@@ -77,9 +77,13 @@ pip install -r requirements.txt
 ```
 
 ### 2. Environment Setup
-Create a `.env` file (or set environment variables) with Gemini API Keys:
-```
+Create a `.env` file in the project **root** directory (or set environment variables) with Gemini API Keys (multiple keys are supported for rate-limit rotation):
+```env
+# Required: Gemini API Keys (comma-separated for multiple keys)
 GEMINI_API_KEYS=key1,key2,key3
+
+# Or a single key (legacy support)
+GEMINI_API_KEY=your_single_key_here
 ```
 
 ### 3. Run Tests

@@ -77,9 +77,13 @@ pip install -r requirements.txt
 ```
 
 ### 2. 环境配置
-创建 `.env` 文件（或设置环境变量），配置 Gemini API Keys：
-```
+在项目**根目录**下创建 `.env` 文件，配置 Gemini API Keys（支持多个 Key 轮换以避免频率限制）：
+```env
+# 必填：Gemini API Key (推荐使用复数形式配置多个)
 GEMINI_API_KEYS=key1,key2,key3
+
+# 或者配置单个 Key (兼容旧版本)
+GEMINI_API_KEY=your_single_key_here
 ```
 
 ### 3. 运行测试

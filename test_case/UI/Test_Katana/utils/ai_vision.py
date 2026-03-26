@@ -12,8 +12,21 @@ try:
 except ImportError:
     rag_kb = None
 
-# Load from backend/.env if exists, or root
-load_dotenv(os.path.join(os.path.dirname(__file__), "../../../../backend/.env"))
+from pathlib import Path
+
+# Load from possible .env locations: root or backend/
+root_env = Path(__file__).parents[4] / ".env"
+backend_env = Path(__file__).parents[4] / "backend" / ".env"
+
+if root_env.exists():
+    load_dotenv(root_env)
+    logger.info(f"Loaded configuration from root .env: {root_env}")
+elif backend_env.exists():
+    load_dotenv(backend_env)
+    logger.info(f"Loaded configuration from backend .env: {backend_env}")
+else:
+    # Default fallback to CWD-based load
+    load_dotenv()
 
 class AIVisionService:
     _instance = None
