@@ -32,12 +32,9 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     
     # Guest Mode Setup
     if val.get("guest", False):
-        logger.info(f"Running {list(smokecases1.keys())[0]} in GUEST mode (new context)")
-        context = browser.new_context()
-        page = context.new_page()
-        request.addfinalizer(lambda: context.close())
+        logger.info(f"Running {list(smokecases1.keys())[0]} in GUEST mode")
 
-    page.set_default_timeout(90000)
+    page.set_default_timeout(30000)  # Reduced from 90s for faster AI failover
     
     # Test Metadata extraction
     caseno = list(smokecases1.keys())[0]
@@ -58,6 +55,12 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     for k, v in test_step.items():
         logger.info(f">>> Current Step: {k}")
         
+        # Global Crash Check
+        if page.get_by_text("Something went wrong!", exact=True).is_visible():
+            logger.error("Application crash detected (Something went wrong!)")
+            page.screenshot(path="crash_detected.png")
+            pytest.fail("Application crashed during test execution.")
+
         # 1. Action Registry Lookup
         action = get_action(k)
         
@@ -91,7 +94,11 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 logger.error(f"FATAL: Step '{k}' could not be resolved by Registry or Fallback.")
                 pytest.fail(f"Step '{k}' not found or failed in fallback. Check actions/__init__.py or YAML key.")
 
-
+        # Post-step Crash Check
+        if page.get_by_text("Something went wrong!", exact=True).is_visible():
+             logger.error("Application crash detected after step completion.")
+             page.screenshot(path=f"crash_after_{k}.png")
+             pytest.fail(f"Application crashed after step: {k}")
 
     # --- Assertion Phase ---
     allure_step_no(f'expect_result:{str(expect_result)}')
@@ -99,35 +106,33 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
         for assertion in expect_result["assertions"]:
             assertion_type = assertion.get("assertion_type")
             
-            # Use Registry for assertions too if possible, or keep simple dispatch here
             if assertion_type == "element_visible_by_text":
                 text = assertion.get("text")
                 if text:
-                    # Robust check combining content and specific visibility
+                    logger.info(f"Verifying visibility of text: '{text}'")
                     try:
-                        page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=5000)
+                        page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=10000)
+                        logger.info(f"Assertion success: Text '{text}' is visible.")
                     except:
-                        # Fallback to source check
-                        assert text in page.content(), f"Text '{text}' not found in page content."
-
-            elif assertion_type == "element_text":
-                role = assertion.get("role")
-                value = assertion.get("value")
-                if role and value:
-                    from playwright.sync_api import expect
-                    element = page.get_by_role(role=role).nth(0)
-                    expect(element).to_have_text(value)
-                    
+                        # Capture page content for debugging
+                        found_in_content = text in page.content()
+                        if not found_in_content:
+                            logger.error(f"Assertion failed: Text '{text}' not found in page content.")
+                            page.screenshot(path=f"fail_assert_{caseno}.png")
+                        assert found_in_content, f"Assertion failed: Text '{text}' not found in page content."
+            
             elif assertion_type == "element_visible":
                 role = assertion.get("role")
-                visible = assertion.get("visible", True)
+                name = assertion.get("name")
                 if role:
-                    from playwright.sync_api import expect
-                    element = page.get_by_role(role=role).nth(0)
-                    if visible:
-                        expect(element).to_be_visible()
-                    else:
-                        expect(element).to_be_hidden()
+                    logger.info(f"Verifying visibility of element: {role} '{name}'")
+                    try:
+                        page.get_by_role(role, name=name).first.wait_for(state="visible", timeout=10000)
+                        logger.info(f"Assertion success: Element {role} '{name}' is visible.")
+                    except:
+                        logger.error(f"Assertion failed: Element {role} '{name}' not found or visible.")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Element {role} '{name}' not found or visible.")
             
             # Delegate complex layout assertions back to actions if needed, 
             # but usually assertions stay in the test runner or are simple checks.

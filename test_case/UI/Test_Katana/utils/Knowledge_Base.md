@@ -36,5 +36,30 @@
 6. **Switch Context:** Click the "Posts" tab.
 7. **Action:** Click the specific post card, then click "Edit" in its popup/menu.
 
+## 6. Core Business Logic Scenarios (from Use Cases)
+* **Ticket Management Flow:**
+    1. Open **"Sale Details"** page.
+    2. Verify **"Item Info"** contains valid ticket number and status (e.g., "Not redeemed").
+    3. Clicking **"Mark as redeemed"** triggers a confirmation pop-up: *"Mark item as Redeemed?"*.
+    4. Successful redemption updates the ticket status to **"Redeemed"**.
+* **Product & Order Inspection:**
+    1. Enter the **"catalogs"** section.
+    2. Select the target product.
+    3. Switch to the **"Orders"** tab to view specific sale data and ticket redemption records.
+* **Refund Scenarios:** Merchants often need to verify ticket redemption status (e.g., after a refund) to ensure inventory and customer records match.
+* **In-Post Checkouts (T3348 Pattern):** 
+    1. **Setup:** Partners can enable `checkoutInPost` internally via the "Advanced" tab of a specific post within an event. This allows consumers to buy directly.
+    2. **Consumer Flow:** Guests interacting with the post click "RSVP" -> "Buy now", opening an overlay modal rather than redirecting to a separate checkout portal. This shortens the purchase funnel.
+    3. **Verification:** Success is verified by the inline appearance of the "Thanks for your payment!" dialog on the same host page.
+
+## 7. Product Inventory Auto-Replacement (T4259)
+- **Business Logic (A > B > C)**:
+    - When a product's inventory reaches 0 (or a low threshold), it is automatically replaced by a configured substitute on the PDP.
+    - Setup: Partner navigates to "Edit Ticket" -> Sets inventory to 1 -> Goes to "Edit Post" -> "Customize product settings" -> Checks "To replace other items".
+- **UI Caveats & Automation Strategy**:
+    - **Inventory Fields**: MUI Controlled components. MUST use native typing (`page.keyboard.type`) followed by **Enter** and **Tab** to persist values. Standard `fill()` often reverts.
+    - **Replacement Checkboxes**: In the "Customize product settings" drawer, each product row has a "To replace other items" checkbox. **Crucially, there is a circular 'Info' icon immediately to the right of the checkbox.** To avoid misclicks, target specific input names like `input[name*='hasReplaceProduct']` or click the text label instead of searching for a generic checkbox role.
+    - **Product Selection**: After checking the replacement box, a nested drawer opens for selection. Click the product card (image or title) to select.
+
 ---
-*Note: This Knowledge Base is incrementally updated as new test patterns and AI healing failures are analyzed.*
+*Note: This Knowledge Base is incrementally updated as new test patterns, AI healing failures, and business use cases are analyzed.*

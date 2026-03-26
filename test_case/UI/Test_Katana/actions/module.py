@@ -1,41 +1,42 @@
-
-import re
-from loguru import logger
 from playwright.sync_api import Page
+from loguru import logger
+from .base import smart_click
 
 def click_module_edit_button(page: Page, v: dict):
-    # Click edit button on specific module using regex filter
     module_name = v.get("module_name")
-    logger.info(f"Attempting to find edit button for module: {module_name}")
-    try:
-        # Try specific module name if provided
-        module_div = page.locator("div").filter(has_text=re.compile(f"{module_name}", re.I)).filter(has_text="Add new").last
-        module_div.get_by_role("button").nth(2).click(timeout=10000)
-        logger.info(f"Successfully clicked edit button for {module_name}")
-    except Exception as e:
-        logger.warning(f"Failed to find edit button for {module_name} with primary locator: {e}. Trying fallback...")
-        try:
-            # Broad fallback: look for the second button in a div that contains the module name
-            page.locator("div").filter(has_text=re.compile(f"{module_name}", re.I)).get_by_role("button").nth(2).click(timeout=5000)
-            logger.info(f"Successfully clicked edit button for {module_name} (fallback)")
-        except:
-            logger.error(f"Failed to find edit button for {module_name} (FATAL).")
-            raise
+    # T3556 recording shows target is a div with title and "Add new", then 2nd button (index 1)
+    smart_click(page, {
+        "locator": f'div:has-text("^{module_name}Add new$")',
+        "role": "button",
+        "index": 1,
+        "name": f"Edit button for {module_name}",
+        "timeout": 15000,
+        **v
+    })
 
 def click_module_paragraph(page: Page, v: dict):
-    # Click on module paragraph
-    page.get_by_role("paragraph").filter(has_text=v["text"]).click()
+    # Click on module paragraph using smart logic
+    smart_click(page, {"role": "paragraph", "name": v.get("text"), "timeout": 10000, **v})
 
 def click_add_new_product(page: Page, v: dict):
-    # Click "Add new" button within specific module
+    # Click "Add new" button within specific module header
     module_name = v.get("module_name")
-    page.locator("div").filter(has_text=re.compile(f"^{module_name}Add new$")).get_by_role("button").first.click()
+    smart_click(page, {
+        "locator": f'div:has-text("^{module_name}Add new$")',
+        "role": "button",
+        "name": "Add new button",
+        "index": 1, # Usually the add/edit buttons are here
+        "timeout": 15000,
+        **v
+    })
 
 def click_module_add_new(page: Page, v: dict):
     # Click the "Add new" button specifically for the named module
     module_name = v.get("module_name")
-    logger.info(f"Targeting 'Add new' button for module: {module_name}")
-    # Scope to the module title and then find the button next to it
-    module_container = page.locator("div").filter(has_text=re.compile(f"{module_name}", re.I)).filter(has_text="Add new").last
-    module_container.get_by_role("button", name="Add new").click(timeout=10000)
-    logger.info(f"Clicked 'Add new' for module {module_name}")
+    smart_click(page, {
+        "role": "button", 
+        "name": "Add new", 
+        "locator": f'div:has-text("{module_name}")', 
+        "timeout": 10000, 
+        **v
+    })

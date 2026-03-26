@@ -59,10 +59,27 @@ def start_autotest():
     # Call the status update script
     status_script_path = os.path.join(BASE_DIR, 'tools', 'update_test_status.py')
     logger.info(f"Calling test status update script: {status_script_path}")
-    subprocess.run(["python", status_script_path]) # Run the script
+    try:
+        # Added a 60-second timeout to prevent the script from hanging indefinitely
+        subprocess.run(["python", status_script_path], timeout=60)
+    except subprocess.TimeoutExpired:
+        logger.error(f"Status update script timed out after 60 seconds.")
+    except Exception as e:
+        logger.error(f"Error running status update script: {e}")
     
-    os.system(f'"{allure_path}" generate "{allure_data_dir}" -o "{allure_report_dir}" -c')
-    os.system(f'"{allure_path}" open "{allure_report_dir}"')
+    allure_bat = allure_path + ".bat"
+    
+    logger.info(f"Generating Allure report: {allure_report_dir}")
+    # Using subprocess.run with list to safely handle Windows paths with spaces
+    generate_cmd = [allure_bat, "generate", allure_data_dir, "-o", allure_report_dir, "-c"]
+    logger.info(f"Running command: {' '.join(generate_cmd)}")
+    subprocess.run(generate_cmd, check=True)
+    
+    logger.info(f"Opening Allure report...")
+    open_cmd = [allure_bat, "open", allure_report_dir]
+    logger.info(f"Running command: {' '.join(open_cmd)}")
+    subprocess.run(open_cmd)
+
 
 
 if __name__ == '__main__':

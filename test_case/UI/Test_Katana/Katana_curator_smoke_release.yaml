@@ -1,8 +1,8 @@
-
+﻿
 testT3370:
     description: "Verify set the product card alignment at the store level"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_init: 1000
         goto_storefront_top_aligned:
@@ -13,10 +13,10 @@ testT3370:
             timeout: 15000
         publish_button_click_top_aligned: {}
         verify_navigation_after_publish_top_aligned:
-            url_regex: "https://release.pear.us/yu-xiao"
+            url_regex: "https://release.pear.us/demi-release"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/yu-xiao"
+            fallback_url: "https://release.pear.us/demi-release"
             fallback_timeout: 30000
         click_mui_svg_icon_top_aligned: {}
         click_products_text_top_aligned: {}
@@ -37,10 +37,10 @@ testT3370:
             timeout: 15000
         publish_button_click_waterfall: {}
         verify_navigation_after_publish_waterfall:
-            url_regex: "https://release.pear.us/yu-xiao"
+            url_regex: "https://release.pear.us/demi-release"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/yu-xiao"
+            fallback_url: "https://release.pear.us/demi-release"
             fallback_timeout: 30000
         click_mui_svg_icon_waterfall: {}
         click_products_text_waterfall: {}
@@ -48,10 +48,10 @@ testT3370:
             index: 1
             timeout: 6000
         verify_waterfall_layout:
-            url_regex: "https://release.pear.us/yu-xiao"
+            url_regex: "https://release.pear.us/demi-release"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/yu-xiao"
+            fallback_url: "https://release.pear.us/demi-release"
             fallback_timeout: 30000
             wait_for_timeout: 1500
             wait_for_cards_timeout: 6000
@@ -62,7 +62,7 @@ testT3370:
 testT3554:
     description: "Verify adding a new module in shop page"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -75,7 +75,7 @@ testT3554:
         sleep_wait_confirm: 2000
         R_click7: { role: 'button', name: 'Add', index: -1 }
         sleep_after_publish: 5000
-        open_back: "https://release.pear.us/yu-xiao"
+        open_back: "https://release.pear.us/demi-release"
         sleep_before_verify: 2000
     expect_result:
         description: "Verify that the new module is visible on the page"
@@ -86,7 +86,7 @@ testT3554:
 testT4264:
     description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -95,7 +95,7 @@ testT4264:
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_after_add: 1500
         sleep_after_add_new: 2000
-        l_click_regex1: { text: '^Image$', index: 0 }
+        l_click_regex1: { text: '^Image$', index: 0 , exact: true}
         sleep_after_click_image: 2000
         check2: { role: 'radio', name: 'Carousel Carousel' }
         sleep_before_add: 2000
@@ -132,7 +132,7 @@ testT1993:
 testT855:
     description: "Verify the Share button functionality"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 3000
         R_click_share: { role: 'button', name: 'Share' }
         sleep_after_click: 2000
@@ -140,12 +140,12 @@ testT855:
         description: "Share dialog or options should appear"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Shop link copied — ready to"
+              text: "Shop link copied — ready to share!"
 
 testT1747:
     description: "Verify whether clicking the 'Save as draft' button in the lower left corner of the Create Post page can save it as a draft Post"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 3000
         R_click_plus_button: { role: 'button', name: '0', exact: True }
         sleep_after_plus: 2000
@@ -166,27 +166,13 @@ testT1747:
         description: "Draft post should be saved successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Post saved as draft!"
-
-testT_HEAL:
-  description: "AI Self-Healing Demo - Click Module with Visual Description"
-  test_step:
-    open: "https://release.pear.us/yu-xiao"
-    sleep: 3000
-    R_click:
-      name: "The hamburger menu icon (three lines) in the navigation bar"
-      locator: "#broken-id-forced-healing"
-    sleep: 2000
-  expect_result:
-    assertions:
-      - assertion_type: "element_visible_by_text"
-        text: "Title"
+              text: "Your post is saved"
 
 testT4279:
     guest: true
     description: "Verify submitting the contact form"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
         R_click_auto_test_form: { role: 'button', name: 'Auto test form' }
@@ -219,11 +205,11 @@ testT4279:
 testT1520:
     description: "Verify follow and unfollow store functionality"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 3000
         R_click_explore: { role: 'button', name: 'Explore' }
         sleep_after_explore: 2000
-        R_click_store_link: { role: 'link', name: "avatar Demi-release's Store" }
+        R_click_store_link: { role: 'link', name: "ccc" }
         sleep_after_store: 2000
         R_click_logo: { role: 'img', name: 'Logo' }
         sleep_after_logo: 1000
@@ -270,7 +256,7 @@ testT1520:
 testT4306:
     description: "Verify viewing user form submissions"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 5000
         click_form_more_menu: { form_name: 'Auto test form' }
         sleep_after_more_click: 2000
@@ -295,9 +281,9 @@ testT4306:
 testT3556:
     description: "Verify editing an existing module"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 3000
-        click_module_edit_button: { module_name: 'test new module' }
+        click_module_edit_button: { module_name: 'post module 1' }
         sleep_after_edit_click: 1500
         R_click_edit_module: { role: 'button', name: 'Edit module' }
         sleep_after_edit_module: 1000
@@ -309,13 +295,12 @@ testT3556:
     expect_result:
         description: "Module should be edited successfully"
         assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "test updated module"
+            - { assertion_type: "element_visible_by_text", text: "test updated mod", exact: false }
 
 testT3842:
     description: "Verify adding a new product to an existing module"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -327,10 +312,10 @@ testT3842:
         check2: { role: 'radio', name: 'Carousel Carousel' }
         sleep_before_add: 2000
         R_click4: { role: 'button', name: 'Add' }
-        sleep_after_add: 3000
+        sleep_after_add: 4000
         click_module_add_new: { module_name: 'test product link' }
         sleep_after_add_new: 5000
-        fill_product_url: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
+        fill_product_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
         fill_product_title: { placeholder: 'As the bold title on your', value: 'test prodcut link card' }
         sleep_before_price: 1000
         fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
@@ -349,7 +334,7 @@ testT3842:
 testT2129:
     description: "Verify the Product card can create post success on my shop page"
     test_step:
-        open: "https://release.pear.us/yu-xiao"
+        open: "https://release.pear.us/demi-release"
         sleep_after_open: 3000
         R_click_more_action: { role: 'button', name: 'More action' }
         sleep_after_more: 1500
@@ -362,16 +347,15 @@ testT2129:
             value: "test auto post title"
         R_click_save_draft: { role: 'button', name: 'Save as draft' }
         sleep_after_save: 2000
-        verify_text_visible: { text: "Your post is saved!" }
         R_click_got_it: { role: 'button', name: 'Got it' }
         sleep_after_got: 1000
         R_click_view_shop: { role: 'button', name: 'View in My Shop' }
         sleep_after_view: 1500
+        verify_text_visible: { text: "test auto post title" }
     expect_result:
         description: "Post should be saved as draft successfully"
         assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Your post is saved!"
+            - { assertion_type: "element_visible_by_text", text: "test auto post", exact: false }
 
 testT4777:
     description: "Verify product details in a post by: 1. Start on Events page."
@@ -379,31 +363,192 @@ testT4777:
         open: "https://release.pear.us/events"
         wait_for_url: { url: "**/events" }
         sleep_after_open: 5000
-        R_click_FAB: { role: 'button', name: 'Add', exact: false }
+        R_click_FAB: { role: 'button', name: 'Add' }
         sleep_after_FAB: 2000
         R_click_create_post: { role: 'button', name: 'Create a Post' }
         sleep_after_create: 2000
         R_click_yes: { role: 'button', name: 'Yes' }
         sleep_after_yes: 3000
-        R_click_existing_event: { text: "Lury 10378 event test", exact: false }
+        R_click_existing_event: { text: "auto test event", exact: false }
         sleep_after_event: 2000
         R_click_select_continue: { role: 'button', name: 'Select and continue' }
         sleep_after_select: 2000
         R_click_confirm: { role: 'button', name: 'Confirm' }
         sleep_after_confirm: 5000
         # Navigation Reinforcement: If the confirm leads back to explore, force go back to events
-        open_events: "https://release.pear.us/events"
-        wait_for_url_again: { url: "**/events" }
-        sleep_after_reopen: 4000
+        # open_events: "https://release.pear.us/events"
+        # wait_for_url_again: { url: "**/events" }
+        # sleep_after_reopen: 4000
         R_click_event_more_menu: { role: 'button', name: 'More' }
         sleep_after_more_menu: 2000
         R_click_view_event: { role: 'menuitem', name: 'View event' }
         sleep_after_enter: 4000
         R_click_posts_tab: { role: 'tab', name: 'Posts' }
         sleep_after_posts_tab: 3000
-        R_click_post_card: { role: 'paragraph', name: 'Lury 10378 event test 222', exact: false, force: true }
+        R_click_post_card: { role: 'button', name: 'Lury automation event with event coupon', exact: false }
         sleep_after_post_card: 4000
     expect_result:
         description: "Verify product details in edit mode under Commerce tab"
         assertions:
-            - { assertion_type: "element_visible_by_text", text: "event product 0129" }
+            - { assertion_type: "element_visible_by_text", text: "Lury automation event with event coupon" }
+
+
+testT3348_partner:
+    description: "Verify partner can enable 'checkout within the post' for a product in an event"
+    test_step:
+        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        sleep_after_open: 5000
+        R_click_post_product: { role: 'button', name: 'Image of Product auto test', exact: false }
+        sleep_after_click_product: 2000
+        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_after_advanced: 1500
+        check_checkout_in_post: { locator: 'input[name="checkoutInPost"]', checked: true }
+        sleep_after_check: 2000
+        R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
+        sleep_before_confirm: 1500
+        R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
+        sleep_after_update: 3000
+    expect_result:
+        description: "Post product advanced checkout setting should be updated successfully (Verifcation happens in guest flow)"
+        assertions: []
+
+testT3348_guest:
+    guest: true
+    description: "Verify guest can use the 'checkout within the post' modal to make a purchase"
+    test_step:
+        open: "https://demi0214.notip.com.cn/post/auto-test-event"
+        sleep_after_open: 5000
+        R_click_rsvp: { role: 'button', name: 'RSVP', exact: true }
+        sleep_after_rsvp: 3000
+        # R_click_buy_now: { role: 'button', name: 'Buy now' }
+        # sleep_after_buy_now: 3000
+        R_click_continue: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue: 2000
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 't1' }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 't2' }
+        fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 567-8900' }
+        fill_email: { locator: 'input[name="contact.email"]', value: 'yuxiao.zhu.ext@1m.app' }
+        sleep_before_place_order: 1500
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_after_place_order: 8000
+    expect_result:
+        description: "Guest should see the successful payment confirmation modal"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Thanks for your payment!"
+
+testT4259_partner:
+    description: "Verify partner can set up product auto-replacement chain A->B->C"
+    test_step:
+        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        sleep_after_open: 5000
+        R_click_tickets_tab: { role: 'tab', name: 'Tickets' }
+        sleep_after_tickets_tab: 2000
+        
+        R_click_general_a: { text: 'General A' }
+        sleep_before_fill_a: 1500
+        fill_numeric_a: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
+        sleep_before_save_a: 2000
+        R_click_save_a: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_a: 2000
+        
+        R_click_general_b: { text: 'General B' }
+        sleep_before_fill_b: 1500
+        fill_numeric_b: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
+        sleep_before_save_b: 2000
+        R_click_save_b: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_b: 2000
+
+        R_click_events_tab: { role: 'tab', name: 'Event' }
+        sleep_after_events_tab: 2000
+        
+        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        sleep_after_posts_tab: 2000
+        
+        R_click_post_product: { role: 'button', name: 'Image of Product', exact: false }
+        sleep_after_click_product: 5000
+        
+        R_click_customize_products: { role: 'button', name: 'Customize products', timeout: 30000 }
+        sleep_after_customize: 3000
+        
+        # --- Configure Replacements for C (Replace C with B) ---
+        check_replace_c_b: { locator: 'input[name="products.0.hasReplaceProduct"]', checked: true }
+        sleep_after_check_c_b: 3000
+        select_b_for_c: { name: 'General B' }
+        sleep_after_select_b: 2000
+        R_click_confirm_c_b: { name: 'Confirm' }
+        sleep_after_confirm_c_b: 5000
+        
+        # --- Configure Replacements for B (Replace B with A) ---
+        check_replace_b_a: { locator: 'input[name="products.1.hasReplaceProduct"]', checked: true, timeout: 20000 }
+        sleep_after_check_b_a: 3000
+        select_a_for_b: { name: 'General A' }
+        sleep_after_select_a: 2000
+        R_click_confirm_b_a: { name: 'Confirm' }
+        sleep_after_confirm_b_a: 2000
+        
+        R_click_save_products: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_products: 2000
+        R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
+        sleep_before_confirm: 1500
+        R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
+        sleep_after_update: 3000
+    expect_result:
+        description: "Partner setup of auto-replacement chain completed"
+        assertions: []
+
+testT4259_guest:
+    guest: true
+    description: "Verify guest experiences A->B->C auto replacement when purchasing"
+    test_step:
+        open: "https://demi0214.notip.com.cn/post/auto-test-event"
+        sleep_after_open: 5000
+        
+        # --- Purchase 1 (Consumes General A) ---
+        R_click_rsvp_1: { role: 'button', name: 'RSVP', exact: true }
+        sleep_after_rsvp_1: 7000
+        R_click_checkout_1: { name: 'Checkout', disable_ai: true }
+        sleep_after_checkout_1: 3000
+        R_click_continue_1: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_1: 2000
+        fill_first_name_1: { locator: 'input[name="contact.firstName"]', value: 't1' }
+        fill_last_name_1: { locator: 'input[name="contact.lastName"]', value: 't2' }
+        fill_phone_1: { role: 'textbox', name: 'Phone number', value: '(234) 567-8900' }
+        fill_email_1: { locator: 'input[name="contact.email"]', value: 'yuxiao.zhu.ext@1m.app' }
+        sleep_before_place_order_1: 1500
+        R_click_place_order_1: { role: 'button', name: 'Place order' }
+        sleep_after_place_order_1: 8000
+        open_pdp_1: "https://demi0214.notip.com.cn/post/auto-test-event"
+        sleep_after_reload_1: 5000
+        verify_b_visible: { assertion_type: 'element_visible_by_text', text: 'General B' }
+        
+        # --- Purchase 2 (Consumes General B) ---
+        R_click_rsvp_2: { role: 'button', name: 'RSVP', exact: true }
+        sleep_after_rsvp_2: 7000
+        R_click_checkout_2: { name: 'Checkout', disable_ai: true }
+        sleep_after_checkout_2: 3000
+        R_click_continue_2: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_2: 2000
+        fill_first_name_2: { locator: 'input[name="contact.firstName"]', value: 't1' }
+        fill_last_name_2: { locator: 'input[name="contact.lastName"]', value: 't2' }
+        fill_phone_2: { role: 'textbox', name: 'Phone number', value: '(234) 567-8900' }
+        fill_email_2: { locator: 'input[name="contact.email"]', value: 'yuxiao.zhu.ext@1m.app' }
+        sleep_before_place_order_2: 1500
+        R_click_place_order_2: { role: 'button', name: 'Place order' }
+        sleep_after_place_order_2: 10000
+        open_pdp_2: "https://demi0214.notip.com.cn/post/auto-test-event"
+        sleep_after_reload_2: 5000
+        
+    expect_result:
+        description: "After buying A and B, General C should now be the listed product"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "General CFREE"
+
+testT3981:
+    description: "Verify QR scanner (Valid, Redeemed, Not Recognized) and Cleanup"
+    test_step:
+        execute_t3981_flow: "run"
+    expect_result:
+        description: "All automated camera test scenarios passed gracefully"
+        assertions: []

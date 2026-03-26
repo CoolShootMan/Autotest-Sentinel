@@ -60,7 +60,7 @@ def update_ones_test_status(test_results):
 
         # Navigate to the test plan using fuzzy matching for "smoke testing"
 
-        test_plan_name_regex = re.compile(r"smoke testing", re.IGNORECASE)
+        test_plan_name_regex = re.compile(r"Regression Testing", re.IGNORECASE)
 
         
 

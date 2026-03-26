@@ -1,0 +1,37 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state="D:\\new test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
+    page = context.new_page()
+    page.goto("https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts")
+    page.get_by_role("tab", name="Tickets").click()
+    page.get_by_text("General A").click()
+    page.get_by_placeholder("Quantity").fill("1")
+    page.get_by_role("button", name="Save").click()
+    page.get_by_text("General B").click()
+    page.get_by_placeholder("Quantity").fill("1")
+    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Create a post").click()
+    page.get_by_role("button", name="Close").click()
+    page.get_by_role("button", name="Image of Product auto test event buy venue | Thu, Dec 31 (EST) Get Tickets auto-test-event-2 Offer up to 25%", exact=True).click()
+    page.get_by_role("button", name="Customize products").click()
+    page.locator("input[name=\"products.0.hasReplaceProduct\"]").check()
+    page.get_by_role("paragraph").filter(has_text="General B").click()
+    page.get_by_role("button", name="Confirm").click()
+    page.locator("input[name=\"products.1.hasReplaceProduct\"]").check()
+    page.get_by_role("paragraph").filter(has_text="General A").click()
+    page.get_by_role("button", name="Confirm").click()
+    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Update").click()
+    page.get_by_role("button", name="Update").click()
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)

@@ -62,6 +62,22 @@ def pytest_runtest_makereport(item, call):
             pass # Ignore errors if the fixture is not present
 
 
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    return {
+        **browser_type_launch_args,
+        "args": [
+            # 1. 自动允许媒体流（摄像头/麦克风）权限，不再弹出浏览器授权框
+            "--use-fake-ui-for-media-stream",
+            
+            # 2. 启用虚拟媒体设备，用软件模拟的设备代替真实硬件
+            "--use-fake-device-for-media-stream",
+            
+            # 3. 指定作为摄像头输入的视频文件（必须是 .y4m 格式）
+            # 请务必将下面的路径改为你本地二维码视频的真实路径
+            r"--use-file-for-fake-video-capture=D:\new test\Autotest-monster\data\Ticket_C.y4m"
+        ],
+    }
 
 
 def pytest_addoption(parser):
@@ -79,10 +95,11 @@ def browser_context_args(browser_context_args, playwright):
     return {
         **browser_context_args,
         **iphone_12,
+        "permissions": ["camera", "microphone"],
     }
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def page(context: BrowserContext) -> Generator[Page, None, None]:
     page = context.new_page()
     yield page
@@ -93,7 +110,7 @@ def _build_artifact_test_folder(
     output_dir = pytestconfig.getoption("--output")
     return os.path.join(output_dir, slugify(request.node.nodeid), folder_or_file_name)
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def context(
     browser: Browser,
     browser_context_args: Dict,
@@ -102,11 +119,30 @@ def context(
 ) -> Generator[BrowserContext, None, None]:
     pages: List[Page] = []
     storage_state = pytestconfig.getoption("--storage-state")
-    # 只在指定了 storage-state 时才传入,否则创建访客上下文
-    if storage_state:
+    
+    is_guest = False
+    try:
+        if "smokecases1" in request.fixturenames:
+            smokecases1 = request.getfixturevalue("smokecases1")
+            is_guest = list(smokecases1.values())[0].get("guest", False)
+    except Exception:
+        pass
+
+    # 只在指定了 storage-state 且非访客模式 时才传入,否则创建访客上下文
+    if storage_state and not is_guest:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
-        context = browser.new_context(**browser_context_args)
+        guest_args = browser_context_args.copy()
+        if is_guest:
+            # Revert to Desktop mode for Guest tests to maintain backward compatibility
+            guest_args.pop("userAgent", None)
+            guest_args.pop("deviceScaleFactor", None)
+            guest_args.pop("isMobile", None)
+            guest_args.pop("hasTouch", None)
+            guest_args.pop("defaultBrowserType", None)
+            guest_args["viewport"] = {'width': 1920, 'height': 1080}
+            
+        context = browser.new_context(**guest_args)
     context.on("page", lambda page: pages.append(page))
     tracing_option = pytestconfig.getoption("--tracing")
     capture_trace = tracing_option in ["on", "retain-on-failure"]
@@ -205,3 +241,24 @@ def pytest_generate_tests(metafunc):
 def smokecases1(request):
     """ Parameterized test case (kept for compatibility with existing tests) """
     return request.param
+
+@pytest.fixture(scope="function", autouse=True)
+def webrtc_override(context):
+    """
+    Injects a JavaScript workaround into every page to strip dimensional and facing constraints
+    from getUserMedia. This prevents the fake camera feed (.y4m) from being cropped to fit 
+    the emulated mobile viewport, ensuring the full QR code is visible.
+    """
+    context.add_init_script("""
+        const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+        navigator.mediaDevices.getUserMedia = function(constraints) {
+            if (constraints && constraints.video && typeof constraints.video === 'object') {
+                if (constraints.video.facingMode) delete constraints.video.facingMode;
+                if (constraints.video.width) delete constraints.video.width;
+                if (constraints.video.height) delete constraints.video.height;
+                if (constraints.video.aspectRatio) delete constraints.video.aspectRatio;
+                console.log('WebRTC override: Stripped constraints to prevent .y4m cropping');
+            }
+            return originalGetUserMedia(constraints);
+        };
+    """)

@@ -2,7 +2,8 @@
 from .base import (
     open_url, 
     smart_click, 
-    smart_fill, 
+    smart_fill,
+    fill_numeric,
     smart_check, 
     smart_swipe, 
     smart_sleep,
@@ -13,15 +14,19 @@ from .base import (
     wait_for_url,
     save_html,
     click_modal_close,
-    verify_text_visible
+    verify_text_visible,
+    reload_page,
+    execute_t3981_flow
 )
+
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
     click_products_tab_t2129, click_bell_button, click_product_plus_button,
     click_product_image, verify_post_exists, R_click_follow, 
-    click_close_toast, verify_toast_message
+    click_close_toast, verify_toast_message, select_replacement_product,
+    click_by_coordinates, click_relative_to_selector
 )
 from .form import (
     verify_submission_details, verify_message_content, click_form_more_menu,
@@ -102,7 +107,13 @@ ACTIONS = {
     "verify_text_visible": verify_text_visible,
     "click_module_add_new": click_module_add_new,
     "verify_product_visible": verify_text_visible,
+    "select_replacement_product": select_replacement_product,
+    "click_by_coordinates": click_by_coordinates,
+    "click_relative_to_selector": click_relative_to_selector,
+    "reload": reload_page,
+    "execute_t3981_flow": execute_t3981_flow,
 }
+
 
 def get_action(name):
     """
@@ -117,6 +128,8 @@ def get_action(name):
     # 2. Prefix mapping
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
+    elif name.startswith("fill_numeric"):
+        return fill_numeric
     elif name.startswith("fill"):
         return smart_fill
     elif name.startswith("check"):
@@ -139,10 +152,22 @@ def get_action(name):
         return wait_for_url
     elif name.startswith("open"):
         return open_url
+    elif name.startswith("reload"):
+        return reload_page
+
     
     # Special prefixes that map to specific functions
     if name.startswith("click_close_toast"):
         return click_close_toast
+    
+    if name.startswith("verify_toast"):
+        return verify_toast_message
+    if name.startswith("verify"):
+        return verify_text_visible
+
+        
+    if name.startswith("select_a_for_b") or name.startswith("select_b_for_c"):
+        return select_replacement_product
         
     # Add other prefix handlers here as we migrate them
     
