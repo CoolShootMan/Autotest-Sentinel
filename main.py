@@ -57,15 +57,16 @@ def start_autotest():
     logger.error(f"Pytest stderr: {result.stderr}")
     
     # Call the status update script
-    status_script_path = os.path.join(BASE_DIR, 'tools', 'update_test_status.py')
-    logger.info(f"Calling test status update script: {status_script_path}")
-    try:
-        # Added a 60-second timeout to prevent the script from hanging indefinitely
-        subprocess.run(["python", status_script_path], timeout=60)
-    except subprocess.TimeoutExpired:
-        logger.error(f"Status update script timed out after 60 seconds.")
-    except Exception as e:
-        logger.error(f"Error running status update script: {e}")
+    # status_script_path = os.path.join(BASE_DIR, 'tools', 'update_test_status.py')
+    # logger.info(f"Calling test status update script: {status_script_path}")
+    # try:
+    #     # Added a 60-second timeout to prevent the script from hanging indefinitely
+    #     subprocess.run(["python", status_script_path], timeout=60)
+    # except subprocess.TimeoutExpired:
+    #     logger.error(f"Status update script timed out after 60 seconds.")
+    # except Exception as e:
+    #     logger.error(f"Error running status update script: {e}")
+
     
     allure_bat = allure_path + ".bat"
     

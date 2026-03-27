@@ -58,3 +58,10 @@ crash_click.png
 # === OS Files ===
 Thumbs.db
 .DS_Store
+
+# === Binary Assets (Large files excluded from repo) ===
+*.y4m
+*.webm
+*.mp4
+*.yuv
+*.h264
