@@ -65,3 +65,5 @@ Thumbs.db
 *.mp4
 *.yuv
 *.h264
+
+.tmp

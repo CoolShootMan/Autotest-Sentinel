@@ -1,5 +1,13 @@
 # get-started
 
+## setup env
+```sh
+cd ~/your-project-dir/Autotest-monster
+pip install -r requirements.txt
+
+## env activate
+source .venv/bin/activate
+```
 
 ## 如何录制
 1. 确认有 playwright 命令
