@@ -508,7 +508,7 @@ testT4279:
         open: "https://release.pear.us/demi-release"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
-        R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }
+        R_click_auto_test_form: { role: 'button', name: 'Auto test form' }
         sleep_after_click_form: 3000
         fill_note:
             locator: 'input[placeholder="Please fill this out"]'
