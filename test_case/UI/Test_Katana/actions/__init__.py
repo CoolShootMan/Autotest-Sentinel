@@ -15,6 +15,8 @@ from .base import (
     save_html,
     click_modal_close,
     verify_text_visible,
+    verify_value,
+    verify_value_near,
     reload_page,
     execute_t3981_flow
 )
@@ -105,6 +107,8 @@ ACTIONS = {
     "check_label_waterfall": smart_check,
     "verify_invitation_link_clipboard": verify_invitation_link_clipboard,
     "verify_text_visible": verify_text_visible,
+    "verify_value": verify_value,
+    "verify_value_near": verify_value_near,
     "click_module_add_new": click_module_add_new,
     "verify_product_visible": verify_text_visible,
     "select_replacement_product": select_replacement_product,
@@ -162,6 +166,8 @@ def get_action(name):
     
     if name.startswith("verify_toast"):
         return verify_toast_message
+    if name.startswith("verify_value"):
+        return verify_value
     if name.startswith("verify"):
         return verify_text_visible
 

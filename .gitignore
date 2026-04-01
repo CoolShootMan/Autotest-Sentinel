@@ -26,6 +26,7 @@ env/
 # Cookie files contain real auth tokens - NEVER commit
 test_case/UI/Test_Katana/cookie_*.json
 test_case/UI/Test_Katana/staging_cookie.json
+tools/get_cookie.py
 *.env
 .env.*
 

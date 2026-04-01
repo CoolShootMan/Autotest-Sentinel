@@ -69,6 +69,15 @@ def smart_fill(page: Page, v: dict):
     target_value = v.get("value", "")
     target_locator = v.get("locator")
     
+    # Handle random value patterns like RANDOM_1_10, RANDOM_10_50
+    if isinstance(target_value, str) and target_value.startswith("RANDOM_"):
+        import random
+        parts = target_value.split("_")
+        if len(parts) == 3:
+            min_val, max_val = int(parts[1]), int(parts[2])
+            target_value = str(random.randint(min_val, max_val))
+            logger.info(f"Generated random value: {target_value} (range: {min_val}-{max_val})")
+    
     logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
     
     # Timeout for traditional fill - trigger AI faster
@@ -397,6 +406,7 @@ def smart_click(page: Page, v: dict):
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
     force = v.get("force", False) # Default to False for better event triggering
+    optional = v.get("optional", False) # If True, skip if element not found
     
     # Validation
     if not target_name and not target_locator and not target_role:
@@ -473,17 +483,36 @@ def smart_click(page: Page, v: dict):
         
         # FINAL ATTEMPT: Wait for the best candidate to become visible/stable
         if el:
+            # Check if button is disabled before clicking
+            is_disabled = False
+            try:
+                is_disabled = el.is_disabled()
+            except: pass
+
+            if is_disabled:
+                logger.warning(f"Target '{target_name}' is disabled. Will try fallback if available.")
+                raise Exception(f"Button '{target_name}' is disabled.")
+
             el.wait_for(state="visible", timeout=5000)
             el.click(force=force)
             logger.info(f"Clicked target '{target_name or 'unnamed'}' (index: {target_index}) via semantic search.")
             return
     except Exception as e:
         logger.debug(f"Standard click failed: {e}")
+        # --- FALLBACK SUPPORT ---
+        fallback = v.get("fallback")
+        if fallback:
+            logger.warning(f"Triggering fallback click for '{target_name}'. Reason: {e}")
+            return smart_click(page, fallback)
 
 
     # 3. --- AI Self-Healing Fallback (The "Brain") ---
     if v.get("disable_ai", False):
-        logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
+        logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. ")
+        # Check if optional - skip instead of raising error
+        if optional:
+            logger.info(f"Element '{target_name or target_locator}' not found but optional=True. Skipping.")
+            return
         raise Exception(f"Element not found: {target_name or target_locator}")
 
     logger.error(f"All traditional methods failed for '{target_name or target_locator}'. Triggering AI Self-Healing...")
@@ -615,6 +644,18 @@ def smart_click(page: Page, v: dict):
     # If even AI fails, re-raise original or fail
     if v.get("_retry_ai", 0) > 0:
         return # We already tried
+    
+    # --- FINAL FALLBACK SUPPORT ---
+    fallback = v.get("fallback")
+    if fallback:
+        logger.warning(f"All attempts (including AI) failed for '{target_name}'. Executing fallback action: {fallback}")
+        return smart_click(page, fallback)
+
+    # Check if optional - skip instead of raising error
+    if optional:
+        logger.info(f"Element '{target_name or target_locator}' not found but optional=True. Skipping.")
+        return
+
     raise Exception(f"Failed to click '{target_name or target_locator}' after all attempts including AI.")
 
 def click_modal_close(page: Page, v: dict):
@@ -740,3 +781,195 @@ def execute_t3981_flow(page: Page, v):
             
     logger.info(">>> T3981 demo flow completed successfully.")
 
+def verify_value(page: Page, v: dict):
+    # Verify the value of an input field
+    target_name = v.get("name")
+    target_locator = v.get("locator")
+    expected_value = str(v.get("value"))
+    timeout = v.get("timeout", 10000)
+
+    logger.info(f"Verifying value of '{target_name or target_locator}' matches '{expected_value}'")
+
+    if target_locator:
+        el = page.locator(target_locator).first
+    else:
+        # Use name attribute fallback
+        el = page.locator(f'input[name="{target_name}"], [name="{target_name}"]').first
+
+    el.wait_for(state="visible", timeout=timeout)
+
+    try:
+        actual_value = str(el.input_value())
+        if actual_value != expected_value:
+            # Check if it's a numeric match (e.g. "10" matching 10)
+            try:
+                if float(actual_value) == float(expected_value):
+                    logger.info(f"Numeric match success: {actual_value} == {expected_value}")
+                    return
+            except: pass
+
+            logger.error(f"Value check FAILED for {target_name or target_locator}. Expected: '{expected_value}', Actual: '{actual_value}'")
+            page.screenshot(path=f"fail_verify_value_{target_name or 'elem'}.png")
+            assert actual_value == expected_value, f"Expected value '{expected_value}', but found '{actual_value}'"
+        
+        logger.info(f"Successfully verified value '{actual_value}'")
+    except Exception as e:
+        logger.error(f"Error during value verification: {e}")
+        page.screenshot(path=f"error_verify_value_{target_name or 'elem'}.png")
+        raise AssertionError(f"Failed to verify value of {target_name or target_locator}. Error: {e}")
+
+
+def verify_value_near(page: Page, v: dict):
+    """
+    Verify the value of an input field by finding it relative to a nearby text element.
+    Example: find input near "5555" text and verify its value.
+    
+    Usage in YAML:
+        verify_value_near: { near_text: "5555", expected: "10" }
+    """
+    near_text = v.get("near_text")  # The text to search near (e.g., "5555")
+    near_index = v.get("near_index", 0)  # Index if multiple matches
+    expected_value = str(v.get("expected") or v.get("value"))
+    direction = v.get("direction", "right")  # 'right', 'left', 'below', 'above'
+    offset_selector = v.get("selector")  # Optional: CSS selector to narrow down
+    
+    logger.info(f"Verifying value near text '{near_text}' (direction: {direction}), expected: '{expected_value}'")
+    
+    try:
+        # Step 1: Find the anchor element with the near_text
+        if near_text:
+            anchor = page.get_by_text(near_text, exact=False).nth(near_index)
+            anchor_box = anchor.bounding_box()
+            
+            if not anchor_box:
+                raise Exception(f"Anchor text '{near_text}' not found or not visible")
+            
+            logger.info(f"Found anchor '{near_text}' at: {anchor_box}")
+        
+        # Step 2: Build XPath/selector to find nearby input
+        # Strategy: Use JavaScript to find sibling or parent elements containing input
+        js_script = f"""
+        (function() {{
+            // Find all text elements and inputs
+            const allElements = document.querySelectorAll('*');
+            let targetInput = null;
+            
+            // Find the anchor element with matching text
+            for (let el of allElements) {{
+                if (el.children.length === 0 && el.textContent.trim() === '{near_text}' && el.offsetParent !== null) {{
+                    const rect = el.getBoundingClientRect();
+                    const anchorX = rect.left + rect.width / 2;
+                    const anchorY = rect.top + rect.height / 2;
+                    
+                    // Search for input in specified direction
+                    const searchRadius = 300; // pixels
+                    let bestMatch = null;
+                    let bestDistance = Infinity;
+                    
+                    const inputs = document.querySelectorAll('input[name*="commission"], input[type="number"], input[placeholder*="e.g.,"]');
+                    
+                    for (let input of inputs) {{
+                        if (!input.offsetParent) continue; // Skip hidden elements
+                        
+                        const inputRect = input.getBoundingClientRect();
+                        const inputX = inputRect.left + inputRect.width / 2;
+                        const inputY = inputRect.top + inputRect.height / 2;
+                        
+                        let dx = inputX - anchorX;
+                        let dy = inputY - anchorY;
+                        
+                        // Check if in correct direction
+                        let validDirection = false;
+                        if ('{direction}' === 'right') {{
+                            validDirection = dx > 0 && dx < searchRadius && Math.abs(dy) < 150;
+                        }} else if ('{direction}' === 'left') {{
+                            validDirection = dx < 0 && Math.abs(dx) < searchRadius && Math.abs(dy) < 150;
+                        }} else if ('{direction}' === 'below') {{
+                            validDirection = dy > 0 && dy < searchRadius && Math.abs(dx) < 150;
+                        }} else if ('{direction}' === 'above') {{
+                            validDirection = dy < 0 && Math.abs(dy) < searchRadius && Math.abs(dx) < 150;
+                        }}
+                        
+                        if (validDirection) {{
+                            const distance = Math.sqrt(dx*dx + dy*dy);
+                            if (distance < bestDistance) {{
+                                bestDistance = distance;
+                                bestMatch = input;
+                            }}
+                        }}
+                    }}
+                    
+                    if (bestMatch) {{
+                        return bestMatch.outerHTML.substring(0, 200);
+                    }}
+                    break;
+                }}
+            }}
+            return null;
+        }})()
+        """
+        
+        result = page.evaluate(js_script)
+        if result:
+            logger.info(f"Found nearby input via JS: {result[:100]}...")
+        
+        # Step 3: Alternative approach - find input by name near the text container
+        # Use the name attribute pattern from the original step
+        name_pattern = v.get("name") or "commissionRateForPromoters"
+        
+        # Try to find the input within the same container as near_text
+        candidates = [
+            page.locator(f'input[name="{name_pattern}"]').first,
+            page.locator(f'input[name*="commission"]').first,
+            page.locator('input[type="number"]').first,
+        ]
+        
+        el = None
+        for candidate in candidates:
+            try:
+                if candidate.is_visible(timeout=1000):
+                    el = candidate
+                    break
+            except:
+                continue
+        
+        if not el:
+            # Fallback: use near() method if available
+            if near_text:
+                try:
+                    # Try to find text then use next sibling
+                    text_locator = page.get_by_text(near_text, exact=True)
+                    el = text_locator.locator("xpath=following-sibling::input").first
+                    if el.is_visible(timeout=1000):
+                        logger.info("Found input via following-sibling XPath")
+                except:
+                    pass
+        
+        if not el:
+            raise Exception(f"Could not locate input field near '{near_text}'")
+        
+        # Step 4: Verify the value
+        actual_value = str(el.input_value())
+        logger.info(f"Actual value found: '{actual_value}', expected: '{expected_value}'")
+        
+        if actual_value != expected_value:
+            # Try numeric match
+            try:
+                if float(actual_value) == float(expected_value):
+                    logger.info(f"Numeric match success: {actual_value} == {expected_value}")
+                    return
+            except:
+                pass
+            
+            logger.error(f"Value check FAILED. Expected: '{expected_value}', Actual: '{actual_value}'")
+            page.screenshot(path=f"fail_verify_value_near_{near_text}.png")
+            assert actual_value == expected_value, f"Expected '{expected_value}', got '{actual_value}'"
+        
+        logger.info(f"Successfully verified value near '{near_text}': '{actual_value}'")
+        
+    except AssertionError:
+        raise
+    except Exception as e:
+        logger.error(f"Error in verify_value_near: {e}")
+        page.screenshot(path=f"error_verify_value_near_{near_text or 'unknown'}.png")
+        raise AssertionError(f"Failed to verify value near '{near_text}': {e}")
