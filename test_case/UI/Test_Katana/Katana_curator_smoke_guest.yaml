@@ -124,10 +124,19 @@ testT4790_checked:
     test_step:
         open_demi_release:
             url: "https://release.pear.us/demi-release"
-        R_click_form_more_menu:
-            role: "button"
+        R_click_form1_menu:
+            locator: ".MuiButtonBase-root.MuiButton-root.MuiButton-outlined.MuiButton-outlinedPrimary.MuiButton-sizeMedium.MuiButton-outlinedSizeMedium.MuiButton-colorPrimary.katana-92nbzx"
             index: 0
-        R_click_view_submissions:
+        R_click_view_submissions1:
+            role: "link"
+            name: "View submissions"
+        R_click_back:
+            role: "button"
+            name: "Back"
+        R_click_form2_menu:
+            locator: "div:nth-child(2) > .MuiStack-root.katana-10r081p > .MuiStack-root.katana-1bc4u47 > .MuiBox-root > .MuiButtonBase-root"
+            index: 0
+        R_click_view_submissions2:
             role: "link"
             name: "View submissions"
         R_click_download:
