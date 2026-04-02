@@ -1,75 +1,106 @@
 testT4279:
-    description: "Verify guest can submit the Auto test Form on demi-release page"
-    test_step:
-        open_demi_release:
-            url: "https://release.pear.us/demi-release"
-        R_click_auto_test_form:
-            role: "button"
-            name: "Auto test Form test subtitle"
-        fill_short_text:
-            locator: 'input[name="afe285e3-3637-4821-846c-aa489aeafd32"]'
-            value: "short msg"
-        fill_long_text:
-            locator: 'textarea[name="4dd51c09-dad5-42ba-962a-2f6377260173"]'
-            value: "long mesg"
-        fill_email:
-            role: "textbox"
-            name: "Enter your email address"
-            value: "email@email.com"
-        fill_phone:
-            role: "textbox"
-            name: "Phone number"
-            value: "2313223211"
-        upload_media:
-            text: "Add media"
-            file_path: "data/test imag.jpeg"
-        R_click_choose_date:
-            role: "textbox"
-            name: "Choose date"
-        click_date_12:
-            role: "gridcell"
-            name: "12"
-        click_ok:
-            role: "button"
-            name: "OK"
-        check_yes:
-            role: "radio"
-            name: "Yes"
-        check_2:
-            role: "checkbox"
-            name: "2"
-        check_3:
-            role: "checkbox"
-            name: "3"
-        fill_name:
-            locator: 'input[name="d4f72645-f096-47e0-96f4-49f4ce83d16b"]'
-            value: "afeiship"
-        fill_field1:
-            locator: 'input[name="4ccd5f77-1751-410a-b359-b77de1828e60"]'
-            value: "test"
-        fill_field2:
-            locator: 'input[name="faeede48-2065-46bb-990b-1e9731957d15"]'
-            value: "laogo"
-        fill_field3:
-            locator: 'input[name="ef2cc012-9b08-4b31-9126-06f7e4ccc06b"]'
-            value: "xxx"
-        fill_field4:
-            locator: 'input[name="6a22b6f0-eeeb-41ba-8e26-e516187335f1"]'
-            value: "yyy"
-        fill_field5:
-            locator: 'input[name="8ad4be74-e07e-48cf-b167-e019d04527b4"]'
-            value: "test"
-        fill_field6:
-            locator: 'input[name="bacb6b39-f319-414b-a8d8-c7ed243719d0"]'
-            value: "sdfsdf"
-        R_click_submit:
-            role: "button"
-            name: "Submit"
-    expect_result:
-        description: "Form should be submitted successfully with Got it confirmation"
-        assertions:
-          - assertion_type: "element_visible_by_text"
-            text: "Got it"
+  description: "Verify guest can submit the Auto test Form on demi-release page"
+  test_step:
+    open_demi_release:
+      url: "https://release.pear.us/demi-release"
+    R_click_auto_test_form:
+      role: "button"
+      name: "Partner_create_form"
+
+    # short answer - 真实业务描述
+    fill_short_text:
+      locator: 'input[name="39ba2c71-31f3-45f4-88a4-6a6b7b2d8bc9"]'
+      value: "Pear Partner Cooperation Inquiry"
+
+    # long paragraph - 真实长文本
+    fill_long_text:
+      locator: 'textarea[name="97ce1a93-5c6e-4f56-a505-9d934f975b1f"]'
+      value: "I am interested in establishing a long-term partnership with Pear. My team focuses on content creation and brand promotion, and we hope to collaborate on official events and marketing campaigns."
+
+    # email - 真实商务邮箱
+    fill_email:
+      locator: 'input[name="91da1ff1-72f3-41ce-b3de-82262369bb09"]'
+      value: "cooperation.business@gmail.com"
+
+    # phone - 真实美国手机号格式
+    fill_phone:
+      locator: 'input[name="1d33dacd-ee10-4cee-98ab-01540b76f187"]'
+      value: "+13105558976"
+
+    # upload media - 修正文件名 + 真实素材路径
+    upload_media:
+      text: "Add media"
+      file_path: "data/test imag.jpeg"
+
+    # date time - 选择当月真实日期
+    R_click_choose_date:
+      role: "textbox"
+      name: "Choose date"
+    click_date_12:
+      role: "gridcell"
+      name: "12"
+    click_ok:
+      role: "button"
+      name: "OK"
+
+    # single choice: Yes
+    check_yes:
+      role: "radio"
+      name: "Yes"
+
+    # multiple choice: 1,2
+    check_1:
+      role: "checkbox"
+      name: "1"
+    check_2:
+      role: "checkbox"
+      name: "2"
+
+    # Instagram - 真实用户名
+    fill_instagram:
+      locator: 'input[name="ac1e4d22-eae1-470b-bbd6-7cb866d7b6a1"]'
+      value: "pear_partner_official"
+
+    # Facebook - 真实用户名
+    fill_facebook:
+      locator: 'input[name="2c761dc2-a9ac-407b-ae9d-a7ac6b738900"]'
+      value: "PearPartnerOfficial"
+
+    # Tiktok - 真实用户名
+    fill_tiktok:
+      locator: 'input[name="c243af4d-99a1-4dc7-be3b-5ae7ec6a21b6"]'
+      value: "pear_partner"
+
+    # X (Twitter) - 真实用户名
+    fill_x:
+      locator: 'input[name="b9c97bc4-a2a6-405c-afae-af42a5984465"]'
+      value: "PearPartnerHQ"
+
+    # Youtube - 真实用户名
+    fill_youtube:
+      locator: 'input[name="50381cf6-0cf7-4b02-aa2d-96bcf10be0f1"]'
+      value: "@PearPartnerChannel"
+
+    # Linkedin - 真实用户名
+    fill_linkedin:
+      locator: 'input[name="a910f76f-9c0c-407a-86cb-785bd3bfe4ab"]'
+      value: "pear-partner-official"
+
+    # Threads - 真实用户名
+    fill_threads:
+      locator: 'input[name="8d20b396-1a59-4e72-96ce-95206d067210"]'
+      value: "pear_partner_official"
+
+    # submit
+    R_click_submit:
+      role: "button"
+      name: "Submit"
+
+  expect_result:
+    description: "Form should be submitted successfully with Got it confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Got it"
 
 testT4790:
     guest: true
