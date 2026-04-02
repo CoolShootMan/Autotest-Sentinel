@@ -13,6 +13,7 @@ source .venv/bin/activate
 1. 确认有 playwright 命令
 2. 录制命令 `playwright codegen 目录URL`(不需要登录等场景的)
 3. 实际录制: playwright codegen https://release.pear.us/demi-release
+4. iphone 录制: `playwright codegen --device="iPhone 12" https://release.pear.us/demi-release`
 
 ## 运行单个 case
 ```sh
