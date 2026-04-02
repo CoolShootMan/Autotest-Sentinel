@@ -70,3 +70,50 @@ testT9999:
         assertions:
           - assertion_type: "element_visible_by_text"
             text: "Got it"
+
+testT4790:
+    description: "Verify guest can submit form with 10 media uploads"
+    test_step:
+        open_demi_release:
+            url: "https://release.pear.us/demi-release"
+        R_click_auto_test_10_medias:
+            role: "button"
+            name: "Auto test 10 medias With 10"
+        upload_media_1:
+            text: "Add media"
+            file_path: "data/imgs/pic_001.png"
+        upload_media_2:
+            text: "Add media"
+            file_path: "data/imgs/pic_002.png"
+        upload_media_3:
+            text: "Add media"
+            file_path: "data/imgs/pic_003.png"
+        upload_media_4:
+            text: "Add media"
+            file_path: "data/imgs/pic_004.png"
+        upload_media_5:
+            text: "Add media"
+            file_path: "data/imgs/pic_005.png"
+        upload_media_6:
+            text: "Add media"
+            file_path: "data/imgs/pic_006.png"
+        upload_media_7:
+            text: "Add media"
+            file_path: "data/imgs/pic_007.png"
+        upload_media_8:
+            text: "Add media"
+            file_path: "data/imgs/pic_008.png"
+        upload_media_9:
+            text: "Add media"
+            file_path: "data/imgs/pic_009.png"
+        upload_media_10:
+            text: "Add media"
+            file_path: "data/imgs/pic_010.png"
+        R_click_submit:
+            role: "button"
+            name: "Submit"
+    expect_result:
+        description: "Form with 10 media uploads should be submitted successfully"
+        assertions:
+          - assertion_type: "element_visible_by_text"
+            text: "Got it"
