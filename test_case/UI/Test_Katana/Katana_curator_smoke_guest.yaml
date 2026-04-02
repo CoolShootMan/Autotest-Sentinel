@@ -1,4 +1,4 @@
-testT9999:
+testT4279:
     description: "Verify guest can submit the Auto test Form on demi-release page"
     test_step:
         open_demi_release:
