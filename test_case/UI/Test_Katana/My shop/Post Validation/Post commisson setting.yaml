@@ -1,0 +1,63 @@
+
+
+# Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
+# Step description:
+# 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
+# 2. Click and open "Share this post with promoters?" under Post setting. 
+# 3. Click "Bulk set", Set the commission rate to 50% in "Bulk set a promoter commission" 
+# 4. Click "Apply to all" 
+# 5. Click "Publish" and ”Confirm“ 
+# 6. Use one account to purchase two products in Post and check the commission
+# Expected result:
+# Successfully published a post with batch setting of commission rate, and the combined commission is calculated correctly.
+# (self_listing products with "your", total commission rate is 0%)
+
+
+testT1742:
+    description: "Verify that the Post commission rate can be Batch setting to a Fix value"
+    test_step:
+        open: "https://release.pear.us/lindazhoupromoter1"
+        sleep_after_open: 5000
+        R_click_my_shop: { role: 'button', name: 'My shop' }
+        R_click_product: { role: 'button', name: 'Image of Product test 7995' }
+        R_click_product_first: { role: 'button', name: 'Image of Product test 7995', index: 0 }
+        R_click_selling: { role: 'tab', name: 'Selling' }
+        R_click_customize: { role: 'button', name: 'Customize products' }
+        R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
+        fill_commission: { placeholder: "e.g., 5", value: '10' }
+        R_click_confirm: { role: 'button', name: 'Confirm' }
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
+        R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
+        sleep_after_save_final: 1500
+        R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_after_close: 1000
+        # 校验在 Post Card 列表上展示的佣金比例是否更新为 10%
+        verify_post_offer: { text: "Offer up to 10%" }
+
+
+        open_again: "https://release.pear.us/lindazhoupromoter1"
+
+        sleep_end: 3000
+    expect_result:
+        description: "Commission rate should be updated to 10"
+        assertions:
+          # 最终校验：再次进入详情页确认佣金显示为 10
+          - assertion_type: "element_visible_by_text"
+            text: "10"
+    teardown_step:
+        R_click_product: { role: 'button', name: 'Image of Product test 7995' }
+        R_click_selling: { role: 'tab', name: 'Selling' }
+        R_click_customize_teardown: { role: 'button', name: 'Customize products' }
+        verify_value_near: { near_text: "5555", direction: "right", expected: "10" }
+        R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }             
+        fill_commission_teardown: { placeholder: "e.g., 5", value: 'RANDOM_1_10' }
+        R_click_confirm_teardown: { role: 'button', name: 'Confirm' }
+        R_click_save_teardown: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
+        R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
+        sleep_after_save_final: 1500
+        R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_after_close: 1000
+
+        

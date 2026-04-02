@@ -135,9 +135,20 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                         page.screenshot(path=f"fail_assert_{caseno}.png")
                         pytest.fail(f"Assertion failed: Element {role} '{name}' not found or visible.")
             
-            # Delegate complex layout assertions back to actions if needed, 
-            # but usually assertions stay in the test runner or are simple checks.
-            # (Layout assertions from legacy were moved to actions/layout.py but those were inside the Step loop steps??)
-            # Wait, in the original file, layout checks were STEPS (verify_top_aligned_layout), AND assertions.
-            # verify_top_aligned_layout in YAML IS A STEP.
-            # The 'assertions' block in YAML usually contains simple checks.
+            
+    # --- Teardown Phase ---
+    teardown_step = dict(list(smokecases1.values())[0]).get("teardown_step", {})
+    if teardown_step:
+        logger.info(">>> Starting Teardown Phase to clean up test data")
+        for tk, tv in teardown_step.items():
+            logger.info(f">>> Teardown Step: {tk}")
+            t_action = get_action(tk)
+            if t_action:
+                try: t_action(page, tv)
+                except Exception as e: logger.error(f"Teardown Action '{tk}' failed: {e}")
+            else:
+                if tk.startswith("click"):
+                    try:
+                        t_target_text = tv.get('text') or tv.get('name')
+                        if t_target_text: page.click(f"text={t_target_text}", timeout=5000)
+                    except: pass

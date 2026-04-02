@@ -76,7 +76,10 @@ def browser_type_launch_args(browser_type_launch_args):
             
             # 3. 指定作为摄像头输入的视频文件（必须是 .y4m 格式）
             # 请务必将下面的路径改为你本地二维码视频的真实路径
-            r"--use-file-for-fake-video-capture=D:\new test\Autotest-monster\data\Ticket_C.y4m"
+            r"--use-file-for-fake-video-capture=D:\new test\Autotest-monster\data\Ticket_C.y4m",
+            "--start-maximized",
+            "--disable-translate",
+            "--disable-features=Translate"
         ],
     }
 
@@ -84,7 +87,6 @@ def browser_type_launch_args(browser_type_launch_args):
 def pytest_addoption(parser):
     parser.addoption("--env", action="store", default="release", help="Test environment: release, staging, or local")
     parser.addoption("--storage-state", action="store", default=None, help="Path to the storage state file")
-    parser.addoption("--yaml", action="store", default=None, help="Specific YAML file to load test cases from")
     # Standard Playwright options (if not added by plugin or for custom usage)
     # Re-adding them here to prevent 'unrecognized argument' errors if plugin doesn't add them at this stage or logical conflict.
     # It is safer to add them if the code in this file explicitly calls getoption for them.
@@ -125,7 +127,12 @@ def context(
 ) -> Generator[BrowserContext, None, None]:
     pages: List[Page] = []
     storage_state = pytestconfig.getoption("--storage-state")
-    
+    if not storage_state:
+        # Optimize: automatically load the default cookie state if it exists
+        default_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release.json")
+        if os.path.exists(default_cookie_path):
+            storage_state = default_cookie_path
+            
     is_guest = False
     try:
         if "smokecases1" in request.fixturenames:
@@ -219,20 +226,15 @@ def smokecases1_data(pytestconfig):
 
 def pytest_generate_tests(metafunc):
     if "smokecases1" in metafunc.fixturenames:
-        yaml_file = metafunc.config.getoption("--yaml")
+        # Load data once per session via a helper or direct read
+        # Note: We can't use fixtures easily inside hook-like generators without request
+        # So we read the config during generation
         env = metafunc.config.getoption("--env")
+        filename = f"Katana_curator_smoke_{env}.yaml"
         
-        if yaml_file:
-            # If yaml_file is just a name, look in the Test_Katana directory
-            if not os.path.isabs(yaml_file):
-                path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file)
-            else:
-                path = yaml_file
-        else:
-            filename = f"Katana_curator_smoke_{env}.yaml"
-            path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
-            
+        path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
         if os.path.exists(path):
+            logger.info(f"Loading test cases from: {path}")
             with open(path, "r", encoding="utf-8") as f:
                 raw_data = yaml.safe_load(f)
                 cases = []
@@ -243,6 +245,7 @@ def pytest_generate_tests(metafunc):
                 ids = [k for k in raw_data.keys()]
                 metafunc.parametrize("smokecases1", cases, ids=ids)
         else:
+            logger.error(f"Test case file not found: {path}")
             metafunc.parametrize("smokecases1", [])
 
 @pytest.fixture()
