@@ -72,6 +72,7 @@ testT9999:
             text: "Got it"
 
 testT4790:
+    guest: true
     description: "Verify guest can submit form with 10 media uploads"
     test_step:
         open_demi_release:
