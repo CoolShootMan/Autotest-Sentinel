@@ -2,7 +2,17 @@
   "cookies": [
     {
       "name": "release_katana_visitor_id",
-      "value": "e66f1a08-c6fd-430e-9174-50983fffe498",
+      "value": "9735b490-5e62-4a50-9ffc-013f4b66b88c",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_web_auth_token_guest",
+      "value": "K4ZwpgTgkgJgXATgOwGYCsAjALAgDAWjTADYAmfLAQzQIQDM6BjfXARhTqw2OIwA4+jADRgAdgDc4EMABswlcENCQASgHs5cAMIB5AHIBlAKoBZAKIql4CABUAngAcwcAOJGzBm0ICWlAC5wrEhIaKysWFh8xCIAHg6BfLg8SKS4UUA._ueit7XQ8FLwmfZpwS35xbTu5zHwGsPPDKT8P_nASDk",
       "domain": ".release.pear.us",
       "path": "/",
       "expires": -1,
@@ -12,7 +22,7 @@
     },
     {
       "name": "YSC",
-      "value": "b2efkrLDEvM",
+      "value": "vJCaQtnRkSQ",
       "domain": ".youtube.com",
       "path": "/",
       "expires": -1,
@@ -24,10 +34,10 @@
     },
     {
       "name": "VISITOR_INFO1_LIVE",
-      "value": "nGz8yzSXvXs",
+      "value": "LCrdvHXW_Go",
       "domain": ".youtube.com",
       "path": "/",
-      "expires": 1790666347.432481,
+      "expires": 1790666543.479538,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None",
@@ -36,22 +46,10 @@
     },
     {
       "name": "VISITOR_PRIVACY_METADATA",
-      "value": "CgJKUBIEGgAgMw%3D%3D",
+      "value": "CgJKUBIEGgAgRw%3D%3D",
       "domain": ".youtube.com",
       "path": "/",
-      "expires": 1790666347.432503,
-      "httpOnly": true,
-      "secure": true,
-      "sameSite": "None",
-      "partitionKey": "https://pear.us",
-      "_crHasCrossSiteAncestor": true
-    },
-    {
-      "name": "__Secure-YNID",
-      "value": "17.YT=r1ON6odPzrJQx1o6AMI4v6_cElxLgpxrwaa5j0tdz4zvsvvfBGhO0NtmlvmYTdGy_xHLjd-T0smMSu3NK1UGP1835_v9Qew5f0JKVE5Iiu86WF1CQXaA4xbLjxfr07jfLXIwEL_so_wlJePtdtu-nCtyJtuaDEvU5M_nN-KDo9F83l26QdKTXNsePWPd2lDzb6WNBSbzK8UOiPpcqBxD5eh6d8fot9PgZETXAdVOrCIjNGYpVEcCNeUSzZ2jP0rrke2iXXL_IiwtbDg-j-GH01_nacDMY9eUhxfZihwWrtQinaOjCQoNPu9q3Ztt4eeKmzZ-c7eB5rQMPRSruRq7fA",
-      "domain": ".youtube.com",
-      "path": "/",
-      "expires": 1790666346.432409,
+      "expires": 1790666543.479575,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None",
@@ -60,10 +58,10 @@
     },
     {
       "name": "__Secure-ROLLOUT_TOKEN",
-      "value": "CLTs48mZ0snTSRDN6cqg0M6TAxi56POg0M6TAw%3D%3D",
+      "value": "CL-92rPTuYn-DRD5gqDj0M6TAxjo6Ojj0M6TAw%3D%3D",
       "domain": ".youtube.com",
       "path": "/",
-      "expires": 1790666347.43252,
+      "expires": 1790666487.746954,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None",
@@ -71,11 +69,31 @@
       "_crHasCrossSiteAncestor": true
     },
     {
-      "name": "release_katana_web_auth_token_guest",
-      "value": "K4ZwpgTgkgJgXGAbIgZgRgIYAYAcBaAY1RjwBYBmLMPATjQHZS8BWLGnclLsU9gGjAA7AG5wIYADZgM4PqEgAlAPZS4AYQDyAOQDKAVQCyAUQVzwEACoBPAA5g4AcT1GdFvgEsMAFzgN6zNDQKUnoBAA8bXxwsZHo0GhCgA.hodkCE_UQHsngH0FCC5tV63lTSZ_2rczPWCzHk6QHAk",
-      "domain": ".release.pear.us",
+      "name": "release_katana_web_auth_token_refresh",
+      "value": "K4ZwpgTgkgJgXAThgBmQDgMwGMBsBaGGDAFj2JwHYE80K1k8KMAjNLAVi3OOIEYAaMADsAbnAhgANmACG4fgEsZAFzi8KTJpTTFBADwAOa+uwBMCYhh1A.jgwo1qsEh6EEM-sY3LejaGArVWcRAhykQvMzwz7bjJk",
+      "domain": "release.pear.us",
       "path": "/",
       "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_web_auth_token",
+      "value": "K4ZwpgTgkgJgXAThgBmQDgMwGMBsBaGGDAFj2JwHYE80K1k8KMAjNLAVi3OOIEYAaMADsAbnAhgANmACG4fqEgAlAPbS4AIQCqAZSgA5AKI6dAfQAKAQSUAVI0oXgINgJ4AHMHADy%2BjV%2BsAIgYA4vxuABYqQmD6wAC2zJBwANS8xOgY7AhovOwUgnEyAJaScAAewDJCAHRgZQAuyQBMTQACvHHVMm5u-EUy9XC8FBTsvGnsmYJlbkMjY2k47OxAA.teI-G49wYj4Qi1473z3XMhY4f05QQ0es-Y_zDiMdCeg",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1775114655.189293,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_vanity_url",
+      "value": "/demi-release",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1806650540,
       "httpOnly": false,
       "secure": false,
       "sameSite": "Lax"
@@ -116,15 +134,15 @@
       "localStorage": [
         {
           "name": "ytidb::LAST_RESULT_ENTRY_KEY",
-          "value": "{\"data\":{\"hasSucceededOnce\":true},\"expiration\":1777706351380,\"creation\":1775114351380}"
+          "value": "{\"data\":{\"hasSucceededOnce\":true},\"expiration\":1777706550957,\"creation\":1775114550957}"
         },
         {
           "name": "yt-player-user-settings",
-          "value": "{\"data\":\"{\\\"484\\\":{\\\"stringValue\\\":\\\"\\\"}}\",\"expiration\":1777706348588,\"creation\":1775114348588}"
+          "value": "{\"data\":\"{\\\"484\\\":{\\\"stringValue\\\":\\\"\\\"}}\",\"expiration\":1777706548484,\"creation\":1775114548484}"
         },
         {
           "name": "yt-icons-last-purged",
-          "value": "1770967148189"
+          "value": "1775114488181"
         }
       ]
     }

@@ -118,3 +118,24 @@ testT4790:
         assertions:
           - assertion_type: "element_visible_by_text"
             text: "Got it"
+
+testT4790_checked:
+    description: "As curator, verify and download submission for Auto test 10 medias form"
+    test_step:
+        open_demi_release:
+            url: "https://release.pear.us/demi-release"
+        R_click_form_more_menu:
+            role: "button"
+            index: 0
+        R_click_view_submissions:
+            role: "link"
+            name: "View submissions"
+        R_click_download:
+            role: "link"
+            locator: 'td >> a'
+            download: true
+    expect_result:
+        description: "Curator should be able to view submissions and download the file"
+        assertions:
+          - assertion_type: "element_visible_by_text"
+            text: "Download"
