@@ -8,6 +8,7 @@ Author           : AllenLuo
 Version          : 2.0
 '''
 import os
+os.environ["AI_DISABLED"] = "True"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 # Ensure BASE_DIR is absolute and correct if it was failing
 if not os.path.exists(os.path.join(BASE_DIR, "test_case")):
@@ -83,6 +84,7 @@ def browser_type_launch_args(browser_type_launch_args):
 def pytest_addoption(parser):
     parser.addoption("--env", action="store", default="release", help="Test environment: release, staging, or local")
     parser.addoption("--storage-state", action="store", default=None, help="Path to the storage state file")
+    parser.addoption("--yaml", action="store", default=None, help="Specific YAML file to load test cases from")
     # Standard Playwright options (if not added by plugin or for custom usage)
     # Re-adding them here to prevent 'unrecognized argument' errors if plugin doesn't add them at this stage or logical conflict.
     # It is safer to add them if the code in this file explicitly calls getoption for them.
@@ -95,6 +97,10 @@ def browser_context_args(browser_context_args, playwright):
     return {
         **browser_context_args,
         **iphone_12,
+        "viewport": {"width": 430, "height": 932},
+        "device_scale_factor": 3,
+        "is_mobile": True,
+        "has_touch": True,
         "permissions": ["camera", "microphone"],
     }
 
@@ -128,21 +134,13 @@ def context(
     except Exception:
         pass
 
-    # 只在指定了 storage-state 且非访客模式 时才传入,否则创建访客上下文
+    # Only use storage-state if authenticated and NOT a guest
     if storage_state and not is_guest:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
-        guest_args = browser_context_args.copy()
-        if is_guest:
-            # Revert to Desktop mode for Guest tests to maintain backward compatibility
-            guest_args.pop("userAgent", None)
-            guest_args.pop("deviceScaleFactor", None)
-            guest_args.pop("isMobile", None)
-            guest_args.pop("hasTouch", None)
-            guest_args.pop("defaultBrowserType", None)
-            guest_args["viewport"] = {'width': 1920, 'height': 1080}
-            
-        context = browser.new_context(**guest_args)
+        # Use full mobile emulation args even for guests as requested
+        context = browser.new_context(**browser_context_args)
+
     context.on("page", lambda page: pages.append(page))
     tracing_option = pytestconfig.getoption("--tracing")
     capture_trace = tracing_option in ["on", "retain-on-failure"]
@@ -221,17 +219,27 @@ def smokecases1_data(pytestconfig):
 
 def pytest_generate_tests(metafunc):
     if "smokecases1" in metafunc.fixturenames:
-        # Load data once per session via a helper or direct read
-        # Note: We can't use fixtures easily inside hook-like generators without request
-        # So we read the config during generation
+        yaml_file = metafunc.config.getoption("--yaml")
         env = metafunc.config.getoption("--env")
-        filename = f"Katana_curator_smoke_{env}.yaml"
         
-        path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
+        if yaml_file:
+            # If yaml_file is just a name, look in the Test_Katana directory
+            if not os.path.isabs(yaml_file):
+                path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file)
+            else:
+                path = yaml_file
+        else:
+            filename = f"Katana_curator_smoke_{env}.yaml"
+            path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
+            
         if os.path.exists(path):
             with open(path, "r", encoding="utf-8") as f:
                 raw_data = yaml.safe_load(f)
-                cases = [{k: v} for k, v in raw_data.items()]
+                cases = []
+                for k, v in raw_data.items():
+                    # Inject file path metadata for self-patching
+                    v["__yaml_path__"] = path
+                    cases.append({k: v})
                 ids = [k for k in raw_data.keys()]
                 metafunc.parametrize("smokecases1", cases, ids=ids)
         else:

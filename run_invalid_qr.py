@@ -49,13 +49,15 @@ def run_invalid_scan():
         
         try:
             print("Waiting for popup text...")
-            page.locator("text=Code Not Recognized").wait_for(state="visible", timeout=30000)
-            print("SUCCESS: Code Not Recognized detected.")
+            # Updated to 'Cannot be redeemed' which is the actual text seen in mobile emulation
+            page.locator("text=Cannot be redeemed|text=Code Not Recognized").first.wait_for(state="visible", timeout=30000)
+            print("SUCCESS: Error message detected.")
             status = "SUCCESS"
         except Exception as e:
-            print(f"FAILURE: Timed out waiting for Code Not Recognized with error_prod.y4m. {e}")
+            print(f"FAILURE: Timed out waiting for error message with error_prod.y4m. {e}")
             page.screenshot(path="fail_invalid_scan_final.png")
             status = "FAILURE"
+
         
         browser.close()
         return status

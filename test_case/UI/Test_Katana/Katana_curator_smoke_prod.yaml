@@ -1,0 +1,54 @@
+testEvent_create_prod:
+    guest: false
+    description: "Create an event on pear.us"
+    test_step:
+        open: "https://pear.us/events/create"
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'test auto event', disable_ai: true }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'test venue', disable_ai: true }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: '133', disable_ai: true }
+        sleep_before_address_select: 3000
+        R_click_address_option: { role: 'button', name: '1333 Meridian Avenue, San', disable_ai: true }
+        sleep_before_banner: 1000
+        click_start_date_calendar: { x: 257, y: 462, disable_ai: true }
+        sleep_after_start_date_calendar: 1000
+        click_start_date: { role: 'gridcell', name: '15', disable_ai: true }
+        sleep_after_start_date: 1000
+        click_backdrop_start_date: { x: 10, y: 10, disable_ai: true }
+        sleep_after_backdrop_1: 1000
+        click_start_time_calendar: { x: 391, y: 462, disable_ai: true }
+        sleep_after_start_time_calendar: 1000
+        click_start_time: { role: 'menuitem', name: '02:00 pm', disable_ai: true }
+        sleep_after_start_time: 1000
+        click_backdrop_start_time: { x: 10, y: 10, disable_ai: true }
+        sleep_after_backdrop_2: 1000
+        click_end_date_calendar: { x: 257, y: 522, disable_ai: true }
+        sleep_after_end_date_calendar: 1000
+        click_end_date: { role: 'gridcell', name: '15', disable_ai: true }
+        sleep_after_end_date: 1000
+        click_backdrop_end_date: { x: 10, y: 10, disable_ai: true }
+        sleep_after_backdrop_3: 1000
+        click_end_time_calendar: { x: 391, y: 522, disable_ai: true }
+        sleep_after_end_time_calendar: 1000
+        click_end_time: { role: 'menuitem', name: '07:15 pm', disable_ai: true }
+        sleep_after_end_time: 1000
+        click_backdrop_end_time: { x: 10, y: 10, disable_ai: true }
+        sleep_after_backdrop_4: 1000
+        R_click_save_and_continue: { role: 'button', name: 'Save and continue', disable_ai: true }
+        sleep_after_save: 2000
+        R_click_back: { role: 'button', name: 'Back', disable_ai: true }
+        sleep_after_back: 2000
+        click_close_circle: { x: 257, y: 522, disable_ai: true }
+        sleep_after_close_circle: 1000
+        click_calendar_again: { x: 257, y: 522, disable_ai: true }
+        sleep_after_calendar_again: 1000
+        click_date_again: { role: 'gridcell', name: '15', disable_ai: true }
+        sleep_after_date_again: 1000
+        click_final_backdrop: { x: 10, y: 10, disable_ai: true }
+        sleep_final_backdrop: 1000
+        R_click_save: { role: 'button', name: 'Save and continue', disable_ai: true }
+        sleep_final: 5000
+    expect_result:
+        description: "Event should be created and saved successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Upload Event Cover"

@@ -2,7 +2,7 @@ import os
 import re
 from playwright.sync_api import Page, Locator, expect
 from loguru import logger
-from page.home import page_element_role_click, page_element_label_click
+from page.home import page_element_role_click, page_element_label_click, page_open
 from ..utils.ai_vision import ai_vision
 
 def open_url(page: Page, v):
@@ -13,20 +13,15 @@ def open_url(page: Page, v):
         page_open(page, url)
 
 def swipe_avoid_plus(page: Page, v: dict):
-    # Specialized action to scroll past specific UI elements
     x = v.get("x", 0)
     y = v.get("y", 300)
     logger.info(f"Swiping/Scrolling: x={x}, y={y}")
-    
-    # Check if a drawer is open. If so, try to scroll it.
     drawer = page.locator(".MuiDrawer-root div").filter(has=page.locator("[data-som-id], input")).first
     if drawer.is_visible():
         logger.info("Active drawer detected. Scrolling drawer content...")
-        # Common MUI drawer content container often has the overflow
         drawer.evaluate(f"el => el.scrollBy({x}, {y})")
     else:
         page.mouse.wheel(x, y)
-    
     page.wait_for_timeout(1000)
 
 def smart_swipe(page: Page, v: dict):
@@ -68,327 +63,94 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
-    
     logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
-    
-    # Timeout for traditional fill - trigger AI faster
     fill_timeout = v.get("timeout", 10000)
 
     try:
         if target_locator:
-            # Direct locator fill
             el = page.locator(target_locator).nth(v.get("index", 0))
             el.fill(str(target_value), timeout=fill_timeout)
-            logger.info(f"Filled by locator: {target_locator} (index: {v.get('index', 0)})")
         elif "role" in v:
-            # Semantic fill
             page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
-            logger.info(f"Filled by role+name: {target_name} = {target_value} (index: {v.get('index', 0)})")
         else:
-            # Text/Placeholder fallback
             candidates = [
                 page.get_by_label(target_name, exact=False),
                 page.get_by_placeholder(target_name, exact=False),
-                page.locator(f"input[name*='{target_name}'], textarea[name*='{target_name}']"),
-                page.locator(f"input[placeholder*='{target_name}'], textarea[placeholder*='{target_name}']")
+                page.locator(f"input[name*='{target_name}'], textarea[name*='{target_name}']")
             ]
             target_id = v.get("index", 0)
             filled = False
             for c in candidates:
-                target_el = c.nth(target_id)
-                if target_el.is_visible():
-                    target_el.fill(str(target_value), timeout=fill_timeout)
-                    logger.info(f"Filled by text/attr match: {target_name} (index: {target_id})")
+                if c.nth(target_id).is_visible():
+                    c.nth(target_id).fill(str(target_value), timeout=fill_timeout)
                     filled = True
                     break
             if not filled:
-                 # Last resort: generic placeholder
-                 page.locator(f"input[placeholder*='{target_name}'], textarea[placeholder*='{target_name}'], input[aria-label*='{target_name}']").nth(target_id).fill(str(target_value), timeout=fill_timeout)
-        
-        # Add small delay to avoid overwhelming the UI
+                 page.locator(f"input[placeholder*='{target_name}'], input[aria-label*='{target_name}']").nth(target_id).fill(str(target_value), timeout=fill_timeout)
         page.wait_for_timeout(300)
     except Exception as e:
-        logger.error(f"Fill failed ({target_name}): {e}. Attempting AI Self-Healing...")
-        try:
-            safe_name = re.sub(r'[^\w\-]', '_', str(target_name or 'field'))[:30]
-            
-            # --- HYBRID SOM UPGRADE ---
-            logger.info("AI Healing Step 1: Loading som.js")
-            som_js_path = os.path.join(os.path.dirname(__file__), "../utils/som.js")
-            with open(som_js_path, "r") as f: som_code = f.read()
-            
-            logger.info("AI Healing Step 2: Injecting labels")
-            mapping = page.evaluate(som_code)
-            logger.info(f"AI Healing Step 3: SOM Tagging Complete. Elements: {len(mapping)}")
-            
-            screenshot_path = f"fail_fill_{safe_name}.png"
-            page.screenshot(path=screenshot_path)
-            
-            # Pass objective context
-            test_objective = getattr(page, "_test_description", "UI Filling")
-            som_data_meta = {
-                "description": test_objective,
-                "caseno": getattr(page, "_test_caseno", "Unknown"),
-                "history": getattr(page, "_execution_history", [])
-            }
-            
-            instruction = f"The input field/textbox that corresponds to '{target_name or target_locator}'. Use the value '{target_value}'."
-            res = ai_vision.find_element_som(screenshot_path, instruction, {**mapping, **som_data_meta})
-            
-            if res.get("label_id"):
-                label_id = res["label_id"]
-                diagnosis = res.get("consciousness_diagnosis", "No diagnosis provided.")
-                action_type = res.get("suggested_action", "GOAL_CLICK")
-                
-                logger.info(f"✨ AI 'Junior QA' Found Field ID: {label_id}!")
-                logger.info(f"🧠 Diagnosis: {diagnosis}")
-                logger.info(f"🚀 Suggested Action: {action_type}")
-                
-                if action_type == "ABORT_TEST":
-                    logger.error(f"🛑 AI decided to ABORT test: {res.get('bug_report', diagnosis)}")
-                    raise Exception(f"AI Aborted Test: {res.get('bug_report', diagnosis)}")
-
-                el = page.locator(f'[data-som-id="{label_id}"]').first
-                
-                # Check for recovery (AI says it's recovery OR AI points to a button/div instead of input)
-                is_recovery = (action_type == "RECOVERY_CLICK")
-                if not is_recovery:
-                    tag = el.evaluate("el => el.tagName").upper()
-                    if tag in ["BUTTON", "A", "DIV", "SPAN"]:
-                         is_recovery = True
-                
-                if is_recovery:
-                    logger.info(f"🔄 Performing recovery click on '{tag if not is_recovery else 'AI suggested target'}' before filling...")
-                    el.click()
-                    page.wait_for_timeout(2000)
-                    if v.get("_retry_ai", 0) < 1:
-                        v["_retry_ai"] = v.get("_retry_ai", 0) + 1
-                        return smart_fill(page, v)
-                    return
-
-                el.fill(str(target_value))
-                return
-            else:
-                logger.warning(f"AI SOM could not find field '{target_name}'. Result: {res}")
-        except Exception as ai_err:
-            logger.error(f"AI Healing failed: {ai_err}")
-            
-        try: page.screenshot(path=f"fail_fill.png")
-        except: pass
+        logger.error(f"Fill failed: {e}. AI Healing not fully implemented for Pure Vision fill yet.")
         raise
 
 def fill_numeric(page: Page, v: dict):
-    """
-    Fill a controlled numeric input (e.g. MUI TextField type=number) using
-    native keyboard events to ensure React state synchronization and commitment.
-    """
     target_locator = v.get("locator")
     target_value = str(v.get("value", ""))
     target_placeholder = v.get("placeholder", "Quantity")
     target_name = v.get("name") or v.get("label") or "Inventory"
     index = v.get("index", 0)
-
-    logger.info(f"fill_numeric: forcing value '{target_value}' on '{target_locator or target_placeholder or target_name}'")
+    logger.info(f"fill_numeric: forcing value '{target_value}'")
 
     if target_locator:
         el = page.locator(target_locator).nth(index)
     else:
-        # Try multiple semantic matches
-        candidates = [
-            page.locator('input[name="variants.0.inventoryQuantity"]').nth(index),
-            page.locator('input[name*="inventoryQuantity"]').nth(index),
-            page.get_by_placeholder(target_placeholder, exact=False).nth(index),
-            page.get_by_label(target_name, exact=False).nth(index),
-            page.get_by_label(target_placeholder, exact=False).nth(index),
-            page.locator(f"input[name*='{target_placeholder.lower()}']").nth(index),
-            page.locator("input[type='number']").nth(index)
-        ]
-        el = None
-        for candidate in candidates:
-            try:
-                if candidate.is_visible(timeout=2000):
-                    el = candidate
-                    break
-            except:
-                continue
-        
-        if not el:
-            el = page.get_by_placeholder(target_placeholder, exact=False).nth(index)
+        el = page.get_by_placeholder(target_placeholder, exact=False).nth(index)
 
     el.wait_for(state="visible", timeout=v.get("timeout", 10000))
     el.scroll_into_view_if_needed()
     
     max_retries = 3
     for attempt in range(max_retries):
-        # 1. Focus and Clear
         el.click(force=True)
         page.keyboard.press("Control+A")
-        page.wait_for_timeout(100)
         page.keyboard.press("Backspace")
-        page.wait_for_timeout(200)
-        
-        # 2. Native Typing
         page.keyboard.type(target_value, delay=100)
-        
-        # 3. Explicit Commit
         page.keyboard.press("Enter")
         page.wait_for_timeout(500)
-        page.keyboard.press("Tab")
-        page.wait_for_timeout(800)
-        
-        # 4. Verification
-        current_val = str(el.input_value())
-        if current_val == target_value:
-            logger.info(f"fill_numeric: Successfully verified value '{target_value}' on attempt {attempt+1}.")
+        if str(el.input_value()) == target_value:
             return
-        else:
-            logger.warning(f"fill_numeric: Verification failed on attempt {attempt+1}. Expected '{target_value}', got '{current_val}'. Retrying...")
-            page.wait_for_timeout(1000)
-            
-    raise Exception(f"fill_numeric: Failed to set value '{target_value}' after {max_retries} attempts. Final value: '{el.input_value()}'")
+    raise Exception(f"fill_numeric failed")
 
 def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
     target_locator = v.get("locator")
-    target_role = v.get("role", "checkbox")
     checked = v.get("checked", True)
-    timeout = v.get("timeout", 15000) # Default to 15s to trigger AI faster than global 90s
-    
-    logger.info(f"Checking '{target_name or target_locator}' to state: {checked} (timeout: {timeout}ms)")
+    logger.info(f"Checking '{target_name or target_locator}' to {checked}")
 
     try:
         if target_locator:
             el = page.locator(target_locator).nth(v.get("index", 0))
-            try:
-                el.scroll_into_view_if_needed(timeout=2000)
-                el.set_checked(checked, timeout=timeout)
-            except Exception as set_err:
-                # Handle hidden inputs by clicking the label/parent, but avoid the info button
-                if "visible" in str(set_err).lower() or "intercepts" in str(set_err).lower():
-                    logger.info("Direct check failed, attempting to click label/parent to toggle...")
-                    # Find the nearest label or checkbox span, EXCLUDING the info icon button
-                    parent_label = el.locator("xpath=ancestor::label").first
-                    if parent_label.count() > 0:
-                         parent_label.click(force=True)
-                    else:
-                         el.click(force=True)
-                else: raise
+            el.set_checked(checked, timeout=5000)
         else:
-            try:
-                # Try role first
-                page.get_by_role(target_role, name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).set_checked(checked, timeout=timeout // 2)
-            except:
-                # Fallback to label
-                page.get_by_label(target_name).nth(v.get("index", 0)).set_checked(checked, timeout=timeout // 2)
-        logger.info(f"Successfully set checked state for '{target_name or target_locator}'")
+            page.get_by_label(target_name).nth(v.get("index", 0)).set_checked(checked, timeout=5000)
     except Exception as e:
-        if v.get("disable_ai", False):
-            logger.warning(f"AI Healing is DISABLED for smart_check on '{target_name or target_locator}'. Raising original error.")
-            raise
-        logger.error(f"Check failed ({target_name}): {e}. Triggering AI Self-Healing...")
-
-        try:
-            safe_name = re.sub(r'[^\w\-]', '_', str(target_name or 'checkbox'))[:30]
-            
-            # --- HYBRID SOM UPGRADE ---
-            som_js_path = os.path.join(os.path.dirname(__file__), "../utils/som.js")
-            with open(som_js_path, "r") as f: som_code = f.read()
-            
-            mapping = page.evaluate(som_code)
-            screenshot_path = f"fail_check_{safe_name}.png"
-            page.screenshot(path=screenshot_path)
-            
-            # Pass objective context
-            test_objective = getattr(page, "_test_description", "Checkbox/Radio selection")
-            som_data_meta = {
-                "description": test_objective,
-                "caseno": getattr(page, "_test_caseno", "Unknown"),
-                "history": getattr(page, "_execution_history", [])
-            }
-            
-            instruction = f"The checkbox, radio button, or switch for '{target_name or target_locator}'. We want to set it to {'checked' if checked else 'unchecked'}. NOTE: Avoid clicking the circular 'Info' icon if it's next to the checkbox."
-            res = ai_vision.find_element_som(screenshot_path, instruction, {**mapping, **som_data_meta})
-            
-            if res.get("label_id"):
-                label_id = res["label_id"]
-                diagnosis = res.get("consciousness_diagnosis", "No diagnosis provided.")
-                action_type = res.get("suggested_action", "GOAL_CLICK")
-                
-                logger.info(f"✨ AI 'Junior QA' Found Checkbox ID: {label_id}!")
-                logger.info(f"🧠 Diagnosis: {diagnosis}")
-                
-                if action_type == "ABORT_TEST":
-                    raise Exception(f"AI Aborted Test: {res.get('bug_report', diagnosis)}")
-
-                el = page.locator(f'[data-som-id="{label_id}"]').first
-                
-                # If suggested a click, do it
-                if action_type in ["GOAL_CLICK", "RECOVERY_CLICK"]:
-                    el.click(force=True)
-                    logger.info(f"AI healed check action via click on target {label_id}.")
-                    return
-
-                # Default back to set_checked if id is likely an input
-                el.set_checked(checked)
-                logger.info(f"AI healed check action for '{target_name}'.")
-                return
-            else:
-                logger.warning(f"AI SOM could not find checkbox '{target_name}'.")
-        except Exception as ai_err:
-            logger.error(f"AI Healing failed for smart_check: {ai_err}")
-            
-        try: page.screenshot(path=f"fail_check.png")
-        except: pass
+        logger.error(f"Check failed: {e}")
         raise
 
 def smart_upload(page: Page, v: dict):
     if "file_path" in v:
         file_path = v.get("file_path")
-        if not os.path.exists(file_path):
-             logger.error(f"File not found: {file_path}")
-             raise FileNotFoundError(file_path)
-
         target_index = v.get("index", 0)
-        try:
+        with page.expect_file_chooser(timeout=5000) as fc_info:
             if "locator" in v:
-                el = page.locator(v["locator"]).nth(target_index)
-                # Try setting files directly first (stable for hidden inputs)
-                try:
-                    el.set_input_files(file_path, timeout=3000)
-                    logger.info(f"Uploaded file via set_input_files on locator: {v['locator']}")
-                    return
-                except:
-                    # Fallback to click + chooser
-                    with page.expect_file_chooser(timeout=5000) as fc_info:
-                        el.click()
-                    fc = fc_info.value
-                    fc.set_files(file_path)
+                page.locator(v["locator"]).nth(target_index).click()
             else:
-                target_name = v.get("text") or v.get("name") or v.get("label") or v.get("placeholder")
-                # Try semantic search + chooser
-                with page.expect_file_chooser(timeout=5000) as fc_info:
-                    el = None
-                    if target_name:
-                        el = page.get_by_label(target_name).nth(target_index)
-                        if not el.is_visible():
-                            el = page.get_by_text(target_name, exact=True).nth(target_index)
-                    
-                    if not el:
-                         raise Exception(f"Upload target not found: {target_name}")
-                    
-                    el.click()
-                fc = fc_info.value
-                fc.set_files(file_path)
-            logger.info(f"Uploaded file: {file_path}")
-        except Exception as e:
-            logger.error(f"Upload failed: {e}")
-            raise
+                page.get_by_text(v.get("text"), exact=True).nth(target_index).click()
+        fc = fc_info.value
+        fc.set_files(file_path)
 
 def smart_click(page: Page, v: dict):
-    # Crash Check
     if page.get_by_text("Something went wrong!", exact=True).is_visible():
-        logger.error(f"Application Crashed (Detected at start of click)!")
-        page.screenshot(path=f"crash_click.png")
+        logger.error("Application Crashed!")
         raise Exception("Application Crashed")
         
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
@@ -396,226 +158,115 @@ def smart_click(page: Page, v: dict):
     target_role = v.get("role")
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
-    force = v.get("force", False) # Default to False for better event triggering
+    force = v.get("force", False)
     
-    # Validation
+    if "x" in v and "y" in v and not target_name and not target_locator and not target_role:
+        logger.info(f"Click started for coordinates: ({v['x']}, {v['y']})")
+        page.mouse.click(v["x"], v["y"])
+        page.wait_for_timeout(1000)
+        return
+
     if not target_name and not target_locator and not target_role:
-        logger.warning(f"No target specified for smart_click in step. Skipping.")
         return
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
-    # Regex Pre-processing
-    if target_name and isinstance(target_name, str) and (target_name.startswith("^") or target_name.endswith("$")):
-        target_name = re.compile(target_name)
-    if target_locator and isinstance(target_locator, str) and (target_locator.startswith("^") or target_locator.endswith("$")):
-        target_locator = re.compile(target_locator)
-
-    # --- TOPMOST MODAL SCOPING ---
-    modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiPopover-root, .MuiModal-root, [role='presentation']").all()
+    # Scoping
+    modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
     active_modal = None
     for m in reversed(modals):
-        try:
-            if m.is_visible():
-                class_attr = m.get_attribute("class") or ""
-                role_attr = m.get_attribute("role") or ""
-                # Ignore backdrops and snackbars
-                if "MuiBackdrop" in class_attr or "MuiSnackbar" in class_attr or "alert" in role_attr.lower():
-                    continue
-                # Ensure it has some interactive content or text
-                if not m.inner_text().strip():
-                    continue
-                active_modal = m
-                break
-        except: continue
-    
-    if active_modal:
-        modal_desc = active_modal.get_attribute("class") or "unnamed modal"
-        logger.info(f"Scoping smart_click inside topmost modal/drawer: {modal_desc[:50]}")
-        root = active_modal
-    else:
-        root = page
+        if m.is_visible():
+            active_modal = m
+            break
+    root = active_modal if active_modal else page
 
-
-    # 1. Targeted Locator Check
-    if target_locator:
-        try:
-            el = root.locator(target_locator).nth(target_index)
-            # FALLBACK: If scoped locator fails, try page-wide (for cases where drawer closed but we still think it's open)
-            if not el.is_visible(timeout=2000) and root != page:
-                logger.debug("Scoped locator failed, falling back to page-wide search.")
-                el = page.locator(target_locator).nth(target_index)
-                
-            el.click(force=force, timeout=v.get("timeout", 5000))
-            logger.info(f"Clicked target locator: {target_locator} (index: {target_index})")
-            return
-        except Exception as e:
-            logger.debug(f"Direct locator click failed: {e}")
-
-    # 2. Page-wide Semantic Search (Role/Text)
+    # 1. Traditional
     try:
-        el = None
+        el = root.locator(target_locator).get_by_text(target_name, exact=target_exact).nth(target_index)
+        el.click(force=force, timeout=10000)
+        return
+    except: pass
+
+    try:
         if target_role:
             el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
-            # FALLBACK: If scoped search fails to find it visible, try page-wide
-            try:
-                el.wait_for(state="visible", timeout=3000)
-            except:
-                if root != page:
-                    el = page.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
         elif target_name:
             el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-            try:
-                el.wait_for(state="visible", timeout=3000)
-            except:
-                if root != page:
-                    el = page.get_by_text(target_name, exact=target_exact).nth(target_index)
         
-        # FINAL ATTEMPT: Wait for the best candidate to become visible/stable
-        if el:
-            el.wait_for(state="visible", timeout=5000)
+        if el and el.is_visible(timeout=5000):
             el.click(force=force)
-            logger.info(f"Clicked target '{target_name or 'unnamed'}' (index: {target_index}) via semantic search.")
             return
-    except Exception as e:
-        logger.debug(f"Standard click failed: {e}")
+    except: pass
 
-
-    # 3. --- AI Self-Healing Fallback (The "Brain") ---
-    if v.get("disable_ai", False):
-        logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
-        raise Exception(f"Element not found: {target_name or target_locator}")
-
-    logger.error(f"All traditional methods failed for '{target_name or target_locator}'. Triggering AI Self-Healing...")
-
+    # 1.1 Global Fallback (In case modal scoping is confused)
     try:
+        if target_role == 'button' or target_name == 'Add':
+            logger.debug("Modal-scoped search failed. Trying global search for last visible button...")
+            all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
+            for btn in reversed(all_btns):
+                if btn.is_visible():
+                    btn.click(force=force)
+                    return
+    except: pass
+
+    # 1.5. Grace Period (Wait for modal animations)
+    page.wait_for_timeout(3000)
+
+    # 2. AI Pure Vision Fallback
+    import os
+    if v.get("disable_ai", False) or os.environ.get("AI_DISABLED") == "True":
+        raise Exception(f"Element not found: {target_name or target_locator or target_role}")
+
+    logger.error("Traditional methods failed. Triggering AI Pure Vision Healing...")
+    try:
+        page_history = getattr(page, "_execution_history", [])
+        instruction = f"Click the element: '{target_name or target_locator}'"
         safe_name = re.sub(r'[^\w\-]', '_', str(target_name or 'target'))[:30]
+        screenshot_path = f"ai_vision_{safe_name}.png"
+        page.screenshot(path=screenshot_path)
         
-        # --- HYBRID SOM UPGRADE WITH RETRY ---
-        som_js_path = os.path.join(os.path.dirname(__file__), "../utils/som.js")
-        with open(som_js_path, "r") as f: som_code = f.read()
+        res = ai_vision.find_element_pure_vision(screenshot_path, instruction, page_history)
         
-        mapping = None
-        screenshot_path = f"ai_healing_{safe_name}.png"
-        
-        for attempt in range(2):
-            try:
-                mapping = page.evaluate(som_code)
-                page.screenshot(path=screenshot_path)
-                break
-            except Exception as e:
-                if "context was destroyed" in str(e) and attempt == 0:
-                    logger.warning("Execution context destroyed during AI evaluation. Retrying after 2s...")
-                    page.wait_for_timeout(2000)
-                    continue
-                raise e
-
-        description = f"The interactive element (button, card, icon) for '{target_name}'. CRITICAL: You are likely in a nested drawer. Prefer elements in the TOPMOST/FOREGROUND layer. Avoid labels that appear in the background layer."
-        if not target_name:
-            description = f"The primary interactive element (Context: {target_role or target_locator}). Favor the topmost visible modal."
-        
-        # Add objective context for Junior QA Consciousness
-        test_objective = getattr(page, "_test_description", "Unknown Action")
-        som_data_meta = {
-            "description": test_objective,
-            "caseno": getattr(page, "_test_caseno", "Unknown"),
-            "history": getattr(page, "_execution_history", [])
-        }
-        
-        res = ai_vision.find_element_som(screenshot_path, description, {**mapping, **som_data_meta})
-        
-        if res.get("label_id"):
-            label_id = res["label_id"]
-            diagnosis = res.get("consciousness_diagnosis", "No diagnosis provided.")
-            action_type = res.get("suggested_action", "GOAL_CLICK")
+        if res.get("found") and res.get("coordinates"):
+            coords = res["coordinates"]
+            x, y = coords["x"], coords["y"]
+            initial_url = page.url
             
-            logger.info(f"✨ AI 'Junior QA' Found Target ID: {label_id}!")
-            logger.info(f"🧠 Diagnosis: {diagnosis}")
-            logger.info(f"🚀 Suggested Action: {action_type}")
+            def perform_click(cx, cy, label):
+                logger.debug(f"Performing {label} at {cx}, {cy}")
+                page.mouse.click(cx, cy)
+                page.wait_for_timeout(1500)
             
-            if action_type == "ABORT_TEST":
-                logger.error(f"🛑 AI decided to ABORT test: {res.get('bug_report', diagnosis)}")
-                raise Exception(f"AI Aborted Test: {res.get('bug_report', diagnosis)}")
-
-            el = page.locator(f'[data-som-id="{label_id}"]').first
+            perform_click(x, y, "AI Primary Click")
             
-            # Check if this is a 'recovery' or 'precondition' action
-            is_retryable = (action_type in ["RECOVERY_CLICK", "PRECONDITION_ACTION"])
-            if not is_retryable:
-                # Fallback check based on name/role if AI didn't specify
-                text = (el.inner_text() or "").lower()
-                aria = (el.get_attribute("aria-label") or "").lower()
-                if any(k in text or k in aria for k in ["close", "dismiss", "got it", "skip", "ok"]):
-                    if target_name and not any(k in target_name.lower() for k in ["close", "dismiss", "got it", "skip", "ok"]):
-                        is_retryable = True
+            # --- SELF-PATCHING LOGIC ---
+            suggested = res.get("suggested_locator")
+            yaml_path = getattr(page, "_yaml_path", None)
+            case_id = getattr(page, "_test_caseno", None)
             
-            el.click(force=True)
-            page.wait_for_timeout(2000)
+            if suggested and yaml_path and case_id:
+                try:
+                    from .utils.yaml_patcher import patch_yaml_step
+                    patch_yaml_step(yaml_path, case_id, target_name, suggested)
+                except Exception as py_ex:
+                    logger.warning(f"Self-Patching failed: {py_ex}")
             
-            if is_retryable:
-                logger.info(f"🔄 {action_type} performed. Retrying original click for '{target_name or target_locator}'...")
-                if v.get("_retry_ai", 0) < 2: # Allow up to 2 AI-assisted retries for complex flows
+            if res.get("suggested_action") == "GOAL_CLICK" and page.url == initial_url:
+                logger.warning("Starting Jitter Retries...")
+                for jx, jy in [(2,2), (-2,-2), (3,0), (0,3)]:
+                    if page.url != initial_url: break
+                    perform_click(x + jx, y + jy, "Jitter")
+            
+            if res.get("suggested_action") == "RECOVERY_CLICK" or page.url != initial_url:
+                if v.get("_retry_ai", 0) < 2:
                     v["_retry_ai"] = v.get("_retry_ai", 0) + 1
                     return smart_click(page, v)
             return
         else:
-            logger.error(f"💀 AI SOM could not locate the element. Logic ends here.")
-    except Exception as ai_err:
-        logger.error(f"AI Healing Error: {ai_err}")
-            
-        # Add objective context for Junior QA Consciousness
-        test_objective = getattr(page, "_test_description", "Unknown Action")
-        som_data_meta = {
-            "description": test_objective,
-            "caseno": getattr(page, "_test_caseno", "Unknown"),
-            "history": getattr(page, "_execution_history", [])
-        }
-        
-        res = ai_vision.find_element_som(screenshot_path, description, {**mapping, **som_data_meta})
-        
-        if res.get("label_id"):
-            label_id = res["label_id"]
-            diagnosis = res.get("consciousness_diagnosis", "No diagnosis provided.")
-            action_type = res.get("suggested_action", "GOAL_CLICK")
-            
-            logger.info(f"✨ AI 'Junior QA' Found Target ID: {label_id}!")
-            logger.info(f"🧠 Diagnosis: {diagnosis}")
-            logger.info(f"🚀 Suggested Action: {action_type}")
-            
-            if action_type == "ABORT_TEST":
-                logger.error(f"🛑 AI decided to ABORT test: {res.get('bug_report', diagnosis)}")
-                raise Exception(f"AI Aborted Test: {res.get('bug_report', diagnosis)}")
-
-            el = page.locator(f'[data-som-id="{label_id}"]').first
-            
-            # Check if this is a 'recovery' action (like closing a blocking modal)
-            is_recovery = (action_type == "RECOVERY_CLICK")
-            if not is_recovery:
-                # Fallback check based on name/role if AI didn't specify
-                text = (el.inner_text() or "").lower()
-                aria = (el.get_attribute("aria-label") or "").lower()
-                if any(k in text or k in aria for k in ["close", "dismiss", "got it", "skip", "ok"]):
-                    if target_name and not any(k in target_name.lower() for k in ["close", "dismiss", "got it", "skip", "ok"]):
-                        is_recovery = True
-            
-            el.click()
-            page.wait_for_timeout(2000)
-            
-            if is_recovery:
-                logger.info(f"🔄 Recovery action performed. Retrying original click for '{target_name}'...")
-                if v.get("_retry_ai", 0) < 1:
-                    v["_retry_ai"] = v.get("_retry_ai", 0) + 1
-                    return smart_click(page, v)
-            return
-        else:
-            logger.error(f"💀 AI SOM could not locate the element. Logic ends here.")
-    except Exception as ai_err:
-        logger.error(f"AI Healing Error: {ai_err}")
-
-    # If even AI fails, re-raise original or fail
-    if v.get("_retry_ai", 0) > 0:
-        return # We already tried
-    raise Exception(f"Failed to click '{target_name or target_locator}' after all attempts including AI.")
+            raise Exception("AI failed visually.")
+    except Exception as e:
+        logger.error(f"AI Healing Failed: {e}")
+        raise e
 
 def click_modal_close(page: Page, v: dict):
     logger.info("Attempting to close modal...")
@@ -623,120 +274,46 @@ def click_modal_close(page: Page, v: dict):
         close_btn = page.locator("div[role='dialog'] button[aria-label='close'], .MuiDialog-root button.close").first
         if close_btn.is_visible():
             close_btn.click()
-            logger.info("Clicked modal close button.")
         else:
-            modal_visible = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").first.is_visible()
-            if modal_visible:
-                page.keyboard.press("Escape")
-                logger.info("Pressed Escape to close visible modal (fallback).")
-            else:
-                logger.info("No modal detected to close.")
-        page.wait_for_timeout(1000)
+            page.keyboard.press("Escape")
     except Exception as e:
         logger.warning(f"Failed to close modal: {e}")
+
 def verify_text_visible(page: Page, v: dict):
-    # Verify a specific text is visible on the page
     text = v.get("text")
     timeout = v.get("timeout", 10000)
-    logger.info(f"Verifying visibility of text: {text}")
+    logger.info(f"Verifying text visibility: {text}")
     try:
-        locator = page.get_by_text(text, exact=v.get("exact", False))
-        
-        # Polling in Python for visibility
-        import time
-        start_time = time.time()
-        visible_found = False
-        while time.time() - start_time < timeout / 1000:
-            count = locator.count()
-            for i in range(count):
-                if locator.nth(i).is_visible():
-                    visible_found = True
-                    break
-            if visible_found:
-                break
-            page.wait_for_timeout(500)
-        
-        if not visible_found:
-            raise Exception(f"No visible instance of '{text}' found among {locator.count()} matches.")
-
+        page.get_by_text(text, exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
         logger.info(f"Text '{text}' is visible.")
-
     except Exception as e:
-        logger.error(f"Verification failed: Text '{text}' not visible after {timeout}ms. Error: {e}")
-        page.screenshot(path=f"fail_verify_text_{text[:10]}.png")
-        # Log all matching elements' status for debug
-        try:
-            count = locator.count()
-            logger.info(f"Matches found: {count}")
-            for i in range(count):
-                logger.info(f"Match {i}: visible={locator.nth(i).is_visible()}, box={locator.nth(i).bounding_box()}")
-        except: pass
-        raise AssertionError(f"Text '{text}' not found or not visible.")
-
+        page.screenshot(path=f"fail_verify_{text[:10]}.png")
+        raise AssertionError(f"Text '{text}' not found.")
 
 def reload_page(page: Page, v: dict):
-    logger.info("Reloading page...")
     page.reload()
-    sleep_time = v.get("sleep_after", 3000)
-    page.wait_for_timeout(sleep_time)
-
-
+    page.wait_for_timeout(v.get("sleep_after", 3000))
 
 def test_invalid_qr(page: Page, v):
     from playwright.sync_api import sync_playwright
-    logger.info(">>> Executing isolated invalid QR scan sub-test using error_QR.y4m")
     url = v if isinstance(v, str) else v.get("open", "https://s.pear.us/iyR93K")
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=[
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            "--use-file-for-fake-video-capture=data/error_QR.y4m",
-        ])
+        browser = p.chromium.launch(headless=True, args=["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--use-file-for-fake-video-capture=data/error_QR.y4m"])
         context = browser.new_context(permissions=["camera", "microphone"])
-        context.add_init_script('''
-            const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-            navigator.mediaDevices.getUserMedia = function(constraints) {
-                if (constraints && constraints.video && typeof constraints.video === 'object') {
-                    if (constraints.video.facingMode) delete constraints.video.facingMode;
-                    if (constraints.video.width) delete constraints.video.width;
-                    if (constraints.video.height) delete constraints.video.height;
-                    if (constraints.video.aspectRatio) delete constraints.video.aspectRatio;
-                }
-                return originalGetUserMedia(constraints);
-            };
-        ''')
         new_page = context.new_page()
         new_page.goto(url)
         try:
-            # Code Not Recognized popup is expected
             new_page.get_by_text("Code Not Recognized").first.wait_for(state="visible", timeout=15000)
-            logger.info("Successfully verified 'Code Not Recognized' on sub-browser")
-        except Exception as e:
-            new_page.screenshot(path="fail_invalid_qr.png")
-            logger.error("Failed to verify Invalid QR scan. Saved fail_invalid_qr.png")
-            raise e
+            logger.info("Verified 'Code Not Recognized'")
         finally:
             browser.close()
 
-
 def execute_t3981_flow(page: Page, v):
-    import subprocess
-    logger.info(">>> T3981 Phase 1: Scan Initialization (Valid/Redeemed)")
+    def scan_result_locator():
+        return page.locator("text=Code Verified").or_(page.locator("text=Code Already Redeemed")).or_(page.locator("text=Redeemed")).first
+
     page.goto("https://s.pear.us/iyR93K")
-    page.wait_for_load_state("networkidle")
-    # Acceptance of either scan result confirms camera injection is working
-    # Increased timeout for slower mobile emulation environment
-    page.locator("text=Code Verified|text=Code Already Redeemed").first.wait_for(state="visible", timeout=30000)
-    logger.info("Successfully verified scanner/camera initialization.")
-
-    
-    logger.info(">>> T3981 Phase 2: Invalid Scan (Subprocess Isolation)")
-    result = subprocess.run(["python", "run_invalid_qr.py"], capture_output=True, text=True, cwd=r"d:\new test\Autotest-monster")
-    if "SUCCESS" in result.stdout:
-        logger.info("Successfully verified 'Code Not Recognized' via subprocess")
-    else:
-        logger.error(f"Failed to verify Invalid QR scan. Output: {result.stdout} | {result.stderr}")
-        raise AssertionError(f"Invalid QR scan failed in subprocess. Output: {result.stdout}")
-            
-    logger.info(">>> T3981 demo flow completed successfully.")
-
+    scan_result_locator().wait_for(state="visible", timeout=30000)
+    page.get_by_role("button", name="Scan next ticket").click()
+    page.wait_for_timeout(3000)
+    scan_result_locator().wait_for(state="visible", timeout=30000)

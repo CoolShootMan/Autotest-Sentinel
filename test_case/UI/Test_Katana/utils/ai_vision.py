@@ -58,7 +58,11 @@ class AIVisionService:
 
     def _configure_client(self, key):
         genai.configure(api_key=key)
-        self.model = genai.GenerativeModel('gemini-3-flash-preview')
+        # Use Flash for basic background checks/logging
+        self.model_flash = genai.GenerativeModel('gemini-2.0-flash')
+        # Use Pro for specialized UI reasoning and pure vision navigation
+        self.model_pro = genai.GenerativeModel('gemini-2.0-flash') # Fallback to Flash due to 404 on Pro Exp
+        self.model = self.model_flash # default fallback
 
     def _rotate_key(self):
         if len(self.api_keys) <= 1: return False
@@ -104,101 +108,70 @@ class AIVisionService:
                 break
         return {"found": False}
 
-    def find_element_som(self, screenshot_path: str, instruction: str, som_data: dict) -> dict:
+    def find_element_pure_vision(self, screenshot_path: str, instruction: str, history: list = None) -> dict:
         """
-        Hybrid SOM (Set-of-Mark) approach with Context Awareness.
+        Pure Vision-based identification with Introspection logic.
+        Requires no DOM/SOM information.
         """
         if not self.api_keys: return {"found": False, "error": "No API keys."}
         
         with open(screenshot_path, "rb") as image_file:
             image_data = image_file.read()
-        
-        # 1. Format Context
-        context = som_data.get("context", {})
-        ctx_str = f"Active Drawer: {context.get('drawer_title') if context.get('is_drawer_open') else 'None'}"
-        
-        # 2. Format Labels: Prioritize foreground elements, then background, up to 100 total.
-        elements = som_data.get('elements', [])
-        foreground = [e for e in elements if e.get('context') == 'foreground_drawer']
-        background = [e for e in elements if e.get('context') != 'foreground_drawer']
-        
-        # Combine them (foreground first)
-        ordered_elements = foreground + background
-        map_context = "\n".join([f"ID {item['id']}: role={item['role']}, text={item['text']}, placeholder={item['placeholder']}, context={item['context']}" for item in ordered_elements[:100]])
-
-        goal_desc = f'Interact with "{instruction}"'
-        if "description" in som_data:
-             goal_desc += f' (Target Goal: {som_data["description"]})'
-             
-        retrieved_knowledge = "None"
-        if rag_kb:
-            # Query knowledge base with task instruction + target goal context
-            retrieved_knowledge = rag_kb.query(goal_desc, top_k=2)
-             
+            
         history_str = "None"
-        if som_data.get("history"):
-            history_list = [f"Step '{k}' with params {v}" for k, v in som_data["history"]]
-            # keep last 7 steps to not overload context
-            history_str = "\n".join(history_list[-7:])
-             
+        if history:
+            # format last 5 steps for context
+            history_str = "\n".join([f"- {h}" for h in history[-5:]])
+        
         prompt = f"""
-        You are an Advanced QA Automation Agent testing the "Pear" system.
-        Business Context: Pear is a hybrid B2C and B2B social commerce platform with a mobile-first interface. Modules include Explore (consumer feed), Events (creator/B2B management), Shops, and Posts conventions.
-        You have full context of what has been executed so far, so please DO NOT repeat completed steps if the current page looks wrong.
+        You are a Human-like QA Automation Agent testing a mobile-responsive web app.
+        Current Step Objective: "{instruction}"
         
-        Current Page Context: {ctx_str}
-        Overall Test Goal: {goal_desc}
-        
-        Recent Execution History (Steps ALREADY completed successfully):
+        Execution Context (Previous Steps):
         {history_str}
         
-        System Training Context (RAG Knowledge):
-        {retrieved_knowledge}
-        
-        Look at this screenshot. Interactive elements have RED numbered labels.
-        Labels Metadata:
-        {map_context}
-        
         Task:
-        1. Diagnose the current page state. Look for:
-           - Are we on the correct page for the goal? (e.g. if the goal is related to Events management, we should NOT be on the Explore page).
-           - Error messages (red text like "Required", "Invalid").
-           - Blocking modals or popups.
-           - Crucially: Check if the target element is DISABLED or grayed out.
-        2. Analyze based on the History:
-           - If a previous step logically brought you here, but it's the wrong page, DO NOT try to re-do a previous step like "Create Post" just because a similar button exists here. You must RECOVER (e.g., click a back button or close button to return to the right flow).
-        3. Determine the NEXT logical action:
-           - If the target is visible and enabled, output GOAL_CLICK.
-           - If you must clear a modal or navigate away from an incorrect page (like the Explore feed), output RECOVERY_CLICK and select the appropriate label (e.g., "Back", "Close", "Cancel").
-           - If you need to fill a missing field or select a precondition item, output PRECONDITION_ACTION.
-           
+        1. **Diagnose**: Look at the screenshot. Is the page in the correct state for the objective? 
+           Check for: Blocking modals (Close/X buttons), Error messages, or if we are on the wrong tab.
+        2. **Reason**: Identify the target element based *only* on visual cues (text, icons, buttons). 
+           If the target is obscured by a modal, you MUST first identify the button to close/dismiss that modal.
+        3. **Introspection**: Why is this the correct target? Double-check that it's not a background element.
+        
         Return strictly valid JSON:
         {{
-          "consciousness_diagnosis": "Detailed diagnosis considering the History, business context, and current visual state.",
-          "thought_process": "Explain logic for picking the label_id, actively referencing WHY the history makes this the right move.",
-          "suggested_action": "RECOVERY_CLICK, GOAL_CLICK, PRECONDITION_ACTION",
-          "label_id": <int> or null
+          "consciousness_diagnosis": "Explain the current page state and any obstacles found.",
+          "thought_process": "Detailed reasoning for picking the coordinates.",
+          "suggested_action": "GOAL_CLICK (standard), RECOVERY_CLICK (to close a modal), or ABORT (if a critical bug is found)",
+          "coordinates": {{ "x": <int>, "y": <int> }},
+          "suggested_locator": {{ "role": "button", "name": "Exact text", "description": "High-level goal description" }},
+          "found": true
         }}
+        
+        Screen Resolution: 430 x 932
+        Important: Return coordinates in the range of [0-430] for X and [0-932] for Y.
+        Return raw JSON only.
         """
 
-        for attempt in range(len(self.api_keys) * 2):
+        for attempt in range(len(self.api_keys) * 3): # 增加到 3 倍 Key 的重试次数
             try:
-                logger.info(f"Connecting to Gemini (Attempt {attempt+1})...")
-                response = self.model.generate_content([
+                logger.info(f"Connecting to Gemini (Self-Healing) - Attempt {attempt+1}...")
+                response = self.model_pro.generate_content([
                     {'mime_type': 'image/png', 'data': image_data},
                     prompt
                 ])
-                logger.info(f"Gemini Raw Response: {response.text}")
                 res = self._parse_json(response.text)
-                if res.get("thought_process"):
-                    logger.info(f"🧠 AI SOM Thoughts: {res['thought_process']}")
+                if res.get("consciousness_diagnosis"):
+                    logger.info(f"🧠 AI Diagnosis: {res['consciousness_diagnosis']}")
                 return res
-            except ResourceExhausted:
-                if not self._rotate_key(): break
-                sleep(1)
             except Exception as e:
-                logger.error(f"AI Vision SOM Error: {e}")
-                break
+                logger.error(f"AI Pure Vision Error on Attempt {attempt+1}: {e}")
+                # 如果是限频，等待时间略增加
+                sleep_time = 3 if "429" in str(e) else 1
+                if not self._rotate_key(): 
+                     logger.warning("No more keys to rotate, sleep and retry same key.")
+                     sleep(sleep_time)
+                else:
+                     sleep(sleep_time) # 略等一下让轮转生效
         return {"found": False}
 
     def _parse_json(self, text):

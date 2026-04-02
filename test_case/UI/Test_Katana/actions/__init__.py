@@ -30,7 +30,8 @@ from .product import (
 )
 from .form import (
     verify_submission_details, verify_message_content, click_form_more_menu,
-    click_submission_details_back, click_contact_form
+    click_submission_details_back, click_contact_form,
+    download_submission_csv, verify_csv_data
 )
 from .layout import (
     verify_top_aligned_layout, verify_waterfall_layout,
@@ -112,6 +113,8 @@ ACTIONS = {
     "click_relative_to_selector": click_relative_to_selector,
     "reload": reload_page,
     "execute_t3981_flow": execute_t3981_flow,
+    "download_submission_csv": download_submission_csv,
+    "verify_csv_data": verify_csv_data,
 }
 
 

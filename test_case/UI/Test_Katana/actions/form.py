@@ -1,7 +1,9 @@
-
 import re
+import os
+import csv
 from loguru import logger
 from playwright.sync_api import Page
+from .base import smart_click
 
 def verify_submission_details(page: Page, v: dict):
     page.get_by_role("heading", name=v["name"]).wait_for(state="visible", timeout=5000)
@@ -66,3 +68,44 @@ def click_submission_details_back(page: Page, v: dict):
 
 def click_contact_form(page: Page, v: dict):
     page.locator("div").filter(has_text="Auto test form").last.click()
+
+def download_submission_csv(page: Page, v: dict):
+    logger.info(f"Triggering CSV download for: {v.get('name')}")
+    # Ensure data directory exists
+    if not os.path.exists("data"):
+        os.makedirs("data")
+        
+    with page.expect_download() as download_info:
+        smart_click(page, v)
+    download = download_info.value
+    path = os.path.join("data", download.suggested_filename)
+    download.save_as(path)
+    logger.info(f"CSV saved to: {path}")
+    setattr(page, "_last_download_csv", path)
+
+def verify_csv_data(page: Page, v: dict):
+    path = getattr(page, "_last_download_csv", None)
+    if not path or not os.path.exists(path):
+        raise Exception("No downloaded CSV file found to verify.")
+    
+    expected_row = v.get("expected_row", {})
+    logger.info(f"Verifying CSV data against pattern: {expected_row}")
+    
+    found = False
+    with open(path, mode='r', encoding='utf-8-sig') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            match = True
+            for k, val in expected_row.items():
+                # Flexible matching (strip whitespace, case insensitive optionally)
+                if str(val).strip() not in str(row.get(k, "")).strip():
+                    match = False
+                    break
+            if match:
+                found = True
+                logger.info(f"SUCCESS: Found matching row in CSV: {row}")
+                break
+                
+    if not found:
+        logger.error(f"FAILED: Expected row {expected_row} not found in CSV {path}")
+        raise AssertionError(f"CSV data verification failed for {path}")

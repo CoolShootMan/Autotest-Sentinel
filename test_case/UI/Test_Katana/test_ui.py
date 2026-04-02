@@ -45,6 +45,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     # Pass metadata to page object for AI context
     setattr(page, "_test_description", description)
     setattr(page, "_test_caseno", caseno)
+    setattr(page, "_yaml_path", val.get("__yaml_path__")) # For self-patching
     setattr(page, "_execution_history", [])  # Initialize execution history
     
     allure_title(caseno)
