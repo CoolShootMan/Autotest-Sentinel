@@ -170,7 +170,7 @@ testPartner_create_form:
       - assertion_type: "element_visible_by_text"
         text: "Partner_create_form"
 
-testT4279:
+testPartner_guest_submission:
   guest: true
   is_mobile: true
   description: "Verify guest can submit the Auto test Form on demi-release page"
@@ -280,7 +280,7 @@ testT4279:
       - assertion_type: "element_visible_by_text"
         text: "Got it"
 
-testT4306:
+testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
   test_step:
     open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
