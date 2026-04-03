@@ -38,7 +38,7 @@ def start_autotest():
     allure_data_dir = os.path.join(BASE_DIR, 'allure-results', now_time)
     allure_report_dir = os.path.join(BASE_DIR, 'report', 'html', now_time)
     test_results = os.path.join(BASE_DIR, 'report', 'video', now_time)
-    storage_state_path = os.path.join(BASE_DIR, 'test_case', 'UI', 'Test_Katana', 'cookie_release.json')
+    storage_state_path = os.path.join(BASE_DIR, 'test_case', 'UI', 'Test_Katana', 'cookie_release_demi.json')
 
     logger.info(f"Allure data directory: {allure_data_dir}")
     

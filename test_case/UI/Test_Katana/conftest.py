@@ -213,20 +213,39 @@ def context(
             except Exception:
                 pass
 
+    # --- Video Attachment Fix ---
+    # CRITICAL: video.path() must be called BEFORE context.close().
+    # context.close() triggers Playwright to finalize and write the video file to disk.
+    # After close(), we can safely read and attach the file to Allure.
     video_option = pytestconfig.getoption("--video")
     capture_video = video_option == "on" or (
         failed and video_option == "retain-on-failure"
     )
+    video_paths = []
     if capture_video:
         for i, page in enumerate(pages):
             video = page.video
             if video:
                 try:
-                    video_path = video.path()
-                    allure.attach.file(
-                        video_path,
-                        name=f"Video {i}",
-                        attachment_type=allure.attachment_type.WEBM,
-                    )
-                except Exception:
-                    pass
+                    # Record path BEFORE context.close() finalizes the file
+                    video_paths.append((i, video.path()))
+                except Exception as e:
+                    logger.warning(f"Could not get video path for page {i}: {e}")
+
+    # Close context: this is when Playwright writes the video to disk
+    context.close()
+
+    # Now attach the finalized video files to Allure
+    for i, video_path in video_paths:
+        try:
+            if os.path.exists(video_path):
+                allure.attach.file(
+                    video_path,
+                    name=f"Video {i}",
+                    attachment_type=allure.attachment_type.WEBM,
+                )
+                logger.info(f"Video {i} attached to Allure: {video_path}")
+            else:
+                logger.warning(f"Video file not found after context close: {video_path}")
+        except Exception as e:
+            logger.warning(f"Failed to attach video {i} to Allure: {e}")

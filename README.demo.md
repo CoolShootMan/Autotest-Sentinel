@@ -13,3 +13,8 @@ $ pytest test_case/UI/Test_Katana/test_ui.py -k "testPartner_verify_commission" 
 # all in one
 $ pytest test_case/UI/Test_Katana/test_ui.py -k "testPartner_create_form or testPartner_guest_submission or testPartner_verify_commission" --storage-state "test_case/UI/Test_Katana/cookie_release.json" --env release --yaml Partner_create_form.yaml --headed -v
 ```
+
+# main.py
+```shell
+$ python main.py
+```

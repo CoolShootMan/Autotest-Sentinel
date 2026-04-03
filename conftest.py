@@ -105,7 +105,18 @@ def context(
     pages: List[Page] = []
     storage_state = pytestconfig.getoption("--storage-state")
     
-    if storage_state:
+    is_guest = False
+    try:
+        if "smokecases1" in request.fixturenames:
+            val = request.getfixturevalue("smokecases1")
+            is_guest = list(val.values())[0].get("guest", False)
+    except Exception:
+        pass
+
+    if is_guest:
+        logger.info("GUEST MODE detected in fixture override: Bypassing cookie loading for pure context")
+        context = browser.new_context(**browser_context_args)
+    elif storage_state:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
         # Check if local conftest defined a default cookie_release.json
@@ -125,7 +136,7 @@ def pytest_generate_tests(metafunc):
     if "smokecases1" in metafunc.fixturenames:
         yaml_file = metafunc.config.getoption("--yaml")
         if not yaml_file:
-            yaml_file = "Katana_curator_smoke.yaml"
+            yaml_file = "Partner_create_form.yaml"
             
         yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file)
         
