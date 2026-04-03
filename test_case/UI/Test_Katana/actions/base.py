@@ -69,7 +69,7 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
-    
+
     logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
     fill_timeout = v.get("timeout", 10000)
 
