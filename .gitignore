@@ -70,3 +70,4 @@ Thumbs.db
 # ignore test error screenshots (generated at runtime)
 /*.png
 /requirements.txt
+/test_case/UI/Test_Katana/cookie_release.json

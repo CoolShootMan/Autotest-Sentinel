@@ -219,6 +219,10 @@ def smart_click(page: Page, v: dict):
                 el.click(force=True)
             else:
                 el.click(force=force)
+            # Close dropdown/listbox after selecting an option
+            if target_role == 'option':
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
             return
     except Exception as e:
         logger.debug(f"Standard click failed: {e}")
