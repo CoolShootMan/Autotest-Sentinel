@@ -17,6 +17,7 @@ from .base import (
     verify_text_visible,
     verify_value,
     verify_value_near,
+    verify_all_commission_values,
     reload_page,
     execute_t3981_flow
 )
@@ -110,6 +111,7 @@ ACTIONS = {
     "verify_text_visible": verify_text_visible,
     "verify_value": verify_value,
     "verify_value_near": verify_value_near,
+    "verify_all_commission": verify_all_commission_values,
     "click_module_add_new": click_module_add_new,
     "verify_product_visible": verify_text_visible,
     "select_replacement_product": select_replacement_product,

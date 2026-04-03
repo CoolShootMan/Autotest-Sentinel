@@ -46,8 +46,10 @@ class AIVisionService:
              keys_str = os.getenv("GEMINI_API_KEY")
         
         if not keys_str:
-             logger.error("No GEMINI_API_KEYS found in environment.")
+             logger.warning("GEMINI_API_KEY not configured. AI healing feature will be skipped.")
              self.api_keys = []
+             self.model = None
+             self.initialized = True
              return
 
         self.api_keys = [k.strip() for k in keys_str.split(",") if k.strip()]
