@@ -65,46 +65,68 @@ def pytest_runtest_makereport(item, call):
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
+    # Default to Ticket_C for the main session
+    # Use forward slashes for safer Chromium argument parsing on Windows
+    y4m_path = os.path.join(BASE_DIR, "data", "Ticket_C.y4m").replace("\\", "/")
+
     return {
         **browser_type_launch_args,
         "args": [
-            # 1. 自动允许媒体流（摄像头/麦克风）权限，不再弹出浏览器授权框
             "--use-fake-ui-for-media-stream",
-            
-            # 2. 启用虚拟媒体设备，用软件模拟的设备代替真实硬件
             "--use-fake-device-for-media-stream",
-            
-            # 3. 指定作为摄像头输入的视频文件（必须是 .y4m 格式）
-            # 请务必将下面的路径改为你本地二维码视频的真实路径
-            r"--use-file-for-fake-video-capture=D:\new test\Autotest-monster\data\Ticket_C.y4m",
+            f"--use-file-for-fake-video-capture={y4m_path}",
+            "--window-size=600,1100",
             "--start-maximized",
             "--disable-translate",
             "--disable-features=Translate"
         ],
     }
 
-
 def pytest_addoption(parser):
-    parser.addoption("--env", action="store", default="release", help="Test environment: release, staging, or local")
-    parser.addoption("--storage-state", action="store", default=None, help="Path to the storage state file")
-    # Standard Playwright options (if not added by plugin or for custom usage)
-    # Re-adding them here to prevent 'unrecognized argument' errors if plugin doesn't add them at this stage or logical conflict.
-    # It is safer to add them if the code in this file explicitly calls getoption for them.
-    # Note: If pytest-playwright is installed, it might add them. But duplications are usually ignored or handle-able. 
-    # However, to be safe against the error we just saw:
+    try:
+        parser.addoption("--env", action="store", default="release", help="Test environment: release, staging, or local")
+    except ValueError:
+        pass
+    try:
+        parser.addoption("--storage-state", action="store", default=None, help="Path to the storage state file")
+    except ValueError:
+        pass
+    try:
+        parser.addoption("--yaml", action="store", default=None, help="Specific YAML file to load test cases from")
+    except ValueError:
+        pass
 
-@pytest.fixture(scope="session")
-def browser_context_args(browser_context_args, playwright):
-    iphone_12 = playwright.devices['iPhone 12 Pro']
-    return {
-        **browser_context_args,
-        **iphone_12,
-        "viewport": {"width": 430, "height": 932},
-        "device_scale_factor": 3,
-        "is_mobile": True,
-        "has_touch": True,
-        "permissions": ["camera", "microphone"],
-    }
+@pytest.fixture()
+def browser_context_args(browser_context_args, playwright, request):
+    """
+    Dynamic device emulation based on YAML 'is_mobile' flag.
+    """
+    is_mobile = False
+    try:
+        if "smokecases1" in request.fixturenames:
+            smokecases1 = request.getfixturevalue("smokecases1")
+            v = list(smokecases1.values())[0]
+            is_mobile = v.get("is_mobile", False)
+    except Exception:
+        pass
+
+    if is_mobile:
+        iphone_14 = playwright.devices['iPhone 14 Pro Max']
+        res = {
+            **browser_context_args,
+            **iphone_14,
+            "permissions": ["camera", "microphone"],
+        }
+        logger.info("MOBILE_EMULATION: Enabled (iPhone 14 Pro Max)")
+        return res
+    else:
+        # Desktop (Default)
+        res = {
+            **browser_context_args,
+            "permissions": ["camera", "microphone"],
+        }
+        logger.info("MOBILE_EMULATION: Disabled (Desktop)")
+        return res
 
 
 @pytest.fixture()
@@ -177,99 +199,34 @@ def context(
         failed and screenshot_option == "only-on-failure"
     )
     if capture_screenshot:
-        for index, page in enumerate(pages):
-            human_readable_status = "failed" if failed else "finished"
+        for i, page in enumerate(pages):
             screenshot_path = _build_artifact_test_folder(
-                pytestconfig, request, f"test-{human_readable_status}-{index+1}.png"
+                pytestconfig, request, f"screenshot-{i}.png"
             )
             try:
-                page.screenshot(timeout=5000, path=screenshot_path)
-            except Error:
+                page.screenshot(path=screenshot_path)
+                allure.attach.file(
+                    screenshot_path,
+                    name=f"Screenshot {i}",
+                    attachment_type=allure.attachment_type.PNG,
+                )
+            except Exception:
                 pass
-
-    context.close()
 
     video_option = pytestconfig.getoption("--video")
-    preserve_video = video_option == "on" or (
+    capture_video = video_option == "on" or (
         failed and video_option == "retain-on-failure"
     )
-    if preserve_video:
-        for page in pages:
-            human_readable_status = "failed" if failed else "finished"
+    if capture_video:
+        for i, page in enumerate(pages):
             video = page.video
-            if not video:
-                continue
-            try:
-                video_path = video.path()
-                file_name = f"{slugify(request.node.nodeid)}.webm"
-                video.save_as(path=_build_artifact_test_folder(pytestconfig, request, file_name))
-                allure.attach.file(_build_artifact_test_folder(pytestconfig, request, file_name), name=request.node.name, attachment_type=allure.attachment_type.WEBM)
-
-            except Error:
-                # Silent catch empty videos.
-                pass
-
-@pytest.fixture(scope="session")
-def smokecases1_data(pytestconfig):
-    env = pytestconfig.getoption("--env")
-    filename = f"Katana_curator_smoke_{env}.yaml"
-    
-    test_case_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
-    logger.info(f"Loading test cases from: {test_case_path}")
-    
-    if not os.path.exists(test_case_path):
-        logger.error(f"Configuration file not found: {test_case_path}")
-        pytest.fail(f"Config file {filename} not found for environment '{env}'")
-
-    with open(test_case_path, "r", encoding="utf-8") as file:
-        return yaml.safe_load(file.read())
-
-def pytest_generate_tests(metafunc):
-    if "smokecases1" in metafunc.fixturenames:
-        # Load data once per session via a helper or direct read
-        # Note: We can't use fixtures easily inside hook-like generators without request
-        # So we read the config during generation
-        env = metafunc.config.getoption("--env")
-        filename = f"Katana_curator_smoke_{env}.yaml"
-        
-        path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", filename)
-        if os.path.exists(path):
-            logger.info(f"Loading test cases from: {path}")
-            with open(path, "r", encoding="utf-8") as f:
-                raw_data = yaml.safe_load(f)
-                cases = []
-                for k, v in raw_data.items():
-                    # Inject file path metadata for self-patching
-                    v["__yaml_path__"] = path
-                    cases.append({k: v})
-                ids = [k for k in raw_data.keys()]
-                metafunc.parametrize("smokecases1", cases, ids=ids)
-        else:
-            logger.error(f"Test case file not found: {path}")
-            metafunc.parametrize("smokecases1", [])
-
-@pytest.fixture()
-def smokecases1(request):
-    """ Parameterized test case (kept for compatibility with existing tests) """
-    return request.param
-
-@pytest.fixture(scope="function", autouse=True)
-def webrtc_override(context):
-    """
-    Injects a JavaScript workaround into every page to strip dimensional and facing constraints
-    from getUserMedia. This prevents the fake camera feed (.y4m) from being cropped to fit 
-    the emulated mobile viewport, ensuring the full QR code is visible.
-    """
-    context.add_init_script("""
-        const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-        navigator.mediaDevices.getUserMedia = function(constraints) {
-            if (constraints && constraints.video && typeof constraints.video === 'object') {
-                if (constraints.video.facingMode) delete constraints.video.facingMode;
-                if (constraints.video.width) delete constraints.video.width;
-                if (constraints.video.height) delete constraints.video.height;
-                if (constraints.video.aspectRatio) delete constraints.video.aspectRatio;
-                console.log('WebRTC override: Stripped constraints to prevent .y4m cropping');
-            }
-            return originalGetUserMedia(constraints);
-        };
-    """)
+            if video:
+                try:
+                    video_path = video.path()
+                    allure.attach.file(
+                        video_path,
+                        name=f"Video {i}",
+                        attachment_type=allure.attachment_type.WEBM,
+                    )
+                except Exception:
+                    pass

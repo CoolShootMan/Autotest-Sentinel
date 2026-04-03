@@ -1,7 +1,13 @@
 import os
 import re
+import subprocess
+import sys
 from playwright.sync_api import Page, Locator, expect
 from loguru import logger
+
+# Calculate project base directory (5 levels up from actions/base.py)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+logger.info(f"ACTIONS_BASE_DIR: {BASE_DIR}")
 from page.home import page_element_role_click, page_element_label_click, page_open
 from ..utils.ai_vision import ai_vision
 
@@ -176,11 +182,22 @@ def smart_click(page: Page, v: dict):
             break
     root = active_modal if active_modal else page
 
-    # 1. Traditional
     try:
+        # Standard relative locator attempt
         el = root.locator(target_locator).get_by_text(target_name, exact=target_exact).nth(target_index)
-        el.click(force=force, timeout=10000)
-        return
+        if el.is_visible(timeout=2000):
+            el.click(force=force)
+            return
+    except: pass
+
+    try:
+        # 1.1 Aria-label fallback (Critical for icon buttons)
+        if target_name:
+            el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
+            if el.is_visible(timeout=2000):
+                el.click(force=force)
+                logger.info(f"Clicked via aria-label fallback: {target_name}")
+                return
     except: pass
 
     try:
@@ -199,8 +216,22 @@ def smart_click(page: Page, v: dict):
 
 
     # 3. --- AI Self-Healing Fallback (The "Brain") ---
-    if v.get("disable_ai", False):
+    # Global Kill-switch check
+    if v.get("disable_ai", False) or os.environ.get("AI_DISABLED") == "True":
         logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
+        
+        # 3.1 Global Fallback (Last ditch effort for common buttons like 'Add')
+        if target_role == 'button' or target_name == 'Add' or target_name == 'Add new':
+            try:
+                logger.debug("Traditional/Modal search failed. Trying global search for last visible button...")
+                all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
+                for btn in reversed(all_btns):
+                    if btn.is_visible():
+                        btn.click(force=force)
+                        logger.info(f"Global fallback SUCCESS for '{target_name}'")
+                        return
+            except: pass
+            
         raise Exception(f"Element not found: {target_name or target_locator}")
 
     logger.error("Traditional methods failed. Triggering AI Pure Vision Healing...")
@@ -298,25 +329,51 @@ def test_invalid_qr(page: Page, v):
         finally:
             browser.close()
 
-def execute_t3981_flow(page: Page, v):
-    def scan_result_locator():
-        return page.locator("text=Code Verified").or_(page.locator("text=Code Already Redeemed")).or_(page.locator("text=Redeemed")).first
-
-    page.goto("https://s.pear.us/iyR93K")
-    page.wait_for_load_state("networkidle")
-    # Acceptance of either scan result confirms camera injection is working
-    # Increased timeout for slower mobile emulation environment
-    page.locator("text=Code Verified|text=Code Already Redeemed").first.wait_for(state="visible", timeout=30000)
-    logger.info("Successfully verified scanner/camera initialization.")
-
-    
-    logger.info(">>> T3981 Phase 2: Invalid Scan (Subprocess Isolation)")
-    result = subprocess.run(["python", "run_invalid_qr.py"], capture_output=True, text=True, cwd=r"d:\new test\Autotest-monster")
+def execute_not_recognized_scan(page: Page, v):
+    """
+    Subprocess isolated action to verify 'Code Not Recognized'.
+    Bypasses Playwright video source limitations by launching a fresh browser.
+    """
+    logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
+    result = subprocess.run(
+        [sys.executable, "run_invalid_qr.py"], 
+        capture_output=True, 
+        text=True, 
+        cwd=BASE_DIR
+    )
     if "SUCCESS" in result.stdout:
         logger.info("Successfully verified 'Code Not Recognized' via subprocess")
     else:
-        logger.error(f"Failed to verify Invalid QR scan. Output: {result.stdout} | {result.stderr}")
-        raise AssertionError(f"Invalid QR scan failed in subprocess. Output: {result.stdout}")
-            
-    logger.info(">>> T3981 demo flow completed successfully.")
+        logger.error(f"Failed to verify Invalid QR scan. Output:\n{result.stdout}\nStderr:\n{result.stderr}")
+        raise AssertionError("Invalid QR scan failed in subprocess. Check logs for details.")
+
+def verify_value(page: Page, v: dict):
+    target_name = v.get("name")
+    target_locator = v.get("locator")
+    expected_value = str(v.get("value"))
+    timeout = v.get("timeout", 10000)
+    logger.info(f"Verifying value of '{target_name or target_locator}' matches '{expected_value}'")
+    if target_locator:
+        el = page.locator(target_locator).first
+    else:
+        el = page.locator(f'input[name="{target_name}"], [name="{target_name}"]').first
+    el.wait_for(state="visible", timeout=timeout)
+    actual_value = str(el.input_value())
+    if actual_value != expected_value:
+        try:
+            if float(actual_value) == float(expected_value): return
+        except: pass
+        raise AssertionError(f"Expected value '{expected_value}', but found '{actual_value}'")
+
+def verify_value_near(page: Page, v: dict):
+    # Restoring simplified version of verify_value_near for compatibility
+    near_text = v.get("near_text")
+    expected_value = str(v.get("expected") or v.get("value"))
+    logger.info(f"Verifying value near text '{near_text}', expected: '{expected_value}'")
+    # Search for an input near the exact text match
+    el = page.get_by_text(near_text, exact=False).locator("xpath=../..//input").first
+    el.wait_for(state="visible", timeout=5000)
+    actual_value = str(el.input_value())
+    if actual_value != expected_value:
+        raise AssertionError(f"Near text '{near_text}': Expected '{expected_value}', got '{actual_value}'")
 

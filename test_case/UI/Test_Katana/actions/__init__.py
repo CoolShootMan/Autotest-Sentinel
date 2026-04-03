@@ -18,7 +18,7 @@ from .base import (
     verify_value,
     verify_value_near,
     reload_page,
-    execute_t3981_flow
+    execute_not_recognized_scan
 )
 
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new
@@ -33,7 +33,7 @@ from .product import (
 from .form import (
     verify_submission_details, verify_message_content, click_form_more_menu,
     click_submission_details_back, click_contact_form,
-    download_submission_csv, verify_csv_data
+    download_submission_csv, verify_csv_data, capture_total_count
 )
 from .layout import (
     verify_top_aligned_layout, verify_waterfall_layout,
@@ -116,9 +116,10 @@ ACTIONS = {
     "click_by_coordinates": click_by_coordinates,
     "click_relative_to_selector": click_relative_to_selector,
     "reload": reload_page,
-    "execute_t3981_flow": execute_t3981_flow,
+    "execute_not_recognized_scan": execute_not_recognized_scan,
     "download_submission_csv": download_submission_csv,
     "verify_csv_data": verify_csv_data,
+    "capture_total_count": capture_total_count,
 }
 
 

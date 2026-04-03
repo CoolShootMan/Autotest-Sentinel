@@ -508,12 +508,37 @@ testT4259_guest:
             - assertion_type: "element_visible_by_text"
               text: "General CFREE"
 
-testT3981:
-    description: "Verify QR scanner (Redeemed)"
+testT3981_Verified:
+    is_mobile: true
+    description: "Verify QR scanner can successfully verify a valid ticket (Verified)"
     test_step:
-        execute_t3981_flow: "run"
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_verified: { text: "Code Verified", timeout: 20000 }
     expect_result:
-        description: "All automated camera test scenarios passed gracefully"
+        description: "Ticket should be verified successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Verified" }
+
+testT3981_Already:
+    is_mobile: true
+    description: "Verify QR scanner shows 'Already Redeemed' for an already used ticket"
+    test_step:
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_already: { text: "Code Already Redeemed", timeout: 20000 }
+    expect_result:
+        description: "Should display Already Redeemed status"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Already Redeemed" }
+
+testT3981_NotRecognized:
+    is_mobile: true
+    description: "Verify QR scanner shows error for an unrecognized/invalid code"
+    test_step:
+        execute_not_recognized_scan: "run"
+    expect_result:
+        description: "Should display Code Not Recognized error"
         assertions: []
 
 testT4279:
