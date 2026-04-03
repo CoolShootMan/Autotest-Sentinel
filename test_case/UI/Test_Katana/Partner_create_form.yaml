@@ -172,35 +172,29 @@ testT4279:
         open_demi_release:
             url: "https://release.pear.us/demi-release"
         R_click_auto_test_form:
-            role: "button"
-            name: "Partner_create_form"
+            text: "Partner_create_form"
+        sleep_after_open_form: 1500
 
-    # short answer - realistic business description
         fill_short_text:
             locator: 'input[name="39ba2c71-31f3-45f4-88a4-6a6b7b2d8bc9"]'
             value: "Pear Partner Cooperation Inquiry"
 
-    # long paragraph - realistic long text
         fill_long_text:
             locator: 'textarea[name="97ce1a93-5c6e-4f56-a505-9d934f975b1f"]'
             value: "I am interested in establishing a long-term partnership with Pear. My team focuses on content creation and brand promotion, and we hope to collaborate on official events and marketing campaigns."
 
-    # email - realistic business email
         fill_email:
             locator: 'input[name="91da1ff1-72f3-41ce-b3de-82262369bb09"]'
             value: "cooperation.business@gmail.com"
 
-    # phone - realistic US phone number format
         fill_phone:
             locator: 'input[name="1d33dacd-ee10-4cee-98ab-01540b76f187"]'
             value: "+13105558976"
 
-    # upload media - corrected filename with realistic asset path
         upload_media:
             text: "Add media"
             file_path: "data/test imag.jpeg"
 
-    # date time - select a real date in the current month
         R_click_choose_date:
             role: "textbox"
             name: "Choose date"
@@ -211,55 +205,42 @@ testT4279:
             role: "button"
             name: "OK"
 
-    # single choice: Yes
-        check_yes:
-            role: "radio"
-            name: "Yes"
+        click_yes:
+            text: "Yes"
 
-    # multiple choice: 1,2
-        check_1:
-            role: "checkbox"
-            name: "1"
-        check_2:
-            role: "checkbox"
-            name: "2"
+        click_choice_1:
+            text: "1"
+        click_choice_2:
+            text: "2"
 
-    # Instagram - realistic username
         fill_instagram:
             locator: 'input[name="ac1e4d22-eae1-470b-bbd6-7cb866d7b6a1"]'
             value: "pear_partner_official"
 
-    # Facebook - realistic username
         fill_facebook:
             locator: 'input[name="2c761dc2-a9ac-407b-ae9d-a7ac6b738900"]'
             value: "PearPartnerOfficial"
 
-    # Tiktok - realistic username
         fill_tiktok:
             locator: 'input[name="c243af4d-99a1-4dc7-be3b-5ae7ec6a21b6"]'
             value: "pear_partner"
 
-    # X (Twitter) - realistic username
         fill_x:
             locator: 'input[name="b9c97bc4-a2a6-405c-afae-af42a5984465"]'
             value: "PearPartnerHQ"
 
-    # Youtube - realistic username
         fill_youtube:
             locator: 'input[name="50381cf6-0cf7-4b02-aa2d-96bcf10be0f1"]'
             value: "@PearPartnerChannel"
 
-    # Linkedin - realistic username
         fill_linkedin:
             locator: 'input[name="a910f76f-9c0c-407a-86cb-785bd3bfe4ab"]'
             value: "pear-partner-official"
 
-    # Threads - realistic username
         fill_threads:
             locator: 'input[name="8d20b396-1a59-4e72-96ce-95206d067210"]'
             value: "pear_partner_official"
 
-    # submit
         R_click_submit:
             role: "button"
             name: "Submit"

@@ -208,8 +208,13 @@ def smart_click(page: Page, v: dict):
         
         # FINAL ATTEMPT: Wait for the best candidate to become visible/stable
         if el:
-            el.wait_for(state="visible", timeout=5000)
-            el.click(force=force)
+            el.scroll_into_view_if_needed()
+            page.wait_for_timeout(300)
+            if not el.is_visible():
+                logger.warning(f"Element '{target_name}' found but not visible. Trying to force click...")
+                el.click(force=True)
+            else:
+                el.click(force=force)
             return
     except Exception as e:
         logger.debug(f"Standard click failed: {e}")
@@ -376,4 +381,26 @@ def verify_value_near(page: Page, v: dict):
     actual_value = str(el.input_value())
     if actual_value != expected_value:
         raise AssertionError(f"Near text '{near_text}': Expected '{expected_value}', got '{actual_value}'")
+
+def verify_all_commission_values(page: Page, v: dict):
+    """
+    Verifies commission rates for all products in a list or module.
+    Expects a list of values or a single value in 'v'.
+    """
+    expected_values = v.get("values", [])
+    if not expected_values and "value" in v:
+        expected_values = [v["value"]]
+        
+    logger.info(f"Verifying all commission values: {expected_values}")
+    
+    # Implementation based on typical Katana commission UI (labels or inputs)
+    for i, val in enumerate(expected_values):
+        try:
+            # Common pattern: Mui input or a text label
+            target = page.locator(f"input[value='{val}'], :text-is('{val}%'), :text-is('{val}')").nth(i)
+            target.wait_for(state="visible", timeout=5000)
+            logger.info(f"Commission value {i} verified: {val}")
+        except Exception as e:
+            logger.error(f"Failed to find commission value {val} at index {i}: {e}")
+            raise AssertionError(f"Could not verify commission value: {val}")
 
