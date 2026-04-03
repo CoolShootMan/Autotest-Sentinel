@@ -66,3 +66,6 @@ Thumbs.db
 *.mp4
 *.yuv
 *.h264
+
+# ignore test error screenshots (generated at runtime)
+/*.png

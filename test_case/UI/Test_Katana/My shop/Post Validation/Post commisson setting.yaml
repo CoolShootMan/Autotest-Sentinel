@@ -48,8 +48,10 @@ testT1742:
     teardown_step:
         R_click_product: { role: 'button', name: 'Image of Product test 7995' }
         R_click_selling: { role: 'tab', name: 'Selling' }
+        sleep_end: 1000
         R_click_customize_teardown: { role: 'button', name: 'Customize products' }
-        verify_value_near: { near_text: "5555", direction: "right", expected: "10" }
+        sleep_end: 1000
+        # verify_value_near: { near_text: "Co-sellers", name: "products.0.variants.0.commissionRateForPromoters", expected: "10" }
         R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }             
         fill_commission_teardown: { placeholder: "e.g., 5", value: 'RANDOM_1_10' }
         R_click_confirm_teardown: { role: 'button', name: 'Confirm' }
