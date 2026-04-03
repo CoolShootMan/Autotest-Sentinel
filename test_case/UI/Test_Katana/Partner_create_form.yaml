@@ -234,44 +234,39 @@ testT4279:
 
     # Instagram - realistic username
     fill_instagram:
-      locator: 'input[placeholder="username"]'
-      index: 0
+      locator: 'xpath=//div[text()="Instagram"]/following-sibling::div//input'
       value: "pear_partner_official"
 
     # Facebook - realistic username
     fill_facebook:
-      locator: 'input[placeholder="username"]'
-      index: 1
+      locator: 'xpath=//div[text()="Facebook"]/following-sibling::div//input'
+      wait_for: 2000
+      scroll_into_view: true  # 强制滚动到元素
       value: "PearPartnerOfficial"
 
     # Tiktok - realistic username
     fill_tiktok:
-      locator: 'input[placeholder="username"]'
-      index: 2
+      locator: 'xpath=//div[text()="Tiktok"]/following-sibling::div//input'
       value: "pear_partner"
 
     # X (Twitter) - realistic username
     fill_x:
-      locator: 'input[placeholder="username"]'
-      index: 3
+      locator: 'xpath=//div[text()="X"]/following-sibling::div//input'
       value: "PearPartnerHQ"
 
     # Youtube - realistic username
     fill_youtube:
-      locator: 'input[placeholder="username"]'
-      index: 4
+      locator: 'xpath=//div[text()="Youtube"]/following-sibling::div//input'
       value: "PearPartnerChannel"
 
     # Linkedin - realistic username
     fill_linkedin:
-      locator: 'input[placeholder="username"]'
-      index: 5
+      locator: 'xpath=//div[text()="Linkedin"]/following-sibling::div//input'
       value: "pear-partner-official"
 
     # Threads - realistic username
     fill_threads:
-      locator: 'input[placeholder="username"]'
-      index: 6
+      locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
       value: "pear_partner_official"
 
     # submit
