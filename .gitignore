@@ -69,3 +69,4 @@ Thumbs.db
 
 # ignore test error screenshots (generated at runtime)
 /*.png
+/requirements.txt
