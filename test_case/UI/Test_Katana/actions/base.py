@@ -133,10 +133,14 @@ def smart_check(page: Page, v: dict):
     checked = v.get("checked", True)
     logger.info(f"Checking '{target_name or target_locator}' to {checked}")
 
+    target_role = v.get("role")
+
     try:
         if target_locator:
             el = page.locator(target_locator).nth(v.get("index", 0))
             el.set_checked(checked, timeout=5000)
+        elif target_role:
+            page.get_by_role(target_role, name=target_name).nth(v.get("index", 0)).set_checked(checked, timeout=5000)
         else:
             page.get_by_label(target_name).nth(v.get("index", 0)).set_checked(checked, timeout=5000)
     except Exception as e:
