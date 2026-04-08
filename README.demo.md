@@ -16,5 +16,10 @@ $ pytest test_case/UI/Test_Katana/test_ui.py -k "testPartner_create_form or test
 
 # main.py
 ```shell
+# not work on macos
 $ python main.py
+```
+
+## recording a yaml
+```shell
 ```
