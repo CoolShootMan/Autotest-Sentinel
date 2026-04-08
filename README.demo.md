@@ -43,5 +43,5 @@ $ python main.py
 ## make it better
 1. autotest monster 应该是一个 `cli` + 一个管理界面
 2. 前期可以是一个 `cli`，对于一切人员，只关心 `generate cases`
-3. 不同的模块，有不同的目录来管理 case - 最终可以选择入库(ps: yaml可以直接入库)
+3. 不同的模块，有不同的目录来管理 case - 最终可以选择入库(ps: `yaml` 可以直接入库)
 4. windows/mac 可以正常运行(目前环境这块还存在小问题)
