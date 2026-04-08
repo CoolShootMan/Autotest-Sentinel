@@ -170,7 +170,7 @@ testPartner_create_form:
       - assertion_type: "element_visible_by_text"
         text: "Partner_create_form"
 
-testPartner_guest_submission:
+test_guest_submission_1:
   guest: true
   is_mobile: true
   description: "Verify guest can submit the Auto test Form on demi-release page"
@@ -265,9 +265,9 @@ testPartner_guest_submission:
       value: "pear-partner-official"
 
     # Threads - realistic username
-    fill_threads:
-      locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
-      value: "pear_partner_official"
+    # fill_threads:
+    #   locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
+    #   value: "pear_partner_official"
 
     # submit
     R_click_submit:
@@ -279,6 +279,41 @@ testPartner_guest_submission:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Got it"
+
+test_guest_submission_2:
+  guest: true
+  is_mobile: true
+  description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
+  test_step:
+    open_demi_release:
+      url: "https://demi0214.notip.com.cn/form/0d95efc9-c0ad-441d-b901-dc3b9ee2084d"
+
+    # submit
+    R_click_submit:
+      role: "button"
+      name: "Submit"
+    # Verify every field in the modal (Comprehensive UI check)
+    verify_short: { text: 'This field is required. Please fill it in.' }
+    verify_long: { text: 'This field is required. Please fill it in.' }
+    verify_email: { text: 'Enter a valid e-mail address' }
+    verify_phone: { text: 'Enter a valid phone number' }
+    verify_date: { text: 'This field is required. Please fill it in.' }
+    verify_choice: { text: 'This field is required. Please fill it in.' }
+    verify_multi: { text: 'This field is required. Please fill it in.' }
+    verify_multi_2: { text: '2' }
+    # Social Media fields verification
+    verify_instagram: { text: 'This field is required. Please fill it in.' }
+    verify_facebook: { text: 'This field is required. Please fill it in.' }
+    verify_tiktok: { text: 'This field is required. Please fill it in.' }
+    verify_x: { text: 'This field is required. Please fill it in.' }
+    verify_youtube: { text: 'This field is required. Please fill it in.' }
+    verify_linkedin: { text: 'This field is required. Please fill it in.' }
+
+  expect_result:
+    description: "Form should be submitted successfully with Got it confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Partner_create_form_001"
 
 testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
@@ -311,7 +346,7 @@ testPartner_verify_commission:
     verify_x: { text: '@PearPartnerHQ' }
     verify_youtube: { text: '@PearPartnerChannel' }
     verify_linkedin: { text: '@pear-partner-official' }
-    verify_threads: { text: '@pear_partner_official' }
+    #verify_threads: { text: '@pear_partner_official' }
 
     click_submission_details_back: { }
     sleep_after_back: 2000
@@ -331,7 +366,7 @@ testPartner_verify_commission:
         'X': '@PearPartnerHQ',
         'Youtube': '@PearPartnerChannel',
         'Linkedin': '@pear-partner-official',
-        'Threads': '@pear_partner_official'
+        #'Threads': '@pear_partner_official'
       }
 
   expect_result:

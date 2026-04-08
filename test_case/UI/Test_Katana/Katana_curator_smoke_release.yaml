@@ -94,7 +94,7 @@ testT4264:
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_after_add: 1500
         sleep_after_add_new: 2000
-        l_click_regex1: { text: '^Image$', index: 0 , exact: true}
+        l_click_regex1: { text: '^Image$' , exact: true}
         sleep_after_click_image: 2000
         check2: { role: 'radio', name: 'Carousel Carousel' }
         sleep_before_add: 2000
@@ -174,7 +174,7 @@ testT1520:
         sleep_after_open: 3000
         R_click_explore: { role: 'button', name: 'Explore' }
         sleep_after_explore: 2000
-        R_click_store_link: { role: 'link', name: "ccc" }
+        R_click_store_link: { role: 'link', name: "ccc", exact: True }
         sleep_after_store: 2000
         R_click_logo: { role: 'img', name: 'Logo' }
         sleep_after_logo: 1000
@@ -369,96 +369,96 @@ testT4777:
 #             - assertion_type: "element_visible_by_text"
 #               text: "For the majority of customers, Pear is indeed a trustworthy and reliable website."
 
-# testT3348_partner:
-#     description: "Verify partner can enable 'checkout within the post' for a product in an event"
-#     test_step:
-#         open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
-#         sleep_after_open: 5000
-#         R_click_post_product: { role: 'button', name: 'Image of Product auto test', exact: false }
-#         sleep_after_click_product: 2000
-#         R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
-#         sleep_after_advanced: 1500
-#         check_checkout_in_post: { locator: 'input[name="checkoutInPost"]', checked: true }
-#         sleep_after_check: 2000
-#         R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
-#         sleep_before_confirm: 1500
-#         R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
-#         sleep_after_update: 3000
-#     expect_result:
-#         description: "Post product advanced checkout setting should be updated successfully (Verifcation happens in guest flow)"
-#         assertions: []
+testT3348_partner:
+    description: "Verify partner can enable 'checkout within the post' for a product in an event"
+    test_step:
+        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        sleep_after_open: 5000
+        R_click_post_product: { role: 'button', name: 'Image of Product auto test', exact: false }
+        sleep_after_click_product: 2000
+        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_after_advanced: 1500
+        check_checkout_in_post: { locator: 'input[name="checkoutInPost"]', checked: true }
+        sleep_after_check: 2000
+        R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
+        sleep_before_confirm: 1500
+        R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
+        sleep_after_update: 3000
+    expect_result:
+        description: "Post product advanced checkout setting should be updated successfully (Verifcation happens in guest flow)"
+        assertions: []
 
-# testT3348_guest:
-#     guest: true
-#     description: "Verify guest can use the 'checkout within the post' modal to make a purchase"
-#     test_step:
-#         open: "https://demi0214.notip.com.cn/post/auto-test-event"
-#         sleep_after_open: 5000
-#         R_click_rsvp: { role: 'button', name: 'RSVP', exact: true }
-#         sleep_after_rsvp: 3000
-#         R_click_continue: { role: 'button', name: 'Continue', exact: true }
-#         sleep_after_continue: 2000
-#         fill_first_name: { locator: 'input[name="contact.firstName"]', value: 't1' }
-#         fill_last_name: { locator: 'input[name="contact.lastName"]', value: 't2' }
-#         fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 567-8900' }
-#         fill_email: { locator: 'input[name="contact.email"]', value: 'yuxiao.zhu.ext@1m.app' }
-#         sleep_before_place_order: 1500
-#         R_click_place_order: { role: 'button', name: 'Place order' }
-#         sleep_after_place_order: 8000
-#     expect_result:
-#         description: "Guest should see the successful payment confirmation modal"
-#         assertions:
-#             - assertion_type: "element_visible_by_text"
-#               text: "Thanks for your payment!"
+testT3348_guest:
+    guest: true
+    description: "Verify guest can use the 'checkout within the post' modal to make a purchase"
+    test_step:
+        open: "https://demi0214.notip.com.cn/post/auto-test-event"
+        sleep_after_open: 5000
+        R_click_rsvp: { role: 'button', name: 'RSVP', exact: true }
+        sleep_after_rsvp: 3000
+        R_click_continue: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue: 2000
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 't1' }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 't2' }
+        fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 567-8900' }
+        fill_email: { locator: 'input[name="contact.email"]', value: 'yuxiao.zhu.ext@1m.app' }
+        sleep_before_place_order: 1500
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_after_place_order: 8000
+    expect_result:
+        description: "Guest should see the successful payment confirmation modal"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Thanks for your payment!"
 
-# testT4259_partner:
-#     description: "Verify partner can set up product auto-replacement chain A->B->C"
-#     test_step:
-#         open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
-#         sleep_after_open: 5000
-#         R_click_tickets_tab: { role: 'tab', name: 'Tickets' }
-#         sleep_after_tickets_tab: 2000
-#         R_click_general_a: { text: 'General A' }
-#         sleep_before_fill_a: 1500
-#         fill_numeric_a: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
-#         sleep_before_save_a: 2000
-#         R_click_save_a: { role: 'button', name: 'Save', exact: true }
-#         sleep_after_save_a: 2000
-#         R_click_general_b: { text: 'General B' }
-#         sleep_before_fill_b: 1500
-#         fill_numeric_b: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
-#         sleep_before_save_b: 2000
-#         R_click_save_b: { role: 'button', name: 'Save', exact: true }
-#         sleep_after_save_b: 2000
-#         R_click_events_tab: { role: 'tab', name: 'Event' }
-#         sleep_after_events_tab: 2000
-#         R_click_posts_tab: { role: 'tab', name: 'Posts' }
-#         sleep_after_posts_tab: 2000
-#         R_click_post_product: { role: 'button', name: 'Image of Product', exact: false }
-#         sleep_after_click_product: 5000
-#         R_click_customize_products: { role: 'button', name: 'Customize products', timeout: 30000 }
-#         sleep_after_customize: 3000
-#         check_replace_c_b: { locator: 'input[name="products.0.hasReplaceProduct"]', checked: true }
-#         sleep_after_check_c_b: 3000
-#         select_b_for_c: { name: 'General B' }
-#         sleep_after_select_b: 2000
-#         R_click_confirm_c_b: { name: 'Confirm' }
-#         sleep_after_confirm_c_b: 5000
-#         check_replace_b_a: { locator: 'input[name="products.1.hasReplaceProduct"]', checked: true, timeout: 20000 }
-#         sleep_after_check_b_a: 3000
-#         select_a_for_b: { name: 'General A' }
-#         sleep_after_select_a: 2000
-#         R_click_confirm_b_a: { name: 'Confirm' }
-#         sleep_after_confirm_b_a: 2000
-#         R_click_save_products: { role: 'button', name: 'Save', exact: true }
-#         sleep_after_save_products: 2000
-#         R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
-#         sleep_before_confirm: 1500
-#         R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
-#         sleep_after_update: 3000
-#     expect_result:
-#         description: "Partner setup of auto-replacement chain completed"
-#         assertions: []
+testT4259_partner:
+    description: "Verify partner can set up product auto-replacement chain A->B->C"
+    test_step:
+        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        sleep_after_open: 5000
+        R_click_tickets_tab: { role: 'tab', name: 'Tickets' }
+        sleep_after_tickets_tab: 2000
+        R_click_general_a: { text: 'General A' }
+        sleep_before_fill_a: 1500
+        fill_numeric_a: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
+        sleep_before_save_a: 2000
+        R_click_save_a: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_a: 2000
+        R_click_general_b: { text: 'General B' }
+        sleep_before_fill_b: 1500
+        fill_numeric_b: { locator: 'input[name="variants.0.inventoryQuantity"]', value: '1' }
+        sleep_before_save_b: 2000
+        R_click_save_b: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_b: 2000
+        R_click_events_tab: { role: 'tab', name: 'Event' }
+        sleep_after_events_tab: 2000
+        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        sleep_after_posts_tab: 2000
+        R_click_post_product: { role: 'button', name: 'Image of Product', exact: false }
+        sleep_after_click_product: 5000
+        R_click_customize_products: { role: 'button', name: 'Customize products', timeout: 30000 }
+        sleep_after_customize: 3000
+        check_replace_c_b: { locator: 'input[name="products.0.hasReplaceProduct"]', checked: true }
+        sleep_after_check_c_b: 3000
+        select_b_for_c: { name: 'General B' }
+        sleep_after_select_b: 2000
+        R_click_confirm_c_b: { name: 'Confirm' }
+        sleep_after_confirm_c_b: 5000
+        check_replace_b_a: { locator: 'input[name="products.1.hasReplaceProduct"]', checked: true, timeout: 20000 }
+        sleep_after_check_b_a: 3000
+        select_a_for_b: { name: 'General A' }
+        sleep_after_select_a: 2000
+        R_click_confirm_b_a: { name: 'Confirm' }
+        sleep_after_confirm_b_a: 2000
+        R_click_save_products: { role: 'button', name: 'Save', exact: true }
+        sleep_after_save_products: 2000
+        R_click_update: { role: 'button', name: 'Update', exact: true, index: 0 }
+        sleep_before_confirm: 1500
+        R_click_update_confirm: { role: 'button', name: 'Update', exact: true, index: -1 }
+        sleep_after_update: 3000
+    expect_result:
+        description: "Partner setup of auto-replacement chain completed"
+        assertions: []
 
 testT4259_guest:
     guest: true
