@@ -9,11 +9,10 @@ Version          : 2.0
 '''
 import os
 os.environ["AI_DISABLED"] = "True"
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-# Ensure BASE_DIR is absolute and correct if it was failing
-if not os.path.exists(os.path.join(BASE_DIR, "test_case")):
-    # Fallback to a safer calculation if 4 levels isn't right for some reason
-    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+while not os.path.exists(os.path.join(BASE_DIR, "test_case")) and BASE_DIR != os.path.dirname(BASE_DIR):
+    BASE_DIR = os.path.dirname(BASE_DIR)
+
 import shutil
 from loguru import logger
 import warnings
@@ -63,24 +62,6 @@ def pytest_runtest_makereport(item, call):
             pass # Ignore errors if the fixture is not present
 
 
-@pytest.fixture(scope="session")
-def browser_type_launch_args(browser_type_launch_args):
-    # Default to Ticket_C for the main session
-    # Use forward slashes for safer Chromium argument parsing on Windows
-    y4m_path = os.path.join(BASE_DIR, "data", "Ticket_C.y4m").replace("\\", "/")
-
-    return {
-        **browser_type_launch_args,
-        "args": [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            f"--use-file-for-fake-video-capture={y4m_path}",
-            "--window-size=600,1100",
-            "--start-maximized",
-            "--disable-translate",
-            "--disable-features=Translate"
-        ],
-    }
 
 def pytest_addoption(parser):
     try:
@@ -110,23 +91,24 @@ def browser_context_args(browser_context_args, playwright, request):
     except Exception:
         pass
 
+    # Base arguments for all contexts
+    base_args = {
+        **browser_context_args,
+        "permissions": ["camera", "microphone"],
+        "ignore_https_errors": True,
+    }
+
     if is_mobile:
         iphone_14 = playwright.devices['iPhone 14 Pro Max']
         res = {
-            **browser_context_args,
+            **base_args,
             **iphone_14,
-            "permissions": ["camera", "microphone"],
         }
         logger.info("MOBILE_EMULATION: Enabled (iPhone 14 Pro Max)")
         return res
     else:
-        # Desktop (Default)
-        res = {
-            **browser_context_args,
-            "permissions": ["camera", "microphone"],
-        }
         logger.info("MOBILE_EMULATION: Disabled (Desktop)")
-        return res
+        return base_args
 
 
 @pytest.fixture()
@@ -169,6 +151,42 @@ def context(
     else:
         # Use full mobile emulation args even for guests as requested
         context = browser.new_context(**browser_context_args)
+
+    # Force grant permissions even if storage_state has restricted ones
+    try:
+        context.grant_permissions(["camera", "microphone"])
+    except Exception as e:
+        logger.warning(f"Failed to grant preset permissions: {e}")
+
+    # --- KEY FIX: Patch getUserMedia to relax 'exact' constraints ---
+    # The web app requests facingMode:{exact:"environment"} and deviceId:{exact:...}
+    # which fails because Chromium's fake device doesn't declare a facing mode.
+    # We intercept and change 'exact' to 'ideal' so the fake device can pass the check.
+    context.add_init_script("""
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            const _original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+            navigator.mediaDevices.getUserMedia = function(constraints) {
+                if (constraints && constraints.video && typeof constraints.video === 'object') {
+                    const v = JSON.parse(JSON.stringify(constraints.video));
+                    // Relax facingMode: {exact: 'environment'} -> {ideal: 'environment'}
+                    if (v.facingMode && v.facingMode.exact) {
+                        v.facingMode = { ideal: v.facingMode.exact };
+                    }
+                    // Remove deviceId exact constraint (fake device has no real deviceId)
+                    if (v.deviceId && v.deviceId.exact) {
+                        delete v.deviceId;
+                    }
+                    // Delete width/height constraints so the fake camera ignores 16:9 
+                    // requirements and doesn't crop or stretch 1:1 videos like Ticket_C.y4m
+                    if (v.width) delete v.width;
+                    if (v.height) delete v.height;
+                    constraints = { ...constraints, video: v };
+                }
+                return _original(constraints);
+            };
+        }
+    """)
+    logger.info("CAMERA_PATCH: getUserMedia constraint relaxation injected.")
 
     context.on("page", lambda page: pages.append(page))
     tracing_option = pytestconfig.getoption("--tracing")

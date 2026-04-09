@@ -58,65 +58,6 @@ testT3370:
         description: "Product card alignment should be verified for both Top aligned and Waterfall layouts."
         assertions: []
 
-testT3554:
-    description: "Verify adding a new module in shop page"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
-        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'test new module' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_before_add: 2000
-        R_click4: { role: 'button', name: 'Add' }
-        sleep_wait_product: 5000
-        R_click5: { role: 'button', index: 1 }
-        sleep_wait_confirm: 2000
-        R_click7: { role: 'button', name: 'Add', index: -1 }
-        sleep_after_publish: 5000
-        open_back: "https://release.pear.us/demi-release"
-        sleep_before_verify: 2000
-    expect_result:
-        description: "Verify that the new module is visible on the page"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "test new module"
-
-testT4264:
-    description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
-        sleep_after_module_click: 5000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_after_add: 1500
-        sleep_after_add_new: 2000
-        l_click_regex1: { text: '^Image$' , exact: true}
-        sleep_after_click_image: 2000
-        check2: { role: 'radio', name: 'Carousel Carousel' }
-        sleep_before_add: 2000
-        R_click4: { role: 'button', name: 'Add' }
-        sleep_after_add: 2000
-        click_module_add_new: { module_name: 'test image link' }
-        fill_by_placeholder_and_locator1: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
-        fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
-        upload1: { text: 'Upload', file_path: 'D:/new test/Autotest-monster/data/test imag.jpeg' }
-        wait_for_upload_and_ui_update1: { timeout: 5000 }
-        sleep_before_done: 2000
-        R_click_done: { role: 'button', name: 'Done', exact: true }
-        screenshot_check_done: { name: "debug_done_click" }
-        sleep_after_done: 2000
-        click_add_button_regex_final: {}
-        sleep_after_close: 3000
-    expect_result:
-        description: "Verify that the new image link card is visible on the page"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "test aotu image"
-
 testT1993:
     description: "Verify the function of generating invitation link"
     test_step:
@@ -242,58 +183,6 @@ testT4306:
               text: "test auto send"
             - assertion_type: "element_visible_by_text"
               text: "yuxiao.zhu.ext@1m.app"
-
-testT3556:
-    description: "Verify editing an existing module"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        sleep_after_open: 3000
-        click_module_edit_button: { module_name: 'post module 1' }
-        sleep_after_edit_click: 1500
-        R_click_edit_module: { role: 'button', name: 'Edit module' }
-        sleep_after_edit_module: 1000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test updated module' }
-        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
-        sleep_before_save: 1000
-        R_click_save: { role: 'button', name: 'Save' }
-        sleep_after_save: 3000
-    expect_result:
-        description: "Module should be edited successfully"
-        assertions:
-            - { assertion_type: "element_visible_by_text", text: "test updated mod", exact: false }
-
-testT3842:
-    description: "Verify adding a new product to an existing module"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
-        sleep_after_module_click: 2000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test product link' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        check1: { role: 'radio', name: 'Links (select a type below)' }
-        l_click_regex1: { text: '^Product$', index: 0 }
-        check2: { role: 'radio', name: 'Carousel Carousel' }
-        sleep_before_add: 2000
-        R_click4: { role: 'button', name: 'Add' }
-        sleep_after_add: 4000
-        click_module_add_new: { module_name: 'test product link' }
-        sleep_after_add_new: 5000
-        fill_product_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
-        fill_product_title: { placeholder: 'As the bold title on your', value: 'test prodcut link card' }
-        sleep_before_price: 1000
-        fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
-        upload_product_image: { text: 'Upload', file_path: 'D:/new test/Autotest-monster/data/test imag.jpeg' }
-        sleep_after_upload: 3000
-        sleep_before_final_add: 2000
-        click_add_button_regex: {}
-        sleep_after_final_add: 3000
-        verify_product_visible: { text: 'test prodcut link card' }
-    expect_result:
-        description: "Product should be added to the module successfully"
-        assertions: []
-#               text: "test prodcut link card"
 
 testT2129:
     description: "Verify the Product card can create post success on my shop page"

@@ -29,6 +29,27 @@ import re
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    # Now that the path is space-free (monster_test), we can use simple normalization
+    y4m_path = os.path.join(BASE_DIR, "data", "Ticket_C.y4m").replace("\\", "/")
+    logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
+
+    return {
+        **browser_type_launch_args,
+        "args": [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            f"--use-file-for-fake-video-capture={y4m_path}",
+            "--window-size=600,1100",
+            "--start-maximized",
+            "--disable-translate",
+            "--disable-features=Translate",
+            "--disable-gpu",
+            "--no-sandbox"
+        ],
+    }
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
@@ -136,7 +157,7 @@ def pytest_generate_tests(metafunc):
     if "smokecases1" in metafunc.fixturenames:
         yaml_file = metafunc.config.getoption("--yaml")
         if not yaml_file:
-            yaml_file = "Partner_create_form.yaml"
+            yaml_file = "Storefront_module.yaml"
             
         yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file)
         

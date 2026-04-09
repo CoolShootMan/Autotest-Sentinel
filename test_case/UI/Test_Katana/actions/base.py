@@ -5,8 +5,10 @@ import sys
 from playwright.sync_api import Page, Locator, expect
 from loguru import logger
 
-# Calculate project base directory (5 levels up from actions/base.py)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+# Calculate project base directory dynamically (search up for .git or test_case)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+while not os.path.exists(os.path.join(BASE_DIR, "test_case")) and BASE_DIR != os.path.dirname(BASE_DIR):
+    BASE_DIR = os.path.dirname(BASE_DIR)
 logger.info(f"ACTIONS_BASE_DIR: {BASE_DIR}")
 from page.home import page_element_role_click, page_element_label_click, page_open
 from ..utils.ai_vision import ai_vision
@@ -187,18 +189,31 @@ def smart_click(page: Page, v: dict):
     root = active_modal if active_modal else page
 
     try:
-        # Standard relative locator attempt
-        el = root.locator(target_locator).get_by_text(target_name, exact=target_exact).nth(target_index)
-        if el.is_visible(timeout=2000):
-            el.click(force=force)
-            return
-    except: pass
+        # Standard locator attempt
+        # If target_locator is an absolute XPath or specified, use it directly from page
+        if target_locator:
+            if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                # Ensure Playwright treats it as XPath explicitly to avoid CSS engine errors
+                xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                el = page.locator(xpath_locator).nth(target_index)
+            else:
+                el = root.locator(target_locator).nth(target_index)
+            
+            # If name is also provided, filter by it
+            if target_name:
+                el = el.get_by_text(target_name, exact=target_exact)
+                
+            if el.is_visible(timeout=5000):
+                el.click(force=force)
+                return
+    except Exception as e:
+        logger.debug(f"Locator attempt failed: {e}")
 
     try:
         # 1.1 Aria-label fallback (Critical for icon buttons)
         if target_name:
             el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            if el.is_visible(timeout=2000):
+            if el.is_visible(timeout=3000):
                 el.click(force=force)
                 logger.info(f"Clicked via aria-label fallback: {target_name}")
                 return
