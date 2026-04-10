@@ -43,7 +43,7 @@ testT4264:
         click_module_add_new: { module_name: 'test image link',exact: true }
         fill_by_placeholder_and_locator1: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
         fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
-        upload1: { text: 'Upload', file_path: 'D:/new test/Autotest-monster/data/test imag.jpeg' }
+        upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
         wait_for_upload_and_ui_update1: { timeout: 5000 }
         sleep_before_done: 2000
         R_click_done: { role: 'button', name: 'Done', exact: true }
@@ -100,7 +100,7 @@ testT3842:
         fill_product_title: { placeholder: 'As the bold title on your', value: 'test prodcut link card' }
         sleep_before_price: 1000
         fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
-        upload_product_image: { text: 'Upload', file_path: 'D:/new test/Autotest-monster/data/test imag.jpeg' }
+        upload_product_image: { text: 'Upload', file_path: 'data/test imag.jpeg' }
         sleep_after_upload: 5000
         sleep_before_final_add: 2000
         R_click_final_add: { locator: "/html/body/div[3]/div[3]/div/div[3]/div/div/button", name: "Add" }
@@ -112,3 +112,90 @@ testT3842:
         description: "Product should be added to the module successfully"
         assertions: []
 #               text: "test prodcut link card"
+
+
+testT4660:
+    is_mobile: true
+    description: "Verify adding a Music module and track, then deleting it"
+    test_step:
+        open: "https://release.pear.us/demi-release"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 3000
+        R_click_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test-Module-Music' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select_music: 2000
+        R_click_music: { locator: 'div', text: 'Music', exact: true }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+        click_module_add_new: { module_name: 'Test-Module-Music' }
+        fill_music_title: { role: 'textbox', name: 'Enter title, e.g. "Acoustic', value: 'TestMusic' }
+        fill_music_artist: { role: 'textbox', name: 'Enter artist, e.g. "Marco', value: 'one' }
+        R_click_square_image: { text: 'Square image' }
+        fill_spotify: { placeholder: 'Please enter link', value: 'https://open.spotify.com/episode/2tu23nk5IA85ZERqtV9yhJ?si=qXWPBakCTmKp6WUmPRAOPA&nd=1&dlsi=03780e5ded85490a', index: 0 }
+        fill_apple_music: { placeholder: 'Please enter link', value: 'https://music.apple.com/cn/album/%E5%B9%B3%E5%BA%B8-live/1851707677?i=1851707683', index: 1 }
+        upload_replace: { text: 'Replace', file_path: 'data/test imag.jpeg' }
+        wait_for_upload_and_ui_update1: { timeout: 300 }
+        R_click_done: { role: 'button', name: 'Done', exact: true }
+        sleep_before_done: 3000
+        R_click_add_service: { role: 'button', name: 'Add service' }
+        R_click_amazon: { role: 'button', name: 'Amazon' }
+        fill_amazon_link: { placeholder: 'Please enter link', value: 'https://www.amazon.com/music', index: 2 }
+        R_click_final_add_track: { role: 'button', name: 'Add', exact: true }
+        sleep_after_track_add: 3000
+        click_module_edit_button: { module_name: 'Test-Module-Music' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        R_click_confirm_delete: { role: 'button', name: 'Delete' }
+        sleep_after_delete: 2000
+    expect_result:
+        description: "Module and track should be added and then deleted successfully"
+        assertions: []
+
+testT5106:
+    description: "Verify event creation and completion (archiving)"
+    test_step:
+        open: "https://release.pear.us/demi-release"
+        sleep_after_open: 2000
+        R_click_storefront_nav: { role: 'button', name: 'Storefront' }
+        R_click_events_tab: { role: 'link', name: 'Events' }
+        R_click_create_event: { role: 'button', name: 'Create an event' }
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
+        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
+        sleep_after_address_fill: 1500
+        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
+        R_click_calendar_icon: { locator: "[data-testid='CalendarLineIcon']", index: 0 }
+        R_click_date_30: { role: 'gridcell', name: '30' }
+        sleep_after_select_calender: 1000
+        R_click_calendar_icon_2: { locator: "[data-testid='CalendarLineIcon']", index: 0 }
+        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        R_click_save_continue: { role: 'button', name: 'Save and continue' }
+        sleep_before_tickets: 2000
+        R_click_save_tickets: { role: 'button', name: 'Save and continue to Tickets' }
+        fill_quantity: { placeholder: 'Quantity', value: '36' }
+        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
+        sleep_after_ticket_fill: 2000
+        R_click_save_lineup: { role: 'button', name: 'Save and continue to Lineup' }
+        sleep_before_finish: 2000
+        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_module_1: { role: 'button', name: 'demi test' }
+        R_click_module_2: { role: 'button', name: 'test updated module' }
+        R_click_view_st: { role: 'button', name: 'View post on storefront' }
+        sleep_after_view_st: 5000
+        click_module_post_view_event_cta: { module_name: 'demi test', post_title: 'Test-event-Auto-archive' }
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
+        R_click_mark_completed_confirm: { role: 'button', name: 'Mark as Completed' }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        R_click_close_modal: { role: 'button', name: 'Close' }
+        sleep_after_close: 2000
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test-event-Auto-archive"
+
+

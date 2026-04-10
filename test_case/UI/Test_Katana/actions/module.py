@@ -33,4 +33,9 @@ def click_module_add_new(page: Page, v: dict):
     # 2. Click the button within that container
     container.get_by_role("button", name="Add new").click(timeout=10000)
 
-
+def click_module_post_view_event_cta(page: Page, v: dict):
+    post_title = v.get("post_title")
+    module_name = v.get("module_name")
+    logger.info(f"Clicking view event cta for module: {module_name} and post title: {post_title}")
+    container = page.locator("div", has_text=module_name).filter(has_text=post_title).last
+    container.get_by_role("button", name="View event").first.click(timeout=10000)
