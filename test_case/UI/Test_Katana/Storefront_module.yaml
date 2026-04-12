@@ -155,10 +155,12 @@ testT5106:
     description: "Verify event creation and completion (archiving)"
     test_step:
         open: "https://release.pear.us/demi-release"
-        sleep_after_open: 2000
+        # open: "https://release.pear.us/events/create"
+        sleep_after_open: 5000
         R_click_storefront_nav: { role: 'button', name: 'Storefront' }
         R_click_events_tab: { role: 'link', name: 'Events' }
-        R_click_create_event: { role: 'button', name: 'Create an event' }
+        sleep_after_events_tab: 3000
+        R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
@@ -170,13 +172,14 @@ testT5106:
         sleep_after_select_calender: 1000
         R_click_calendar_icon_2: { locator: "[data-testid='CalendarLineIcon']", index: 0 }
         R_click_time_option: { role: 'menuitem', name: '12:45 am' }
-        R_click_save_continue: { role: 'button', name: 'Save and continue' }
         sleep_before_tickets: 2000
-        R_click_save_tickets: { role: 'button', name: 'Save and continue to Tickets' }
+        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
+        sleep_before_tickets: 2000
+        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
         fill_quantity: { placeholder: 'Quantity', value: '36' }
         fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
         sleep_after_ticket_fill: 2000
-        R_click_save_lineup: { role: 'button', name: 'Save and continue to Lineup' }
+        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
         sleep_before_finish: 2000
         R_click_finish: { role: 'button', name: 'Finish and create post' }
         R_click_module_1: { role: 'button', name: 'demi test' }
@@ -188,7 +191,8 @@ testT5106:
         sleep_after_edit_event: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
         R_click_status_completed: { role: 'menuitem', name: 'Completed' }
-        R_click_mark_completed_confirm: { role: 'button', name: 'Mark as Completed' }
+        sleep_after_edit_event: 2000
+        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
         R_click_save_edit: { role: 'button', name: 'Save' }
         R_click_close_modal: { role: 'button', name: 'Close' }
         sleep_after_close: 2000
