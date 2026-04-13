@@ -1,11 +1,11 @@
 testT3554:
     description: "Verify adding a new module in shop page"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
-        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'test new module' }
+        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'post module 1' }
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_before_add: 2000
         R_click4: { role: 'button', name: 'Add' }
@@ -14,18 +14,38 @@ testT3554:
         sleep_wait_confirm: 2000
         R_click7: { role: 'button', name: 'Add', index: -1 }
         sleep_after_publish: 5000
-        open_back: "https://release.pear.us/demi-release"
+        open_back: "https://release.pear.us/autotestshop"
         sleep_before_verify: 2000
     expect_result:
         description: "Verify that the new module is visible on the page"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "test new module"
+              text: "post module 1"
+
+testT3556:
+    description: "Verify editing an existing module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        click_module_edit_button: { module_name: 'post module 1' }
+        sleep_after_edit_click: 1500
+        R_click_edit_module: { role: 'button', name: 'Edit module' }
+        sleep_after_edit_module: 1000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test updated module' }
+        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
+        sleep_before_save: 1000
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
+    expect_result:
+        description: "Module should be edited successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "test updated mod", exact: false }
+
 
 testT4264:
     description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -59,29 +79,11 @@ testT4264:
             - assertion_type: "element_visible_by_text"
               text: "test aotu image"
 
-testT3556:
-    description: "Verify editing an existing module"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        sleep_after_open: 3000
-        click_module_edit_button: { module_name: 'post module 1' }
-        sleep_after_edit_click: 1500
-        R_click_edit_module: { role: 'button', name: 'Edit module' }
-        sleep_after_edit_module: 1000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test updated module' }
-        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
-        sleep_before_save: 1000
-        R_click_save: { role: 'button', name: 'Save' }
-        sleep_after_save: 3000
-    expect_result:
-        description: "Module should be edited successfully"
-        assertions:
-            - { assertion_type: "element_visible_by_text", text: "test updated mod", exact: false }
 
 testT3842:
     description: "Verify adding a new product to an existing module"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -101,13 +103,12 @@ testT3842:
         sleep_before_price: 1000
         fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
         upload_product_image: { text: 'Upload', file_path: 'data/test imag.jpeg' }
-        sleep_after_upload: 5000
-        sleep_before_final_add: 2000
-        R_click_final_add: { locator: "/html/body/div[3]/div[3]/div/div[3]/div/div/button", name: "Add" }
+        sleep_after_upload: 10000
+        R_click_final_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
         sleep_after_final_add: 3000
         l_click_links_tab_prod: { role: 'tab', name: 'Links' }
         sleep_before_verify_prod: 2000
-        verify_product_visible: { text: 'test prodcut link card' }
+        verify_product_visible: { text: 'test prodcut link' }
     expect_result:
         description: "Product should be added to the module successfully"
         assertions: []
@@ -118,7 +119,7 @@ testT4660:
     is_mobile: true
     description: "Verify adding a Music module and track, then deleting it"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
         R_click_module: { role: 'button', name: 'Module' }
@@ -154,7 +155,7 @@ testT4660:
 testT5106:
     description: "Verify event creation and completion (archiving)"
     test_step:
-        #open: "https://release.pear.us/demi-release"
+        #open: "https://release.pear.us/autotestshop"
         open: "https://release.pear.us/events/create"
         sleep_after_open: 5000
         # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
@@ -182,11 +183,9 @@ testT5106:
         R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
         sleep_before_finish: 2000
         R_click_finish: { role: 'button', name: 'Finish and create post' }
-        R_click_module_1: { role: 'button', name: 'demi test' }
-        R_click_module_2: { role: 'button', name: 'test updated module' }
         R_click_view_st: { role: 'button', name: 'View post on storefront' }
         sleep_after_view_st: 5000
-        click_module_post_view_event_cta: { module_name: 'demi test', post_title: 'Test-event-Auto-archive' }
+        click_module_post_view_event_cta: { module_name: 'test updated module', post_title: 'Test-event-Auto-archive' }
         R_click_edit_event: { role: 'button', name: 'Edit event' }
         sleep_after_edit_event: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }

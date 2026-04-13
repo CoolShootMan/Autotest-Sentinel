@@ -136,11 +136,12 @@ GEMINI_API_KEY=your_single_key_here
 ```bash
 # 运行特定用例 (headed 模式)
 pytest test_case/UI/Test_Katana/test_ui.py \
-    -k "testT3554" \
     --headed \
     -v \
     --env release \
-    --storage-state test_case/UI/Test_Katana/cookie_release.json
+    --yaml All_YAML/Module/Module.yaml \
+    --storage-state test_case/UI/Test_Katana/cookie_release.json \
+    -k "testT3842"
 
 # 运行全部用例并生成报告
 python main.py
