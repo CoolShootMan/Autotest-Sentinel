@@ -36,3 +36,77 @@ testT4790:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Thanks for your submission!"
+
+testT4970:
+  guest: false
+  description: "Verify single choice field validation errors: single option, zero options, empty options, duplicate options"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Click "Add new" to create form
+    click_add_new: { role: 'button', name: 'Add new' }
+    sleep_add: 3000
+
+    # Fill form title and subtitle
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test form verify error' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'single choice/multiple choice options' }
+
+    # Delete default Email and Phone fields
+    click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
+    click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_1: 500
+    click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_2: 500
+    click_view_phone_options: { role: 'button', name: 'View Phone options', exact: true }
+    click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_1: 500
+    click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_2: 500
+
+    # Add Single choice field
+    click_add_new_field: { role: 'button', name: 'Add new field', exact: true }
+    sleep_after_add_field: 500
+    click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
+    fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'single' }
+    fill_field_description: { role: 'textbox', name: 'Enter a description', value: 'xx' }
+
+    # --- Verification 1: Single option validation ---
+    # Default has 2 options, click Add with no option content filled
+    click_add_attempt_1: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_1: { text: 'Options cannot be empty' }
+
+    # Fill only the first option
+    fill_option_1: { role: 'textbox', name: 'Enter option', index: 0, value: 'xx' }
+    click_add_attempt_2: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_2: { text: 'Options cannot be empty' }
+
+    # --- Verification 3: Duplicate content validation ---
+    # Fill second option with same value as first
+    fill_option_2_dup: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx' }
+    click_add_attempt_3: { role: 'button', name: 'Add', exact: true }
+    verify_duplicate_error: { text: 'Options cannot have duplicates: "xx"' }
+
+    # --- Verification 4: Add a third empty option ---
+    click_add_option: { role: 'button', name: 'Add option' }
+    click_add_attempt_4: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_3: { text: 'Options cannot be empty' }
+
+    # Fix: delete the 3rd empty option, update second option to unique value
+    click_add_attempt_5: { role: 'button', name: 'Add', exact: true }
+    click_delete_option_3: { locator: '[data-testid="mui-icon-button"]', index: 2 }
+    sleep_delete_option: 500
+    fill_option_2_unique: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx1' }
+    click_add_final: { role: 'button', name: 'Add', exact: true }
+
+    # Continue and save
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 1000
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Single choice field should show validation errors for empty, single, and duplicate options, then save successfully"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "test form verify error"
