@@ -111,7 +111,7 @@ testT4970:
       - assertion_type: "element_visible_by_text"
         text: "test form verify error"
 
-testT4867:
+testT4866:
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
@@ -152,8 +152,44 @@ testT4867:
     sleep_after_update: 3000
     verify_published: { text: 'Post published!' }
 
+    # Verify CTA button on storefront opens form modal
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    R_click_test_form_btn: { role: 'button', text: 'test form' }
+    sleep_after_modal: 2000
+    verify_contact_us: { locator: 'h4.MuiTypography-h4', text: 'Contact us' }
+
   expect_result:
-    description: "Post should be published successfully with CTA form button"
-    assertions:
-      - assertion_type: "element_visible_by_text"
-        text: "Post published!"
+    description: "CTA form button should be inserted and post published successfully"
+    assertions: []
+
+testT4867:
+  guest: false
+  description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click on CTA button in editor to select it
+    R_click_cta_btn: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select: 500
+
+    # Delete the CTA button
+    R_click_delete: { role: 'button', name: 'Delete' }
+    sleep_after_delete: 500
+    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 1000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+    # Verify CTA button no longer exists on storefront
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
+
+  expect_result:
+    description: "CTA form button should be removed from post after deletion"
+    assertions: []
