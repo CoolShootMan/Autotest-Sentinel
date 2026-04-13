@@ -159,7 +159,7 @@ def smart_upload(page: Page, v: dict):
             else:
                 page.get_by_text(v.get("text"), exact=True).nth(target_index).click()
         fc = fc_info.value
-        fc.set_files(file_path)
+        fc.set_files(file_path if isinstance(file_path, list) else [file_path])
 
 def smart_click(page: Page, v: dict):
     if page.get_by_text("Something went wrong!", exact=True).is_visible():

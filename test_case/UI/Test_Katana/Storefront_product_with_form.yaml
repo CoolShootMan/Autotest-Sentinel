@@ -15,3 +15,24 @@ testT3690:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Added to cart"
+
+testT4790:
+  description: "Verify guest can submit a form with media upload on standalone form page"
+  guest: true
+  test_step:
+    open: "https://release.pear.us/form/7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    sleep_after_open: 3000
+    fill_short_text: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
+    press_enter: { press: 'Enter' }
+    fill_short_text_retry: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
+    upload_media: { text: 'Add media', file_path: ['data/imgs/01.png', 'data/imgs/02.png', 'data/imgs/03.png', 'data/imgs/04.png', 'data/imgs/05.png', 'data/imgs/06.png', 'data/imgs/07.png', 'data/imgs/08.png', 'data/imgs/09.png', 'data/imgs/10.png'] }
+    sleep_after_upload: 2000
+    R_click_button: { locator: '[data-testid="button"]' }
+    sleep_after_submit: 3000
+    verify_thanks: { text: 'Thanks for your submission!' }
+    R_click_got_it: { locator: '[data-testid="mui-button"]' }
+  expect_result:
+    description: "Form should be submitted successfully with thanks confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your submission!"
