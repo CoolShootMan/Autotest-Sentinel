@@ -1,4 +1,4 @@
-testT3690:
+testT5007:
   description: "Verify adding a product with form to cart from storefront"
   guest: true
   test_step:
