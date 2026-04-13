@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import glob
+from pathlib import Path
 
 def image_to_y4m(image_path, output_path, duration_sec=5, fps=30):
     """
@@ -54,6 +55,8 @@ def batch_convert(img_dir, output_dir):
         image_to_y4m(img_path, output_path)
 
 if __name__ == "__main__":
-    img_dir = r"Autotest-monster\data\prod_env_QR"
-    output_dir = r"Autotest-monster\data"
-    batch_convert(img_dir, output_dir)
+    project_root = Path(__file__).parent
+    img_dir = project_root / "data" / "prod_env_QR"
+    output_dir = project_root / "data"
+
+    batch_convert(str(img_dir), str(output_dir))
