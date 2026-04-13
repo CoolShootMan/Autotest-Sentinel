@@ -1,0 +1,17 @@
+testT3690:
+  description: "Verify adding a product with form to cart from storefront"
+  guest: true
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/exo646"
+    sleep_after_open: 3000
+    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    sleep_after_form: 1000
+    fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+    verify_added: { text: 'Added to cart' }
+  expect_result:
+    description: "Product should be added to cart successfully"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Added to cart"
