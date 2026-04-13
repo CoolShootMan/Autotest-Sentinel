@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 
 from playwright.sync_api import Playwright, sync_playwright, expect
 
@@ -8,27 +9,33 @@ def run(playwright: Playwright) -> None:
     context = browser.new_context()
     page = context.new_page()
     page.goto("https://release.pear.us/login", timeout=90000)
-    page.screenshot(path="login_debug.png")
-    print("Screenshot saved to login_debug.png")
+    # page.screenshot(path="login_debug.png")
+    # print("Screenshot saved to login_debug.png")
     
     # The login page might directly show the email/password fields or require a click.
-    try:
-        page.get_by_text("Log in with password").click(timeout=10000)
-    except Exception as e:
-        print(f"Failed to click 'Login with password': {e}")
-        page.screenshot(path="login_error.png")
-        raise e
-    page.get_by_text("Use Email").click()
+    # try:
+    #     page.get_by_text("Log in with password").click(timeout=10000)
+    # except Exception as e:
+    #     print(f"Failed to click 'Login with password': {e}")
+    #     page.screenshot(path="login_error.png")
+    #     raise e
+    # page.get_by_text("Use Email").click()
     #page.get_by_role("textbox", name="Phone number").fill("4086257869")
     #page.get_by_role("textbox", name="Input your password").fill("Xuan123456")
-    page.get_by_role("textbox", name="Email").fill("linda.zhou.ext+02@1m.app")
+    # page.get_by_role("textbox", name="Email").fill("linda.zhou.ext+02@1m.app")
+    # page.get_by_role("textbox", name="Input your password").fill("Happy123")
+    page.get_by_role("textbox", name="Email").fill("yuxiao.zhu.ext+999@1m.app")
     page.get_by_role("textbox", name="Input your password").fill("Happy123")
     page.get_by_role("button", name="Log in", exact=True).click()
     # Wait for the URL to change, indicating a successful login and navigation.
     page.wait_for_url(lambda url: "/login" not in url, timeout=60000)
 
     # Now that login is complete, save the storage state.
-    cookies = context.storage_state(path="D:\\UI Automation\\test_case\\UI\\Test_Katana\\cookie_release.json")
+    # 构建跨平台路径（支持 Mac、Windows、Linux）
+    project_root = Path(__file__).parent.parent
+    cookie_path = project_root / "test_case" / "UI" / "Test_Katana" / "cookie_release.json"
+
+    cookies = context.storage_state(path=str(cookie_path))
     print(cookies)
     page.close()
 
