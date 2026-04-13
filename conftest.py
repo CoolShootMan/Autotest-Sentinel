@@ -31,8 +31,25 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
-    # Now that the path is space-free (monster_test), we can use simple normalization
-    y4m_path = os.path.join(BASE_DIR, "data", "Ticket_C.y4m").replace("\\", "/")
+    # Default to the trimmed small video to prevent OOM
+    y4m_name = "Ticket_Small.y4m"
+    
+    # Fallback to Ticket_C.y4m if small one doesn't exist
+    if not os.path.exists(os.path.join(BASE_DIR, "data", y4m_name)):
+        y4m_name = "Ticket_C.y4m"
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
+    if worker_id != "master":
+        # Extract index from 'gw0', 'gw1' etc.
+        try:
+            worker_idx = int(re.sub(r'\D', '', worker_id)) + 1
+            worker_y4m = f"Ticket_{worker_idx}.y4m"
+            if os.path.exists(os.path.join(BASE_DIR, "data", worker_y4m)):
+                y4m_name = worker_y4m
+                logger.info(f"WORKER_ISOLATION: Worker {worker_id} using dedicated video: {y4m_name}")
+        except Exception as e:
+            logger.warning(f"Failed to determine worker-specific video: {e}")
+
+    y4m_path = os.path.join(BASE_DIR, "data", y4m_name).replace("\\", "/")
     logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
 
     return {
