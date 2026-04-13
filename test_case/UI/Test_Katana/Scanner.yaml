@@ -1,93 +1,113 @@
-# --- Original Scan Cases (Commented out for Concurrency Test) ---
-# testT3981_Verified:
+# --- Original Scan Cases ---
+testT3981_Verified:
+    is_mobile: true
+    description: "Verify QR scanner can successfully verify a valid ticket (Verified)"
+    test_step:
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_verified: { text: "Code Verified", timeout: 20000 }
+    expect_result:
+        description: "Ticket should be verified successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Verified" }
+
+testT3981_Already:
+    is_mobile: true
+    description: "Verify QR scanner shows 'Already Redeemed' for an already used ticket"
+    test_step:
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_already: { text: "Code Already Redeemed", timeout: 20000 }
+    expect_result:
+        description: "Should display Already Redeemed status"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Already Redeemed" }
+
+testT3981_NotRecognized:
+    is_mobile: true
+    description: "Verify QR scanner shows error for an unrecognized/invalid code"
+    test_step:
+        execute_not_recognized_scan: "run"
+    expect_result:
+        description: "Should display Code Not Recognized error"
+        assertions: []
+
+# --- Concurrency Stress Test (10 Threads) - Commented out, pending test data ---
+# testT3981_Concurrency_01:
 #     is_mobile: true
-#     description: "Verify QR scanner can successfully verify a valid ticket (Verified)"
+#     video_index: 1
+#     description: "Concurrent Scan Worker 01"
 #     test_step:
 #         open: "https://s.pear.us/AspxjH"
 #         sleep_wait_for_scan: 5000
-#         verify_verified: { text: "Code Verified", timeout: 20000 }
+#         verify_verified: { text: "Code Verified", timeout: 25000 }
 #     expect_result:
-#         description: "Ticket should be verified successfully"
-#         assertions:
-#             - { assertion_type: "element_visible_by_text", text: "Code Verified" }
-
-# --- Concurrency Stress Test (10 Threads) ---
-# Note: These will use Ticket_{1..10}.y4m if available, otherwise Ticket_C.y4m
-testT3981_Concurrency_01:
-    is_mobile: true
-    video_index: 1
-    description: "Concurrent Scan Worker 01"
-    test_step:
-        open: "https://s.pear.us/AspxjH"
-        sleep_wait_for_scan: 5000
-        verify_verified: { text: "Code Verified", timeout: 25000 }
-    expect_result:
-        description: "Concurrent scan verification"
-        assertions: []
-
-testT3981_Concurrency_02:
-    is_mobile: true
-    video_index: 2
-    description: "Concurrent Scan Worker 02"
-    test_step:
-        open: "https://s.pear.us/AspxjH"
-        sleep_wait_for_scan: 5000
-        verify_verified: { text: "Code Verified", timeout: 25000 }
-    expect_result:
-        assertions: []
-
-testT3981_Concurrency_03:
-    is_mobile: true
-    video_index: 3
-    description: "Concurrent Scan Worker 03"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_04:
-    is_mobile: true
-    video_index: 4
-    description: "Concurrent Scan Worker 04"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_05:
-    is_mobile: true
-    video_index: 5
-    description: "Concurrent Scan Worker 05"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_06:
-    is_mobile: true
-    video_index: 6
-    description: "Concurrent Scan Worker 06"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_07:
-    is_mobile: true
-    video_index: 7
-    description: "Concurrent Scan Worker 07"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_08:
-    is_mobile: true
-    video_index: 8
-    description: "Concurrent Scan Worker 08"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_09:
-    is_mobile: true
-    video_index: 9
-    description: "Concurrent Scan Worker 09"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
-
-testT3981_Concurrency_10:
-    is_mobile: true
-    video_index: 10
-    description: "Concurrent Scan Worker 10"
-    test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
-    expect_result: { assertions: [] }
+#         description: "Concurrent scan verification"
+#         assertions: []
+#
+# testT3981_Concurrency_02:
+#     is_mobile: true
+#     video_index: 2
+#     description: "Concurrent Scan Worker 02"
+#     test_step:
+#         open: "https://s.pear.us/AspxjH"
+#         sleep_wait_for_scan: 5000
+#         verify_verified: { text: "Code Verified", timeout: 25000 }
+#     expect_result:
+#         assertions: []
+#
+# testT3981_Concurrency_03:
+#     is_mobile: true
+#     video_index: 3
+#     description: "Concurrent Scan Worker 03"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_04:
+#     is_mobile: true
+#     video_index: 4
+#     description: "Concurrent Scan Worker 04"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_05:
+#     is_mobile: true
+#     video_index: 5
+#     description: "Concurrent Scan Worker 05"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_06:
+#     is_mobile: true
+#     video_index: 6
+#     description: "Concurrent Scan Worker 06"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_07:
+#     is_mobile: true
+#     video_index: 7
+#     description: "Concurrent Scan Worker 07"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_08:
+#     is_mobile: true
+#     video_index: 8
+#     description: "Concurrent Scan Worker 08"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_09:
+#     is_mobile: true
+#     video_index: 9
+#     description: "Concurrent Scan Worker 09"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
+#
+# testT3981_Concurrency_10:
+#     is_mobile: true
+#     video_index: 10
+#     description: "Concurrent Scan Worker 10"
+#     test_step: { open: "https://s.pear.us/AspxjH", sleep_wait_for_scan: 5000, verify_verified: { text: "Code Verified", timeout: 25000 } }
+#     expect_result: { assertions: [] }
