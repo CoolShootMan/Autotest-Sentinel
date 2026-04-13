@@ -110,3 +110,48 @@ testT4970:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "test form verify error"
+
+testT4867:
+  guest: false
+  description: "Verify inserting a CTA button with form into a post and publishing"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click Description to focus editor, then insert CTA Button
+    R_click_description: { role: 'textbox', name: 'Description' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true }
+    R_click_cta_elements: { text: 'CTA Elements' }
+    R_click_cta_button: { text: 'CTA Button' }
+    sleep_after_cta: 1000
+
+    # Select "Form" type from dropdown
+    R_click_type_dropdown: { locator: '[aria-label=""]', index: 0 }
+    R_click_form_option: { role: 'option', name: 'Form' }
+    sleep_after_select_type: 500
+
+    # Fill button text
+    R_click_action: { text: 'Action' }
+    fill_button_text: { role: 'textbox', name: 'Button text', value: 'test form' }
+
+    # Select the form created in testT4970
+    R_click_form_dropdown: { locator: '[aria-label=""]', index: 1 }
+    R_click_select_form: { text: 'test form verify error', index: 0 }
+    sleep_after_select_form: 500
+
+    # Confirm and save
+    R_click_save: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save: 1000
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+  expect_result:
+    description: "Post should be published successfully with CTA form button"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Post published!"
