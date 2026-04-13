@@ -25,7 +25,7 @@ testT4790:
     fill_short_text: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
     press_enter: { press: 'Enter' }
     fill_short_text_retry: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
-    upload_media: { text: 'Add media', file_path: ['data/imgs/01.png', 'data/imgs/02.png', 'data/imgs/03.png', 'data/imgs/04.png', 'data/imgs/05.png', 'data/imgs/06.png', 'data/imgs/07.png', 'data/imgs/08.png', 'data/imgs/09.png', 'data/imgs/10.png'] }
+    upload_media: { text: 'Add media', file_path: [ 'data/imgs/01.png', 'data/imgs/02.png', 'data/imgs/03.png', 'data/imgs/04.png', 'data/imgs/05.png', 'data/imgs/06.png', 'data/imgs/07.png', 'data/imgs/08.png', 'data/imgs/09.png', 'data/imgs/10.png' ] }
     sleep_after_upload: 2000
     R_click_button: { locator: '[data-testid="button"]' }
     sleep_after_submit: 3000
@@ -120,23 +120,25 @@ testT4867:
 
     # Click Description to focus editor, then insert CTA Button
     R_click_description: { role: 'textbox', name: 'Description' }
-    R_click_insert: { role: 'button', name: 'Insert', exact: true }
-    R_click_cta_elements: { text: 'CTA Elements' }
-    R_click_cta_button: { text: 'CTA Button' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_cta_elements:
+      locator: "li"
+      text: "CTA Elements"
+    sleep_after_hover_cta: 1500
+    R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
     sleep_after_cta: 1000
 
-    # Select "Form" type from dropdown
-    R_click_type_dropdown: { locator: '[aria-label=""]', index: 0 }
-    R_click_form_option: { role: 'option', name: 'Form' }
+    # Fill button text
+    fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label',  value: 'test form' }
+
+    # Select "Form" action from dropdown
+    R_click_action_select: { text: 'ActionSelect button' }
+    R_click_form_option: { text: 'Form', exact: true }
     sleep_after_select_type: 500
 
-    # Fill button text
-    R_click_action: { text: 'Action' }
-    fill_button_text: { role: 'textbox', name: 'Button text', value: 'test form' }
-
     # Select the form created in testT4970
-    R_click_form_dropdown: { locator: '[aria-label=""]', index: 1 }
-    R_click_select_form: { text: 'test form verify error', index: 0 }
+    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
     sleep_after_select_form: 500
 
     # Confirm and save
