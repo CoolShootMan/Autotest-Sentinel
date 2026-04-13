@@ -154,13 +154,13 @@ testT4660:
 testT5106:
     description: "Verify event creation and completion (archiving)"
     test_step:
-        open: "https://release.pear.us/demi-release"
-        # open: "https://release.pear.us/events/create"
+        #open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/events/create"
         sleep_after_open: 5000
-        R_click_storefront_nav: { role: 'button', name: 'Storefront' }
-        R_click_events_tab: { role: 'link', name: 'Events' }
-        sleep_after_events_tab: 3000
-        R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
+        # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
+        # R_click_events_tab: { role: 'link', name: 'Events' }
+        # sleep_after_events_tab: 3000
+        # R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }

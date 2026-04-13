@@ -54,6 +54,6 @@ def batch_convert(img_dir, output_dir):
         image_to_y4m(img_path, output_path)
 
 if __name__ == "__main__":
-    img_dir = r"D:\monster_test\Autotest-monster\data\prod_env_QR"
-    output_dir = r"D:\monster_test\Autotest-monster\data"
+    img_dir = r"Autotest-monster\data\prod_env_QR"
+    output_dir = r"Autotest-monster\data"
     batch_convert(img_dir, output_dir)
