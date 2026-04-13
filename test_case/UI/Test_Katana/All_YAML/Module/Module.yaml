@@ -167,10 +167,10 @@ testT5106:
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
         R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
-        R_click_calendar_icon: { locator: "[data-testid='CalendarLineIcon']", index: 0 }
+        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
         R_click_date_30: { role: 'gridcell', name: '30' }
         sleep_after_select_calender: 1000
-        R_click_calendar_icon_2: { locator: "[data-testid='CalendarLineIcon']", index: 0 }
+        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
         R_click_time_option: { role: 'menuitem', name: '12:45 am' }
         sleep_before_tickets: 2000
         R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }

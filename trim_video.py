@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 def trim_y4m(input_path, output_path, num_frames=60):
     """
@@ -55,10 +56,8 @@ def trim_y4m(input_path, output_path, num_frames=60):
     print(f"Success! Created {output_path} ({os.path.getsize(output_path) / 1024 / 1024:.2f} MB)")
 
 if __name__ == "__main__":
-    # Path configuration
-    base_dir = r"D:\monster_test\Autotest-monster"
-    input_file = os.path.join(base_dir, "data", "Ticket_C.y4m")
-    output_file = os.path.join(base_dir, "data", "Ticket_Small.y4m")
-    
-    # Trim to 2 seconds (approx 60 frames at 30fps)
-    trim_y4m(input_file, output_file, num_frames=60)
+    project_root = Path(__file__).parent
+
+    input_file = project_root / "data" / "Ticket_C.y4m"
+    output_file = project_root / "data" / "Ticket_Small.y4m"
+    trim_y4m(str(input_file), str(output_file), num_frames=60)
