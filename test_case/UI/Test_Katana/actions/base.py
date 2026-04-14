@@ -331,27 +331,6 @@ def click_modal_close(page: Page, v: dict):
 def verify_text_visible(page: Page, v: dict):
     text = v.get("text")
     timeout = v.get("timeout", 10000)
-    not_visible = v.get("assert_not_visible", False)
-
-    if not_visible:
-        logger.info(f"Verifying text is NOT visible: {text or v.get('locator')}")
-        if v.get("locator"):
-            el = page.locator(v["locator"]).first
-            if text:
-                el = el.get_by_text(text, exact=v.get("exact", False))
-        elif text:
-            el = page.get_by_text(text, exact=v.get("exact", False)).first
-        else:
-            raise AssertionError("verify: no text or locator provided")
-        try:
-            el.wait_for(state="hidden", timeout=timeout)
-            logger.info(f"Confirmed element is not visible: {text or v.get('locator')}")
-        except:
-            if el.is_visible():
-                page.screenshot(path=f"fail_not_visible_{str(text or v.get('locator'))[:10]}.png")
-                raise AssertionError(f"Element '{text or v.get('locator')}' is still visible but should not be.")
-        return
-
     logger.info(f"Verifying text visibility: {text}")
     try:
         page.get_by_text(text, exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
