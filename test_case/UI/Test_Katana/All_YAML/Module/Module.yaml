@@ -202,7 +202,6 @@ testT5106:
               text: "Test-event-Auto-archive"
 
 
-
 testT4622:
     description: "Verify module collapse and expand toggle functionality"
     test_step:
@@ -223,4 +222,103 @@ testT4622:
     expect_result:
         description: "Module should collapse then expand correctly"
         assertions: []
+
+
+testT3788:
+    description: "Verify adding products to a new module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select_type: 2000
+        R_click_product_type: { text: 'Products' }
+        R_click_add_btn: { role: 'button', name: 'Add' }
+        sleep_before_add_btn: 2000
+        click_module_edit_button_1: { module_name: 'Module-products' } 
+        R_click_add_from_my_posts: { role: 'button', name: 'Add from my posts' }
+        sleep_before_add_from_my_posts: 3000
+        R_click_combobox: { role: "combobox" }
+        R_click_post_url: { text: "/autotestshop/post/demi-0320-new", exact: false }
+        R_click_post_icon_1: { locator: "//div[@data-index='0']"}
+        R_click_post_icon_2: { locator: "//div[@data-index='1']" }
+        R_click_final_post_add: { role: 'button', name: 'Add' }
+        sleep_after_add_from_my_products: 2000
+        click_module_edit_button_2: { module_name: 'Module-products' } 
+        R_click_add_from_my_products: { role: 'button', name: 'Add from my products' }
+        sleep_before_add_from_my_products: 5000
+        R_click_icon_1: { locator: "//div[@data-testid='shop-brand']", index: 0 }
+        R_click_final_product_add: { role: 'button', name: 'Add' }
+        sleep_after_add: 3000
+    expect_result:
+        description: "Verify that the new module 'Module-products' is added successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "General Admission 001"
+            - assertion_type: "element_visible_by_text"
+              text: "Ladies Free RSVP"
+            - assertion_type: "element_visible_by_text"
+              text: "autotest prod"
+
+
+testT4852:
+    description: "Verify adding a mixed content type module with posts, products, links, and forms"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Mixed module type' }
+        R_click_mixed_content: { role: 'button', name: 'Mixed content types Combine' }
+        sleep_after_mixed_click: 2000
+        R_click_add_module: { role: 'button', name: 'Add module' }
+        sleep_after_add_module: 3000
+        # Add from my posts
+        click_module_edit_button_1: { module_name: 'Mixed module type' }
+        sleep_before_add_posts: 1000
+        R_click_add_from_posts: { role: 'button', name: 'Add from my posts' }
+        sleep_after_posts_click: 2000
+        R_click_post_item: { role: 'button', name: 'Image of Product demi 0320' }
+        sleep_after_post_select: 1000
+        R_click_add_1: { role: 'button', name: 'Add' }
+        sleep_after_first_add: 2000
+        # Add from my products
+        click_module_edit_button_2: { module_name: 'Mixed module type' }
+        sleep_before_add_products: 2000
+        R_click_add_from_products: { role: 'button', name: 'Add from my products' }
+        sleep_after_products_click: 2000
+        R_click_first_product_icon: { locator: "//div[@data-index='0']" }
+        sleep_after_product_select: 1000
+        R_click_add_2: { role: 'button', name: 'Add' }
+        sleep_after_second_add: 2000
+        #Add from my links (first selection)
+        click_module_edit_button_3: { module_name: 'Mixed module type' }
+        sleep_before_add_links_1: 2000
+        R_click_add_from_links_1: { role: 'button', name: 'Add from my links' }
+        sleep_after_links_click_1: 2000
+        R_click_link_rect_1: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Image' }
+        R_click_link_rect_2: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Video' }
+        R_click_link_rect_3: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Ticket / event' }
+        R_click_link_rect_4: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Link', exact: true }
+        R_click_link_rect_5: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Music' }
+        R_click_link_rect_6: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Product' }
+        sleep_after_link_select_1: 1000
+        R_click_add_3: { role: 'button', name: 'Add' }
+        sleep_after_third_add: 2000
+        # Add from my forms
+        click_module_edit_button_4: { module_name: 'Mixed module type' }
+        sleep_before_add_forms: 2000
+        R_click_add_from_forms: { role: 'button', name: 'Add from my forms' }
+        sleep_after_forms_click: 2000
+        R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'auto test 10 images' }
+        sleep_after_form_select: 1000
+        R_click_add_4: { role: 'button', name: 'Add' }
+        sleep_after_final_add: 3000
+    expect_result:
+        description: "Verify that the mixed content module is created successfully with all content types"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Mixed module type"
+              # The assertion needs to be optimized
 
