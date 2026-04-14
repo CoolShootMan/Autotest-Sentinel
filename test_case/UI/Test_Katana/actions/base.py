@@ -339,6 +339,59 @@ def verify_text_visible(page: Page, v: dict):
         page.screenshot(path=f"fail_verify_{text[:10]}.png")
         raise AssertionError(f"Text '{text}' not found.")
 
+def verify_text_hidden(page: Page, v: dict):
+    text = v.get("text")
+    timeout = v.get("timeout", 10000)
+    logger.info(f"Verifying text hidden: {text}")
+    try:
+        element = page.get_by_text(text, exact=v.get("exact", False)).first
+        
+        # Evaluate visibility with JS. MUI uses height=0 and overflow=hidden for collapse.
+        # Playwright's native hidden state sometimes thinks an element is visible if its own bounding rect is > 0, 
+        # even if an ancestor is 0-height and hidden overflow.
+        is_hidden_js = """(el) => {
+            if (!el) return true;
+            let current = el;
+            while (current && current !== document.body) {
+                const style = window.getComputedStyle(current);
+                if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) < 0.05) return true;
+                
+                // Deal with MUI and standard accessibility clipping techniques
+                if (style.clip === 'rect(0px, 0px, 0px, 0px)') return true;
+                if (style.clipPath && style.clipPath !== 'none' && style.clipPath.includes('(0')) return true;
+                
+                const rect = current.getBoundingClientRect();
+                // If a container essentially has no dimensions and hides its overflow...
+                if ((rect.height <= 2 || rect.width <= 2) && 
+                    (style.overflow === 'hidden' || style.overflowY === 'hidden' || style.overflowX === 'hidden')) {
+                    return true;
+                }
+                current = current.parentElement;
+            }
+            const rect = el.getBoundingClientRect();
+            // If the element itself is technically rendered but scaled to 0 or squashed
+            if (rect.width <= 2 || rect.height <= 2) return true;
+            return false;
+        }"""
+        
+        import time
+        start_time = time.time()
+        while time.time() - start_time < timeout / 1000.0:
+            # First check native playwright hidden
+            if element.is_hidden():
+                logger.info(f"Text '{text}' is hidden natively.")
+                return
+            # Then check our robust visual JS check
+            if element.evaluate(is_hidden_js):
+                logger.info(f"Text '{text}' is successfully hidden (visually via JS).")
+                return
+            time.sleep(0.5)
+            
+        raise AssertionError(f"Timeout {timeout}ms exceeded. Text '{text}' remained visible.")
+    except Exception as e:
+        page.screenshot(path=f"fail_verify_hidden_{text[:10]}.png")
+        raise AssertionError(f"Text '{text}' is still visible! Exception: {str(e)}")
+
 def reload_page(page: Page, v: dict):
     page.reload()
     page.wait_for_timeout(v.get("sleep_after", 3000))

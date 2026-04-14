@@ -202,3 +202,25 @@ testT5106:
               text: "Test-event-Auto-archive"
 
 
+
+testT4622:
+    description: "Verify module collapse and expand toggle functionality"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+
+        # Step 1: Click collapse icon (arrow-up) to fold module content
+        click_module_collapse: { module_name: "MyForm" }
+        sleep_after_collapse: 1500
+        # 直击本质的断言 1：验证整个模块的物理高度已坍塌（小于150px）
+        verify_module_collapsed: { module_name: "MyForm" }
+        # Step 2: Click expand icon (arrow-up-icon依然是那个节点)
+        click_module_expand: { module_name: "MyForm" }
+        sleep_after_expand: 1500
+        # 直击本质的断言 2：验证整个模块的物理高度已恢复（大于150px）
+        verify_module_expanded: { module_name: "MyForm" }
+
+    expect_result:
+        description: "Module should collapse then expand correctly"
+        assertions: []
+
