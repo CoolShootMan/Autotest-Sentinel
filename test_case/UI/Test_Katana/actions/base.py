@@ -226,6 +226,7 @@ def smart_click(page: Page, v: dict):
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
     force = v.get("force", False) # Default to False for better event triggering
+    optional = v.get("optional", False) # If True, skip silently when element not found
     
     # Validation
     if not target_name and not target_locator and not target_role:
@@ -260,7 +261,14 @@ def smart_click(page: Page, v: dict):
             if el.is_visible(timeout=5000):
                 el.click(force=force)
                 return
+            else:
+                if optional:
+                    logger.info(f"Optional click: element at index {target_index} not visible, skipping.")
+                    return
     except Exception as e:
+        if optional:
+            logger.info(f"Optional click: locator attempt failed for index {target_index}, skipping. ({e})")
+            return
         logger.debug(f"Locator attempt failed: {e}")
 
     try:
@@ -298,6 +306,11 @@ def smart_click(page: Page, v: dict):
 
 
     # 3. --- AI Self-Healing Fallback (The "Brain") ---
+    # Optional check: if all traditional methods failed and this click is optional, skip gracefully
+    if optional:
+        logger.info(f"Optional click: element '{target_name or target_locator}' not found after all attempts, skipping.")
+        return
+
     # Global Kill-switch check
     if v.get("disable_ai", False) or os.environ.get("AI_DISABLED") == "True":
         logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
