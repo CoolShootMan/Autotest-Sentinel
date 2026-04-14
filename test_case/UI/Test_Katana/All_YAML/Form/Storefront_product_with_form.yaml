@@ -291,3 +291,75 @@ testT4276:
   expect_result:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
     assertions: []
+
+testT4866_edit:
+  guest: false
+  description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
+  test_step:
+    # --- Part 1: Create CTA form button (same as testT4866) ---
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    R_click_description: { role: 'textbox', name: 'Description' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_cta_elements:
+      locator: "li"
+      text: "CTA Elements"
+    sleep_after_hover_cta: 1500
+    R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
+    sleep_after_cta: 1000
+
+    fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form' }
+
+    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
+    R_click_form_option: { text: 'Form', exact: true }
+    sleep_after_select_type: 500
+
+    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
+    sleep_after_select_form: 500
+
+    R_click_save: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save: 1000
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+    R_click_update_1: { role: 'button', name: 'Update' }
+    sleep_after_update_1: 3000
+
+    # --- Part 2: Edit button text ---
+    open_edit: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open_edit: 3000
+
+    R_click_cta_btn_in_editor: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select_btn: 500
+    R_click_edit_button: { role: 'button', name: 'Edit' }
+    sleep_after_edit_click: 1000
+
+    fill_updated_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form update1' }
+    R_click_save_edit: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save_edit: 1000
+    R_click_confirm_edit: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm_edit: 2000
+    R_click_update_2: { role: 'button', name: 'Update' }
+    sleep_after_update_2: 3000
+
+    # --- Part 3: Verify updated text on storefront ---
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    verify_updated_btn: { text: 'test form update1' }
+
+    # --- Part 4: Delete the CTA button ---
+    open_delete: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open_delete: 3000
+    R_click_cta_btn_delete: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select_delete: 500
+    R_click_delete_btn: { role: 'button', name: 'Delete' }
+    sleep_after_delete: 500
+    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm_delete: 1000
+    R_click_update_3: { role: 'button', name: 'Update' }
+    sleep_after_update_3: 3000
+
+  expect_result:
+    description: "CTA form button text should be updated and visible on storefront, then deleted"
+    assertions: []
