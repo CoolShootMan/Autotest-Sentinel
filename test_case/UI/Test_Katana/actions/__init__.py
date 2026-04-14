@@ -143,6 +143,17 @@ def get_action(name):
         return ACTIONS[name]
     
     # 2. Prefix mapping
+    if name.startswith("click_module_edit_button"):
+        return click_module_edit_button
+    elif name.startswith("click_module_paragraph"):
+        return click_module_paragraph
+    elif name.startswith("click_add_new_product"):
+        return click_add_new_product
+    elif name.startswith("click_module_add_new"):
+        return click_module_add_new
+    elif name.startswith("click_module_post_view_event_cta"):
+        return click_module_post_view_event_cta
+
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("fill_numeric"):
