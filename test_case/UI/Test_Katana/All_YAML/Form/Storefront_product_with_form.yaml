@@ -144,7 +144,7 @@ testT4866:
     fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label',  value: 'test form' }
 
     # Select "Form" action from dropdown
-    R_click_action_select: { text: 'ActionSelect button' }
+    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
     R_click_form_option: { text: 'Form', exact: true }
     sleep_after_select_type: 500
 
@@ -173,7 +173,7 @@ testT4866:
 
   expect_result:
     description: "CTA form button should be inserted and post published successfully"
-    assertions: []
+    assertions: [ ]
 
 testT4867:
   guest: false
@@ -204,4 +204,4 @@ testT4867:
 
   expect_result:
     description: "CTA form button should be removed from post after deletion"
-    assertions: []
+    assertions: [ ]
