@@ -1,5 +1,6 @@
 # T1742: Post commission Batch set to 10%
 testT1742:
+    description: "Post commission Batch set to 10%"
     test_step:
         # Step 1: Events 列表页 -> 点击 Event 卡片
         open: "https://release.pear.us/events"
@@ -22,15 +23,15 @@ testT1742:
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
         sleep_step: 1500
 
-        # Step 4: 填佣金 10 -> Apply to all -> Publish -> Confirm -> Save
+        # Step 4: 填佣金 10 -> Confirm -> Publish -> Save
         fill_commission: { placeholder: "e.g., 5", value: '10' }
-        sleep_step: 500
-        R_click_apply_all: { role: 'button', name: 'Apply to all' }
         sleep_step: 1000
-        R_click_publish: { role: 'button', name: 'Publish', index: 0 }
+        R_click_confirm_value: { role: 'button', name: 'Confirm' }
+
         sleep_step: 1500
-        R_click_confirm: { role: 'button', name: 'Confirm' }
-        sleep_step: 1500
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_step: 3000
+        
         R_click_save: { role: 'button', name: 'Save' }
         sleep_step: 3000
         R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
@@ -63,7 +64,7 @@ testT1742:
         R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }
         # 恢复佣金为 1-10 随机值（方便脚本反复跑）
         fill_commission_teardown: { placeholder: "e.g., 5", value: 'RANDOM_1_10' }
-        R_click_apply_all_teardown: { role: 'button', name: 'Apply to all' }
+        # R_click_apply_all_teardown: { role: 'button', name: 'Apply to all' }
         sleep_step: 1000
         R_click_publish_teardown: { role: 'button', name: 'Publish', index: 0 }
         sleep_step: 1500

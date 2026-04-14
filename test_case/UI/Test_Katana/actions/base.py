@@ -165,7 +165,13 @@ def smart_click(page: Page, v: dict):
     if page.get_by_text("Something went wrong!", exact=True).is_visible():
         logger.error("Application Crashed!")
         raise Exception("Application Crashed")
-        
+
+    # Wait for loading overlays/backdrops to disappear before clicking anything
+    try:
+        backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
+        backdrop.wait_for(state="hidden", timeout=8000)
+    except: pass
+
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
     target_role = v.get("role")
@@ -179,14 +185,108 @@ def smart_click(page: Page, v: dict):
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
-    # Scoping
+    # Scoping: find all visible modals
     modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
-    active_modal = None
-    for m in reversed(modals):
-        if m.is_visible():
-            active_modal = m
-            break
-    root = active_modal if active_modal else page
+    visible_modals = [m for m in modals if m.is_visible()]
+    active_modal = visible_modals[-1] if visible_modals else None
+
+    # Special handling for "Publish": use JS to find and click, searching in visible dialog first, then full page
+    if target_name == "Publish":
+        logger.debug("Publish handler: using JS-based click")
+        try:
+            page.wait_for_timeout(3000)  # Wait for loading/Confirm dialog to settle
+            clicked = page.evaluate("""
+                () => {
+                    // Find all visible dialogs and pick the last one (most recent)
+                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
+                    let targetContainer = null;
+                    for (const d of dialogs) {
+                        const style = window.getComputedStyle(d);
+                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
+                            targetContainer = d;
+                        }
+                    }
+                    // Search in visible dialog first
+                    if (targetContainer) {
+                        const dialogBtns = Array.from(targetContainer.querySelectorAll('button'));
+                        for (const btn of dialogBtns) {
+                            const t = btn.textContent.trim();
+                            if (t === 'Publish' && btn.offsetParent !== null) {
+                                btn.click();
+                                return 'dialog';
+                            }
+                        }
+                    }
+                    // Fallback: search entire page
+                    const allBtns = Array.from(document.querySelectorAll('button'));
+                    for (const btn of allBtns) {
+                        const t = btn.textContent.trim();
+                        if (t === 'Publish' && btn.offsetParent !== null) {
+                            btn.click();
+                            return 'page';
+                        }
+                    }
+                    return null;
+                }
+            """)
+            if clicked:
+                logger.info(f"Publish clicked via JS ({clicked})")
+                page.wait_for_timeout(1000)
+                return
+            else:
+                logger.debug("JS Publish: no visible button found")
+        except Exception as e:
+            logger.debug(f"JS Publish click error: {e}")
+
+    # Special handling for "Save": use JS to find and click the LAST visible Save button in the most recent dialog
+    if target_name == "Save":
+        logger.debug("Save handler: using JS-based click")
+        try:
+            page.wait_for_timeout(1500)
+            clicked = page.evaluate("""
+                () => {
+                    // Find all visible dialogs
+                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
+                    let targetContainer = null;
+                    for (const d of dialogs) {
+                        const style = window.getComputedStyle(d);
+                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
+                            targetContainer = d;
+                        }
+                    }
+                    // Search in the last visible dialog first, then full page
+                    const searchIn = targetContainer || document.body;
+                    const btns = Array.from(searchIn.querySelectorAll('button'));
+                    for (const btn of btns) {
+                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
+                            btn.click();
+                            return 'ok';
+                        }
+                    }
+                    // Fallback: search entire page
+                    const allBtns = Array.from(document.querySelectorAll('button'));
+                    for (const btn of allBtns) {
+                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
+                            btn.click();
+                            return 'page';
+                        }
+                    }
+                    return null;
+                }
+            """)
+            if clicked:
+                logger.info(f"Save clicked via JS ({clicked})")
+                page.wait_for_timeout(1000)
+                return
+            else:
+                logger.debug("JS Save: no enabled button found")
+        except Exception as e:
+            logger.debug(f"JS Save click error: {e}")
+
+    # For most buttons (Get Tickets, Selling, Customize, Batch set, etc.), search the WHOLE page.
+    # Only scope to modal for known dialog buttons (Confirm, Save, Cancel, etc.)
+    dialog_buttons = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
+    root = active_modal if (active_modal and target_name in dialog_buttons) else page
 
     try:
         # Standard locator attempt
@@ -203,7 +303,7 @@ def smart_click(page: Page, v: dict):
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
                 
-            if el.is_visible(timeout=5000):
+            if el.is_visible(timeout=60000):
                 el.click(force=force)
                 return
     except Exception as e:
@@ -213,27 +313,67 @@ def smart_click(page: Page, v: dict):
         # 1.1 Aria-label fallback (Critical for icon buttons)
         if target_name:
             el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            if el.is_visible(timeout=3000):
+            if el.is_visible(timeout=60000):
                 el.click(force=force)
                 logger.info(f"Clicked via aria-label fallback: {target_name}")
                 return
     except: pass
+
+    # ---- 4. Robust page-level fallback (always from page, not from root modal) ----
+    if target_role == 'button' or target_name in {"Get Tickets", "Selling", "Customize products", "Batch set commission rates"}:
+        try:
+            if target_name:
+                # Find ALL matching elements on the page
+                if target_role:
+                    all_matches = page.get_by_role(target_role, name=target_name, exact=target_exact).all()
+                else:
+                    all_matches = page.get_by_text(target_name, exact=target_exact).all()
+                logger.debug(f"Page-level search for '{target_name}': {len(all_matches)} total elements")
+                for idx, candidate in enumerate(all_matches):
+                    try:
+                        is_vis = candidate.is_visible(timeout=2000)
+                        if is_vis:
+                            logger.info(f"Page-level found '{target_name}' #{idx}, clicking with force")
+                            candidate.click(force=True)
+                            return
+                    except Exception as inner_e:
+                        logger.debug(f"  candidate #{idx} failed: {inner_e}")
+                        try:
+                            page.evaluate("(el) => el.click()", candidate.element_handle())
+                            logger.info(f"Page-level JS-click '{target_name}' #{idx}")
+                            return
+                        except: pass
+        except Exception as e:
+            logger.debug(f"Page-level fallback error: {e}")
 
     try:
         if target_role:
             el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
         elif target_name:
             el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-        
-        # FINAL ATTEMPT: Wait for the best candidate to become visible/stable
+
+        # FINAL ATTEMPT: For dialog buttons, skip scroll stability check (dialogs often have CSS animations)
         if el:
-            el.scroll_into_view_if_needed()
+            try:
+                el.scroll_into_view_if_needed(timeout=3000)
+            except Exception as scroll_e:
+                logger.debug(f"Scroll not stable (normal for dialogs): {scroll_e}")
             page.wait_for_timeout(300)
-            if not el.is_visible():
-                logger.warning(f"Element '{target_name}' found but not visible. Trying to force click...")
+            try:
+                # Always try force=True for dialog buttons to bypass animation/timeouts
                 el.click(force=True)
-            else:
-                el.click(force=force)
+                logger.info(f"Force-clicked '{target_name}'")
+                return
+            except Exception as click_e:
+                logger.debug(f"Force click failed, trying JS: {click_e}")
+                # Last resort: JS click using element_handle
+                try:
+                    page.evaluate("(el) => el.click()", el.element_handle())
+                    logger.info(f"JS-clicked '{target_name}'")
+                    return
+                except Exception as js_e:
+                    logger.debug(f"JS click also failed: {js_e}")
+                    raise
             # Close dropdown/listbox after selecting an option
             if target_role == 'option':
                 page.keyboard.press("Escape")
@@ -255,9 +395,19 @@ def smart_click(page: Page, v: dict):
                 all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
                 for btn in reversed(all_btns):
                     if btn.is_visible():
-                        btn.click(force=force)
+                        try:
+                            btn.scroll_into_view_if_needed(timeout=3000)
+                        except: pass
+                        btn.click(force=True)
                         logger.info(f"Global fallback SUCCESS for '{target_name}'")
                         return
+                    else:
+                        # Try JS click for hidden elements
+                        try:
+                            page.evaluate("(el) => el.click()", btn.element_handle())
+                            logger.info(f"Global fallback SUCCESS (JS) for '{target_name}'")
+                            return
+                        except: pass
             except: pass
             
         raise Exception(f"Element not found: {target_name or target_locator}")
