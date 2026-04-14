@@ -240,3 +240,54 @@ testT4281:
   expect_result:
     description: "Recipient email validation should block save with empty or invalid email"
     assertions: []
+
+
+testT4276:
+  guest: false
+  description: "Verify form title/subtitle/email icon validation and save combinations"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open form creation
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # --- Step 1: Empty title -> verify error ---
+    R_click_continue_1: { role: 'button', name: 'Continue' }
+    sleep_after_continue_1: 1000
+    verify_title_error: { text: 'Please enter the Title' }
+
+    # --- Step 2: Fill title only, no subtitle, email icon OFF, save ---
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test title' }
+    R_click_continue_2: { role: 'button', name: 'Continue' }
+    sleep_after_continue_2: 2000
+    verify_confirmation_1: { text: 'Form confirmation message' }
+    R_click_close_preview_1: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_1: 500
+
+    # --- Step 3: Add subtitle, email icon OFF, save ---
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'xxxx subtitle' }
+    R_click_continue_3: { role: 'button', name: 'Continue' }
+    sleep_after_continue_3: 2000
+    verify_confirmation_2: { text: 'Form confirmation message' }
+    R_click_close_preview_2: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_2: 500
+
+    # --- Step 4: Toggle email icon ON, save ---
+    R_click_email_icon_on: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r > path' }
+    R_click_continue_4: { role: 'button', name: 'Continue' }
+    sleep_after_continue_4: 2000
+    verify_confirmation_3: { text: 'Form confirmation message' }
+    R_click_close_preview_3: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_3: 500
+
+    # --- Step 5: Toggle email icon OFF, save ---
+    R_click_email_icon_off: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
+    R_click_continue_5: { role: 'button', name: 'Continue' }
+    sleep_after_continue_5: 2000
+    verify_confirmation_4: { text: 'Form confirmation message' }
+
+  expect_result:
+    description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
+    assertions: []
