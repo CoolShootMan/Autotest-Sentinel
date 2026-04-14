@@ -472,6 +472,11 @@ testT4539:
 
     # Export selected data
     download_submission_csv: { name: 'Export selected data', role: 'button' }
+    verify_csv_data:
+      expected_row: {
+        'Name': 'imsg',
+      }
+
 
   expect_result:
     description: "Batch select should allow selecting submissions and exporting data"
