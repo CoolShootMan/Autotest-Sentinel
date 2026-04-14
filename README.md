@@ -60,14 +60,33 @@ GEMINI_API_KEY=your_single_key_here
 
 ### 3. 一键运行测试
 
-推荐使用 `run.py` 智能启动脚本进行测试执行：
+推荐使用 `runner.py` 智能启动脚本进行测试执行：
 
 ```bash
 # 交互式执行：终端弹出层级菜单，支持逐层进入目录、选择具体 YAML 或一键执行某个目录下的所有测试！
-python run.py
+python runner.py
 ```
 
-### 4. 查看测试报告
+### 4. 录制测试脚本 (Codegen)
+
+本项目提供了 `codegen.py` 和 `codegen.sh` 脚本，用于快速启动 Playwright 录制工具，并自动根据角色和环境加载对应的登录 Cookie，避免每次录制都需要重新登录。
+
+**使用方式：**
+```bash
+# 使用 Python 脚本 (推荐)
+./codegen.py
+
+# 或使用 Shell 脚本
+./codegen.sh
+```
+
+**交互式录制流程：**
+1. **选择角色**: 支持 `partner`, `guest`, `co-seller`。选择 `guest` 时不会加载任何 Cookie。
+2. **选择环境**: 支持 `staging`, `release`, `prod`。工具会自动寻找类似 `cookie_release.json` 或 `cookie_coseller_prod.json` 的文件并加载。
+3. **输入 URL**: 输入你想直接跳转录制的页面链接（直接回车可跳过，开启空白页）。
+*(注：在任意提示环节输入 `q` 或按 `Ctrl+C` 即可安全退出)*
+
+### 5. 查看测试报告
 
 测试完成后，系统会自动生成并打开 Allure 测试报告。
 
@@ -77,20 +96,20 @@ python run.py
 
 ### 测试执行与常用命令
 
-除了交互式的 `run.py`，您也可以通过命令行传递参数或直接使用 pytest 命令。
+除了交互式的 `runner.py`，您也可以通过命令行传递参数或直接使用 pytest 命令。
 
-**使用 `run.py` 快捷指令：**
+**使用 `runner.py` 快捷指令：**
 ```bash
 # 运行单个测试用例 (默认带上 --headed -v)
-python run.py testT4718
+python runner.py testT4718
 
 # 运行多个测试用例 (默认使用 or 逻辑匹配)
-python run.py testT4718 testT4718_guest
+python runner.py testT4718 testT4718_guest
 
 # 传递额外的 pytest 参数 (如无头模式、指定环境等)
-python run.py testT4718 --headless --env release
+python runner.py testT4718 --headless --env release
 ```
-> **💡 提示：** 当执行整个文件或目录下所有的测试时，`run.py` 会自动解析 YAML 提取出每一个单独的 `testTxxxx` 测试用例，并**逐一拆分执行**。如果某一个用例失败，不会中断其他用例的执行。
+> **💡 提示：** 当执行整个文件或目录下所有的测试时，`runner.py` 会自动解析 YAML 提取出每一个单独的 `testTxxxx` 测试用例，并**逐一拆分执行**。如果某一个用例失败，不会中断其他用例的执行。
 
 **使用原生 `pytest` 命令：**
 ```bash
