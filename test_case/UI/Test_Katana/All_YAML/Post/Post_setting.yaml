@@ -1,0 +1,78 @@
+# T1742: Post commission Batch set to 10%
+testT1742:
+    test_step:
+        # Step 1: Events 列表页 -> 点击 Event 卡片
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # "Auto-Test-post-setting" 是 DIV 元素（非 BUTTON），用 text 精确匹配
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Event 详情页 -> 点击 Post 卡片 "auto-test-post-setting-t1742"
+        # 每个 post 卡片都有 "Get Tickets" 按钮，取第一个
+        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        sleep_step: 3000
+
+        # Step 3: Post 详情页 -> Selling tab -> Customize products -> Batch set commission rates
+        R_click_selling: { role: 'tab', name: 'Selling' }
+        sleep_step: 2000
+        R_click_customize: { role: 'button', name: 'Customize products' }
+        sleep_step: 3000
+        R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
+        sleep_step: 1500
+
+        # Step 4: 填佣金 10 -> Apply to all -> Publish -> Confirm -> Save
+        fill_commission: { placeholder: "e.g., 5", value: '10' }
+        sleep_step: 500
+        R_click_apply_all: { role: 'button', name: 'Apply to all' }
+        sleep_step: 1000
+        R_click_publish: { role: 'button', name: 'Publish', index: 0 }
+        sleep_step: 1500
+        R_click_confirm: { role: 'button', name: 'Confirm' }
+        sleep_step: 1500
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_step: 3000
+        R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
+        sleep_step: 1500
+        R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_step: 1000
+
+        # Step 5: 验证 Post Card 显示 "Offer up to 10%"
+        verify_post_offer: { text: "Offer up to 10%" }
+
+        # Step 6: 重新打开 Events 验证
+        open_again: "https://release.pear.us/events"
+        sleep_end: 3000
+
+    expect_result:
+        assertions:
+          - assertion_type: "element_visible_by_text"
+            text: "10"
+
+    teardown_step:
+        # 恢复设置：重新进入 event -> post -> Selling -> Customize
+        R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+        R_click_post_teardown: { role: 'button', name: 'Get Tickets', index: 0 }
+        sleep_step: 3000
+        R_click_selling: { role: 'tab', name: 'Selling' }
+        sleep_step: 2000
+        R_click_customize_teardown: { role: 'button', name: 'Customize products' }
+        sleep_step: 3000
+        R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }
+        # 恢复佣金为 1-10 随机值（方便脚本反复跑）
+        fill_commission_teardown: { placeholder: "e.g., 5", value: 'RANDOM_1_10' }
+        R_click_apply_all_teardown: { role: 'button', name: 'Apply to all' }
+        sleep_step: 1000
+        R_click_publish_teardown: { role: 'button', name: 'Publish', index: 0 }
+        sleep_step: 1500
+        R_click_confirm_teardown: { role: 'button', name: 'Confirm' }
+        sleep_step: 1500
+        R_click_save_teardown: { role: 'button', name: 'Save' }
+        sleep_step: 3000
+        R_click_save_final_teardown: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
+        sleep_step: 1500
+        R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_end: 1000
+
