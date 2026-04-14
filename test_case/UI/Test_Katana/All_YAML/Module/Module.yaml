@@ -322,3 +322,50 @@ testT4852:
               text: "Mixed module type"
               # The assertion needs to be optimized
 
+testT3843:
+    description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+        R_click_module: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Link1' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select: 2000
+        check_carousel: { role: 'radio', name: 'Carousel Carousel' }
+        click_general_link: { text: "General Link", exact: true }
+        sleep_before_add: 2000
+        R_click_add_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_module: 3000
+        click_module_edit_button: { module_name: 'Link1' }
+        R_click_add_from_my_links: { role: 'button', name: 'Add from my links' }
+        sleep_after_my_links_click: 2000
+        click_rect_1: { locator: "div[data-testid='mui-stack']", index: 0, optional: true }
+        click_rect_3: { locator: "div[data-testid='mui-stack']", index: 1, optional: true }
+        click_rect_5: { locator: "div[data-testid='mui-stack']", index: 2, optional: true }
+        R_click_add_2: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_my_links_added: 3000
+        click_module_add_new_1: { module_name: 'Link1' }
+        sleep_wait_form: 1500
+        fill_url_1: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_1: { placeholder: 'As the bold title on your', value: 'test link1' }
+        R_click_add_link_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_1: 3000
+        click_module_add_new_2: { module_name: 'Link1' }
+        sleep_wait_form_2: 1500
+        fill_url_2: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_2: { placeholder: 'As the bold title on your', value: 'test link2' }
+        click_align_center: { label: 'Align center' }
+        R_click_add_link_2: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_2: 3000
+        sleep_after_delete: 2000
+    expect_result:
+        description: "Verify that the new General Link module is successfully added and formatted"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Link1"
+            - assertion_type: "element_visible_by_text"
+              text: "test link1"
+            - assertion_type: "element_visible_by_text"
+              text: "test link2"
