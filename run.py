@@ -10,11 +10,65 @@ import os
 import sys
 import subprocess
 import re
+import platform
+
+def check_and_activate_env():
+    """
+    检测当前是否在虚拟环境中，或者是否安装了 pytest。
+    如果没有，尝试自动激活项目目录下的虚拟环境。
+    """
+    # 检查 pytest 是否可用
+    try:
+        subprocess.run([sys.executable, "-m", "pytest", "--version"], 
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        pass
+
+    print("⚠️ 未检测到 pytest 或当前未处于虚拟环境中。尝试自动激活...")
+    
+    # 确定虚拟环境的激活脚本路径
+    system = platform.system().lower()
+    venv_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "venv")
+    
+    if not os.path.exists(venv_dir):
+        print(f"❌ 找不到虚拟环境目录: {venv_dir}")
+        print("💡 请先运行 setup_env.sh (macOS/Linux) 或 setup_env.bat (Windows) 初始化环境。")
+        sys.exit(1)
+
+    if system == "windows":
+        activate_script = os.path.join(venv_dir, "Scripts", "activate.bat")
+        python_exe = os.path.join(venv_dir, "Scripts", "python.exe")
+    else:
+        activate_script = os.path.join(venv_dir, "bin", "activate")
+        python_exe = os.path.join(venv_dir, "bin", "python")
+
+    if not os.path.exists(python_exe):
+         print(f"❌ 找不到虚拟环境的 Python 解释器: {python_exe}")
+         sys.exit(1)
+         
+    print(f"🔄 正在使用虚拟环境的 Python 重新启动脚本: {python_exe}")
+    
+    # 使用虚拟环境的 Python 重新运行当前脚本及所有参数
+    # sys.argv 包含了原始的所有命令行参数
+    cmd = [python_exe] + sys.argv
+    try:
+        # 使用 os.execv 替换当前进程（在 Unix 上）或者使用 subprocess.run（在 Windows 上）
+        if system == "windows":
+            result = subprocess.run(cmd)
+            sys.exit(result.returncode)
+        else:
+            os.execv(python_exe, cmd)
+    except Exception as e:
+        print(f"❌ 重新启动脚本失败: {e}")
+        sys.exit(1)
 
 def get_test_cases_from_yaml(yaml_path):
     """
-    从指定的 yaml 文件中解析出所有的测试用例名称
+    从指定的 yaml 文件中解析出所有的测试用例名称和描述
     假设测试用例的定义以 test 且顶格开头，如 'testT4718:'
+    紧接着的行可能是 '  description: "xxx"'
+    返回一个包含 {"name": "test_name", "desc": "description"} 字典的列表
     """
     test_cases = []
     # 转换为绝对路径读取
@@ -24,11 +78,24 @@ def get_test_cases_from_yaml(yaml_path):
         
     try:
         with open(abs_path, 'r', encoding='utf-8') as f:
+            current_test = None
             for line in f:
                 # 匹配顶格写并且以 test 开头，以冒号结尾的行
                 match = re.match(r'^(test[a-zA-Z0-9_]+):', line)
                 if match:
-                    test_cases.append(match.group(1))
+                    if current_test:
+                        test_cases.append(current_test)
+                    current_test = {"name": match.group(1), "desc": ""}
+                elif current_test:
+                    # 尝试匹配描述行
+                    desc_match = re.match(r'^\s+description:\s*(["\'])(.*?)\1', line)
+                    if desc_match and not current_test["desc"]:
+                        current_test["desc"] = desc_match.group(2)
+            
+            # 把最后一个加进去
+            if current_test:
+                test_cases.append(current_test)
+                
     except Exception as e:
         print(f"⚠️ 读取配置文件 {abs_path} 时出错: {e}")
         
@@ -96,10 +163,11 @@ def execute_yamls(yaml_paths, k_expression, additional_args):
                 if not success:
                     has_error = True
             else:
-                print(f"🔍 在该配置文件中找到 {len(test_cases)} 个用例: {', '.join(test_cases)}")
+                names = [tc['name'] for tc in test_cases]
+                print(f"🔍 在该配置文件中找到 {len(test_cases)} 个用例: {', '.join(names)}")
                 for idx, tc in enumerate(test_cases, 1):
                     print(f"\n⏳ 进度: 配置文件 [{i}/{len(yaml_paths)}] -> 用例 [{idx}/{len(test_cases)}]")
-                    success = run_single_pytest(tc, p, additional_args)
+                    success = run_single_pytest(tc['name'], p, additional_args)
                     if not success:
                         has_error = True
         else:
@@ -256,7 +324,8 @@ def interactive_test_case_selection(yaml_rel_path):
     
     options = [{"label": "⚡ 全部执行", "value": "ALL"}]
     for tc in test_cases:
-        options.append({"label": f"🧪 {tc}", "value": tc})
+        desc_str = f" - {tc['desc']}" if tc["desc"] else ""
+        options.append({"label": f"🧪 {tc['name']}{desc_str}", "value": tc['name']})
         
     for idx, opt in enumerate(options, 1):
         print(f"  [{idx}] {opt['label']}")
@@ -314,6 +383,9 @@ def get_all_yamls_in_dir(directory):
     return yamls
 
 def main():
+    # 检测并激活虚拟环境
+    check_and_activate_env()
+
     base_yaml_dir = os.path.join("test_case", "UI", "Test_Katana", "All_YAML")
     katana_dir = os.path.join("test_case", "UI", "Test_Katana")
     
