@@ -1,0 +1,41 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state="./test_case/UI/Test_Katana/cookie_release.json")
+    page = context.new_page()
+    page.goto("https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view")
+    page.locator("div").nth(4).click()
+    page.get_by_role("tab", name="Posts").click()
+    page.get_by_role("button", name="Create a post").click()
+    page.get_by_role("button", name="Upcoming Events").click()
+    page.get_by_role("button", name="test updated module").click()
+    page.get_by_role("button", name="Confirm").click()
+    page.get_by_role("button", name="Image of Product auto test event buy venue | Thu, Dec 31 (EST) Get Tickets auto-test-event-19 Offer up to 25%", exact=True).click()
+    page.get_by_role("tab", name="Selling", exact=True).click()
+    page.get_by_test_id("enhance-button-cta").click()
+    page.get_by_role("img", name="Image of Product").nth(1).click()
+    page.get_by_role("button", name="Add 2 product(s)").click()
+    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Save").click()
+    page.get_by_role("tab", name="Content").click()
+    page.get_by_role("button", name="Edit post").click()
+    page.locator("input[name=\"showAdditionalContent\"]").check()
+    page.get_by_role("button", name="Insert", exact=True).click()
+    page.locator("li").filter(has_text="CTA Elements").hover()
+    page.get_by_role("menuitem", name="CTA Product Banner").click()
+    page.get_by_role("img", name="Image of Product").nth(1).click()
+    page.get_by_role("button", name="Insert").click()
+    page.get_by_test_id("mui-button").click()
+    page.get_by_test_id("confirm-button").click()
+    page.get_by_role("button", name="Update").click()
+    
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)
