@@ -171,18 +171,34 @@ deactivate                  # 退出
 
 ### 运行测试
 
+#### 推荐方式：使用 `run.py` 智能启动脚本
+
+为了简化冗长的 `--yaml` 路径输入，我们提供了 `run.py` 脚本，它会自动搜索 `All_YAML` 目录找到对应的配置文件并执行测试。
+
+```bash
+# 运行单个测试用例 (默认带上 --headed -v)
+python run.py testT4718
+
+# 运行多个测试用例 (默认使用 or 逻辑匹配)
+python run.py testT4718 testT4718_guest
+
+# 传递额外的 pytest 参数 (如无头模式、指定环境等)
+python run.py testT4718 --headless --env release
+
+# 如果在多个 YAML 文件中找到了同名用例，终端将提供交互式选择：
+# [1] All_YAML/Events/Sync_event_post.yaml
+# [2] All_YAML/Form/Storefront_product_with_form.yaml
+# [3] ⚡ 全部执行 (自动在所有匹配文件中执行)
+```
+
+#### 传统方式：直接使用 pytest 命令
+
 ```bash
 # 测试特定用例
-pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --headed -v --env release --storage-state test_case/UI/Test_Katana/cookie_release.json
+pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
 
 # 测试多个用例
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --headed -v
-
-# 运行所有测试
-pytest test_case/UI/Test_Katana/test_ui.py --headed -v
-
-# 显示详细输出
-pytest -vv -s test_case/UI/Test_Katana/test_ui.py
+pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
 
 # 生成 Allure 报告
 pytest --alluredir=allure-results test_case/UI/Test_Katana/test_ui.py
