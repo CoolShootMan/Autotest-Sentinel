@@ -123,7 +123,7 @@ testT4970:
       - assertion_type: "element_visible_by_text"
         text: "test form verify error"
 
-testT4866:
+testT4860:
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
@@ -292,7 +292,7 @@ testT4276:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
     assertions: []
 
-testT4866_edit:
+testT4866:
   guest: false
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
