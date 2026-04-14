@@ -363,3 +363,93 @@ testT4866_edit:
   expect_result:
     description: "CTA form button text should be updated and visible on storefront, then deleted"
     assertions: []
+
+testT4847:
+  guest: false
+  description: "Verify adding field help text (description) to form fields"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open form creation
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # Fill form title and subtitle
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'auto_test help-text' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'test help text' }
+
+    # --- Step 1: Edit Name field with help text ---
+    click_view_name_options: { role: 'button', name: 'View Name options', exact: true }
+    click_edit_name: { role: 'button', name: 'Edit' }
+    sleep_after_edit_name: 500
+    fill_name_title: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
+    fill_name_description: { role: 'textbox', name: 'Enter a description', value: 'short with help text' }
+    R_click_save_name: { role: 'button', name: 'Save' }
+    sleep_after_save_name: 500
+
+    # --- Step 2: Edit Email field with help text ---
+    click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
+    click_edit_email: { role: 'button', name: 'Edit' }
+    sleep_after_edit_email: 500
+    fill_email_description: { role: 'textbox', name: 'Enter a description', value: 'Email with help text' }
+    R_click_save_email: { role: 'button', name: 'Save' }
+    sleep_after_save_email: 500
+
+    # Continue and save form
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 1000
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Form fields should support help text descriptions"
+    assertions: []
+
+testT4847_view:
+  guest: true
+  description: "Verify help text tooltips are visible on storefront form fields"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Click on the form card by title
+    R_click_form_card: { locator: '[data-testid="base-form-card-container"]:has-text("auto_test help-text")' }
+    sleep_after_click_card: 1000
+
+    # Verify short field help text tooltip
+    R_click_short_tooltip: { role: 'button', name: 'short with help text' }
+    sleep_after_tooltip_1: 500
+    verify_short_help: { text: 'short with help text' }
+
+    # Verify email field help text tooltip
+    R_click_email_tooltip: { role: 'button', name: 'Email with help text' }
+    sleep_after_tooltip_2: 500
+    verify_email_help: { text: 'Email with help text' }
+
+    # Verify form title in modal
+    verify_form_title: { text: 'auto_test help-text' }
+    R_click_close: { role: 'button', name: 'Close' }
+
+  expect_result:
+    description: "Help text tooltips should be visible when clicking the info icon on form fields"
+    assertions: []
+
+testT4847_destroy:
+  guest: false
+  description: "Remove the auto_test help-text form from module (cleanup)"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Remove form from module - locate by title
+    R_click_more_options: { locator: '[data-testid="base-form-card-container"]:has-text("auto_test help-text") >> [data-testid="base-more-horiz-icon-cta"]' }
+    sleep_after_click: 500
+    R_click_remove: { role: 'button', name: 'Remove from this module' }
+    sleep_after_remove: 500
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+  expect_result:
+    description: "Form should be removed from module"
+    assertions: []
