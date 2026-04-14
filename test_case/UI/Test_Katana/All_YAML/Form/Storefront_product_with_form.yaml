@@ -22,10 +22,22 @@ testT4790:
   test_step:
     open: "https://release.pear.us/form/7a9ae2eb-68f6-4c62-96b1-48c85e488977"
     sleep_after_open: 3000
-    fill_short_text: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
+    fill_short_text: { role: 'textbox', name: 'Please fill this out', value: '10 images uploaded case' }
     press_enter: { press: 'Enter' }
     fill_short_text_retry: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
-    upload_media: { text: 'Add media', file_path: ['data/imgs/01.png', 'data/imgs/02.png', 'data/imgs/03.png', 'data/imgs/04.png', 'data/imgs/05.png', 'data/imgs/06.png', 'data/imgs/07.png', 'data/imgs/08.png', 'data/imgs/09.png', 'data/imgs/10.png'] }
+    upload_media:
+      text: 'Add media'
+      file_path:
+        - data/imgs/01.png
+        - data/imgs/02.png
+        - data/imgs/03.png
+        - data/imgs/04.png
+        - data/imgs/05.png
+        - data/imgs/06.png
+        - data/imgs/07.png
+        - data/imgs/08.png
+        - data/imgs/09.png
+        - data/imgs/10.png
     sleep_after_upload: 2000
     R_click_button: { locator: '[data-testid="button"]' }
     sleep_after_submit: 3000
@@ -36,3 +48,160 @@ testT4790:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Thanks for your submission!"
+
+testT4970:
+  guest: false
+  description: "Verify single choice field validation errors: single option, zero options, empty options, duplicate options"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Click "Add new" to create form
+    click_add_new: { role: 'button', name: 'Add new' }
+    sleep_add: 3000
+
+    # Fill form title and subtitle
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test form verify error' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'single choice/multiple choice options' }
+
+    # Delete default Email and Phone fields
+    click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
+    click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_1: 500
+    click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_2: 500
+    click_view_phone_options: { role: 'button', name: 'View Phone options', exact: true }
+    click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_1: 500
+    click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_2: 500
+
+    # Add Single choice field
+    click_add_new_field: { role: 'button', name: 'Add new field', exact: true }
+    sleep_after_add_field: 500
+    click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
+    fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'single' }
+    fill_field_description: { role: 'textbox', name: 'Enter a description', value: 'xx' }
+
+    # --- Verification 1: Single option validation ---
+    # Default has 2 options, click Add with no option content filled
+    click_add_attempt_1: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_1: { text: 'Options cannot be empty' }
+
+    # Fill only the first option
+    fill_option_1: { role: 'textbox', name: 'Enter option', index: 0, value: 'xx' }
+    click_add_attempt_2: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_2: { text: 'Options cannot be empty' }
+
+    # --- Verification 3: Duplicate content validation ---
+    # Fill second option with same value as first
+    fill_option_2_dup: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx' }
+    click_add_attempt_3: { role: 'button', name: 'Add', exact: true }
+    verify_duplicate_error: { text: 'Options cannot have duplicates: "xx"' }
+
+    # --- Verification 4: Add a third empty option ---
+    click_add_option: { role: 'button', name: 'Add option' }
+    click_add_attempt_4: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_3: { text: 'Options cannot be empty' }
+
+    # Fix: delete the 3rd empty option, update second option to unique value
+    click_add_attempt_5: { role: 'button', name: 'Add', exact: true }
+    click_delete_option_3: { locator: '[data-testid="mui-icon-button"]', index: 2 }
+    sleep_delete_option: 500
+    fill_option_2_unique: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx1' }
+    click_add_final: { role: 'button', name: 'Add', exact: true }
+
+    # Continue and save
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 1000
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Single choice field should show validation errors for empty, single, and duplicate options, then save successfully"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "test form verify error"
+
+testT4866:
+  guest: false
+  description: "Verify inserting a CTA button with form into a post and publishing"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click Description to focus editor, then insert CTA Button
+    R_click_description: { role: 'textbox', name: 'Description' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_cta_elements:
+      locator: "li"
+      text: "CTA Elements"
+    sleep_after_hover_cta: 1500
+    R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
+    sleep_after_cta: 1000
+
+    # Fill button text
+    fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label',  value: 'test form' }
+
+    # Select "Form" action from dropdown
+    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
+    R_click_form_option: { text: 'Form', exact: true }
+    sleep_after_select_type: 500
+
+    # Select the form created in testT4970
+    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
+    sleep_after_select_form: 500
+
+    # Confirm and save
+    R_click_save: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save: 1000
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+    # Verify CTA button on storefront opens form modal
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    R_click_test_form_btn: { role: 'button', text: 'test form' }
+    sleep_after_modal: 2000
+    verify_contact_us: { locator: 'h4.MuiTypography-h4', text: 'Contact us' }
+
+  expect_result:
+    description: "CTA form button should be inserted and post published successfully"
+    assertions: [ ]
+
+testT4867:
+  guest: false
+  description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click on CTA button in editor to select it
+    R_click_cta_btn: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select: 500
+
+    # Delete the CTA button
+    R_click_delete: { role: 'button', name: 'Delete' }
+    sleep_after_delete: 500
+    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 1000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+    # Verify CTA button no longer exists on storefront
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
+
+  expect_result:
+    description: "CTA form button should be removed from post after deletion"
+    assertions: [ ]
