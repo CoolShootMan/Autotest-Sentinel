@@ -205,3 +205,38 @@ testT4867:
   expect_result:
     description: "CTA form button should be removed from post after deletion"
     assertions: [ ]
+
+
+testT4281:
+  guest: false
+  description: "Verify recipient email validation when creating a new form"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open "Add new" form configuration
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # Step 5: Clear recipient email and try to save
+    fill_empty_email: { role: 'textbox', name: 'Recipient Email', value: '' }
+    R_click_continue_1: { role: 'button', name: 'Continue' }
+    sleep_after_continue_1: 1000
+    verify_email_error_1: { text: 'Enter a valid email' }
+
+    # Step 6: Fill invalid email (not a valid format) and try to save
+    fill_invalid_email: { role: 'textbox', name: 'Recipient Email', value: 'test-not-email' }
+    R_click_continue_2: { role: 'button', name: 'Continue' }
+    sleep_after_continue_2: 1000
+    verify_email_error_2: { text: 'Enter a valid email' }
+
+    # Step 7: Fill valid email
+    fill_valid_email: { role: 'textbox', name: 'Recipient Email', value: 'aric.zheng.ext@1m.app' }
+    fill_form_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'xx' }
+    R_click_continue_3: { role: 'button', name: 'Continue' }
+    sleep_after_continue_3: 2000
+    verify_confirmation: { text: 'Form confirmation message' }
+
+  expect_result:
+    description: "Recipient email validation should block save with empty or invalid email"
+    assertions: []
