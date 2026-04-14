@@ -453,3 +453,26 @@ testT4847_destroy:
   expect_result:
     description: "Form should be removed from module"
     assertions: []
+
+testT4539:
+  guest: false
+  description: "Verify batch select submissions and export selected data"
+  test_step:
+    open: "https://release.pear.us/curator/submission?formId=7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    sleep_after_open: 3000
+
+    # Step 1: Click "Batch select" button -> checkboxes appear
+    R_click_batch_select: { locator: '[data-testid="mui-button"]' }
+
+    # Step 2: Select a submission row checkbox
+    check_submission: { locator: 'input[type="checkbox"]', index: 1 }
+
+    # Step 3: Click "Actions..." button -> menu with export option
+    R_click_actions: { locator: '[data-testid="mui-button"]' }
+
+    # Export selected data
+    download_submission_csv: { name: 'Export selected data', role: 'button' }
+
+  expect_result:
+    description: "Batch select should allow selecting submissions and exporting data"
+    assertions: []
