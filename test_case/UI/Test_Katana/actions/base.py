@@ -67,7 +67,61 @@ def save_html(page: Page, v: dict):
     with open(f"{name}.html", "w", encoding="utf-8") as f:
         f.write(page.content())
 
-def smart_fill(page: Page, v: dict):
+def smart_if(page: Page, v: dict):
+    condition = v.get("condition", {})
+    then_steps = v.get("then", {})
+    else_steps = v.get("else", {})
+    
+    locator_str = condition.get("locator")
+    role = condition.get("role")
+    name = condition.get("name")
+    text = condition.get("text")
+    state = condition.get("state", "visible")
+    timeout = condition.get("timeout", 5000)
+    
+    logger.info(f"Evaluating if condition: {condition}")
+    
+    is_true = False
+    try:
+        if locator_str:
+            if locator_str.startswith("/") or locator_str.startswith("xpath="):
+                xpath_locator = locator_str if locator_str.startswith("xpath=") else f"xpath={locator_str}"
+                el = page.locator(xpath_locator).first
+            else:
+                el = page.locator(locator_str).first
+        elif role:
+            el = page.get_by_role(role, name=name).first
+        elif text:
+            el = page.get_by_text(text, exact=condition.get("exact", False)).first
+        else:
+            raise ValueError("Condition must specify locator, role, or text")
+            
+        if state == "visible":
+            el.wait_for(state="visible", timeout=timeout)
+            is_true = True
+        elif state == "hidden":
+            el.wait_for(state="hidden", timeout=timeout)
+            is_true = True
+    except Exception as e:
+        logger.info(f"Condition evaluated to False: {e}")
+        is_true = False
+        
+    from . import get_action
+    
+    steps_to_run = then_steps if is_true else else_steps
+    
+    if steps_to_run:
+        for k, step_v in steps_to_run.items():
+            logger.info(f"  >>> If-block executing step: {k}")
+            action = get_action(k)
+            if action:
+                action(page, step_v)
+                page._execution_history.append((k, step_v))
+            else:
+                logger.error(f"  >>> If-block: Action '{k}' not found.")
+                raise Exception(f"Action '{k}' not found in if block.")
+
+def smart_fill(page: Page, v: dict):  
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
