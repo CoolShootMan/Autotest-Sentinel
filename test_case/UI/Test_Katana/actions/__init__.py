@@ -10,6 +10,7 @@ from .base import (
     smart_press,
     smart_upload,
     smart_screenshot,
+    smart_if,
     wait_for_selector,
     wait_for_url,
     save_html,
@@ -156,6 +157,8 @@ def get_action(name):
 
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
+    elif name.startswith("if_"):
+        return smart_if
     elif name.startswith("fill_numeric"):
         return fill_numeric
     elif name.startswith("fill"):

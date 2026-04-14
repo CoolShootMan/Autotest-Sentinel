@@ -71,3 +71,8 @@ Thumbs.db
 /*.png
 /requirements.txt
 /test_case/UI/Test_Katana/cookie_release.json
+**/__pycache__/*
+
+venv/pyvenv.cfg
+
+tools/__pycache__/*.pyc
