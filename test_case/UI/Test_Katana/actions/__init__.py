@@ -23,9 +23,12 @@ from .base import (
     reload_page,
     execute_not_recognized_scan,
     wait_toast,
+    drag_element,
+    drag_and_drop_by_coordinates,
+    swipe_to_element,
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style,verify_child_element_count
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -70,6 +73,10 @@ ACTIONS = {
     "verify_module_collapsed": verify_module_collapsed,
     "verify_module_expanded": verify_module_expanded,
     "verify_element_style": verify_element_style,
+    "verify_child_element_count":verify_child_element_count,
+    "drag_element": drag_element,
+    "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
+    "swipe_to_element": swipe_to_element,
     
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
@@ -156,6 +163,16 @@ def get_action(name):
         return click_module_add_new
     elif name.startswith("click_module_post_view_event_cta"):
         return click_module_post_view_event_cta
+    elif name.startswith("verify_element_style"):
+        return verify_element_style
+    elif name.startswith("verify_child_element_count"):
+        return verify_child_element_count
+    elif name.startswith("drag_element"):
+        return drag_element
+    elif name.startswith("drag_and_drop_by_coordinates"):
+        return drag_and_drop_by_coordinates
+    elif name.startswith("swipe_to_element"):
+        return swipe_to_element
 
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
