@@ -548,3 +548,57 @@ testT3695_guest:
   expect_result:
     description: "Custom Text 'product form must be filled' should be visible on the guest page"
     assertions: []
+
+testT3690:
+  guest: true
+  description: "Verify product form data persists through cart, checkout, and order confirmation"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+
+    # Add to cart with form data
+    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    sleep_after_click: 1000
+    fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+
+    # View cart
+    R_click_view_cart: { role: 'button', name: 'View cart' }
+    sleep_after_view_cart: 2000
+
+    # Verify form data in cart dialog
+    R_click_enhance_1: { locator: '[data-testid="enhance-button"]', index: 0 }
+    sleep_after_enhance_1: 1000
+    verify_form_data_cart: { text: 'just place some text' }
+    R_click_close_1: { role: 'button', name: 'Close' }
+    sleep_after_close_1: 500
+
+    # Confirm cart
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Verify form data after confirm
+    R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
+    sleep_after_enhance_2: 1000
+    verify_form_data_confirm: { text: 'just place some text' }
+    R_click_close_2: { role: 'button', name: 'Close' }
+    sleep_after_close_2: 500
+
+    # Place order
+    R_click_place_order: { role: 'button', name: 'Place order' }
+    sleep_after_place_order: 2000
+
+    # Fill shipping info
+    fill_email: { locator: 'input[name="contact.email"]', value: 'xx@qq.com' }
+    fill_first_name: { locator: 'input[name="address.firstName"]', value: 'aric' }
+    fill_last_name: { locator: 'input[name="address.lastName"]', value: 'zheng' }
+    fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: '10' }
+    R_click_address_option: { role: 'button', name: '100 East Rich Street,' }
+    fill_address_line2: { locator: 'input[name="address.line2"]', value: '10' }
+    fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 939-2929' }
+    sleep_after_shipping: 1000
+
+  expect_result:
+    description: "Form data should persist through cart and checkout flow"
+    assertions: []
