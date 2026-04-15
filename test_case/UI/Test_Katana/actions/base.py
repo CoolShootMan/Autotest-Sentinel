@@ -279,12 +279,29 @@ def smart_click(page: Page, v: dict):
     target_test_id = v.get("test_id")
     force = v.get("force", False) # Default to False for better event triggering
     optional = v.get("optional", False) # If True, skip silently when element not found
-    
+    skip_if_disabled = v.get("skip_if_disabled", False) # If True, skip silently when button is disabled
+
     # Validation
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
+
+    # skip_if_disabled: if the target button is disabled, skip this step silently
+    if skip_if_disabled:
+        try:
+            if target_role and target_name:
+                candidate = page.get_by_role(target_role, name=target_name).nth(target_index)
+            elif target_locator:
+                candidate = page.locator(target_locator).nth(target_index)
+            else:
+                candidate = page.get_by_text(target_name, exact=target_exact).nth(target_index)
+            # is_disabled() returns True when button has disabled attribute or aria-disabled="true"
+            if candidate.is_disabled(timeout=3000):
+                logger.info(f"skip_if_disabled: '{target_name or target_locator}' is disabled, skipping step.")
+                return
+        except Exception as e:
+            logger.debug(f"skip_if_disabled check error (proceeding normally): {e}")
 
     # Scoping: find all visible modals
     modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
@@ -682,6 +699,42 @@ def verify_text_hidden(page: Page, v: dict):
     except Exception as e:
         page.screenshot(path=f"fail_verify_hidden_{text[:10]}.png")
         raise AssertionError(f"Text '{text}' is still visible! Exception: {str(e)}")
+
+def smart_wait(page: Page, v: dict):
+    """
+    Wait for an element to appear (become visible).
+    Supports: role, name, locator, text.
+    Usage in YAML:
+        wait_customize_back: { role: 'button', name: 'Customize products', timeout: 15000, disable_ai: true }
+    """
+    timeout = v.get("timeout", 10000)
+    role = v.get("role")
+    name = v.get("name")
+    locator = v.get("locator")
+    text = v.get("text")
+    logger.info(f"smart_wait: waiting for element (role={role}, name={name}, locator={locator}, text={text}, timeout={timeout})")
+
+    try:
+        if locator:
+            el = page.locator(locator)
+        elif role and name:
+            el = page.get_by_role(role, name=name)
+        elif role:
+            el = page.get_by_role(role)
+        elif text:
+            el = page.get_by_text(text, exact=False)
+        else:
+            logger.warning(f"smart_wait: no locator/role/name/text specified, skipping")
+            return
+
+        el.first.wait_for(state="visible", timeout=timeout)
+        logger.info(f"smart_wait: element appeared successfully")
+    except Exception as e:
+        logger.warning(f"smart_wait: element did not appear within {timeout}ms: {e}")
+        try:
+            page.screenshot(path=f"fail_wait_{str(v)[:30]}.png")
+        except:
+            pass
 
 def reload_page(page: Page, v: dict):
     page.reload()
