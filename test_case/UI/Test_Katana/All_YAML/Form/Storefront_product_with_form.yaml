@@ -524,3 +524,27 @@ testT4540:
   expect_result:
     description: "Submission times should display in CST after setting timezone to GMT+8:00"
     assertions: []
+
+testT3695_curator:
+  guest: false
+  description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+    verify_text_not_visible: { text: 'product form must be filled', assert_not_visible: true }
+
+  expect_result:
+    description: "Custom Text 'product form must be filled' should not be visible on the page"
+    assertions: []
+
+testT3695_guest:
+  guest: true
+  description: "Verify the Custom Text input field is visible on the Guest view"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+    verify_text_visible: { text: 'product form must be filled' }
+
+  expect_result:
+    description: "Custom Text 'product form must be filled' should be visible on the guest page"
+    assertions: []
