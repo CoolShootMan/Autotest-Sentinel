@@ -21,7 +21,8 @@ from .base import (
     verify_value_near,
     verify_all_commission_values,
     reload_page,
-    execute_not_recognized_scan
+    execute_not_recognized_scan,
+    wait_toast,
 )
 
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded
@@ -185,6 +186,8 @@ def get_action(name):
         return open_url
     elif name.startswith("reload"):
         return reload_page
+    elif name.startswith("wait_toast"):
+        return wait_toast
     elif name.startswith("wait_"):
         return wait_for_selector
 
