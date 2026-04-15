@@ -634,4 +634,43 @@ testT4868:
 
   expect_result:
     description: "Page should display 'Form unavailable' text"
-    assertions: []
+    assertions: [ ]
+
+testT3794:
+  guest: false
+  description: "Verify creating a form and then deleting it, confirming it disappears from both list and storefront"
+  test_step:
+    open: "https://release.pear.us/autotestshop#Form"
+    sleep_after_open: 3000
+
+    # Create a new form
+    R_click_add_new: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'form will be delete xxyyzz' }
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_after_continue: 500
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+
+    # Verify form exists in list
+    verify_form_visible: { text: 'form will be delete' }
+
+    # Switch to Forms tab
+    R_click_forms_tab: { role: 'tab', name: 'Forms' }
+    sleep_after_tab: 1000
+
+    # Delete the form
+    R_click_form_more: { locator: '#infinite-query-FORM [data-testid="base-form-card-container"] [data-testid="base-more-horiz-icon-cta"]', index: 0 }
+    sleep_after_more: 500
+    R_click_delete_1: { role: 'button', name: 'Delete',exact: true }
+    sleep_after_delete_1: 500
+    R_click_delete_2: { role: 'button', name: 'Delete',exact: true }
+    sleep_after_delete_2: 1000
+    verify_deleted: { text: 'Delete successful' }
+
+    # Verify form is gone from list
+    verify_form_removed: { text: 'form will be delete xxyyzz', assert_not_visible: true }
+
+  expect_result:
+    description: "Form should be created and then deleted successfully"
+    assertions: [ ]
