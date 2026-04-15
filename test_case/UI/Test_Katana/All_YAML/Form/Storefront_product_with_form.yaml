@@ -239,7 +239,7 @@ testT4281:
 
   expect_result:
     description: "Recipient email validation should block save with empty or invalid email"
-    assertions: []
+    assertions: [ ]
 
 
 testT4276:
@@ -290,7 +290,7 @@ testT4276:
 
   expect_result:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
-    assertions: []
+    assertions: [ ]
 
 testT4866:
   guest: false
@@ -362,7 +362,7 @@ testT4866:
 
   expect_result:
     description: "CTA form button text should be updated and visible on storefront, then deleted"
-    assertions: []
+    assertions: [ ]
 
 testT4847:
   guest: false
@@ -404,7 +404,7 @@ testT4847:
 
   expect_result:
     description: "Form fields should support help text descriptions"
-    assertions: []
+    assertions: [ ]
 
 testT4847_view:
   guest: true
@@ -433,7 +433,7 @@ testT4847_view:
 
   expect_result:
     description: "Help text tooltips should be visible when clicking the info icon on form fields"
-    assertions: []
+    assertions: [ ]
 
 testT4847_destroy:
   guest: false
@@ -452,7 +452,7 @@ testT4847_destroy:
 
   expect_result:
     description: "Form should be removed from module"
-    assertions: []
+    assertions: [ ]
 
 testT4539:
   guest: false
@@ -480,7 +480,7 @@ testT4539:
 
   expect_result:
     description: "Batch select should allow selecting submissions and exporting data"
-    assertions: []
+    assertions: [ ]
 
 
 testT4540:
@@ -523,4 +523,154 @@ testT4540:
 
   expect_result:
     description: "Submission times should display in CST after setting timezone to GMT+8:00"
-    assertions: []
+    assertions: [ ]
+
+testT3695_curator:
+  guest: false
+  description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+    verify_text_not_visible: { text: 'product form must be filled', assert_not_visible: true }
+
+  expect_result:
+    description: "Custom Text 'product form must be filled' should not be visible on the page"
+    assertions: [ ]
+
+testT3695_guest:
+  guest: true
+  description: "Verify the Custom Text input field is visible on the Guest view"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+    verify_text_visible: { text: 'product form must be filled' }
+
+  expect_result:
+    description: "Custom Text 'product form must be filled' should be visible on the guest page"
+    assertions: [ ]
+
+testT3690:
+  guest: true
+  description: "Verify product form data persists through cart, checkout, and order confirmation"
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    sleep_after_open: 3000
+
+    # Add to cart with form data
+    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    sleep_after_click: 1000
+    fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+
+    # View cart
+    R_click_view_cart: { role: 'button', name: 'View cart' }
+    sleep_after_view_cart: 2000
+
+    # Verify form data in cart dialog
+    R_click_enhance_1: { locator: '[data-testid="enhance-button"]', index: 0 }
+    sleep_after_enhance_1: 1000
+    verify_form_data_cart: { text: 'just place some text' }
+    R_click_close_1: { role: 'button', name: 'Close' }
+    sleep_after_close_1: 500
+
+    # Confirm cart
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Verify form data after confirm
+    R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
+    sleep_after_enhance_2: 1000
+    verify_form_data_confirm: { text: 'just place some text' }
+    R_click_close_2: { role: 'button', name: 'Close' }
+    sleep_after_close_2: 500
+
+    # Place order
+    R_click_place_order: { role: 'button', name: 'Place order' }
+    sleep_after_place_order: 2000
+
+    # Fill shipping info
+    fill_email: { locator: 'input[name="contact.email"]', value: 'xx@qq.com' }
+    fill_first_name: { locator: 'input[name="address.firstName"]', value: 'aric' }
+    fill_last_name: { locator: 'input[name="address.lastName"]', value: 'zheng' }
+    fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: '10' }
+    R_click_address_option: { role: 'button', name: '100 East Rich Street,' }
+    fill_address_line2: { locator: 'input[name="address.line2"]', value: '10' }
+    fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 939-2929' }
+    sleep_after_shipping: 1000
+
+  expect_result:
+    description: "Form data should persist through cart and checkout flow"
+    assertions: [ ]
+
+testT5006_curator:
+  guest: false
+  description: "Verify disabling product form in catalog product settings"
+  test_step:
+    open: "https://release.pear.us/catalog/0638b6d9-191b-4c6c-a1d9-184684593c35"
+    sleep_after_open: 3000
+
+    # Open product menu and edit
+    R_click_product1: { role: 'link', name: 'Avatar autotest product title' }
+    sleep_after_open_product1: 1000
+
+    # Go to Advanced tab and disable product form
+    R_click_advanced1: { locator: ".MuiTab-root:has-text('Advanced')" }
+    check_disable_form: { role: 'checkbox', name: 'isProductFormEnabled', checked: false, locator: 'input[name="isProductFormEnabled"]' }
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+  expect_result:
+    description: "Product form should be disabled after unchecking isProductFormEnabled"
+    assertions: [ ]
+
+testT4868:
+  guest: true
+  description: "Verify product page shows 'Form unavailable' when form is disabled"
+  test_step:
+    open: "https://release.pear.us/autotestshop/post/autotest-form-unavalible-form"
+    sleep_after_open: 3000
+    verify_unavailable: { text: 'Form unavailable' }
+
+  expect_result:
+    description: "Page should display 'Form unavailable' text"
+    assertions: [ ]
+
+testT3794:
+  guest: false
+  description: "Verify creating a form and then deleting it, confirming it disappears from both list and storefront"
+  test_step:
+    open: "https://release.pear.us/autotestshop#Form"
+    sleep_after_open: 3000
+
+    # Create a new form
+    R_click_add_new: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'form will be delete xxyyzz' }
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_after_continue: 500
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+
+    # Verify form exists in list
+    verify_form_visible: { text: 'form will be delete' }
+
+    # Switch to Forms tab
+    R_click_forms_tab: { role: 'tab', name: 'Forms' }
+    sleep_after_tab: 1000
+
+    # Delete the form
+    R_click_form_more: { locator: '#infinite-query-FORM [data-testid="base-form-card-container"] [data-testid="base-more-horiz-icon-cta"]', index: 0 }
+    sleep_after_more: 500
+    R_click_delete_1: { role: 'button', name: 'Delete',exact: true }
+    sleep_after_delete_1: 500
+    R_click_delete_2: { role: 'button', name: 'Delete',exact: true }
+    sleep_after_delete_2: 1000
+    verify_deleted: { text: 'Delete successful' }
+
+    # Verify form is gone from list
+    verify_form_removed: { text: 'form will be delete xxyyzz', assert_not_visible: true }
+
+  expect_result:
+    description: "Form should be created and then deleted successfully"
+    assertions: [ ]
