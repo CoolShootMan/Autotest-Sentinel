@@ -1,11 +1,11 @@
 
 from .base import (
-    open_url, 
-    smart_click, 
+    open_url,
+    smart_click,
     smart_fill,
     fill_numeric,
-    smart_check, 
-    smart_swipe, 
+    smart_check,
+    smart_swipe,
     smart_sleep,
     smart_press,
     smart_upload,
@@ -185,6 +185,8 @@ def get_action(name):
         return open_url
     elif name.startswith("reload"):
         return reload_page
+    elif name.startswith("wait_"):
+        return wait_for_selector
 
     
     # Special prefixes that map to specific functions
