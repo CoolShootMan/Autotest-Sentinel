@@ -1,0 +1,43 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state="D:\\monster_test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
+    page = context.new_page()
+    page.goto("https://release.pear.us/post/create")
+    page.get_by_role("tab", name="Content").click()
+    page.get_by_role("textbox", name="Pick a bold title for your").fill("test_3991")
+    page.get_by_role("tab", name="Advanced").click()
+    page.get_by_text("Allow others to copy").visible()
+    page.get_by_role("tab", name="Commerce").click()
+    page.get_by_test_id("enhance-button-cta").click()
+    page.get_by_role("img", name="Image of Product").first.click()
+    page.get_by_role("button", name="Add 1/20 product(s)").click()
+    page.get_by_role("checkbox").check()
+    page.get_by_role("button", name="Save").click()
+    page.get_by_test_id("confirm-button").click()
+    page.get_by_role("button", name="Publish").click()
+    page.get_by_role("button", name="Got it").click()
+    page.get_by_role("button", name="Image of Product test_3991 $").first.click()
+    page.get_by_role("tab", name="Co-selling").click()
+    page.get_by_role("tab", name="Co-sellers").click()
+    page.get_by_test_id("mui-button").click()
+    page.get_by_role("checkbox").nth(1).check()
+    page.get_by_role("button", name="Add").click()
+    page.get_by_text("Post added!").visible()
+    page.get_by_role("tab", name="Advanced").click()
+    page.get_by_text("Add a note for co-sellers").visible()
+    page.locator("input[name=\"enableDownlineNote\"]").check()
+    page.get_by_role("textbox", name="Enter a short message for").fill("test_3991")
+    page.get_by_role("button", name="Apply").click()
+    page.get_by_text("Post advanced settings updated").visible()
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)

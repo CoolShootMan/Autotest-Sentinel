@@ -133,20 +133,65 @@ def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
     target_locator = v.get("locator")
     checked = v.get("checked", True)
+    target_role = v.get("role")
+    target_index = v.get("index", 0)
+    no_modal_scope = v.get("no_modal_scope", False)
     logger.info(f"Checking '{target_name or target_locator}' to {checked}")
 
-    target_role = v.get("role")
+    def _get_el(root):
+        if target_locator:
+            return page.locator(target_locator).nth(target_index)
+        elif target_role:
+            return root.get_by_role(target_role, name=target_name).nth(target_index)
+        else:
+            return root.get_by_label(target_name).nth(target_index)
+
+    def _mui_fallback(el):
+        """Force-click the parent wrapper for React controlled inputs."""
+        logger.warning("Falling back to MUI force-click on parent wrapper...")
+        is_currently_checked = el.evaluate("node => node.checked")
+        if bool(is_currently_checked) != bool(checked):
+            el.locator("..").click(force=True)
+            page.wait_for_timeout(500)
+
+    # --- Strategy 1: Page-level first (most common case, no modal restriction) ---
+    try:
+        el = _get_el(page)
+        el.set_checked(checked, timeout=3000)
+        logger.info(f"Checked '{target_name or target_locator}' via page-level.")
+        return
+    except Exception as e:
+        if "Clicking the checkbox did not change its state" in str(e) or "intercepts pointer events" in str(e):
+            try:
+                _mui_fallback(_get_el(page))
+                return
+            except Exception as fe:
+                logger.warning(f"MUI fallback also failed: {fe}")
+        # On Timeout or Strict-mode: fall through to modal-scoped attempt
+        logger.debug(f"Page-level check failed ({type(e).__name__}), trying modal scope...")
+
+    # --- Strategy 2: Modal-scoped (only when page-level times out & not suppressed) ---
+    if no_modal_scope:
+        logger.error(f"Check failed at page-level and no_modal_scope=True, giving up.")
+        raise Exception(f"smart_check: element '{target_name or target_locator}' not found on page.")
 
     try:
-        if target_locator:
-            el = page.locator(target_locator).nth(v.get("index", 0))
+        modals = page.locator("[role='dialog'], [role='alertdialog'], .MuiDialog-root, .MuiModal-root").all()
+        active_modal = next((m for m in reversed(modals) if m.is_visible()), None)
+        if active_modal:
+            logger.debug("Trying within active modal scope...")
+            el = _get_el(active_modal)
             el.set_checked(checked, timeout=5000)
-        elif target_role:
-            page.get_by_role(target_role, name=target_name).nth(v.get("index", 0)).set_checked(checked, timeout=5000)
-        else:
-            page.get_by_label(target_name).nth(v.get("index", 0)).set_checked(checked, timeout=5000)
-    except Exception as e:
-        logger.error(f"Check failed: {e}")
+            logger.info(f"Checked '{target_name or target_locator}' via modal scope.")
+            return
+    except Exception as e2:
+        if "Clicking the checkbox did not change its state" in str(e2) or "intercepts pointer events" in str(e2):
+            try:
+                _mui_fallback(_get_el(active_modal))
+                return
+            except Exception as fe2:
+                logger.error(f"MUI modal fallback also failed: {fe2}")
+        logger.error(f"Modal-scoped check also failed: {e2}")
         raise
 
 def smart_upload(page: Page, v: dict):
@@ -171,10 +216,11 @@ def smart_click(page: Page, v: dict):
     target_role = v.get("role")
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
+    target_test_id = v.get("test_id")
     force = v.get("force", False) # Default to False for better event triggering
     
     # Validation
-    if not target_name and not target_locator and not target_role:
+    if not target_name and not target_locator and not target_role and not target_test_id:
         return
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
@@ -189,7 +235,14 @@ def smart_click(page: Page, v: dict):
     root = active_modal if active_modal else page
 
     try:
-        # Standard locator attempt
+        # 1. Test ID attempt (Most robust if available)
+        if target_test_id:
+            el = root.get_by_test_id(target_test_id).nth(target_index)
+            if el.is_visible(timeout=5000):
+                el.click(force=force)
+                return
+
+        # 2. Standard locator attempt
         # If target_locator is an absolute XPath or specified, use it directly from page
         if target_locator:
             if target_locator.startswith("/") or target_locator.startswith("xpath="):
