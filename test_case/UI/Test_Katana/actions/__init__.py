@@ -10,11 +10,13 @@ from .base import (
     smart_press,
     smart_upload,
     smart_screenshot,
+    smart_if,
     wait_for_selector,
     wait_for_url,
     save_html,
     click_modal_close,
     verify_text_visible,
+    verify_text_hidden,
     verify_value,
     verify_value_near,
     verify_all_commission_values,
@@ -22,7 +24,7 @@ from .base import (
     execute_not_recognized_scan
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -62,6 +64,10 @@ ACTIONS = {
     "click_module_paragraph": click_module_paragraph,
     "click_add_new_product": click_add_new_product,
     "click_module_post_view_event_cta": click_module_post_view_event_cta,
+    "click_module_collapse": click_module_collapse,
+    "click_module_expand": click_module_expand,
+    "verify_module_collapsed": verify_module_collapsed,
+    "verify_module_expanded": verify_module_expanded,
     
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
@@ -110,6 +116,7 @@ ACTIONS = {
     "check_label_waterfall": smart_check,
     "verify_invitation_link_clipboard": verify_invitation_link_clipboard,
     "verify_text_visible": verify_text_visible,
+    "verify_text_hidden": verify_text_hidden,
     "verify_value": verify_value,
     "verify_value_near": verify_value_near,
     "verify_all_commission": verify_all_commission_values,
@@ -137,8 +144,21 @@ def get_action(name):
         return ACTIONS[name]
     
     # 2. Prefix mapping
+    if name.startswith("click_module_edit_button"):
+        return click_module_edit_button
+    elif name.startswith("click_module_paragraph"):
+        return click_module_paragraph
+    elif name.startswith("click_add_new_product"):
+        return click_add_new_product
+    elif name.startswith("click_module_add_new"):
+        return click_module_add_new
+    elif name.startswith("click_module_post_view_event_cta"):
+        return click_module_post_view_event_cta
+
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
+    elif name.startswith("if_"):
+        return smart_if
     elif name.startswith("fill_numeric"):
         return fill_numeric
     elif name.startswith("fill"):
@@ -173,6 +193,8 @@ def get_action(name):
     
     if name.startswith("verify_toast"):
         return verify_toast_message
+    if name.startswith("verify_hidden"):
+        return verify_text_hidden
     if name.startswith("verify_value"):
         return verify_value
     if name.startswith("verify"):

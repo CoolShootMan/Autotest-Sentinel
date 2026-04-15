@@ -1,0 +1,526 @@
+testT5007:
+  description: "Verify adding a product with form to cart from storefront"
+  guest: true
+  test_step:
+    open: "https://release.pear.us/autotestshop/p/exo646"
+    sleep_after_open: 3000
+    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    sleep_after_form: 1000
+    fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_after_save: 2000
+    verify_added: { text: 'Added to cart' }
+  expect_result:
+    description: "Product should be added to cart successfully"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Added to cart"
+
+testT4790:
+  description: "Verify guest can submit a form with media upload on standalone form page"
+  guest: true
+  test_step:
+    open: "https://release.pear.us/form/7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    sleep_after_open: 3000
+    fill_short_text: { role: 'textbox', name: 'Please fill this out', value: '10 images uploaded case' }
+    press_enter: { press: 'Enter' }
+    fill_short_text_retry: { role: 'textbox', name: 'Please fill this out', value: '10 imsg' }
+    upload_media:
+      text: 'Add media'
+      file_path:
+        - data/imgs/01.png
+        - data/imgs/02.png
+        - data/imgs/03.png
+        - data/imgs/04.png
+        - data/imgs/05.png
+        - data/imgs/06.png
+        - data/imgs/07.png
+        - data/imgs/08.png
+        - data/imgs/09.png
+        - data/imgs/10.png
+    sleep_after_upload: 2000
+    R_click_button: { locator: '[data-testid="button"]' }
+    sleep_after_submit: 3000
+    verify_thanks: { text: 'Thanks for your submission!' }
+    R_click_got_it: { locator: '[data-testid="mui-button"]' }
+  expect_result:
+    description: "Form should be submitted successfully with thanks confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your submission!"
+
+testT4970:
+  guest: false
+  description: "Verify single choice field validation errors: single option, zero options, empty options, duplicate options"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Click "Add new" to create form
+    click_add_new: { role: 'button', name: 'Add new' }
+    sleep_add: 3000
+
+    # Fill form title and subtitle
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test form verify error' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'single choice/multiple choice options' }
+
+    # Delete default Email and Phone fields
+    click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
+    click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_1: 500
+    click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_2: 500
+    click_view_phone_options: { role: 'button', name: 'View Phone options', exact: true }
+    click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_1: 500
+    click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_2: 500
+
+    # Add Single choice field
+    click_add_new_field: { role: 'button', name: 'Add new field', exact: true }
+    sleep_after_add_field: 500
+    click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
+    fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'single' }
+    fill_field_description: { role: 'textbox', name: 'Enter a description', value: 'xx' }
+
+    # --- Verification 1: Single option validation ---
+    # Default has 2 options, click Add with no option content filled
+    click_add_attempt_1: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_1: { text: 'Options cannot be empty' }
+
+    # Fill only the first option
+    fill_option_1: { role: 'textbox', name: 'Enter option', index: 0, value: 'xx' }
+    click_add_attempt_2: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_2: { text: 'Options cannot be empty' }
+
+    # --- Verification 3: Duplicate content validation ---
+    # Fill second option with same value as first
+    fill_option_2_dup: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx' }
+    click_add_attempt_3: { role: 'button', name: 'Add', exact: true }
+    verify_duplicate_error: { text: 'Options cannot have duplicates: "xx"' }
+
+    # --- Verification 4: Add a third empty option ---
+    click_add_option: { role: 'button', name: 'Add option' }
+    click_add_attempt_4: { role: 'button', name: 'Add', exact: true }
+    verify_empty_options_error_3: { text: 'Options cannot be empty' }
+
+    # Fix: delete the 3rd empty option, update second option to unique value
+    click_add_attempt_5: { role: 'button', name: 'Add', exact: true }
+    click_delete_option_3: { locator: '[data-testid="mui-icon-button"]', index: 2 }
+    sleep_delete_option: 500
+    fill_option_2_unique: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx1' }
+    click_add_final: { role: 'button', name: 'Add', exact: true }
+
+    # Continue and save
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 1000
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Single choice field should show validation errors for empty, single, and duplicate options, then save successfully"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "test form verify error"
+
+testT4860:
+  guest: false
+  description: "Verify inserting a CTA button with form into a post and publishing"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click Description to focus editor, then insert CTA Button
+    R_click_description: { role: 'textbox', name: 'Description' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_cta_elements:
+      locator: "li"
+      text: "CTA Elements"
+    sleep_after_hover_cta: 1500
+    R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
+    sleep_after_cta: 1000
+
+    # Fill button text
+    fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label',  value: 'test form' }
+
+    # Select "Form" action from dropdown
+    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
+    R_click_form_option: { text: 'Form', exact: true }
+    sleep_after_select_type: 500
+
+    # Select the form created in testT4970
+    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
+    sleep_after_select_form: 500
+
+    # Confirm and save
+    R_click_save: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save: 1000
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+    # Verify CTA button on storefront opens form modal
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    R_click_test_form_btn: { role: 'button', text: 'test form' }
+    sleep_after_modal: 2000
+    verify_contact_us: { locator: 'h4.MuiTypography-h4', text: 'Contact us' }
+
+  expect_result:
+    description: "CTA form button should be inserted and post published successfully"
+    assertions: [ ]
+
+testT4867:
+  guest: false
+  description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
+  test_step:
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    # Click on CTA button in editor to select it
+    R_click_cta_btn: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select: 500
+
+    # Delete the CTA button
+    R_click_delete: { role: 'button', name: 'Delete' }
+    sleep_after_delete: 500
+    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 1000
+
+    # Publish post
+    R_click_update: { role: 'button', name: 'Update' }
+    sleep_after_update: 3000
+    verify_published: { text: 'Post published!' }
+
+    # Verify CTA button no longer exists on storefront
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
+
+  expect_result:
+    description: "CTA form button should be removed from post after deletion"
+    assertions: [ ]
+
+
+testT4281:
+  guest: false
+  description: "Verify recipient email validation when creating a new form"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open "Add new" form configuration
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # Step 5: Clear recipient email and try to save
+    fill_empty_email: { role: 'textbox', name: 'Recipient Email', value: '' }
+    R_click_continue_1: { role: 'button', name: 'Continue' }
+    sleep_after_continue_1: 1000
+    verify_email_error_1: { text: 'Enter a valid email' }
+
+    # Step 6: Fill invalid email (not a valid format) and try to save
+    fill_invalid_email: { role: 'textbox', name: 'Recipient Email', value: 'test-not-email' }
+    R_click_continue_2: { role: 'button', name: 'Continue' }
+    sleep_after_continue_2: 1000
+    verify_email_error_2: { text: 'Enter a valid email' }
+
+    # Step 7: Fill valid email
+    fill_valid_email: { role: 'textbox', name: 'Recipient Email', value: 'aric.zheng.ext@1m.app' }
+    fill_form_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'xx' }
+    R_click_continue_3: { role: 'button', name: 'Continue' }
+    sleep_after_continue_3: 2000
+    verify_confirmation: { text: 'Form confirmation message' }
+
+  expect_result:
+    description: "Recipient email validation should block save with empty or invalid email"
+    assertions: []
+
+
+testT4276:
+  guest: false
+  description: "Verify form title/subtitle/email icon validation and save combinations"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open form creation
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # --- Step 1: Empty title -> verify error ---
+    R_click_continue_1: { role: 'button', name: 'Continue' }
+    sleep_after_continue_1: 1000
+    verify_title_error: { text: 'Please enter the Title' }
+
+    # --- Step 2: Fill title only, no subtitle, email icon OFF, save ---
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test title' }
+    R_click_continue_2: { role: 'button', name: 'Continue' }
+    sleep_after_continue_2: 2000
+    verify_confirmation_1: { text: 'Form confirmation message' }
+    R_click_close_preview_1: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_1: 500
+
+    # --- Step 3: Add subtitle, email icon OFF, save ---
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'xxxx subtitle' }
+    R_click_continue_3: { role: 'button', name: 'Continue' }
+    sleep_after_continue_3: 2000
+    verify_confirmation_2: { text: 'Form confirmation message' }
+    R_click_close_preview_2: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_2: 500
+
+    # --- Step 4: Toggle email icon ON, save ---
+    R_click_email_icon_on: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r > path' }
+    R_click_continue_4: { role: 'button', name: 'Continue' }
+    sleep_after_continue_4: 2000
+    verify_confirmation_3: { text: 'Form confirmation message' }
+    R_click_close_preview_3: { locator: '[data-testid="close-icon"]' }
+    sleep_after_close_3: 500
+
+    # --- Step 5: Toggle email icon OFF, save ---
+    R_click_email_icon_off: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
+    R_click_continue_5: { role: 'button', name: 'Continue' }
+    sleep_after_continue_5: 2000
+    verify_confirmation_4: { text: 'Form confirmation message' }
+
+  expect_result:
+    description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
+    assertions: []
+
+testT4866:
+  guest: false
+  description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
+  test_step:
+    # --- Part 1: Create CTA form button (same as testT4866) ---
+    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open: 3000
+
+    R_click_description: { role: 'textbox', name: 'Description' }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_cta_elements:
+      locator: "li"
+      text: "CTA Elements"
+    sleep_after_hover_cta: 1500
+    R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
+    sleep_after_cta: 1000
+
+    fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form' }
+
+    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
+    R_click_form_option: { text: 'Form', exact: true }
+    sleep_after_select_type: 500
+
+    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
+    sleep_after_select_form: 500
+
+    R_click_save: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save: 1000
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+    R_click_update_1: { role: 'button', name: 'Update' }
+    sleep_after_update_1: 3000
+
+    # --- Part 2: Edit button text ---
+    open_edit: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open_edit: 3000
+
+    R_click_cta_btn_in_editor: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select_btn: 500
+    R_click_edit_button: { role: 'button', name: 'Edit' }
+    sleep_after_edit_click: 1000
+
+    fill_updated_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form update1' }
+    R_click_save_edit: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save_edit: 1000
+    R_click_confirm_edit: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm_edit: 2000
+    R_click_update_2: { role: 'button', name: 'Update' }
+    sleep_after_update_2: 3000
+
+    # --- Part 3: Verify updated text on storefront ---
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    sleep_after_open_storefront: 3000
+    verify_updated_btn: { text: 'test form update1' }
+
+    # --- Part 4: Delete the CTA button ---
+    open_delete: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    sleep_after_open_delete: 3000
+    R_click_cta_btn_delete: { locator: '[data-testid="rich-text-button"]' }
+    sleep_after_select_delete: 500
+    R_click_delete_btn: { role: 'button', name: 'Delete' }
+    sleep_after_delete: 500
+    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm_delete: 1000
+    R_click_update_3: { role: 'button', name: 'Update' }
+    sleep_after_update_3: 3000
+
+  expect_result:
+    description: "CTA form button text should be updated and visible on storefront, then deleted"
+    assertions: []
+
+testT4847:
+  guest: false
+  description: "Verify adding field help text (description) to form fields"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Open form creation
+    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    sleep_after_click: 1000
+
+    # Fill form title and subtitle
+    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'auto_test help-text' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'test help text' }
+
+    # --- Step 1: Edit Name field with help text ---
+    click_view_name_options: { role: 'button', name: 'View Name options', exact: true }
+    click_edit_name: { role: 'button', name: 'Edit' }
+    sleep_after_edit_name: 500
+    fill_name_title: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
+    fill_name_description: { role: 'textbox', name: 'Enter a description', value: 'short with help text' }
+    R_click_save_name: { role: 'button', name: 'Save' }
+    sleep_after_save_name: 500
+
+    # --- Step 2: Edit Email field with help text ---
+    click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
+    click_edit_email: { role: 'button', name: 'Edit' }
+    sleep_after_edit_email: 500
+    fill_email_description: { role: 'textbox', name: 'Enter a description', value: 'Email with help text' }
+    R_click_save_email: { role: 'button', name: 'Save' }
+    sleep_after_save_email: 500
+
+    # Continue and save form
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 1000
+    R_click_save: { role: 'button', name: 'Save' }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Form fields should support help text descriptions"
+    assertions: []
+
+testT4847_view:
+  guest: true
+  description: "Verify help text tooltips are visible on storefront form fields"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Click on the form card by title
+    R_click_form_card: { locator: '[data-testid="base-form-card-container"]:has-text("auto_test help-text")' }
+    sleep_after_click_card: 1000
+
+    # Verify short field help text tooltip
+    R_click_short_tooltip: { role: 'button', name: 'short with help text' }
+    sleep_after_tooltip_1: 500
+    verify_short_help: { text: 'short with help text' }
+
+    # Verify email field help text tooltip
+    R_click_email_tooltip: { role: 'button', name: 'Email with help text' }
+    sleep_after_tooltip_2: 500
+    verify_email_help: { text: 'Email with help text' }
+
+    # Verify form title in modal
+    verify_form_title: { text: 'auto_test help-text' }
+    R_click_close: { role: 'button', name: 'Close' }
+
+  expect_result:
+    description: "Help text tooltips should be visible when clicking the info icon on form fields"
+    assertions: []
+
+testT4847_destroy:
+  guest: false
+  description: "Remove the auto_test help-text form from module (cleanup)"
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_after_open: 3000
+
+    # Remove form from module - locate by title
+    R_click_more_options: { locator: '[data-testid="base-form-card-container"]:has-text("auto_test help-text") >> [data-testid="base-more-horiz-icon-cta"]' }
+    sleep_after_click: 500
+    R_click_remove: { role: 'button', name: 'Remove from this module' }
+    sleep_after_remove: 500
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+  expect_result:
+    description: "Form should be removed from module"
+    assertions: []
+
+testT4539:
+  guest: false
+  description: "Verify batch select submissions and export selected data"
+  test_step:
+    open: "https://release.pear.us/curator/submission?formId=7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    sleep_after_open: 3000
+
+    # Step 1: Click "Batch select" button -> checkboxes appear
+    R_click_batch_select: { locator: '[data-testid="mui-button"]' }
+
+    # Step 2: Select a submission row checkbox
+    check_submission: { locator: 'input[type="checkbox"]', index: 1 }
+
+    # Step 3: Click "Actions..." button -> menu with export option
+    R_click_actions: { locator: '[data-testid="mui-button"]' }
+
+    # Export selected data
+    download_submission_csv: { name: 'Export selected data', role: 'button' }
+    verify_csv_data:
+      expected_row: {
+        'Name': 'imsg',
+      }
+
+
+  expect_result:
+    description: "Batch select should allow selecting submissions and exporting data"
+    assertions: []
+
+
+testT4540:
+  guest: false
+  description: "Verify timezone setting affects submission time display (CST)"
+  test_step:
+    # --- Part 1: Set timezone to GMT+8:00 Shanghai ---
+    open: "https://release.pear.us/edit-profile#BusinessOperation"
+    sleep_after_open: 3000
+    R_click_timezone: { locator: '#timeZone_select + .MuiInputBase-root' }
+    sleep_after_click_timezone: 300
+    R_click_shanghai: { role: 'option', text: '(GMT+8:00) Asia/Shanghai' }
+    R_click_save_1: { role: 'button', name: 'Save' }
+    sleep_after_save_1: 1000
+    R_click_save_2: { role: 'button', name: 'Save' }
+    sleep_after_save_2: 3000
+    verify_update_success: { text: 'Update Success!' }
+
+    # --- Part 2: Verify submission times show CST ---
+    open_submission: "https://release.pear.us/curator/submission?formId=7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    sleep_after_open_submission: 3000
+    verify_table_cst: { text: '(CST)' }
+
+    # --- Part 3: Click submission row, verify dialog shows CST ---
+    R_click_submission_row: { role: 'cell', name: 'imsg', index: 1 }
+    sleep_after_click: 2000
+    verify_dialog_cst: { text: '(CST)' }
+
+    # --- Part 4: Reset timezone back to GMT-8:00 Los_Angeles ---
+    open_reset: "https://release.pear.us/edit-profile#BusinessOperation"
+    sleep_after_open_reset: 3000
+    R_click_timezone_reset: { locator: '#timeZone_select + .MuiInputBase-root' }
+    sleep_after_click_timezone_reset: 300
+    R_click_shanghai_reset: { role: 'option', text: '(GMT-8:00) America/Los_Angeles' }
+    R_click_save_reset_1: { role: 'button', name: 'Save' }
+    sleep_after_save_reset_1: 1000
+    R_click_save_reset_2: { role: 'button', name: 'Save' }
+    sleep_after_save_reset_2: 3000
+    verify_reset_success: { text: 'Update Success!' }
+
+  expect_result:
+    description: "Submission times should display in CST after setting timezone to GMT+8:00"
+    assertions: []

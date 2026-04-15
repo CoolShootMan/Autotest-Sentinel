@@ -1,0 +1,19 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state="D:\\monster_test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
+    page = context.new_page()
+    page.goto("https://release.pear.us/autotestshop")
+    page.locator("div").filter(has_text=re.compile(r"^MyFormAdd new$")).get_by_test_id("arrow-up-icon").click()
+    page.locator("div").filter(has_text=re.compile(r"^MyFormAdd new$")).get_by_test_id("arrow-up-icon").click()
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)
