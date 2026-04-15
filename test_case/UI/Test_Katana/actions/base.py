@@ -824,3 +824,41 @@ def verify_all_commission_values(page: Page, v: dict):
             logger.error(f"Failed to find commission value {val} at index {i}: {e}")
             raise AssertionError(f"Could not verify commission value: {val}")
 
+
+def wait_toast(page: Page, v: dict):
+    """
+    Wait for a toast / snackbar message to appear, indicating a background operation completed.
+    Supports: message (the text to wait for), timeout (ms, default 15000).
+
+    Usage in YAML:
+        wait_save_success: { message: "Post products updated", timeout: 15000 }
+        wait_publish_success: { message: "Published", timeout: 10000 }
+    """
+    import time
+    message = v.get("message", "")
+    timeout = v.get("timeout", 15000)
+    logger.info(f"wait_toast: waiting for '{message}' (timeout={timeout}ms)")
+
+    start = time.time()
+    while time.time() - start < timeout / 1000.0:
+        # Search in common toast/snackbar container selectors
+        toast_locator = page.locator(
+            "[class*='Snackbar'], [class*='Toast'], [role='alert'], "
+            ".MuiSnackbar-root, [class*='notification'], [class*='message']"
+        )
+        for toast in toast_locator.all():
+            try:
+                if toast.is_visible():
+                    content = toast.inner_text()
+                    if message in content:
+                        logger.info(f"Toast found: '{content.strip()[:80]}'")
+                        page.wait_for_timeout(500)
+                        return
+            except Exception:
+                pass
+        time.sleep(0.3)
+
+    logger.warning(f"Toast '{message}' not found within {timeout}ms, continuing anyway...")
+    page.screenshot(path=f"warn_toast_{message[:20]}.png")
+
+

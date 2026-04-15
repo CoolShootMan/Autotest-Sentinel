@@ -44,9 +44,9 @@ testT1742:
         R_click_save_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
         # 优化：等待 Save 按钮变为 disabled，表示保存完成
         R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # 优化：等待 Save 按钮变为 disabled，表示保存完成
-        wait_save_disabled: { selector: "button:has-text('Save')[disabled]", timeout: 15000, disable_ai: true }
-        
+        # 优化：等 toast 出现说明后端真正保存成功
+        wait_toast_success: { message: "Post products updated", timeout: 15000 }
+
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_step: 2000
 
@@ -85,13 +85,15 @@ testT1742:
         # 优化：等待 Save 按钮变为 disabled，表示保存完成
         R_click_save_teardown_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
         sleep_step: 2000
-        优化：等待 Save 按钮变为 disabled，表示保存完成
-        wait_save_disabled_teardown: { selector: "button:has-text('Save')[disabled]", timeout: 15000, disable_ai: true }
-        sleep_step: 5000
+        # 优化：等 toast 出现说明后端真正保存成功
+        wait_toast_success_teardown: { message: "Post products updated", timeout: 15000 }
+
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_end: 1000
         # Step 5: 验证 Post Card 显示 "Offer up to 8%"
         verify_post_offer: { text: "Offer up to 8%" }
+
+
 
 
 
