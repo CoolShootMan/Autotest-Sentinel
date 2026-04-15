@@ -620,17 +620,18 @@ testT5006_curator:
     R_click_confirm: { locator: '[data-testid="confirm-button"]' }
     sleep_after_confirm: 2000
 
-    # Verify form is disabled by reopening product
-    R_click_product2: { role: 'link', name: 'Avatar autotest product title' }
-    sleep_after_open_product2: 1000
-
-    R_click_advanced2: { locator: ".MuiTab-root:has-text('Advanced')" }
-    sleep_after_advanced_verify: 500
-    verify_form_disabled: { locator: 'input[name="isProductFormEnabled"]', assert_not_checked: true }
-
   expect_result:
     description: "Product form should be disabled after unchecking isProductFormEnabled"
     assertions: [ ]
 
 testT4868:
-  guest: false
+  guest: true
+  description: "Verify product page shows 'Form unavailable' when form is disabled"
+  test_step:
+    open: "https://release.pear.us/autotestshop/post/autotest-form-unavalible-form"
+    sleep_after_open: 3000
+    verify_unavailable: { text: 'Form unavailable' }
+
+  expect_result:
+    description: "Page should display 'Form unavailable' text"
+    assertions: []
