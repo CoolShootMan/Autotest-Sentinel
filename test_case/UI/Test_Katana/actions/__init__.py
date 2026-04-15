@@ -24,7 +24,7 @@ from .base import (
     execute_not_recognized_scan
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -68,6 +68,7 @@ ACTIONS = {
     "click_module_expand": click_module_expand,
     "verify_module_collapsed": verify_module_collapsed,
     "verify_module_expanded": verify_module_expanded,
+    "verify_element_style": verify_element_style,
     
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
