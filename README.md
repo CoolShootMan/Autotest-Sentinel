@@ -258,6 +258,53 @@ actions/ (Action Registry 动作注册表)
 1. Python 版本是否符合 3.9+ 要求 (`python --version`)
 2. `.env` 文件中的 Gemini API Key 是否正确配置并未欠费/超限
 3. 控制台输出的 AI 诊断日志，以定位问题根因
+如遇问题，请检查：
+
+1. Python 版本是否符合要求（`python --version`）
+2. 虚拟环境是否正确激活
+3. 依赖包是否完整安装
+4. Playwright 浏览器是否已安装
+5. `.env` 文件中的 API Key 是否正确配置
+
+## Page-level Search — 零 Token 全页扫描兜底
+
+**背景**: 当目标按钮/元素处于 Modal 弹窗域之外（例如 Drawer 抽屉、Post 编辑器面板），而框架已将搜索域锁定在弹窗内时，传统定位会失败。
+
+**机制**: `smart_click` 在传统 Playwright 定位失败后，若目标具有 `role='button'` 属性，会自动触发全页面按钮扫描：
+
+```python
+# YAML 用法无需任何改动，框架自动兜底：
+R_click_save: { role: 'button', name: 'Save' }
+```
+
+**优势**: 相比 AI 自愈，Page-level Search **无需截图、无需调用 Gemini API、零 Token 消耗、零额外延迟**，精准度反而更高（因为页面按钮枚举是精确匹配，AI 视觉是概率性的）。
+
+### MUI Controlled-Input 自愈 — 应对 React 受控组件拦截
+
+**背景**: Material-UI 的 Switch/Checkbox 使用受控组件模式，原生 `<input>` 被视觉 Wrapper 覆盖。Playwright 的 `set_checked()` 有时会抛出：
+```
+Locator.set_checked: Clicking the checkbox did not change its state
+<div class="MuiStack-root ..."> intercepts pointer events
+```
+
+**机制**: `smart_check` 检测到此错误后，自动执行三步降级：
+1. 通过 JS `node.checked` 读取真实状态，避免无谓的重复切换
+2. 定位父级包裹节点（React onClick handler 真正绑定处）
+3. `force=True` 穿透遮罩层直接点击父节点
+
+### test_id 原生支持
+
+`smart_click` 现已支持 `test_id` 参数，作为**最高优先级定位策略**（优于 role/name/locator）：
+
+```yaml
+# 支持在任何 clickable 步骤中使用 test_id
+click_cta: { test_id: 'enhance-button-cta' }
+click_confirm: { test_id: 'confirm-button' }
+```
+
+### smart_check 弹窗域感知
+
+`smart_check` 现已与 `smart_click` 同步，自动检测当前激活的 Modal/Dialog/Drawer，将 checkbox 搜索域限制在弹窗内，避免勾选到背景页面中的同名元素。
 
 ---
 
