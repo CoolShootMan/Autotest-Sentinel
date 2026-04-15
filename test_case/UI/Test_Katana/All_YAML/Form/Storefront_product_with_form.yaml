@@ -239,7 +239,7 @@ testT4281:
 
   expect_result:
     description: "Recipient email validation should block save with empty or invalid email"
-    assertions: []
+    assertions: [ ]
 
 
 testT4276:
@@ -290,7 +290,7 @@ testT4276:
 
   expect_result:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
-    assertions: []
+    assertions: [ ]
 
 testT4866:
   guest: false
@@ -362,7 +362,7 @@ testT4866:
 
   expect_result:
     description: "CTA form button text should be updated and visible on storefront, then deleted"
-    assertions: []
+    assertions: [ ]
 
 testT4847:
   guest: false
@@ -404,7 +404,7 @@ testT4847:
 
   expect_result:
     description: "Form fields should support help text descriptions"
-    assertions: []
+    assertions: [ ]
 
 testT4847_view:
   guest: true
@@ -433,7 +433,7 @@ testT4847_view:
 
   expect_result:
     description: "Help text tooltips should be visible when clicking the info icon on form fields"
-    assertions: []
+    assertions: [ ]
 
 testT4847_destroy:
   guest: false
@@ -452,7 +452,7 @@ testT4847_destroy:
 
   expect_result:
     description: "Form should be removed from module"
-    assertions: []
+    assertions: [ ]
 
 testT4539:
   guest: false
@@ -480,7 +480,7 @@ testT4539:
 
   expect_result:
     description: "Batch select should allow selecting submissions and exporting data"
-    assertions: []
+    assertions: [ ]
 
 
 testT4540:
@@ -523,7 +523,7 @@ testT4540:
 
   expect_result:
     description: "Submission times should display in CST after setting timezone to GMT+8:00"
-    assertions: []
+    assertions: [ ]
 
 testT3695_curator:
   guest: false
@@ -535,7 +535,7 @@ testT3695_curator:
 
   expect_result:
     description: "Custom Text 'product form must be filled' should not be visible on the page"
-    assertions: []
+    assertions: [ ]
 
 testT3695_guest:
   guest: true
@@ -547,7 +547,7 @@ testT3695_guest:
 
   expect_result:
     description: "Custom Text 'product form must be filled' should be visible on the guest page"
-    assertions: []
+    assertions: [ ]
 
 testT3690:
   guest: true
@@ -601,4 +601,36 @@ testT3690:
 
   expect_result:
     description: "Form data should persist through cart and checkout flow"
-    assertions: []
+    assertions: [ ]
+
+testT5006_curator:
+  guest: false
+  description: "Verify disabling product form in catalog product settings"
+  test_step:
+    open: "https://release.pear.us/catalog/0638b6d9-191b-4c6c-a1d9-184684593c35"
+    sleep_after_open: 3000
+
+    # Open product menu and edit
+    R_click_product1: { role: 'link', name: 'Avatar autotest product title' }
+    sleep_after_open_product1: 1000
+
+    # Go to Advanced tab and disable product form
+    R_click_advanced1: { locator: ".MuiTab-root:has-text('Advanced')" }
+    check_disable_form: { role: 'checkbox', name: 'isProductFormEnabled', checked: false, locator: 'input[name="isProductFormEnabled"]' }
+    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_confirm: 2000
+
+    # Verify form is disabled by reopening product
+    R_click_product2: { role: 'link', name: 'Avatar autotest product title' }
+    sleep_after_open_product2: 1000
+
+    R_click_advanced2: { locator: ".MuiTab-root:has-text('Advanced')" }
+    sleep_after_advanced_verify: 500
+    verify_form_disabled: { locator: 'input[name="isProductFormEnabled"]', assert_not_checked: true }
+
+  expect_result:
+    description: "Product form should be disabled after unchecking isProductFormEnabled"
+    assertions: [ ]
+
+testT4868:
+  guest: false
