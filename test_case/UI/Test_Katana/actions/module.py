@@ -85,7 +85,7 @@ def verify_module_expanded(page: Page, v: dict):
     module_name = v.get("module_name")
     logger.info(f"Verifying module '{module_name}' is expanded by measuring height...")
     header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
-    
+
     import time
     start_time = time.time()
     # Poll for height to grow (e.g. > 150px means body is unfolded)
@@ -96,3 +96,155 @@ def verify_module_expanded(page: Page, v: dict):
             return
         time.sleep(0.5)
     raise AssertionError(f"Module '{module_name}' did not expand. Current Height: {box['height']:.1f}px")
+
+
+def verify_element_style(page: Page, v: dict):
+    """
+    Verify CSS style properties of an element
+
+    Supported parameters:
+    - locator: Element locator (required)
+    - container: Container element name/text to search within (optional)
+    - container_filter: Filter criteria for finding stable parent container (optional)
+      - attributes: Dict of attribute names to match (e.g., {"data-testid": "module"})
+      - exclude_dynamic_attrs: List of attribute patterns to exclude (e.g., ["id", "class"])
+      - max_levels: Maximum number of parent levels to search (default: 5)
+    - property: CSS property name to verify (single string or list)
+    - expected: Expected value (single value or dictionary)
+    - operator: Comparison operator, default 'equals', supports: equals, contains, gt, lt, gte, lte
+    - timeout: Timeout in milliseconds, default 5000
+
+    Usage examples:
+
+    1. Verify single property:
+       verify_element_style:
+           locator: ".my-element"
+           property: "display"
+           expected: "none"
+
+    2. Verify within a container:
+       verify_element_style:
+           container: "My Module"
+           locator: ".button"
+           property: "color"
+           expected: "rgb(255, 0, 0)"
+
+    3. Verify with smart container filtering:
+       verify_element_style:
+           container: "My Module"
+           locator: ".button"
+           property: "height"
+           expected: "100px"
+
+    4. Verify multiple properties:
+       verify_element_style:
+           locator: ".my-element"
+           property: ["display", "color"]
+           expected: {"display": "none", "color": "rgb(255, 0, 0)"}
+
+    5. Verify numeric comparison:
+       verify_element_style:
+           locator: ".my-element"
+           property: "height"
+           expected: "100px"
+           operator: "gte"  # Greater than or equal
+
+    6. Get and print all styles (for debugging):
+       verify_element_style:
+           locator: ".my-element"
+           property: "all"  # Print all computed styles
+    """
+    locator_str = v.get("locator")
+    container_name = v.get("container")
+    if not locator_str:
+        raise ValueError("verify_element_style: 'locator' parameter is required")
+
+    timeout = v.get("timeout", 5000)
+    container_filter = v.get("container_filter")
+
+    # Apply container filter if specified
+    if container_name:
+        logger.info(f"Searching within container: {container_name}")
+
+        # Find initial container by text
+        container = page.locator("div", has_text=container_name).locator(f"xpath={container_filter}").last
+
+        className = container.get_attribute("class")
+
+        print("JJJJJJ", className)
+
+        locator = container.locator(locator_str)
+    else:
+        locator = page.locator(locator_str)
+
+    # Wait for element to be visible
+    locator.wait_for(state="visible", timeout=timeout)
+
+    property_names = v.get("property")
+    expected = v.get("expected")
+    operator = v.get("operator", "equals")
+
+    container_info = f" (in container: {container_name})" if container_name else ""
+    logger.info(f"Verifying element style - Locator: {locator_str}{container_info}, Property: {property_names}")
+
+    # If 'all', print all computed styles and return
+    if property_names == "all":
+        styles = locator.evaluate("el => window.getComputedStyle(el)")
+        logger.info(f"Element complete stylesheet:\n{styles}")
+        return
+
+    # Support single property or property list
+    if isinstance(property_names, str):
+        properties = [property_names]
+    else:
+        properties = property_names
+
+    # Get all computed styles
+    computed_styles = locator.evaluate("el => window.getComputedStyle(el)")
+
+    results = []
+    for prop in properties:
+        actual_value = computed_styles.get(prop, "")
+
+        # Determine expected value
+        if isinstance(expected, dict):
+            exp_value = expected.get(prop, "")
+        else:
+            exp_value = expected if len(properties) == 1 else ""
+
+        # Verification logic
+        passed = False
+        if operator == "equals":
+            passed = actual_value == exp_value
+        elif operator == "contains":
+            passed = exp_value in actual_value
+        elif operator == "gt":
+            passed = float(actual_value) > float(exp_value)
+        elif operator == "lt":
+            passed = float(actual_value) < float(exp_value)
+        elif operator == "gte":
+            passed = float(actual_value) >= float(exp_value)
+        elif operator == "lte":
+            passed = float(actual_value) <= float(exp_value)
+        else:
+            raise ValueError(f"Unsupported operator: {operator}")
+
+        status = "✓" if passed else "✗"
+        result_msg = f"{status} {prop}: {actual_value}"
+        if exp_value:
+            result_msg += f" (expected: {exp_value}, operator: {operator})"
+        results.append(result_msg)
+
+        if not passed:
+            logger.error(result_msg)
+        else:
+            logger.info(result_msg)
+
+    # Summarize results
+    if any("✗" in r for r in results):
+        raise AssertionError(f"Style verification failed:\n" + "\n".join(results))
+    else:
+        logger.info("All style verifications passed")
+
+
+

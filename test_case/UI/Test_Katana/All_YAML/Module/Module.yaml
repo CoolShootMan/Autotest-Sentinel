@@ -320,7 +320,7 @@ testT4852:
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "Mixed module type"
-              # The assertion needs to be optimized
+              # TODO: 检查module中是否正常显示了所有添加的内容
 
 testT3843:
     description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
@@ -369,3 +369,90 @@ testT3843:
               text: "test link1"
             - assertion_type: "element_visible_by_text"
               text: "test link2"
+
+testT3886_long:
+    description: "Verify adding a long Video link module with YouTube link"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test - module - video' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_continue: 2000
+        R_click_links_type: { text: 'Links(select a type below)' }
+        sleep_after_links_click: 1000
+        R_click_video_type: { text: 'Video' }
+        sleep_after_video_click: 1000
+        R_click_add_module: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+        # Click the module edit button to add video link
+        click_module_edit_button: { module_name: 'Test - module - video' }
+        sleep_before_add_new: 2000
+        R_click_add_new_link: { role: 'button', name: 'Add new link' }
+        sleep_after_add_new_link: 2000
+        fill_youtube_link: { placeholder: 'YouTube link only', value: 'https://www.youtube.com/watch?v=ydGPSqqVBXM' }
+        sleep_after_fill: 3000
+        # Click to confirm/add the link
+        click_confirm_button: { locator: "[role='dialog'] [data-testid='enhance-button']", name: 'Add' }
+        sleep_after_confirm: 2000
+        verify_module_long_video: { module_name: "Test - module - video" } # TODO: 需要实现断言 -> 检查视频是否在module中正常显示
+    expect_result:
+        description: "Verify that the Video module is created successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
+
+testT3886_short:
+    description: "Verify adding a short Video link module with Tiktok link"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test - module - video - short' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_continue: 2000
+        R_click_links_type: { text: 'Links(select a type below)' }
+        sleep_after_links_click: 1000
+        R_click_video_type: { text: 'Video' }
+        check2: { role: 'radio', name: 'Short video' }
+        sleep_after_video_click: 1000
+        R_click_add_module: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+        # Click the module edit button to add video link
+        click_module_edit_button: { module_name: 'Test - module - video - short' }
+        sleep_before_add_new: 2000
+        R_click_add_new_link: { role: 'button', name: 'Add new link' }
+        sleep_after_add_new_link: 2000
+        fill_youtube_link: { placeholder: 'YouTube Shorts', value: 'www.tiktok.com/@auyeu.marvi/video/7540458722930216222?is_from_webapp=1&sender_device=pc' }
+        sleep_after_fill: 3000
+        # Click to confirm/add the link
+        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Add' , exact: true}
+        sleep_after_confirm: 2000
+        verify_module_long_video: { module_name: "Test - module - video - short" } # TODO: 需要实现断言 -> 检查视频是否在module中正常显示
+    expect_result:
+        description: "Verify that the Video module is created successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
+
+
+testT4903:
+    description: "Verify two methods that can convert the module to the draft state"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        click_module_edit_button: { module_name: 'Past Events' }
+        R_click_hide_module: { role: 'button', name: 'Hide module' }
+        sleep_after_hide_module: 2000
+        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Hide' , exact: true}
+        sleep_after_confirm: 5000
+        verify_element_style: {container: 'Past Events', container_filter: '../..', locator: '>div:nth-child(2)>div', property: 'opacity', expected: '0.7' }
+        click_module_edit_button2: { module_name: 'Past Events' }
+        R_click_show_module: { role: 'button', name: 'Show module' }
+    expect_result:
+        description: "Verify that the module is hidden successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
