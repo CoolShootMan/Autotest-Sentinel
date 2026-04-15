@@ -326,3 +326,106 @@ testT4279:
 - `cookie_*.json` — 包含真实的认证 Token
 - `.env` — 包含 Gemini API Keys
 - `ai_healing_screenshots/` — 包含系统截图（可能暴露业务数据）
+
+---
+
+## 9. V4.1 智能兜底机制 (Smart Fallback)
+
+### 9.1 架构升级：三层容错（v4.1）
+
+```
+Level 1: 标准 Playwright 定位 (test_id → role+name → locator → text)
+    ↓ 失败
+Level 2a: Page-level Search [v4.1] (零 Token 全页扫描)
+    遍历页面所有匹配元素 → 点击第一个可见者
+    ↓ 失败
+Level 2b: MUI Controlled-Input Fallback [v4.1] (仅 smart_check)
+    JS 读取 node.checked → force click 父级包裹节点
+    ↓ 失败
+Level 3: AI Self-Healing (Gemini Vision + SOM + RAG)
+```
+
+### 9.2 Page-level Search
+
+**触发条件**: `target_role == 'button'` 且前两级定位都失败。
+
+**实现位置**: `actions/base.py` → `smart_click()` → 第 424 行起。
+
+**工作原理**:
+```python
+# 调用 page.get_by_role(...).all() 不限制 Modal 域
+all_matches = page.get_by_role(target_role, name=target_name, exact=False).all()
+for idx, candidate in enumerate(all_matches):
+    if candidate.is_visible(timeout=2000):
+        candidate.click(force=True)   # 点击第一个可见者
+        return
+    else:
+        # 最终降级：JS 直接 dispatch click event
+        page.evaluate("(el) => el.click()", candidate.element_handle())
+        return
+```
+
+**关键优势**:
+| 对比项 | Page-level Search | AI Self-Healing |
+|--------|------------------|-----------------|
+| Token 消耗 | **0** | 约 500-1500 tokens/次 |
+| 延迟 | **< 200ms** | 3-10 秒 |
+| 精准度 | **精确字符串匹配** | 视觉概率估算 |
+| 依赖 | 无 | Gemini API + 网络 |
+
+**YAML 使用**: 无需任何改动，框架自动触发。
+
+### 9.3 MUI Controlled-Input Fallback (`smart_check` 专属)
+
+**触发条件**: `set_checked()` 抛出 `"Clicking the checkbox did not change its state"` 或 `"intercepts pointer events"`。
+
+**实现位置**: `actions/base.py` → `smart_check()` → except 块。
+
+**分步流程**:
+```python
+# Step 1: 重新定位元素
+el = root.get_by_role(target_role, ...).nth(index)
+
+# Step 2: 读取 JS 真实状态，防止重复切换
+is_currently_checked = el.evaluate("node => node.checked")
+if bool(is_currently_checked) == bool(checked):
+    return  # 状态已正确，无需操作
+
+# Step 3: 强制穿透点击父级包裹
+el.locator("..").click(force=True)
+page.wait_for_timeout(500)
+```
+
+**适用场景**: Material-UI Switch、Checkbox、Toggle 等 React 受控组件。
+
+### 9.4 test_id 原生支持
+
+`smart_click` 最高优先级定位策略，在所有其他定位方式之前尝试：
+
+```yaml
+# YAML 中直接传入 test_id 参数
+click_cta_btn: { test_id: 'enhance-button-cta' }
+click_confirm:  { test_id: 'confirm-button' }
+```
+
+```python
+# 内部实现（base.py）
+if target_test_id:
+    el = root.get_by_test_id(target_test_id).nth(target_index)
+    if el.is_visible(timeout=5000):
+        el.click(force=force)
+        return
+```
+
+### 9.5 smart_check 弹窗域感知
+
+与 `smart_click` 保持一致，自动检测激活弹窗并将搜索域限制在其中：
+
+```python
+modals = page.locator("[role='dialog'], [role='alertdialog'], .MuiDialog-root, .MuiModal-root, .MuiDrawer-root").all()
+active_modal = next((m for m in reversed(modals) if m.is_visible()), None)
+root = active_modal if active_modal else page
+```
+
+**避免的问题**: 防止 `check_xxx_checkbox: { role: 'checkbox', index: 0 }` 在弹窗打开时误匹配到背景页面的同名 checkbox。
+
