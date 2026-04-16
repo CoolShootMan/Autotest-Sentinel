@@ -1,7 +1,10 @@
 
+
+from playwright.sync_api import Page
 from .base import (
     open_url,
     smart_click,
+    _smart_click_with_fallback,
     smart_fill,
     fill_numeric,
     smart_check,
@@ -54,12 +57,28 @@ from .layout import (
 )
 from .collabs import verify_invitation_link_clipboard
 
+def smart_click_scan(page: Page, v: dict):
+    """
+    完整兜底点击（等效于 smart_click + fallback_scan=True）。
+    等同于在 YAML 中写：R_click: { name: 'xxx', fallback_scan: true }
+
+    推荐场景：弹窗嵌套、多层 Drawer、元素被外层容器遮盖等传统定位困难的步骤。
+    普通用例请继续使用 R_click 或 click（默认快速定位，不触发 Page-level Search）。
+    """
+    if isinstance(v, dict):
+        v = {**v, "fallback_scan": True}
+    else:
+        v = {"fallback_scan": True}
+    smart_click(page, v)
+
+
 # Registry for exact match keys
 ACTIONS = {
     "open": open_url,
     # Generic overrides
     "click_modal_close": click_modal_close,
     "R_click": smart_click,
+    "R_click_scan": smart_click_scan,   # 显式启用 Page-level Search + AI 兜底
     "fill": smart_fill,
     "check": smart_check,
     "swipe": smart_swipe,
@@ -185,6 +204,8 @@ def get_action(name):
     elif name.startswith("swipe_to_element"):
         return swipe_to_element
 
+    if name.startswith("R_click_scan") or name.startswith("click_scan"):
+        return smart_click_scan
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("if_"):
