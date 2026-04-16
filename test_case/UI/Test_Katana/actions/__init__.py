@@ -42,7 +42,7 @@ from .module import (
     click_module_add_new, click_module_post_view_event_cta, click_module_collapse,
     click_module_expand, verify_module_collapsed, verify_module_expanded,
     verify_element_style, verify_child_element_count, verify_no_sibling_text,
-    verify_element_not_contains_text
+    verify_element_not_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
 )
 from .product import (
 
@@ -102,6 +102,8 @@ ACTIONS = {
     "create_session": create_session,
     "switch_session": switch_session,
     "close_session": close_session,
+    "verify_carousel_scroll": verify_carousel_scroll,
+    "verify_carousel_nav_hidden_at_last": verify_carousel_nav_hidden_at_last,
 
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
@@ -255,6 +257,10 @@ def get_action(name):
     
     if name.startswith("verify_no_sibling"):
         return verify_no_sibling_text
+    if name.startswith("verify_carousel_nav_hidden"):
+        return verify_carousel_nav_hidden_at_last
+    if name.startswith("verify_carousel_scroll"):
+        return verify_carousel_scroll
     if name.startswith("verify_toast"):
         return verify_toast_message
     if name.startswith("verify_hidden"):
