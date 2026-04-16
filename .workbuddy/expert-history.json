@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "sessions": {
+    "f155e392cf1f44eca3a0918343f061f9": [
+      {
+        "expertId": "SoftwareArchitect",
+        "name": "架构通",
+        "profession": "软件架构师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/02-Engineering/SoftwareArchitect/SoftwareArchitect.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/02-Engineering/SoftwareArchitect/SoftwareArchitect_zh.md",
+        "usedAt": 1776240110296,
+        "industryId": "02-Engineering"
+      }
+    ]
+  },
+  "lastUpdated": 1776318837433
+}
