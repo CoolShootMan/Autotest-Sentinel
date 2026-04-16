@@ -23,7 +23,7 @@ from tools import allure_title, allure_step_no
 from page.home import *
 
 # Import the new Action Registry
-from .actions import get_action
+from test_case.UI.Test_Katana.actions import get_action
 
 @allure.testcase('https://ones.cn/project/#/testcase/team/T7u1zXum/plan/QCuFwDdq/library/XcAFFViB/module/6mi4qiVp', 'ONS测试用例链接')
 @allure.title("测试执行")
@@ -173,7 +173,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
             
             
     # --- Teardown Phase ---
-    teardown_step = dict(list(smokecases1.values())[0]).get("teardown_step", {})
+    teardown_step = val.get("teardown_step", {})
     if teardown_step:
         logger.info(">>> Starting Teardown Phase to clean up test data")
         for tk, tv in teardown_step.items():
