@@ -80,7 +80,29 @@ testT4622:
     description: "Verify module collapse and expand toggle functionality"
     test_step:
         open: "https://release.pear.us/autotestshop"
-        sleep_after_open: 3000
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+
+        # Prerequisite: Create module (from testT3554)
+        R_click_create_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_wait_product: 5000
+        R_click_select_product: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click_add_product: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
+        sleep_after_create: 3000
+
+        # Prerequisite: Rename module to "Updated module" (from testT3556)
+        click_module_edit_button: { module_name: 'Verify Add module' }
+        sleep_after_edit_click: 1500
+        R_click_edit_module: { role: 'button', name: 'Edit module' }
+        sleep_after_edit_module: 1000
+        fill_new_title: { role: 'textbox', name: 'Enter title of the module', value: 'Updated module' }
+        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
+        sleep_before_save: 1000
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
 
         # Step 1: Click collapse icon (arrow-up) to fold module content
         click_module_collapse: { module_name: "Updated module" }
@@ -255,6 +277,83 @@ testT3843:
               text: "test link1"
             - assertion_type: "element_visible_by_text"
               text: "test link2"
+
+# ------------------ Module - carousel nav buttons ------------------------
+testT4602:
+    description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+
+        # Step 1: Create module with General Link + Carousel type
+        # This creates the LAST module on the page, ensuring we operate on the correct one
+        R_click_module: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test nav buttons' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select: 2000
+        click_general_link: { text: "General Link", exact: true }
+        sleep_before_type_select: 2000
+        check_carousel: { role: 'radio', name: 'Carousel Carousel' }
+        sleep_before_add: 2000
+        R_click_add_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_module: 3000
+
+        # Step 2: Add 3 links to the last module (click_module_add_new targets last matching module)
+        # Link 1: title1
+        click_module_add_new_1: { module_name: 'test nav buttons' }
+        sleep_wait_form_1: 1500
+        fill_url_1: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_1: { placeholder: 'As the bold title on your', value: 'title1' }
+        R_click_add_link_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_1: 3000
+
+        # Link 2: title2
+        click_module_add_new_2: { module_name: 'test nav buttons' }
+        sleep_wait_form_2: 1500
+        fill_url_2: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_2: { placeholder: 'As the bold title on your', value: 'title2' }
+        R_click_add_link_2: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_2: 3000
+
+        # Link 3: title3
+        click_module_add_new_3: { module_name: 'test nav buttons' }
+        sleep_wait_form_3: 1500
+        fill_url_3: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_3: { placeholder: 'As the bold title on your', value: 'title3' }
+        R_click_add_link_3: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_3: 3000
+
+        # Step 3: Verify carousel scroll behavior
+        # - Hover over module to reveal nav buttons
+        # - Click next: verify scroll distance = one link card width
+        # - Click prev: verify scroll distance = one link card width (smooth back)
+        # - Navigate to last element: verify next button is hidden
+        verify_carousel_scroll_module:
+            module_name: 'test nav buttons'
+            link_item_selector: 'a'
+            tolerance: 10
+
+    expect_result:
+        description: "Verify carousel navigation: clicking next/prev slides content by exactly one link width, next button hidden at last element, nav buttons only visible on hover"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test nav buttons"
+            - assertion_type: "element_visible_by_text"
+              text: "title1"
+            - assertion_type: "element_visible_by_text"
+              text: "title2"
+            - assertion_type: "element_visible_by_text"
+              text: "title3"
+
+    teardown_step:
+        # Delete the module after verification (cleanup)
+        click_module_edit_button_del: { module_name: 'test nav buttons' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        sleep_after_delete_click: 1500
+        click_confirm_delete: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete', exact: true }
+        sleep_after_confirm_delete: 5000
 
 # ------------------ Module -link ->  product ------------------------
 testT3842:
@@ -573,16 +672,11 @@ testT4852:
               # TODO: 检查module中是否正常显示了所有添加的内容
 
 # ------------------ Archiving ---------------------
-testT5106:
+testT4556:
     description: "Verify event creation and completion (archiving)"
     test_step:
-        #open: "https://release.pear.us/autotestshop"
         open: "https://release.pear.us/events/create"
         sleep_after_open: 5000
-        # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
-        # R_click_events_tab: { role: 'link', name: 'Events' }
-        # sleep_after_events_tab: 3000
-        # R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
@@ -622,6 +716,41 @@ testT5106:
             - assertion_type: "element_visible_by_text"
               text: "Test-event-Auto-archive"
 
+testT5105:
+    description: "Verify  co-seller  “Auto-archive completed event posts“ , and remove the completed event posts from the module"
+    test_step:
+        # ========================================
+        # Partner 
+        # ========================================
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        click_module_post_view_event_cta: { module_name: 'Upcoming Events', post_title: 'verify-co-seller-auto-archive' }
+        sleep_after_click_event: 2000
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        sleep_after_click_dropdown: 2000
+        R_click_status_completed: { locator: "ul[role='menu'] li[data-testid='menu-item']", name: 'Completed' , exact: true}
+        sleep_after_edit_event: 2000
+        R_click_mark_completed_confirm: {  locator: 'div[data-track-location="Dialog"] button[data-track-location="Dialog"]', text: 'Mark as Completed', exact: true }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        sleep_after_save: 2000
+        # ========================================
+        # Co-seller
+        # ========================================
+        session_user_coseller__open: {url: "https://release.pear.us/your-business-name-yuu7" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
+        session_user_coseller__sleep_after_inject_cookies: 5000
+        session_user_coseller__verify_element_not_contains_text: { text: 'verify-co-seller-auto-archive', container: 'Upcoming Events' , locator: '.list-container'}
+        sleep_after_close: 2000
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test-event-Auto-archive"
+
+        
+        
+
 # ------------------ CoSeller Module ---------------------------
 testT4603:
     is_coseller: true
@@ -648,4 +777,5 @@ testT4603:
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "products"
+
 

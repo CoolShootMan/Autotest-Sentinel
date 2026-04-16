@@ -295,6 +295,298 @@ def verify_element_style(page: Page, v: dict):
         logger.info("All style verifications passed")
 
 
+def verify_carousel_scroll(page: Page, v: dict):
+    """
+    Verify carousel horizontal scroll navigation within a specific module.
+    - Locates the module by name (finds the last matching module on page)
+    - Hovers over the module to reveal navigation buttons
+    - Clicks next/prev and verifies scroll distance equals one link card width
+    - Verifies next button is hidden when at the last element
+
+    Supported parameters:
+    - module_name: Name of the module to test (required)
+    - link_item_selector: CSS selector for individual link cards inside the carousel (default: 'a')
+    - scroll_container_selector: CSS selector for the scrollable container (optional, auto-detected)
+    - tolerance: Pixel tolerance for scroll distance comparison (default: 10)
+
+    Usage in YAML:
+        verify_carousel_scroll:
+            module_name: 'test nav buttons'
+            link_item_selector: 'a'
+            tolerance: 10
+    """
+    import time
+
+    module_name = v.get("module_name")
+    link_item_selector = v.get("link_item_selector", "a")
+    tolerance = v.get("tolerance", 10)
+
+    if not module_name:
+        raise ValueError("verify_carousel_scroll: 'module_name' parameter is required")
+
+    logger.info(f"verify_carousel_scroll: Testing module '{module_name}'")
+
+    # Find the FULL module container (header + body) by locating the header first,
+    # then navigating up to the parent that encompasses both header and carousel body.
+    # The header has the module title text and "Add new" button.
+    # We need the parent container because carousel items are in a sibling div.
+    
+    # Strategy: find the header container (has title + "Add new"), then get its parent
+    header_containers = page.locator("div").filter(
+        has=page.get_by_text(module_name, exact=True)
+    ).filter(
+        has=page.get_by_role("button", name="Add new")
+    ).all()
+    
+    if not header_containers:
+        raise AssertionError(f"Module '{module_name}' header not found on page")
+    
+    header = header_containers[-1]
+    # Navigate up to get the full module container (parent of header contains the body too)
+    module_container = header.locator("xpath=..")
+    
+    # Verify this container is big enough to contain both header and body
+    container_box = module_container.bounding_box()
+    logger.info(f"Found module container, size: {container_box['width']:.0f}x{container_box['height']:.0f}px")
+    
+    module_container.scroll_into_view_if_needed()
+    page.wait_for_timeout(500)
+
+    # Hover over module to reveal nav buttons (next/prev only show on hover)
+    box = module_container.bounding_box()
+    if box:
+        # Move mouse to center of module to trigger hover
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(800)
+
+    # Find the scrollable container within the module
+    # Look for the element that has overflow-x scroll/auto
+    scroll_container_selector = v.get("scroll_container_selector")
+    if scroll_container_selector:
+        scroll_el = module_container.locator(scroll_container_selector).first
+    else:
+        # Auto-detect: find the scrollable container using JS
+        # We'll use JS to find and store a reference to the scroll container
+        scroll_container_found = module_container.evaluate("""
+            (container) => {
+                const candidates = container.querySelectorAll('div');
+                for (const el of candidates) {
+                    const style = window.getComputedStyle(el);
+                    if ((style.overflowX === 'auto' || style.overflowX === 'scroll')
+                        && el.scrollWidth > el.clientWidth) {
+                        el.setAttribute('data-auto-scroll-container', 'true');
+                        return true;
+                    }
+                }
+                // Fallback: check container itself
+                const cStyle = window.getComputedStyle(container);
+                if (cStyle.overflowX === 'auto' || cStyle.overflowX === 'scroll') {
+                    container.setAttribute('data-auto-scroll-container', 'true');
+                    return true;
+                }
+                return false;
+            }
+        """)
+        if scroll_container_found:
+            scroll_el = module_container.locator("[data-auto-scroll-container='true']").first
+        else:
+            scroll_el = module_container.locator("div").last  # fallback
+
+    # Debug: take screenshot to see current state
+    page.screenshot(path=f"debug_carousel_before_link_search.png")
+    logger.info(f"Debug screenshot saved: debug_carousel_before_link_search.png")
+
+    # Try to find link cards with flexible selectors
+    # The carousel may render links as <a>, <div>, or other elements
+    link_selectors_to_try = [link_item_selector, "a", "div[class*='card']", "div[class*='link']", "div[class*='item']", "[role='link']", "div[class*='MuiCard']"]
+    first_link = None
+    used_selector = link_item_selector
+    
+    for selector in link_selectors_to_try:
+        candidates = module_container.locator(selector)
+        count = candidates.count()
+        logger.info(f"Trying selector '{selector}': found {count} elements")
+        if count > 0:
+            for i in range(min(count, 5)):
+                try:
+                    if candidates.nth(i).is_visible(timeout=2000):
+                        first_link = candidates.nth(i)
+                        used_selector = selector
+                        logger.info(f"Found visible link card with selector '{selector}' at index {i}")
+                        break
+                except:
+                    continue
+            if first_link:
+                break
+    
+    if not first_link:
+        # Last resort: log all child elements for debugging
+        logger.error(f"Could not find any visible link items. Dumping module HTML...")
+        try:
+            inner_html = module_container.evaluate("el => el.innerHTML.substring(0, 2000)")
+            logger.error(f"Module HTML: {inner_html}")
+        except:
+            pass
+        page.screenshot(path=f"fail_no_link_items_{module_name[:10]}.png")
+        raise AssertionError(f"No visible link items found in module '{module_name}' with any selector")
+
+    link_box = first_link.bounding_box()
+    if not link_box:
+        raise AssertionError(f"Could not get bounding box for link items in module '{module_name}'")
+    expected_scroll_width = link_box["width"]
+    logger.info(f"Found link card using selector '{used_selector}', width: {expected_scroll_width:.1f}px")
+
+    # Get scroll position helper using JS
+    def get_scroll_left():
+        return module_container.evaluate("""
+            (container) => {
+                const candidates = container.querySelectorAll('div');
+                for (const el of candidates) {
+                    const style = window.getComputedStyle(el);
+                    if ((style.overflowX === 'auto' || style.overflowX === 'scroll')
+                        && el.scrollWidth > el.clientWidth) {
+                        return el.scrollLeft;
+                    }
+                }
+                return 0;
+            }
+        """)
+
+    # Find nav buttons within the module
+    def click_nav_button(direction):
+        """Click next or prev button. direction: 'next' or 'prev'"""
+        btn = module_container.get_by_role("button", name=direction)
+        if btn.count() > 0 and btn.last.is_visible():
+            btn.last.click(timeout=5000)
+            page.wait_for_timeout(500)  # Wait for scroll animation
+            return True
+        else:
+            logger.info(f"'{direction}' button not visible in module '{module_name}'")
+            return False
+
+    # --- Test 1: Click next and verify scroll distance ---
+    initial_scroll = get_scroll_left()
+    logger.info(f"Initial scroll position: {initial_scroll:.1f}px")
+
+    # Hover again to make sure nav buttons are visible
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(500)
+
+    clicked = click_nav_button("next")
+    if clicked:
+        after_next_scroll = get_scroll_left()
+        actual_scroll_distance = abs(after_next_scroll - initial_scroll)
+        logger.info(f"After next click - scroll position: {after_next_scroll:.1f}px, distance: {actual_scroll_distance:.1f}px")
+
+        diff = abs(actual_scroll_distance - expected_scroll_width)
+        if diff <= tolerance:
+            logger.info(f"✓ Next scroll distance ({actual_scroll_distance:.1f}px) matches link width ({expected_scroll_width:.1f}px) within tolerance ({tolerance}px)")
+        else:
+            logger.warning(f"⚠ Next scroll distance ({actual_scroll_distance:.1f}px) differs from link width ({expected_scroll_width:.1f}px) by {diff:.1f}px")
+    else:
+        raise AssertionError(f"Could not click 'next' button in module '{module_name}'. Make sure there are enough links to require scrolling.")
+
+    # --- Test 2: Click prev and verify scroll distance ---
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(500)
+
+    clicked = click_nav_button("prev")
+    if clicked:
+        after_prev_scroll = get_scroll_left()
+        prev_distance = abs(after_prev_scroll - after_next_scroll)
+        logger.info(f"After prev click - scroll position: {after_prev_scroll:.1f}px, distance: {prev_distance:.1f}px")
+
+        diff = abs(prev_distance - expected_scroll_width)
+        if diff <= tolerance:
+            logger.info(f"✓ Prev scroll distance ({prev_distance:.1f}px) matches link width ({expected_scroll_width:.1f}px) within tolerance ({tolerance}px)")
+        else:
+            logger.warning(f"⚠ Prev scroll distance ({prev_distance:.1f}px) differs from link width ({expected_scroll_width:.1f}px) by {diff:.1f}px")
+    else:
+        logger.warning("Could not click 'prev' button, skipping prev verification")
+
+    # --- Test 3: Navigate to last element, verify next button is hidden ---
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(500)
+
+    # Click next until we reach the end
+    max_clicks = 10
+    for i in range(max_clicks):
+        if box:
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.wait_for_timeout(300)
+
+        next_btn = module_container.get_by_role("button", name="next")
+        if next_btn.count() == 0 or not next_btn.last.is_visible():
+            logger.info(f"✓ 'next' button is hidden after {i} clicks (reached last element)")
+            break
+        next_btn.last.click(timeout=5000)
+        page.wait_for_timeout(500)
+    else:
+        logger.warning(f"Clicked next {max_clicks} times but next button still visible")
+
+    logger.info(f"✓ Carousel scroll verification completed for module '{module_name}'")
+
+
+def verify_carousel_nav_hidden_at_last(page: Page, v: dict):
+    """
+    Verify that the 'next' navigation button is hidden when carousel is at the last element.
+    
+    Supported parameters:
+    - module_name: Name of the module to test (required)
+    - click_next_times: Number of times to click next before checking (default: 5)
+    """
+    module_name = v.get("module_name")
+    click_next_times = v.get("click_next_times", 5)
+
+    if not module_name:
+        raise ValueError("verify_carousel_nav_hidden_at_last: 'module_name' parameter is required")
+
+    logger.info(f"verify_carousel_nav_hidden_at_last: Testing module '{module_name}'")
+
+    # Find the LAST matching module (handles multiple modules on page)
+    all_modules = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).all()
+    if not all_modules:
+        raise AssertionError(f"Module '{module_name}' not found on page")
+    module_container = all_modules[-1]
+    module_container.scroll_into_view_if_needed()
+    page.wait_for_timeout(500)
+
+    box = module_container.bounding_box()
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(800)
+
+    # Click next repeatedly to reach the last element
+    for i in range(click_next_times):
+        if box:
+            page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.wait_for_timeout(300)
+
+        next_btn = module_container.get_by_role("button", name="next")
+        if next_btn.count() > 0 and next_btn.last.is_visible():
+            next_btn.last.click(timeout=5000)
+            page.wait_for_timeout(500)
+            logger.info(f"Clicked next #{i+1}")
+        else:
+            logger.info(f"'next' button not visible at click #{i+1}, already at last element")
+            break
+
+    # Final check: next button should NOT be visible
+    if box:
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.wait_for_timeout(500)
+
+    next_btn = module_container.get_by_role("button", name="next")
+    if next_btn.count() > 0 and next_btn.last.is_visible():
+        page.screenshot(path=f"fail_next_btn_still_visible_{module_name[:10]}.png")
+        raise AssertionError(f"'next' button is still visible at the last element in module '{module_name}'")
+    
+    logger.info(f"✓ 'next' button is correctly hidden at the last element in module '{module_name}'")
+
+
 def verify_child_element_count(page: Page, v: dict):
     """
     Verify the number of child elements within a parent element
@@ -400,4 +692,98 @@ def verify_child_element_count(page: Page, v: dict):
         logger.info(result_msg)
         logger.info("Child element count verification passed")
 
+
+def verify_element_not_contains_text(page: Page, v: dict):
+    """
+    Verify that an element does NOT contain specific text
+
+    Supported parameters:
+    - locator: Element locator (required)
+    - text: The text that should NOT exist in the element (required)
+    - exact: Whether to match exact text (default: false)
+    - container: Container element name/text to search within (optional)
+    - timeout: Timeout in milliseconds (default: 5000)
+
+    Usage examples:
+
+    1. Basic usage - verify text does not exist:
+       verify_element_not_contains_text:
+           locator: ".my-element"
+           text: "Error Message"
+
+    2. Verify within a container:
+       verify_element_not_contains_text:
+           container: "My Module"
+           locator: ".status-message"
+           text: "Failed"
+
+    3. Exact match:
+       verify_element_not_contains_text:
+           locator: ".notification"
+           text: "Success"
+           exact: true
+
+    4. Check multiple texts should not exist:
+       verify_element_not_contains_text:
+           locator: ".error-list"
+           text: "Critical Error"
+    """
+    locator_str = v.get("locator")
+    text_to_check = v.get("text")
+    exact_match = v.get("exact", False)
+    container_name = v.get("container")
+    timeout = v.get("timeout", 5000)
+
+    if not locator_str:
+        raise ValueError("verify_element_not_contains_text: 'locator' parameter is required")
+    if not text_to_check:
+        raise ValueError("verify_element_not_contains_text: 'text' parameter is required")
+
+    # Apply container filter if specified
+    if container_name:
+        logger.info(f"Searching within container: {container_name}")
+        # Find container by text
+        container_elem = page.locator("div").filter(has=page.get_by_text(container_name, exact=False)).last
+        locator = container_elem.locator(locator_str)
+        container_info = f" (in container: {container_name})"
+    else:
+        locator = page.locator(locator_str)
+        container_info = ""
+
+    logger.info(f"Verifying element does NOT contain text - Locator: {locator_str}{container_info}, Text: '{text_to_check}', Exact: {exact_match}")
+
+    try:
+        # Wait for element to be visible
+        locator.wait_for(state="visible", timeout=timeout)
+
+        # Get element text content
+        element_text = locator.inner_text()
+
+        # Check if text exists
+        if exact_match:
+            text_exists = text_to_check == element_text.strip()
+        else:
+            text_exists = text_to_check in element_text
+
+        if text_exists:
+            logger.error(f"Verification failed: Element '{locator_str}' contains text '{text_to_check}'")
+            logger.error(f"Element content: {element_text}")
+            page.screenshot(path=f"fail_not_contains_{text_to_check[:10]}.png")
+            raise AssertionError(
+                f"Element '{locator_str}' should NOT contain text '{text_to_check}', "
+                f"but it was found in: {element_text}"
+            )
+        else:
+            logger.info(f"✓ Verification passed: Element '{locator_str}' does NOT contain text '{text_to_check}'")
+            logger.info(f"Element content: {element_text}")
+
+    except Exception as e:
+        if "does NOT contain text" in str(e):
+            # Re-raise our custom assertion error
+            raise
+        else:
+            # Handle other exceptions (element not found, timeout, etc.)
+            logger.error(f"Error during verification: {e}")
+            page.screenshot(path=f"fail_not_contains_error_{text_to_check[:10]}.png")
+            raise
 

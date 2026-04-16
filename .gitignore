@@ -60,6 +60,9 @@ crash_click.png
 Thumbs.db
 .DS_Store
 
+# === WorkBuddy AI Tool (local only, do not commit) ===
+.workbuddy/
+
 # === Binary Assets (Large files excluded from repo) ===
 *.y4m
 *.webm

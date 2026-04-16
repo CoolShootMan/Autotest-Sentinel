@@ -17,8 +17,26 @@ def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
     if url:
+        # Check if cookie_file is provided - inject cookies BEFORE opening page
+        cookie_file = v.get("cookie_file") if isinstance(v, dict) else None
+        if cookie_file:
+            logger.info(f">>> Injecting cookies BEFORE opening page: {cookie_file}")
+            try:
+                _inject_cookies_to_context(page, cookie_file)
+                logger.info("✓ Cookies injected successfully, opening page with authenticated session")
+            except Exception as e:
+                logger.warning(f"⚠ Cookie injection failed: {e}. Continuing with unauthenticated session.")
+
         from page.home import page_open
         page_open(page, url)
+
+        # Automatically handle pop-ups that appear after page loading
+        logger.info(">>> Auto-handling modals after page load")
+        try:
+            auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
+        except Exception as e:
+            # Failure in bullet layer processing does not affect the main process
+            logger.debug(f"Auto modal handling skipped or failed: {e}")
 
 def swipe_avoid_plus(page: Page, v: dict):
     x = v.get("x", 0)
@@ -1346,4 +1364,591 @@ def fill_stripe_iframe(page: Page, v: dict):
 
 
 
+
+def handle_modal(page: Page, v: dict):
+    """
+    Handle various types of modals, dialogs, and popups by clicking buttons within them.
+    Supports multiple modal identification methods and button selection strategies.
+
+    Supported parameters:
+    - modal_identifiers: List of modal identification methods (tried in order)
+      - selector: CSS/XPath selector
+      - role: ARIA role (dialog, alertdialog, etc.)
+      - text: Text content within modal
+      - class: CSS class name
+      - test_id: data-testid attribute
+    - button_selectors: List of button selection methods (tried in order)
+      - selector: CSS/XPath selector
+      - role: ARIA role (button)
+      - text: Button text
+      - test_id: data-testid attribute
+      - index: Button index (if multiple)
+    - timeout: Timeout in milliseconds for modal detection (default: 5000)
+    - wait_before_click: Delay before clicking button (default: 1000)
+    - close_all: Close all matching modals (default: false)
+    - max_attempts: Maximum number of attempts to find modal (default: 3)
+    - ignore_if_not_found: Don't fail if modal not found (default: false)
+
+    Usage examples:
+
+    1. Simple modal with text button:
+       handle_modal:
+           modal_identifiers:
+               - role: "dialog"
+           button_selectors:
+               - text: "Got it"
+
+    2. Multiple modal types and buttons:
+       handle_modal:
+           modal_identifiers:
+               - class: "MuiDialog-root"
+               - role: "alertdialog"
+               - selector: "[role='dialog']"
+           button_selectors:
+               - text: "Accept"
+               - text: "Agree"
+               - role: "button", name: "Close"
+
+    3. Modal with test_id:
+       handle_modal:
+           modal_identifiers:
+               - test_id: "cookie-banner"
+           button_selectors:
+               - test_id: "accept-button"
+
+    4. Close all matching modals:
+       handle_modal:
+           modal_identifiers:
+               - class: "notification-toast"
+           button_selectors:
+               - selector: ".close-button"
+           close_all: true
+
+    5. Ignore if modal not found:
+       handle_modal:
+           modal_identifiers:
+               - class: "promo-banner"
+           button_selectors:
+               - text: "Close"
+           ignore_if_not_found: true
+    """
+    logger.info(">>> Current Step: handle_modal")
+
+    modal_identifiers = v.get("modal_identifiers", [])
+    button_selectors = v.get("button_selectors", [])
+    timeout = v.get("timeout", 5000)
+    wait_before_click = v.get("wait_before_click", 1000)
+    close_all = v.get("close_all", False)
+    max_attempts = v.get("max_attempts", 4)
+    ignore_if_not_found = v.get("ignore_if_not_found", False)
+
+    if not modal_identifiers:
+        raise ValueError("handle_modal: 'modal_identifiers' must be provided")
+    if not button_selectors:
+        raise ValueError("handle_modal: 'button_selectors' must be provided")
+
+    logger.info(f"Looking for modal with {len(modal_identifiers)} identification methods")
+    logger.info(f"Button selectors to try: {len(button_selectors)}")
+
+    modal_found = False
+    modal_locator = None
+
+    # Try each modal identifier
+    for attempt in range(max_attempts):
+        logger.info(f"Modal detection attempt {attempt + 1}/{max_attempts}")
+
+        for modal_id in modal_identifiers:
+            try:
+                # Build modal locator based on identifier type
+                if "selector" in modal_id:
+                    modal_locator = page.locator(modal_id["selector"]).first
+                elif "role" in modal_id:
+                    role = modal_id["role"]
+                    name = modal_id.get("name")
+                    if name:
+                        modal_locator = page.get_by_role(role, name=name).first
+                    else:
+                        modal_locator = page.get_by_role(role).first
+                elif "text" in modal_id:
+                    modal_locator = page.get_by_text(modal_id["text"], exact=False).first
+                elif "class" in modal_id:
+                    modal_locator = page.locator(f".{modal_id['class']}").first
+                elif "test_id" in modal_id:
+                    modal_locator = page.locator(f"[data-testid='{modal_id['test_id']}']").first
+                else:
+                    logger.warning(f"Unknown modal identifier type: {modal_id}")
+                    continue
+
+                # Check if modal is visible
+                if modal_locator.is_visible(timeout=1000):
+                    logger.info(f"✓ Modal found using: {modal_id}")
+                    modal_found = True
+                    break
+                else:
+                    logger.debug(f"Modal not visible using: {modal_id}")
+
+            except Exception as e:
+                logger.debug(f"Error checking modal with {modal_id}: {e}")
+                continue
+
+        if modal_found:
+            break
+
+        # Wait before retry
+        if attempt < max_attempts - 1:
+            page.wait_for_timeout(500)
+
+    if not modal_found:
+        if ignore_if_not_found:
+            logger.info("Modal not found, but ignoring as per configuration")
+            return
+        else:
+            logger.error(f"Modal not found after {max_attempts} attempts")
+            page.screenshot(path="modal_not_found.png")
+            raise AssertionError("Modal not found")
+
+    # Click buttons in modal
+    buttons_clicked = 0
+    if close_all:
+        # Close all matching buttons
+        logger.info("Closing all matching buttons in modal")
+        for button_id in button_selectors:
+            try:
+                button = find_button_in_modal(page, modal_locator, button_id)
+                if button and button.is_visible():
+                    button.click()
+                    buttons_clicked += 1
+                    page.wait_for_timeout(wait_before_click)
+            except Exception as e:
+                logger.debug(f"Error clicking button {button_id}: {e}")
+    else:
+        # Click first matching button
+        logger.info("Clicking first matching button in modal")
+        for button_id in button_selectors:
+            try:
+                button = find_button_in_modal(page, modal_locator, button_id)
+                if button and button.is_visible():
+                    logger.info(f"Clicking button: {button_id}")
+                    page.wait_for_timeout(wait_before_click)
+                    button.click(timeout=1000)
+                    buttons_clicked += 1
+                    break
+            except Exception as e:
+                logger.debug(f"Error clicking button {button_id}: {e}")
+                continue
+
+    if buttons_clicked > 0:
+        logger.info(f"✓ Modal handled successfully, clicked {buttons_clicked} button(s)")
+    else:
+        logger.warning("⚠ No buttons were clicked in modal")
+        if not ignore_if_not_found:
+            page.screenshot(path="modal_button_not_found.png")
+            raise AssertionError("No clickable buttons found in modal")
+
+
+def find_button_in_modal(page: Page, modal_locator, button_id):
+    """
+    Helper function to find a button within a modal using various selection methods
+    """
+    try:
+        if "selector" in button_id:
+            return modal_locator.locator(button_id["selector"]).last
+        elif "role" in button_id:
+            role = button_id["role"]
+            name = button_id.get("name")
+            index = button_id.get("index", -1)
+            if name:
+                return modal_locator.get_by_role(role, name=name, exact=button_id.get("exact", False)).nth(index)
+            else:
+                return modal_locator.get_by_role(role).nth(index)
+        elif "text" in button_id:
+            text = button_id["text"]
+            exact = button_id.get("exact", False)
+            index = button_id.get("index", 0)
+            return modal_locator.get_by_text(text, exact=exact).nth(index)
+        elif "test_id" in button_id:
+            return modal_locator.locator(f"[data-testid='{button_id['test_id']}']").last
+        else:
+            logger.warning(f"Unknown button selector type: {button_id}")
+            return None
+    except Exception as e:
+        logger.debug(f"Error finding button with {button_id}: {e}")
+        return None
+
+
+def auto_handle_modals(page: Page, v: dict):
+    """
+    Automatically detect and handle common modals that appear after page navigation.
+    This is a convenience wrapper for handle_modal with pre-configured common modal patterns.
+
+    Supported parameters:
+    - timeout: Timeout in milliseconds (default: 3000)
+    - wait_before_click: Delay before clicking (default: 300)
+    - ignore_if_not_found: Always succeed even if no modal found (default: true)
+    - max_iterations: Maximum times to iterate through modal patterns (default: 5)
+                         Use this to handle multi-step modals (e.g., tours with multiple steps)
+
+    Usage examples:
+
+    1. Auto-handle after page load:
+       auto_handle_modals:
+           timeout: 3000
+
+    2. Handle multi-step modals (tours):
+       auto_handle_modals:
+           timeout: 5000
+           max_iterations: 10  # Handle up to 10 modal steps
+
+    Common modals detected:
+    - Cookie consent banners
+    - Welcome/guide tours (multi-step)
+    - Notification toasts
+    - Update prompts
+    - Announcement banners
+    """
+    logger.info(">>> Current Step: auto_handle_modals")
+
+    timeout = v.get("timeout", 3000)
+    ignore_if_not_found = v.get("ignore_if_not_found", True)
+    max_iterations = v.get("max_iterations", 5)
+
+    # Common modal patterns
+    common_modals = [
+        # Cookie banners
+        {
+            "modal_identifiers": [
+                {"class": "cookie-banner"},
+                {"text": "Customize Your Cookie Choices"},
+                {"selector": "div[aria-describedby='cm__desc']"},
+            ],
+            "button_selectors": [
+                {"text": "Accept all"},
+                {"text": "Agree"},
+                {"text": "Got it"},
+                {"role": "button", "name": "Accept all"},
+                {"test_id": "accept-cookies"},
+                {"selector": "div[aria-describedby='cm__desc'] button[data-role='all']"},
+            ]
+        },
+        # Welcome/guide tours (multi-step modals)
+        {
+            "modal_identifiers": [
+                {"role": "presentation", "name": "Customize your shop"},
+                {"role": "presentation", "name": "Add new module"},
+                {"role": "presentation", "name": "Preview your shop"},
+                {"role": "presentation", "name": "Introduce content tabs"},
+                {"class": "MuiPopover-paper"},
+                {"selector": "div[role='presentation'] .MuiPopover-paper"},
+            ],
+            "button_selectors": [
+                {"role": "button", "name": "Next"},
+                {"role": "button","name": "Skip"},
+                {"role": "button","name": "Got it"},
+                {"role": "button","name": "Close"},
+                {"role": "button","name": "Finish"},
+                {"test_id": "button"},
+                {"selector": "div[role='presentation'] button[data-track-location='Dialog']"},
+            ]
+        },
+        # Notification toasts
+        {
+            "modal_identifiers": [
+                {"class": "MuiSnackbar-root"},
+                {"class": "toast"},
+                {"role": "alert"},
+                {"selector": "div[data-track-location='Dialog']"},
+            ],
+            "button_selectors": [
+                {"selector": ".close-button"},
+                {"selector": "[aria-label='Close']"},
+                {"role": "button", "name": "Close"},
+                {"selector": "div[data-track-location='Dialog'] button[data-track-location='Dialog']"},
+            ]
+        },
+    ]
+
+    total_handled = 0
+    iteration = 0
+
+    # Loop to handle multi-step modals (e.g., tours with multiple "Next" buttons)
+    while iteration < max_iterations:
+        iteration += 1
+        logger.info(f">>> Modal handling iteration {iteration}/{max_iterations}")
+
+        handled_this_round = 0
+        modal_found_this_round = False
+
+        for modal_config in common_modals:
+            try:
+                # Try to find and handle the modal
+                handle_modal(page, {
+                    **modal_config,
+                    "timeout": timeout,
+                    "ignore_if_not_found": True,
+                    "wait_before_click": 1000
+                })
+                handled_this_round += 1
+                modal_found_this_round = True
+                logger.info(f"✓ Modal handled in iteration {iteration}")
+
+            except Exception as e:
+                # Continue to next modal pattern
+                logger.debug(f"Modal pattern failed in iteration {iteration}: {e}")
+                continue
+
+        if handled_this_round > 0:
+            total_handled += handled_this_round
+            # Wait a bit for next modal to appear (multi-step scenarios)
+            page.wait_for_timeout(500)
+        else:
+            # No modals found/handled in this iteration, stop looping
+            logger.info(f"No modals found in iteration {iteration}, stopping auto-handle")
+            break
+
+    if total_handled > 0:
+        logger.info(f"✓ Auto-handled {total_handled} modal step(s) across {iteration} iteration(s)")
+    else:
+        logger.info("No modals detected to handle")
+
+
+def create_session(page: Page, v: dict):
+    """
+    Create a named session (browser context) that can be referenced later.
+    Sessions are completely isolated and support all testing operations.
+
+    Supported parameters:
+    - name: Session name (required) - used to reference this session
+    - url: URL to open in the new session (optional)
+    - cookie_file: Path to cookie JSON file to inject (optional)
+    - cookies: List of cookie dictionaries to inject (optional)
+    - storage_state: Path to storage state JSON file (optional)
+    - timeout: Timeout for page load in milliseconds (default: 30000)
+
+    Usage examples:
+
+    1. Create a named session:
+       test_step:
+           session_user_b:
+               open_incognito: "https://example.com"
+               cookie_file: "cookies/user_b.json"
+               R_click_profile: { role: 'button', name: 'Profile' }
+
+    2. Reference existing session:
+       test_step:
+           session_user_b:
+               R_click_settings: { role: 'button', name: 'Settings' }
+
+    3. Nested sessions:
+       test_step:
+           session_admin:
+               open_incognito: "https://example.com/admin"
+               session_sub_admin:
+                   open_incognito: "https://example.com/settings"
+                   R_click_settings: { role: 'button', name: 'Settings' }
+    """
+    session_name = v.get("name")
+    if not session_name:
+        raise ValueError("create_session: 'name' parameter is required")
+
+    logger.info(f">>> Creating session: {session_name}")
+
+    # Get browser from current page
+    context = page.context
+    browser = context.browser
+
+    if not browser:
+        raise RuntimeError("Cannot access browser from current page")
+
+    try:
+        # Initialize session storage if not exists
+        if not hasattr(page, "_sessions"):
+            setattr(page, "_sessions", {})
+        if not hasattr(page, "_active_session"):
+            setattr(page, "_active_session", None)
+        if not hasattr(page, "_session_stack"):
+            setattr(page, "_session_stack", [])
+
+        # Create new browser context for the session
+        new_context_args = {
+            "viewport": context.pages[0].viewport_size if context.pages else {"width": 1280, "height": 720},
+            "locale": "en-US",
+            "timezone_id": "America/New_York",
+        }
+
+        # Load storage state if provided
+        storage_state = v.get("storage_state")
+        if storage_state and os.path.exists(storage_state):
+            import json
+            logger.info(f"Loading storage state from: {storage_state}")
+            with open(storage_state, "r") as f:
+                new_context_args["storage_state"] = json.load(f)
+
+        # Create the new context
+        new_context = browser.new_context(**new_context_args)
+        logger.info(f"✓ Created browser context for session: {session_name}")
+
+        # Load cookies if provided
+        cookie_file = v.get("cookie_file")
+        if cookie_file and os.path.exists(cookie_file):
+            import json
+            logger.info(f"Loading cookies from: {cookie_file}")
+            with open(cookie_file, "r") as f:
+                cookie_data = json.load(f)
+                if isinstance(cookie_data, list):
+                    new_context.add_cookies(cookie_data)
+                elif isinstance(cookie_data, dict) and "cookies" in cookie_data:
+                    new_context.add_cookies(cookie_data["cookies"])
+            logger.info(f"✓ Loaded cookies for session: {session_name}")
+
+        # Add custom cookies if provided
+        cookies = v.get("cookies", [])
+        if cookies and not cookie_file:
+            logger.info(f"Adding {len(cookies)} custom cookies to session: {session_name}")
+            new_context.add_cookies(cookies)
+
+        # Create page in the new context
+        new_page = new_context.new_page()
+
+        # Navigate to URL if provided
+        url = v.get("url")
+        if url:
+            timeout = v.get("timeout", 30000)
+            logger.info(f"Session '{session_name}' navigating to: {url}")
+            new_page.goto(url, timeout=timeout)
+            logger.info(f"✓ Session '{session_name}' loaded")
+
+        # Store session
+        page._sessions[session_name] = {
+            "page": new_page,
+            "context": new_context,
+            "parent_session": page._active_session,
+            "url": new_page.url
+        }
+
+        # Set as active session
+        page._active_session = session_name
+        logger.info(f">>> Active session set to: {session_name}")
+
+        # Return for potential chaining
+        return new_page
+
+    except Exception as e:
+        logger.error(f"✗ Failed to create session '{session_name}': {e}")
+        raise
+
+
+def switch_session(page: Page, v: dict):
+    """
+    Switch to a previously created session.
+
+    Supported parameters:
+    - name: Session name to switch to (required)
+
+    Usage:
+       test_step:
+           switch_to_user_b:
+               switch_session: { name: "user_b" }
+           R_click_button: { role: 'button', name: 'Continue' }
+    """
+    session_name = v.get("name")
+    if not session_name:
+        raise ValueError("switch_session: 'name' parameter is required")
+
+    if not hasattr(page, "_sessions") or session_name not in page._sessions:
+        raise ValueError(f"Session '{session_name}' not found. Available sessions: {list(page._sessions.keys()) if hasattr(page, '_sessions') else []}")
+
+    # Set as active session
+    page._active_session = session_name
+    session = page._sessions[session_name]
+
+    logger.info(f">>> Switched to session: {session_name}")
+    logger.info(f">>> Session URL: {session['url']}")
+
+    return session["page"]
+
+
+def close_session(page: Page, v: dict):
+    """
+    Close a session and clean up its resources.
+
+    Supported parameters:
+    - name: Session name to close (required, or "current" for active session)
+
+    Usage:
+       test_step:
+           close_user_b:
+               close_session: { name: "user_b" }
+    """
+    session_name = v.get("name")
+
+    if not session_name or session_name == "current":
+        session_name = getattr(page, "_active_session", None)
+
+    if not session_name:
+        raise ValueError("No active session to close")
+
+    if not hasattr(page, "_sessions") or session_name not in page._sessions:
+        logger.warning(f"Session '{session_name}' not found")
+        return
+
+    session = page._sessions[session_name]
+
+    try:
+        # Close the page and context
+        session["context"].close()
+        del page._sessions[session_name]
+
+        # If we closed the active session, switch to parent or default
+        if page._active_session == session_name:
+            parent_session = session.get("parent_session")
+            page._active_session = parent_session if parent_session else None
+
+        logger.info(f"✓ Closed session: {session_name}")
+
+    except Exception as e:
+        logger.error(f"✗ Failed to close session '{session_name}': {e}")
+        raise
+
+def _inject_cookies_to_context(page: Page, cookie_file: str):
+    """
+    Internal helper: Inject cookies to browser context BEFORE opening page.
+    This is more efficient than injecting after page load (no reload needed).
+
+    Args:
+        page: Playwright page object
+        cookie_file: Path to cookie JSON file
+
+    Raises:
+        FileNotFoundError: If cookie file doesn't exist
+        ValueError: If cookie file format is invalid
+    """
+    import json
+    import os
+
+    if not os.path.exists(cookie_file):
+        raise FileNotFoundError(f"Cookie file not found: {cookie_file}")
+
+    # Get current browser context
+    context = page.context
+
+    logger.info(f"Loading cookies from: {cookie_file}")
+    with open(cookie_file, "r") as f:
+        cookie_data = json.load(f)
+
+    # Handle different JSON formats
+    if isinstance(cookie_data, list):
+        # Direct list of cookies
+        cookies_to_add = cookie_data
+    elif isinstance(cookie_data, dict):
+        # Playwright storage state format
+        if "cookies" in cookie_data:
+            cookies_to_add = cookie_data["cookies"]
+        else:
+            raise ValueError(f"Unexpected cookie file format (missing 'cookies' key): {cookie_file}")
+    else:
+        raise ValueError(f"Invalid cookie file format: {cookie_file}")
+
+    # Add cookies to context
+    context.add_cookies(cookies_to_add)
+    logger.info(f"✓ Loaded {len(cookies_to_add)} cookies to context (ready for authenticated page load)")
 
