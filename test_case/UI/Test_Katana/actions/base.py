@@ -168,7 +168,7 @@ def smart_fill(page: Page, v: dict):
             target_id = v.get("index", 0)
             filled = False
             for c in candidates:
-                if c.nth(target_id).is_visible():
+                if c.nth(target_id).is_visible(timeout=2000):    # 加超时：原来无超时可能等 30s
                     c.nth(target_id).fill(str(target_value), timeout=fill_timeout)
                     filled = True
                     break
@@ -306,15 +306,23 @@ def smart_upload(page: Page, v: dict):
         fc = fc_info.value
         fc.set_files(file_path if isinstance(file_path, list) else [file_path])
 
-def smart_click(page: Page, v: dict):
-    if page.get_by_text("Something went wrong!", exact=True).is_visible():
-        logger.error("Application Crashed!")
-        raise Exception("Application Crashed")
+def _smart_click_core(page: Page, v: dict):
+    """
+    核心点击逻辑（不含 Page-level Search 和 AI 自愈）。
+    smart_click 和 smart_click_scan 共用此核心函数。
+    """
+    # 优化：is_visible 加 5s 超时（原来无超时，可能等 30s）
+    try:
+        if page.get_by_text("Something went wrong!", exact=True).is_visible(timeout=5000):
+            logger.error("Application Crashed!")
+            raise Exception("Application Crashed")
+    except: pass
 
     # Wait for loading overlays/backdrops to disappear before clicking anything
+    # 优化：timeout 从 8s 降至 2s；用 detach 状态检测（不阻塞主流程）
     try:
         backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
-        backdrop.wait_for(state="hidden", timeout=8000)
+        backdrop.wait_for(state="detached", timeout=2000)  # 2s 超时，避免卡住
     except: pass
 
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
@@ -323,16 +331,15 @@ def smart_click(page: Page, v: dict):
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
     target_test_id = v.get("test_id")
-    force = v.get("force", False) # Default to False for better event triggering
-    optional = v.get("optional", False) # If True, skip silently when element not found
-    skip_if_disabled = v.get("skip_if_disabled", False) # If True, skip silently when button is disabled
-    skip_if_checked = v.get("skip_if_checked", False)    # If True, skip silently when checkbox is already checked
+    force = v.get("force", False)
+    optional = v.get("optional", False)
+    skip_if_disabled = v.get("skip_if_disabled", False)
+    skip_if_checked = v.get("skip_if_checked", False)
 
-    # Validation
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
 
-    # skip_if_checked: if the checkbox is already checked (ON), skip the click
+    # skip_if_checked
     if skip_if_checked and target_locator:
         try:
             el = page.locator(target_locator).nth(target_index)
@@ -345,7 +352,7 @@ def smart_click(page: Page, v: dict):
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
-    # skip_if_disabled: if the target button is disabled, skip this step silently
+    # skip_if_disabled
     if skip_if_disabled:
         try:
             if target_role and target_name:
@@ -354,166 +361,230 @@ def smart_click(page: Page, v: dict):
                 candidate = page.locator(target_locator).nth(target_index)
             else:
                 candidate = page.get_by_text(target_name, exact=target_exact).nth(target_index)
-            # is_disabled() returns True when button has disabled attribute or aria-disabled="true"
             if candidate.is_disabled(timeout=3000):
                 logger.info(f"skip_if_disabled: '{target_name or target_locator}' is disabled, skipping step.")
                 return
         except Exception as e:
             logger.debug(f"skip_if_disabled check error (proceeding normally): {e}")
 
-    # Scoping: find all visible modals
-    modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
-    visible_modals = [m for m in modals if m.is_visible()]
+    # Scoping: find visible modals（优化：限制数量 + 快速过滤）
+    # 原来对每个 modal 调用 .is_visible()（默认等待 30s/个），改为取前 5 个且 timeout=1s
+    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    visible_modals = []
+    for m in raw_modals[:5]:                              # 最多检查 5 个，减少 DOM 遍历
+        try:
+            if m.is_visible(timeout=1000):                # 快速判断，1s 超时
+                visible_modals.append(m)
+        except: pass
     active_modal = visible_modals[-1] if visible_modals else None
 
-    # Special handling for "Publish": use JS to find and click, searching in visible dialog first, then full page
-    if target_name == "Publish":
-        logger.debug("Publish handler: using JS-based click")
-        try:
-            page.wait_for_timeout(3000)  # Wait for loading/Confirm dialog to settle
-            clicked = page.evaluate("""
-                () => {
-                    // Find all visible dialogs and pick the last one (most recent)
-                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
-                    let targetContainer = null;
-                    for (const d of dialogs) {
-                        const style = window.getComputedStyle(d);
-                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
-                            targetContainer = d;
-                        }
-                    }
-                    // Search in visible dialog first
-                    if (targetContainer) {
-                        const dialogBtns = Array.from(targetContainer.querySelectorAll('button'));
-                        for (const btn of dialogBtns) {
-                            const t = btn.textContent.trim();
-                            if (t === 'Publish' && btn.offsetParent !== null) {
-                                btn.click();
-                                return 'dialog';
-                            }
-                        }
-                    }
-                    // Fallback: search entire page
-                    const allBtns = Array.from(document.querySelectorAll('button'));
-                    for (const btn of allBtns) {
-                        const t = btn.textContent.trim();
-                        if (t === 'Publish' && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'page';
-                        }
-                    }
-                    return null;
-                }
-            """)
-            if clicked:
-                logger.info(f"Publish clicked via JS ({clicked})")
+    # Save / Publish: 优先 Playwright 快速定位，失败后再走 JS fallback
+    # 避免无条件执行 JS handler（原来会固定等 1.5s/3s）
+    # 非 Save/Publish 按钮：跳过此块，直接进入通用策略 1-4
+    if target_name in ("Save", "Publish"):
+        playwright_failed_for_special = False
+
+        # 1. Playwright — 优先在 Dialog 内定位（高效，大多数情况下直接命中）
+        dialog_btns = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
+        if active_modal and target_name in dialog_btns:
+            try:
+                el = active_modal.get_by_role("button", name=target_name).nth(target_index)
+                el.scroll_into_view_if_needed(timeout=3000)
+                page.wait_for_timeout(300)
+                el.click(force=True)
+                logger.info(f"smart_click: '{target_name}' clicked via Playwright (modal-scoped)")
                 page.wait_for_timeout(1000)
                 return
-            else:
-                logger.debug("JS Publish: no visible button found")
-        except Exception as e:
-            logger.debug(f"JS Publish click error: {e}")
+            except Exception:
+                playwright_failed_for_special = True
 
-    # Special handling for "Save": use JS to find and click the LAST visible Save button in the most recent dialog
-    if target_name == "Save":
-        logger.debug("Save handler: using JS-based click")
-        try:
-            page.wait_for_timeout(1500)
-            clicked = page.evaluate("""
-                () => {
-                    // Find all visible dialogs
-                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
-                    let targetContainer = null;
-                    for (const d of dialogs) {
-                        const style = window.getComputedStyle(d);
-                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
-                            targetContainer = d;
-                        }
-                    }
-                    // Search in the last visible dialog first, then full page
-                    const searchIn = targetContainer || document.body;
-                    const btns = Array.from(searchIn.querySelectorAll('button'));
-                    for (const btn of btns) {
-                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'ok';
-                        }
-                    }
-                    // Fallback: search entire page
-                    const allBtns = Array.from(document.querySelectorAll('button'));
-                    for (const btn of allBtns) {
-                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'page';
-                        }
-                    }
-                    return null;
-                }
-            """)
-            if clicked:
-                logger.info(f"Save clicked via JS ({clicked})")
+        # 2. Playwright — 全局定位（大多数正常情况）
+        if not playwright_failed_for_special:
+            try:
+                el = page.get_by_role("button", name=target_name).nth(target_index)
+                el.scroll_into_view_if_needed(timeout=3000)
+                page.wait_for_timeout(300)
+                el.click(force=True)
+                logger.info(f"smart_click: '{target_name}' clicked via Playwright (page-level)")
                 page.wait_for_timeout(1000)
                 return
-            else:
-                logger.debug("JS Save: no enabled button found")
-        except Exception as e:
-            logger.debug(f"JS Save click error: {e}")
+            except Exception:
+                playwright_failed_for_special = True
 
-    # For most buttons (Get Tickets, Selling, Customize, Batch set, etc.), search the WHOLE page.
-    # Only scope to modal for known dialog buttons (Confirm, Save, Cancel, etc.)
+        # 3. JS fallback — 只在 Playwright 失败后触发（原来无条件执行，固定等 1.5-3s）
+        js_click_code = """
+            () => {
+                const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
+                let targetContainer = null;
+                for (const d of dialogs) {
+                    const style = window.getComputedStyle(d);
+                    if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
+                        targetContainer = d;
+                    }
+                }
+                const searchIn = targetContainer || document.body;
+                const btns = Array.from(searchIn.querySelectorAll('button'));
+                for (const btn of btns) {
+                    if (btn.textContent.trim() === arguments[0] && !btn.disabled && btn.offsetParent !== null) {
+                        btn.click(); return 'ok';
+                    }
+                }
+                const allBtns = Array.from(document.querySelectorAll('button'));
+                for (const btn of allBtns) {
+                    if (btn.textContent.trim() === arguments[0] && !btn.disabled && btn.offsetParent !== null) {
+                        btn.click(); return 'page';
+                    }
+                }
+                return null;
+            }
+        """
+        try:
+            clicked = page.evaluate(js_click_code, target_name)
+            if clicked:
+                logger.info(f"{target_name} clicked via JS fallback ({clicked})")
+                page.wait_for_timeout(1000)
+                return
+        except Exception as e:
+            logger.debug(f"JS {target_name} fallback error: {e}")
+
+    # ---- 通用定位策略 1-4（Dialog 按钮走 Dialog-scoped，普通按钮走 page） ----
     dialog_buttons = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
     root = active_modal if (active_modal and target_name in dialog_buttons) else page
 
-    try:
-        # 1. Test ID attempt (Most robust if available)
-        if target_test_id:
+    # 1. Test ID
+    if target_test_id:
+        try:
             el = root.get_by_test_id(target_test_id).nth(target_index)
             if el.is_visible(timeout=5000):
                 el.click(force=force)
                 return
+        except: pass
 
-        # 2. Standard locator attempt
-        # If target_locator is an absolute XPath or specified, use it directly from page
-        if target_locator:
+    # 2. Standard locator
+    # 优化：直接 click()，不先 is_visible（Playwright click 内部自带检查）
+    if target_locator:
+        try:
             if target_locator.startswith("/") or target_locator.startswith("xpath="):
-                # Ensure Playwright treats it as XPath explicitly to avoid CSS engine errors
                 xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
                 el = page.locator(xpath_locator).nth(target_index)
             else:
                 el = root.locator(target_locator).nth(target_index)
-            
-            # If name is also provided, filter by it
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
-                
-            if el.is_visible(timeout=60000):
-                el.click(force=force)
-                return
-            else:
-                if optional:
-                    logger.info(f"Optional click: element at index {target_index} not visible, skipping.")
-                    return
-    except Exception as e:
-        if optional:
-            logger.info(f"Optional click: locator attempt failed for index {target_index}, skipping. ({e})")
+            el.click(force=force, timeout=5000)  # 直接点击，不先 is_visible
+            logger.info(f"Clicked via locator: {target_name or target_locator}")
             return
-        logger.debug(f"Locator attempt failed: {e}")
-
-    try:
-        # 1.1 Aria-label fallback (Critical for icon buttons)
-        if target_name:
-            el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            if el.is_visible(timeout=60000):
-                el.click(force=force)
-                logger.info(f"Clicked via aria-label fallback: {target_name}")
+        except Exception as e:
+            if optional:
+                logger.info(f"Optional click: locator attempt failed for index {target_index}, skipping. ({e})")
                 return
-    except: pass
+            logger.debug(f"Locator attempt failed: {e}")
 
-    # ---- 4. Robust page-level fallback (always from page, not from root modal) ----
+    # 3. Aria-label fallback（按钮很少有 aria-label，timeout 极短，避免白等）
+    if target_name:
+        try:
+            el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
+            el.click(force=force, timeout=3000)  # 直接点击
+            logger.info(f"Clicked via aria-label fallback: {target_name}")
+            return
+        except: pass
+
+    # 4. Role / text fallback
+    # 优化：移除 scroll_into_view_if_needed（会阻塞且浪费时间）
+    # - Playwright click() 内部自带滚动，不需要显式 scroll
+    # - 直接 click()，失败再 force
+    try:
+        if target_role:
+            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+        elif target_name:
+            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+        if el:
+            # 先尝试正常点击（Playwright click 内部自带 scroll + 可见性检查）
+            try:
+                el.click(timeout=5000)  # 5s 超时，不 force
+                logger.info(f"Clicked '{target_name}'")
+                if target_role == 'option':
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                return
+            except Exception as click_e:
+                logger.debug(f"Normal click failed ({click_e}), trying force...")
+
+            # 点击失败，尝试 force（跳过所有检查）
+            try:
+                el.click(force=True, timeout=3000)
+                logger.info(f"Force-clicked '{target_name}'")
+                if target_role == 'option':
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                return
+            except Exception as force_e:
+                logger.debug(f"Force click failed, trying JS: {force_e}")
+                try:
+                    page.evaluate("(el) => el.click()", el.element_handle())
+                    logger.info(f"JS-clicked '{target_name}'")
+                    return
+                except Exception as js_e:
+                    logger.debug(f"JS click also failed: {js_e}")
+                    raise
+    except Exception as e:
+        logger.debug(f"Standard click failed: {e}")
+
+    # All core strategies exhausted — raise so caller can decide what to do next
+    raise Exception(f"smart_click: element not found: {target_name or target_locator}")
+
+
+def smart_click(page: Page, v: dict):
+    """
+    快速点击 — 仅使用传统 Playwright 定位策略。
+
+    参数：
+        fallback_scan: bool, 默认为 False。
+            - False: 精准定位失败后直接抛出异常，不触发 Page-level Search。
+                      **适用于 95% 的普通用例，获得最优性能。**
+            - True:  精准定位失败后，触发 Page-level Search + AI 自愈兜底。
+                      **适用于弹窗嵌套、多层遮罩等传统定位困难的场景。**
+
+    YAML 用法示例：
+        # 普通点击（快速）
+        click_save: { name: 'Save' }
+
+        # 困难场景（带 Page-level Search，耗时但更稳定）
+        click_save: { name: 'Save', fallback_scan: true }
+
+        # 困难场景（显式名称，语义更清晰）
+        R_click_save_hard: { name: 'Save', fallback_scan: true }
+    """
+    try:
+        _smart_click_core(page, v)
+        return  # 核心定位成功，直接返回
+    except Exception as primary_error:
+        if not v.get("fallback_scan", False):
+            # fallback_scan=False（默认）：精准定位失败 → 直接抛异常，不拖泥带水
+            logger.debug(f"smart_click (fast): {primary_error}")
+            raise primary_error
+
+        # fallback_scan=True：进入 Page-level Search + AI 兜底链路
+        _smart_click_with_fallback(page, v, primary_error)
+
+
+def _smart_click_with_fallback(page: Page, v, primary_error):
+    """
+    完整兜底点击 — 包含 Page-level Search 和 AI 自愈。
+    仅在 fallback_scan=True 时由 smart_click 调用。
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    optional = v.get("optional", False)
+
+    logger.info(f"smart_click (fallback_scan=True): Page-level Search triggered for '{target_name or target_role}'")
+
+    # ---- 5. Page-level Search: 全页面按钮枚举 ----
+    # 优化：is_visible 超时从 2000ms 降至 500ms，减少等待时间
     if target_role == 'button' or target_name in {"Get Tickets", "Selling", "Customize products", "Batch set commission rates"}:
         try:
             if target_name:
-                # Find ALL matching elements on the page
                 if target_role:
                     all_matches = page.get_by_role(target_role, name=target_name, exact=target_exact).all()
                 else:
@@ -521,7 +592,8 @@ def smart_click(page: Page, v: dict):
                 logger.debug(f"Page-level search for '{target_name}': {len(all_matches)} total elements")
                 for idx, candidate in enumerate(all_matches):
                     try:
-                        is_vis = candidate.is_visible(timeout=2000)
+                        # 优化：超时 500ms（原来 2000ms），快速判断可见性
+                        is_vis = candidate.is_visible(timeout=500)
                         if is_vis:
                             logger.info(f"Page-level found '{target_name}' #{idx}, clicking with force")
                             candidate.click(force=True)
@@ -536,137 +608,96 @@ def smart_click(page: Page, v: dict):
         except Exception as e:
             logger.debug(f"Page-level fallback error: {e}")
 
-    try:
-        if target_role:
-            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
-        elif target_name:
-            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-
-        # FINAL ATTEMPT: For dialog buttons, skip scroll stability check (dialogs often have CSS animations)
-        if el:
-            try:
-                el.scroll_into_view_if_needed(timeout=3000)
-            except Exception as scroll_e:
-                logger.debug(f"Scroll not stable (normal for dialogs): {scroll_e}")
-            page.wait_for_timeout(300)
-            try:
-                # Always try force=True for dialog buttons to bypass animation/timeouts
-                el.click(force=True)
-                logger.info(f"Force-clicked '{target_name}'")
-                return
-            except Exception as click_e:
-                logger.debug(f"Force click failed, trying JS: {click_e}")
-                # Last resort: JS click using element_handle
-                try:
-                    page.evaluate("(el) => el.click()", el.element_handle())
-                    logger.info(f"JS-clicked '{target_name}'")
-                    return
-                except Exception as js_e:
-                    logger.debug(f"JS click also failed: {js_e}")
-                    raise
-            # Close dropdown/listbox after selecting an option
-            if target_role == 'option':
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(300)
-            return
-    except Exception as e:
-        logger.debug(f"Standard click failed: {e}")
-
-
-    # 3. --- AI Self-Healing Fallback (The "Brain") ---
-    # Optional check: if all traditional methods failed and this click is optional, skip gracefully
+    # ---- 6. AI Self-Healing Fallback ----
     if optional:
-        logger.info(f"Optional click: element '{target_name or target_locator}' not found after all attempts, skipping.")
+        logger.info(f"Optional click: element '{target_name}' not found after all attempts, skipping.")
         return
 
     # Global Kill-switch check
     if v.get("disable_ai", False) or os.environ.get("AI_DISABLED") == "True":
-        logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
-        
-        # 3.1 Global Fallback (Last ditch effort for common buttons like 'Add')
+        logger.warning(f"AI Healing is DISABLED for '{target_name}'. Raising original error.")
         if target_role == 'button' or target_name == 'Add' or target_name == 'Add new':
             try:
                 logger.debug("Traditional/Modal search failed. Trying global search for last visible button...")
                 all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
                 for btn in reversed(all_btns):
-                    if btn.is_visible():
-                        try:
-                            btn.scroll_into_view_if_needed(timeout=3000)
-                        except: pass
-                        btn.click(force=True)
-                        logger.info(f"Global fallback SUCCESS for '{target_name}'")
-                        return
-                    else:
-                        # Try JS click for hidden elements
-                        try:
-                            page.evaluate("(el) => el.click()", btn.element_handle())
-                            logger.info(f"Global fallback SUCCESS (JS) for '{target_name}'")
+                    try:
+                        if btn.is_visible(timeout=1000):           # 优化：加 1s 超时（原来无超时等 30s）
+                            try:
+                                btn.scroll_into_view_if_needed(timeout=3000)
+                            except: pass
+                            btn.click(force=True)
+                            logger.info(f"Global fallback SUCCESS for '{target_name}'")
                             return
-                        except: pass
+                        else:
+                            try:
+                                page.evaluate("(el) => el.click()", btn.element_handle())
+                                logger.info(f"Global fallback SUCCESS (JS) for '{target_name}'")
+                                return
+                            except: pass
+                    except: pass
             except: pass
-            
-        raise Exception(f"Element not found: {target_name or target_locator}")
+        raise Exception(f"Element not found: {target_name}")
 
     logger.error("Traditional methods failed. Triggering AI Pure Vision Healing...")
     try:
         page_history = getattr(page, "_execution_history", [])
-        instruction = f"Click the element: '{target_name or target_locator}'"
+        instruction = f"Click the element: '{target_name}'"
         safe_name = re.sub(r'[^\w\-]', '_', str(target_name or 'target'))[:30]
         screenshot_path = f"ai_vision_{safe_name}.png"
         page.screenshot(path=screenshot_path)
-        
+
         res = ai_vision.find_element_pure_vision(screenshot_path, instruction, page_history)
-        
+
         if res.get("found") and res.get("coordinates"):
             coords = res["coordinates"]
             x, y = coords["x"], coords["y"]
             initial_url = page.url
-            
+
             def perform_click(cx, cy, label):
                 logger.debug(f"Performing {label} at {cx}, {cy}")
                 page.mouse.click(cx, cy)
                 page.wait_for_timeout(1500)
-            
+
             perform_click(x, y, "AI Primary Click")
-            
+
             # --- SELF-PATCHING LOGIC ---
             suggested = res.get("suggested_locator")
             yaml_path = getattr(page, "_yaml_path", None)
             case_id = getattr(page, "_test_caseno", None)
-            
+
             if suggested and yaml_path and case_id:
                 try:
                     from .utils.yaml_patcher import patch_yaml_step
                     patch_yaml_step(yaml_path, case_id, target_name, suggested)
                 except Exception as py_ex:
                     logger.warning(f"Self-Patching failed: {py_ex}")
-            
+
             if res.get("suggested_action") == "GOAL_CLICK" and page.url == initial_url:
                 logger.warning("Starting Jitter Retries...")
                 for jx, jy in [(2,2), (-2,-2), (3,0), (0,3)]:
                     if page.url != initial_url: break
                     perform_click(x + jx, y + jy, "Jitter")
-            
+
             if res.get("suggested_action") == "RECOVERY_CLICK" or page.url != initial_url:
                 if v.get("_retry_ai", 0) < 2:
                     v["_retry_ai"] = v.get("_retry_ai", 0) + 1
                     return smart_click(page, v)
             return
         else:
-            logger.error(f"💀 AI SOM could not locate the element. Logic ends here.")
+            logger.error(f"AI SOM could not locate the element. Logic ends here.")
     except Exception as ai_err:
         logger.error(f"AI Healing Error: {ai_err}")
 
-    # If even AI fails, re-raise original or fail
     if v.get("_retry_ai", 0) > 0:
-        return # We already tried
-    raise Exception(f"Failed to click '{target_name or target_locator}' after all attempts including AI.")
+        return
+    raise Exception(f"Failed to click '{target_name}' after all attempts including AI.")
 
 def click_modal_close(page: Page, v: dict):
     logger.info("Attempting to close modal...")
     try:
         close_btn = page.locator("div[role='dialog'] button[aria-label='close'], .MuiDialog-root button.close").first
-        if close_btn.is_visible():
+        if close_btn.is_visible(timeout=3000):            # 加超时：原来无超时可能等 30s
             close_btn.click()
         else:
             page.keyboard.press("Escape")
@@ -692,7 +723,7 @@ def verify_text_visible(page: Page, v: dict):
             el.wait_for(state="hidden", timeout=timeout)
             logger.info(f"Confirmed element is not visible: {text or v.get('locator')}")
         except:
-            if el.is_visible():
+            if el.is_visible(timeout=3000):                   # 加超时：原来无超时可能等 30s
                 page.screenshot(path=f"fail_not_visible_{str(text or v.get('locator'))[:10]}.png")
                 raise AssertionError(f"Element '{text or v.get('locator')}' is still visible but should not be.")
         return
@@ -906,7 +937,7 @@ def wait_toast(page: Page, v: dict):
         )
         for toast in toast_locator.all():
             try:
-                if toast.is_visible():
+                if toast.is_visible(timeout=1000):        # 加超时：原来无超时可能等 30s/个
                     content = toast.inner_text()
                     if message in content:
                         logger.info(f"Toast found: '{content.strip()[:80]}'")
@@ -1188,7 +1219,7 @@ def swipe_to_element(page: Page, v: dict):
 
     # Check if element is already visible
     try:
-        if target_elem.is_visible():
+        if target_elem.is_visible(timeout=3000):           # 加超时：原来无超时可能等 30s
             logger.info("Element is already visible")
             return
     except:

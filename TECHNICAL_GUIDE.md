@@ -1,4 +1,4 @@
-# Auto Test Framework v4.0 - 技术指南
+# Auto Test Framework v4.1 - 技术指南
 
 ## 目录
 - [1. 项目架构](#1-项目架构)
@@ -9,6 +9,7 @@
 - [6. RAG 知识库维护](#6-rag-知识库维护)
 - [7. 调试技巧](#7-调试技巧)
 - [8. 常见问题](#8-常见问题)
+- [9. v4.1 智能兜底机制 (Smart Fallback)](#9-v41-智能兜底机制-smart-fallback)
 
 ---
 
@@ -105,11 +106,13 @@ pytest test_case\UI\Test_Katana\test_ui.py -k "test_guest_submission_2" --storag
 `smart_click` (在 `actions/base.py` 中) 实现了三级容错：
 
 ```
-Level 1: 标准 Playwright 定位 (5s timeout)
+Level 1: 标准 Playwright 定位 (test_id → role+name → locator → text)
+    ↓ 失败（若 fallback_scan=True 进入 Level 2；否则直接抛异常）
+Level 2a: Page-level Search (fallback_scan=True 时触发，零 Token)
     ↓ 失败
-Level 2: Legacy Fallback 定位 (15s timeout)
+Level 2b: MUI Controlled-Input Fallback (仅 smart_check)
     ↓ 失败
-Level 3: AI Self-Healing (Gemini Vision)
+Level 3: AI Self-Healing (fallback_scan=True 且 disable_ai=False)
 ```
 
 ### 3.2 AI Vision 服务 (`utils/ai_vision.py`)
@@ -335,28 +338,32 @@ testT4279:
 
 ```
 Level 1: 标准 Playwright 定位 (test_id → role+name → locator → text)
-    ↓ 失败
-Level 2a: Page-level Search [v4.1] (零 Token 全页扫描)
-    遍历页面所有匹配元素 → 点击第一个可见者
-    ↓ 失败
-Level 2b: MUI Controlled-Input Fallback [v4.1] (仅 smart_check)
-    JS 读取 node.checked → force click 父级包裹节点
-    ↓ 失败
-Level 3: AI Self-Healing (Gemini Vision + SOM + RAG)
+    ↓ 失败（fallback_scan=False 时直接抛出异常）
+    ↓
+Level 2: Page-level Search + AI 自愈（仅 fallback_scan=True 时触发）
+    ├── Page-level Search: 零 Token 全页扫描
+    │   遍历页面所有匹配元素 → 点击第一个可见者
+    │   └── is_visible 超时优化：500ms（v4.1 原为 2000ms）
+    └── AI Self-Healing: Gemini Vision + SOM + RAG（当 Page-level Search 也失败时）
 ```
+
+> ⚠️ **v4.1 重大变更**: Page-level Search **不再默认触发**。
+> 改为 `fallback_scan=True` 按需启用，避免无差别降级拖慢所有用例。
+> 默认行为已恢复为纯快速精准定位。
 
 ### 9.2 Page-level Search
 
-**触发条件**: `target_role == 'button'` 且前两级定位都失败。
+**触发条件**: `fallback_scan=True` 且 Level 1 精准定位失败。
 
-**实现位置**: `actions/base.py` → `smart_click()` → 第 424 行起。
+**实现位置**: `actions/base.py` → `_smart_click_with_fallback()`。
 
 **工作原理**:
 ```python
 # 调用 page.get_by_role(...).all() 不限制 Modal 域
 all_matches = page.get_by_role(target_role, name=target_name, exact=False).all()
 for idx, candidate in enumerate(all_matches):
-    if candidate.is_visible(timeout=2000):
+    # 优化：超时 500ms（v4.0 原为 2000ms），减少等待
+    if candidate.is_visible(timeout=500):
         candidate.click(force=True)   # 点击第一个可见者
         return
     else:
@@ -373,7 +380,18 @@ for idx, candidate in enumerate(all_matches):
 | 精准度 | **精确字符串匹配** | 视觉概率估算 |
 | 依赖 | 无 | Gemini API + 网络 |
 
-**YAML 使用**: 无需任何改动，框架自动触发。
+**YAML 使用** — 推荐用法：
+
+```yaml
+# ✅ 普通用例（快速，默认不触发 Page-level Search）
+R_click_save: { name: 'Save' }
+
+# ✅ 困难场景（显式开启完整兜底）
+R_click_save_hard: { name: 'Save', fallback_scan: true }
+
+# ✅ 显式 action（R_click_scan 等效于 fallback_scan=True）
+R_click_scan_save: { name: 'Save' }
+```
 
 ### 9.3 MUI Controlled-Input Fallback (`smart_check` 专属)
 
