@@ -1,3 +1,4 @@
+# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -9,6 +10,7 @@
 # Expected result:
 # Successfully published a post with batch setting of commission rate, and the combined commission is calculated correctly.
 # (self_listing products with "your", total commission rate is 0%)
+# ==============================================================================
 
 # T1742: Post commission Batch set to 10%
 testT1742:
@@ -293,6 +295,151 @@ testT3683_T3684:
 
 
 
+
+
+
+
+
+
+
+
+# ==============================================================================
+# Test Case: T3686
+# T3686: Verify the order confirmation note is displayed on order placed page when purchased through Coseller's shop
+#
+# Step description:
+# 1. Coseller logs into Pear.us and navigates to the original Post
+# 2. Click "Add to shop" to resell the Post (with is_coseller: true)
+# 3. Navigate to the Coseller's resold Post page
+# 4. Guest adds to cart, checkout, place order
+# 5. Verify confirmation note displayed on order placed page
+#
+# Expected result:
+# 1. Coseller can successfully resell the Post via "Add to shop"
+# 2. Order Confirmation Note displayed below order details on order placed page
+#    (same note content as set by Curator on the original Post)
+# ==============================================================================
+
+testT3686_CosellerResell:
+    is_coseller: true
+    description: "Verify Order Confirmation Note is displayed when purchasing through Coseller's resold Post"
+    test_step:
+
+        # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
+        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+        sleep_step: 5000
+
+        # Click "Add to shop" button to resell the Post (is_coseller: true)
+        R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 8000 }
+        sleep_step: 3000
+
+        # Handle onboarding modal: check "Do not show me this again" and click "Customize Now"
+        check_do_not_show: { locator: "input[name='display']", optional: true }
+        sleep_step: 500
+        R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
+        sleep_step: 3000
+
+        # Click Publish button to publish the resold post (first click may open confirmation dialog)
+        R_click_publish_resold: { role: 'button', name: 'Publish', optional: true, timeout: 5000 }
+        sleep_step: 2000
+
+        # Second click on Publish confirmation dialog (modal button)
+        R_click_publish_confirm: { role: 'button', name: 'Publish', index: 1, optional: true, timeout: 5000 }
+        sleep_step: 1000
+
+
+        # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
+        # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
+        # sleep_step: 500
+        R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
+        sleep_step: 2000
+
+        # Wait for toast message "Post published and added to your shop."
+        wait_toast_publish: { message: "Post published and added to your shop.", timeout: 10000 }
+        sleep_step: 3000
+
+        # =========================================================================
+        # T3686: Verify Order confirmation note is inherited and non-editable in Coseller's Post
+        # =========================================================================
+
+        # Step 3.1: Navigate to Coseller's shop page
+        open_coseller_shop: "https://release.pear.us/autotest-coseller"
+        sleep_step: 3000
+
+        # Step 3.2: Find and click the resold Post to edit
+        R_click_resold_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+        sleep_step: 3000
+
+        # Step 3.3: Switch to Advanced tab
+        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_step: 2000
+
+        # Step 3.4: Verify the note content is displayed and matches original (implies toggle is ON)
+        verify_note_content: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
+        sleep_step: 500
+
+
+
+        # =========================================================================
+        # T3686: Guest checkout from Coseller's resold Post to verify confirmation note
+        # =========================================================================
+
+        # T3686 Step 3: Log out from Coseller account
+        open_account: "https://release.pear.us/account"
+        sleep_step: 3000
+
+        R_click_logout: { role: 'button', name: 'Log out' }
+        sleep_step: 3000
+
+        # T3686 Step 4: Navigate to Coseller's resold Post page as guest
+        open_resold_post: "https://release.pear.us/autotest-coseller/post/auto-test-post-setting-t1742"
+        sleep_step: 3000
+
+        # T3686 Step 5: Guest clicks Buy Ticket (from Coseller's shop General Admission 01)
+        R_click_buy_ticket_ga01: { near_text: "General Admission 01", role: 'button', name: 'Buy Ticket', index: 0 }
+        sleep_step: 2000
+
+        # T3686 Step 7: Click Continue to enter Contact info page
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_step: 2000
+
+        # T3686 Step 8: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Coseller' }
+        sleep_step: 500
+
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Guest' }
+        sleep_step: 500
+
+        fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+        sleep_step: 500
+
+        fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
+        sleep_step: 500
+
+        # T3686 Step 8.5: Fill Credit Card information (Stripe iframe)
+        fill_stripe_iframe:
+            card_number: '4242424242424242'
+            expiry: '02/45'
+            cvc: '345'
+            card_name: 'linda 4650'
+            zipcode: '90021'
+        sleep_step: 1000
+
+        # T3686 Step 9: Place Order
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_step: 3000
+
+        # T3686 Expected: Verify confirmation note is displayed
+        verify_note_on_order_placed: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
+        sleep_end: 3000
+
+    expect_result:
+        assertions:
+            # ===== T3686 Expected Result =====
+            # Order Confirmation Note displayed below order details on order placed page
+            # Note content matches what was set by Curator on the original Post
+            - assertion_type: "element_visible_by_text"
+              text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
 
 
 

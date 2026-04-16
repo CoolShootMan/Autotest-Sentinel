@@ -30,6 +30,7 @@ from .base import (
     drag_element,
     drag_and_drop_by_coordinates,
     swipe_to_element,
+    fill_stripe_iframe,
     handle_modal,
     auto_handle_modals,
     create_session,
@@ -167,6 +168,7 @@ ACTIONS = {
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
     "scroll_to_bottom": scroll_to_bottom,
+    "fill_stripe_iframe": fill_stripe_iframe,
 }
 
 

@@ -1276,6 +1276,90 @@ def scroll_to_bottom(page: Page, v: dict):
             break
 
 
+def fill_stripe_iframe(page: Page, v: dict):
+    """
+    Fill Stripe Elements iframe fields using evaluate() for reliable cross-origin access.
+    Supports: card_number, expiry, cvc, card_name, zipcode
+    """
+    card_number = v.get("card_number", "")
+    expiry = v.get("expiry", "")
+    cvc = v.get("cvc", "")
+    card_name = v.get("card_name", "")
+    zipcode = v.get("zipcode", "")
+    timeout_ms = v.get("timeout", 15000)
+
+    logger.info(f"fill_stripe_iframe: card={bool(card_number)}, expiry={bool(expiry)}, cvc={bool(cvc)}")
+
+    # 方法: 遍历所有 iframe，找到包含 Stripe 元素的 frame
+    filled_count = 0
+    
+    for frame in page.frames:
+        try:
+            url = frame.url or ""
+            if "stripe" not in url.lower():
+                continue
+                
+            # 在每个 frame 中尝试填写
+            fields_to_fill = [
+                ("cardnumber", card_number),
+                ("exp-date", expiry),
+                ("cvc", cvc),
+            ]
+            
+            for name, value in fields_to_fill:
+                if value:
+                    try:
+                        # 使用 focus + type 方法，而不是 fill
+                        el = frame.locator(f'input[name="{name}"]')
+                        if el.count() > 0:
+                            el.click(timeout=3000)
+                            el.fill(value, timeout=timeout_ms)
+                            logger.info(f"fill_stripe_iframe: filled {name} in frame")
+                            filled_count += 1
+                    except Exception as e:
+                        pass  # 静默失败，尝试下一个 frame
+        except:
+            continue
+    
+    if filled_count > 0:
+        logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields")
+    else:
+        logger.warning("fill_stripe_iframe: could not fill Stripe fields, they may require manual input")
+        # 截图以便调试
+        page.screenshot(path="stripe_iframe_debug.png")
+
+    # 填写主页面字段
+    if card_name:
+        try:
+            page.fill('input[name="cardName"]', card_name)
+            logger.info(f"fill_stripe_iframe: filled cardName")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill cardName ({e})")
+
+    if zipcode:
+        try:
+            page.fill('input[name="billingAddress.zipcode"]', zipcode)
+            logger.info(f"fill_stripe_iframe: filled zipcode")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill zipcode ({e})")
+
+    # 填写 card name 和 zipcode（这些通常在主页面，不在 iframe 里）
+    if card_name:
+        try:
+            page.fill('input[name="cardName"]', card_name)
+            logger.info(f"fill_stripe_iframe: filled cardName")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill cardName ({e})")
+
+    if zipcode:
+        try:
+            page.fill('input[name="billingAddress.zipcode"]', zipcode)
+            logger.info(f"fill_stripe_iframe: filled zipcode")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill zipcode ({e})")
+
+
+
 
 
 
