@@ -573,16 +573,11 @@ testT4852:
               # TODO: 检查module中是否正常显示了所有添加的内容
 
 # ------------------ Archiving ---------------------
-testT5106:
+testT4556:
     description: "Verify event creation and completion (archiving)"
     test_step:
-        #open: "https://release.pear.us/autotestshop"
         open: "https://release.pear.us/events/create"
         sleep_after_open: 5000
-        # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
-        # R_click_events_tab: { role: 'link', name: 'Events' }
-        # sleep_after_events_tab: 3000
-        # R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
@@ -622,6 +617,41 @@ testT5106:
             - assertion_type: "element_visible_by_text"
               text: "Test-event-Auto-archive"
 
+testT5105:
+    description: "Verify  co-seller  “Auto-archive completed event posts“ , and remove the completed event posts from the module"
+    test_step:
+        # ========================================
+        # Partner 
+        # ========================================
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        click_module_post_view_event_cta: { module_name: 'Upcoming Events', post_title: 'verify-co-seller-auto-archive' }
+        sleep_after_click_event: 2000
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        sleep_after_click_dropdown: 2000
+        R_click_status_completed: { locator: "ul[role='menu'] li[data-testid='menu-item']", name: 'Completed' , exact: true}
+        sleep_after_edit_event: 2000
+        R_click_mark_completed_confirm: {  locator: 'div[data-track-location="Dialog"] button[data-track-location="Dialog"]', text: 'Mark as Completed', exact: true }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        sleep_after_save: 2000
+        # ========================================
+        # Co-seller
+        # ========================================
+        session_user_coseller__open: {url: "https://release.pear.us/your-business-name-yuu7" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
+        session_user_coseller__sleep_after_inject_cookies: 5000
+        session_user_coseller__verify_element_not_contains_text: { text: 'verify-co-seller-auto-archive', container: 'Upcoming Events' , locator: '.list-container'}
+        sleep_after_close: 2000
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test-event-Auto-archive"
+
+        
+        
+
 # ------------------ CoSeller Module ---------------------------
 testT4603:
     is_coseller: true
@@ -648,4 +678,5 @@ testT4603:
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "products"
+
 
