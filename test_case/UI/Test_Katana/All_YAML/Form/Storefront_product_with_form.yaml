@@ -525,6 +525,56 @@ testT4540:
     description: "Submission times should display in CST after setting timezone to GMT+8:00"
     assertions: [ ]
 
+testT3695_config_form:
+  guest: false
+  description: "Configure product form: enable form, set title/subtitle, add short text field"
+  test_step:
+    open: "https://release.pear.us/catalog"
+    sleep_after_open: 3000
+
+    # Open product
+    R_click_product: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
+    sleep_after_open_product: 1000
+
+    # Go to Advanced tab and enable form
+    R_click_advanced: { locator: ".MuiTab-root:has-text('Advanced')" }
+    sleep_after_tab: 500
+    check_reset_form: { locator: 'input[name="isProductFormEnabled"]', checked: false }
+    sleep_reset_form: 300
+    R_click_save1: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_save1: 1000
+    open_again: "https://release.pear.us/catalog"
+    sleep_after_open2: 3000
+    # Open product
+    R_click_product2: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
+    sleep_after_open_product2: 1000
+    R_click_advanced2: { locator: ".MuiTab-root:has-text('Advanced')" }
+    sleep_after_tab2: 500
+    check_enable_form: { locator: 'input[name="isProductFormEnabled"]', checked: true }
+    sleep_after_checked: 500
+
+    # Fill form title and subtitle
+    fill_form_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'product form must be filled' }
+    fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'sub title' }
+
+    # Add short text field
+    R_click_add_field: { locator: '[data-testid="mui-button"]' }
+    sleep_after_add_field: 500
+    fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
+    R_click_add: { role: 'button', name: 'Add' }
+    sleep_after_add: 500
+
+    # Confirm and save
+    R_click_confirm: { role: 'button', name: 'Confirm' }
+    sleep_after_confirm: 500
+    R_click_save: { locator: '[data-testid="confirm-button"]' }
+    sleep_after_save: 3000
+    verify_updated: { text: 'Product updated!' }
+
+  expect_result:
+    description: "Product form should be configured successfully"
+    assertions: []
+
 testT3695_curator:
   guest: false
   description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
@@ -582,7 +632,7 @@ testT3690:
     R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
     sleep_after_enhance_2: 1000
     verify_form_data_confirm: { text: 'just place some text' }
-    R_click_close_2: { role: 'button', name: 'Close' }
+    R_click_close_2: { locator: '.modal-header-close-btn[aria-label="Close"]' }
     sleep_after_close_2: 500
 
     # Place order
@@ -611,7 +661,7 @@ testT5006_curator:
     sleep_after_open: 3000
 
     # Open product menu and edit
-    R_click_product1: { role: 'link', name: 'Avatar autotest product title' }
+    R_click_product1: { role: 'link', name: 'autotest product title - do not delete' }
     sleep_after_open_product1: 1000
 
     # Go to Advanced tab and disable product form
