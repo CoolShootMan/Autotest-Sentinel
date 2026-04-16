@@ -132,10 +132,28 @@ def context(
     pages: List[Page] = []
     storage_state = pytestconfig.getoption("--storage-state")
     if not storage_state:
+        # Check if YAML specifies is_coseller flag
+        is_coseller = False
+        try:
+            if "smokecases1" in request.fixturenames:
+                smokecases1 = request.getfixturevalue("smokecases1")
+                is_coseller = list(smokecases1.values())[0].get("is_coseller", False)
+        except Exception:
+            pass
+
+        if is_coseller:
+            coseller_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release_co_seller.json")
+            if os.path.exists(coseller_cookie_path):
+                storage_state = coseller_cookie_path
+                logger.info(f"COSeller MODE detected: Using cookie_release_co_seller.json")
+            else:
+                logger.warning(f"COSeller cookie file not found: {coseller_cookie_path}, falling back to default")
+
         # Optimize: automatically load the default cookie state if it exists
-        default_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release.json")
-        if os.path.exists(default_cookie_path):
-            storage_state = default_cookie_path
+        if not storage_state:
+            default_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release.json")
+            if os.path.exists(default_cookie_path):
+                storage_state = default_cookie_path
             
     is_guest = False
     try:

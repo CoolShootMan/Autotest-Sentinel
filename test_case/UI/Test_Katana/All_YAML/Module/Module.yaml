@@ -622,3 +622,30 @@ testT5106:
             - assertion_type: "element_visible_by_text"
               text: "Test-event-Auto-archive"
 
+# ------------------ CoSeller Module ---------------------------
+testT4603:
+    is_coseller: true
+    description: "Verify co-seller can add a Products module on the shop page"
+    test_step:
+        open: "https://release.pear.us/autotest-coseller"
+        sleep_after_open: 5000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'products' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_continue: 2000
+        check_products: { role: 'radio', name: 'Products' }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_after_add: 3000
+        verify_products_added: { text: 'products', timeout: 10000 }
+        verify_no_sibling_add_new: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: -1, text: 'Add new' }
+        R_click_more_icon: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: -1 }
+        sleep_after_more_click: 1000
+        R_click_backdrop: { locator: '.MuiBackdrop-root' }
+        sleep_after_backdrop: 1000
+    expect_result:
+        description: "Co-seller should be able to add a Products module and verify no 'Add new product' option in dropdown menu"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "products"
+
