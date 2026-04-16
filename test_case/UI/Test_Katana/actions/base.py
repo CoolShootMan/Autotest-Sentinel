@@ -131,7 +131,7 @@ def smart_fill(page: Page, v: dict):
 
     try:
         if target_locator:
-            el = page.locator(target_locator).nth(v.get("index", 0))
+            el = page.locator(target_locator).first
             el.fill(str(target_value), timeout=fill_timeout)
         elif "role" in v:
             page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
@@ -280,10 +280,22 @@ def smart_click(page: Page, v: dict):
     force = v.get("force", False) # Default to False for better event triggering
     optional = v.get("optional", False) # If True, skip silently when element not found
     skip_if_disabled = v.get("skip_if_disabled", False) # If True, skip silently when button is disabled
+    skip_if_checked = v.get("skip_if_checked", False)    # If True, skip silently when checkbox is already checked
 
     # Validation
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
+
+    # skip_if_checked: if the checkbox is already checked (ON), skip the click
+    if skip_if_checked and target_locator:
+        try:
+            el = page.locator(target_locator).nth(target_index)
+            is_checked = el.is_checked(timeout=3000)
+            if is_checked:
+                logger.info(f"skip_if_checked: '{target_locator}' is already ON, skipping toggle click.")
+                return
+        except Exception as e:
+            logger.debug(f"skip_if_checked check error (proceeding normally): {e}")
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
@@ -1183,5 +1195,43 @@ def swipe_to_element(page: Page, v: dict):
     except Exception as e:
         logger.error(f"✗ Swipe failed: {e}")
         raise
+
+
+def scroll_to_bottom(page: Page, v: dict):
+    """
+    Scroll to page bottom or to a specific element containing target text.
+    Supports: text (target text to scroll to), iterations (scroll steps, default 10),
+              delay (ms between scrolls, default 500).
+    """
+    import time
+    target_text = v.get("text", "")
+    iterations = v.get("iterations", 10)
+    delay_ms = v.get("delay", 500)
+
+    logger.info(f"scroll_to_bottom: target_text='{target_text}', iterations={iterations}")
+
+    if target_text:
+        try:
+            el = page.get_by_text(target_text, exact=False).first
+            el.scroll_into_view_if_needed(timeout=15000)
+            logger.info(f"scroll_to_bottom: scrolled to target text '{target_text}'")
+            page.wait_for_timeout(300)
+            return
+        except Exception as e:
+            logger.debug(f"scroll_to_bottom: direct scroll failed ({e}), trying iterative scroll...")
+
+    for i in range(iterations):
+        page.mouse.wheel(0, 500)
+        page.wait_for_timeout(delay_ms)
+        scroll_pos = page.evaluate("window.scrollY + window.innerHeight")
+        doc_height = page.evaluate("document.documentElement.scrollHeight")
+        if scroll_pos >= doc_height - 100:
+            logger.info(f"scroll_to_bottom: reached bottom at iteration {i+1}")
+            break
+
+
+
+
+
 
 
