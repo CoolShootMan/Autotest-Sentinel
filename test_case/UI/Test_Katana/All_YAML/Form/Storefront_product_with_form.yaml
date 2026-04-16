@@ -573,7 +573,7 @@ testT3695_config_form:
 
   expect_result:
     description: "Product form should be configured successfully"
-    assertions: []
+    assertions: [ ]
 
 testT3695_curator:
   guest: false
@@ -621,7 +621,7 @@ testT3690:
     R_click_enhance_1: { locator: '[data-testid="enhance-button"]', index: 0 }
     sleep_after_enhance_1: 1000
     verify_form_data_cart: { text: 'just place some text' }
-    R_click_close_1: { role: 'button', name: 'Close' }
+    R_click_close_1: { locator: '.modal-header-close-btn[aria-label="Close"]' }
     sleep_after_close_1: 500
 
     # Confirm cart
@@ -717,9 +717,9 @@ testT3794:
     R_click_delete_2: { role: 'button', name: 'Delete',exact: true }
     sleep_after_delete_2: 1000
     verify_deleted: { text: 'Delete successful' }
-
+    sleep_after_delete_3: 1000
     # Verify form is gone from list
-    verify_form_removed: { text: 'form will be delete xxyyzz', assert_not_visible: true }
+    verify_form_removed: { locator: '.MuiTypography-body1:has-text("form will be delete xxyyzz")', assert_not_visible: true }
 
   expect_result:
     description: "Form should be created and then deleted successfully"
