@@ -12,53 +12,86 @@
 
 
 testT1742:
-    description: "Verify that the Post commission rate can be Batch setting to a Fix value"
+    description: "Post commission Batch set to 10%"
     test_step:
-        open: "https://release.pear.us/lindazhoupromoter1"
-        sleep_after_open: 5000
-        R_click_my_shop: { role: 'button', name: 'My shop' }
-        R_click_product: { role: 'button', name: 'Image of Product test 7995' }
-        R_click_product_first: { role: 'button', name: 'Image of Product test 7995', index: 0 }
+        # Step 1: Events 列表页 -> 点击 Event 卡片
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # "Auto-Test-post-setting" 是 DIV 元素（非 BUTTON），用 text 精确匹配
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Event 详情页 -> 点击 Post 卡片
+        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        sleep_step: 3000
+
+        # Step 3: Post 详情页 -> Selling tab -> Customize products -> Batch set commission rates
         R_click_selling: { role: 'tab', name: 'Selling' }
+        sleep_step: 2000
         R_click_customize: { role: 'button', name: 'Customize products' }
+        sleep_step: 3000
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
+        sleep_step: 1500
+
+        # Step 4: 填佣金 10 -> Confirm -> Save
         fill_commission: { placeholder: "e.g., 5", value: '10' }
-        R_click_confirm: { role: 'button', name: 'Confirm' }
-        R_click_save: { role: 'button', name: 'Save' }
-        sleep_after_save: 3000
-        R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
-        sleep_after_save_final: 1500
+        sleep_step: 3000
+        R_click_confirm_value: { role: 'button', name: 'Confirm' }
+        sleep_step: 1500
+
+        # Save（若已是10%则Save为disabled，跳过）
+        R_click_save_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
+        # 优化：等待 Save 按钮变为 disabled，表示保存完成
+        R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
+        # 优化：等 toast 出现说明后端真正保存成功
+        wait_toast_success: { message: "Post products updated", timeout: 15000 }
+
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
-        sleep_after_close: 1000
-        # 校验在 Post Card 列表上展示的佣金比例是否更新为 10%
+        sleep_step: 2000
+
+        # Step 5: 验证 Post Card 显示 "Offer up to 10%"
         verify_post_offer: { text: "Offer up to 10%" }
 
-
-        open_again: "https://release.pear.us/lindazhoupromoter1"
-
+        # Step 6: 重新打开 Events 验证
+        open_again: "https://release.pear.us/events"
         sleep_end: 3000
+
     expect_result:
-        description: "Commission rate should be updated to 10"
         assertions:
-          # 最终校验：再次进入详情页确认佣金显示为 10
           - assertion_type: "element_visible_by_text"
             text: "10"
+
     teardown_step:
-        R_click_product: { role: 'button', name: 'Image of Product test 7995' }
-        R_click_selling: { role: 'tab', name: 'Selling' }
-        sleep_end: 1000
+        # 恢复设置：重新进入 event -> post -> Selling -> Customize，将佣金改回 8%
+        R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+        R_click_post_teardown: { role: 'button', name: 'Get Tickets', index: 0 }
+        sleep_step: 3000
+        R_click_selling_teardown: { role: 'tab', name: 'Selling' }
+        sleep_step: 2000
         R_click_customize_teardown: { role: 'button', name: 'Customize products' }
-        sleep_end: 1000
-        # verify_value_near: { near_text: "Co-sellers", name: "products.0.variants.0.commissionRateForPromoters", expected: "10" }
-        R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }             
-        fill_commission_teardown: { placeholder: "e.g., 5", value: 'RANDOM_1_10' }
+        sleep_step: 3000
+        R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }
+        sleep_step: 1500
+        # 恢复佣金为 8（与测试值 10 不同，确保 Save 可点击）
+        fill_commission_teardown: { placeholder: "e.g., 5", value: '8' }
+        sleep_step: 1000
         R_click_confirm_teardown: { role: 'button', name: 'Confirm' }
-        R_click_save_teardown: { role: 'button', name: 'Save' }
-        sleep_after_save: 3000
-        R_click_save_final: { role: 'button', name: 'Save', fallback: { locator: '[data-testid="CloseIcon"]' }, disable_ai: true }
-        sleep_after_save_final: 1500
-        R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
-        sleep_after_close: 1000
+        sleep_step: 1500
+
+        # teardown Save（佣金从10→8有变化，Save一定可点；但保险起见也加 skip_if_disabled）
+        R_click_save_teardown_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
+        # 优化：等待 Save 按钮变为 disabled，表示保存完成
+        R_click_save_teardown_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
+        sleep_step: 2000
+        # 优化：等 toast 出现说明后端真正保存成功
+        wait_toast_success_teardown: { message: "Post products updated", timeout: 15000 }
+
+        R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_end: 1000
+        # Step 5: 验证 Post Card 显示 "Offer up to 8%"
+        verify_post_offer: { text: "Offer up to 8%" }
 
 testT3991:
     description: "Verify that partner can set a note for co-sellers in a post"
