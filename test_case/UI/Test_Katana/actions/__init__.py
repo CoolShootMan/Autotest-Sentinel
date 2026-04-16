@@ -11,6 +11,7 @@ from .base import (
     smart_upload,
     smart_screenshot,
     smart_if,
+    smart_wait,
     wait_for_selector,
     wait_for_url,
     save_html,
@@ -23,6 +24,7 @@ from .base import (
     reload_page,
     execute_not_recognized_scan,
     wait_toast,
+    scroll_to_bottom,
 )
 
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style
@@ -132,6 +134,7 @@ ACTIONS = {
     "download_submission_csv": download_submission_csv,
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
+    "scroll_to_bottom": scroll_to_bottom,
 }
 
 
@@ -190,7 +193,7 @@ def get_action(name):
     elif name.startswith("wait_toast"):
         return wait_toast
     elif name.startswith("wait_"):
-        return wait_for_selector
+        return smart_wait
 
     
     # Special prefixes that map to specific functions
