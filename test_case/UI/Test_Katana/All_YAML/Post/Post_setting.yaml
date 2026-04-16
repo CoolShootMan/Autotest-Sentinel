@@ -14,19 +14,19 @@
 testT1742:
     description: "Post commission Batch set to 10%"
     test_step:
-        # Step 1: Events 列表页 -> 点击 Event 卡片
+        # Step 1: Events list page -> click Event card
         open: "https://release.pear.us/events"
         sleep_step: 5000
 
-        # "Auto-Test-post-setting" 是 DIV 元素（非 BUTTON），用 text 精确匹配
+        # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Event 详情页 -> 点击 Post 卡片
+        # Step 2: Event detail page -> click Post card
         R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
         sleep_step: 3000
 
-        # Step 3: Post 详情页 -> Selling tab -> Customize products -> Batch set commission rates
+        # Step 3: Post detail page -> Selling tab -> Customize products -> Batch set commission rates
         R_click_selling: { role: 'tab', name: 'Selling' }
         sleep_step: 2000
         R_click_customize: { role: 'button', name: 'Customize products' }
@@ -34,26 +34,26 @@ testT1742:
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
         sleep_step: 1500
 
-        # Step 4: 填佣金 10 -> Confirm -> Save
+        # Step 4: Fill commission 10 -> Confirm -> Save
         fill_commission: { placeholder: "e.g., 5", value: '10' }
         sleep_step: 3000
         R_click_confirm_value: { role: 'button', name: 'Confirm' }
         sleep_step: 1500
 
-        # Save（若已是10%则Save为disabled，跳过）
+        # Save (skip if already at 10%, Save will be disabled)
         R_click_save_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # 优化：等待 Save 按钮变为 disabled，表示保存完成
+        # Optimization: wait for Save button to become disabled, indicating save is complete
         R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # 优化：等待 Save 按钮变为 disabled，表示保存完成
-        wait_save_disabled: { selector: "button:has-text('Save')[disabled]", timeout: 15000, disable_ai: true }
-        
+        # Optimization: wait for toast to appear, confirming backend save is successful
+        wait_toast_success: { message: "Post products updated", timeout: 15000 }
+
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_step: 2000
 
-        # Step 5: 验证 Post Card 显示 "Offer up to 10%"
+        # Step 5: Verify Post Card displays "Offer up to 10%"
         verify_post_offer: { text: "Offer up to 10%" }
 
-        # Step 6: 重新打开 Events 验证
+        # Step 6: Reopen Events to verify
         open_again: "https://release.pear.us/events"
         sleep_end: 3000
 
@@ -63,7 +63,7 @@ testT1742:
             text: "10"
 
     teardown_step:
-        # 恢复设置：重新进入 event -> post -> Selling -> Customize，将佣金改回 8%
+        # Restore settings: re-enter event -> post -> Selling -> Customize, revert commission to 8%
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
         R_click_post_teardown: { role: 'button', name: 'Get Tickets', index: 0 }
@@ -74,24 +74,26 @@ testT1742:
         sleep_step: 3000
         R_click_batch_set_teardown: { role: 'button', name: 'Batch set commission rates' }
         sleep_step: 1500
-        # 恢复佣金为 8（与测试值 10 不同，确保 Save 可点击）
+        # Restore commission to 8 (different from test value 10, to ensure Save is clickable)
         fill_commission_teardown: { placeholder: "e.g., 5", value: '8' }
         sleep_step: 1000
         R_click_confirm_teardown: { role: 'button', name: 'Confirm' }
         sleep_step: 1500
 
-        # teardown Save（佣金从10→8有变化，Save一定可点；但保险起见也加 skip_if_disabled）
+        # teardown Save (commission changed from 10->8, Save is clickable; add skip_if_disabled for safety)
         R_click_save_teardown_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # 优化：等待 Save 按钮变为 disabled，表示保存完成
+        # Optimization: wait for Save button to become disabled, indicating save is complete
         R_click_save_teardown_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
         sleep_step: 2000
-        # 优化：等待 Save 按钮变为 disabled，表示保存完成
-        wait_save_disabled_teardown: { selector: "button:has-text('Save')[disabled]", timeout: 15000, disable_ai: true }
-        sleep_step: 5000
+        # Optimization: wait for toast to appear, confirming backend save is successful
+        wait_toast_success_teardown: { message: "Post products updated", timeout: 15000 }
+
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_end: 1000
-        # Step 5: 验证 Post Card 显示 "Offer up to 8%"
+        # Step 5: Verify Post Card displays "Offer up to 8%"
         verify_post_offer: { text: "Offer up to 8%" }
+
+
 
 
 
@@ -108,7 +110,7 @@ testT3991:
         
         click_advanced_tab: { role: 'tab', name: 'Advanced' }
         
-        # 必定断言 1：验证高级设置可见
+        # Must assertion 1: Verify advanced settings are visible
         verify_allow_copy_visible: { text: "Allow others to copy" }
         
         click_commerce_tab: { role: 'tab', name: 'Commerce' }
@@ -118,7 +120,7 @@ testT3991:
         click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
         sleep_after_add_product: 1500
         
-        # 弹窗状态变化后，勾选产品选项（此时在弹窗内或已切换回主页面）
+        # After modal state changes, check the product option (may be in modal or back to main page)
         check_product_checkbox: { role: 'checkbox', index: 0, no_modal_scope: true }
         sleep_after_check_product_checkbox: 1000
         click_save_btn_commerce: { role: 'button', name: 'Save' }
@@ -129,7 +131,7 @@ testT3991:
         click_got_it_btn: { role: 'button', name: 'Got it' }
         sleep_after_got_it: 2000
         
-        # 点击刚创建的Post进入详情
+        # Click the newly created Post to enter details
         click_post_card: { role: 'button', name: 'Image of Product testT3991 $', index: 0 }
         sleep_after_click_post: 3000
         
@@ -139,13 +141,13 @@ testT3991:
         check_coseller_checkbox: { role: 'checkbox', index: 1 }
         click_add_btn: { role: 'button', name: 'Add' }
         
-        # 必定断言 2：添加co-seller成功后的提示
+        # Must assertion 2: Toast message after successfully adding co-seller
         verify_toast_post_added: { text: "Post added!" }
         sleep_after_toast_1: 1500
         
         click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
         
-        # 必定断言 3：验证设置项可见
+        # Must assertion 3: Verify setting item is visible
         verify_note_visible: { text: "Add a note for co-sellers" }
         
         check_enable_downline_note: { locator: 'input[name="enableDownlineNote"]' }
@@ -154,12 +156,148 @@ testT3991:
         click_save_btn: { role: 'button', name: 'Save' }
         sleep_after_save: 3000
 
-        # 必定断言 4：配置完成后的提示
+        # Must assertion 4: Toast message after configuration is complete
         verify_toast_settings_updated: { text: "Post advanced settings updated" }
         
     expect_result:
         description: "Partner should be able to set a note for co-sellers successfully."
         assertions: []
+
+
+
+
+
+
+
+# ==============================================================================
+# Test Case: T3683 & T3684
+# T3683: Verify the user can edit order confirmation note for original post
+# T3684: Verify the order confirmation note is displayed on order placed page
+#
+# Step description:
+# 1. Open Events -> click Auto-Test-post-setting -> click Get Tickets -> enter Post edit page
+# 2. T3683: Switch to Advanced tab, enable "Order confirmation note" toggle, input note, save
+# 3. T3684: Add to cart, checkout, place order
+#           Verify confirmation note displayed on order placed page and order details page
+#
+# Expected result:
+# 1. T3683: On Advanced tab, "Order confirmation note" toggle default is OFF
+#           After enabling: input box shows placeholder "e.g., Event time, location, or special instructions for buyers"
+#           Max length 2000, saved successfully with toast
+# 2. T3684: Confirmation note displayed below order details on order placed page
+#           Confirmation note displayed below order instruction on order details page
+# ==============================================================================
+
+
+testT3683_T3684:
+    description: "Verify Order Confirmation Note - Edit in Advanced Tab and Verify Display on Order Page"
+    test_step:
+        # Step 1: Events list page -> click Event card
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Event detail page -> click Post card
+        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        sleep_step: 3000
+
+        # Step 3: Post edit page -> switch to Advanced tab
+        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_step: 1500
+
+        # T3683 Step 1: Wait for Advanced tab to load
+        wait_advanced_loaded: { role: 'tab', name: 'Advanced', timeout: 8000 }
+        sleep_step: 1000
+
+        # T3683 Step 2: Click toggle to enable Order confirmation note (only when OFF -> ON)
+        R_click_order_note_toggle: { locator: 'input[name="isOrderConfirmationNoteEnabled"]', skip_if_checked: true }
+        sleep_step: 1000
+
+        # T3683 Step 3: Verify toggle is enabled (input box appears)
+        # Note: Use smart_wait to verify label exists (instead of verify_text_visible)
+        wait_order_note_label: { text: "Order confirmation note", timeout: 8000 }
+        fill_order_note: { placeholder: "e.g., Event time, location, or special instructions for buyers", value: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
+        sleep_step: 500
+
+        # T3683 Step 4: Save
+        R_click_save: { role: 'button', name: 'Save' }
+        wait_toast_save: { message: "Post advanced settings updated", timeout: 15000 }
+
+        # Step 5: Close Post edit drawer, return to Event detail page
+        R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+        sleep_step: 2000
+
+        # =========================================================================
+        # T3684: Guest checkout to verify confirmation note display
+        # =========================================================================
+
+        # Step 5.1: Log out from Curator account
+        open_account: "https://release.pear.us/account"
+        sleep_step: 3000
+
+        R_click_logout: { role: 'button', name: 'Log out' }
+        sleep_step: 3000
+
+        # Step 6: Directly access Post page for Guest ticket purchase
+        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+        sleep_step: 3000
+
+        # Step 7: Select product "General Admission 01", click its Buy Ticket button
+        R_click_buy_ticket_ga01: { near_text: "General Admission 01", role: 'button', name: 'Buy Ticket', index: 0 }
+        sleep_step: 2000
+
+        # Step 8: Enter coupon code "autotest" for 0-dollar purchase
+        fill_coupon_code: { placeholder: 'Enter coupon code', value: 'autotest' }
+        sleep_step: 500
+
+        R_click_apply: { role: 'button', name: 'Apply' }
+        sleep_step: 2000
+
+        # Step 8.1: Click Continue to enter Contact info page
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_step: 2000
+
+        # Step 9: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        sleep_step: 500
+
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_step: 500
+
+        fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+        sleep_step: 500
+
+        fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
+        sleep_step: 500
+
+        # Step 10: Place Order
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_step: 3000
+
+        # T3684 Expected: Verify confirmation note is displayed (no manual scroll needed, wait_for will auto-wait for visibility)
+        verify_note_on_order_placed: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
+        sleep_end: 3000
+
+    expect_result:
+        assertions:
+            # ===== T3684: Order Confirmation - Additional Details =====
+            # These assertions run after all test steps complete, when on Order Placed page
+            - assertion_type: "element_visible_by_text"
+              text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
+
+
+
+
+
+
+
+
+
+
+
 
 
 # T2705: Partner hides the variant and sets the default variant

@@ -1,3 +1,4 @@
+#--------- Module - Create / Edit / Deteletd / Rearrange / Show / Collapse -------------
 testT3554:
     description: "Verify adding a new module in shop page"
     test_step:
@@ -5,33 +6,29 @@ testT3554:
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
-        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'post module 1' }
+        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
         R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_before_add: 2000
         R_click4: { role: 'button', name: 'Add' }
         sleep_wait_product: 5000
-        R_click5: { role: 'button', index: 1 }
-        sleep_wait_confirm: 2000
-        R_click7: { role: 'button', name: 'Add', index: -1 }
-        sleep_after_publish: 5000
-        open_back: "https://release.pear.us/autotestshop"
+        R_click5: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click7: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
         sleep_before_verify: 2000
     expect_result:
-        description: "Verify that the new module is visible on the page"
+        description: "Verify that the new module is visible on the pa ge"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "post module 1"
+              text: "Verify Add module"
 
 testT3556:
     description: "Verify editing an existing module"
     test_step:
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
-        click_module_edit_button: { module_name: 'post module 1' }
+        click_module_edit_button: { module_name: 'Verify Add module' }
         sleep_after_edit_click: 1500
         R_click_edit_module: { role: 'button', name: 'Edit module' }
         sleep_after_edit_module: 1000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test updated module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Updated module' }
         R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
         sleep_before_save: 1000
         R_click_save: { role: 'button', name: 'Save' }
@@ -39,168 +36,45 @@ testT3556:
     expect_result:
         description: "Module should be edited successfully"
         assertions:
-            - { assertion_type: "element_visible_by_text", text: "test updated mod", exact: false }
+            - { assertion_type: "element_visible_by_text", text: "Updated module", exact: false }
 
-
-testT4264:
-    description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
+testT3577:
+    description: "Verify that curator modifies the sorting of module and the sorting of module contents"
     test_step:
         open: "https://release.pear.us/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
-        sleep_after_module_click: 5000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_after_add: 1500
-        sleep_after_add_new: 2000
-        l_click_image: { locator: 'p', text: 'Image', exact: true, index: 0 }
-        sleep_after_click_image: 2000
-        check2: { role: 'radio', name: 'Carousel Carousel' }
-        sleep_before_add: 2000
-        R_click4: { role: 'button', name: 'Add' }
-        sleep_after_add: 2000
-        click_module_add_new: { module_name: 'test image link',exact: true }
-        fill_by_placeholder_and_locator1: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
-        fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
-        upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
-        wait_for_upload_and_ui_update1: { timeout: 5000 }
-        sleep_before_done: 2000
-        R_click_done: { role: 'button', name: 'Done', exact: true }
-        screenshot_check_done: { name: "debug_done_click" }
-        sleep_after_done: 3000
-        R_click_add_final: { locator: "/html/body/div[3]/div[3]/div/div[3]/div/div/button", name: "Add" }
-        sleep_after_close: 3000
-        # l_click_links_tab: { role: 'tab', name: 'Links' }
-        # sleep_before_verify: 2000
-    expect_result:
-        description: "Verify that the new image link card is visible on the page"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "test aotu image"
-
-
-testT3842:
-    description: "Verify adding a new product to an existing module"
-    test_step:
-        open: "https://release.pear.us/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
-        sleep_after_module_click: 2000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test product link' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        check1: { role: 'radio', name: 'Links (select a type below)' }
-        l_click_product: { locator: 'p', text: 'Product', exact: true, index: 0 }
-        check2: { role: 'radio', name: 'Carousel Carousel' }
-        sleep_before_add: 2000
-        R_click4: { role: 'button', name: 'Add' }
-        sleep_after_add: 4000
-        click_module_add_new: { module_name: 'test product link' }
-        sleep_after_add_new: 5000
-        fill_product_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
-        fill_product_title: { placeholder: 'As the bold title on your', value: 'test prodcut link card' }
-        sleep_before_price: 1000
-        fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
-        upload_product_image: { text: 'Upload', file_path: 'data/test imag.jpeg' }
-        sleep_after_upload: 10000
-        R_click_final_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
-        sleep_after_final_add: 3000
-        l_click_links_tab_prod: { role: 'tab', name: 'Links' }
-        sleep_before_verify_prod: 2000
-        verify_product_visible: { text: 'test prodcut link' }
-    expect_result:
-        description: "Product should be added to the module successfully"
-        assertions: []
-#               text: "test prodcut link card"
-
-
-testT4660:
-    is_mobile: true
-    description: "Verify adding a Music module and track, then deleting it"
-    test_step:
-        open: "https://release.pear.us/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
-        R_click_module: { role: 'button', name: 'Module' }
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test-Module-Music' }
-        R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_before_select_music: 2000
-        R_click_music: { locator: 'div', text: 'Music', exact: true }
-        R_click_add: { role: 'button', name: 'Add' }
-        sleep_after_add_module: 3000
-        click_module_add_new: { module_name: 'Test-Module-Music' }
-        fill_music_title: { role: 'textbox', name: 'Enter title, e.g. "Acoustic', value: 'TestMusic' }
-        fill_music_artist: { role: 'textbox', name: 'Enter artist, e.g. "Marco', value: 'one' }
-        R_click_square_image: { text: 'Square image' }
-        fill_spotify: { placeholder: 'Please enter link', value: 'https://open.spotify.com/episode/2tu23nk5IA85ZERqtV9yhJ?si=qXWPBakCTmKp6WUmPRAOPA&nd=1&dlsi=03780e5ded85490a', index: 0 }
-        fill_apple_music: { placeholder: 'Please enter link', value: 'https://music.apple.com/cn/album/%E5%B9%B3%E5%BA%B8-live/1851707677?i=1851707683', index: 1 }
-        upload_replace: { text: 'Replace', file_path: 'data/test imag.jpeg' }
-        wait_for_upload_and_ui_update1: { timeout: 300 }
-        R_click_done: { role: 'button', name: 'Done', exact: true }
-        sleep_before_done: 3000
-        R_click_add_service: { role: 'button', name: 'Add service' }
-        R_click_amazon: { role: 'button', name: 'Amazon' }
-        fill_amazon_link: { placeholder: 'Please enter link', value: 'https://www.amazon.com/music', index: 2 }
-        R_click_final_add_track: { role: 'button', name: 'Add', exact: true }
-        sleep_after_track_add: 3000
-        click_module_edit_button: { module_name: 'Test-Module-Music' }
-        R_click_delete_module: { role: 'button', name: 'Delete module' }
-        R_click_confirm_delete: { role: 'button', name: 'Delete' }
-        sleep_after_delete: 2000
-    expect_result:
-        description: "Module and track should be added and then deleted successfully"
-        assertions: []
+        R_click_1: { locator: 'button[data-testid="enhance-button"]', name: 'Rearrange', exact: true }
+        sleep_after_click: 3000
+        drag_element_1: 
+            source_locator: 'div[aria-describedby="DndDescribedBy-0"]:nth-child(2) svg'
+            target_locator: 'div[aria-describedby="DndDescribedBy-0"]:nth-child(1) svg'
+        sleep_drag_element: 5000
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
 
-testT5106:
-    description: "Verify event creation and completion (archiving)"
-    test_step:
-        #open: "https://release.pear.us/autotestshop"
-        open: "https://release.pear.us/events/create"
-        sleep_after_open: 5000
-        # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
-        # R_click_events_tab: { role: 'link', name: 'Events' }
-        # sleep_after_events_tab: 3000
-        # R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
-        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
-        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
-        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
-        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
-        sleep_after_address_fill: 1500
-        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
-        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
-        R_click_date_30: { role: 'gridcell', name: '30' }
-        sleep_after_select_calender: 1000
-        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
-        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
-        sleep_before_tickets: 2000
-        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
-        sleep_before_tickets: 2000
-        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
-        fill_quantity: { placeholder: 'Quantity', value: '36' }
-        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
-        sleep_after_ticket_fill: 2000
-        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
-        sleep_before_finish: 2000
-        R_click_finish: { role: 'button', name: 'Finish and create post' }
-        R_click_view_st: { role: 'button', name: 'View post on storefront' }
-        sleep_after_view_st: 5000
-        click_module_post_view_event_cta: { module_name: 'test updated module', post_title: 'Test-event-Auto-archive' }
-        R_click_edit_event: { role: 'button', name: 'Edit event' }
-        sleep_after_edit_event: 2000
-        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
-        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
-        sleep_after_edit_event: 2000
-        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
-        R_click_save_edit: { role: 'button', name: 'Save' }
-        R_click_close_modal: { role: 'button', name: 'Close' }
-        sleep_after_close: 2000
     expect_result:
-        description: "Event should be created and then marked as completed successfully"
+        description: "Module sorting and module contents sorting should be modified successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "The storefront has been updated!" }
+
+testT4903:
+    description: "Verify two methods that can convert the module to the draft state"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        click_module_edit_button: { module_name: 'Updated module' }
+        R_click_hide_module: { role: 'button', name: 'Hide module' }
+        sleep_after_hide_module: 2000
+        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Hide' , exact: true}
+        sleep_after_confirm: 5000
+        verify_element_style: {container: 'Updated module', container_filter: '../..', locator: '>div:nth-child(2)>div', property: 'opacity', expected: '0.7' }
+        click_module_edit_button2: { module_name: 'Updated module' }
+        R_click_show_module: { role: 'button', name: 'Show module' }
+    expect_result:
+        description: "Verify that the module is hidden successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Test-event-Auto-archive"
-
+              text: []
 
 testT4622:
     description: "Verify module collapse and expand toggle functionality"
@@ -209,21 +83,91 @@ testT4622:
         sleep_after_open: 3000
 
         # Step 1: Click collapse icon (arrow-up) to fold module content
-        click_module_collapse: { module_name: "MyForm" }
+        click_module_collapse: { module_name: "Updated module" }
         sleep_after_collapse: 1500
         # 直击本质的断言 1：验证整个模块的物理高度已坍塌（小于150px）
-        verify_module_collapsed: { module_name: "MyForm" }
+        verify_module_collapsed: { module_name: "Updated module" }
         # Step 2: Click expand icon (arrow-up-icon依然是那个节点)
-        click_module_expand: { module_name: "MyForm" }
+        click_module_expand: { module_name: "Updated module" }
         sleep_after_expand: 1500
         # 直击本质的断言 2：验证整个模块的物理高度已恢复（大于150px）
-        verify_module_expanded: { module_name: "MyForm" }
+        verify_module_expanded: { module_name: "Updated module" }
 
     expect_result:
         description: "Module should collapse then expand correctly"
         assertions: []
 
+testDeleteModule:
+    description: "Verify module delete functionality"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        click_module_edit_button: { module_name: 'Updated module' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        sleep_after_delete_click: 1500
+        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete' , exact: true}
+        sleep_after_confirm: 5000
+    expect_result:
+        description: "Verify that the module is deleted successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Delete module success"
 
+# ------------------ Module - post  ---------------------------
+testAddNewPost: 
+    description: "Verify adding new post module in shop page"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add post module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_wait_product: 5000
+        R_click_5: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" , exact: true}
+        R_click7: { locator: "button[data-track-location='Dialog']", name: 'Add',  index: -1 }
+        sleep_after_add: 5000
+        verify_child_element_count_1: { container: 'Verify Add post module', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 1 }
+
+        # Click module button to trigger post creation flow
+        click_module_add_new: { module_name: 'Verify Add post module' }
+        R_click_no: { locator: "button[data-track-location='Dialog']", name: 'No', exact: true }
+        sleep_after_add: 5000
+        if_discard_drawer:
+            condition:
+                role: "button"
+                name: "Discard"
+            then:
+                click_discard: { role: "button", name: "Discard" }
+                sleep_after_discard: 1500
+        click_enhance_button: { test_id: 'enhance-button-cta' }
+        sleep_after_enhance_click: 2000
+        # Select media items (first two)
+        click_media_icon_1: { locator: 'div[data-testid="shop-brand"]' }
+        click_media_icon_2: { locator: 'div[data-testid="shop-brand"]', index: 1 }
+        # Add products
+        R_click_add_products: { locator: "button[data-track-location='Dialog']", name: 'Add 2/20 product(s)', exact: true }
+        # Switch to Content tab
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        # Fill post title
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'Test - add new post' }
+        # Confirm and publish
+        click_confirm_button: { test_id: 'confirm-button' }
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_after_publish: 3000
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_after_got_it: 5000
+        verify_child_element_count_2: { container: 'Verify Add post module', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 2 }
+        sleep_after_got_it: 5000
+
+    expect_result:
+        description: "Verify that the new module is visible on the page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Verify Add post module"
+
+
+# ------------------ Module - product ------------------------
 testT3788:
     description: "Verify adding products to a new module"
     test_step:
@@ -262,66 +206,8 @@ testT3788:
               text: "autotest prod"
 
 
-testT4852:
-    description: "Verify adding a mixed content type module with posts, products, links, and forms"
-    test_step:
-        open: "https://release.pear.us/autotestshop"
-        sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
-        sleep_after_module_click: 2000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Mixed module type' }
-        R_click_mixed_content: { role: 'button', name: 'Mixed content types Combine' }
-        sleep_after_mixed_click: 2000
-        R_click_add_module: { role: 'button', name: 'Add module' }
-        sleep_after_add_module: 3000
-        # Add from my posts
-        click_module_edit_button_1: { module_name: 'Mixed module type' }
-        sleep_before_add_posts: 1000
-        R_click_add_from_posts: { role: 'button', name: 'Add from my posts' }
-        sleep_after_posts_click: 2000
-        R_click_post_item: { role: 'button', name: 'Image of Product demi 0320' }
-        sleep_after_post_select: 1000
-        R_click_add_1: { role: 'button', name: 'Add' }
-        sleep_after_first_add: 2000
-        # Add from my products
-        click_module_edit_button_2: { module_name: 'Mixed module type' }
-        sleep_before_add_products: 2000
-        R_click_add_from_products: { role: 'button', name: 'Add from my products' }
-        sleep_after_products_click: 2000
-        R_click_first_product_icon: { locator: "//div[@data-index='0']" }
-        sleep_after_product_select: 1000
-        R_click_add_2: { role: 'button', name: 'Add' }
-        sleep_after_second_add: 2000
-        #Add from my links (first selection)
-        click_module_edit_button_3: { module_name: 'Mixed module type' }
-        sleep_before_add_links_1: 2000
-        R_click_add_from_links_1: { role: 'button', name: 'Add from my links' }
-        sleep_after_links_click_1: 2000
-        R_click_link_rect_1: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Image' }
-        R_click_link_rect_2: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Video' }
-        R_click_link_rect_3: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Ticket / event' }
-        R_click_link_rect_4: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Link', exact: true }
-        R_click_link_rect_5: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Music' }
-        R_click_link_rect_6: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Product' }
-        sleep_after_link_select_1: 1000
-        R_click_add_3: { role: 'button', name: 'Add' }
-        sleep_after_third_add: 2000
-        # Add from my forms
-        click_module_edit_button_4: { module_name: 'Mixed module type' }
-        sleep_before_add_forms: 2000
-        R_click_add_from_forms: { role: 'button', name: 'Add from my forms' }
-        sleep_after_forms_click: 2000
-        R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'auto test 10 images' }
-        sleep_after_form_select: 1000
-        R_click_add_4: { role: 'button', name: 'Add' }
-        sleep_after_final_add: 3000
-    expect_result:
-        description: "Verify that the mixed content module is created successfully with all content types"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Mixed module type"
-              # TODO: 检查module中是否正常显示了所有添加的内容
 
+# ------------------ Module - link -> general link ------------------------
 testT3843:
     description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
     test_step:
@@ -370,6 +256,155 @@ testT3843:
             - assertion_type: "element_visible_by_text"
               text: "test link2"
 
+# ------------------ Module -link ->  product ------------------------
+testT3842:
+    description: "Verify adding a new product to an existing module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test product link' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        check1: { role: 'radio', name: 'Links (select a type below)' }
+        l_click_product: { locator: 'p', text: 'Product', exact: true, index: 0 }
+        check2: { role: 'radio', name: 'Carousel Carousel' }
+        sleep_before_add: 2000
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_after_add: 4000
+        click_module_add_new: { module_name: 'test product link' }
+        sleep_after_add_new: 5000
+        fill_product_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
+        fill_product_title: { placeholder: 'As the bold title on your', value: 'test prodcut link card' }
+        sleep_before_price: 1000
+        fill_product_price: { placeholder: 'Enter a price for sale', value: '20.99' }
+        upload_product_image: { text: 'Upload', file_path: 'data/test imag.jpeg' }
+        sleep_after_upload: 10000
+        R_click_final_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_final_add: 3000
+        l_click_links_tab_prod: { role: 'tab', name: 'Links' }
+        sleep_before_verify_prod: 2000
+        verify_product_visible: { text: 'test prodcut link' }
+    expect_result:
+        description: "Product should be added to the module successfully"
+        assertions: []
+
+
+# ------------------ Module -link ->  image ------------------------
+testT4264:
+    description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 5000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_add: 1500
+        sleep_after_add_new: 2000
+        l_click_image: { locator: 'p', text: 'Image', exact: true, index: 0 }
+        sleep_after_click_image: 2000
+        check2: { role: 'radio', name: 'Carousel Carousel' }
+        sleep_before_add: 2000
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_after_add: 2000
+        click_module_add_new: { module_name: 'test image link',exact: true }
+        fill_by_placeholder_and_locator1: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
+        fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
+        upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
+        wait_for_upload_and_ui_update1: { timeout: 5000 }
+        sleep_before_done: 2000
+        R_click_done: { role: 'button', name: 'Done', exact: true }
+        screenshot_check_done: { name: "debug_done_click" }
+        sleep_after_done: 3000
+        R_click_add_final: { locator: "/html/body/div[3]/div[3]/div/div[3]/div/div/button", name: "Add" }
+        sleep_after_close: 3000
+        # l_click_links_tab: { role: 'tab', name: 'Links' }
+        # sleep_before_verify: 2000
+    expect_result:
+        description: "Verify that the new image link card is visible on the page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test aotu image"
+
+
+# ------------------ Module -link ->  music ------------------------
+testT4660:
+    is_mobile: true
+    description: "Verify adding a Music module and track, then deleting it"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 3000
+        R_click_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test-Module-Music' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select_music: 2000
+        R_click_music: { locator: 'div', text: 'Music', exact: true }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+        click_module_add_new: { module_name: 'Test-Module-Music' }
+        fill_music_title: { role: 'textbox', name: 'Enter title, e.g. "Acoustic', value: 'TestMusic' }
+        fill_music_artist: { role: 'textbox', name: 'Enter artist, e.g. "Marco', value: 'one' }
+        R_click_square_image: { text: 'Square image' }
+        fill_spotify: { placeholder: 'Please enter link', value: 'https://open.spotify.com/episode/2tu23nk5IA85ZERqtV9yhJ?si=qXWPBakCTmKp6WUmPRAOPA&nd=1&dlsi=03780e5ded85490a', index: 0 }
+        fill_apple_music: { placeholder: 'Please enter link', value: 'https://music.apple.com/cn/album/%E5%B9%B3%E5%BA%B8-live/1851707677?i=1851707683', index: 1 }
+        upload_replace: { text: 'Replace', file_path: 'data/test imag.jpeg' }
+        wait_for_upload_and_ui_update1: { timeout: 300 }
+        R_click_done: { role: 'button', name: 'Done', exact: true }
+        sleep_before_done: 3000
+        R_click_add_service: { role: 'button', name: 'Add service' }
+        R_click_amazon: { role: 'button', name: 'Amazon' }
+        fill_amazon_link: { placeholder: 'Please enter link', value: 'https://www.amazon.com/music', index: 2 }
+        R_click_final_add_track: { role: 'button', name: 'Add', exact: true }
+        sleep_after_track_add: 3000
+        click_module_edit_button: { module_name: 'Test-Module-Music' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        R_click_confirm_delete: { role: 'button', name: 'Delete' }
+        sleep_after_delete: 2000
+    expect_result:
+        description: "Module and track should be added and then deleted successfully"
+        assertions: []
+
+testT4816:
+    description: "Verify adding a Music module with Spotify and Apple Music links"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Music Module' }
+        R_click_continue: { locator: "button[data-track-location='Dialog']", name: 'Continue' , exact: true}
+        R_click_music_type: { text: 'Music' , exact: true}
+        R_click_add_module: { locator: "button[data-track-location='Dialog']", name: 'Add' , exact: true}
+        sleep_after_add_module: 3000
+        # Add music track
+        click_module_edit_button: { module_name: 'Test Music Module' }
+        R_click_add_new_link: { role: 'button', name: 'Add new link' }
+        sleep_after_add_new_click: 2000
+        fill_music_title: { role: 'textbox', name: 'Enter title, e.g. "Acoustic', value: 'test-music' }
+        fill_music_artist: { role: 'textbox', name: 'Enter artist, e.g. "Marco', value: 'test artist' }
+        R_click_square_image: { text: 'Square image' }
+        upload1: { text: 'Replace', file_path: 'data/test imag.jpeg' }
+        R_click_done: { role: 'button', name: 'Done', exact: true }
+        # Fill streaming service links
+        fill_spotify_link: { locator: 'input[name="additionalInfo.services.0.src"]', value: 'https://open.spotify.com/album/46NAV9AiBwqlDZbpHXAt7A' }
+        fill_apple_music_link: { locator: 'input[name="additionalInfo.services.1.src"]', value: 'https://music.apple.com/cn/album/%E5%90%8C%E5%90%8D%E5%B0%88%E8%BC%AF-remastered/990152978' }
+        sleep_after_final_add: 5000
+        R_click_final_add: { role: 'button', name: 'Add', exact: true }
+
+    expect_result:
+        description: "Verify that the Music module is created successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test Music Module"
+            - assertion_type: "element_visible_by_text"
+              text: "test-music"
+
+
+# ------------------ Module -link ->  video ------------------------
 testT3886_long:
     description: "Verify adding a long Video link module with YouTube link"
     test_step:
@@ -437,27 +472,7 @@ testT3886_short:
             - assertion_type: "element_visible_by_text"
               text: []
 
-
-testT4903:
-    description: "Verify two methods that can convert the module to the draft state"
-    test_step:
-        open: "https://release.pear.us/autotestshop"
-        sleep_after_open: 3000
-        click_module_edit_button: { module_name: 'Past Events' }
-        R_click_hide_module: { role: 'button', name: 'Hide module' }
-        sleep_after_hide_module: 2000
-        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Hide' , exact: true}
-        sleep_after_confirm: 5000
-        verify_element_style: {container: 'Past Events', container_filter: '../..', locator: '>div:nth-child(2)>div', property: 'opacity', expected: '0.7' }
-        click_module_edit_button2: { module_name: 'Past Events' }
-        R_click_show_module: { role: 'button', name: 'Show module' }
-    expect_result:
-        description: "Verify that the module is hidden successfully"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: []
-
-
+# ------------------ Module -link ->  ticket / event ------------------------
 testT3841:
     description: "Verify that the user adds the link card of Ticket/Event on the shop page(modules) and module menu"
     test_step:
@@ -496,39 +511,141 @@ testT3841:
               text: "Ticket/event"
 
 
-testT4816:
-    description: "Verify adding a Music module with Spotify and Apple Music links"
+# ------------------  Mixed Module -------------------
+testT4852:
+    description: "Verify adding a mixed content type module with posts, products, links, and forms"
     test_step:
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
-        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Music Module' }
-        R_click_continue: { locator: "button[data-track-location='Dialog']", name: 'Continue' , exact: true}
-        R_click_music_type: { text: 'Music' , exact: true}
-        R_click_add_module: { locator: "button[data-track-location='Dialog']", name: 'Add' , exact: true}
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Mixed module type' }
+        R_click_mixed_content: { role: 'button', name: 'Mixed content types Combine' }
+        sleep_after_mixed_click: 2000
+        R_click_add_module: { role: 'button', name: 'Add module' }
         sleep_after_add_module: 3000
-        # Add music track
-        click_module_edit_button: { module_name: 'Test Music Module' }
-        R_click_add_new_link: { role: 'button', name: 'Add new link' }
-        sleep_after_add_new_click: 2000
-        fill_music_title: { role: 'textbox', name: 'Enter title, e.g. "Acoustic', value: 'test-music' }
-        fill_music_artist: { role: 'textbox', name: 'Enter artist, e.g. "Marco', value: 'test artist' }
-        R_click_square_image: { text: 'Square image' }
-        upload1: { text: 'Replace', file_path: 'data/test imag.jpeg' }
-        R_click_done: { role: 'button', name: 'Done', exact: true }
-        # Fill streaming service links
-        fill_spotify_link: { locator: 'input[name="additionalInfo.services.0.src"]', value: 'https://open.spotify.com/album/46NAV9AiBwqlDZbpHXAt7A' }
-        fill_apple_music_link: { locator: 'input[name="additionalInfo.services.1.src"]', value: 'https://music.apple.com/cn/album/%E5%90%8C%E5%90%8D%E5%B0%88%E8%BC%AF-remastered/990152978' }
-        sleep_after_final_add: 5000
-        R_click_final_add: { role: 'button', name: 'Add', exact: true }
-
+        # Add from my posts
+        click_module_edit_button_1: { module_name: 'Mixed module type' }
+        sleep_before_add_posts: 1000
+        R_click_add_from_posts: { role: 'button', name: 'Add from my posts' }
+        sleep_after_posts_click: 2000
+        R_click_post_item: { role: 'button', name: 'Image of Product demi 0320' }
+        sleep_after_post_select: 1000
+        R_click_add_1: { role: 'button', name: 'Add' }
+        sleep_after_first_add: 2000
+        # Add from my products
+        click_module_edit_button_2: { module_name: 'Mixed module type' }
+        sleep_before_add_products: 2000
+        R_click_add_from_products: { role: 'button', name: 'Add from my products' }
+        sleep_after_products_click: 2000
+        R_click_first_product_icon: { locator: "//div[@data-index='0']" }
+        sleep_after_product_select: 1000
+        R_click_add_2: { role: 'button', name: 'Add' }
+        sleep_after_second_add: 2000
+        #Add from my links (first selection)
+        click_module_edit_button_3: { module_name: 'Mixed module type' }
+        sleep_before_add_links_1: 2000
+        R_click_add_from_links_1: { role: 'button', name: 'Add from my links' }
+        sleep_after_links_click_1: 2000
+        R_click_link_rect_1: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Image' }
+        R_click_link_rect_2: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Video' }
+        R_click_link_rect_3: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Ticket / event' }
+        R_click_link_rect_4: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Link', exact: true }
+        R_click_link_rect_5: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Music' }
+        R_click_link_rect_6: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Product' }
+        sleep_after_link_select_1: 1000
+        R_click_add_3: { role: 'button', name: 'Add' }
+        sleep_after_third_add: 2000
+        # Add from my forms
+        click_module_edit_button_4: { module_name: 'Mixed module type' }
+        sleep_before_add_forms: 2000
+        R_click_add_from_forms: { role: 'button', name: 'Add from my forms' }
+        sleep_after_forms_click: 2000
+        R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'auto test 10 images' }
+        sleep_after_form_select: 1000
+        R_click_add_4: { role: 'button', name: 'Add' }
+        sleep_after_final_add: 3000
     expect_result:
-        description: "Verify that the Music module is created successfully"
+        description: "Verify that the mixed content module is created successfully with all content types"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Test Music Module"
-            - assertion_type: "element_visible_by_text"
-              text: "test-music"
+              text: "Mixed module type"
+              # TODO: 检查module中是否正常显示了所有添加的内容
 
+# ------------------ Archiving ---------------------
+testT5106:
+    description: "Verify event creation and completion (archiving)"
+    test_step:
+        #open: "https://release.pear.us/autotestshop"
+        open: "https://release.pear.us/events/create"
+        sleep_after_open: 5000
+        # R_click_storefront_nav: { role: 'button', name: 'Storefront' }
+        # R_click_events_tab: { role: 'link', name: 'Events' }
+        # sleep_after_events_tab: 3000
+        # R_click_create_event: { locator: "button[data-track-location]", exact: True, name: 'Create an event',index: 1 }
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
+        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
+        sleep_after_address_fill: 1500
+        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
+        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_date_30: { role: 'gridcell', name: '30' }
+        sleep_after_select_calender: 1000
+        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        sleep_before_tickets: 2000
+        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
+        sleep_before_tickets: 2000
+        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
+        fill_quantity: { placeholder: 'Quantity', value: '36' }
+        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
+        sleep_after_ticket_fill: 2000
+        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
+        sleep_before_finish: 2000
+        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_view_st: { role: 'button', name: 'View post on storefront' }
+        sleep_after_view_st: 5000
+        click_module_post_view_event_cta: { module_name: 'test updated module', post_title: 'Test-event-Auto-archive' }
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
+        sleep_after_edit_event: 2000
+        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        R_click_close_modal: { role: 'button', name: 'Close' }
+        sleep_after_close: 2000
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test-event-Auto-archive"
+
+# ------------------ CoSeller Module ---------------------------
+testT4603:
+    is_coseller: true
+    description: "Verify co-seller can add a Products module on the shop page"
+    test_step:
+        open: "https://release.pear.us/autotest-coseller"
+        sleep_after_open: 5000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'products' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_continue: 2000
+        check_products: { role: 'radio', name: 'Products' }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_after_add: 3000
+        verify_products_added: { text: 'products', timeout: 10000 }
+        verify_no_sibling_add_new: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: -1, text: 'Add new' }
+        R_click_more_icon: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: -1 }
+        sleep_after_more_click: 1000
+        R_click_backdrop: { locator: '.MuiBackdrop-root' }
+        sleep_after_backdrop: 1000
+    expect_result:
+        description: "Co-seller should be able to add a Products module and verify no 'Add new product' option in dropdown menu"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "products"
 

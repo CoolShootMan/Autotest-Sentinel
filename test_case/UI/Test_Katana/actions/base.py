@@ -137,7 +137,7 @@ def smart_fill(page: Page, v: dict):
 
     try:
         if target_locator:
-            el = page.locator(target_locator).nth(v.get("index", 0))
+            el = page.locator(target_locator).first
             el.fill(str(target_value), timeout=fill_timeout)
         elif "role" in v:
             page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
@@ -308,10 +308,22 @@ def smart_click(page: Page, v: dict):
     force = v.get("force", False) # Default to False for better event triggering
     optional = v.get("optional", False) # If True, skip silently when element not found
     skip_if_disabled = v.get("skip_if_disabled", False) # If True, skip silently when button is disabled
+    skip_if_checked = v.get("skip_if_checked", False)    # If True, skip silently when checkbox is already checked
 
     # Validation
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
+
+    # skip_if_checked: if the checkbox is already checked (ON), skip the click
+    if skip_if_checked and target_locator:
+        try:
+            el = page.locator(target_locator).nth(target_index)
+            is_checked = el.is_checked(timeout=3000)
+            if is_checked:
+                logger.info(f"skip_if_checked: '{target_locator}' is already ON, skipping toggle click.")
+                return
+        except Exception as e:
+            logger.debug(f"skip_if_checked check error (proceeding normally): {e}")
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
@@ -838,9 +850,9 @@ def verify_all_commission_values(page: Page, v: dict):
     expected_values = v.get("values", [])
     if not expected_values and "value" in v:
         expected_values = [v["value"]]
-        
+
     logger.info(f"Verifying all commission values: {expected_values}")
-    
+
     # Implementation based on typical Katana commission UI (labels or inputs)
     for i, val in enumerate(expected_values):
         try:
@@ -851,4 +863,403 @@ def verify_all_commission_values(page: Page, v: dict):
         except Exception as e:
             logger.error(f"Failed to find commission value {val} at index {i}: {e}")
             raise AssertionError(f"Could not verify commission value: {val}")
+
+
+def wait_toast(page: Page, v: dict):
+    """
+    Wait for a toast / snackbar message to appear, indicating a background operation completed.
+    Supports: message (the text to wait for), timeout (ms, default 15000).
+
+    Usage in YAML:
+        wait_save_success: { message: "Post products updated", timeout: 15000 }
+        wait_publish_success: { message: "Published", timeout: 10000 }
+    """
+    import time
+    message = v.get("message", "")
+    timeout = v.get("timeout", 15000)
+    logger.info(f"wait_toast: waiting for '{message}' (timeout={timeout}ms)")
+
+    start = time.time()
+    while time.time() - start < timeout / 1000.0:
+        # Search in common toast/snackbar container selectors
+        toast_locator = page.locator(
+            "[class*='Snackbar'], [class*='Toast'], [role='alert'], "
+            ".MuiSnackbar-root, [class*='notification'], [class*='message']"
+        )
+        for toast in toast_locator.all():
+            try:
+                if toast.is_visible():
+                    content = toast.inner_text()
+                    if message in content:
+                        logger.info(f"Toast found: '{content.strip()[:80]}'")
+                        page.wait_for_timeout(500)
+                        return
+            except Exception:
+                pass
+        time.sleep(0.3)
+
+    logger.warning(f"Toast '{message}' not found within {timeout}ms, continuing anyway...")
+    page.screenshot(path=f"warn_toast_{message[:20]}.png")
+
+def drag_element(page: Page, v: dict):
+    """
+    Drag and drop element using Playwright's drag and drop API
+
+    Supported parameters:
+    - source_locator: Source element locator to drag (required)
+    - target_locator: Target element locator to drop on (required)
+    - source_text: Text to identify source element (alternative to source_locator)
+    - target_text: Text to identify target element (alternative to target_locator)
+    - timeout: Timeout in milliseconds for element visibility (default: 10000)
+    - force: Force the drag operation even if elements are not visible (default: false)
+    - delay: Delay in milliseconds between drag start and drop (default: 0)
+
+    Usage examples:
+
+    1. Drag by locator:
+       drag_element:
+           source_locator: "#draggable-item"
+           target_locator: "#drop-zone"
+
+    2. Drag by text:
+       drag_element:
+           source_text: "Drag me"
+           target_text: "Drop here"
+
+    3. Drag with position offset:
+       drag_element:
+           source_locator: ".card"
+           target_locator: ".container"
+           source_position: { x: 10, y: 10 }  # Offset from source element center
+           target_position: { x: 50, y: 50 }  # Offset from target element center
+
+    4. Drag with delay:
+       drag_element:
+           source_locator: "#item1"
+           target_locator: "#item2"
+           delay: 500  # Wait 500ms before dropping
+    """
+    logger.info(">>> Current Step: drag_element")
+
+    # Get source element
+    source_locator = v.get("source_locator")
+    source_text = v.get("source_text")
+
+    if source_locator:
+        source_elem = page.locator(source_locator).first
+    elif source_text:
+        source_elem = page.get_by_text(source_text).first
+    else:
+        raise ValueError("drag_element: Either 'source_locator' or 'source_text' must be provided")
+
+    # Get target element
+    target_locator = v.get("target_locator")
+    target_text = v.get("target_text")
+
+    if target_locator:
+        target_elem = page.locator(target_locator).first
+    elif target_text:
+        target_elem = page.get_by_text(target_text).first
+    else:
+        raise ValueError("drag_element: Either 'target_locator' or 'target_text' must be provided")
+
+    timeout = v.get("timeout", 10000)
+    delay = v.get("delay", 0)
+    force = v.get("force", False)
+
+    # Wait for elements to be ready
+    logger.info(f"Waiting for source element to be ready...")
+    source_elem.wait_for(state="attached", timeout=timeout)
+
+    logger.info(f"Waiting for target element to be ready...")
+    target_elem.wait_for(state="attached", timeout=timeout)
+
+    # Get optional position offsets
+    source_position = v.get("source_position", {})
+    target_position = v.get("target_position", {})
+
+    # Perform drag and drop
+    logger.info(f"Dragging element to target...")
+
+    try:
+        # Use bounding box for precise control if positions are specified
+        if source_position or target_position:
+            source_box = source_elem.bounding_box()
+            target_box = target_elem.bounding_box()
+
+            # Calculate source point (center + offset)
+            source_x = source_box["x"] + source_box["width"] / 2 + source_position.get("x", 0)
+            source_y = source_box["y"] + source_box["height"] / 2 + source_position.get("y", 0)
+
+            # Calculate target point (center + offset)
+            target_x = target_box["x"] + target_box["width"] / 2 + target_position.get("x", 0)
+            target_y = target_box["y"] + target_box["height"] / 2 + target_position.get("y", 0)
+
+            logger.info(f"Drag from ({source_x:.0f}, {source_y:.0f}) to ({target_x:.0f}, {target_y:.0f})")
+
+            # Perform drag using mouse
+            page.mouse.move(source_x, source_y)
+            page.mouse.down()
+            if delay > 0:
+                page.wait_for_timeout(delay)
+            page.mouse.move(target_x, target_y)
+            page.mouse.up()
+
+        else:
+            # Use Playwright's built-in drag and drop API
+            source_elem.drag_to(
+                target_elem,
+                force=force,
+                timeout=timeout
+            )
+
+        logger.info("✓ Drag and drop completed successfully")
+
+    except Exception as e:
+        logger.error(f"✗ Drag and drop failed: {e}")
+        raise
+
+
+def drag_and_drop_by_coordinates(page: Page, v: dict):
+    """
+    Drag and drop using absolute or relative coordinates
+
+    Supported parameters:
+    - source_locator: Source element locator (required)
+    - start_x: Starting X coordinate (relative to source element)
+    - start_y: Starting Y coordinate (relative to source element)
+    - end_x: Ending X coordinate (absolute or relative to source)
+    - end_y: Ending Y coordinate (absolute or relative to source)
+    - absolute: Use absolute coordinates if true (default: false)
+    - steps: Number of intermediate move steps for smooth animation (default: 1)
+
+    Usage examples:
+
+    1. Drag with relative coordinates:
+       drag_and_drop_by_coordinates:
+           source_locator: ".draggable"
+           start_x: 100
+           start_y: 100
+           end_x: 300
+           end_y: 300
+
+    2. Drag with absolute coordinates:
+       drag_and_drop_by_coordinates:
+           source_locator: ".draggable"
+           start_x: 100
+           start_y: 100
+           end_x: 500
+           end_y: 500
+           absolute: true
+
+    3. Smooth drag animation:
+       drag_and_drop_by_coordinates:
+           source_locator: ".card"
+           start_x: 50
+           start_y: 50
+           end_x: 200
+           end_y: 200
+           steps: 10  # 10 intermediate points for smooth animation
+    """
+    logger.info(">>> Current Step: drag_and_drop_by_coordinates")
+
+    source_locator_str = v.get("source_locator")
+    if not source_locator_str:
+        raise ValueError("drag_and_drop_by_coordinates: 'source_locator' is required")
+
+    source_elem = page.locator(source_locator_str).first
+    source_elem.wait_for(state="attached", timeout=v.get("timeout", 10000))
+
+    source_box = source_elem.bounding_box()
+    start_x = v.get("start_x", 0)
+    start_y = v.get("start_y", 0)
+    end_x = v.get("end_x", 0)
+    end_y = v.get("end_y", 0)
+    absolute = v.get("absolute", False)
+    steps = v.get("steps", 1)
+
+    # Calculate coordinates
+    if absolute:
+        # Use absolute screen coordinates
+        actual_start_x = start_x
+        actual_start_y = start_y
+        actual_end_x = end_x
+        actual_end_y = end_y
+    else:
+        # Use relative coordinates from source element
+        actual_start_x = source_box["x"] + source_box["width"] / 2 + start_x
+        actual_start_y = source_box["y"] + source_box["height"] / 2 + start_y
+        actual_end_x = source_box["x"] + source_box["width"] / 2 + end_x
+        actual_end_y = source_box["y"] + source_box["height"] / 2 + end_y
+
+    logger.info(f"Dragging from ({actual_start_x:.0f}, {actual_start_y:.0f}) to ({actual_end_x:.0f}, {actual_end_y:.0f}) with {steps} steps")
+
+    try:
+        # Move to start position
+        page.mouse.move(actual_start_x, actual_start_y)
+        page.mouse.down()
+
+        # Perform drag with intermediate steps
+        if steps > 1:
+            for i in range(1, steps + 1):
+                ratio = i / steps
+                intermediate_x = actual_start_x + (actual_end_x - actual_start_x) * ratio
+                intermediate_y = actual_start_y + (actual_end_y - actual_start_y) * ratio
+                page.mouse.move(intermediate_x, intermediate_y)
+                page.wait_for_timeout(10)  # Small delay for each step
+        else:
+            # Direct move
+            page.mouse.move(actual_end_x, actual_end_y)
+
+        page.mouse.up()
+        logger.info("✓ Drag and drop by coordinates completed successfully")
+
+    except Exception as e:
+        logger.error(f"✗ Drag and drop by coordinates failed: {e}")
+        raise
+
+
+def swipe_to_element(page: Page, v: dict):
+    """
+    Swipe/scroll to make an element visible or move it into view
+
+    Supported parameters:
+    - locator: Target element locator (required)
+    - text: Text to identify target element (alternative to locator)
+    - direction: Swipe direction - 'up', 'down', 'left', 'right' (default: 'down')
+    - distance: Swipe distance in pixels (default: 500)
+    - speed: Swipe speed multiplier (default: 1.0)
+    - timeout: Timeout in milliseconds (default: 5000)
+
+    Usage examples:
+
+    1. Swipe to make element visible:
+       swipe_to_element:
+           locator: "#my-element"
+           direction: "down"
+           distance: 300
+
+    2. Swipe by text:
+       swipe_to_element:
+           text: "Load More"
+           direction: "up"
+
+    3. Long swipe:
+       swipe_to_element:
+           locator: ".footer"
+           direction: "down"
+           distance: 1000
+           speed: 2.0
+    """
+    logger.info(">>> Current Step: swipe_to_element")
+
+    locator_str = v.get("locator")
+    text = v.get("text")
+    direction = v.get("direction", "down")
+    distance = v.get("distance", 500)
+    speed = v.get("speed", 1.0)
+    timeout = v.get("timeout", 5000)
+
+    # Get target element
+    if locator_str:
+        target_elem = page.locator(locator_str).first
+    elif text:
+        target_elem = page.get_by_text(text).first
+    else:
+        raise ValueError("swipe_to_element: Either 'locator' or 'text' must be provided")
+
+    # Check if element is already visible
+    try:
+        if target_elem.is_visible():
+            logger.info("Element is already visible")
+            return
+    except:
+        pass
+
+    # Calculate swipe coordinates based on direction
+    viewport_size = page.viewport_size()
+
+    # Center of viewport
+    center_x = viewport_size["width"] / 2
+    center_y = viewport_size["height"] / 2
+
+    # Start and end coordinates
+    start_x, start_y = center_x, center_y
+    end_x, end_y = center_x, center_y
+
+    if direction == "up":
+        start_y = center_y + distance / 2
+        end_y = center_y - distance / 2
+    elif direction == "down":
+        start_y = center_y - distance / 2
+        end_y = center_y + distance / 2
+    elif direction == "left":
+        start_x = center_x + distance / 2
+        end_x = center_x - distance / 2
+    elif direction == "right":
+        start_x = center_x - distance / 2
+        end_x = center_x + distance / 2
+
+    logger.info(f"Swiping {direction} by {distance}px (from {start_x:.0f},{start_y:.0f} to {end_x:.0f},{end_y:.0f})")
+
+    try:
+        # Perform swipe
+        page.mouse.move(start_x, start_y)
+        page.mouse.down()
+        page.wait_for_timeout(50)  # Small delay to register the down event
+        page.mouse.move(end_x, end_y)
+        page.mouse.up()
+
+        # Wait for animation
+        page.wait_for_timeout(int(500 / speed))
+
+        # Verify element is now visible
+        if not target_elem.is_visible(timeout=timeout):
+            logger.warning(f"Element still not visible after swipe. Attempting scrollIntoView...")
+            target_elem.scroll_into_view_if_needed()
+
+        logger.info("✓ Swipe completed successfully")
+
+    except Exception as e:
+        logger.error(f"✗ Swipe failed: {e}")
+        raise
+
+
+def scroll_to_bottom(page: Page, v: dict):
+    """
+    Scroll to page bottom or to a specific element containing target text.
+    Supports: text (target text to scroll to), iterations (scroll steps, default 10),
+              delay (ms between scrolls, default 500).
+    """
+    import time
+    target_text = v.get("text", "")
+    iterations = v.get("iterations", 10)
+    delay_ms = v.get("delay", 500)
+
+    logger.info(f"scroll_to_bottom: target_text='{target_text}', iterations={iterations}")
+
+    if target_text:
+        try:
+            el = page.get_by_text(target_text, exact=False).first
+            el.scroll_into_view_if_needed(timeout=15000)
+            logger.info(f"scroll_to_bottom: scrolled to target text '{target_text}'")
+            page.wait_for_timeout(300)
+            return
+        except Exception as e:
+            logger.debug(f"scroll_to_bottom: direct scroll failed ({e}), trying iterative scroll...")
+
+    for i in range(iterations):
+        page.mouse.wheel(0, 500)
+        page.wait_for_timeout(delay_ms)
+        scroll_pos = page.evaluate("window.scrollY + window.innerHeight")
+        doc_height = page.evaluate("document.documentElement.scrollHeight")
+        if scroll_pos >= doc_height - 100:
+            logger.info(f"scroll_to_bottom: reached bottom at iteration {i+1}")
+            break
+
+
+
+
+
+
 

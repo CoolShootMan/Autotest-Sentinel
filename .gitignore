@@ -76,3 +76,6 @@ Thumbs.db
 venv/pyvenv.cfg
 
 tools/__pycache__/*.pyc
+
+# gfl config
+.gfl.config.yml

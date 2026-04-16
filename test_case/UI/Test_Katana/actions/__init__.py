@@ -13,6 +13,7 @@ from .base import (
     smart_upload,
     smart_screenshot,
     smart_if,
+    smart_wait,
     wait_for_selector,
     wait_for_url,
     save_html,
@@ -23,10 +24,16 @@ from .base import (
     verify_value_near,
     verify_all_commission_values,
     reload_page,
-    execute_not_recognized_scan
+    execute_not_recognized_scan,
+    wait_toast,
+    scroll_to_bottom,
+    drag_element,
+    drag_and_drop_by_coordinates,
+    swipe_to_element,
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style,verify_child_element_count
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_no_sibling_text
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -73,6 +80,11 @@ ACTIONS = {
     "verify_module_collapsed": verify_module_collapsed,
     "verify_module_expanded": verify_module_expanded,
     "verify_element_style": verify_element_style,
+    "verify_child_element_count":verify_child_element_count,
+    "drag_element": drag_element,
+    "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
+    "swipe_to_element": swipe_to_element,
+    "verify_no_sibling_text": verify_no_sibling_text,
     
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
@@ -135,6 +147,7 @@ ACTIONS = {
     "download_submission_csv": download_submission_csv,
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
+    "scroll_to_bottom": scroll_to_bottom,
 }
 
 
@@ -159,6 +172,16 @@ def get_action(name):
         return click_module_add_new
     elif name.startswith("click_module_post_view_event_cta"):
         return click_module_post_view_event_cta
+    elif name.startswith("verify_element_style"):
+        return verify_element_style
+    elif name.startswith("verify_child_element_count"):
+        return verify_child_element_count
+    elif name.startswith("drag_element"):
+        return drag_element
+    elif name.startswith("drag_and_drop_by_coordinates"):
+        return drag_and_drop_by_coordinates
+    elif name.startswith("swipe_to_element"):
+        return swipe_to_element
 
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
@@ -190,14 +213,18 @@ def get_action(name):
         return open_url
     elif name.startswith("reload"):
         return reload_page
+    elif name.startswith("wait_toast"):
+        return wait_toast
     elif name.startswith("wait_"):
-        return wait_for_selector
+        return smart_wait
 
     
     # Special prefixes that map to specific functions
     if name.startswith("click_close_toast"):
         return click_close_toast
     
+    if name.startswith("verify_no_sibling"):
+        return verify_no_sibling_text
     if name.startswith("verify_toast"):
         return verify_toast_message
     if name.startswith("verify_hidden"):
