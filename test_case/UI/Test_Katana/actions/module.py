@@ -98,6 +98,58 @@ def verify_module_expanded(page: Page, v: dict):
     raise AssertionError(f"Module '{module_name}' did not expand. Current Height: {box['height']:.1f}px")
 
 
+def verify_no_sibling_text(page: Page, v: dict):
+    """
+    Verify that an element's siblings do NOT contain the specified text.
+    
+    Supported parameters:
+    - locator: Element locator (required)
+    - index: Element index, supports negative values like -1 for last (default: -1)
+    - text: The text that should NOT exist in sibling elements (required)
+    - timeout: Timeout in milliseconds (default: 5000)
+    
+    Usage in YAML:
+        verify_no_sibling_add_new:
+            locator: '[data-testid="base-more-horiz-icon-cta"]'
+            index: -1
+            text: 'Add new'
+    """
+    locator_str = v.get("locator")
+    text = v.get("text", "Add new")
+    target_index = v.get("index", -1)
+    timeout = v.get("timeout", 5000)
+    
+    if not locator_str:
+        raise ValueError("verify_no_sibling_text: 'locator' parameter is required")
+    
+    logger.info(f"Verifying no sibling with text '{text}' for element: {locator_str}[{target_index}]")
+    
+    # Find the target element
+    el = page.locator(locator_str).nth(target_index)
+    el.wait_for(state="visible", timeout=timeout)
+    
+    # Check parent container for siblings containing the text
+    parent = el.locator("xpath=..")
+    sibling_with_text = parent.locator(f":text-is('{text}')").or_(
+        parent.locator(f"button:has-text('{text}')")
+    ).or_(
+        parent.locator(f"[data-testid]:has-text('{text}')")
+    )
+    
+    count = sibling_with_text.count()
+    if count > 0:
+        # Also check visibility
+        for i in range(count):
+            if sibling_with_text.nth(i).is_visible():
+                page.screenshot(path=f"fail_sibling_{text[:10]}.png")
+                raise AssertionError(
+                    f"Found sibling element with text '{text}' near '{locator_str}[{target_index}]', "
+                    f"but it should NOT exist for co-seller."
+                )
+    
+    logger.info(f"Confirmed: no sibling with text '{text}' found near '{locator_str}[{target_index}]'")
+
+
 def verify_element_style(page: Page, v: dict):
     """
     Verify CSS style properties of an element
@@ -168,10 +220,6 @@ def verify_element_style(page: Page, v: dict):
 
         # Find initial container by text
         container = page.locator("div", has_text=container_name).locator(f"xpath={container_filter}").last
-
-        className = container.get_attribute("class")
-
-        print("JJJJJJ", className)
 
         locator = container.locator(locator_str)
     else:
@@ -246,5 +294,110 @@ def verify_element_style(page: Page, v: dict):
     else:
         logger.info("All style verifications passed")
 
+
+def verify_child_element_count(page: Page, v: dict):
+    """
+    Verify the number of child elements within a parent element
+
+    Supported parameters:
+    - parent_locator: Parent element locator (required)
+    - child_locator: Child element selector to count (required)
+    - expected: Expected count of child elements (required)
+    - operator: Comparison operator, default 'equals', supports: equals, gt, lt, gte, lte, ne
+    - container: Parent container name/text to search within (optional)
+    - timeout: Timeout in milliseconds, default 5000
+
+    Usage examples:
+
+    1. Verify exact count:
+       verify_child_element_count:
+           parent_locator: ".my-module"
+           child_locator: ".item"
+           expected: 5
+
+    2. Verify within a container:
+       verify_child_element_count:
+           container: "My Module"
+           parent_locator: ".content"
+           child_locator: "button"
+           expected: 3
+
+    3. Verify minimum count:
+       verify_child_element_count:
+           parent_locator: "[data-testid='module']"
+           child_locator: ".product-card"
+           expected: 2
+           operator: "gte"  # Greater than or equal
+
+    4. Verify maximum count:
+       verify_child_element_count:
+           parent_locator: ".gallery"
+           child_locator: "img"
+           expected: 10
+           operator: "lte"  # Less than or equal
+    """
+    parent_locator_str = v.get("parent_locator")
+    child_locator_str = v.get("child_locator")
+    expected_count = v.get("expected")
+    container_name = v.get("container")
+
+    if not parent_locator_str:
+        raise ValueError("verify_child_element_count: 'parent_locator' parameter is required")
+    if not child_locator_str:
+        raise ValueError("verify_child_element_count: 'child_locator' parameter is required")
+    if expected_count is None:
+        raise ValueError("verify_child_element_count: 'expected' parameter is required")
+
+    timeout = v.get("timeout", 5000)
+    operator = v.get("operator", "equals")
+
+    # Apply container filter if specified
+    if container_name:
+        logger.info(f"Searching within container: {container_name}")
+        # Find parent container by text
+        container_elem = page.locator("div").filter(has=page.get_by_text(container_name, exact=True)).last
+        parent_locator = container_elem.locator(f"xpath={parent_locator_str}")
+
+        container_info = f" (in container: {container_name})"
+    else:
+        parent_locator = page.locator(parent_locator_str)
+        container_info = ""
+
+    # Wait for parent element to be visible
+    parent_locator.wait_for(state="visible", timeout=timeout)
+
+    # Count child elements
+    child_locator = parent_locator.locator(child_locator_str)
+    actual_count = child_locator.count()
+
+    logger.info(f"Counting child elements - Parent: {parent_locator_str}{container_info}, Child: {child_locator_str}")
+    logger.info(f"Actual count: {actual_count}, Expected: {expected_count}, Operator: {operator}")
+
+    # Perform comparison
+    passed = False
+    if operator == "equals":
+        passed = actual_count == expected_count
+    elif operator == "gt":
+        passed = actual_count > expected_count
+    elif operator == "lt":
+        passed = actual_count < expected_count
+    elif operator == "gte":
+        passed = actual_count >= expected_count
+    elif operator == "lte":
+        passed = actual_count <= expected_count
+    elif operator == "ne":
+        passed = actual_count != expected_count
+    else:
+        raise ValueError(f"Unsupported operator: {operator}")
+
+    status = "✓" if passed else "✗"
+    result_msg = f"{status} Child element count: {actual_count} (expected: {expected_count}, operator: {operator})"
+
+    if not passed:
+        logger.error(result_msg)
+        raise AssertionError(f"Child element count verification failed:\n{result_msg}")
+    else:
+        logger.info(result_msg)
+        logger.info("Child element count verification passed")
 
 
