@@ -292,6 +292,32 @@ Locator.set_checked: Clicking the checkbox did not change its state
 2. 定位父级包裹节点（React onClick handler 真正绑定处）
 3. `force=True` 穿透遮罩层直接点击父节点
 
+#### `smart_check` 典型使用场景示例：
+
+*   **场景 1：标准 MUI Switch (受控组件)**
+    ```yaml
+    # 无需担心 Playwright 报错 "Clicking... did not change state"
+    check_allow_copy: { name: "Allow others to copy", checked: true }
+    ```
+
+*   **场景 2：弹窗与背景“撞衫” (智能域感知)**
+    ```yaml
+    # 自动锁定最新弹窗视口，避免误点背景中的同名元素
+    check_modal_default: { role: 'checkbox', index: 0 } 
+    ```
+
+*   **场景 3：打破沙箱 (手动跨域)**
+    ```yaml
+    # 若需在弹窗/抽屉开启时勾选底层页面元素，使用 no_modal_scope
+    check_background_sync: { role: 'checkbox', name: 'Sync now', no_modal_scope: true }
+    ```
+
+*   **场景 4：最高稳定定位 (`test_id` + `check`)**
+    ```yaml
+    # 结合最稳的 test_id 定位与最聪明的 check 动作
+    check_publish_toggle: { test_id: 'publish-switch-input', checked: true }
+    ```
+
 ### test_id 原生支持
 
 `smart_click` 现已支持 `test_id` 参数，作为**最高优先级定位策略**（优于 role/name/locator）：
@@ -308,4 +334,4 @@ click_confirm: { test_id: 'confirm-button' }
 
 ---
 
-**版本:** v4.0 | **最后更新:** 2026-04-14 | **维护者:** Autotest-monster Team
+**版本:** v4.0 | **最后更新:** 2026-04-15 | **维护者:** Autotest-monster Team
