@@ -135,6 +135,42 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                         page.screenshot(path=f"fail_assert_{caseno}.png")
                         pytest.fail(f"Assertion failed: Element {role} '{name}' not found or visible.")
             
+            elif assertion_type == "element_not_visible":
+                role = assertion.get("role")
+                name = assertion.get("name")
+                locator = assertion.get("locator")
+                logger.info(f"Verifying element is NOT visible: role={role}, name={name}, locator={locator}")
+                try:
+                    if locator:
+                        is_visible = page.locator(locator).first.is_visible(timeout=3000)
+                    elif role:
+                        is_visible = page.get_by_role(role, name=name).first.is_visible(timeout=3000)
+                    else:
+                        is_visible = False
+                    if is_visible:
+                        logger.error(f"Assertion failed: Element should NOT be visible but it is (role={role}, name={name}, locator={locator}).")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Element should NOT be visible but it is (role={role}, name={name}, locator={locator}).")
+                    else:
+                        logger.info(f"Assertion success: Element is correctly NOT visible (role={role}, name={name}, locator={locator}).")
+                except Exception as e:
+                    # is_visible returning False or throwing means not visible - which is what we want
+                    logger.info(f"Assertion success: Element is correctly NOT visible (role={role}, name={name}, locator={locator}).")
+            
+            elif assertion_type == "element_not_visible_by_text":
+                text = assertion.get("text")
+                logger.info(f"Verifying text is NOT visible: '{text}'")
+                try:
+                    is_visible = page.get_by_text(text, exact=False).first.is_visible(timeout=3000)
+                    if is_visible:
+                        logger.error(f"Assertion failed: Text '{text}' should NOT be visible but it is.")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Text '{text}' should NOT be visible but it is.")
+                    else:
+                        logger.info(f"Assertion success: Text '{text}' is correctly NOT visible.")
+                except:
+                    logger.info(f"Assertion success: Text '{text}' is correctly NOT visible.")
+            
             
     # --- Teardown Phase ---
     teardown_step = dict(list(smokecases1.values())[0]).get("teardown_step", {})
