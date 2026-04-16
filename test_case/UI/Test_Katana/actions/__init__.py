@@ -30,6 +30,7 @@ from .base import (
     drag_element,
     drag_and_drop_by_coordinates,
     swipe_to_element,
+    fill_stripe_iframe,
 )
 
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style,verify_child_element_count
@@ -148,6 +149,7 @@ ACTIONS = {
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
     "scroll_to_bottom": scroll_to_bottom,
+    "fill_stripe_iframe": fill_stripe_iframe,
 }
 
 
