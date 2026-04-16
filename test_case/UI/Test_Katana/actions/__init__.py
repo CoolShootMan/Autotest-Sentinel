@@ -32,7 +32,7 @@ from .base import (
     swipe_to_element,
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style,verify_child_element_count
+from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_child_element_count, verify_carousel_scroll, verify_carousel_nav_hidden_at_last
 from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_no_sibling_text
 from .product import (
 
@@ -85,6 +85,8 @@ ACTIONS = {
     "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
     "swipe_to_element": swipe_to_element,
     "verify_no_sibling_text": verify_no_sibling_text,
+    "verify_carousel_scroll": verify_carousel_scroll,
+    "verify_carousel_nav_hidden_at_last": verify_carousel_nav_hidden_at_last,
     
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
@@ -225,6 +227,10 @@ def get_action(name):
     
     if name.startswith("verify_no_sibling"):
         return verify_no_sibling_text
+    if name.startswith("verify_carousel_nav_hidden"):
+        return verify_carousel_nav_hidden_at_last
+    if name.startswith("verify_carousel_scroll"):
+        return verify_carousel_scroll
     if name.startswith("verify_toast"):
         return verify_toast_message
     if name.startswith("verify_hidden"):
