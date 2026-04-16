@@ -80,7 +80,29 @@ testT4622:
     description: "Verify module collapse and expand toggle functionality"
     test_step:
         open: "https://release.pear.us/autotestshop"
-        sleep_after_open: 3000
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+
+        # Prerequisite: Create module (from testT3554)
+        R_click_create_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_wait_product: 5000
+        R_click_select_product: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click_add_product: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
+        sleep_after_create: 3000
+
+        # Prerequisite: Rename module to "Updated module" (from testT3556)
+        click_module_edit_button: { module_name: 'Verify Add module' }
+        sleep_after_edit_click: 1500
+        R_click_edit_module: { role: 'button', name: 'Edit module' }
+        sleep_after_edit_module: 1000
+        fill_new_title: { role: 'textbox', name: 'Enter title of the module', value: 'Updated module' }
+        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
+        sleep_before_save: 1000
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
 
         # Step 1: Click collapse icon (arrow-up) to fold module content
         click_module_collapse: { module_name: "Updated module" }
