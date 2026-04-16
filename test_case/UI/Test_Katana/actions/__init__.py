@@ -30,10 +30,20 @@ from .base import (
     drag_element,
     drag_and_drop_by_coordinates,
     swipe_to_element,
+    handle_modal,
+    auto_handle_modals,
+    create_session,
+    switch_session,
+    close_session,
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_child_element_count, verify_carousel_scroll, verify_carousel_nav_hidden_at_last
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_no_sibling_text
+from .module import (
+    click_module_edit_button, click_module_paragraph, click_add_new_product,
+    click_module_add_new, click_module_post_view_event_cta, click_module_collapse,
+    click_module_expand, verify_module_collapsed, verify_module_expanded,
+    verify_element_style, verify_child_element_count, verify_no_sibling_text,
+    verify_element_not_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
+)
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -81,13 +91,20 @@ ACTIONS = {
     "verify_module_expanded": verify_module_expanded,
     "verify_element_style": verify_element_style,
     "verify_child_element_count":verify_child_element_count,
+    "verify_no_sibling_text": verify_no_sibling_text,
+    "verify_element_not_contains_text": verify_element_not_contains_text,
     "drag_element": drag_element,
     "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
     "swipe_to_element": swipe_to_element,
-    "verify_no_sibling_text": verify_no_sibling_text,
+
+    "handle_modal": handle_modal,
+    "auto_handle_modals": auto_handle_modals,
+    "create_session": create_session,
+    "switch_session": switch_session,
+    "close_session": close_session,
     "verify_carousel_scroll": verify_carousel_scroll,
     "verify_carousel_nav_hidden_at_last": verify_carousel_nav_hidden_at_last,
-    
+
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
     "click_add_button_regex_final": click_add_button_regex,
@@ -178,12 +195,25 @@ def get_action(name):
         return verify_element_style
     elif name.startswith("verify_child_element_count"):
         return verify_child_element_count
+    elif name.startswith("verify_element_not_contains_text"):
+        return verify_element_not_contains_text
     elif name.startswith("drag_element"):
         return drag_element
     elif name.startswith("drag_and_drop_by_coordinates"):
         return drag_and_drop_by_coordinates
     elif name.startswith("swipe_to_element"):
         return swipe_to_element
+    elif name.startswith("handle_modal"):
+        return handle_modal
+    elif name.startswith("auto_handle_modals"):
+        return auto_handle_modals
+    elif name.startswith("create_session") or name.startswith("session_"):
+        return create_session
+    elif name.startswith("switch_session"):
+        return switch_session
+    elif name.startswith("close_session"):
+        return close_session
+
 
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click

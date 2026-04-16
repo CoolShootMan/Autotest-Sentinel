@@ -693,3 +693,97 @@ def verify_child_element_count(page: Page, v: dict):
         logger.info("Child element count verification passed")
 
 
+def verify_element_not_contains_text(page: Page, v: dict):
+    """
+    Verify that an element does NOT contain specific text
+
+    Supported parameters:
+    - locator: Element locator (required)
+    - text: The text that should NOT exist in the element (required)
+    - exact: Whether to match exact text (default: false)
+    - container: Container element name/text to search within (optional)
+    - timeout: Timeout in milliseconds (default: 5000)
+
+    Usage examples:
+
+    1. Basic usage - verify text does not exist:
+       verify_element_not_contains_text:
+           locator: ".my-element"
+           text: "Error Message"
+
+    2. Verify within a container:
+       verify_element_not_contains_text:
+           container: "My Module"
+           locator: ".status-message"
+           text: "Failed"
+
+    3. Exact match:
+       verify_element_not_contains_text:
+           locator: ".notification"
+           text: "Success"
+           exact: true
+
+    4. Check multiple texts should not exist:
+       verify_element_not_contains_text:
+           locator: ".error-list"
+           text: "Critical Error"
+    """
+    locator_str = v.get("locator")
+    text_to_check = v.get("text")
+    exact_match = v.get("exact", False)
+    container_name = v.get("container")
+    timeout = v.get("timeout", 5000)
+
+    if not locator_str:
+        raise ValueError("verify_element_not_contains_text: 'locator' parameter is required")
+    if not text_to_check:
+        raise ValueError("verify_element_not_contains_text: 'text' parameter is required")
+
+    # Apply container filter if specified
+    if container_name:
+        logger.info(f"Searching within container: {container_name}")
+        # Find container by text
+        container_elem = page.locator("div").filter(has=page.get_by_text(container_name, exact=False)).last
+        locator = container_elem.locator(locator_str)
+        container_info = f" (in container: {container_name})"
+    else:
+        locator = page.locator(locator_str)
+        container_info = ""
+
+    logger.info(f"Verifying element does NOT contain text - Locator: {locator_str}{container_info}, Text: '{text_to_check}', Exact: {exact_match}")
+
+    try:
+        # Wait for element to be visible
+        locator.wait_for(state="visible", timeout=timeout)
+
+        # Get element text content
+        element_text = locator.inner_text()
+
+        # Check if text exists
+        if exact_match:
+            text_exists = text_to_check == element_text.strip()
+        else:
+            text_exists = text_to_check in element_text
+
+        if text_exists:
+            logger.error(f"Verification failed: Element '{locator_str}' contains text '{text_to_check}'")
+            logger.error(f"Element content: {element_text}")
+            page.screenshot(path=f"fail_not_contains_{text_to_check[:10]}.png")
+            raise AssertionError(
+                f"Element '{locator_str}' should NOT contain text '{text_to_check}', "
+                f"but it was found in: {element_text}"
+            )
+        else:
+            logger.info(f"✓ Verification passed: Element '{locator_str}' does NOT contain text '{text_to_check}'")
+            logger.info(f"Element content: {element_text}")
+
+    except Exception as e:
+        if "does NOT contain text" in str(e):
+            # Re-raise our custom assertion error
+            raise
+        else:
+            # Handle other exceptions (element not found, timeout, etc.)
+            logger.error(f"Error during verification: {e}")
+            page.screenshot(path=f"fail_not_contains_error_{text_to_check[:10]}.png")
+            raise
+
