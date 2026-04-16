@@ -85,7 +85,7 @@ testT1742:
         # 优化：等待 Save 按钮变为 disabled，表示保存完成
         R_click_save_teardown_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
         sleep_step: 2000
-        优化：等待 Save 按钮变为 disabled，表示保存完成
+        # 优化：等待 Save 按钮变为 disabled，表示保存完成
         wait_save_disabled_teardown: { selector: "button:has-text('Save')[disabled]", timeout: 15000, disable_ai: true }
         sleep_step: 5000
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
@@ -160,5 +160,165 @@ testT3991:
     expect_result:
         description: "Partner should be able to set a note for co-sellers successfully."
         assertions: []
-        
 
+
+# T2705: Partner hides the variant and sets the default variant
+testT2705_VerifyPartner:
+  guest: false
+  description: "Partner hides the variant and sets the default variant on the management page"
+  test_step:
+    open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Selling"
+    sleep_after_open: 5000
+
+    # Click Customize products
+    R_click_customize: { role: "button", name: "Customize products" }
+    sleep_before_scroll: 2000
+
+    # Scroll down the drawer to reveal the variants table
+    swipe_avoid_plus: { x: 0, y: 500 }
+    sleep_before_horizontal_scroll: 1000
+
+    # Scroll the variant table to the right
+    swipe_right: { x: 800, y: 0 }
+    sleep_after_scroll: 1000
+
+    # The exclude checkbox for '5 people' (1st column checkbox, index=0)
+    check_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0 }
+
+    # The default variant checkbox for '9 people' (2nd column checkbox, index=1)
+    check_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1 }
+
+    # Save and Save1
+    R_click_save: { role: "button", name: "Save" }
+    R_click_save1: { role: "button", name: "Save" }
+    sleep_after_update: 5000
+
+  expect_result:
+    description: "Curator successfully saves the operation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Post products updated"
+
+
+# Separate verification for Guest
+testT2705_VerifyGuest:
+  guest: true
+  description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
+  test_step:
+    open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+    sleep_after_open: 5000
+
+    # Scroll down to reveal product cards
+    swipe_avoid_plus: { x: 0, y: 500 }
+    sleep_after_scroll: 1000
+
+    # Click the product card with image to open detail page
+    R_click_product_card_with_image: { locator: "xpath=//img[ancestor::div[contains(@class,'product')]]/ancestor::div[contains(@class,'product')][1]", index: 0 }
+    sleep_after_click: 5000
+
+    # Scroll down to the variant section in the detail page
+    swipe_to_variant: { x: 0, y: 600 }
+
+  expect_result:
+    description: "The variant '5 people' should be completely hidden and '9 people' variant should be the default variant"
+    assertions:
+      - assertion_type: "element_not_visible_by_text"
+        text: "5 people"
+      - assertion_type: "element_not_visible_by_text"
+        text: "5people"
+      - assertion_type: "element_visible_by_text"
+        text: "9 people"
+
+  teardown_step:
+    # Step 1: Inject partner cookies into guest context to switch identity
+    add_cookies: {}
+    sleep_step: 1000
+    # Step 2: Open partner post URL (partner cookie already injected, direct access)
+    open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Selling"
+    sleep_step: 5000
+    # Step 3: Uncheck the boxes and save
+    R_click_customize_reset: { role: "button", name: "Customize products" }
+    sleep_step: 2000
+    swipe_reset: { x: 0, y: 500 }
+    sleep_step: 1000
+    swipe_right_reset: { x: 800, y: 0 }
+    sleep_step: 1000
+    uncheck_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0, checked: false }
+    uncheck_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1, checked: false }
+    R_click_save_reset: { role: "button", name: "Save" }
+    R_click_save_reset1: { role: "button", name: "Save" }
+    sleep_step: 3000
+
+
+
+
+# T2830: Partner hides a post on the storefront
+testT2830_VerifyPartner:
+    description: "Verify hiding a post from the store via Advanced settings"
+    test_step:
+        open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Content"
+        sleep_after_open: 2000
+        # Edit the post advanced settings
+        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        check_hide_in_store: { locator: "input[name='hideInStore']" }
+        save_html_partner_before: { name: "debug_partner_before_update" }
+        R_click_Save: { role: "button", name: "Save" }
+        sleep_after_save: 5000
+        screenshot_after_curator_persistence: { name: "debug_partner_final" }
+    expect_result:
+        description: "Post advanced settings updated"
+        assertions: []
+
+# Separate verification for Guest
+testT2830_VerifyGuest:
+    guest: true
+    description: "Verify that the post should be hidden from the store for guest users after curator action"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        # Scroll to ensure all content is loaded and checked
+        swipe_down_to_check: { x: 0, y: 800 }
+        sleep_after_scroll: 2000
+      
+        # Step 1: scroll the Posts tab element into view
+        wait_for_selector: { locator: "xpath=//button[@role='tab' and contains(text(),'Posts')]", scroll: true }
+        sleep_after_wait_for_selector: 1000
+        # Scroll down a bit more to better position the Posts tab
+        swipe_down_to_check: { x: 0, y: 500 }
+        sleep_after_scroll: 1000
+
+        sleep_after_click: 2000
+        screenshot_guest_view: { name: "debug_guest_view" }
+        save_html_guest: { name: "debug_guest_source" }
+    expect_result:
+        description: "The post should be hidden from the store for guest users"
+        assertions:
+            - assertion_type: "element_not_visible_by_text"
+              text: "Test event post variant settings"
+
+    teardown_step:
+        # Step 1: Inject partner cookies into guest context to switch identity
+        add_cookies: {}
+        sleep_step: 3000
+        # Step 2: Open post URL as partner and uncheck hideInStore
+        open_teardown: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Content"
+        sleep_step: 5000
+        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        sleep_step: 2000
+        # Uncheck the hideInStore checkbox (checked: false to uncheck)
+        uncheck_hide_in_store: { locator: "input[name='hideInStore']", checked: false }
+        R_click_Save: { role: "button", name: "Save" }
+        sleep_step: 3000
+        # Step 3: Clear cookies to switch back to guest context
+        clear_cookies: {}
+        sleep_step: 1000
+        # Step 4: Verify in guest context that the post is now visible
+        open_guest_shop: "https://release.pear.us/autotestshop"
+        sleep_step: 5000
+        swipe_down_to_check: { x: 0, y: 800 }
+        sleep_step: 2000
+        wait_for_selector: { locator: "xpath=//button[@role='tab' and contains(text(),'Posts')]", scroll: true }
+        sleep_step: 1000
+        screenshot_guest_view_restored: { name: "debug_guest_view_restored" }
+        save_html_guest_restored: { name: "debug_guest_source_restored" }
+        verify_text_visible: { text: "Test event post variant settings" }

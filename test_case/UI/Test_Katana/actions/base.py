@@ -51,8 +51,14 @@ def smart_screenshot(page: Page, v: dict):
 def wait_for_selector(page: Page, v: dict):
     selector = v.get("selector") or v.get("locator")
     timeout = v.get("timeout", 30000)
+    scroll = v.get("scroll", False)
     if selector:
-        page.wait_for_selector(selector, timeout=timeout)
+        el = page.locator(selector).first
+        if scroll:
+            el.scroll_into_view_if_needed(timeout=timeout)
+            page.wait_for_timeout(500)
+        else:
+            page.wait_for_selector(selector, timeout=timeout)
 
 def wait_for_url(page: Page, v: dict):
     url = v.get("url") or v.get("verify_navigation")
@@ -247,6 +253,28 @@ def smart_check(page: Page, v: dict):
                 logger.error(f"MUI modal fallback also failed: {fe2}")
         logger.error(f"Modal-scoped check also failed: {e2}")
         raise
+
+def smart_add_cookies(page: Page, v: dict):
+    """Inject cookies from a Playwright storage-state file into the current context.
+    Caller is responsible for navigating to the partner URL after this call.
+    """
+    import json
+    state_path = v.get("storage_state") or os.path.join(
+        BASE_DIR, "test_case", "UI", "Test_Katana", "cookie_release.json"
+    )
+    if not os.path.exists(state_path):
+        raise FileNotFoundError(f"Cookie storage state file not found: {state_path}")
+    state = json.load(open(state_path, encoding="utf-8"))
+    cookies = state.get("cookies", [])
+    if not cookies:
+        raise ValueError(f"No cookies found in storage state: {state_path}")
+    page.context.add_cookies(cookies)
+    logger.info(f"Added {len(cookies)} partner cookies from {state_path}")
+
+def clear_cookies(page: Page, v: dict):
+    """Clear all cookies from the current context to switch to guest."""
+    page.context.clear_cookies()
+    logger.info("Cleared all cookies to switch back to guest context")
 
 def smart_upload(page: Page, v: dict):
     if "file_path" in v:

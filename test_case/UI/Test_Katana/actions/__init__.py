@@ -8,6 +8,8 @@ from .base import (
     smart_swipe,
     smart_sleep,
     smart_press,
+    smart_add_cookies,
+    clear_cookies,
     smart_upload,
     smart_screenshot,
     smart_if,
@@ -57,6 +59,8 @@ ACTIONS = {
     "sleep": smart_sleep,
     "press": smart_press,
     "upload": smart_upload,
+    "add_cookies": smart_add_cookies,
+    "clear_cookies": clear_cookies,
     "screenshot": smart_screenshot,
     
     # Module specific
@@ -164,7 +168,7 @@ def get_action(name):
         return fill_numeric
     elif name.startswith("fill"):
         return smart_fill
-    elif name.startswith("check"):
+    elif name.startswith("check") or name.startswith("uncheck"):
         return smart_check
     elif name.startswith("swipe") or name.startswith("scroll"):
         return smart_swipe
