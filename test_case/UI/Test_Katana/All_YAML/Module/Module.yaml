@@ -14,7 +14,7 @@ testT3554:
         R_click7: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
         sleep_before_verify: 2000
     expect_result:
-        description: "Verify that the new module is visible on the pa ge"
+        description: "Verify that the new module is visible on the page"
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "Verify Add module"
@@ -672,9 +672,38 @@ testT4852:
               # TODO: 检查module中是否正常显示了所有添加的内容
 
 # ------------------ Archiving ---------------------
+testAddNewUpdateModule:
+    description: "Verify the addition of a new module to the store page for use in archiving test cases"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'new module use in archiving test cases' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_wait_product: 5000
+        R_click5: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click7: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
+        sleep_before_verify: 2000
+    expect_result:
+        description: "Verify that the new module is visible on the page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "new module use in archiving test cases"
+
+
 testT4556:
     description: "Verify event creation and completion (archiving)"
     test_step:
+        open_2: "https://release.pear.us/events/settings"
+        sleep_after_open: 5000
+        R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive: 1000
+        R_click_auto_archive_2: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive_2: 2000
+        R_click_selected_past_event: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]', name: 'new module use in archiving test cases', optional: true}
+        R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
+        sleep_after_apply_1: 2000
         open: "https://release.pear.us/events/create"
         sleep_after_open: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
@@ -698,10 +727,9 @@ testT4556:
         R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
         sleep_before_finish: 2000
         R_click_finish: { role: 'button', name: 'Finish and create post' }
-        R_click_view_st: { role: 'button', name: 'View post on storefront' }
+        R_click_view_st: { role: 'button', name: 'Go to event list' }
         sleep_after_view_st: 5000
-        click_module_post_view_event_cta: { module_name: 'test updated module', post_title: 'Test-event-Auto-archive' }
-        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        R_click_edit_event: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive' , exact: true}
         sleep_after_edit_event: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
         R_click_status_completed: { role: 'menuitem', name: 'Completed' }
@@ -740,16 +768,126 @@ testT5105:
         # ========================================
         session_user_coseller__open: {url: "https://release.pear.us/your-business-name-yuu7" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
-        session_user_coseller__verify_element_not_contains_text: { text: 'verify-co-seller-auto-archive', container: 'Upcoming Events' , locator: '.list-container'}
+        session_user_coseller__verify_element_not_contains_text: { text: 'verify-co-seller-auto-archive', locator: '.list-container', container: 'Expired events' , container_filter: '../..' }
         sleep_after_close: 2000
     expect_result:
         description: "Event should be created and then marked as completed successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Test-event-Auto-archive"
+              text: []
 
+testT4853:
+    description: "Verify that when the status of the new merchant's event automatically becomes 'Completed', the system will automatically create the 'Past event' module and archive the event post."
+    test_step:
+        open_2: "https://release.pear.us/events/settings"
+        sleep_after_open: 5000
+        R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive: 1000
+        R_click_auto_archive_2: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive_2: 2000
+        R_click_selected_past_event: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]', name: 'Past Events', optional: true}
+        R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
+        sleep_after_apply_1: 2000
+        open_back: "https://release.pear.us/events/create"
+        sleep_after_open_back: 5000
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-past-event' }
+        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
+        sleep_after_address_fill: 1500
+        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
+        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_date_30: { role: 'gridcell', name: '30' }
+        sleep_after_select_calender: 1000
+        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        sleep_before_tickets: 2000
+        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
+        sleep_before_tickets_2: 2000
+        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
+        fill_quantity: { placeholder: 'Quantity', value: '36' }
+        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
+        sleep_after_ticket_fill: 2000
+        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
+        sleep_before_finish: 2000
+        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_view_st: { role: 'button', name: 'View post on storefront' }
+        sleep_after_view_st: 5000
+        click_module_post_view_event_cta: { module_name: 'new module use in archiving test cases', post_title: 'Test-event-Auto-archive-past-event' }
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
+        sleep_after_edit_event_2: 2000
+        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        sleep_after_save_edit: 2000
+        open_back_2: "https://release.pear.us/autotestshop"
+        sleep_after_open_back_2: 5000
+        verify_element_contains_text: { container: 'Past Events', locator: '../..', text: 'Test-event-Auto-archive-past-event'}
         
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
         
+testT4559:
+    description: 'Verify enable "Auto-archive completed event posts", but do not select any module'
+    test_step:
+        open: "https://release.pear.us/events/settings"
+        sleep_after_open: 5000
+        R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive: 1000
+        R_click_auto_archive_2: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive_2: 2000
+        R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
+        sleep_after_apply_1: 2000
+        open_back: "https://release.pear.us/events/create"
+        sleep_after_open_back: 5000
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-not-selected' }
+        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
+        sleep_after_address_fill: 1500
+        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
+        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_date_30: { role: 'gridcell', name: '30' }
+        sleep_after_select_calender: 1000
+        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        sleep_before_tickets: 2000
+        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
+        sleep_before_tickets_2: 2000
+        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
+        fill_quantity: { placeholder: 'Quantity', value: '36' }
+        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
+        sleep_after_ticket_fill: 2000
+        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
+        sleep_before_finish: 2000
+        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_finish_select_module: { locator: 'div[data-testid="mui-list-item-button"]'}
+        R_click_view_st: { role: 'button', name: 'Go to event list' }
+        sleep_after_view_st: 5000
+        R_click_edit_event_name: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive-not-selected' , exact: true}
+        R_click_edit_event: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
+        sleep_after_edit_event_2: 2000
+        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        sleep_after_save_edit: 2000
+        open_2: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../../..', text: 'Test-event-Auto-archive-not-selected', assert: false}
+
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
+
 
 # ------------------ CoSeller Module ---------------------------
 testT4603:

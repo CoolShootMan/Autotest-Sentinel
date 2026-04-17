@@ -46,7 +46,7 @@ from .module import (
     click_module_add_new, click_module_post_view_event_cta, click_module_collapse,
     click_module_expand, verify_module_collapsed, verify_module_expanded,
     verify_element_style, verify_child_element_count, verify_no_sibling_text,
-    verify_element_not_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
+    verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
 )
 from .product import (
 
@@ -112,7 +112,7 @@ ACTIONS = {
     "verify_element_style": verify_element_style,
     "verify_child_element_count":verify_child_element_count,
     "verify_no_sibling_text": verify_no_sibling_text,
-    "verify_element_not_contains_text": verify_element_not_contains_text,
+    "verify_element_contains_text": verify_element_contains_text,
     "drag_element": drag_element,
     "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
     "swipe_to_element": swipe_to_element,
@@ -216,8 +216,8 @@ def get_action(name):
         return verify_element_style
     elif name.startswith("verify_child_element_count"):
         return verify_child_element_count
-    elif name.startswith("verify_element_not_contains_text"):
-        return verify_element_not_contains_text
+    elif name.startswith("verify_element_contains_text"):
+        return verify_element_contains_text
     elif name.startswith("drag_element"):
         return drag_element
     elif name.startswith("drag_and_drop_by_coordinates"):
