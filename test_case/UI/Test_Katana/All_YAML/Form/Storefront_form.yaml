@@ -5,8 +5,8 @@ testPartner_create_form:
     open: "https://release.pear.us/autotestshop"
     sleep_open: 3000
 
-    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
-    sleep_click_add_my_form: 1000
+#    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
+#    sleep_click_add_my_form: 1000
     click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_add: 3000
 
