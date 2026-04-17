@@ -841,3 +841,60 @@ def verify_element_contains_text(page: Page, v: dict):
             page.screenshot(path=f"fail_{'contains' if is_positive else 'not_contains'}_error_{text_to_check[:10]}.png")
             raise
 
+
+def click_container_button(page: Page, v: dict):
+    """
+    Click a button within a specific container element.
+
+    Supported parameters:
+    - container: Container element text or locator to search within (required)
+    - container_locator: CSS/XPath selector for the container (optional, used with container text for double-locator)
+    - button: Button selector within the container, supports CSS or XPath (required)
+    - button_index: Button index when multiple matches found (default: 0)
+
+    Usage examples:
+
+    1. CSS button in text container:
+       click_container_button:
+           container: "My Module"
+           button: ".edit-btn"
+
+    2. XPath button:
+       click_container_button:
+           container: "My Module"
+           button: "//button[contains(@class, 'MuiButton')]"
+           button_index: 1
+
+    3. Container with double-locator pattern:
+       click_container_button:
+           container: "My Module"
+           container_locator: "//div[@data-testid='module-header']"
+           button: "//button[@aria-label='Edit']"
+    """
+    container_text = v.get("container")
+    container_locator = v.get("container_locator")
+    button_selector = v.get("button")
+    button_index = v.get("button_index", 0)
+
+    if not container_text and not container_locator:
+        raise ValueError("click_container_button: 'container' or 'container_locator' is required")
+    if not button_selector:
+        raise ValueError("click_container_button: 'button' is required")
+
+    # Find container
+    if container_text:
+        container = page.locator("div", has_text=container_text).last
+        if container_locator:
+            prefix = "xpath=" if container_locator.startswith("/") else ""
+            container = container.locator(f"{prefix}{container_locator}").last
+    else:
+        prefix = "xpath=" if container_locator.startswith("/") else ""
+        container = page.locator(f"{prefix}{container_locator}").last
+
+    container.scroll_into_view_if_needed()
+    logger.info(f"click_container_button: container='{container_text or container_locator}', button='{button_selector}', index={button_index}")
+
+    # Find and click button, auto-detect XPath
+    prefix = "xpath=" if button_selector.startswith("/") else ""
+    container.locator(f"{prefix}{button_selector}").nth(button_index).click(timeout=10000)
+    logger.info(f"✓ Clicked button '{button_selector}' at index {button_index}")
