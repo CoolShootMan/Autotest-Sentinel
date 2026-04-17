@@ -40,9 +40,14 @@ def click_module_add_new(page: Page, v: dict):
 def click_module_post_view_event_cta(page: Page, v: dict):
     post_title = v.get("post_title")
     module_name = v.get("module_name")
-    logger.info(f"Clicking view event cta for module: {module_name} and post title: {post_title}")
+    button_name = v.get("button_name")
+    button_index = v.get("button_index", 0)
+    logger.info(f"Clicking button for module: {module_name} and post title: {post_title}")
     container = page.locator("div", has_text=module_name).filter(has_text=post_title).last
-    container.get_by_role("button", name="View event").first.click(timeout=10000)
+    if button_name:
+        container.get_by_role("button", name=button_name).nth(button_index).click(timeout=1000)
+    else:
+        container.locator("button").nth(button_index).click(timeout=1000)
 
 def click_module_item_more_icon(page: Page, v: dict):
     """Click the 'more' (horiz icon) button on a post/card item inside a module using data-testid='base-more-horiz-icon-cta'.
@@ -728,11 +733,11 @@ def verify_child_element_count(page: Page, v: dict):
 
 def verify_element_contains_text(page: Page, v: dict):
     """
-    Verify that an element does or does NOT contain specific text.
+    Verify that an element does or does NOT contain specific text(s).
 
     Supported parameters:
     - locator: Element locator (required)
-    - text: The text to check in the element (required)
+    - text: The text to check, supports single string or list of strings (required)
     - exact: Whether to match exact text (default: false)
     - assert: Assertion direction, true = contains (default), false = not contains
     - container: Container element name/text to search within (optional)
@@ -740,47 +745,47 @@ def verify_element_contains_text(page: Page, v: dict):
 
     Usage examples:
 
-    1. Verify text DOES exist (default):
+    1. Verify single text DOES exist (default):
        verify_element_contains_text:
            locator: ".my-element"
            text: "Success"
 
-    2. Verify text does NOT exist:
+    2. Verify multiple texts DO exist:
+       verify_element_contains_text:
+           locator: ".my-element"
+           text: ["Success", "Welcome"]
+
+    3. Verify text does NOT exist:
        verify_element_contains_text:
            locator: ".my-element"
            text: "Error Message"
            assert: false
 
-    3. Verify within a container:
+    4. Verify multiple texts do NOT exist:
        verify_element_contains_text:
-           container: "My Module"
-           locator: ".status-message"
-           text: "Failed"
-
-    4. Exact match:
-       verify_element_contains_text:
-           locator: ".notification"
-           text: "Success"
-           exact: true
+           locator: ".my-element"
+           text: ["Error", "Failed"]
+           assert: false
     """
     locator_str = v.get("locator")
-    text_to_check = v.get("text")
+    text_param = v.get("text")
     exact_match = v.get("exact", False)
     is_positive = v.get("assert", True)
     container_name = v.get("container")
-
 
     timeout = v.get("timeout", 3000)
 
     if not locator_str:
         raise ValueError("verify_element_contains_text: 'locator' parameter is required")
-    if not text_to_check:
+    if not text_param:
         raise ValueError("verify_element_contains_text: 'text' parameter is required")
+
+    # Normalize to list: "text" -> ["text"], ["a","b"] -> ["a","b"]
+    texts = [text_param] if isinstance(text_param, str) else list(text_param)
 
     # Apply container filter if specified
     if container_name:
         logger.info(f"Searching within container: {container_name}")
-        # Find container by text
         locator = page.locator("div", has_text=container_name).locator(f"xpath={locator_str}").last
         container_info = f" (in container: {container_name})"
     else:
@@ -788,35 +793,42 @@ def verify_element_contains_text(page: Page, v: dict):
         container_info = ""
 
     direction_label = "DOES contain" if is_positive else "does NOT contain"
-    logger.info(f"Verifying element {direction_label} text - Locator: {locator_str}{container_info}, Text: '{text_to_check}', Exact: {exact_match}")
+    logger.info(f"Verifying element {direction_label} text - Locator: {locator_str}{container_info}, Texts: {texts}, Exact: {exact_match}")
 
     try:
         # Wait for element to be visible
         locator.wait_for(state="visible", timeout=timeout)
 
-        # Get element text content
+        # Get element text content once
         element_text = locator.inner_text()
 
-        # Check if text exists
-        if exact_match:
-            text_exists = text_to_check == element_text.strip()
-        else:
-            text_exists = text_to_check in element_text
+        # Check each text
+        failures = []
+        for text_to_check in texts:
+            if exact_match:
+                text_exists = text_to_check == element_text.strip()
+            else:
+                text_exists = text_to_check in element_text
 
-        # Determine assertion result based on direction
-        passed = text_exists if is_positive else not text_exists
+            passed = text_exists if is_positive else not text_exists
+            status = "✓" if passed else "✗"
+            logger.info(f"  {status} '{text_to_check}'")
 
-        if not passed:
+            if not passed:
+                failures.append(text_to_check)
+
+        if failures:
             verb = "should" if is_positive else "should NOT"
-            logger.error(f"Verification failed: Element '{locator_str}' {verb} contain text '{text_to_check}'")
+            failed_list = ", ".join(f"'{t}'" for t in failures)
+            logger.error(f"Verification failed: Element '{locator_str}' {verb} contain text(s): {failed_list}")
             logger.error(f"Element content: {element_text}")
-            page.screenshot(path=f"fail_{'contains' if is_positive else 'not_contains'}_{text_to_check[:10]}.png")
+            page.screenshot(path=f"fail_{'contains' if is_positive else 'not_contains'}_{texts[0][:10]}.png")
             raise AssertionError(
-                f"Element '{locator_str}' {verb} contain text '{text_to_check}', "
+                f"Element '{locator_str}' {verb} contain text(s): {failed_list}, "
                 f"actual content: {element_text}"
             )
         else:
-            logger.info(f"✓ Verification passed: Element '{locator_str}' {direction_label} text '{text_to_check}'")
+            logger.info(f"✓ All {len(texts)} text(s) passed for element '{locator_str}'")
             logger.info(f"Element content: {element_text}")
 
     except Exception as e:

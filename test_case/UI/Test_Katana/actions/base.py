@@ -17,8 +17,52 @@ def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
     if url:
+        params = v if isinstance(v, dict) else {}
+        # --- Context-level configuration (must be set before page navigation) ---
+        ctx = page.context
+
+        geolocation = params.get("geolocation")
+        if geolocation:
+            import json
+            if isinstance(geolocation, str):
+                geolocation = json.loads(geolocation)
+            logger.info(f"Setting geolocation: {geolocation}")
+            ctx.set_geolocation(geolocation)
+
+        timezone_id = params.get("timezone_id")
+        if timezone_id:
+            # timezone_id is a context creation param, simulate via JS injection
+            logger.info(f"Injecting timezone override: {timezone_id}")
+            page.add_init_script(f"""
+                // Override Date timezone
+                const _origTimezone = Intl.DateTimeFormat;
+                window.Intl.DateTimeFormat = function(...args) {{
+                    if (args.length === 0) args.push(undefined, {{ timeZone: '{timezone_id}' }});
+                    else if (args.length === 1) args.push({{ timeZone: '{timezone_id}' }});
+                    else if (args[1] && typeof args[1] === 'object') args[1].timeZone = '{timezone_id}';
+                    return new _origTimezone(...args);
+                }};
+                window.Intl.DateTimeFormat.prototype = _origTimezone.prototype;
+                window.Intl.DateTimeFormat.supportedLocalesOf = _origTimezone.supportedLocalesOf;
+            """)
+
+        locale = params.get("locale")
+        if locale:
+            # locale is a context creation param, simulate via JS injection
+            logger.info(f"Injecting locale override: {locale}")
+            page.add_init_script(f"""
+                // Override navigator.language and navigator.languages
+                Object.defineProperty(navigator, 'language', {{ get: () => '{locale}', configurable: true }});
+                Object.defineProperty(navigator, 'languages', {{ get: () => ['{locale}'], configurable: true }});
+            """)
+
+        permissions = params.get("permissions")
+        if permissions:
+            logger.info(f"Granting permissions: {permissions}")
+            ctx.grant_permissions(permissions)
+
         # Check if cookie_file is provided - inject cookies BEFORE opening page
-        cookie_file = v.get("cookie_file") if isinstance(v, dict) else None
+        cookie_file = params.get("cookie_file")
         if cookie_file:
             logger.info(f">>> Injecting cookies BEFORE opening page: {cookie_file}")
             try:
