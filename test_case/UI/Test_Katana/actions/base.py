@@ -33,6 +33,8 @@ def open_url(page: Page, v):
         # Automatically handle pop-ups that appear after page loading
         logger.info(">>> Auto-handling modals after page load")
         try:
+            # Wait for page to fully render before detecting modals
+            page.wait_for_timeout(1000)
             auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
         except Exception as e:
             # Failure in bullet layer processing does not affect the main process
@@ -1641,7 +1643,16 @@ def auto_handle_modals(page: Page, v: dict):
 
     timeout = v.get("timeout", 3000)
     ignore_if_not_found = v.get("ignore_if_not_found", True)
-    max_iterations = v.get("max_iterations", 5)
+    max_iterations = v.get("max_iterations", 3)
+
+    # Early exit: skip if no modal/popup elements present on page
+    # MuiPopover-paper: visible only when a popover/modal is open
+    # MuiBackdrop-root: visible only when a backdrop overlay exists
+    has_popover = page.locator(".MuiPopover-paper").count() > 0
+    has_backdrop = page.locator(".MuiBackdrop-root").count() > 0
+    if not has_popover and not has_backdrop:
+        logger.info("No modal/popup elements found (MuiPopover-paper / MuiBackdrop-root), skipping auto_handle_modals")
+        return
 
     # Common modal patterns
     common_modals = [
@@ -1668,6 +1679,7 @@ def auto_handle_modals(page: Page, v: dict):
                 {"role": "presentation", "name": "Add new module"},
                 {"role": "presentation", "name": "Preview your shop"},
                 {"role": "presentation", "name": "Introduce content tabs"},
+                {"role": "presentation", "name": "Rearrange modules"},
                 {"class": "MuiPopover-paper"},
                 {"selector": "div[role='presentation'] .MuiPopover-paper"},
             ],
