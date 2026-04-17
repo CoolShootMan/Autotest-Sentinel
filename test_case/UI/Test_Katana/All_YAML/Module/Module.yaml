@@ -124,7 +124,7 @@ testT3555:
     test_step:
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
-        Click module button to trigger post creation flow
+        #Click module button to trigger post creation flow
         click_module_add_new: { module_name: 'Updated module' }
         R_click_no: { locator: "button[data-track-location='Dialog']", name: 'No', exact: true }
         sleep_after_add: 5000
