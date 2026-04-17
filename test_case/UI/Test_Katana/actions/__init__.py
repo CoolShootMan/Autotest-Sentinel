@@ -43,8 +43,8 @@ from .base import (
 
 from .module import (
     click_module_edit_button, click_module_paragraph, click_add_new_product,
-    click_module_add_new, click_module_post_view_event_cta, click_module_collapse,
-    click_module_expand, verify_module_collapsed, verify_module_expanded,
+    click_module_add_new, click_module_post_view_event_cta, click_module_item_more_icon,
+    click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded,
     verify_element_style, verify_child_element_count, verify_no_sibling_text,
     verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
 )
@@ -105,6 +105,7 @@ ACTIONS = {
     "click_module_paragraph": click_module_paragraph,
     "click_add_new_product": click_add_new_product,
     "click_module_post_view_event_cta": click_module_post_view_event_cta,
+    "click_module_item_more_icon": click_module_item_more_icon,
     "click_module_collapse": click_module_collapse,
     "click_module_expand": click_module_expand,
     "verify_module_collapsed": verify_module_collapsed,
@@ -212,6 +213,8 @@ def get_action(name):
         return click_module_add_new
     elif name.startswith("click_module_post_view_event_cta"):
         return click_module_post_view_event_cta
+    elif name.startswith("click_module_item_more_icon"):
+        return click_module_item_more_icon
     elif name.startswith("verify_element_style"):
         return verify_element_style
     elif name.startswith("verify_child_element_count"):
