@@ -249,6 +249,7 @@ testT3788:
         R_click_icon_1: { locator: "//div[@data-testid='shop-brand']", index: 0 }
         R_click_final_product_add: { role: 'button', name: 'Add' }
         sleep_after_add: 3000
+        verify_child_element_count: { container: "Module-products", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 3 }
     expect_result:
         description: "Verify that the new module 'Module-products' is added successfully"
         assertions:
@@ -256,9 +257,35 @@ testT3788:
               text: "General Admission 001"
             - assertion_type: "element_visible_by_text"
               text: "Ladies Free RSVP"
-            - assertion_type: "element_visible_by_text"
-              text: "autotest prod"
 
+testT3789:
+    guest: true
+    description: "Verify the resale process. The consumer purchases module-Products(Shared with me)"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        click_container_button: { container: 'Module-products', container_locator: "../..", button: "//div[@data-media-absolute='bottomRight']", button_index: 1}
+        sleep_after_click_container_button: 2000
+        R_click_checkout_cta: { locator: 'button[data-track-location="Notification"]', name: "Checkout" }
+        sleep_aftet_click_checkout_cta: 5000
+        fill_contact_first_name: { locator: 'input[name="contact.firstName"]',  value: 'Lida' }
+        fill_contact_last_name: { locator: 'input[name="contact.lastName"]',  value: 'Zhou' }
+        fill_contact_phone_name: { locator: 'input[name="contact.phoneNumber"]',  value: '(301) 842-7082' }
+        fill_contact_email_name: { locator: 'input[name="contact.email"]',  value: 'yuxiao.zhu.ext+10000@1m.app' }
+        fill_stripe_iframe:
+            card_number: '4242424242424242'
+            expiry: '02/45'
+            cvc: '345'
+            card_name: 'linda 4650'
+            zipcode: '90021'
+        R_click_place_order: { role: "button", name: "Place order"}
+        sleep_after_click_place_order: 5000
+
+    expect_result:
+        description: "Verify that the new module 'Module-products' is added successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "$1.8" 
 
 
 # ------------------ Module - link -> general link ------------------------

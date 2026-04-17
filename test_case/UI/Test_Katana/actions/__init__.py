@@ -46,7 +46,8 @@ from .module import (
     click_module_add_new, click_module_post_view_event_cta, click_module_item_more_icon,
     click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded,
     verify_element_style, verify_child_element_count, verify_no_sibling_text,
-    verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last
+    verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last,
+    click_container_button
 )
 from .product import (
 
@@ -117,6 +118,7 @@ ACTIONS = {
     "drag_element": drag_element,
     "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
     "swipe_to_element": swipe_to_element,
+    "click_container_button": click_container_button,
 
     "handle_modal": handle_modal,
     "auto_handle_modals": auto_handle_modals,
@@ -237,6 +239,8 @@ def get_action(name):
         return switch_session
     elif name.startswith("close_session"):
         return close_session
+    elif name.startswith("click_container_button"):
+        return click_container_button
 
 
     if name.startswith("R_click_scan") or name.startswith("click_scan"):
