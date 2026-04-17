@@ -413,26 +413,22 @@ def _smart_click_core(page: Page, v: dict):
         except Exception as e:
             logger.debug(f"skip_if_disabled check error (proceeding normally): {e}")
 
-    # Scoping: find visible modals（优化：限制数量 + 快速过滤）
-    # 原来对每个 modal 调用 .is_visible()（默认等待 30s/个），改为取前 5 个且 timeout=1s
+    # Scoping: find visible modals
+    # Use is_visible() without timeout to avoid blocking on hidden modals
     raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
     visible_modals = []
-    for m in raw_modals[:5]:                              # 最多检查 5 个，减少 DOM 遍历
+    for m in raw_modals[:10]:
         try:
-            if m.is_visible(timeout=1000):                # 快速判断，1s 超时
+            if m.is_visible():
                 visible_modals.append(m)
         except: pass
     active_modal = visible_modals[-1] if visible_modals else None
 
     # Save / Publish: 优先 Playwright 快速定位，失败后再走 JS fallback
-    # 避免无条件执行 JS handler（原来会固定等 1.5s/3s）
-    # 非 Save/Publish 按钮：跳过此块，直接进入通用策略 1-4
     if target_name in ("Save", "Publish"):
         playwright_failed_for_special = False
 
-        # 1. Playwright — 优先在 Dialog 内定位（高效，大多数情况下直接命中）
-        dialog_btns = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
-        if active_modal and target_name in dialog_btns:
+        if active_modal:
             try:
                 el = active_modal.get_by_role("button", name=target_name).nth(target_index)
                 el.scroll_into_view_if_needed(timeout=3000)
@@ -444,8 +440,7 @@ def _smart_click_core(page: Page, v: dict):
             except Exception:
                 playwright_failed_for_special = True
 
-        # 2. Playwright — 全局定位（大多数正常情况）
-        if not playwright_failed_for_special:
+        if not playwright_failed_for_special and not active_modal:
             try:
                 el = page.get_by_role("button", name=target_name).nth(target_index)
                 el.scroll_into_view_if_needed(timeout=3000)
@@ -457,7 +452,6 @@ def _smart_click_core(page: Page, v: dict):
             except Exception:
                 playwright_failed_for_special = True
 
-        # 3. JS fallback — 只在 Playwright 失败后触发（原来无条件执行，固定等 1.5-3s）
         js_click_code = """
             () => {
                 const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
@@ -493,9 +487,9 @@ def _smart_click_core(page: Page, v: dict):
         except Exception as e:
             logger.debug(f"JS {target_name} fallback error: {e}")
 
-    # ---- 通用定位策略 1-4（Dialog 按钮走 Dialog-scoped，普通按钮走 page） ----
-    dialog_buttons = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
-    root = active_modal if (active_modal and target_name in dialog_buttons) else page
+    # ---- 通用定位策略 1-4 ----
+    # Restore standard scoping: if there is an active modal, restrict all searches to it by default.
+    root = active_modal if active_modal else page
 
     # 1. Test ID
     if target_test_id:
@@ -514,7 +508,10 @@ def _smart_click_core(page: Page, v: dict):
                 xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
                 el = page.locator(xpath_locator).nth(target_index)
             else:
-                el = root.locator(target_locator).nth(target_index)
+                # 修复: 自定义 CSS locator 退回使用全局 page.locator() 进行查找。
+                # 由于这些 locator 通常是从 body/html 开始的完整特征路径，将它们约束在 active_modal 之下会导致层叠错误 (如 dialog 内部再找一个 dialog）。
+                el = page.locator(target_locator).nth(target_index)
+
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
             el.click(force=force, timeout=5000)  # 直接点击，不先 is_visible
@@ -638,8 +635,8 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
                 logger.debug(f"Page-level search for '{target_name}': {len(all_matches)} total elements")
                 for idx, candidate in enumerate(all_matches):
                     try:
-                        # 优化：超时 500ms（原来 2000ms），快速判断可见性
-                        is_vis = candidate.is_visible(timeout=500)
+                        # 优化：无超时，快速判断可见性 (避免每个隐藏元素阻塞 500ms)
+                        is_vis = candidate.is_visible()
                         if is_vis:
                             logger.info(f"Page-level found '{target_name}' #{idx}, clicking with force")
                             candidate.click(force=True)
