@@ -119,11 +119,43 @@ testT4622:
         description: "Module should collapse then expand correctly"
         assertions: []
 
-testDeleteModule:
+testT3555:
     description: "Verify module delete functionality"
     test_step:
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
+        Click module button to trigger post creation flow
+        click_module_add_new: { module_name: 'Updated module' }
+        R_click_no: { locator: "button[data-track-location='Dialog']", name: 'No', exact: true }
+        sleep_after_add: 5000
+        if_discard_drawer:
+            condition:
+                role: "button"
+                name: "Discard"
+            then:
+                click_discard: { role: "button", name: "Discard" }
+                sleep_after_discard: 1500
+        click_enhance_button: { test_id: 'enhance-button-cta' }
+        sleep_after_enhance_click: 2000
+        # Select media items (first two)
+        click_media_icon_1: { locator: 'div[data-testid="shop-brand"]' }
+        click_media_icon_2: { locator: 'div[data-testid="shop-brand"]', index: 1 }
+        # Add products
+        R_click_add_products: { locator: "button[data-track-location='Dialog']", name: 'Add 2/20 product(s)', exact: true }
+        # Switch to Content tab
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        # Fill post title
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'Test - add new post for deletion' }
+        # Confirm and publish
+        click_confirm_button: { test_id: 'confirm-button' }
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_after_publish: 3000
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_after_got_it: 5000
+        click_module_post_view_event_cta: { module_name: 'Updated module', post_title: 'Test - add new post for deletion', button_index: -1 }
+        R_click_edit_post_muen: { role: "button", name: 'Remove from this module', exact: true }
+        R_click_confirm_button: { locator: "button[data-track-location='Dialog']", name: 'Remove', exact: true }
+        sleep_after_click_event: 2000
         click_module_edit_button: { module_name: 'Updated module' }
         R_click_delete_module: { role: 'button', name: 'Delete module' }
         sleep_after_delete_click: 1500
@@ -367,7 +399,7 @@ testT3842:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test product link' }
         R_click_continue: { role: 'button', name: 'Continue' }
         check1: { role: 'radio', name: 'Links (select a type below)' }
-        l_click_product: { locator: 'p', text: 'Product', exact: true, index: 0 }
+        R_click_product: { locator: 'div[data-testid="link-type-item"]', text: 'Product', exact: true, index: 0 }
         check2: { role: 'radio', name: 'Carousel Carousel' }
         sleep_before_add: 2000
         R_click4: { role: 'button', name: 'Add' }
@@ -401,9 +433,8 @@ testT4264:
         sleep_after_module_click: 5000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
         R_click_continue: { role: 'button', name: 'Continue' }
-        sleep_after_add: 1500
         sleep_after_add_new: 2000
-        l_click_image: { locator: 'p', text: 'Image', exact: true, index: 0 }
+        R_click_image: { locator: 'div[data-testid="link-type-item"]', name: 'Image', exact: true }
         sleep_after_click_image: 2000
         check2: { role: 'radio', name: 'Carousel Carousel' }
         sleep_before_add: 2000
@@ -414,19 +445,15 @@ testT4264:
         fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
         upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
         wait_for_upload_and_ui_update1: { timeout: 5000 }
-        sleep_before_done: 2000
         R_click_done: { role: 'button', name: 'Done', exact: true }
-        screenshot_check_done: { name: "debug_done_click" }
-        sleep_after_done: 3000
-        R_click_add_final: { locator: "/html/body/div[3]/div[3]/div/div[3]/div/div/button", name: "Add" }
-        sleep_after_close: 3000
-        # l_click_links_tab: { role: 'tab', name: 'Links' }
-        # sleep_before_verify: 2000
+        sleep_before_done: 2000
+        verify_element_contains_text: { container: 'test image link', locator: '../..', text: ['test aotu image']}
+
     expect_result:
         description: "Verify that the new image link card is visible on the page"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "test aotu image"
+              text: []
 
 
 # ------------------ Module -link ->  music ------------------------
@@ -465,7 +492,9 @@ testT4660:
         sleep_after_delete: 2000
     expect_result:
         description: "Module and track should be added and then deleted successfully"
-        assertions: []
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Delete module success"
 
 testT4816:
     description: "Verify adding a Music module with Spotify and Apple Music links"
@@ -501,6 +530,8 @@ testT4816:
               text: "Test Music Module"
             - assertion_type: "element_visible_by_text"
               text: "test-music"
+            - assertion_type: "element_visible_by_text"
+              text: "test artist"
 
 
 # ------------------ Module -link ->  video ------------------------
@@ -530,7 +561,7 @@ testT3886_long:
         # Click to confirm/add the link
         click_confirm_button: { locator: "[role='dialog'] [data-testid='enhance-button']", name: 'Add' }
         sleep_after_confirm: 2000
-        verify_module_long_video: { module_name: "Test - module - video" } # TODO: 需要实现断言 -> 检查视频是否在module中正常显示
+        verify_child_element_count: { container: "Test - module - video", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 1 }
     expect_result:
         description: "Verify that the Video module is created successfully"
         assertions:
@@ -564,7 +595,7 @@ testT3886_short:
         # Click to confirm/add the link
         click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Add' , exact: true}
         sleep_after_confirm: 2000
-        verify_module_long_video: { module_name: "Test - module - video - short" } # TODO: 需要实现断言 -> 检查视频是否在module中正常显示
+        verify_child_element_count: { container: "Test - module - video - short", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 1 }
     expect_result:
         description: "Verify that the Video module is created successfully"
         assertions:
@@ -594,8 +625,8 @@ testT3841:
         R_click_add_new_links: { role: 'button', name: 'Add new link' }
         fill_event_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
         fill_event_title: { placeholder: 'As the bold title on your', value: 'Ticket/event' }
-        R_click_date_picker: { label: 'Choose date' }
-        R_click_date_30: { role: 'gridcell', name: '30' }
+        R_click_date_picker: { locator: 'input[placeholder="MM/DD/YYYY"]' }
+        fill_event_date: { placeholder: 'MM/DD/YYYY', value: '12/12/2030' }
         fill_event_venue: { placeholder: 'Enter a position', value: 'Test Venue' }
         upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
         sleep_after_upload: 8000
@@ -609,6 +640,24 @@ testT3841:
             - assertion_type: "element_visible_by_text"
               text: "Ticket/event"
 
+# This use case relies on T3841
+testT4908:
+    description: "Verify that the date of “tikcet/event”module link inputs remain consistent and are not shifted by browser or system time zone offsets. "
+    test_step:
+        open: 
+            url: "https://release.pear.us/autotestshop"
+            geolocation: {"latitude": 40.71, "longitude": -74.01}
+            timezone_id: "America/New_York"
+            locale: "en-US"
+            permissions: ["geolocation"]
+        sleep_after_open: 3000
+
+        verify_element_contains_text: {  container: 'Test Ticket Event module', locator: '../..', text: ['Dec', '12','2030'] }
+    expect_result:
+        description: "Verify whether the time has been converted according to the time zone "
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
 
 # ------------------  Mixed Module -------------------
 testT4852:
@@ -660,16 +709,16 @@ testT4852:
         sleep_before_add_forms: 2000
         R_click_add_from_forms: { role: 'button', name: 'Add from my forms' }
         sleep_after_forms_click: 2000
-        R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'auto test 10 images' }
+        R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack']" }
         sleep_after_form_select: 1000
         R_click_add_4: { role: 'button', name: 'Add' }
         sleep_after_final_add: 3000
+        verify_child_element_count_2: { container: 'Mixed module type', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 9 }
     expect_result:
         description: "Verify that the mixed content module is created successfully with all content types"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Mixed module type"
-              # TODO: 检查module中是否正常显示了所有添加的内容
+              text: []
 
 # ------------------ Archiving ---------------------
 testAddNewUpdateModule:
@@ -752,7 +801,7 @@ testT5105:
         # ========================================
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 5000
-        click_module_post_view_event_cta: { module_name: 'Upcoming Events', post_title: 'verify-co-seller-auto-archive' }
+        click_module_post_view_event_cta: { module_name: 'Upcoming Events', post_title: 'verify-co-seller-auto-archive', button_name: 'View event' }
         sleep_after_click_event: 2000
         R_click_edit_event: { role: 'button', name: 'Edit event' }
         sleep_after_edit_event: 2000
@@ -768,7 +817,7 @@ testT5105:
         # ========================================
         session_user_coseller__open: {url: "https://release.pear.us/your-business-name-yuu7" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
-        session_user_coseller__verify_element_not_contains_text: { text: 'verify-co-seller-auto-archive', locator: '.list-container', container: 'Expired events' , container_filter: '../..' }
+        session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive']}
         sleep_after_close: 2000
     expect_result:
         description: "Event should be created and then marked as completed successfully"
@@ -813,7 +862,7 @@ testT4853:
         R_click_finish: { role: 'button', name: 'Finish and create post' }
         R_click_view_st: { role: 'button', name: 'View post on storefront' }
         sleep_after_view_st: 5000
-        click_module_post_view_event_cta: { module_name: 'new module use in archiving test cases', post_title: 'Test-event-Auto-archive-past-event' }
+        click_module_post_view_event_cta: { module_name: 'new module use in archiving test cases', post_title: 'Test-event-Auto-archive-past-event', button_name: 'View event' }
         R_click_edit_event: { role: 'button', name: 'Edit event' }
         sleep_after_edit_event: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
@@ -824,14 +873,15 @@ testT4853:
         sleep_after_save_edit: 2000
         open_back_2: "https://release.pear.us/autotestshop"
         sleep_after_open_back_2: 5000
-        verify_element_contains_text: { container: 'Past Events', locator: '../..', text: 'Test-event-Auto-archive-past-event'}
+        verify_element_contains_text: { container: 'Past Events', locator: '../..', text: ['Test-event-Auto-archive-past-event']}
         
     expect_result:
         description: "Event should be created and then marked as completed successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
               text: []
-        
+
+# The use case for T4557 is the same as that for T4559
 testT4559:
     description: 'Verify enable "Auto-archive completed event posts", but do not select any module'
     test_step:
@@ -880,7 +930,7 @@ testT4559:
         sleep_after_save_edit: 2000
         open_2: "https://release.pear.us/autotestshop"
         sleep_after_open: 5000
-        verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../../..', text: 'Test-event-Auto-archive-not-selected', assert: false}
+        verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../../..', text: ['Test-event-Auto-archive-not-selected'], assert: false}
 
     expect_result:
         description: "Event should be created and then marked as completed successfully"
