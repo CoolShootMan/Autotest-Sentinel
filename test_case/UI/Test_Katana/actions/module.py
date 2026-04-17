@@ -44,6 +44,39 @@ def click_module_post_view_event_cta(page: Page, v: dict):
     container = page.locator("div", has_text=module_name).filter(has_text=post_title).last
     container.get_by_role("button", name="View event").first.click(timeout=10000)
 
+def click_module_item_more_icon(page: Page, v: dict):
+    """Click the 'more' (horiz icon) button on a post/card item inside a module using data-testid='base-more-horiz-icon-cta'.
+
+    This clicks the more icon on a specific post/card within the module's content area,
+    NOT the module header's edit button.
+
+    Supported parameters:
+    - module_name: Name of the module to target (required)
+    - index: Index of the post's more icon, supports negative values like -1 for last (default: -1)
+
+    Usage in YAML:
+        click_module_more_icon: { module_name: 'post duplicate module', index: -1 }
+    """
+    module_name = v.get("module_name")
+    target_index = v.get("index", -1)
+    logger.info(f"Clicking more icon on item inside module: {module_name} (index: {target_index})")
+
+    # Find the module header container first
+    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(
+        has=page.get_by_role("button")
+    ).last
+    header.scroll_into_view_if_needed()
+
+    # Navigate to the parent module container that includes both header and body (posts)
+    module_container = header.locator("xpath=..")
+
+    # Within the module body, find the more icon on a specific post/card item
+    icon = module_container.locator("[data-testid='base-more-horiz-icon-cta']").nth(target_index)
+    icon.wait_for(state="visible", timeout=10000)
+    icon.click(timeout=15000)
+    page.wait_for_timeout(1000)
+
+
 def click_module_collapse(page: Page, v: dict):
     """Collapse a module by clicking its arrow-up icon."""
     module_name = v.get("module_name")

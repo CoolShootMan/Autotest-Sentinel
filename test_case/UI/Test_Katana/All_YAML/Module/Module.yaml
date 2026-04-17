@@ -889,6 +889,55 @@ testT4559:
               text: []
 
 
+# ------------------ Module - Post Duplicate ---------------------------
+testT4605:
+    description: "Verify duplicating a post within a carousel module results in two posts in the module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+
+        # Step 1: Create a new carousel module (post type by default)
+        R_click_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'post duplicate module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        check_carousel: { role: 'radio', name: 'Carousel Carousel' }
+        R_click_add_module: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+
+        # Step 2: Select the first post from the dialog and add to module
+        R_click_select_post: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click_add_post: { role: 'button', name: 'Add', exact: true }
+        sleep_after_add_post: 3000
+
+        # Step 3: Click the post options menu and duplicate
+        click_module_item_more_icon: { module_name: 'post duplicate module', index: -1 }
+        sleep_after_options_click: 1000
+        R_click_duplicate: { role: 'button', name: 'Duplicate' }
+        click_confirm_button: { test_id: 'confirm-button' }
+        sleep_after_duplicate: 3000
+
+        # Step 4: Publish changes
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_after_publish: 3000
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_after_got_it: 5000
+
+        # Step 5: Verify 2 posts exist in the module after duplication
+        verify_child_element_count_1: { container: 'post duplicate module ', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 2 }
+
+    expect_result:
+        description: "Verify that duplicating a post in the carousel module results in 2 posts"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "post duplicate module "
+
+    teardown_step:
+        click_module_edit_button_del: { module_name: 'post duplicate module ' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        sleep_after_delete_click: 1500
+        click_confirm_delete: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete', exact: true }
+        sleep_after_confirm_delete: 5000
+
 # ------------------ CoSeller Module ---------------------------
 testT4603:
     is_coseller: true
