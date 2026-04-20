@@ -447,3 +447,147 @@ root = active_modal if active_modal else page
 
 **避免的问题**: 防止 `check_xxx_checkbox: { role: 'checkbox', index: 0 }` 在弹窗打开时误匹配到背景页面的同名 checkbox。
 
+---
+
+## 10. 可选点击与稳定重试机制
+
+### 10.1 概述
+
+为了解决不同场景下的元素点击稳定性问题，新增了两个专用动作方法：
+
+| 方法 | 适用场景 | 找不到元素时 | 点击失败时 |
+|------|----------|--------------|------------|
+| `smart_click_optional` | 元素**可能不存在**（弹框可省略） | 静默跳过 | 不重试 |
+| `smart_click_retry` | 元素**一定存在**，但点击不稳定 | 重试多次后报错 | 自动重试 |
+
+### 10.2 smart_click_optional — 可选点击
+
+**实现位置**: `actions/base.py` → `smart_click_optional()`
+
+**设计目的**: 用于处理"可能出现也可能不出现"的弹框/提示。元素不存在时静默跳过，不报错。
+
+**YAML 用法**:
+```yaml
+# 点击 "Start Customizing" 按钮，如果出现弹框则点击 Done
+smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+smart_click_optional_done: { role: 'button', name: 'Done' }
+```
+
+**与 `smart_click + optional: true` 的区别**:
+- `smart_click` 的 `optional: true` **只在 `target_locator` 路径生效**
+- `smart_click_optional` 在**所有定位策略**上都支持 optional 跳过
+
+**实现逻辑**:
+```python
+def smart_click_optional(page: Page, v: dict):
+    """可选点击 — 元素不存在时静默跳过，不报错。"""
+    # 1. 尝试多种定位策略（test_id → locator → role+name → text）
+    # 2. 所有策略都包裹 try/except，找不到元素不会抛异常
+    # 3. 最终日志: "smart_click_optional: element not found 'xxx', skipping."
+```
+
+**支持的参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `role` | string | - | ARIA 角色 |
+| `name` / `text` | string | - | 元素文本 |
+| `test_id` | string | - | data-testid 属性 |
+| `locator` | string | - | CSS/XPath 选择器 |
+| `index` | int | 0 | 匹配多个时选择第几个 |
+| `timeout` | int | 5000 | 查找超时(ms) |
+| `exact` | bool | false | 文本精确匹配 |
+
+### 10.3 smart_click_retry — 稳定重试点击
+
+**实现位置**: `actions/base.py` → `smart_click_retry()`
+
+**设计目的**: 用于处理"元素一定存在，但点击不稳定"的场景。常见原因：
+- 元素被 loading 遮罩短暂遮挡
+- 元素动画过渡中（未完全可点击）
+- 元素刚出现在 DOM 但未渲染完成
+
+**YAML 用法**:
+```yaml
+# Publish 按钮一定存在，但点击可能不稳定
+smart_click_retry_publish: { role: 'button', name: 'Publish', retry: 3, delay: 500 }
+
+# 弹框中的确认按钮
+smart_click_retry_confirm: { role: 'button', name: 'Confirm', retry: 3, delay: 800, timeout: 8000 }
+```
+
+**实现逻辑**:
+```python
+def smart_click_retry(page: Page, v: dict):
+    """带重试的稳定点击 — 元素一定存在但点击不稳定时使用。"""
+    for attempt in range(1, retry_count + 1):
+        # 1. 尝试多种定位策略查找元素
+        el = _find_element()
+        
+        # 2. 元素未找到 → 等待后重试
+        if el is None:
+            page.wait_for_timeout(delay_ms)
+            continue
+        
+        # 3. 等待动画完成（200ms）
+        page.wait_for_timeout(200)
+        
+        # 4. 执行点击
+        el.click(force=force, timeout=timeout)
+        return
+    
+    # 5. 所有重试都失败 → 抛出异常
+    raise Exception(f"Element not found: {desc}")
+```
+
+**新增参数**:
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `retry` | int | 3 | 重试次数上限 |
+| `delay` | int | 500 | 每次重试间隔(ms) |
+
+**支持的参数**（同 `smart_click_optional`）:
+| 参数 | 说明 |
+|------|------|
+| `role` | ARIA 角色 |
+| `name` / `text` | 元素文本 |
+| `test_id` | data-testid 属性 |
+| `locator` | CSS/XPath 选择器 |
+| `index` | 匹配多个时选择第几个 |
+| `timeout` | 查找超时(ms) |
+| `exact` | 文本精确匹配 |
+
+### 10.4 注册与使用
+
+两个方法已注册到 `actions/__init__.py`:
+
+```python
+# 导入
+from .base import smart_click_optional, smart_click_retry
+
+# ACTIONS 注册表
+ACTIONS = {
+    "smart_click_optional": smart_click_optional,
+    "smart_click_retry": smart_click_retry,
+}
+
+# 前缀匹配规则
+if name.startswith("smart_click_optional"):
+    return smart_click_optional
+if name.startswith("smart_click_retry"):
+    return smart_click_retry
+```
+
+**命名规范**: YAML 中的 step key 需要以方法名开头：
+- `smart_click_optional_xxx` → 调用 `smart_click_optional`
+- `smart_click_retry_xxx` → 调用 `smart_click_retry`
+
+### 10.5 场景选择指南
+
+```
+元素可能不存在？
+├── 是 → smart_click_optional（弹框可省略）
+└── 否 → 元素一定存在
+        ├── 点击不稳定（动画/遮罩）→ smart_click_retry
+        └── 点击稳定 → smart_click 或 R_click
+```
+
