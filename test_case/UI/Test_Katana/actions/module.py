@@ -261,7 +261,8 @@ def verify_element_style(page: Page, v: dict):
 
         locator = container.locator(locator_str)
     else:
-        locator = page.locator(locator_str)
+        # Use .last to avoid strict mode violation when locator matches multiple elements
+        locator = page.locator(locator_str).last
 
     # Wait for element to be visible
     locator.wait_for(state="visible", timeout=timeout)
@@ -285,8 +286,18 @@ def verify_element_style(page: Page, v: dict):
     else:
         properties = property_names
 
-    # Get all computed styles
-    computed_styles = locator.evaluate("el => window.getComputedStyle(el)")
+    # Get computed style values via JS property accessor (cs[key])
+    # CSSStyleDeclaration named properties are prototype getters that don't survive Playwright serialization.
+    # Using cs[key] (camelCase like 'textAlign') instead of cs.getPropertyValue('text-align') 
+    # so YAML can use the convenient camelCase property names.
+    computed_styles = locator.evaluate("""(el, props) => {
+        const cs = window.getComputedStyle(el);
+        const result = {};
+        for (const key of props) {
+            result[key] = cs[key];
+        }
+        return result;
+    }""", properties)
 
     results = []
     for prop in properties:
