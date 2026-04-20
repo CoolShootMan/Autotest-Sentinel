@@ -1468,8 +1468,10 @@ def smart_click_optional(page: Page, v: dict):
             logger.debug(f"smart_click_optional: click failed for '{desc}' ({e})")
             return False
 
-    # Find visible modal scope
-    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
     visible_modals = []
     for m in raw_modals[:10]:
         try:
@@ -1477,51 +1479,66 @@ def smart_click_optional(page: Page, v: dict):
                 visible_modals.append(m)
         except:
             pass
-    active_modal = visible_modals[-1] if visible_modals else None
-    root = active_modal if active_modal else page
 
-    # 1. Test ID
-    if target_test_id:
-        try:
-            el = root.get_by_test_id(target_test_id).nth(target_index)
-            if el.is_visible(timeout=timeout):
+    def _find_and_click_in_scope(scope, desc_prefix=""):
+        """在指定范围内查找并点击元素"""
+        desc = f"{desc_prefix}{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
+
+        # 1. Test ID
+        if target_test_id:
+            try:
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
                 if _try_click(el, f"test_id={target_test_id}"):
-                    return
-        except:
-            pass
+                    return True
+            except:
+                pass
 
-    # 2. Locator
-    if target_locator:
-        try:
-            if target_locator.startswith("/") or target_locator.startswith("xpath="):
-                xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
-                el = page.locator(xpath_locator).nth(target_index)
-            else:
-                el = page.locator(target_locator).nth(target_index)
-            if target_name:
-                el = el.get_by_text(target_name, exact=target_exact)
-            if _try_click(el, target_locator):
-                return
-        except Exception as e:
-            logger.debug(f"smart_click_optional: locator failed ({e})")
+        # 2. Locator
+        if target_locator:
+            try:
+                if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                    xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                    el = page.locator(xpath_locator).nth(target_index)
+                else:
+                    el = page.locator(target_locator).nth(target_index)
+                if target_name:
+                    el = el.get_by_text(target_name, exact=target_exact)
+                if _try_click(el, target_locator):
+                    return True
+            except Exception as e:
+                logger.debug(f"smart_click_optional: locator failed ({e})")
 
-    # 3. Role + name (most common)
-    if target_role and target_name:
-        try:
-            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
-            if _try_click(el, f"{target_role}:{target_name}"):
-                return
-        except:
-            pass
+        # 3. Role + name (most common)
+        if target_role and target_name:
+            try:
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"{target_role}:{target_name}"):
+                    return True
+            except:
+                pass
 
-    # 4. Text only
-    if target_name and not target_role:
-        try:
-            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-            if _try_click(el, f"text={target_name}"):
-                return
-        except:
-            pass
+        # 4. Text only
+        if target_name and not target_role:
+            try:
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"text={target_name}"):
+                    return True
+            except:
+                pass
+
+        return False
+
+    # 搜索策略：先弹框（从后往前，新的弹框优先），再 page 级别
+    # 这样做是因为弹框通常包含用户正在操作的元素
+
+    # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+    for modal in reversed(visible_modals):
+        if _find_and_click_in_scope(modal, f"modal[{visible_modals.index(modal)}]:"):
+            return
+
+    # 2. 最后在 page 级别尝试（处理没有弹框的情况）
+    if _find_and_click_in_scope(page, "page:"):
+        return
 
     # Element not found — silent skip
     logger.info(f"smart_click_optional: element not found '{target_name or target_locator}', skipping.")
@@ -1541,7 +1558,6 @@ def smart_click_retry(page: Page, v: dict):
     新增参数：
     - retry: 重试次数，默认 3
     - delay: 重试间隔(ms)，默认 500
-    - wait_for_ready: 点击前等待元素 ready，默认 true
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
@@ -1554,8 +1570,10 @@ def smart_click_retry(page: Page, v: dict):
     retry_count = v.get("retry", 3)
     delay_ms = v.get("delay", 500)
 
-    # Find visible modal scope
-    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
     visible_modals = []
     for m in raw_modals[:10]:
         try:
@@ -1563,15 +1581,13 @@ def smart_click_retry(page: Page, v: dict):
                 visible_modals.append(m)
         except:
             pass
-    active_modal = visible_modals[-1] if visible_modals else None
-    root = active_modal if active_modal else page
 
-    def _find_element():
-        """尝试多种定位策略，返回找到的元素"""
+    def _find_element_in_scope(scope):
+        """在指定范围内查找元素"""
         # 1. Test ID
         if target_test_id:
             try:
-                el = root.get_by_test_id(target_test_id).nth(target_index)
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
@@ -1595,7 +1611,7 @@ def smart_click_retry(page: Page, v: dict):
         # 3. Role + name (most common)
         if target_role and target_name:
             try:
-                el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
@@ -1604,13 +1620,23 @@ def smart_click_retry(page: Page, v: dict):
         # 4. Text only
         if target_name and not target_role:
             try:
-                el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
                 pass
 
         return None
+
+    def _find_element():
+        """遍历所有可见弹框 + page 查找元素"""
+        # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+        for modal in reversed(visible_modals):
+            el = _find_element_in_scope(modal)
+            if el is not None:
+                return el
+        # 2. 最后在 page 级别尝试
+        return _find_element_in_scope(page)
 
     desc = f"{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
 
