@@ -633,3 +633,152 @@ testT2830_VerifyGuest:
         screenshot_guest_view_restored: { name: "debug_guest_view_restored" }
         save_html_guest_restored: { name: "debug_guest_source_restored" }
         verify_text_visible: { text: "Test event post variant settings" }
+
+
+# ==============================================================================
+# Test Case: T2834 Free shipping UI indicator: Verify that the "Free shipping" tag/label appears correctly on the product page when enabled. 
+# ==============================================================================
+
+testT2834_VerifyPartner:
+    description: "Verify that partner can set a product to have free shipping"
+    test_step:
+        # Step 1: Navigate to the post
+        open: "https://release.pear.us/events"
+        sleep_step: 3000
+        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
+        sleep_step: 2000
+        R_click_post: { test_id: "mui-card-action-area" }
+        sleep_step: 2000
+        R_click_edit_post: { role: "button", name: "Edit post" }
+        sleep_step: 3000
+
+        # Step 2: Edit Style (as recorded in T2834partner)
+        R_click_style_tab: { role: "tab", name: "Style" }
+        sleep_step: 1000
+        R_click_layout_combobox: { role: "combobox" }
+        sleep_step: 500
+        R_click_spotlight_opt: { role: "option", name: "Spotlight Highlight one" }
+        sleep_step: 500
+        R_click_confirm: { test_id: "confirm-button" }
+        sleep_step: 500
+        R_click_update: { role: "button", name: "Update" }
+        sleep_step: 1500
+
+        # Step 3: Switch to Selling tab and customize products
+        click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
+        sleep_step: 2000
+        R_click_select_products: { test_id: "enhance-button-cta" }
+        sleep_step: 2000
+
+        # Step 4: Add product
+        click_product_img: { role: 'img', name: 'Image of Product', index: 3 }
+        sleep_step: 1000
+        click_add_product_btn: { role: 'button', name: 'Add 2/20 product(s)' }
+        sleep_step: 1500
+
+        # Step 5: Check Free Shipping checkbox
+        check_free_shipping: { locator: 'input[name="products.0.isFreeShipping"]', checked: true }
+        sleep_step: 500
+
+        # Step 6: Save changes
+        R_click_save: { role: "button", name: "Save" }
+        sleep_step: 1000
+        R_click_save_again: { role: "button", name: "Save" }
+        sleep_step: 3000
+        
+    expect_result:
+        description: "Post products updated successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Post products updated"
+
+
+testT2834_VerifyGuest:
+    guest: true
+    description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
+    test_step:
+        # Step 1: Shop page
+        open: "https://release.pear.us/autotestshop"
+        sleep_step: 3000
+        # Click the specific product image (as in recording)
+        R_click_product_img: { role: "button", name: "Image of Product verify-co" }
+        sleep_step: 3000
+
+        # Step 2: Navigate to Post details directly (from recording)
+        open_post_details: "https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive-1"
+        sleep_step: 3000
+        R_click_free_shipping_label: { text: "Free shipping" }
+        sleep_step: 1000
+
+        # Verify on post details
+        verify_free_shipping_drawer: { text: "Free shipping", index: 1 }
+        sleep_step: 500
+        
+        # Step 3: Add to Cart / Buy Now
+        R_click_buy_now: { role: "button", name: "Buy now" }
+        sleep_step: 3000
+
+        # Verify in order drawer / paragraph
+        verify_free_shipping_paragraph: { text: "Free shipping", index: 1 }
+        sleep_step: 500
+
+        # Step 4: Checkout
+        R_click_checkout_continue: { test_id: "checkout-in-post-continue-cta" }
+        sleep_step: 3000
+
+        # Fill Details
+        fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
+        fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
+        
+        # Address dropdown selection
+        fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
+        sleep_step: 2000
+        R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
+        sleep_step: 1000
+
+        #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
+        fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
+        fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
+        sleep_step: 1000
+
+        R_click_place_order: { role: "button", name: "Place order" }
+        sleep_step: 1500
+
+        # Step 5: Post-purchase expand details
+        verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
+        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
+        sleep_step: 1000
+
+    expect_result:
+        description: "The free shipping label should be visible on the final order page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Free shipping"
+
+    teardown_step:
+        # Step 1: Inject partner cookies into guest context to switch identity
+        add_cookies: {}
+        sleep_step: 3000
+        
+        # Step 2: Open post URL as partner
+        open_teardown: "https://release.pear.us/events"
+        sleep_step: 3000
+        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
+        sleep_step: 2000
+        R_click_post: { test_id: "mui-card-action-area" }
+        sleep_step: 2000
+        
+        # Step 3: Revert Selling tab Free Shipping
+        click_container_button_2: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2 }
+        sleep_step: 2000
+        R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
+        sleep_step: 3000
+        # Uncheck free shipping (index matching checking step: use container to locate product card by text, then click img inside)
+        click_product_card: { role: 'img', name: 'Image of Product', index: 3 }
+        sleep_step: 1000
+        click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
+        sleep_step: 1500
+        R_click_save_teardown: { role: "button", name: "Save" }
+        sleep_step: 1000
+        R_click_save_again_teardown: { role: "button", name: "Save" }
+        sleep_step: 3000
