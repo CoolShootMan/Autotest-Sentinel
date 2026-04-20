@@ -34,6 +34,8 @@ from .base import (
     drag_and_drop_by_coordinates,
     swipe_to_element,
     fill_stripe_iframe,
+    smart_click_optional,
+    smart_click_retry,
     handle_modal,
     auto_handle_modals,
     create_session,
@@ -191,6 +193,8 @@ ACTIONS = {
     "capture_total_count": capture_total_count,
     "scroll_to_bottom": scroll_to_bottom,
     "fill_stripe_iframe": fill_stripe_iframe,
+    "smart_click_optional": smart_click_optional,
+    "smart_click_retry": smart_click_retry,
 }
 
 
@@ -245,6 +249,10 @@ def get_action(name):
 
     if name.startswith("R_click_scan") or name.startswith("click_scan"):
         return smart_click_scan
+    if name.startswith("smart_click_optional"):
+        return smart_click_optional
+    if name.startswith("smart_click_retry"):
+        return smart_click_retry
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("if_"):

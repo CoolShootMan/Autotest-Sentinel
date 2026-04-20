@@ -32,6 +32,16 @@ testT1742:
         R_click_selling: { role: 'tab', name: 'Selling' }
         sleep_step: 2000
         R_click_customize: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        # Handle optional "Set resale earnings" dialog -> click "Start Customizing"
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        sleep_step: 1000
+
+        # Handle optional "Choose a resale model" tooltip/popover -> click "Done"
+        smart_click_optional_done: { role: 'button', name: 'Done' }
+        sleep_step: 1000
+
         sleep_step: 3000
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
         sleep_step: 1500
@@ -251,22 +261,17 @@ testT3683_T3684:
         R_click_buy_ticket_ga01: { near_text: "General Admission 01", role: 'button', name: 'Buy Ticket', index: 0 }
         sleep_step: 2000
 
-        # Step 8: Enter coupon code "autotest" for 0-dollar purchase
-        fill_coupon_code: { placeholder: 'Enter coupon code', value: 'autotest' }
-        sleep_step: 500
-
-        R_click_apply: { role: 'button', name: 'Apply' }
-        sleep_step: 2000
-
-        # Step 8.1: Click Continue to enter Contact info page
+        # Step 7: Click Continue to enter Contact info page
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_step: 2000
 
-        # Step 9: Fill Contact info
-        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        # Step 8: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'auto' }
         sleep_step: 500
 
-        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Guest' }
+
+
         sleep_step: 500
 
         fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
@@ -275,9 +280,21 @@ testT3683_T3684:
         fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
         sleep_step: 500
 
+        # Step 8.5: Fill Credit Card information (Stripe iframe)
+        fill_stripe_iframe:
+            card_number: '4242424242424242'
+            expiry: '02/45'
+            cvc: '345'
+            card_name: 'linda 4650'
+            zipcode: '90021'
+        sleep_step: 1000
+
         # Step 10: Place Order
         R_click_place_order: { role: 'button', name: 'Place order' }
-        sleep_step: 3000
+
+        # Wait for checkout modal to close and navigate to order placed page
+        wait_for_order_placed: { url: '*order*', timeout: 15000 }
+        sleep_step: 2000
 
         # T3684 Expected: Verify confirmation note is displayed (no manual scroll needed, wait_for will auto-wait for visibility)
         verify_note_on_order_placed: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
@@ -326,7 +343,9 @@ testT3686_CosellerResell:
     test_step:
 
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
-        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: 
+          url: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+          # cookie_file: 'test_case/UI/Test_Katana/cookie_release_co_seller.json"'
         sleep_step: 5000
 
         # Click "Add to shop" button to resell the Post (is_coseller: true)
@@ -340,11 +359,13 @@ testT3686_CosellerResell:
         sleep_step: 3000
 
         # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        R_click_publish_resold: { role: 'button', name: 'Publish', optional: true, timeout: 5000 }
+        # 使用 smart_click_retry: 元素一定存在，但点击可能不稳定（动画遮罩等），需要重试
+        smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
         sleep_step: 2000
 
         # Second click on Publish confirmation dialog (modal button)
-        R_click_publish_confirm: { role: 'button', name: 'Publish', index: 1, optional: true, timeout: 5000 }
+        # 确认弹框出现有延迟，增加等待时间和重试次数；弹框里只有1个Publish，用index: 0
+        smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
         sleep_step: 1000
 
 

@@ -571,9 +571,8 @@ def _smart_click_core(page: Page, v: dict):
                     logger.debug(f"JS click also failed: {js_e}")
                     raise
     except Exception as e:
-        logger.debug(f"Standard click failed: {e}")
+            logger.debug(f"Standard click failed: {e}")
 
-    # All core strategies exhausted — raise so caller can decide what to do next
     raise Exception(f"smart_click: element not found: {target_name or target_locator}")
 
 
@@ -1437,6 +1436,211 @@ def fill_stripe_iframe(page: Page, v: dict):
 
 
 
+
+
+def smart_click_optional(page: Page, v: dict):
+    """
+    可选点击 — 元素不存在时静默跳过，不报错。
+    专用于处理"可能出现也可能不出现"的弹框/提示。
+
+    YAML 用法：
+        R_click_done: { role: 'button', name: 'Done' }
+
+    与 smart_click + optional: true 的区别：
+    - smart_click 的 optional 只在 target_locator 路径生效
+    - smart_click_optional 在所有定位策略上都支持 optional 跳过
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_locator = v.get("locator")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    target_index = v.get("index", 0)
+    target_test_id = v.get("test_id")
+    force = v.get("force", False)
+    timeout = v.get("timeout", 5000)
+
+    def _try_click(el, desc):
+        try:
+            el.click(force=force, timeout=timeout)
+            logger.info(f"smart_click_optional: clicked '{desc}'")
+            return True
+        except Exception as e:
+            logger.debug(f"smart_click_optional: click failed for '{desc}' ({e})")
+            return False
+
+    # Find visible modal scope
+    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    visible_modals = []
+    for m in raw_modals[:10]:
+        try:
+            if m.is_visible():
+                visible_modals.append(m)
+        except:
+            pass
+    active_modal = visible_modals[-1] if visible_modals else None
+    root = active_modal if active_modal else page
+
+    # 1. Test ID
+    if target_test_id:
+        try:
+            el = root.get_by_test_id(target_test_id).nth(target_index)
+            if el.is_visible(timeout=timeout):
+                if _try_click(el, f"test_id={target_test_id}"):
+                    return
+        except:
+            pass
+
+    # 2. Locator
+    if target_locator:
+        try:
+            if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                el = page.locator(xpath_locator).nth(target_index)
+            else:
+                el = page.locator(target_locator).nth(target_index)
+            if target_name:
+                el = el.get_by_text(target_name, exact=target_exact)
+            if _try_click(el, target_locator):
+                return
+        except Exception as e:
+            logger.debug(f"smart_click_optional: locator failed ({e})")
+
+    # 3. Role + name (most common)
+    if target_role and target_name:
+        try:
+            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+            if _try_click(el, f"{target_role}:{target_name}"):
+                return
+        except:
+            pass
+
+    # 4. Text only
+    if target_name and not target_role:
+        try:
+            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+            if _try_click(el, f"text={target_name}"):
+                return
+        except:
+            pass
+
+    # Element not found — silent skip
+    logger.info(f"smart_click_optional: element not found '{target_name or target_locator}', skipping.")
+
+
+def smart_click_retry(page: Page, v: dict):
+    """
+    带重试的稳定点击 — 元素一定存在但点击不稳定时使用。
+
+    与 smart_click_optional 的区别：
+    - smart_click_optional: 找不到元素就跳过（用于可能不存在的元素）
+    - smart_click_retry: 元素一定存在，失败时自动重试（用于稳定存在的元素）
+
+    YAML 用法：
+        smart_click_retry_publish: { role: 'button', name: 'Publish', retry: 3, delay: 500 }
+
+    新增参数：
+    - retry: 重试次数，默认 3
+    - delay: 重试间隔(ms)，默认 500
+    - wait_for_ready: 点击前等待元素 ready，默认 true
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_locator = v.get("locator")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    target_index = v.get("index", 0)
+    target_test_id = v.get("test_id")
+    force = v.get("force", False)
+    timeout = v.get("timeout", 5000)
+    retry_count = v.get("retry", 3)
+    delay_ms = v.get("delay", 500)
+
+    # Find visible modal scope
+    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    visible_modals = []
+    for m in raw_modals[:10]:
+        try:
+            if m.is_visible():
+                visible_modals.append(m)
+        except:
+            pass
+    active_modal = visible_modals[-1] if visible_modals else None
+    root = active_modal if active_modal else page
+
+    def _find_element():
+        """尝试多种定位策略，返回找到的元素"""
+        # 1. Test ID
+        if target_test_id:
+            try:
+                el = root.get_by_test_id(target_test_id).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 2. Locator
+        if target_locator:
+            try:
+                if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                    xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                    el = page.locator(xpath_locator).nth(target_index)
+                else:
+                    el = page.locator(target_locator).nth(target_index)
+                if target_name:
+                    el = el.get_by_text(target_name, exact=target_exact)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 3. Role + name (most common)
+        if target_role and target_name:
+            try:
+                el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 4. Text only
+        if target_name and not target_role:
+            try:
+                el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        return None
+
+    desc = f"{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
+
+    for attempt in range(1, retry_count + 1):
+        try:
+            el = _find_element()
+            if el is None:
+                if attempt < retry_count:
+                    logger.debug(f"smart_click_retry: attempt {attempt}/{retry_count} - element not visible, waiting {delay_ms}ms...")
+                    page.wait_for_timeout(delay_ms)
+                    continue
+                else:
+                    logger.warning(f"smart_click_retry: element '{desc}' not found after {retry_count} attempts")
+                    raise Exception(f"Element not found: {desc}")
+
+            # 等待元素动画完成后再点击
+            page.wait_for_timeout(200)
+
+            # 点击（Playwright 的 click 本身会等待元素可点击）
+            el.click(force=force, timeout=timeout)
+            logger.info(f"smart_click_retry: successfully clicked '{desc}' (attempt {attempt}/{retry_count})")
+            return
+
+        except Exception as e:
+            if attempt < retry_count:
+                logger.debug(f"smart_click_retry: attempt {attempt}/{retry_count} failed for '{desc}': {e}, retrying...")
+                page.wait_for_timeout(delay_ms)
+            else:
+                logger.error(f"smart_click_retry: all {retry_count} attempts failed for '{desc}': {e}")
+                raise
 
 
 def handle_modal(page: Page, v: dict):
