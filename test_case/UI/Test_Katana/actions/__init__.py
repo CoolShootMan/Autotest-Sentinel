@@ -27,6 +27,9 @@ from .base import (
     verify_value_near,
     verify_all_commission_values,
     reload_page,
+    go_back,
+    page_scroll,
+    scroll_tab_content,
     execute_not_recognized_scan,
     run_workflow_script,
     duplicate_post,
@@ -43,6 +46,7 @@ from .base import (
     create_session,
     switch_session,
     close_session,
+    delete_coseller_if_exists,
 )
 
 from .module import (
@@ -189,6 +193,9 @@ ACTIONS = {
     "click_by_coordinates": click_by_coordinates,
     "click_relative_to_selector": click_relative_to_selector,
     "reload": reload_page,
+    "go_back": go_back,
+    "page_scroll": page_scroll,
+    "scroll_tab_content": scroll_tab_content,
     "execute_not_recognized_scan": execute_not_recognized_scan,
     "run_workflow_script": run_workflow_script,
     "duplicate_post": duplicate_post,
@@ -199,6 +206,7 @@ ACTIONS = {
     "fill_stripe_iframe": fill_stripe_iframe,
     "smart_click_optional": smart_click_optional,
     "smart_click_retry": smart_click_retry,
+    "delete_coseller_if_exists": delete_coseller_if_exists,
 }
 
 
@@ -287,8 +295,12 @@ def get_action(name):
         return open_url
     elif name.startswith("reload"):
         return reload_page
+    elif name.startswith("go_back"):
+        return go_back
     elif name.startswith("wait_toast"):
         return wait_toast
+    elif name.startswith("page_scroll"):
+        return page_scroll
     elif name.startswith("wait_"):
         return smart_wait
 
