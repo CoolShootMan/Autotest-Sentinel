@@ -217,8 +217,8 @@ testT3683_T3684:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Event detail page -> click Post card
-        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
 
         # Step 3: Post edit page -> switch to Advanced tab
@@ -453,7 +453,10 @@ testT3686_CosellerResell:
 
         # T3686 Step 9: Place Order
         R_click_place_order: { role: 'button', name: 'Place order' }
-        sleep_step: 3000
+
+        # Wait for order confirmation page to load ("Access Your Order" button appears)
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+        sleep_step: 2000
 
         # T3686 Expected: Verify confirmation note is displayed
         verify_note_on_order_placed: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
