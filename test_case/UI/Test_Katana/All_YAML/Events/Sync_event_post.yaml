@@ -1,7 +1,7 @@
 testT4984_partner:
   description: "Verify adding products to a post via the enhance button in Selling tab"
   test_step:
-    open: "https://release.pear.us/events/87f6cbe2-3e98-44c3-ba26-0b4576253c6b/view"
+    open: "https://release.pear.us/events/2d5a0cea-4ee2-4b98-a7b1-68f5910ec4cd/view"
     sleep_after_open: 5000
     # Create a post
     click_create_post: { role: "button", name: "Create a post" }
@@ -84,7 +84,7 @@ testT4984_guest:
   description: "Verify guest user can buy a product from event post"
   guest: true
   test_step:
-    open: "https://release.pear.us/autotestshop/post/test-event-auto-archive-17"
+    open: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
     sleep_after_open: 3000
 
     click_buy_now:
