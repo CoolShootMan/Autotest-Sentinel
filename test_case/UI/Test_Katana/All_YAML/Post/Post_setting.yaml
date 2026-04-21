@@ -24,8 +24,8 @@ testT1742:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Event detail page -> click Post card
-        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
 
         # Step 3: Post detail page -> Selling tab -> Customize products -> Batch set commission rates
@@ -35,17 +35,17 @@ testT1742:
         sleep_step: 2000
 
         # Handle optional "Set resale earnings" dialog -> click "Start Customizing"
-        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
-        sleep_step: 1000
+        # smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        # sleep_step: 1000
 
         #Handle optional "Choose a resale model" tooltip/popover -> click "Done"
         #注意：Done 是 <p> 元素，不是 <button>，需要用 text 定位
         #现在 base.py 已支持 tooltip/popover 选择器，text 定位应该能正常工作
-        smart_click_optional_done: { name: 'Done' }
-        sleep_step: 1000
+        # smart_click_optional_done: { name: 'Done' }
+        # sleep_step: 1000
 
-        smart_click_optional_done_1: { name: 'Done' }
-        sleep_step: 1000
+        # smart_click_optional_done_1: { name: 'Done' }
+        # sleep_step: 1000
 
         sleep_step: 3000
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
@@ -470,6 +470,33 @@ testT3686_CosellerResell:
             - assertion_type: "element_visible_by_text"
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
 
+
+# Separate verification for Guest
+testT3686_teardown:
+    description: "delete the resold post"
+    expect_result: "Co-seller post deleted successfully or no data to delete"
+    test_step:
+        # Step 1: Events list page -> click Event card
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+
+        # Step 3: Navigate to Co-selling -> Co-sellers tab
+        R_click_Co-selling: { role: "tab", name: "Co-selling" }
+
+        sleep_step: 2000
+        R_click_Co-sellers: { role: "tab", name: "Co-sellers" }
+        sleep_step: 2000
+
+        # Step 4: Delete co-seller if exists (encapsulated action)
+        # If MoreHorizIcon button found -> delete flow; if not found -> skip silently
+        delete_coseller_if_exists: { timeout: 10000, toast_timeout: 8000 }
 
 
 
