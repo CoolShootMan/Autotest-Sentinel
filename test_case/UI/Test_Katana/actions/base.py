@@ -1590,6 +1590,10 @@ def fill_stripe_iframe(page: Page, v: dict):
     """
     Fill Stripe Elements iframe fields using evaluate() for reliable cross-origin access.
     Supports: card_number, expiry, cvc, card_name, zipcode
+    
+    Features:
+    - Waits for Stripe iframe to load with retry mechanism
+    - Retries up to 3 times if fields cannot be filled on first attempt
     """
     card_number = v.get("card_number", "")
     expiry = v.get("expiry", "")
@@ -1597,44 +1601,76 @@ def fill_stripe_iframe(page: Page, v: dict):
     card_name = v.get("card_name", "")
     zipcode = v.get("zipcode", "")
     timeout_ms = v.get("timeout", 15000)
+    max_retries = v.get("max_retries", 3)
 
     logger.info(f"fill_stripe_iframe: card={bool(card_number)}, expiry={bool(expiry)}, cvc={bool(cvc)}")
 
-    # 方法: 遍历所有 iframe，找到包含 Stripe 元素的 frame
-    filled_count = 0
-    
-    for frame in page.frames:
-        try:
-            url = frame.url or ""
-            if "stripe" not in url.lower():
-                continue
+    def wait_for_stripe_frames(timeout=10000):
+        """Wait for at least one Stripe iframe to be present."""
+        import time
+        start = time.time()
+        while time.time() - start < timeout / 1000:
+            for frame in page.frames:
+                if frame.url and "stripe" in frame.url.lower():
+                    return True
+            time.sleep(0.5)
+        return False
+
+    def fill_stripe_fields():
+        """Attempt to fill Stripe iframe fields. Returns count of filled fields."""
+        filled_count = 0
+        
+        for frame in page.frames:
+            try:
+                url = frame.url or ""
+                if "stripe" not in url.lower():
+                    continue
+                    
+                # 在每个 frame 中尝试填写
+                fields_to_fill = [
+                    ("cardnumber", card_number),
+                    ("exp-date", expiry),
+                    ("cvc", cvc),
+                ]
                 
-            # 在每个 frame 中尝试填写
-            fields_to_fill = [
-                ("cardnumber", card_number),
-                ("exp-date", expiry),
-                ("cvc", cvc),
-            ]
-            
-            for name, value in fields_to_fill:
-                if value:
-                    try:
-                        # 使用 focus + type 方法，而不是 fill
-                        el = frame.locator(f'input[name="{name}"]')
-                        if el.count() > 0:
-                            el.click(timeout=3000)
-                            el.fill(value, timeout=timeout_ms)
-                            logger.info(f"fill_stripe_iframe: filled {name} in frame")
-                            filled_count += 1
-                    except Exception as e:
-                        pass  # 静默失败，尝试下一个 frame
-        except:
-            continue
+                for name, value in fields_to_fill:
+                    if value:
+                        try:
+                            # 使用 focus + type 方法，而不是 fill
+                            el = frame.locator(f'input[name="{name}"]')
+                            if el.count() > 0:
+                                el.click(timeout=3000)
+                                el.fill(value, timeout=timeout_ms)
+                                logger.info(f"fill_stripe_iframe: filled {name} in frame")
+                                filled_count += 1
+                        except Exception as e:
+                            pass  # 静默失败，尝试下一个 frame
+            except:
+                continue
+        
+        return filled_count
+
+    # Step 1: Wait for Stripe iframe to load
+    logger.info("fill_stripe_iframe: waiting for Stripe iframe to load...")
+    if not wait_for_stripe_frames(timeout=10000):
+        logger.warning("fill_stripe_iframe: Stripe iframe not found after 10s")
+
+    # Step 2: Try to fill fields with retry mechanism
+    filled_count = 0
+    for attempt in range(1, max_retries + 1):
+        logger.info(f"fill_stripe_iframe: attempt {attempt}/{max_retries}")
+        filled_count = fill_stripe_fields()
+        
+        if filled_count > 0:
+            logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields on attempt {attempt}")
+            break
+        
+        if attempt < max_retries:
+            logger.info(f"fill_stripe_iframe: retrying in 1 second...")
+            page.wait_for_timeout(1000)
     
-    if filled_count > 0:
-        logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields")
-    else:
-        logger.warning("fill_stripe_iframe: could not fill Stripe fields, they may require manual input")
+    if filled_count == 0:
+        logger.warning("fill_stripe_iframe: could not fill Stripe fields after all retries, they may require manual input")
         # 截图以便调试
         page.screenshot(path="stripe_iframe_debug.png")
 
