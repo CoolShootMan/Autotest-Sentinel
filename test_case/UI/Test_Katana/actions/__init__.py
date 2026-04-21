@@ -44,6 +44,7 @@ from .base import (
     create_session,
     switch_session,
     close_session,
+    delete_coseller_if_exists,
 )
 
 from .module import (
@@ -201,6 +202,7 @@ ACTIONS = {
     "fill_stripe_iframe": fill_stripe_iframe,
     "smart_click_optional": smart_click_optional,
     "smart_click_retry": smart_click_retry,
+    "delete_coseller_if_exists": delete_coseller_if_exists,
 }
 
 

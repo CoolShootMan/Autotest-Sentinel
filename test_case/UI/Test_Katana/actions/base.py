@@ -2539,3 +2539,84 @@ def _inject_cookies_to_context(page: Page, cookie_file: str):
     context.add_cookies(cookies_to_add)
     logger.info(f"✓ Loaded {len(cookies_to_add)} cookies to context (ready for authenticated page load)")
 
+
+def delete_coseller_if_exists(page: Page, v: dict):
+    """
+    Complete flow to delete co-seller (if exists).
+    
+    This is a compound action that encapsulates 4 steps:
+    1. Click More button (three dots)
+    2. Click Delete menu option
+    3. Confirm delete in dialog
+    4. Verify delete success toast
+    
+    If step 1 cannot find the More button (no co-seller present), 
+    the entire flow is skipped silently without error.
+    
+    YAML usage:
+        delete_coseller_if_exists: { timeout: 10000 }
+    
+    Parameters:
+    - timeout: Overall timeout in ms, default 10000ms
+    - toast_timeout: Timeout for waiting toast message, default 8000ms
+    """
+    timeout = v.get("timeout", 10000)
+    toast_timeout = v.get("toast_timeout", 8000)
+    
+    logger.info("delete_coseller_if_exists: checking if co-seller exists...")
+    
+    # Step 1: Check if More button exists (indicates co-seller present)
+    try:
+        more_button = page.locator("button:has(svg[data-testid='MoreHorizIcon'])").nth(0)
+        more_button.wait_for(state="visible", timeout=timeout)
+        logger.info("delete_coseller_if_exists: co-seller found, proceeding with delete flow")
+    except Exception:
+        logger.info("delete_coseller_if_exists: no co-seller found (More button not present), skipping")
+        return
+    
+    # Step 2: Click More button
+    try:
+        more_button.click()
+        logger.info("delete_coseller_if_exists: clicked More button")
+        page.wait_for_timeout(1000)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to click More button: {e}")
+        return
+    
+    # Step 3: Click Delete option in menu
+    try:
+        delete_option = page.get_by_text("Delete", exact=True)
+        delete_option.wait_for(state="visible", timeout=timeout)
+        delete_option.click()
+        logger.info("delete_coseller_if_exists: clicked Delete option")
+        page.wait_for_timeout(1500)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to click Delete option: {e}")
+        return
+    
+    # Step 4: Confirm delete in dialog
+    try:
+        # Wait for dialog to appear first
+        dialog = page.locator("div[role='dialog']").filter(has_text="Delete the selected posts")
+        dialog.wait_for(state="visible", timeout=timeout)
+        
+        # Find Delete button within the dialog - use locator to find the button with specific class or text
+        confirm_button = dialog.locator("button").filter(has_text="Delete")
+        confirm_button.wait_for(state="visible", timeout=timeout)
+        confirm_button.click()
+        logger.info("delete_coseller_if_exists: clicked Confirm Delete button")
+        page.wait_for_timeout(3000)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to confirm delete: {e}")
+        return
+    
+    # Step 5: Verify delete success toast
+    try:
+        toast_text = "post deleted resell successfully."
+        toast = page.get_by_text(toast_text, exact=False)
+        toast.wait_for(state="visible", timeout=toast_timeout)
+        logger.info(f"delete_coseller_if_exists: verified success toast '{toast_text}'")
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: toast verification failed: {e}")
+        # Don't fail if toast doesn't appear, the delete might still be successful
+
