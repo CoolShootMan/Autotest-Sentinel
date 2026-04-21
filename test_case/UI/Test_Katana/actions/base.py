@@ -119,8 +119,49 @@ def wait_for_selector(page: Page, v: dict):
     if selector:
         el = page.locator(selector).first
         if scroll:
-            el.scroll_into_view_if_needed(timeout=timeout)
-            page.wait_for_timeout(500)
+            # First try scroll_into_view_if_needed
+            try:
+                el.scroll_into_view_if_needed(timeout=5000)
+                page.wait_for_timeout(500)
+                return
+            except Exception as e:
+                logger.warning(f"scroll_into_view_if_needed failed: {e}, trying iterative scroll...")
+            
+            # Fallback: iterative scrolling until element appears
+            import time
+            start = time.time()
+            scroll_distance = 400
+            while time.time() - start < timeout / 1000:
+                if el.is_visible(timeout=500):
+                    logger.info(f"wait_for_selector: element appeared after scrolling")
+                    return
+                # Use our robust page_scroll to scroll down
+                page.evaluate(f"""
+                    (delta) => {{
+                        const elemBelowMouse = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+                        if (elemBelowMouse) {{
+                            let current = elemBelowMouse;
+                            while (current && current !== document.body) {{
+                                const style = window.getComputedStyle(current);
+                                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                                    current.scrollHeight > current.clientHeight) {{
+                                    current.scrollBy({{ top: delta, behavior: 'instant' }});
+                                    return;
+                                }}
+                                current = current.parentElement;
+                            }}
+                        }}
+                        window.scrollBy({{ top: delta, behavior: 'instant' }});
+                    }}
+                """, scroll_distance)
+                page.wait_for_timeout(300)
+            
+            # Final check
+            if el.is_visible(timeout=500):
+                return
+            
+            page.screenshot(path=f"fail_wait_selector_{selector[:30]}.png")
+            raise Exception(f"wait_for_selector: element '{selector}' not found after scrolling")
         else:
             page.wait_for_selector(selector, timeout=timeout)
 
@@ -195,16 +236,28 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
+    target_frame = v.get("frame") or v.get("frame_locator")
+    target_role = v.get("role")
+    target_index = v.get("index", 0)
 
-    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
+    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}' (frame: {target_frame})")
     fill_timeout = v.get("timeout", 10000)
 
     try:
-        if target_locator:
+        # Handle iframe context if frame is specified
+        if target_frame:
+            fl = page.frame_locator(target_frame)
+            if target_locator:
+                fl.locator(target_locator).first.fill(str(target_value), timeout=fill_timeout)
+            elif target_role:
+                fl.get_by_role(target_role, name=target_name, exact=v.get("exact", False)).fill(str(target_value), timeout=fill_timeout)
+            else:
+                fl.locator(f"textbox[name*='{target_name}']").first.fill(str(target_value), timeout=fill_timeout)
+        elif target_locator:
             el = page.locator(target_locator).first
             el.fill(str(target_value), timeout=fill_timeout)
         elif "role" in v:
-            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
+            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(target_index).fill(str(target_value), timeout=fill_timeout)
         else:
             candidates = [
                 page.get_by_label(target_name, exact=False),
@@ -871,6 +924,190 @@ def reload_page(page: Page, v: dict):
     page.reload()
     page.wait_for_timeout(v.get("sleep_after", 3000))
 
+def page_scroll(page: Page, v: dict):
+    """
+    Page scroll that auto-detects the real scrollable container.
+    Uses multiple strategies in order:
+    1. JS scroll on detected scrollable container
+    2. mouse.wheel()
+    3. keyboard PageDown
+    4. keyboard ArrowDown
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    steps = v.get("steps", 1)
+
+    logger.info(f"page_scroll: scrolling by {y}px x{steps} steps")
+
+    viewport = page.viewport_size or {"width": 1280, "height": 720}
+    center_x = viewport["width"] // 2
+    center_y = viewport["height"] // 2
+
+    for i in range(steps):
+        page.mouse.move(center_x, center_y)
+        page.wait_for_timeout(100)
+
+        scroll_method = "unknown"
+
+        # Strategy 1: JS scroll on detected container
+        scroll_result = page.evaluate("""
+            () => {
+                const allScrollable = [];
+                document.querySelectorAll('div, section, article, main, ul').forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                        el.scrollHeight > el.clientHeight + 5) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.height > 0 && rect.top < window.innerHeight) {
+                            allScrollable.push({ el, scrollable: el.scrollHeight - rect.height, className: el.className.split(' ')[0] });
+                        }
+                    }
+                });
+
+                if (allScrollable.length > 0) {
+                    allScrollable.sort((a, b) => b.scrollable - a.scrollable);
+                    allScrollable[0].el.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                    return 'JS:' + allScrollable[0].className;
+                }
+                return 'JS_fail';
+            }
+        """)
+
+        if 'JS_fail' not in scroll_result:
+            scroll_method = scroll_result
+            logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            # JS scroll succeeded, but also try mouse.wheel + keyboard for MUI pages
+            page.mouse.wheel(0, y)
+            page.keyboard.press("PageDown")
+        else:
+            # Strategy 2: Try to find element under cursor and scroll it
+            elem_result = page.evaluate("""
+                () => {
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    let elem = document.elementFromPoint(centerX, centerY);
+                    while (elem && elem !== document.body) {
+                        if (elem.scrollHeight > elem.clientHeight) {
+                            elem.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                            return 'elem_scroll:' + elem.className.split(' ')[0];
+                        }
+                        elem = elem.parentElement;
+                    }
+                    return 'elem_fail';
+                }
+            """)
+
+            if 'elem_fail' not in elem_result:
+                scroll_method = elem_result
+                logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            else:
+                # Strategy 3: Try to scroll any scrollable element found
+                any_scroll = page.evaluate("""
+                    () => {
+                        const scrollable = document.querySelector('[style*="overflow"]');
+                        if (scrollable) {
+                            scrollable.scrollTop += 500;
+                            return 'any_scroll:' + scrollable.className.split(' ')[0];
+                        }
+                        // Try body
+                        if (document.body && document.body.scrollHeight > document.body.clientHeight) {
+                            document.body.scrollTop += 500;
+                            return 'body_scroll';
+                        }
+                        return 'scroll_fail';
+                    }
+                """)
+                
+                if 'scroll_fail' not in any_scroll:
+                    scroll_method = any_scroll
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                else:
+                    # Strategy 4: mouse.wheel()
+                    page.mouse.wheel(0, y)
+                    page.wait_for_timeout(200)
+                    scroll_method = "mouse_wheel"
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                    
+                    # Strategy 5: keyboard PageDown as last resort
+                    page.keyboard.press("PageDown")
+                    page.wait_for_timeout(200)
+                    page.keyboard.press("PageDown")
+                    logger.info(f"page_scroll: step {i+1}/{steps} keyboard PageDown x2")
+
+        # Log scroll position after all strategies
+        scroll_pos = page.evaluate("""
+            () => {
+                const main = document.querySelector('main, [role="main"], #__next, .main-content');
+                if (main) return 'main.scrollY=' + main.scrollTop + '/' + main.scrollHeight;
+                return 'window.scrollY=' + window.scrollY + '/' + document.body.scrollHeight;
+            }
+        """)
+        logger.info(f"page_scroll: position after step: {scroll_pos}")
+
+        page.wait_for_timeout(delay // steps if steps > 0 else delay)
+
+    logger.info("page_scroll: done")
+
+
+def scroll_tab_content(page: Page, v: dict):
+    """
+    Scroll the content area inside a tab (Posts tab, Products tab, etc).
+    Finds the scrollable container within the active tab content area.
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    
+    logger.info(f"scroll_tab_content: scrolling content by {y}px")
+    
+    result = page.evaluate(f"""
+        (scrollAmount) => {{
+            // Strategy 1: Find tab content container - look for the container after the Posts tab button
+            // Common patterns in tabbed UIs
+            const tabButton = Array.from(document.querySelectorAll('[role="tab"]')).find(t => t.textContent.includes('Posts'));
+            if (tabButton) {{
+                // Find the panel associated with this tab (usually the next sibling or element with aria-labelledby)
+                let container = tabButton.nextElementSibling;
+                while (container) {{
+                    if (container.scrollHeight > container.clientHeight) {{
+                        container.scrollTop += scrollAmount;
+                        return 'scrolled tab panel: ' + container.className;
+                    }}
+                    container = container.nextElementSibling;
+                }}
+                
+                // Alternative: find container by aria-labelledby
+                const panelId = tabButton.getAttribute('aria-controls');
+                if (panelId) {{
+                    const panel = document.getElementById(panelId);
+                    if (panel && panel.scrollHeight > panel.clientHeight) {{
+                        panel.scrollTop += scrollAmount;
+                        return 'scrolled by aria-controls: ' + panelId;
+                    }}
+                }}
+            }}
+            
+            // Strategy 2: Find any visible scrollable container in the main content area
+            const main = document.querySelector('[role="main"]') || document.querySelector('main') || document.querySelector('#root > div > div');
+            if (main && main.scrollHeight > main.clientHeight) {{
+                main.scrollTop += scrollAmount;
+                return 'scrolled main: ' + main.className;
+            }}
+            
+            // Strategy 3: Window scroll
+            window.scrollBy(0, scrollAmount);
+            return 'window scroll';
+        }}
+    """, y)
+    
+    logger.info(f"scroll_tab_content result: {result}")
+    page.wait_for_timeout(delay)
+
+def go_back(page: Page, v: dict):
+    """Go back in browser history (equivalent to clicking browser back button)."""
+    page.go_back()
+    page.wait_for_timeout(v.get("sleep_after", 3000))
+    logger.info("Navigated back in browser history")
+
 def test_invalid_qr(page: Page, v):
     from playwright.sync_api import sync_playwright
     url = v if isinstance(v, str) else v.get("open", "https://s.pear.us/iyR93K")
@@ -1474,6 +1711,10 @@ def fill_stripe_iframe(page: Page, v: dict):
     """
     Fill Stripe Elements iframe fields using evaluate() for reliable cross-origin access.
     Supports: card_number, expiry, cvc, card_name, zipcode
+    
+    Features:
+    - Waits for Stripe iframe to load with retry mechanism
+    - Retries up to 3 times if fields cannot be filled on first attempt
     """
     card_number = v.get("card_number", "")
     expiry = v.get("expiry", "")
@@ -1481,44 +1722,76 @@ def fill_stripe_iframe(page: Page, v: dict):
     card_name = v.get("card_name", "")
     zipcode = v.get("zipcode", "")
     timeout_ms = v.get("timeout", 15000)
+    max_retries = v.get("max_retries", 3)
 
     logger.info(f"fill_stripe_iframe: card={bool(card_number)}, expiry={bool(expiry)}, cvc={bool(cvc)}")
 
-    # 方法: 遍历所有 iframe，找到包含 Stripe 元素的 frame
-    filled_count = 0
-    
-    for frame in page.frames:
-        try:
-            url = frame.url or ""
-            if "stripe" not in url.lower():
-                continue
+    def wait_for_stripe_frames(timeout=10000):
+        """Wait for at least one Stripe iframe to be present."""
+        import time
+        start = time.time()
+        while time.time() - start < timeout / 1000:
+            for frame in page.frames:
+                if frame.url and "stripe" in frame.url.lower():
+                    return True
+            time.sleep(0.5)
+        return False
+
+    def fill_stripe_fields():
+        """Attempt to fill Stripe iframe fields. Returns count of filled fields."""
+        filled_count = 0
+        
+        for frame in page.frames:
+            try:
+                url = frame.url or ""
+                if "stripe" not in url.lower():
+                    continue
+                    
+                # 在每个 frame 中尝试填写
+                fields_to_fill = [
+                    ("cardnumber", card_number),
+                    ("exp-date", expiry),
+                    ("cvc", cvc),
+                ]
                 
-            # 在每个 frame 中尝试填写
-            fields_to_fill = [
-                ("cardnumber", card_number),
-                ("exp-date", expiry),
-                ("cvc", cvc),
-            ]
-            
-            for name, value in fields_to_fill:
-                if value:
-                    try:
-                        # 使用 focus + type 方法，而不是 fill
-                        el = frame.locator(f'input[name="{name}"]')
-                        if el.count() > 0:
-                            el.click(timeout=3000)
-                            el.fill(value, timeout=timeout_ms)
-                            logger.info(f"fill_stripe_iframe: filled {name} in frame")
-                            filled_count += 1
-                    except Exception as e:
-                        pass  # 静默失败，尝试下一个 frame
-        except:
-            continue
+                for name, value in fields_to_fill:
+                    if value:
+                        try:
+                            # 使用 focus + type 方法，而不是 fill
+                            el = frame.locator(f'input[name="{name}"]')
+                            if el.count() > 0:
+                                el.click(timeout=3000)
+                                el.fill(value, timeout=timeout_ms)
+                                logger.info(f"fill_stripe_iframe: filled {name} in frame")
+                                filled_count += 1
+                        except Exception as e:
+                            pass  # 静默失败，尝试下一个 frame
+            except:
+                continue
+        
+        return filled_count
+
+    # Step 1: Wait for Stripe iframe to load
+    logger.info("fill_stripe_iframe: waiting for Stripe iframe to load...")
+    if not wait_for_stripe_frames(timeout=10000):
+        logger.warning("fill_stripe_iframe: Stripe iframe not found after 10s")
+
+    # Step 2: Try to fill fields with retry mechanism
+    filled_count = 0
+    for attempt in range(1, max_retries + 1):
+        logger.info(f"fill_stripe_iframe: attempt {attempt}/{max_retries}")
+        filled_count = fill_stripe_fields()
+        
+        if filled_count > 0:
+            logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields on attempt {attempt}")
+            break
+        
+        if attempt < max_retries:
+            logger.info(f"fill_stripe_iframe: retrying in 1 second...")
+            page.wait_for_timeout(1000)
     
-    if filled_count > 0:
-        logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields")
-    else:
-        logger.warning("fill_stripe_iframe: could not fill Stripe fields, they may require manual input")
+    if filled_count == 0:
+        logger.warning("fill_stripe_iframe: could not fill Stripe fields after all retries, they may require manual input")
         # 截图以便调试
         page.screenshot(path="stripe_iframe_debug.png")
 
@@ -1589,8 +1862,10 @@ def smart_click_optional(page: Page, v: dict):
             logger.debug(f"smart_click_optional: click failed for '{desc}' ({e})")
             return False
 
-    # Find visible modal scope
-    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
     visible_modals = []
     for m in raw_modals[:10]:
         try:
@@ -1598,51 +1873,66 @@ def smart_click_optional(page: Page, v: dict):
                 visible_modals.append(m)
         except:
             pass
-    active_modal = visible_modals[-1] if visible_modals else None
-    root = active_modal if active_modal else page
 
-    # 1. Test ID
-    if target_test_id:
-        try:
-            el = root.get_by_test_id(target_test_id).nth(target_index)
-            if el.is_visible(timeout=timeout):
+    def _find_and_click_in_scope(scope, desc_prefix=""):
+        """在指定范围内查找并点击元素"""
+        desc = f"{desc_prefix}{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
+
+        # 1. Test ID
+        if target_test_id:
+            try:
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
                 if _try_click(el, f"test_id={target_test_id}"):
-                    return
-        except:
-            pass
+                    return True
+            except:
+                pass
 
-    # 2. Locator
-    if target_locator:
-        try:
-            if target_locator.startswith("/") or target_locator.startswith("xpath="):
-                xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
-                el = page.locator(xpath_locator).nth(target_index)
-            else:
-                el = page.locator(target_locator).nth(target_index)
-            if target_name:
-                el = el.get_by_text(target_name, exact=target_exact)
-            if _try_click(el, target_locator):
-                return
-        except Exception as e:
-            logger.debug(f"smart_click_optional: locator failed ({e})")
+        # 2. Locator
+        if target_locator:
+            try:
+                if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                    xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                    el = page.locator(xpath_locator).nth(target_index)
+                else:
+                    el = page.locator(target_locator).nth(target_index)
+                if target_name:
+                    el = el.get_by_text(target_name, exact=target_exact)
+                if _try_click(el, target_locator):
+                    return True
+            except Exception as e:
+                logger.debug(f"smart_click_optional: locator failed ({e})")
 
-    # 3. Role + name (most common)
-    if target_role and target_name:
-        try:
-            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
-            if _try_click(el, f"{target_role}:{target_name}"):
-                return
-        except:
-            pass
+        # 3. Role + name (most common)
+        if target_role and target_name:
+            try:
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"{target_role}:{target_name}"):
+                    return True
+            except:
+                pass
 
-    # 4. Text only
-    if target_name and not target_role:
-        try:
-            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-            if _try_click(el, f"text={target_name}"):
-                return
-        except:
-            pass
+        # 4. Text only
+        if target_name and not target_role:
+            try:
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"text={target_name}"):
+                    return True
+            except:
+                pass
+
+        return False
+
+    # 搜索策略：先弹框（从后往前，新的弹框优先），再 page 级别
+    # 这样做是因为弹框通常包含用户正在操作的元素
+
+    # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+    for modal in reversed(visible_modals):
+        if _find_and_click_in_scope(modal, f"modal[{visible_modals.index(modal)}]:"):
+            return
+
+    # 2. 最后在 page 级别尝试（处理没有弹框的情况）
+    if _find_and_click_in_scope(page, "page:"):
+        return
 
     # Element not found — silent skip
     logger.info(f"smart_click_optional: element not found '{target_name or target_locator}', skipping.")
@@ -1662,7 +1952,6 @@ def smart_click_retry(page: Page, v: dict):
     新增参数：
     - retry: 重试次数，默认 3
     - delay: 重试间隔(ms)，默认 500
-    - wait_for_ready: 点击前等待元素 ready，默认 true
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
@@ -1675,8 +1964,10 @@ def smart_click_retry(page: Page, v: dict):
     retry_count = v.get("retry", 3)
     delay_ms = v.get("delay", 500)
 
-    # Find visible modal scope
-    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
     visible_modals = []
     for m in raw_modals[:10]:
         try:
@@ -1684,15 +1975,13 @@ def smart_click_retry(page: Page, v: dict):
                 visible_modals.append(m)
         except:
             pass
-    active_modal = visible_modals[-1] if visible_modals else None
-    root = active_modal if active_modal else page
 
-    def _find_element():
-        """尝试多种定位策略，返回找到的元素"""
+    def _find_element_in_scope(scope):
+        """在指定范围内查找元素"""
         # 1. Test ID
         if target_test_id:
             try:
-                el = root.get_by_test_id(target_test_id).nth(target_index)
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
@@ -1716,7 +2005,7 @@ def smart_click_retry(page: Page, v: dict):
         # 3. Role + name (most common)
         if target_role and target_name:
             try:
-                el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
@@ -1725,13 +2014,23 @@ def smart_click_retry(page: Page, v: dict):
         # 4. Text only
         if target_name and not target_role:
             try:
-                el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
                 if el.is_visible(timeout=timeout):
                     return el
             except:
                 pass
 
         return None
+
+    def _find_element():
+        """遍历所有可见弹框 + page 查找元素"""
+        # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+        for modal in reversed(visible_modals):
+            el = _find_element_in_scope(modal)
+            if el is not None:
+                return el
+        # 2. 最后在 page 级别尝试
+        return _find_element_in_scope(page)
 
     desc = f"{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
 
@@ -2360,4 +2659,85 @@ def _inject_cookies_to_context(page: Page, cookie_file: str):
     # Add cookies to context
     context.add_cookies(cookies_to_add)
     logger.info(f"✓ Loaded {len(cookies_to_add)} cookies to context (ready for authenticated page load)")
+
+
+def delete_coseller_if_exists(page: Page, v: dict):
+    """
+    Complete flow to delete co-seller (if exists).
+    
+    This is a compound action that encapsulates 4 steps:
+    1. Click More button (three dots)
+    2. Click Delete menu option
+    3. Confirm delete in dialog
+    4. Verify delete success toast
+    
+    If step 1 cannot find the More button (no co-seller present), 
+    the entire flow is skipped silently without error.
+    
+    YAML usage:
+        delete_coseller_if_exists: { timeout: 10000 }
+    
+    Parameters:
+    - timeout: Overall timeout in ms, default 10000ms
+    - toast_timeout: Timeout for waiting toast message, default 8000ms
+    """
+    timeout = v.get("timeout", 10000)
+    toast_timeout = v.get("toast_timeout", 8000)
+    
+    logger.info("delete_coseller_if_exists: checking if co-seller exists...")
+    
+    # Step 1: Check if More button exists (indicates co-seller present)
+    try:
+        more_button = page.locator("button:has(svg[data-testid='MoreHorizIcon'])").nth(0)
+        more_button.wait_for(state="visible", timeout=timeout)
+        logger.info("delete_coseller_if_exists: co-seller found, proceeding with delete flow")
+    except Exception:
+        logger.info("delete_coseller_if_exists: no co-seller found (More button not present), skipping")
+        return
+    
+    # Step 2: Click More button
+    try:
+        more_button.click()
+        logger.info("delete_coseller_if_exists: clicked More button")
+        page.wait_for_timeout(1000)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to click More button: {e}")
+        return
+    
+    # Step 3: Click Delete option in menu
+    try:
+        delete_option = page.get_by_text("Delete", exact=True)
+        delete_option.wait_for(state="visible", timeout=timeout)
+        delete_option.click()
+        logger.info("delete_coseller_if_exists: clicked Delete option")
+        page.wait_for_timeout(1500)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to click Delete option: {e}")
+        return
+    
+    # Step 4: Confirm delete in dialog
+    try:
+        # Wait for dialog to appear first
+        dialog = page.locator("div[role='dialog']").filter(has_text="Delete the selected posts")
+        dialog.wait_for(state="visible", timeout=timeout)
+        
+        # Find Delete button within the dialog - use locator to find the button with specific class or text
+        confirm_button = dialog.locator("button").filter(has_text="Delete")
+        confirm_button.wait_for(state="visible", timeout=timeout)
+        confirm_button.click()
+        logger.info("delete_coseller_if_exists: clicked Confirm Delete button")
+        page.wait_for_timeout(3000)
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: failed to confirm delete: {e}")
+        return
+    
+    # Step 5: Verify delete success toast
+    try:
+        toast_text = "post deleted resell successfully."
+        toast = page.get_by_text(toast_text, exact=False)
+        toast.wait_for(state="visible", timeout=toast_timeout)
+        logger.info(f"delete_coseller_if_exists: verified success toast '{toast_text}'")
+    except Exception as e:
+        logger.warning(f"delete_coseller_if_exists: toast verification failed: {e}")
+        # Don't fail if toast doesn't appear, the delete might still be successful
 

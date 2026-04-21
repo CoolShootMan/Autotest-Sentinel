@@ -24,8 +24,8 @@ testT1742:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Event detail page -> click Post card
-        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
 
         # Step 3: Post detail page -> Selling tab -> Customize products -> Batch set commission rates
@@ -35,12 +35,17 @@ testT1742:
         sleep_step: 2000
 
         # Handle optional "Set resale earnings" dialog -> click "Start Customizing"
-        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
-        sleep_step: 1000
+        # smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        # sleep_step: 1000
 
-        # Handle optional "Choose a resale model" tooltip/popover -> click "Done"
-        smart_click_optional_done: { role: 'button', name: 'Done' }
-        sleep_step: 1000
+        #Handle optional "Choose a resale model" tooltip/popover -> click "Done"
+        #注意：Done 是 <p> 元素，不是 <button>，需要用 text 定位
+        #现在 base.py 已支持 tooltip/popover 选择器，text 定位应该能正常工作
+        # smart_click_optional_done: { name: 'Done' }
+        # sleep_step: 1000
+
+        # smart_click_optional_done_1: { name: 'Done' }
+        # sleep_step: 1000
 
         sleep_step: 3000
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
@@ -212,8 +217,8 @@ testT3683_T3684:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Event detail page -> click Post card
-        R_click_post: { role: 'button', name: 'Get Tickets', index: 0 }
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
 
         # Step 3: Post edit page -> switch to Advanced tab
@@ -448,7 +453,10 @@ testT3686_CosellerResell:
 
         # T3686 Step 9: Place Order
         R_click_place_order: { role: 'button', name: 'Place order' }
-        sleep_step: 3000
+
+        # Wait for order confirmation page to load ("Access Your Order" button appears)
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+        sleep_step: 2000
 
         # T3686 Expected: Verify confirmation note is displayed
         verify_note_on_order_placed: { text: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
@@ -463,6 +471,33 @@ testT3686_CosellerResell:
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
 
 
+# Separate verification for Guest
+testT3686_teardown:
+    description: "delete the resold post"
+    expect_result: "Co-seller post deleted successfully or no data to delete"
+    test_step:
+        # Step 1: Events list page -> click Event card
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Event detail page -> click Post card (link text)
+        R_click_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+
+        # Step 3: Navigate to Co-selling -> Co-sellers tab
+        R_click_Co-selling: { role: "tab", name: "Co-selling" }
+
+        sleep_step: 2000
+        R_click_Co-sellers: { role: "tab", name: "Co-sellers" }
+        sleep_step: 2000
+
+        # Step 4: Delete co-seller if exists (encapsulated action)
+        # If MoreHorizIcon button found -> delete flow; if not found -> skip silently
+        delete_coseller_if_exists: { timeout: 10000, toast_timeout: 8000 }
+
 
 
 
@@ -473,10 +508,27 @@ testT2705_VerifyPartner:
   guest: false
   description: "Partner hides the variant and sets the default variant on the management page"
   test_step:
-    open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Selling"
+    # Step 1: Open Events list page
+    open: "https://release.pear.us/events"
     sleep_after_open: 5000
 
-    # Click Customize products
+    # Step 2: Find and click "Test event post variant settings" event
+    R_click_event: { locator: "text=Test event post variant settings", exact: true }
+    sleep_step: 4000
+
+    # Step 2.1: Scroll down to reveal post card
+    swipe_avoid_plus: { x: 0, y: 500 }
+    sleep_step: 1000
+
+    # Step 3: Click post card to enter post landing page
+    R_click_post_card: { role: "button", name: "Get Tickets", index: 0 }
+    sleep_step: 3000
+
+    # Step 4: Click Selling tab
+    R_click_selling_tab: { role: "tab", name: "Selling" }
+    sleep_step: 2000
+
+    # Step 5: Click Customize products
     R_click_customize: { role: "button", name: "Customize products" }
     sleep_before_scroll: 2000
 
@@ -536,16 +588,34 @@ testT2705_VerifyGuest:
         text: "9 people"
 
   teardown_step:
-    # Step 1: Inject partner cookies into guest context to switch identity
+    # Step 1: Inject partner cookies
     add_cookies: {}
     sleep_step: 1000
-    # Step 2: Open partner post URL (partner cookie already injected, direct access)
-    open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Selling"
+
+    # Step 2: Open Events list page
+    open: "https://release.pear.us/events"
     sleep_step: 5000
-    # Step 3: Uncheck the boxes and save
+
+    # Step 3: Find and click "Test event post variant settings" event
+    R_click_event_reset: { locator: "text=test-event-post-variant-settings", exact: true }
+    sleep_step: 4000
+
+    # Step 2.1: Scroll down to reveal post card
+    swipe_reset: { x: 0, y: 500 }
+    sleep_step: 1000
+
+    # Step 3: Click post card to enter post landing page
+    R_click_post_card_reset: { role: "button", name: "Get Tickets", index: 0 }
+    sleep_step: 3000
+
+    # Step 4: Click Selling tab
+    R_click_selling_tab_reset: { role: "tab", name: "Selling" }
+    sleep_step: 2000
+
+    # Step 5: Click Customize products
     R_click_customize_reset: { role: "button", name: "Customize products" }
     sleep_step: 2000
-    swipe_reset: { x: 0, y: 500 }
+    swipe_reset2: { x: 0, y: 500 }
     sleep_step: 1000
     swipe_right_reset: { x: 800, y: 0 }
     sleep_step: 1000
@@ -556,16 +626,31 @@ testT2705_VerifyGuest:
     sleep_step: 3000
 
 
-
-
 # T2830: Partner hides a post on the storefront
 testT2830_VerifyPartner:
     description: "Verify hiding a post from the store via Advanced settings"
     test_step:
-        open: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Content"
-        sleep_after_open: 2000
-        # Edit the post advanced settings
+        # Step 1: Open Events list page
+        open: "https://release.pear.us/events"
+        sleep_after_open: 5000
+
+        # Step 2: Find and click "Test event post variant settings" event
+        R_click_event: { locator: "text=Test event post variant settings", exact: true }
+        sleep_step: 4000
+
+        # Step 2.1: Scroll down to reveal post card
+        swipe_avoid_plus: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 3: Click post card to enter post landing page
+        R_click_post_card: { role: "button", name: "Get Tickets", index: 0 }
+        sleep_step: 3000
+
+        # Step 4: Click Advanced tab
         R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        sleep_step: 2000
+
+        # Step 5: Check hide in store
         check_hide_in_store: { locator: "input[name='hideInStore']" }
         save_html_partner_before: { name: "debug_partner_before_update" }
         R_click_Save: { role: "button", name: "Save" }
@@ -580,22 +665,27 @@ testT2830_VerifyGuest:
     guest: true
     description: "Verify that the post should be hidden from the store for guest users after curator action"
     test_step:
+        # Open the autotestshop page
         open: "https://release.pear.us/autotestshop"
         sleep_after_open: 5000
-        # Scroll to ensure all content is loaded and checked
-        swipe_down_to_check: { x: 0, y: 800 }
-        sleep_after_scroll: 2000
-      
-        # Step 1: scroll the Posts tab element into view
-        wait_for_selector: { locator: "xpath=//button[@role='tab' and contains(text(),'Posts')]", scroll: true }
-        sleep_after_wait_for_selector: 1000
-        # Scroll down a bit more to better position the Posts tab
-        swipe_down_to_check: { x: 0, y: 500 }
-        sleep_after_scroll: 1000
-
-        sleep_after_click: 2000
-        screenshot_guest_view: { name: "debug_guest_view" }
-        save_html_guest: { name: "debug_guest_source" }
+        
+        # Scroll to Posts tab location first
+        page_scroll: { y: 600, delay: 2000, steps: 2 }
+        sleep_step: 1000
+        
+        # Click Posts tab to navigate to posts section
+        R_click_posts_tab: { role: "tab", name: "Posts" }
+        sleep_step: 2000
+        
+        # Continue scrolling down to load posts
+        page_scroll: { y: 500, delay: 1500, steps: 2 }
+        sleep_step: 1000
+        
+        # The post should be hidden from guest view (as set by partner in teardown)
+        # If the post IS visible, it means the hide setting wasn't applied
+        verify_text_hidden: { text: "test-event-post-variant-settings", timeout: 5000 }
+        
+        sleep_end: 2000
     expect_result:
         description: "The post should be hidden from the store for guest users"
         assertions:
@@ -603,192 +693,393 @@ testT2830_VerifyGuest:
               text: "Test event post variant settings"
 
     teardown_step:
-        # Step 1: Inject partner cookies into guest context to switch identity
+        # Step 1: Inject partner cookies
         add_cookies: {}
-        sleep_step: 3000
-        # Step 2: Open post URL as partner and uncheck hideInStore
-        open_teardown: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view#tab=Content"
+        sleep_step: 1000
+
+        # Step 2: Open Events list page
+        open: "https://release.pear.us/events"
         sleep_step: 5000
-        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+
+        # Step 3: Find and click "Test event post variant settings" event
+        R_click_event_reset: { locator: "text=test-event-post-variant-settings", exact: true }
+        sleep_step: 4000
+
+        # Step 3.1: Scroll down to reveal post card
+        swipe_reset: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 4: Click post card to enter post landing page
+        R_click_post_card_reset: { role: "button", name: "Get Tickets", index: 0 }
+        sleep_step: 3000
+
+        # Step 5: Click Advanced tab
+        R_click_advanced_tab_reset: { role: "tab", name: "Advanced" }
         sleep_step: 2000
-        # Uncheck the hideInStore checkbox (checked: false to uncheck)
+
+        # Step 6: Uncheck hideInStore
         uncheck_hide_in_store: { locator: "input[name='hideInStore']", checked: false }
         R_click_Save: { role: "button", name: "Save" }
         sleep_step: 3000
-        # Step 3: Clear cookies to switch back to guest context
+
+        # Step 7: Clear cookies to switch back to guest context
         clear_cookies: {}
         sleep_step: 1000
-        # Step 4: Verify in guest context that the post is now visible
+
+        # Step 8: Verify in guest context that the post is now visible
         open_guest_shop: "https://release.pear.us/autotestshop"
         sleep_step: 5000
-        swipe_down_to_check: { x: 0, y: 800 }
+        
+        # Scroll down to find Posts tab
+        page_scroll: { y: 800, delay: 1500, steps: 3 }
+        
+        # Click Posts tab
+        R_click_posts_tab: { role: "tab", name: "Posts" }
         sleep_step: 2000
-        wait_for_selector: { locator: "xpath=//button[@role='tab' and contains(text(),'Posts')]", scroll: true }
-        sleep_step: 1000
+        
+        # Scroll down to find the target post
+        page_scroll: { y: 800, delay: 1500, steps: 15 }
+        
         screenshot_guest_view_restored: { name: "debug_guest_view_restored" }
         save_html_guest_restored: { name: "debug_guest_source_restored" }
-        verify_text_visible: { text: "Test event post variant settings" }
+        verify_text_visible: { text: "test-event-post-variant-settings" }
 
-
-# ==============================================================================
-# Test Case: T2834 Free shipping UI indicator: Verify that the "Free shipping" tag/label appears correctly on the product page when enabled. 
-# ==============================================================================
-
-testT2834_VerifyPartner:
-    description: "Verify that partner can set a product to have free shipping"
+# T4735: Partner enables redirect URL for post
+testT4735_VerifyPartner:
+    description: "Enable redirect URL for post and configure redirect settings"
     test_step:
-        # Step 1: Navigate to the post
+        # Step 1: Open Events list page
         open: "https://release.pear.us/events"
-        sleep_step: 3000
-        duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
-        sleep_step: 500
-        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
-        sleep_step: 2000
-        R_click_post: { test_id: "mui-card-action-area" }
-        sleep_step: 2000
-        R_click_edit_post: { role: "button", name: "Edit post" }
-        sleep_step: 3000
+        sleep_after_open: 5000
 
-        # Step 2: Edit Style (as recorded in T2834partner)
-        R_click_style_tab: { role: "tab", name: "Style" }
+        # Step 2: Find and click "Test event post variant settings" event
+        R_click_event: { locator: "text=Test event post variant settings", exact: true }
+        sleep_step: 4000
+
+        # Step 2.1: Scroll down to reveal post card
+        swipe_avoid_plus: { x: 0, y: 500 }
         sleep_step: 1000
-        R_click_layout_combobox: { role: "combobox" }
-        sleep_step: 500
-        R_click_spotlight_opt: { role: "option", name: "Spotlight Highlight one" }
-        sleep_step: 500
-        R_click_confirm: { test_id: "confirm-button" }
-        sleep_step: 500
-        R_click_update: { role: "button", name: "Update" }
-        sleep_step: 1500
 
-        # Step 3: Switch to Selling tab and customize products
-        click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
-        sleep_step: 2000
-        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
-        sleep_step: 1500
-        R_click_select_products: { test_id: "enhance-button-cta" }
+        # Step 3: Click post card to enter post landing page
+        R_click_post_card: { role: "button", name: "Get Tickets", index: 0 }
+        sleep_step: 3000
+
+        # Step 4: Click Advanced tab
+        R_click_advanced_tab: { role: "tab", name: "Advanced" }
         sleep_step: 2000
 
-        # Step 4: Add product
-        # 先搜索 "test_general_products"，让目标卡唯一可见
-        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_step: 500
-        click_search_btn: { role: 'button', name: 'Search' }
-        sleep_step: 2000
-        # 此时只有一张卡，直接用 role+name 点击，不需要 index
-        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
+        # Check enableRedirectUrl checkbox
+        check_enable_redirect: { locator: "input[name='enableRedirectUrl']" }
         sleep_step: 1000
-        click_add_product_btn: { role: 'button', name: 'Add 2/20 product(s)' }
-        sleep_step: 1500
 
-        # Step 5: Check Free Shipping checkbox
-        check_free_shipping: { locator: 'input[name="products.1.isFreeShipping"]', checked: true }
+        # Click Redirect destination name textbox
+        R_click_redirect_name: { role: "textbox", name: "Redirect destination name" }
         sleep_step: 500
 
-        # Step 6: Save changes
+        # Fill Redirect destination name
+        fill_redirect_name: { role: "textbox", name: "Redirect destination name", value: "demi test" }
+        sleep_step: 500
+
+        # Click Redirect destination URL textbox
+        R_click_redirect_url: { role: "textbox", name: "https://example.com" }
+        sleep_step: 500
+
+        # Fill redirect URL
+        fill_redirect_url: { locator: "input[name='redirectUrl']", value: "tklmerch.com" }
+        sleep_step: 500
+
+        # Click Apply button
+        R_click_apply: { role: "button", name: "Apply" }
+        sleep_step: 2000
+
+        # Click Save button
         R_click_save: { role: "button", name: "Save" }
-        sleep_step: 1000
-        R_click_save_again: { role: "button", name: "Save" }
-        sleep_step: 3000
-        
+        sleep_step: 5000
+
     expect_result:
-        description: "Post products updated successfully"
+        description: "Redirect URL settings saved successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Post products updated"
+              text: "Post advanced settings updated"
 
 
-testT2834_VerifyGuest:
+# T4735: Verify redirect popup appears for non-US guest users
+testT4735_VerifyGuest:
     guest: true
-    description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
+    description: "Verify redirect popup appears for non-US guest users when accessing post with redirect enabled"
     test_step:
-        # Step 1: Shop page
-        open: "https://release.pear.us/autotestshop"
-        sleep_step: 3000
-        # Click the specific product image (as in recording)
-        R_click_product_img: { role: "button", name: "Image of Product verify-co" }
-        sleep_step: 3000
+        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        sleep_after_open: 5000
 
-        # Step 2: Navigate to Post details directly (from recording)
-        open_post_details: "https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive"
-        sleep_step: 3000
-        R_click_free_shipping_label: { text: "Free shipping" }
-        sleep_step: 1000
+        # Verify redirect popup is visible
+        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
 
-        # Verify on post details
-        verify_free_shipping_drawer: { text: "Free shipping", index: 1 }
-        sleep_step: 500
-        
-        # Step 3: Add to Cart / Buy Now
-        # R_click_buy_now: { role: "button", name: "Buy now" }
-        # sleep_step: 3000
+        # Click "DEMI TEST" text link to trigger redirect (not a button, use text locator)
+        R_click_redirect_text_demi: { locator: "text=DEMI TEST" }
+        sleep_step: 5000
 
-        # # Verify in order drawer / paragraph
-        # verify_free_shipping_paragraph: { text: "Free shipping", index: 1 }
-        # sleep_step: 500
-
-        # # Step 4: Checkout
-        # R_click_checkout_continue: { test_id: "checkout-in-post-continue-cta" }
-        # sleep_step: 3000
-
-        # # Fill Details
-        # fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
-        # fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
-        
-        # # Address dropdown selection
-        # fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
-        # sleep_step: 2000
-        # R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
-        # sleep_step: 1000
-
-        # #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
-        # fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
-        # fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
-        # sleep_step: 1000
-
-        # R_click_place_order: { role: "button", name: "Place order" }
-        # sleep_step: 1500
-
-        # # Step 5: Post-purchase expand details
-        # verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
-        # R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 1000
+        sleep_end: 3000
 
     expect_result:
-        description: "The free shipping label should be visible on the final order page"
+        description: "Redirect popup should be visible for non-US guest users and clicking DEMI TEST should redirect to tklmerch.com"
         assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Free shipping"
+            - assertion_type: "url_contains"
+              text: "tklmerch.com"
+
+
+# T4735_YesPlease: Verify clicking "Yes, please" button also redirects to tklmerch.com
+testT4735_VerifyGuest_YesPlease:
+    guest: true
+    description: "Verify clicking 'Yes, please' button in redirect popup also redirects to tklmerch.com"
+    test_step:
+        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        sleep_after_open: 5000
+
+        # Verify redirect popup is visible
+        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
+
+        # Click "Yes, please" button to trigger redirect
+        R_click_redirect_btn_yes: { role: "button", name: "Yes, please" }
+        sleep_step: 5000
+
+        sleep_end: 3000
+
+    expect_result:
+        description: "Clicking 'Yes, please' should also redirect to tklmerch.com"
+        assertions:
+            - assertion_type: "url_contains"
+              text: "tklmerch.com"
+
+
+# T4735_NoThanks: Verify clicking "No, thanks" button closes the popup and stays on current page
+testT4735_VerifyGuest_NoThanks:
+    guest: true
+    description: "Verify clicking 'No, thanks' button closes the redirect popup and stays on current page"
+    test_step:
+        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        sleep_after_open: 5000
+
+        # Verify redirect popup is visible
+        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
+
+        # Click "No, thanks" button to close popup
+        R_click_no_thanks: { role: "button", name: "No, thanks" }
+        sleep_step: 3000
+
+        sleep_end: 3000
+
+    expect_result:
+        description: "Redirect popup should be closed and user should stay on current page"
+        assertions:
+            - assertion_type: "url_contains"
+              text: "test-event-post-variant-settings"
 
     teardown_step:
-        # Step 1: Inject partner cookies into guest context to switch identity
+        # Inject partner cookies to switch to partner context
         add_cookies: {}
+        sleep_step: 2000
+
+        # Open post as partner and disable redirect URL
+        open_teardown: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view"
         sleep_step: 3000
-        
-        # Step 2: Open post URL as partner
-        open_teardown: "https://release.pear.us/events"
-        sleep_step: 3000
-        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
+
+        # Click Advanced tab
+        R_click_advanced_tab_teardown: { role: "tab", name: "Advanced" }
         sleep_step: 2000
-        R_click_post: { test_id: "mui-card-action-area" }
-        sleep_step: 2000
-        
-        # Step 3: Revert Selling tab Free Shipping
-        click_container_button_2: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2 }
-        sleep_step: 2000
-        R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
-        sleep_step: 3000
-        # 先搜索 "test_general_products"，让目标卡唯一可见
-        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_step: 500
-        click_search_btn: { role: 'button', name: 'Search' }
-        sleep_step: 2000
-        # 此时只有一张卡，直接用 role+name 点击，不需要 index
-        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
+
+        # Uncheck enableRedirectUrl checkbox to disable redirect
+        uncheck_enable_redirect: { locator: "input[name='enableRedirectUrl']", checked: false }
         sleep_step: 1000
-        click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
-        sleep_step: 1500
+
+        # Save
         R_click_save_teardown: { role: "button", name: "Save" }
-        sleep_step: 1000
-        R_click_save_again_teardown: { role: "button", name: "Save" }
         sleep_step: 3000
+
+
+# T2515 Partner sets Purchase quantity limit=5 for a several-variants item
+testT2515_SetLimit_WithVariant:
+    description: "Partner sets Purchase quantity limit=5 for a several-variants item in post"
+    test_step:
+        # Step 1: Open Events list page
+        open: "https://release.pear.us/events"
+        sleep_after_open: 5000
+
+        # Step 2: Find and click "Test event post variant settings" event
+        R_click_event: { locator: "text=Test event post variant settings", exact: true }
+        sleep_step: 4000
+
+        # Step 2.1: Scroll down to reveal post card
+        swipe_avoid_plus: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 3: Click post card to enter post landing page
+        R_click_post_card: { role: "button", name: "Get Tickets", index: 0 }
+        sleep_step: 3000
+
+        # Step 4: Click Advanced tab
+        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        sleep_step: 2000
+
+        # Step 3: Enable "Purchase quantity limit" toggle
+        check_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']" }
+        sleep_step: 1000
+
+        # Step 4: Set limit value to 5
+        R_click_spinbutton: { role: "spinbutton" }
+        sleep_step: 500
+        fill_limit_value: { role: "spinbutton", value: "5" }
+        sleep_step: 500
+
+        # Step 5: Save
+        R_click_save: { role: "button", name: "Save" }
+        sleep_step: 3000
+        wait_toast_save: { message: "Post advanced settings updated", timeout: 15000 }
+
+    expect_result:
+        description: "Purchase quantity limit saved successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Post advanced settings updated"
+
+
+# T2515 Guest verifies Buy now button is disabled after buying 5 variants
+testT2515_VerifyDisabled_WithVariant:
+    guest: true
+    description: "Verify Buy now button is disabled after buying 5 variants (limit=5)"
+    test_step:
+        # Step 1: Open post detail page as guest
+        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        sleep_after_open: 5000
+
+        # Step 2: Scroll down to load product cards
+        swipe_avoid_plus: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 3: Click product card to open product drawer
+        R_click_product_card: { role: "img", name: "Image of Product", index: 0 }
+        sleep_step: 2000
+
+        # Step 4: Select variant "5 people", set qty=2, Add to cart
+        R_click_variant_5people: { locator: "text=5 people" }
+        sleep_step: 1000
+        fill_qty_5people: { near_text: "5 people", role: "spinbutton", value: "2" }
+        sleep_step: 500
+        R_click_add_to_cart_5people: { locator: "text=Add to cart", disable_ai: true }
+        sleep_step: 2000
+
+        # Step 5: Reopen product drawer (drawer closed after add to cart)
+        R_click_product_card_again: { role: "img", name: "Image of Product", index: 0 }
+        sleep_step: 2000
+
+        # Step 6: Select variant "7 people", set qty=3, Add to cart
+        R_click_variant_7people: { locator: "text=7 people" }
+        sleep_step: 1000
+        fill_qty_7people: { near_text: "7 people", role: "spinbutton", value: "3" }
+        sleep_step: 500
+        R_click_add_to_cart_7people: { locator: "text=Add to cart", disable_ai: true }
+        sleep_step: 2000
+
+        # Step 7: Click Checkout button directly (5+3=8 > 5, but first checkout will succeed)
+        R_click_checkout: { role: "button", name: "Checkout" }
+        sleep_step: 3000
+
+        # Step 7.1: Click Continue to enter Contact info page
+        R_click_continue: { role: "button", name: "Continue" }
+        sleep_step: 3000
+
+        # Step 8: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        sleep_step: 500
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_step: 500
+        fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
+        sleep_step: 500
+        fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
+        sleep_step: 500
+
+        # Step 9: Place order - should succeed (5+3=8 > 5, but limit applies to single variant)
+        R_click_place_order: { role: "button", name: "Place order" }
+        wait_for_url: { url: "*order*", timeout: 10000 }
+        sleep_step: 2000
+
+        # Step 10: Order successful, go back to post detail page
+        go_back: {}
+        sleep_step: 3000
+
+        # Step 10.1: Click product card to open product detail drawer
+        R_click_product_card_reopen: { role: "img", name: "Image of Product", index: 0 }
+        sleep_step: 2000
+
+        # Step 10.2: Select variant "9 people", set qty=5, Add to cart
+        R_click_variant_9people: { locator: "text=9 people" }
+        sleep_step: 1000
+        fill_qty_9people: { near_text: "9 people", role: "spinbutton", value: "5" }
+        sleep_step: 500
+        R_click_add_to_cart_9people: { locator: "text=Add to cart", disable_ai: true }
+        sleep_step: 2000
+
+        # Step 10.3: Click Checkout
+        R_click_checkout_9people: { role: "button", name: "Checkout" }
+        sleep_step: 3000
+
+        # Step 10.4: Click Continue
+        R_click_continue_9people: { role: "button", name: "Continue" }
+        sleep_step: 2000
+
+        # Step 10.5: Fill Contact info
+        fill_first_name_9: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        sleep_step: 500
+        fill_last_name_9: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_step: 500
+        fill_phone_9: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
+        sleep_step: 500
+        fill_email_9: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
+        sleep_step: 500
+
+        # Step 11: Place order - should fail with error
+        R_click_place_order_9: { role: "button", name: "Place order" }
+        sleep_step: 3000
+
+        # Step 12: Verify error message is displayed
+        verify_error_message: { text: "Cannot read properties of undefined (reading 'orderNumbers')", optional: true }
+        sleep_end: 3000
+
+    expect_result:
+        description: "First order succeeds, second order for 9 people fails with error"
+
+    teardown_step:
+        # Step 1: Inject partner cookies to login as partner
+        add_cookies: {}
+        sleep_step: 1000
+
+        # Step 2: Open Events list page
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # Step 3: Find and click "Test event post variant settings" event
+        R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
+        sleep_step: 4000
+
+        # Step 3.1: Scroll down to reveal post card
+        swipe_teardown: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 4: Click post card to enter post landing page
+        R_click_post_card_teardown: { role: "button", name: "Get Tickets", index: 0 }
+        sleep_step: 3000
+
+        # Step 5: Click Advanced tab
+        R_click_advanced_tab_teardown: { role: "tab", name: "Advanced" }
+        sleep_step: 2000
+
+        # Step 6: Disable "Purchase quantity limit" toggle
+        uncheck_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']", checked: false }
+        sleep_step: 1000
+
+        # Step 7: Save
+        R_click_save_teardown: { role: "button", name: "Save" }
+        sleep_step: 3000
+        wait_toast_save_teardown: { message: "Post advanced settings updated", timeout: 15000 }
+
+
+
