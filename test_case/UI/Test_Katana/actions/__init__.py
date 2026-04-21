@@ -1,7 +1,10 @@
 
+
+from playwright.sync_api import Page
 from .base import (
     open_url,
     smart_click,
+    _smart_click_with_fallback,
     smart_fill,
     fill_numeric,
     smart_check,
@@ -33,10 +36,24 @@ from .base import (
     drag_element,
     drag_and_drop_by_coordinates,
     swipe_to_element,
+    fill_stripe_iframe,
+    smart_click_optional,
+    smart_click_retry,
+    handle_modal,
+    auto_handle_modals,
+    create_session,
+    switch_session,
+    close_session,
 )
 
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style,verify_child_element_count
-from .module import click_module_edit_button, click_module_paragraph, click_add_new_product, click_module_add_new, click_module_post_view_event_cta, click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded, verify_element_style, verify_no_sibling_text
+from .module import (
+    click_module_edit_button, click_module_paragraph, click_add_new_product,
+    click_module_add_new, click_module_post_view_event_cta, click_module_item_more_icon,
+    click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded,
+    verify_element_style, verify_child_element_count, verify_no_sibling_text,
+    verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last,
+    click_container_button
+)
 from .product import (
 
     click_add_button_regex, verify_product_clickable, click_products_nav_icon,
@@ -57,12 +74,28 @@ from .layout import (
 )
 from .collabs import verify_invitation_link_clipboard
 
+def smart_click_scan(page: Page, v: dict):
+    """
+    完整兜底点击（等效于 smart_click + fallback_scan=True）。
+    等同于在 YAML 中写：R_click: { name: 'xxx', fallback_scan: true }
+
+    推荐场景：弹窗嵌套、多层 Drawer、元素被外层容器遮盖等传统定位困难的步骤。
+    普通用例请继续使用 R_click 或 click（默认快速定位，不触发 Page-level Search）。
+    """
+    if isinstance(v, dict):
+        v = {**v, "fallback_scan": True}
+    else:
+        v = {"fallback_scan": True}
+    smart_click(page, v)
+
+
 # Registry for exact match keys
 ACTIONS = {
     "open": open_url,
     # Generic overrides
     "click_modal_close": click_modal_close,
     "R_click": smart_click,
+    "R_click_scan": smart_click_scan,   # 显式启用 Page-level Search + AI 兜底
     "fill": smart_fill,
     "check": smart_check,
     "swipe": smart_swipe,
@@ -78,17 +111,28 @@ ACTIONS = {
     "click_module_paragraph": click_module_paragraph,
     "click_add_new_product": click_add_new_product,
     "click_module_post_view_event_cta": click_module_post_view_event_cta,
+    "click_module_item_more_icon": click_module_item_more_icon,
     "click_module_collapse": click_module_collapse,
     "click_module_expand": click_module_expand,
     "verify_module_collapsed": verify_module_collapsed,
     "verify_module_expanded": verify_module_expanded,
     "verify_element_style": verify_element_style,
     "verify_child_element_count":verify_child_element_count,
+    "verify_no_sibling_text": verify_no_sibling_text,
+    "verify_element_contains_text": verify_element_contains_text,
     "drag_element": drag_element,
     "drag_and_drop_by_coordinates": drag_and_drop_by_coordinates,
     "swipe_to_element": swipe_to_element,
-    "verify_no_sibling_text": verify_no_sibling_text,
-    
+    "click_container_button": click_container_button,
+
+    "handle_modal": handle_modal,
+    "auto_handle_modals": auto_handle_modals,
+    "create_session": create_session,
+    "switch_session": switch_session,
+    "close_session": close_session,
+    "verify_carousel_scroll": verify_carousel_scroll,
+    "verify_carousel_nav_hidden_at_last": verify_carousel_nav_hidden_at_last,
+
     # Product/Social specific
     "click_add_button_regex": click_add_button_regex,
     "click_add_button_regex_final": click_add_button_regex,
@@ -154,6 +198,9 @@ ACTIONS = {
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
     "scroll_to_bottom": scroll_to_bottom,
+    "fill_stripe_iframe": fill_stripe_iframe,
+    "smart_click_optional": smart_click_optional,
+    "smart_click_retry": smart_click_retry,
 }
 
 
@@ -178,17 +225,40 @@ def get_action(name):
         return click_module_add_new
     elif name.startswith("click_module_post_view_event_cta"):
         return click_module_post_view_event_cta
+    elif name.startswith("click_module_item_more_icon"):
+        return click_module_item_more_icon
     elif name.startswith("verify_element_style"):
         return verify_element_style
     elif name.startswith("verify_child_element_count"):
         return verify_child_element_count
+    elif name.startswith("verify_element_contains_text"):
+        return verify_element_contains_text
     elif name.startswith("drag_element"):
         return drag_element
     elif name.startswith("drag_and_drop_by_coordinates"):
         return drag_and_drop_by_coordinates
     elif name.startswith("swipe_to_element"):
         return swipe_to_element
+    elif name.startswith("handle_modal"):
+        return handle_modal
+    elif name.startswith("auto_handle_modals"):
+        return auto_handle_modals
+    elif name.startswith("create_session") or name.startswith("session_"):
+        return create_session
+    elif name.startswith("switch_session"):
+        return switch_session
+    elif name.startswith("close_session"):
+        return close_session
+    elif name.startswith("click_container_button"):
+        return click_container_button
 
+
+    if name.startswith("R_click_scan") or name.startswith("click_scan"):
+        return smart_click_scan
+    if name.startswith("smart_click_optional"):
+        return smart_click_optional
+    if name.startswith("smart_click_retry"):
+        return smart_click_retry
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("if_"):
@@ -235,6 +305,10 @@ def get_action(name):
     
     if name.startswith("verify_no_sibling"):
         return verify_no_sibling_text
+    if name.startswith("verify_carousel_nav_hidden"):
+        return verify_carousel_nav_hidden_at_last
+    if name.startswith("verify_carousel_scroll"):
+        return verify_carousel_scroll
     if name.startswith("verify_toast"):
         return verify_toast_message
     if name.startswith("verify_hidden"):

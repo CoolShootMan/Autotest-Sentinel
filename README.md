@@ -266,18 +266,30 @@ actions/ (Action Registry 动作注册表)
 4. Playwright 浏览器是否已安装
 5. `.env` 文件中的 API Key 是否正确配置
 
-## Page-level Search — 零 Token 全页扫描兜底
+## Page-level Search — 按需启用，避免无差别降级拖慢用例
 
-**背景**: 当目标按钮/元素处于 Modal 弹窗域之外（例如 Drawer 抽屉、Post 编辑器面板），而框架已将搜索域锁定在弹窗内时，传统定位会失败。
+**背景**: Page-level Search 在弹窗嵌套、多层 Drawer 等场景下非常有效，但若不加区分地默认触发，会让所有用例（即使不涉及弹窗的普通用例）都多走一轮全页面枚举，导致整体执行时间大幅增加。
 
-**机制**: `smart_click` 在传统 Playwright 定位失败后，若目标具有 `role='button'` 属性，会自动触发全页面按钮扫描：
+**v4.1 变更 — Page-level Search 改为按需启用**:
 
-```python
-# YAML 用法无需任何改动，框架自动兜底：
-R_click_save: { role: 'button', name: 'Save' }
+`smart_click` 默认行为已优化为**快速精准定位**，不再默认触发 Page-level Search。只有显式声明 `fallback_scan: true` 时才进入完整兜底链路。
+
+```yaml
+# ✅ 普通用例（推荐，默认快速，不触发页面枚举）
+R_click_save: { name: 'Save' }
+click_submit: { role: 'button', name: 'Submit' }
+
+# ✅ 困难场景（显式开启 Page-level Search + AI 自愈兜底）
+R_click_save_hard: { name: 'Save', fallback_scan: true }
+R_click_scan: { name: 'Get Tickets' }   # 始终启用完整兜底
+
+# ✅ 显式 action 名称（推荐用于复杂场景）
+R_click_scan_save: { name: 'Save' }     # 等效于 fallback_scan: true
 ```
 
-**优势**: 相比 AI 自愈，Page-level Search **无需截图、无需调用 Gemini API、零 Token 消耗、零额外延迟**，精准度反而更高（因为页面按钮枚举是精确匹配，AI 视觉是概率性的）。
+**性能收益**: 根据用例步骤数量，无差别 Page-level Search 可能导致每步额外等待 0.5–2 秒。改为按需启用后，普通用例预计提速 **30–50%**。
+
+**优势**: 相比 AI 自愈，Page-level Search **无需截图、无需调用 Gemini API、零 Token 消耗**，精准度反而更高（页面按钮枚举是精确匹配，AI 视觉是概率性的）。
 
 ### MUI Controlled-Input 自愈 — 应对 React 受控组件拦截
 
@@ -291,6 +303,32 @@ Locator.set_checked: Clicking the checkbox did not change its state
 1. 通过 JS `node.checked` 读取真实状态，避免无谓的重复切换
 2. 定位父级包裹节点（React onClick handler 真正绑定处）
 3. `force=True` 穿透遮罩层直接点击父节点
+
+#### `smart_check` 典型使用场景示例：
+
+*   **场景 1：标准 MUI Switch (受控组件)**
+    ```yaml
+    # 无需担心 Playwright 报错 "Clicking... did not change state"
+    check_allow_copy: { name: "Allow others to copy", checked: true }
+    ```
+
+*   **场景 2：弹窗与背景“撞衫” (智能域感知)**
+    ```yaml
+    # 自动锁定最新弹窗视口，避免误点背景中的同名元素
+    check_modal_default: { role: 'checkbox', index: 0 } 
+    ```
+
+*   **场景 3：打破沙箱 (手动跨域)**
+    ```yaml
+    # 若需在弹窗/抽屉开启时勾选底层页面元素，使用 no_modal_scope
+    check_background_sync: { role: 'checkbox', name: 'Sync now', no_modal_scope: true }
+    ```
+
+*   **场景 4：最高稳定定位 (`test_id` + `check`)**
+    ```yaml
+    # 结合最稳的 test_id 定位与最聪明的 check 动作
+    check_publish_toggle: { test_id: 'publish-switch-input', checked: true }
+    ```
 
 ### test_id 原生支持
 
@@ -308,4 +346,4 @@ click_confirm: { test_id: 'confirm-button' }
 
 ---
 
-**版本:** v4.0 | **最后更新:** 2026-04-14 | **维护者:** Autotest-monster Team
+**版本:** v4.1 | **最后更新:** 2026-04-16 | **维护者:** Autotest-monster Team

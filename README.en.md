@@ -11,8 +11,11 @@ English | [简体中文](./README.md)
 - **AI Self-Healing**: When traditional locators fail, Gemini Vision AI automatically identifies and repairs element targeting
 - **RAG Knowledge Base**: FAISS + SentenceTransformers powered domain knowledge retrieval for AI context
 - **Execution History Tracking**: Records successful steps to provide AI with current test flow state
+- **Page-level Search** `[v4.1 NEW]`: Automatically fallback to full-page scanning when an element is outside the current Modal area. Zero Token consumption and extremely low latency.
+- **MUI Controlled-Input Self-healing** `[v4.1 NEW]`: Automatically handles React/MUI controlled components (Switch/Checkbox) interception issues by force-clicking the parent wrapper.
+- **Native test_id Support** `[v4.1 NEW]`: `smart_click` now supports the `test_id` parameter directly for the most stable locator strategy.
 - **Multi-Environment Support**: Switch between staging/release via `--env` parameter
-- **Dynamic Assertions**: Multiple assertion types (text visibility, element existence, etc.)
+- **Dynamic Assertions**: Multiple assertion types (text visibility, element existence, visual height, etc.)
 - **Auto-generated Allure Reports**
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
 
@@ -24,13 +27,21 @@ YAML Test Definitions
 test_ui.py (Step Dispatcher + Execution History Tracker)
     ↓
 actions/ (Action Registry)
-    ├── base.py → smart_click / smart_fill (with AI Fallback)
+    ├── base.py → smart_click / smart_fill / smart_check
     ├── module.py / product.py / form.py ...
     ↓
-┌─ Traditional Playwright Locators (role/text/locator)
+┌─ Level 1: Traditional Playwright Locators (role/text/test_id/locator)
 │   Success → Continue
 │   Failure ↓
-└─ AI Self-Healing Engine (utils/ai_vision.py)
+├─ Level 2: Page-level Search [v4.1] (Zero Token Full-page Scan)
+│   Iterates all matches → Clicks first visible candidate
+│   Success → Continue
+│   Failure ↓
+├─ Level 2b: MUI Controlled-Input Fallback [v4.1] (smart_check only)
+│   JS node.checked verification → Force click parent wrapper
+│   Success → Continue
+│   Failure ↓
+└─ Level 3: AI Self-Healing Engine (utils/ai_vision.py)
        ├── Screenshot + SOM Overlay
        ├── RAG Knowledge Base Query (utils/rag_knowledge.py)
        ├── Execution History Context Injection
@@ -334,6 +345,76 @@ If you encounter issues, please check:
 
 ---
 
-**Version:** v4.0  
-**Last Updated:** 2026-04-10  
+## V4.1 New Features (2026-04-14)
+
+### Page-level Search — Zero Token Page-wide Fallback
+
+**Context**: Traditional locators fail when the target button/element is outside the current Modal area (e.g., in a Drawer or Post Editor panel) while the framework has scoped the search to the active modal.
+
+**Mechanism**: `smart_click` automatically triggers a page-wide scan for elements with `role='button'` if Level 1 and Level 2 locators fail:
+
+```python
+# No YAML changes required; the framework handles fallback automatically:
+R_click_save: { role: 'button', name: 'Save' }
+```
+
+**Advantages**: Compared to AI healing, Page-level Search is **Zero Token cost, Zero additional latency**, and often more precise as it uses exact string matching.
+
+### MUI Controlled-Input Self-healing — Handling React Interception
+
+**Context**: Material-UI Switches/Checkboxes often wrap the native `<input>` within multiple `div` layers. Playwright's `set_checked()` might throw:
+```
+Locator.set_checked: Clicking the checkbox did not change its state
+<div class="MuiStack-root ..."> intercepts pointer events
+```
+
+**Mechanism**: `smart_check` detects such errors and executes a three-step fallback:
+1. Verify real state via JS `node.checked` to avoid unnecessary toggles.
+2. Locate the parent wrapper node (where React usually attaches the onClick handler).
+3. `force=True` click the parent wrapper.
+
+#### `smart_check` Usage Scenarios:
+
+*   **Scenario 1: Standard MUI Switch**
+    ```yaml
+    # No need to worry about "Clicking... did not change state" errors
+    check_allow_copy: { name: "Allow others to copy", checked: true }
+    ```
+
+*   **Scenario 2: Modal vs Background Conflict**
+    ```yaml
+    # Automatically scopes to the active modal to avoid mis-clicking background elements
+    check_modal_default: { role: 'checkbox', index: 0 } 
+    ```
+
+*   **Scenario 3: Breaking the Sandbox**
+    ```yaml
+    # Use no_modal_scope if you explicitly need to check a background element while a modal is open
+    check_background_sync: { role: 'checkbox', name: 'Sync now', no_modal_scope: true }
+    ```
+
+*   **Scenario 4: Maximum Stability (`test_id` + `check`)**
+    ```yaml
+    # Combine the most stable test_id strategy with the smartest check action
+    check_publish_toggle: { test_id: 'publish-switch-input', checked: true }
+    ```
+
+### Native test_id Support
+
+`smart_click` now supports the `test_id` parameter as the **highest priority strategy** (ahead of role/name/locator):
+
+```yaml
+# Supported in any clickable steps
+click_cta: { test_id: 'enhance-button-cta' }
+click_confirm: { test_id: 'confirm-button' }
+```
+
+### smart_check Modal Domain Awareness
+
+`smart_check` is now synchronized with `smart_click`, automatically detecting active Modals/Dialogs/Drawers to restrict searching scope, preventing accidental interactions with background checkboxes.
+
+---
+
+**Version:** v4.1  
+**Last Updated:** 2026-04-15  
 **Maintained by:** Autotest-monster Team
