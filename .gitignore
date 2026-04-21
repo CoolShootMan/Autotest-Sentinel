@@ -30,6 +30,9 @@ tools/get_cookie.py
 *.env
 .env.*
 
+# === WorkBuddy (local AI context, not for repo) ===
+.workbuddy/
+
 # === Logs ===
 log/
 *.log

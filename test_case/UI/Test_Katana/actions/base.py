@@ -55,8 +55,49 @@ def wait_for_selector(page: Page, v: dict):
     if selector:
         el = page.locator(selector).first
         if scroll:
-            el.scroll_into_view_if_needed(timeout=timeout)
-            page.wait_for_timeout(500)
+            # First try scroll_into_view_if_needed
+            try:
+                el.scroll_into_view_if_needed(timeout=5000)
+                page.wait_for_timeout(500)
+                return
+            except Exception as e:
+                logger.warning(f"scroll_into_view_if_needed failed: {e}, trying iterative scroll...")
+            
+            # Fallback: iterative scrolling until element appears
+            import time
+            start = time.time()
+            scroll_distance = 400
+            while time.time() - start < timeout / 1000:
+                if el.is_visible(timeout=500):
+                    logger.info(f"wait_for_selector: element appeared after scrolling")
+                    return
+                # Use our robust page_scroll to scroll down
+                page.evaluate(f"""
+                    (delta) => {{
+                        const elemBelowMouse = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+                        if (elemBelowMouse) {{
+                            let current = elemBelowMouse;
+                            while (current && current !== document.body) {{
+                                const style = window.getComputedStyle(current);
+                                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                                    current.scrollHeight > current.clientHeight) {{
+                                    current.scrollBy({{ top: delta, behavior: 'instant' }});
+                                    return;
+                                }}
+                                current = current.parentElement;
+                            }}
+                        }}
+                        window.scrollBy({{ top: delta, behavior: 'instant' }});
+                    }}
+                """, scroll_distance)
+                page.wait_for_timeout(300)
+            
+            # Final check
+            if el.is_visible(timeout=500):
+                return
+            
+            page.screenshot(path=f"fail_wait_selector_{selector[:30]}.png")
+            raise Exception(f"wait_for_selector: element '{selector}' not found after scrolling")
         else:
             page.wait_for_selector(selector, timeout=timeout)
 
@@ -131,16 +172,28 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
+    target_frame = v.get("frame") or v.get("frame_locator")
+    target_role = v.get("role")
+    target_index = v.get("index", 0)
 
-    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
+    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}' (frame: {target_frame})")
     fill_timeout = v.get("timeout", 10000)
 
     try:
-        if target_locator:
+        # Handle iframe context if frame is specified
+        if target_frame:
+            fl = page.frame_locator(target_frame)
+            if target_locator:
+                fl.locator(target_locator).first.fill(str(target_value), timeout=fill_timeout)
+            elif target_role:
+                fl.get_by_role(target_role, name=target_name, exact=v.get("exact", False)).fill(str(target_value), timeout=fill_timeout)
+            else:
+                fl.locator(f"textbox[name*='{target_name}']").first.fill(str(target_value), timeout=fill_timeout)
+        elif target_locator:
             el = page.locator(target_locator).first
             el.fill(str(target_value), timeout=fill_timeout)
         elif "role" in v:
-            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
+            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(target_index).fill(str(target_value), timeout=fill_timeout)
         else:
             candidates = [
                 page.get_by_label(target_name, exact=False),
@@ -779,6 +832,190 @@ def smart_wait(page: Page, v: dict):
 def reload_page(page: Page, v: dict):
     page.reload()
     page.wait_for_timeout(v.get("sleep_after", 3000))
+
+def page_scroll(page: Page, v: dict):
+    """
+    Page scroll that auto-detects the real scrollable container.
+    Uses multiple strategies in order:
+    1. JS scroll on detected scrollable container
+    2. mouse.wheel()
+    3. keyboard PageDown
+    4. keyboard ArrowDown
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    steps = v.get("steps", 1)
+
+    logger.info(f"page_scroll: scrolling by {y}px x{steps} steps")
+
+    viewport = page.viewport_size or {"width": 1280, "height": 720}
+    center_x = viewport["width"] // 2
+    center_y = viewport["height"] // 2
+
+    for i in range(steps):
+        page.mouse.move(center_x, center_y)
+        page.wait_for_timeout(100)
+
+        scroll_method = "unknown"
+
+        # Strategy 1: JS scroll on detected container
+        scroll_result = page.evaluate("""
+            () => {
+                const allScrollable = [];
+                document.querySelectorAll('div, section, article, main, ul').forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                        el.scrollHeight > el.clientHeight + 5) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.height > 0 && rect.top < window.innerHeight) {
+                            allScrollable.push({ el, scrollable: el.scrollHeight - rect.height, className: el.className.split(' ')[0] });
+                        }
+                    }
+                });
+
+                if (allScrollable.length > 0) {
+                    allScrollable.sort((a, b) => b.scrollable - a.scrollable);
+                    allScrollable[0].el.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                    return 'JS:' + allScrollable[0].className;
+                }
+                return 'JS_fail';
+            }
+        """)
+
+        if 'JS_fail' not in scroll_result:
+            scroll_method = scroll_result
+            logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            # JS scroll succeeded, but also try mouse.wheel + keyboard for MUI pages
+            page.mouse.wheel(0, y)
+            page.keyboard.press("PageDown")
+        else:
+            # Strategy 2: Try to find element under cursor and scroll it
+            elem_result = page.evaluate("""
+                () => {
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    let elem = document.elementFromPoint(centerX, centerY);
+                    while (elem && elem !== document.body) {
+                        if (elem.scrollHeight > elem.clientHeight) {
+                            elem.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                            return 'elem_scroll:' + elem.className.split(' ')[0];
+                        }
+                        elem = elem.parentElement;
+                    }
+                    return 'elem_fail';
+                }
+            """)
+
+            if 'elem_fail' not in elem_result:
+                scroll_method = elem_result
+                logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            else:
+                # Strategy 3: Try to scroll any scrollable element found
+                any_scroll = page.evaluate("""
+                    () => {
+                        const scrollable = document.querySelector('[style*="overflow"]');
+                        if (scrollable) {
+                            scrollable.scrollTop += 500;
+                            return 'any_scroll:' + scrollable.className.split(' ')[0];
+                        }
+                        // Try body
+                        if (document.body && document.body.scrollHeight > document.body.clientHeight) {
+                            document.body.scrollTop += 500;
+                            return 'body_scroll';
+                        }
+                        return 'scroll_fail';
+                    }
+                """)
+                
+                if 'scroll_fail' not in any_scroll:
+                    scroll_method = any_scroll
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                else:
+                    # Strategy 4: mouse.wheel()
+                    page.mouse.wheel(0, y)
+                    page.wait_for_timeout(200)
+                    scroll_method = "mouse_wheel"
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                    
+                    # Strategy 5: keyboard PageDown as last resort
+                    page.keyboard.press("PageDown")
+                    page.wait_for_timeout(200)
+                    page.keyboard.press("PageDown")
+                    logger.info(f"page_scroll: step {i+1}/{steps} keyboard PageDown x2")
+
+        # Log scroll position after all strategies
+        scroll_pos = page.evaluate("""
+            () => {
+                const main = document.querySelector('main, [role="main"], #__next, .main-content');
+                if (main) return 'main.scrollY=' + main.scrollTop + '/' + main.scrollHeight;
+                return 'window.scrollY=' + window.scrollY + '/' + document.body.scrollHeight;
+            }
+        """)
+        logger.info(f"page_scroll: position after step: {scroll_pos}")
+
+        page.wait_for_timeout(delay // steps if steps > 0 else delay)
+
+    logger.info("page_scroll: done")
+
+
+def scroll_tab_content(page: Page, v: dict):
+    """
+    Scroll the content area inside a tab (Posts tab, Products tab, etc).
+    Finds the scrollable container within the active tab content area.
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    
+    logger.info(f"scroll_tab_content: scrolling content by {y}px")
+    
+    result = page.evaluate(f"""
+        (scrollAmount) => {{
+            // Strategy 1: Find tab content container - look for the container after the Posts tab button
+            // Common patterns in tabbed UIs
+            const tabButton = Array.from(document.querySelectorAll('[role="tab"]')).find(t => t.textContent.includes('Posts'));
+            if (tabButton) {{
+                // Find the panel associated with this tab (usually the next sibling or element with aria-labelledby)
+                let container = tabButton.nextElementSibling;
+                while (container) {{
+                    if (container.scrollHeight > container.clientHeight) {{
+                        container.scrollTop += scrollAmount;
+                        return 'scrolled tab panel: ' + container.className;
+                    }}
+                    container = container.nextElementSibling;
+                }}
+                
+                // Alternative: find container by aria-labelledby
+                const panelId = tabButton.getAttribute('aria-controls');
+                if (panelId) {{
+                    const panel = document.getElementById(panelId);
+                    if (panel && panel.scrollHeight > panel.clientHeight) {{
+                        panel.scrollTop += scrollAmount;
+                        return 'scrolled by aria-controls: ' + panelId;
+                    }}
+                }}
+            }}
+            
+            // Strategy 2: Find any visible scrollable container in the main content area
+            const main = document.querySelector('[role="main"]') || document.querySelector('main') || document.querySelector('#root > div > div');
+            if (main && main.scrollHeight > main.clientHeight) {{
+                main.scrollTop += scrollAmount;
+                return 'scrolled main: ' + main.className;
+            }}
+            
+            // Strategy 3: Window scroll
+            window.scrollBy(0, scrollAmount);
+            return 'window scroll';
+        }}
+    """, y)
+    
+    logger.info(f"scroll_tab_content result: {result}")
+    page.wait_for_timeout(delay)
+
+def go_back(page: Page, v: dict):
+    """Go back in browser history (equivalent to clicking browser back button)."""
+    page.go_back()
+    page.wait_for_timeout(v.get("sleep_after", 3000))
+    logger.info("Navigated back in browser history")
 
 def test_invalid_qr(page: Page, v):
     from playwright.sync_api import sync_playwright
