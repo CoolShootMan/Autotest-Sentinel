@@ -24,6 +24,7 @@ from page.home import *
 
 # Import the new Action Registry
 from test_case.UI.Test_Katana.actions import get_action
+from .actions import get_action, create_session
 
 @allure.testcase('https://ones.cn/project/#/testcase/team/T7u1zXum/plan/QCuFwDdq/library/XcAFFViB/module/6mi4qiVp', 'ONS测试用例链接')
 @allure.title("测试执行")
@@ -55,25 +56,91 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     # --- Core Execution Engine ---
     for k, v in test_step.items():
         logger.info(f">>> Current Step: {k}")
-        
+
+        # Parse session namespace: session_<name>__<action>
+        session_prefix = "session_"
+        session_separator = "__"
+        target_session = None
+        actual_action_name = k
+
+        if k.startswith(session_prefix) and session_separator in k:
+            # Extract session name and action
+            parts = k[len(session_prefix):].split(session_separator, 1)
+            if len(parts) == 2:
+                session_name, action_name = parts
+                target_session = session_name
+                actual_action_name = action_name
+                logger.info(f">>> Session Namespace: session='{session_name}', action='{action_name}'")
+
+                # Auto-create session if it doesn't exist
+                if not hasattr(page, "_sessions"):
+                    setattr(page, "_sessions", {})
+
+                if session_name not in page._sessions:
+                    logger.info(f">>> Auto-creating session: {session_name}")
+                    create_session(page, {
+                        "name": session_name,
+                        "url": v.get("url") if isinstance(v, dict) else None
+                    })
+
+                # Set as active session
+                page._active_session = session_name
+
+        # Get the active page (session page or default page)
+        if target_session or hasattr(page, "_active_session") and page._active_session:
+            active_session_name = target_session or page._active_session
+            if active_session_name in page._sessions:
+                active_page = page._sessions[active_session_name]["page"]
+                logger.debug(f">>> Using page from session: {active_session_name}")
+            else:
+                active_page = page
+                logger.warning(f">>> Session '{active_session_name}' not found, using default page")
+        else:
+            active_page = getattr(page, "_active_page", page)
+
         # Global Crash Check
-        if page.get_by_text("Something went wrong!", exact=True).is_visible():
+        if active_page.get_by_text("Something went wrong!", exact=True).is_visible():
             logger.error("Application crash detected (Something went wrong!)")
-            page.screenshot(path="crash_detected.png")
+            active_page.screenshot(path="crash_detected.png")
             pytest.fail("Application crashed during test execution.")
 
         # 1. Action Registry Lookup
-        action = get_action(k)
-        
+        action = get_action(actual_action_name)
+
         if action:
             try:
-                action(page, v)
-                # Record successful step
-                page._execution_history.append((k, v))
+                # Handle session namespace actions
+                if isinstance(action, dict) and action.get("type") == "session_action":
+                    # This is a session namespace action
+                    session_name = action["session_name"]
+                    action_name = action["action_name"]
+
+                    # Get the actual action function
+                    actual_action = get_action(action_name)
+
+                    if actual_action:
+                        # Ensure session exists
+                        if session_name not in page._sessions:
+                            create_session(page, {"name": session_name})
+
+                        # Execute action in session context
+                        session_page = page._sessions[session_name]["page"]
+                        page._active_session = session_name
+
+                        logger.info(f">>> Executing '{action_name}' in session '{session_name}'")
+                        actual_action(session_page, v)
+                        page._execution_history.append((k, v))
+                    else:
+                        logger.error(f"Session action '{action_name}' not found")
+                        pytest.fail(f"Session action '{action_name}' not found")
+                else:
+                    # Regular action
+                    action(active_page, v)
+                    page._execution_history.append((k, v))
             except Exception as e:
                 logger.error(f"Action '{k}' failed: {e}")
                 # Try generic screenshot on failure
-                try: page.screenshot(path=f"fail_{k}.png")
+                try: active_page.screenshot(path=f"fail_{k}.png")
                 except: pass
                 raise
         else:
@@ -84,21 +151,21 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 try:
                    target_text = v.get('text') or v.get('name')
                    if target_text:
-                       page.click(f"text={target_text}", timeout=5000)
+                       active_page.click(f"text={target_text}", timeout=5000)
                        logger.info(f"Fallback click success for: {target_text}")
                        fallback_success = True
                        page._execution_history.append((k, v))
                 except:
                    pass
-            
+
             if not fallback_success:
                 logger.error(f"FATAL: Step '{k}' could not be resolved by Registry or Fallback.")
                 pytest.fail(f"Step '{k}' not found or failed in fallback. Check actions/__init__.py or YAML key.")
 
         # Post-step Crash Check
-        if page.get_by_text("Something went wrong!", exact=True).is_visible():
+        if active_page.get_by_text("Something went wrong!", exact=True).is_visible():
              logger.error("Application crash detected after step completion.")
-             page.screenshot(path=f"crash_after_{k}.png")
+             active_page.screenshot(path=f"crash_after_{k}.png")
              pytest.fail(f"Application crashed after step: {k}")
 
     # --- Assertion Phase ---

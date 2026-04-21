@@ -17,8 +17,72 @@ def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
     if url:
+        params = v if isinstance(v, dict) else {}
+        # --- Context-level configuration (must be set before page navigation) ---
+        ctx = page.context
+
+        geolocation = params.get("geolocation")
+        if geolocation:
+            import json
+            if isinstance(geolocation, str):
+                geolocation = json.loads(geolocation)
+            logger.info(f"Setting geolocation: {geolocation}")
+            ctx.set_geolocation(geolocation)
+
+        timezone_id = params.get("timezone_id")
+        if timezone_id:
+            # timezone_id is a context creation param, simulate via JS injection
+            logger.info(f"Injecting timezone override: {timezone_id}")
+            page.add_init_script(f"""
+                // Override Date timezone
+                const _origTimezone = Intl.DateTimeFormat;
+                window.Intl.DateTimeFormat = function(...args) {{
+                    if (args.length === 0) args.push(undefined, {{ timeZone: '{timezone_id}' }});
+                    else if (args.length === 1) args.push({{ timeZone: '{timezone_id}' }});
+                    else if (args[1] && typeof args[1] === 'object') args[1].timeZone = '{timezone_id}';
+                    return new _origTimezone(...args);
+                }};
+                window.Intl.DateTimeFormat.prototype = _origTimezone.prototype;
+                window.Intl.DateTimeFormat.supportedLocalesOf = _origTimezone.supportedLocalesOf;
+            """)
+
+        locale = params.get("locale")
+        if locale:
+            # locale is a context creation param, simulate via JS injection
+            logger.info(f"Injecting locale override: {locale}")
+            page.add_init_script(f"""
+                // Override navigator.language and navigator.languages
+                Object.defineProperty(navigator, 'language', {{ get: () => '{locale}', configurable: true }});
+                Object.defineProperty(navigator, 'languages', {{ get: () => ['{locale}'], configurable: true }});
+            """)
+
+        permissions = params.get("permissions")
+        if permissions:
+            logger.info(f"Granting permissions: {permissions}")
+            ctx.grant_permissions(permissions)
+
+        # Check if cookie_file is provided - inject cookies BEFORE opening page
+        cookie_file = params.get("cookie_file")
+        if cookie_file:
+            logger.info(f">>> Injecting cookies BEFORE opening page: {cookie_file}")
+            try:
+                _inject_cookies_to_context(page, cookie_file)
+                logger.info("✓ Cookies injected successfully, opening page with authenticated session")
+            except Exception as e:
+                logger.warning(f"⚠ Cookie injection failed: {e}. Continuing with unauthenticated session.")
+
         from page.home import page_open
         page_open(page, url)
+
+        # Automatically handle pop-ups that appear after page loading
+        logger.info(">>> Auto-handling modals after page load")
+        try:
+            # Wait for page to fully render before detecting modals
+            page.wait_for_timeout(1000)
+            auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
+        except Exception as e:
+            # Failure in bullet layer processing does not affect the main process
+            logger.debug(f"Auto modal handling skipped or failed: {e}")
 
 def swipe_avoid_plus(page: Page, v: dict):
     x = v.get("x", 0)
@@ -55,8 +119,49 @@ def wait_for_selector(page: Page, v: dict):
     if selector:
         el = page.locator(selector).first
         if scroll:
-            el.scroll_into_view_if_needed(timeout=timeout)
-            page.wait_for_timeout(500)
+            # First try scroll_into_view_if_needed
+            try:
+                el.scroll_into_view_if_needed(timeout=5000)
+                page.wait_for_timeout(500)
+                return
+            except Exception as e:
+                logger.warning(f"scroll_into_view_if_needed failed: {e}, trying iterative scroll...")
+            
+            # Fallback: iterative scrolling until element appears
+            import time
+            start = time.time()
+            scroll_distance = 400
+            while time.time() - start < timeout / 1000:
+                if el.is_visible(timeout=500):
+                    logger.info(f"wait_for_selector: element appeared after scrolling")
+                    return
+                # Use our robust page_scroll to scroll down
+                page.evaluate(f"""
+                    (delta) => {{
+                        const elemBelowMouse = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+                        if (elemBelowMouse) {{
+                            let current = elemBelowMouse;
+                            while (current && current !== document.body) {{
+                                const style = window.getComputedStyle(current);
+                                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                                    current.scrollHeight > current.clientHeight) {{
+                                    current.scrollBy({{ top: delta, behavior: 'instant' }});
+                                    return;
+                                }}
+                                current = current.parentElement;
+                            }}
+                        }}
+                        window.scrollBy({{ top: delta, behavior: 'instant' }});
+                    }}
+                """, scroll_distance)
+                page.wait_for_timeout(300)
+            
+            # Final check
+            if el.is_visible(timeout=500):
+                return
+            
+            page.screenshot(path=f"fail_wait_selector_{selector[:30]}.png")
+            raise Exception(f"wait_for_selector: element '{selector}' not found after scrolling")
         else:
             page.wait_for_selector(selector, timeout=timeout)
 
@@ -131,16 +236,28 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
+    target_frame = v.get("frame") or v.get("frame_locator")
+    target_role = v.get("role")
+    target_index = v.get("index", 0)
 
-    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}'")
+    logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}' (frame: {target_frame})")
     fill_timeout = v.get("timeout", 10000)
 
     try:
-        if target_locator:
+        # Handle iframe context if frame is specified
+        if target_frame:
+            fl = page.frame_locator(target_frame)
+            if target_locator:
+                fl.locator(target_locator).first.fill(str(target_value), timeout=fill_timeout)
+            elif target_role:
+                fl.get_by_role(target_role, name=target_name, exact=v.get("exact", False)).fill(str(target_value), timeout=fill_timeout)
+            else:
+                fl.locator(f"textbox[name*='{target_name}']").first.fill(str(target_value), timeout=fill_timeout)
+        elif target_locator:
             el = page.locator(target_locator).first
             el.fill(str(target_value), timeout=fill_timeout)
         elif "role" in v:
-            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(v.get("index", 0)).fill(str(target_value), timeout=fill_timeout)
+            page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(target_index).fill(str(target_value), timeout=fill_timeout)
         else:
             candidates = [
                 page.get_by_label(target_name, exact=False),
@@ -150,7 +267,7 @@ def smart_fill(page: Page, v: dict):
             target_id = v.get("index", 0)
             filled = False
             for c in candidates:
-                if c.nth(target_id).is_visible():
+                if c.nth(target_id).is_visible(timeout=2000):    # 加超时：原来无超时可能等 30s
                     c.nth(target_id).fill(str(target_value), timeout=fill_timeout)
                     filled = True
                     break
@@ -288,15 +405,23 @@ def smart_upload(page: Page, v: dict):
         fc = fc_info.value
         fc.set_files(file_path if isinstance(file_path, list) else [file_path])
 
-def smart_click(page: Page, v: dict):
-    if page.get_by_text("Something went wrong!", exact=True).is_visible():
-        logger.error("Application Crashed!")
-        raise Exception("Application Crashed")
+def _smart_click_core(page: Page, v: dict):
+    """
+    核心点击逻辑（不含 Page-level Search 和 AI 自愈）。
+    smart_click 和 smart_click_scan 共用此核心函数。
+    """
+    # 优化：is_visible 加 5s 超时（原来无超时，可能等 30s）
+    try:
+        if page.get_by_text("Something went wrong!", exact=True).is_visible(timeout=5000):
+            logger.error("Application Crashed!")
+            raise Exception("Application Crashed")
+    except: pass
 
     # Wait for loading overlays/backdrops to disappear before clicking anything
+    # 优化：timeout 从 8s 降至 2s；用 detach 状态检测（不阻塞主流程）
     try:
         backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
-        backdrop.wait_for(state="hidden", timeout=8000)
+        backdrop.wait_for(state="detached", timeout=2000)  # 2s 超时，避免卡住
     except: pass
 
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
@@ -305,16 +430,15 @@ def smart_click(page: Page, v: dict):
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
     target_test_id = v.get("test_id")
-    force = v.get("force", False) # Default to False for better event triggering
-    optional = v.get("optional", False) # If True, skip silently when element not found
-    skip_if_disabled = v.get("skip_if_disabled", False) # If True, skip silently when button is disabled
-    skip_if_checked = v.get("skip_if_checked", False)    # If True, skip silently when checkbox is already checked
+    force = v.get("force", False)
+    optional = v.get("optional", False)
+    skip_if_disabled = v.get("skip_if_disabled", False)
+    skip_if_checked = v.get("skip_if_checked", False)
 
-    # Validation
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
 
-    # skip_if_checked: if the checkbox is already checked (ON), skip the click
+    # skip_if_checked
     if skip_if_checked and target_locator:
         try:
             el = page.locator(target_locator).nth(target_index)
@@ -327,7 +451,7 @@ def smart_click(page: Page, v: dict):
 
     logger.info(f"Click started for target: {target_name or target_locator or target_role}")
 
-    # skip_if_disabled: if the target button is disabled, skip this step silently
+    # skip_if_disabled
     if skip_if_disabled:
         try:
             if target_role and target_name:
@@ -336,166 +460,226 @@ def smart_click(page: Page, v: dict):
                 candidate = page.locator(target_locator).nth(target_index)
             else:
                 candidate = page.get_by_text(target_name, exact=target_exact).nth(target_index)
-            # is_disabled() returns True when button has disabled attribute or aria-disabled="true"
             if candidate.is_disabled(timeout=3000):
                 logger.info(f"skip_if_disabled: '{target_name or target_locator}' is disabled, skipping step.")
                 return
         except Exception as e:
             logger.debug(f"skip_if_disabled check error (proceeding normally): {e}")
 
-    # Scoping: find all visible modals
-    modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
-    visible_modals = [m for m in modals if m.is_visible()]
+    # Scoping: find visible modals
+    # Use is_visible() without timeout to avoid blocking on hidden modals
+    raw_modals = page.locator("div[role='dialog'], .MuiDialog-root, .MuiModal-root").all()
+    visible_modals = []
+    for m in raw_modals[:10]:
+        try:
+            if m.is_visible():
+                visible_modals.append(m)
+        except: pass
     active_modal = visible_modals[-1] if visible_modals else None
 
-    # Special handling for "Publish": use JS to find and click, searching in visible dialog first, then full page
-    if target_name == "Publish":
-        logger.debug("Publish handler: using JS-based click")
-        try:
-            page.wait_for_timeout(3000)  # Wait for loading/Confirm dialog to settle
-            clicked = page.evaluate("""
-                () => {
-                    // Find all visible dialogs and pick the last one (most recent)
-                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
-                    let targetContainer = null;
-                    for (const d of dialogs) {
-                        const style = window.getComputedStyle(d);
-                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
-                            targetContainer = d;
-                        }
-                    }
-                    // Search in visible dialog first
-                    if (targetContainer) {
-                        const dialogBtns = Array.from(targetContainer.querySelectorAll('button'));
-                        for (const btn of dialogBtns) {
-                            const t = btn.textContent.trim();
-                            if (t === 'Publish' && btn.offsetParent !== null) {
-                                btn.click();
-                                return 'dialog';
-                            }
-                        }
-                    }
-                    // Fallback: search entire page
-                    const allBtns = Array.from(document.querySelectorAll('button'));
-                    for (const btn of allBtns) {
-                        const t = btn.textContent.trim();
-                        if (t === 'Publish' && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'page';
-                        }
-                    }
-                    return null;
-                }
-            """)
-            if clicked:
-                logger.info(f"Publish clicked via JS ({clicked})")
+    # Save / Publish: 优先 Playwright 快速定位，失败后再走 JS fallback
+    if target_name in ("Save", "Publish"):
+        playwright_failed_for_special = False
+
+        if active_modal:
+            try:
+                el = active_modal.get_by_role("button", name=target_name).nth(target_index)
+                el.scroll_into_view_if_needed(timeout=3000)
+                page.wait_for_timeout(300)
+                el.click(force=True)
+                logger.info(f"smart_click: '{target_name}' clicked via Playwright (modal-scoped)")
                 page.wait_for_timeout(1000)
                 return
-            else:
-                logger.debug("JS Publish: no visible button found")
-        except Exception as e:
-            logger.debug(f"JS Publish click error: {e}")
+            except Exception:
+                playwright_failed_for_special = True
 
-    # Special handling for "Save": use JS to find and click the LAST visible Save button in the most recent dialog
-    if target_name == "Save":
-        logger.debug("Save handler: using JS-based click")
-        try:
-            page.wait_for_timeout(1500)
-            clicked = page.evaluate("""
-                () => {
-                    // Find all visible dialogs
-                    const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
-                    let targetContainer = null;
-                    for (const d of dialogs) {
-                        const style = window.getComputedStyle(d);
-                        if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
-                            targetContainer = d;
-                        }
-                    }
-                    // Search in the last visible dialog first, then full page
-                    const searchIn = targetContainer || document.body;
-                    const btns = Array.from(searchIn.querySelectorAll('button'));
-                    for (const btn of btns) {
-                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'ok';
-                        }
-                    }
-                    // Fallback: search entire page
-                    const allBtns = Array.from(document.querySelectorAll('button'));
-                    for (const btn of allBtns) {
-                        if (btn.textContent.trim() === 'Save' && !btn.disabled && btn.offsetParent !== null) {
-                            btn.click();
-                            return 'page';
-                        }
-                    }
-                    return null;
-                }
-            """)
-            if clicked:
-                logger.info(f"Save clicked via JS ({clicked})")
+        if not playwright_failed_for_special and not active_modal:
+            try:
+                el = page.get_by_role("button", name=target_name).nth(target_index)
+                el.scroll_into_view_if_needed(timeout=3000)
+                page.wait_for_timeout(300)
+                el.click(force=True)
+                logger.info(f"smart_click: '{target_name}' clicked via Playwright (page-level)")
                 page.wait_for_timeout(1000)
                 return
-            else:
-                logger.debug("JS Save: no enabled button found")
+            except Exception:
+                playwright_failed_for_special = True
+
+        js_click_code = """
+            () => {
+                const dialogs = Array.from(document.querySelectorAll('[role="dialog"], .MuiDialog-root, [class*="MuiDialog"]'));
+                let targetContainer = null;
+                for (const d of dialogs) {
+                    const style = window.getComputedStyle(d);
+                    if (style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0) {
+                        targetContainer = d;
+                    }
+                }
+                const searchIn = targetContainer || document.body;
+                const btns = Array.from(searchIn.querySelectorAll('button'));
+                for (const btn of btns) {
+                    if (btn.textContent.trim() === arguments[0] && !btn.disabled && btn.offsetParent !== null) {
+                        btn.click(); return 'ok';
+                    }
+                }
+                const allBtns = Array.from(document.querySelectorAll('button'));
+                for (const btn of allBtns) {
+                    if (btn.textContent.trim() === arguments[0] && !btn.disabled && btn.offsetParent !== null) {
+                        btn.click(); return 'page';
+                    }
+                }
+                return null;
+            }
+        """
+        try:
+            clicked = page.evaluate(js_click_code, target_name)
+            if clicked:
+                logger.info(f"{target_name} clicked via JS fallback ({clicked})")
+                page.wait_for_timeout(1000)
+                return
         except Exception as e:
-            logger.debug(f"JS Save click error: {e}")
+            logger.debug(f"JS {target_name} fallback error: {e}")
 
-    # For most buttons (Get Tickets, Selling, Customize, Batch set, etc.), search the WHOLE page.
-    # Only scope to modal for known dialog buttons (Confirm, Save, Cancel, etc.)
-    dialog_buttons = {"Confirm", "Save", "Cancel", "Apply to all", "Close", "Delete", "Yes", "No"}
-    root = active_modal if (active_modal and target_name in dialog_buttons) else page
+    # ---- 通用定位策略 1-4 ----
+    # Restore standard scoping: if there is an active modal, restrict all searches to it by default.
+    root = active_modal if active_modal else page
 
-    try:
-        # 1. Test ID attempt (Most robust if available)
-        if target_test_id:
+    # 1. Test ID
+    if target_test_id:
+        try:
             el = root.get_by_test_id(target_test_id).nth(target_index)
             if el.is_visible(timeout=5000):
                 el.click(force=force)
                 return
+        except: pass
 
-        # 2. Standard locator attempt
-        # If target_locator is an absolute XPath or specified, use it directly from page
-        if target_locator:
+    # 2. Standard locator
+    # 优化：直接 click()，不先 is_visible（Playwright click 内部自带检查）
+    if target_locator:
+        try:
             if target_locator.startswith("/") or target_locator.startswith("xpath="):
-                # Ensure Playwright treats it as XPath explicitly to avoid CSS engine errors
                 xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
                 el = page.locator(xpath_locator).nth(target_index)
             else:
-                el = root.locator(target_locator).nth(target_index)
-            
-            # If name is also provided, filter by it
+                # 修复: 自定义 CSS locator 退回使用全局 page.locator() 进行查找。
+                # 由于这些 locator 通常是从 body/html 开始的完整特征路径，将它们约束在 active_modal 之下会导致层叠错误 (如 dialog 内部再找一个 dialog）。
+                el = page.locator(target_locator).nth(target_index)
+
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
-                
-            if el.is_visible(timeout=60000):
-                el.click(force=force)
-                return
-            else:
-                if optional:
-                    logger.info(f"Optional click: element at index {target_index} not visible, skipping.")
-                    return
-    except Exception as e:
-        if optional:
-            logger.info(f"Optional click: locator attempt failed for index {target_index}, skipping. ({e})")
+            el.click(force=force, timeout=5000)  # 直接点击，不先 is_visible
+            logger.info(f"Clicked via locator: {target_name or target_locator}")
             return
-        logger.debug(f"Locator attempt failed: {e}")
-
-    try:
-        # 1.1 Aria-label fallback (Critical for icon buttons)
-        if target_name:
-            el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            if el.is_visible(timeout=60000):
-                el.click(force=force)
-                logger.info(f"Clicked via aria-label fallback: {target_name}")
+        except Exception as e:
+            if optional:
+                logger.info(f"Optional click: locator attempt failed for index {target_index}, skipping. ({e})")
                 return
-    except: pass
+            logger.debug(f"Locator attempt failed: {e}")
 
-    # ---- 4. Robust page-level fallback (always from page, not from root modal) ----
+    # 3. Aria-label fallback（按钮很少有 aria-label，timeout 极短，避免白等）
+    if target_name:
+        try:
+            el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
+            el.click(force=force, timeout=3000)  # 直接点击
+            logger.info(f"Clicked via aria-label fallback: {target_name}")
+            return
+        except: pass
+
+    # 4. Role / text fallback
+    # 优化：移除 scroll_into_view_if_needed（会阻塞且浪费时间）
+    # - Playwright click() 内部自带滚动，不需要显式 scroll
+    # - 直接 click()，失败再 force
+    try:
+        if target_role:
+            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+        elif target_name:
+            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
+        if el:
+            # 先尝试正常点击（Playwright click 内部自带 scroll + 可见性检查）
+            try:
+                el.click(timeout=5000)  # 5s 超时，不 force
+                logger.info(f"Clicked '{target_name}'")
+                if target_role == 'option':
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                return
+            except Exception as click_e:
+                logger.debug(f"Normal click failed ({click_e}), trying force...")
+
+            # 点击失败，尝试 force（跳过所有检查）
+            try:
+                el.click(force=True, timeout=3000)
+                logger.info(f"Force-clicked '{target_name}'")
+                if target_role == 'option':
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                return
+            except Exception as force_e:
+                logger.debug(f"Force click failed, trying JS: {force_e}")
+                try:
+                    page.evaluate("(el) => el.click()", el.element_handle())
+                    logger.info(f"JS-clicked '{target_name}'")
+                    return
+                except Exception as js_e:
+                    logger.debug(f"JS click also failed: {js_e}")
+                    raise
+    except Exception as e:
+            logger.debug(f"Standard click failed: {e}")
+
+    raise Exception(f"smart_click: element not found: {target_name or target_locator}")
+
+
+def smart_click(page: Page, v: dict):
+    """
+    快速点击 — 仅使用传统 Playwright 定位策略。
+
+    参数：
+        fallback_scan: bool, 默认为 False。
+            - False: 精准定位失败后直接抛出异常，不触发 Page-level Search。
+                      **适用于 95% 的普通用例，获得最优性能。**
+            - True:  精准定位失败后，触发 Page-level Search + AI 自愈兜底。
+                      **适用于弹窗嵌套、多层遮罩等传统定位困难的场景。**
+
+    YAML 用法示例：
+        # 普通点击（快速）
+        click_save: { name: 'Save' }
+
+        # 困难场景（带 Page-level Search，耗时但更稳定）
+        click_save: { name: 'Save', fallback_scan: true }
+
+        # 困难场景（显式名称，语义更清晰）
+        R_click_save_hard: { name: 'Save', fallback_scan: true }
+    """
+    try:
+        _smart_click_core(page, v)
+        return  # 核心定位成功，直接返回
+    except Exception as primary_error:
+        if not v.get("fallback_scan", False):
+            # fallback_scan=False（默认）：精准定位失败 → 直接抛异常，不拖泥带水
+            logger.debug(f"smart_click (fast): {primary_error}")
+            raise primary_error
+
+        # fallback_scan=True：进入 Page-level Search + AI 兜底链路
+        _smart_click_with_fallback(page, v, primary_error)
+
+
+def _smart_click_with_fallback(page: Page, v, primary_error):
+    """
+    完整兜底点击 — 包含 Page-level Search 和 AI 自愈。
+    仅在 fallback_scan=True 时由 smart_click 调用。
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    optional = v.get("optional", False)
+
+    logger.info(f"smart_click (fallback_scan=True): Page-level Search triggered for '{target_name or target_role}'")
+
+    # ---- 5. Page-level Search: 全页面按钮枚举 ----
+    # 优化：is_visible 超时从 2000ms 降至 500ms，减少等待时间
     if target_role == 'button' or target_name in {"Get Tickets", "Selling", "Customize products", "Batch set commission rates"}:
         try:
             if target_name:
-                # Find ALL matching elements on the page
                 if target_role:
                     all_matches = page.get_by_role(target_role, name=target_name, exact=target_exact).all()
                 else:
@@ -503,7 +687,8 @@ def smart_click(page: Page, v: dict):
                 logger.debug(f"Page-level search for '{target_name}': {len(all_matches)} total elements")
                 for idx, candidate in enumerate(all_matches):
                     try:
-                        is_vis = candidate.is_visible(timeout=2000)
+                        # 优化：无超时，快速判断可见性 (避免每个隐藏元素阻塞 500ms)
+                        is_vis = candidate.is_visible()
                         if is_vis:
                             logger.info(f"Page-level found '{target_name}' #{idx}, clicking with force")
                             candidate.click(force=True)
@@ -518,137 +703,96 @@ def smart_click(page: Page, v: dict):
         except Exception as e:
             logger.debug(f"Page-level fallback error: {e}")
 
-    try:
-        if target_role:
-            el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
-        elif target_name:
-            el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
-
-        # FINAL ATTEMPT: For dialog buttons, skip scroll stability check (dialogs often have CSS animations)
-        if el:
-            try:
-                el.scroll_into_view_if_needed(timeout=3000)
-            except Exception as scroll_e:
-                logger.debug(f"Scroll not stable (normal for dialogs): {scroll_e}")
-            page.wait_for_timeout(300)
-            try:
-                # Always try force=True for dialog buttons to bypass animation/timeouts
-                el.click(force=True)
-                logger.info(f"Force-clicked '{target_name}'")
-                return
-            except Exception as click_e:
-                logger.debug(f"Force click failed, trying JS: {click_e}")
-                # Last resort: JS click using element_handle
-                try:
-                    page.evaluate("(el) => el.click()", el.element_handle())
-                    logger.info(f"JS-clicked '{target_name}'")
-                    return
-                except Exception as js_e:
-                    logger.debug(f"JS click also failed: {js_e}")
-                    raise
-            # Close dropdown/listbox after selecting an option
-            if target_role == 'option':
-                page.keyboard.press("Escape")
-                page.wait_for_timeout(300)
-            return
-    except Exception as e:
-        logger.debug(f"Standard click failed: {e}")
-
-
-    # 3. --- AI Self-Healing Fallback (The "Brain") ---
-    # Optional check: if all traditional methods failed and this click is optional, skip gracefully
+    # ---- 6. AI Self-Healing Fallback ----
     if optional:
-        logger.info(f"Optional click: element '{target_name or target_locator}' not found after all attempts, skipping.")
+        logger.info(f"Optional click: element '{target_name}' not found after all attempts, skipping.")
         return
 
     # Global Kill-switch check
     if v.get("disable_ai", False) or os.environ.get("AI_DISABLED") == "True":
-        logger.warning(f"AI Healing is DISABLED for '{target_name or target_locator}'. Raising original error.")
-        
-        # 3.1 Global Fallback (Last ditch effort for common buttons like 'Add')
+        logger.warning(f"AI Healing is DISABLED for '{target_name}'. Raising original error.")
         if target_role == 'button' or target_name == 'Add' or target_name == 'Add new':
             try:
                 logger.debug("Traditional/Modal search failed. Trying global search for last visible button...")
                 all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
                 for btn in reversed(all_btns):
-                    if btn.is_visible():
-                        try:
-                            btn.scroll_into_view_if_needed(timeout=3000)
-                        except: pass
-                        btn.click(force=True)
-                        logger.info(f"Global fallback SUCCESS for '{target_name}'")
-                        return
-                    else:
-                        # Try JS click for hidden elements
-                        try:
-                            page.evaluate("(el) => el.click()", btn.element_handle())
-                            logger.info(f"Global fallback SUCCESS (JS) for '{target_name}'")
+                    try:
+                        if btn.is_visible(timeout=1000):           # 优化：加 1s 超时（原来无超时等 30s）
+                            try:
+                                btn.scroll_into_view_if_needed(timeout=3000)
+                            except: pass
+                            btn.click(force=True)
+                            logger.info(f"Global fallback SUCCESS for '{target_name}'")
                             return
-                        except: pass
+                        else:
+                            try:
+                                page.evaluate("(el) => el.click()", btn.element_handle())
+                                logger.info(f"Global fallback SUCCESS (JS) for '{target_name}'")
+                                return
+                            except: pass
+                    except: pass
             except: pass
-            
-        raise Exception(f"Element not found: {target_name or target_locator}")
+        raise Exception(f"Element not found: {target_name}")
 
     logger.error("Traditional methods failed. Triggering AI Pure Vision Healing...")
     try:
         page_history = getattr(page, "_execution_history", [])
-        instruction = f"Click the element: '{target_name or target_locator}'"
+        instruction = f"Click the element: '{target_name}'"
         safe_name = re.sub(r'[^\w\-]', '_', str(target_name or 'target'))[:30]
         screenshot_path = f"ai_vision_{safe_name}.png"
         page.screenshot(path=screenshot_path)
-        
+
         res = ai_vision.find_element_pure_vision(screenshot_path, instruction, page_history)
-        
+
         if res.get("found") and res.get("coordinates"):
             coords = res["coordinates"]
             x, y = coords["x"], coords["y"]
             initial_url = page.url
-            
+
             def perform_click(cx, cy, label):
                 logger.debug(f"Performing {label} at {cx}, {cy}")
                 page.mouse.click(cx, cy)
                 page.wait_for_timeout(1500)
-            
+
             perform_click(x, y, "AI Primary Click")
-            
+
             # --- SELF-PATCHING LOGIC ---
             suggested = res.get("suggested_locator")
             yaml_path = getattr(page, "_yaml_path", None)
             case_id = getattr(page, "_test_caseno", None)
-            
+
             if suggested and yaml_path and case_id:
                 try:
                     from .utils.yaml_patcher import patch_yaml_step
                     patch_yaml_step(yaml_path, case_id, target_name, suggested)
                 except Exception as py_ex:
                     logger.warning(f"Self-Patching failed: {py_ex}")
-            
+
             if res.get("suggested_action") == "GOAL_CLICK" and page.url == initial_url:
                 logger.warning("Starting Jitter Retries...")
                 for jx, jy in [(2,2), (-2,-2), (3,0), (0,3)]:
                     if page.url != initial_url: break
                     perform_click(x + jx, y + jy, "Jitter")
-            
+
             if res.get("suggested_action") == "RECOVERY_CLICK" or page.url != initial_url:
                 if v.get("_retry_ai", 0) < 2:
                     v["_retry_ai"] = v.get("_retry_ai", 0) + 1
                     return smart_click(page, v)
             return
         else:
-            logger.error(f"💀 AI SOM could not locate the element. Logic ends here.")
+            logger.error(f"AI SOM could not locate the element. Logic ends here.")
     except Exception as ai_err:
         logger.error(f"AI Healing Error: {ai_err}")
 
-    # If even AI fails, re-raise original or fail
     if v.get("_retry_ai", 0) > 0:
-        return # We already tried
-    raise Exception(f"Failed to click '{target_name or target_locator}' after all attempts including AI.")
+        return
+    raise Exception(f"Failed to click '{target_name}' after all attempts including AI.")
 
 def click_modal_close(page: Page, v: dict):
     logger.info("Attempting to close modal...")
     try:
         close_btn = page.locator("div[role='dialog'] button[aria-label='close'], .MuiDialog-root button.close").first
-        if close_btn.is_visible():
+        if close_btn.is_visible(timeout=3000):            # 加超时：原来无超时可能等 30s
             close_btn.click()
         else:
             page.keyboard.press("Escape")
@@ -674,7 +818,7 @@ def verify_text_visible(page: Page, v: dict):
             el.wait_for(state="hidden", timeout=timeout)
             logger.info(f"Confirmed element is not visible: {text or v.get('locator')}")
         except:
-            if el.is_visible():
+            if el.is_visible(timeout=3000):                   # 加超时：原来无超时可能等 30s
                 page.screenshot(path=f"fail_not_visible_{str(text or v.get('locator'))[:10]}.png")
                 raise AssertionError(f"Element '{text or v.get('locator')}' is still visible but should not be.")
         return
@@ -779,6 +923,190 @@ def smart_wait(page: Page, v: dict):
 def reload_page(page: Page, v: dict):
     page.reload()
     page.wait_for_timeout(v.get("sleep_after", 3000))
+
+def page_scroll(page: Page, v: dict):
+    """
+    Page scroll that auto-detects the real scrollable container.
+    Uses multiple strategies in order:
+    1. JS scroll on detected scrollable container
+    2. mouse.wheel()
+    3. keyboard PageDown
+    4. keyboard ArrowDown
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    steps = v.get("steps", 1)
+
+    logger.info(f"page_scroll: scrolling by {y}px x{steps} steps")
+
+    viewport = page.viewport_size or {"width": 1280, "height": 720}
+    center_x = viewport["width"] // 2
+    center_y = viewport["height"] // 2
+
+    for i in range(steps):
+        page.mouse.move(center_x, center_y)
+        page.wait_for_timeout(100)
+
+        scroll_method = "unknown"
+
+        # Strategy 1: JS scroll on detected container
+        scroll_result = page.evaluate("""
+            () => {
+                const allScrollable = [];
+                document.querySelectorAll('div, section, article, main, ul').forEach(el => {
+                    const style = window.getComputedStyle(el);
+                    if ((style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                        el.scrollHeight > el.clientHeight + 5) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.height > 0 && rect.top < window.innerHeight) {
+                            allScrollable.push({ el, scrollable: el.scrollHeight - rect.height, className: el.className.split(' ')[0] });
+                        }
+                    }
+                });
+
+                if (allScrollable.length > 0) {
+                    allScrollable.sort((a, b) => b.scrollable - a.scrollable);
+                    allScrollable[0].el.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                    return 'JS:' + allScrollable[0].className;
+                }
+                return 'JS_fail';
+            }
+        """)
+
+        if 'JS_fail' not in scroll_result:
+            scroll_method = scroll_result
+            logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            # JS scroll succeeded, but also try mouse.wheel + keyboard for MUI pages
+            page.mouse.wheel(0, y)
+            page.keyboard.press("PageDown")
+        else:
+            # Strategy 2: Try to find element under cursor and scroll it
+            elem_result = page.evaluate("""
+                () => {
+                    const centerX = window.innerWidth / 2;
+                    const centerY = window.innerHeight / 2;
+                    let elem = document.elementFromPoint(centerX, centerY);
+                    while (elem && elem !== document.body) {
+                        if (elem.scrollHeight > elem.clientHeight) {
+                            elem.scrollBy({ top: window.innerHeight * 0.8, behavior: 'instant' });
+                            return 'elem_scroll:' + elem.className.split(' ')[0];
+                        }
+                        elem = elem.parentElement;
+                    }
+                    return 'elem_fail';
+                }
+            """)
+
+            if 'elem_fail' not in elem_result:
+                scroll_method = elem_result
+                logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+            else:
+                # Strategy 3: Try to scroll any scrollable element found
+                any_scroll = page.evaluate("""
+                    () => {
+                        const scrollable = document.querySelector('[style*="overflow"]');
+                        if (scrollable) {
+                            scrollable.scrollTop += 500;
+                            return 'any_scroll:' + scrollable.className.split(' ')[0];
+                        }
+                        // Try body
+                        if (document.body && document.body.scrollHeight > document.body.clientHeight) {
+                            document.body.scrollTop += 500;
+                            return 'body_scroll';
+                        }
+                        return 'scroll_fail';
+                    }
+                """)
+                
+                if 'scroll_fail' not in any_scroll:
+                    scroll_method = any_scroll
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                else:
+                    # Strategy 4: mouse.wheel()
+                    page.mouse.wheel(0, y)
+                    page.wait_for_timeout(200)
+                    scroll_method = "mouse_wheel"
+                    logger.info(f"page_scroll: step {i+1}/{steps} {scroll_method}")
+                    
+                    # Strategy 5: keyboard PageDown as last resort
+                    page.keyboard.press("PageDown")
+                    page.wait_for_timeout(200)
+                    page.keyboard.press("PageDown")
+                    logger.info(f"page_scroll: step {i+1}/{steps} keyboard PageDown x2")
+
+        # Log scroll position after all strategies
+        scroll_pos = page.evaluate("""
+            () => {
+                const main = document.querySelector('main, [role="main"], #__next, .main-content');
+                if (main) return 'main.scrollY=' + main.scrollTop + '/' + main.scrollHeight;
+                return 'window.scrollY=' + window.scrollY + '/' + document.body.scrollHeight;
+            }
+        """)
+        logger.info(f"page_scroll: position after step: {scroll_pos}")
+
+        page.wait_for_timeout(delay // steps if steps > 0 else delay)
+
+    logger.info("page_scroll: done")
+
+
+def scroll_tab_content(page: Page, v: dict):
+    """
+    Scroll the content area inside a tab (Posts tab, Products tab, etc).
+    Finds the scrollable container within the active tab content area.
+    """
+    y = v.get("y", 500)
+    delay = v.get("delay", 1000)
+    
+    logger.info(f"scroll_tab_content: scrolling content by {y}px")
+    
+    result = page.evaluate(f"""
+        (scrollAmount) => {{
+            // Strategy 1: Find tab content container - look for the container after the Posts tab button
+            // Common patterns in tabbed UIs
+            const tabButton = Array.from(document.querySelectorAll('[role="tab"]')).find(t => t.textContent.includes('Posts'));
+            if (tabButton) {{
+                // Find the panel associated with this tab (usually the next sibling or element with aria-labelledby)
+                let container = tabButton.nextElementSibling;
+                while (container) {{
+                    if (container.scrollHeight > container.clientHeight) {{
+                        container.scrollTop += scrollAmount;
+                        return 'scrolled tab panel: ' + container.className;
+                    }}
+                    container = container.nextElementSibling;
+                }}
+                
+                // Alternative: find container by aria-labelledby
+                const panelId = tabButton.getAttribute('aria-controls');
+                if (panelId) {{
+                    const panel = document.getElementById(panelId);
+                    if (panel && panel.scrollHeight > panel.clientHeight) {{
+                        panel.scrollTop += scrollAmount;
+                        return 'scrolled by aria-controls: ' + panelId;
+                    }}
+                }}
+            }}
+            
+            // Strategy 2: Find any visible scrollable container in the main content area
+            const main = document.querySelector('[role="main"]') || document.querySelector('main') || document.querySelector('#root > div > div');
+            if (main && main.scrollHeight > main.clientHeight) {{
+                main.scrollTop += scrollAmount;
+                return 'scrolled main: ' + main.className;
+            }}
+            
+            // Strategy 3: Window scroll
+            window.scrollBy(0, scrollAmount);
+            return 'window scroll';
+        }}
+    """, y)
+    
+    logger.info(f"scroll_tab_content result: {result}")
+    page.wait_for_timeout(delay)
+
+def go_back(page: Page, v: dict):
+    """Go back in browser history (equivalent to clicking browser back button)."""
+    page.go_back()
+    page.wait_for_timeout(v.get("sleep_after", 3000))
+    logger.info("Navigated back in browser history")
 
 def test_invalid_qr(page: Page, v):
     from playwright.sync_api import sync_playwright
@@ -888,7 +1216,7 @@ def wait_toast(page: Page, v: dict):
         )
         for toast in toast_locator.all():
             try:
-                if toast.is_visible():
+                if toast.is_visible(timeout=1000):        # 加超时：原来无超时可能等 30s/个
                     content = toast.inner_text()
                     if message in content:
                         logger.info(f"Toast found: '{content.strip()[:80]}'")
@@ -1170,7 +1498,7 @@ def swipe_to_element(page: Page, v: dict):
 
     # Check if element is already visible
     try:
-        if target_elem.is_visible():
+        if target_elem.is_visible(timeout=3000):           # 加超时：原来无超时可能等 30s
             logger.info("Element is already visible")
             return
     except:
@@ -1258,8 +1586,920 @@ def scroll_to_bottom(page: Page, v: dict):
             break
 
 
+def fill_stripe_iframe(page: Page, v: dict):
+    """
+    Fill Stripe Elements iframe fields using evaluate() for reliable cross-origin access.
+    Supports: card_number, expiry, cvc, card_name, zipcode
+    """
+    card_number = v.get("card_number", "")
+    expiry = v.get("expiry", "")
+    cvc = v.get("cvc", "")
+    card_name = v.get("card_name", "")
+    zipcode = v.get("zipcode", "")
+    timeout_ms = v.get("timeout", 15000)
+
+    logger.info(f"fill_stripe_iframe: card={bool(card_number)}, expiry={bool(expiry)}, cvc={bool(cvc)}")
+
+    # 方法: 遍历所有 iframe，找到包含 Stripe 元素的 frame
+    filled_count = 0
+    
+    for frame in page.frames:
+        try:
+            url = frame.url or ""
+            if "stripe" not in url.lower():
+                continue
+                
+            # 在每个 frame 中尝试填写
+            fields_to_fill = [
+                ("cardnumber", card_number),
+                ("exp-date", expiry),
+                ("cvc", cvc),
+            ]
+            
+            for name, value in fields_to_fill:
+                if value:
+                    try:
+                        # 使用 focus + type 方法，而不是 fill
+                        el = frame.locator(f'input[name="{name}"]')
+                        if el.count() > 0:
+                            el.click(timeout=3000)
+                            el.fill(value, timeout=timeout_ms)
+                            logger.info(f"fill_stripe_iframe: filled {name} in frame")
+                            filled_count += 1
+                    except Exception as e:
+                        pass  # 静默失败，尝试下一个 frame
+        except:
+            continue
+    
+    if filled_count > 0:
+        logger.info(f"fill_stripe_iframe: successfully filled {filled_count} fields")
+    else:
+        logger.warning("fill_stripe_iframe: could not fill Stripe fields, they may require manual input")
+        # 截图以便调试
+        page.screenshot(path="stripe_iframe_debug.png")
+
+    # 填写主页面字段
+    if card_name:
+        try:
+            page.fill('input[name="cardName"]', card_name)
+            logger.info(f"fill_stripe_iframe: filled cardName")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill cardName ({e})")
+
+    if zipcode:
+        try:
+            page.fill('input[name="billingAddress.zipcode"]', zipcode)
+            logger.info(f"fill_stripe_iframe: filled zipcode")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill zipcode ({e})")
+
+    # 填写 card name 和 zipcode（这些通常在主页面，不在 iframe 里）
+    if card_name:
+        try:
+            page.fill('input[name="cardName"]', card_name)
+            logger.info(f"fill_stripe_iframe: filled cardName")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill cardName ({e})")
+
+    if zipcode:
+        try:
+            page.fill('input[name="billingAddress.zipcode"]', zipcode)
+            logger.info(f"fill_stripe_iframe: filled zipcode")
+        except Exception as e:
+            logger.warning(f"fill_stripe_iframe: failed to fill zipcode ({e})")
 
 
 
 
+
+
+
+
+def smart_click_optional(page: Page, v: dict):
+    """
+    可选点击 — 元素不存在时静默跳过，不报错。
+    专用于处理"可能出现也可能不出现"的弹框/提示。
+
+    YAML 用法：
+        R_click_done: { role: 'button', name: 'Done' }
+
+    与 smart_click + optional: true 的区别：
+    - smart_click 的 optional 只在 target_locator 路径生效
+    - smart_click_optional 在所有定位策略上都支持 optional 跳过
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_locator = v.get("locator")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    target_index = v.get("index", 0)
+    target_test_id = v.get("test_id")
+    force = v.get("force", False)
+    timeout = v.get("timeout", 5000)
+
+    def _try_click(el, desc):
+        try:
+            el.click(force=force, timeout=timeout)
+            logger.info(f"smart_click_optional: clicked '{desc}'")
+            return True
+        except Exception as e:
+            logger.debug(f"smart_click_optional: click failed for '{desc}' ({e})")
+            return False
+
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
+    visible_modals = []
+    for m in raw_modals[:10]:
+        try:
+            if m.is_visible():
+                visible_modals.append(m)
+        except:
+            pass
+
+    def _find_and_click_in_scope(scope, desc_prefix=""):
+        """在指定范围内查找并点击元素"""
+        desc = f"{desc_prefix}{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
+
+        # 1. Test ID
+        if target_test_id:
+            try:
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
+                if _try_click(el, f"test_id={target_test_id}"):
+                    return True
+            except:
+                pass
+
+        # 2. Locator
+        if target_locator:
+            try:
+                if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                    xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                    el = page.locator(xpath_locator).nth(target_index)
+                else:
+                    el = page.locator(target_locator).nth(target_index)
+                if target_name:
+                    el = el.get_by_text(target_name, exact=target_exact)
+                if _try_click(el, target_locator):
+                    return True
+            except Exception as e:
+                logger.debug(f"smart_click_optional: locator failed ({e})")
+
+        # 3. Role + name (most common)
+        if target_role and target_name:
+            try:
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"{target_role}:{target_name}"):
+                    return True
+            except:
+                pass
+
+        # 4. Text only
+        if target_name and not target_role:
+            try:
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
+                if _try_click(el, f"text={target_name}"):
+                    return True
+            except:
+                pass
+
+        return False
+
+    # 搜索策略：先弹框（从后往前，新的弹框优先），再 page 级别
+    # 这样做是因为弹框通常包含用户正在操作的元素
+
+    # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+    for modal in reversed(visible_modals):
+        if _find_and_click_in_scope(modal, f"modal[{visible_modals.index(modal)}]:"):
+            return
+
+    # 2. 最后在 page 级别尝试（处理没有弹框的情况）
+    if _find_and_click_in_scope(page, "page:"):
+        return
+
+    # Element not found — silent skip
+    logger.info(f"smart_click_optional: element not found '{target_name or target_locator}', skipping.")
+
+
+def smart_click_retry(page: Page, v: dict):
+    """
+    带重试的稳定点击 — 元素一定存在但点击不稳定时使用。
+
+    与 smart_click_optional 的区别：
+    - smart_click_optional: 找不到元素就跳过（用于可能不存在的元素）
+    - smart_click_retry: 元素一定存在，失败时自动重试（用于稳定存在的元素）
+
+    YAML 用法：
+        smart_click_retry_publish: { role: 'button', name: 'Publish', retry: 3, delay: 500 }
+
+    新增参数：
+    - retry: 重试次数，默认 3
+    - delay: 重试间隔(ms)，默认 500
+    """
+    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
+    target_locator = v.get("locator")
+    target_role = v.get("role")
+    target_exact = v.get("exact", False)
+    target_index = v.get("index", 0)
+    target_test_id = v.get("test_id")
+    force = v.get("force", False)
+    timeout = v.get("timeout", 5000)
+    retry_count = v.get("retry", 3)
+    delay_ms = v.get("delay", 500)
+
+    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
+    # 支持: dialog, modal, tooltip, popover 等浮动层
+    modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
+    raw_modals = page.locator(modal_selector).all()
+    visible_modals = []
+    for m in raw_modals[:10]:
+        try:
+            if m.is_visible():
+                visible_modals.append(m)
+        except:
+            pass
+
+    def _find_element_in_scope(scope):
+        """在指定范围内查找元素"""
+        # 1. Test ID
+        if target_test_id:
+            try:
+                el = scope.get_by_test_id(target_test_id).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 2. Locator
+        if target_locator:
+            try:
+                if target_locator.startswith("/") or target_locator.startswith("xpath="):
+                    xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
+                    el = page.locator(xpath_locator).nth(target_index)
+                else:
+                    el = page.locator(target_locator).nth(target_index)
+                if target_name:
+                    el = el.get_by_text(target_name, exact=target_exact)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 3. Role + name (most common)
+        if target_role and target_name:
+            try:
+                el = scope.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        # 4. Text only
+        if target_name and not target_role:
+            try:
+                el = scope.get_by_text(target_name, exact=target_exact).nth(target_index)
+                if el.is_visible(timeout=timeout):
+                    return el
+            except:
+                pass
+
+        return None
+
+    def _find_element():
+        """遍历所有可见弹框 + page 查找元素"""
+        # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+        for modal in reversed(visible_modals):
+            el = _find_element_in_scope(modal)
+            if el is not None:
+                return el
+        # 2. 最后在 page 级别尝试
+        return _find_element_in_scope(page)
+
+    desc = f"{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
+
+    for attempt in range(1, retry_count + 1):
+        try:
+            el = _find_element()
+            if el is None:
+                if attempt < retry_count:
+                    logger.debug(f"smart_click_retry: attempt {attempt}/{retry_count} - element not visible, waiting {delay_ms}ms...")
+                    page.wait_for_timeout(delay_ms)
+                    continue
+                else:
+                    logger.warning(f"smart_click_retry: element '{desc}' not found after {retry_count} attempts")
+                    raise Exception(f"Element not found: {desc}")
+
+            # 等待元素动画完成后再点击
+            page.wait_for_timeout(200)
+
+            # 点击（Playwright 的 click 本身会等待元素可点击）
+            el.click(force=force, timeout=timeout)
+            logger.info(f"smart_click_retry: successfully clicked '{desc}' (attempt {attempt}/{retry_count})")
+            return
+
+        except Exception as e:
+            if attempt < retry_count:
+                logger.debug(f"smart_click_retry: attempt {attempt}/{retry_count} failed for '{desc}': {e}, retrying...")
+                page.wait_for_timeout(delay_ms)
+            else:
+                logger.error(f"smart_click_retry: all {retry_count} attempts failed for '{desc}': {e}")
+                raise
+
+
+def handle_modal(page: Page, v: dict):
+    """
+    Handle various types of modals, dialogs, and popups by clicking buttons within them.
+    Supports multiple modal identification methods and button selection strategies.
+
+    Supported parameters:
+    - modal_identifiers: List of modal identification methods (tried in order)
+      - selector: CSS/XPath selector
+      - role: ARIA role (dialog, alertdialog, etc.)
+      - text: Text content within modal
+      - class: CSS class name
+      - test_id: data-testid attribute
+    - button_selectors: List of button selection methods (tried in order)
+      - selector: CSS/XPath selector
+      - role: ARIA role (button)
+      - text: Button text
+      - test_id: data-testid attribute
+      - index: Button index (if multiple)
+    - timeout: Timeout in milliseconds for modal detection (default: 5000)
+    - wait_before_click: Delay before clicking button (default: 1000)
+    - close_all: Close all matching modals (default: false)
+    - max_attempts: Maximum number of attempts to find modal (default: 3)
+    - ignore_if_not_found: Don't fail if modal not found (default: false)
+
+    Usage examples:
+
+    1. Simple modal with text button:
+       handle_modal:
+           modal_identifiers:
+               - role: "dialog"
+           button_selectors:
+               - text: "Got it"
+
+    2. Multiple modal types and buttons:
+       handle_modal:
+           modal_identifiers:
+               - class: "MuiDialog-root"
+               - role: "alertdialog"
+               - selector: "[role='dialog']"
+           button_selectors:
+               - text: "Accept"
+               - text: "Agree"
+               - role: "button", name: "Close"
+
+    3. Modal with test_id:
+       handle_modal:
+           modal_identifiers:
+               - test_id: "cookie-banner"
+           button_selectors:
+               - test_id: "accept-button"
+
+    4. Close all matching modals:
+       handle_modal:
+           modal_identifiers:
+               - class: "notification-toast"
+           button_selectors:
+               - selector: ".close-button"
+           close_all: true
+
+    5. Ignore if modal not found:
+       handle_modal:
+           modal_identifiers:
+               - class: "promo-banner"
+           button_selectors:
+               - text: "Close"
+           ignore_if_not_found: true
+    """
+    logger.info(">>> Current Step: handle_modal")
+
+    modal_identifiers = v.get("modal_identifiers", [])
+    button_selectors = v.get("button_selectors", [])
+    timeout = v.get("timeout", 5000)
+    wait_before_click = v.get("wait_before_click", 1000)
+    close_all = v.get("close_all", False)
+    max_attempts = v.get("max_attempts", 4)
+    ignore_if_not_found = v.get("ignore_if_not_found", False)
+
+    if not modal_identifiers:
+        raise ValueError("handle_modal: 'modal_identifiers' must be provided")
+    if not button_selectors:
+        raise ValueError("handle_modal: 'button_selectors' must be provided")
+
+    logger.info(f"Looking for modal with {len(modal_identifiers)} identification methods")
+    logger.info(f"Button selectors to try: {len(button_selectors)}")
+
+    modal_found = False
+    modal_locator = None
+
+    # Try each modal identifier
+    for attempt in range(max_attempts):
+        logger.info(f"Modal detection attempt {attempt + 1}/{max_attempts}")
+
+        for modal_id in modal_identifiers:
+            try:
+                # Build modal locator based on identifier type
+                if "selector" in modal_id:
+                    modal_locator = page.locator(modal_id["selector"]).first
+                elif "role" in modal_id:
+                    role = modal_id["role"]
+                    name = modal_id.get("name")
+                    if name:
+                        modal_locator = page.get_by_role(role, name=name).first
+                    else:
+                        modal_locator = page.get_by_role(role).first
+                elif "text" in modal_id:
+                    modal_locator = page.get_by_text(modal_id["text"], exact=False).first
+                elif "class" in modal_id:
+                    modal_locator = page.locator(f".{modal_id['class']}").first
+                elif "test_id" in modal_id:
+                    modal_locator = page.locator(f"[data-testid='{modal_id['test_id']}']").first
+                else:
+                    logger.warning(f"Unknown modal identifier type: {modal_id}")
+                    continue
+
+                # Check if modal is visible
+                if modal_locator.is_visible(timeout=1000):
+                    logger.info(f"✓ Modal found using: {modal_id}")
+                    modal_found = True
+                    break
+                else:
+                    logger.debug(f"Modal not visible using: {modal_id}")
+
+            except Exception as e:
+                logger.debug(f"Error checking modal with {modal_id}: {e}")
+                continue
+
+        if modal_found:
+            break
+
+        # Wait before retry
+        if attempt < max_attempts - 1:
+            page.wait_for_timeout(500)
+
+    if not modal_found:
+        if ignore_if_not_found:
+            logger.info("Modal not found, but ignoring as per configuration")
+            return
+        else:
+            logger.error(f"Modal not found after {max_attempts} attempts")
+            page.screenshot(path="modal_not_found.png")
+            raise AssertionError("Modal not found")
+
+    # Click buttons in modal
+    buttons_clicked = 0
+    if close_all:
+        # Close all matching buttons
+        logger.info("Closing all matching buttons in modal")
+        for button_id in button_selectors:
+            try:
+                button = find_button_in_modal(page, modal_locator, button_id)
+                if button and button.is_visible():
+                    button.click()
+                    buttons_clicked += 1
+                    page.wait_for_timeout(wait_before_click)
+            except Exception as e:
+                logger.debug(f"Error clicking button {button_id}: {e}")
+    else:
+        # Click first matching button
+        logger.info("Clicking first matching button in modal")
+        for button_id in button_selectors:
+            try:
+                button = find_button_in_modal(page, modal_locator, button_id)
+                if button and button.is_visible():
+                    logger.info(f"Clicking button: {button_id}")
+                    page.wait_for_timeout(wait_before_click)
+                    button.click(timeout=1000)
+                    buttons_clicked += 1
+                    break
+            except Exception as e:
+                logger.debug(f"Error clicking button {button_id}: {e}")
+                continue
+
+    if buttons_clicked > 0:
+        logger.info(f"✓ Modal handled successfully, clicked {buttons_clicked} button(s)")
+    else:
+        logger.warning("⚠ No buttons were clicked in modal")
+        if not ignore_if_not_found:
+            page.screenshot(path="modal_button_not_found.png")
+            raise AssertionError("No clickable buttons found in modal")
+
+
+def find_button_in_modal(page: Page, modal_locator, button_id):
+    """
+    Helper function to find a button within a modal using various selection methods
+    """
+    try:
+        if "selector" in button_id:
+            return modal_locator.locator(button_id["selector"]).last
+        elif "role" in button_id:
+            role = button_id["role"]
+            name = button_id.get("name")
+            index = button_id.get("index", -1)
+            if name:
+                return modal_locator.get_by_role(role, name=name, exact=button_id.get("exact", False)).nth(index)
+            else:
+                return modal_locator.get_by_role(role).nth(index)
+        elif "text" in button_id:
+            text = button_id["text"]
+            exact = button_id.get("exact", False)
+            index = button_id.get("index", 0)
+            return modal_locator.get_by_text(text, exact=exact).nth(index)
+        elif "test_id" in button_id:
+            return modal_locator.locator(f"[data-testid='{button_id['test_id']}']").last
+        else:
+            logger.warning(f"Unknown button selector type: {button_id}")
+            return None
+    except Exception as e:
+        logger.debug(f"Error finding button with {button_id}: {e}")
+        return None
+
+
+def auto_handle_modals(page: Page, v: dict):
+    """
+    Automatically detect and handle common modals that appear after page navigation.
+    This is a convenience wrapper for handle_modal with pre-configured common modal patterns.
+
+    Supported parameters:
+    - timeout: Timeout in milliseconds (default: 3000)
+    - wait_before_click: Delay before clicking (default: 300)
+    - ignore_if_not_found: Always succeed even if no modal found (default: true)
+    - max_iterations: Maximum times to iterate through modal patterns (default: 5)
+                         Use this to handle multi-step modals (e.g., tours with multiple steps)
+
+    Usage examples:
+
+    1. Auto-handle after page load:
+       auto_handle_modals:
+           timeout: 3000
+
+    2. Handle multi-step modals (tours):
+       auto_handle_modals:
+           timeout: 5000
+           max_iterations: 10  # Handle up to 10 modal steps
+
+    Common modals detected:
+    - Cookie consent banners
+    - Welcome/guide tours (multi-step)
+    - Notification toasts
+    - Update prompts
+    - Announcement banners
+    """
+    logger.info(">>> Current Step: auto_handle_modals")
+
+    timeout = v.get("timeout", 3000)
+    ignore_if_not_found = v.get("ignore_if_not_found", True)
+    max_iterations = v.get("max_iterations", 3)
+
+    # Early exit: skip if no modal/popup elements present on page
+    # MuiPopover-paper: visible only when a popover/modal is open
+    # MuiBackdrop-root: visible only when a backdrop overlay exists
+    has_popover = page.locator(".MuiPopover-paper").count() > 0
+    has_backdrop = page.locator(".MuiBackdrop-root").count() > 0
+    if not has_popover and not has_backdrop:
+        logger.info("No modal/popup elements found (MuiPopover-paper / MuiBackdrop-root), skipping auto_handle_modals")
+        return
+
+    # Common modal patterns
+    common_modals = [
+        # Cookie banners
+        {
+            "modal_identifiers": [
+                {"class": "cookie-banner"},
+                {"text": "Customize Your Cookie Choices"},
+                {"selector": "div[aria-describedby='cm__desc']"},
+            ],
+            "button_selectors": [
+                {"text": "Accept all"},
+                {"text": "Agree"},
+                {"text": "Got it"},
+                {"role": "button", "name": "Accept all"},
+                {"test_id": "accept-cookies"},
+                {"selector": "div[aria-describedby='cm__desc'] button[data-role='all']"},
+            ]
+        },
+        # Welcome/guide tours (multi-step modals)
+        {
+            "modal_identifiers": [
+                {"role": "presentation", "name": "Customize your shop"},
+                {"role": "presentation", "name": "Add new module"},
+                {"role": "presentation", "name": "Preview your shop"},
+                {"role": "presentation", "name": "Introduce content tabs"},
+                {"role": "presentation", "name": "Rearrange modules"},
+                {"class": "MuiPopover-paper"},
+                {"selector": "div[role='presentation'] .MuiPopover-paper"},
+            ],
+            "button_selectors": [
+                {"role": "button", "name": "Next"},
+                {"role": "button","name": "Skip"},
+                {"role": "button","name": "Got it"},
+                {"role": "button","name": "Close"},
+                {"role": "button","name": "Finish"},
+                {"test_id": "button"},
+                {"selector": "div[role='presentation'] button[data-track-location='Dialog']"},
+            ]
+        },
+        # Notification toasts
+        {
+            "modal_identifiers": [
+                {"class": "MuiSnackbar-root"},
+                {"class": "toast"},
+                {"role": "alert"},
+                {"selector": "div[data-track-location='Dialog']"},
+            ],
+            "button_selectors": [
+                {"selector": ".close-button"},
+                {"selector": "[aria-label='Close']"},
+                {"role": "button", "name": "Close"},
+                {"selector": "div[data-track-location='Dialog'] button[data-track-location='Dialog']"},
+            ]
+        },
+    ]
+
+    total_handled = 0
+    iteration = 0
+
+    # Loop to handle multi-step modals (e.g., tours with multiple "Next" buttons)
+    while iteration < max_iterations:
+        iteration += 1
+        logger.info(f">>> Modal handling iteration {iteration}/{max_iterations}")
+
+        handled_this_round = 0
+        modal_found_this_round = False
+
+        for modal_config in common_modals:
+            try:
+                # Try to find and handle the modal
+                handle_modal(page, {
+                    **modal_config,
+                    "timeout": timeout,
+                    "ignore_if_not_found": True,
+                    "wait_before_click": 1000
+                })
+                handled_this_round += 1
+                modal_found_this_round = True
+                logger.info(f"✓ Modal handled in iteration {iteration}")
+
+            except Exception as e:
+                # Continue to next modal pattern
+                logger.debug(f"Modal pattern failed in iteration {iteration}: {e}")
+                continue
+
+        if handled_this_round > 0:
+            total_handled += handled_this_round
+            # Wait a bit for next modal to appear (multi-step scenarios)
+            page.wait_for_timeout(500)
+        else:
+            # No modals found/handled in this iteration, stop looping
+            logger.info(f"No modals found in iteration {iteration}, stopping auto-handle")
+            break
+
+    if total_handled > 0:
+        logger.info(f"✓ Auto-handled {total_handled} modal step(s) across {iteration} iteration(s)")
+    else:
+        logger.info("No modals detected to handle")
+
+
+def create_session(page: Page, v: dict):
+    """
+    Create a named session (browser context) that can be referenced later.
+    Sessions are completely isolated and support all testing operations.
+
+    Supported parameters:
+    - name: Session name (required) - used to reference this session
+    - url: URL to open in the new session (optional)
+    - cookie_file: Path to cookie JSON file to inject (optional)
+    - cookies: List of cookie dictionaries to inject (optional)
+    - storage_state: Path to storage state JSON file (optional)
+    - timeout: Timeout for page load in milliseconds (default: 30000)
+
+    Usage examples:
+
+    1. Create a named session:
+       test_step:
+           session_user_b:
+               open_incognito: "https://example.com"
+               cookie_file: "cookies/user_b.json"
+               R_click_profile: { role: 'button', name: 'Profile' }
+
+    2. Reference existing session:
+       test_step:
+           session_user_b:
+               R_click_settings: { role: 'button', name: 'Settings' }
+
+    3. Nested sessions:
+       test_step:
+           session_admin:
+               open_incognito: "https://example.com/admin"
+               session_sub_admin:
+                   open_incognito: "https://example.com/settings"
+                   R_click_settings: { role: 'button', name: 'Settings' }
+    """
+    session_name = v.get("name")
+    if not session_name:
+        raise ValueError("create_session: 'name' parameter is required")
+
+    logger.info(f">>> Creating session: {session_name}")
+
+    # Get browser from current page
+    context = page.context
+    browser = context.browser
+
+    if not browser:
+        raise RuntimeError("Cannot access browser from current page")
+
+    try:
+        # Initialize session storage if not exists
+        if not hasattr(page, "_sessions"):
+            setattr(page, "_sessions", {})
+        if not hasattr(page, "_active_session"):
+            setattr(page, "_active_session", None)
+        if not hasattr(page, "_session_stack"):
+            setattr(page, "_session_stack", [])
+
+        # Create new browser context for the session
+        new_context_args = {
+            "viewport": context.pages[0].viewport_size if context.pages else {"width": 1280, "height": 720},
+            "locale": "en-US",
+            "timezone_id": "America/New_York",
+        }
+
+        # Load storage state if provided
+        storage_state = v.get("storage_state")
+        if storage_state and os.path.exists(storage_state):
+            import json
+            logger.info(f"Loading storage state from: {storage_state}")
+            with open(storage_state, "r") as f:
+                new_context_args["storage_state"] = json.load(f)
+
+        # Create the new context
+        new_context = browser.new_context(**new_context_args)
+        logger.info(f"✓ Created browser context for session: {session_name}")
+
+        # Load cookies if provided
+        cookie_file = v.get("cookie_file")
+        if cookie_file and os.path.exists(cookie_file):
+            import json
+            logger.info(f"Loading cookies from: {cookie_file}")
+            with open(cookie_file, "r") as f:
+                cookie_data = json.load(f)
+                if isinstance(cookie_data, list):
+                    new_context.add_cookies(cookie_data)
+                elif isinstance(cookie_data, dict) and "cookies" in cookie_data:
+                    new_context.add_cookies(cookie_data["cookies"])
+            logger.info(f"✓ Loaded cookies for session: {session_name}")
+
+        # Add custom cookies if provided
+        cookies = v.get("cookies", [])
+        if cookies and not cookie_file:
+            logger.info(f"Adding {len(cookies)} custom cookies to session: {session_name}")
+            new_context.add_cookies(cookies)
+
+        # Create page in the new context
+        new_page = new_context.new_page()
+
+        # Navigate to URL if provided
+        url = v.get("url")
+        if url:
+            timeout = v.get("timeout", 30000)
+            logger.info(f"Session '{session_name}' navigating to: {url}")
+            new_page.goto(url, timeout=timeout)
+            logger.info(f"✓ Session '{session_name}' loaded")
+
+        # Store session
+        page._sessions[session_name] = {
+            "page": new_page,
+            "context": new_context,
+            "parent_session": page._active_session,
+            "url": new_page.url
+        }
+
+        # Set as active session
+        page._active_session = session_name
+        logger.info(f">>> Active session set to: {session_name}")
+
+        # Return for potential chaining
+        return new_page
+
+    except Exception as e:
+        logger.error(f"✗ Failed to create session '{session_name}': {e}")
+        raise
+
+
+def switch_session(page: Page, v: dict):
+    """
+    Switch to a previously created session.
+
+    Supported parameters:
+    - name: Session name to switch to (required)
+
+    Usage:
+       test_step:
+           switch_to_user_b:
+               switch_session: { name: "user_b" }
+           R_click_button: { role: 'button', name: 'Continue' }
+    """
+    session_name = v.get("name")
+    if not session_name:
+        raise ValueError("switch_session: 'name' parameter is required")
+
+    if not hasattr(page, "_sessions") or session_name not in page._sessions:
+        raise ValueError(f"Session '{session_name}' not found. Available sessions: {list(page._sessions.keys()) if hasattr(page, '_sessions') else []}")
+
+    # Set as active session
+    page._active_session = session_name
+    session = page._sessions[session_name]
+
+    logger.info(f">>> Switched to session: {session_name}")
+    logger.info(f">>> Session URL: {session['url']}")
+
+    return session["page"]
+
+
+def close_session(page: Page, v: dict):
+    """
+    Close a session and clean up its resources.
+
+    Supported parameters:
+    - name: Session name to close (required, or "current" for active session)
+
+    Usage:
+       test_step:
+           close_user_b:
+               close_session: { name: "user_b" }
+    """
+    session_name = v.get("name")
+
+    if not session_name or session_name == "current":
+        session_name = getattr(page, "_active_session", None)
+
+    if not session_name:
+        raise ValueError("No active session to close")
+
+    if not hasattr(page, "_sessions") or session_name not in page._sessions:
+        logger.warning(f"Session '{session_name}' not found")
+        return
+
+    session = page._sessions[session_name]
+
+    try:
+        # Close the page and context
+        session["context"].close()
+        del page._sessions[session_name]
+
+        # If we closed the active session, switch to parent or default
+        if page._active_session == session_name:
+            parent_session = session.get("parent_session")
+            page._active_session = parent_session if parent_session else None
+
+        logger.info(f"✓ Closed session: {session_name}")
+
+    except Exception as e:
+        logger.error(f"✗ Failed to close session '{session_name}': {e}")
+        raise
+
+def _inject_cookies_to_context(page: Page, cookie_file: str):
+    """
+    Internal helper: Inject cookies to browser context BEFORE opening page.
+    This is more efficient than injecting after page load (no reload needed).
+
+    Args:
+        page: Playwright page object
+        cookie_file: Path to cookie JSON file
+
+    Raises:
+        FileNotFoundError: If cookie file doesn't exist
+        ValueError: If cookie file format is invalid
+    """
+    import json
+    import os
+
+    if not os.path.exists(cookie_file):
+        raise FileNotFoundError(f"Cookie file not found: {cookie_file}")
+
+    # Get current browser context
+    context = page.context
+
+    logger.info(f"Loading cookies from: {cookie_file}")
+    with open(cookie_file, "r") as f:
+        cookie_data = json.load(f)
+
+    # Handle different JSON formats
+    if isinstance(cookie_data, list):
+        # Direct list of cookies
+        cookies_to_add = cookie_data
+    elif isinstance(cookie_data, dict):
+        # Playwright storage state format
+        if "cookies" in cookie_data:
+            cookies_to_add = cookie_data["cookies"]
+        else:
+            raise ValueError(f"Unexpected cookie file format (missing 'cookies' key): {cookie_file}")
+    else:
+        raise ValueError(f"Invalid cookie file format: {cookie_file}")
+
+    # Add cookies to context
+    context.add_cookies(cookies_to_add)
+    logger.info(f"✓ Loaded {len(cookies_to_add)} cookies to context (ready for authenticated page load)")
 

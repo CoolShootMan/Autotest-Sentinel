@@ -30,6 +30,9 @@ tools/get_cookie.py
 *.env
 .env.*
 
+# === WorkBuddy (local AI context, not for repo) ===
+.workbuddy/
+
 # === Logs ===
 log/
 *.log
@@ -59,6 +62,9 @@ crash_click.png
 # === OS Files ===
 Thumbs.db
 .DS_Store
+
+# === WorkBuddy AI Tool (local only, do not commit) ===
+.workbuddy/
 
 # === Binary Assets (Large files excluded from repo) ===
 *.y4m
