@@ -1129,9 +1129,9 @@ def execute_not_recognized_scan(page: Page, v):
     """
     logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
     result = subprocess.run(
-        [sys.executable, "run_invalid_qr.py"], 
-        capture_output=True, 
-        text=True, 
+        [sys.executable, "run_invalid_qr.py"],
+        capture_output=True,
+        text=True,
         cwd=BASE_DIR
     )
     if "SUCCESS" in result.stdout:
@@ -1139,6 +1139,127 @@ def execute_not_recognized_scan(page: Page, v):
     else:
         logger.error(f"Failed to verify Invalid QR scan. Output:\n{result.stdout}\nStderr:\n{result.stderr}")
         raise AssertionError("Invalid QR scan failed in subprocess. Check logs for details.")
+
+
+def run_workflow_script(page: Page, v):
+    """
+    Generic workflow script runner for api/ui_workflow/*.py scripts.
+    Allows QA to write Python API/script workflows callable from YAML.
+
+    YAML 用法:
+        run_workflow_script: { script: "create_test_post.py", args: { title: "Test" } }
+
+    脚本规范:
+        - 推荐使用 Playwright APIRequestContext（自动携带浏览器 cookie + JS auth header）
+        - 旧方案：subprocess + requests（需手动处理 token，已废弃）
+    """
+    import json
+
+    script_name = v.get("script")
+    if not script_name:
+        raise ValueError("run_workflow_script: 'script' 参数必填，格式: { script: 'filename.py' }")
+
+    if not script_name.endswith(".py"):
+        script_name += ".py"
+
+    script_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", "api", "ui_workflow", script_name)
+
+    if not os.path.exists(script_path):
+        raise FileNotFoundError(f"run_workflow_script: 脚本不存在: {script_path}")
+
+    # 新方案：用 Playwright APIRequestContext（自动共享浏览器 cookie + JS auth header）
+    # 注意：需要脚本支持 --api-context 模式，这里先保留 subprocess 旧逻辑用于兼容
+    args = v.get("args", {})
+    args_json = json.dumps(args)
+
+    logger.info(f">>> Running workflow script: {script_name} | args: {args}")
+
+    result = subprocess.run(
+        [sys.executable, script_path, args_json],
+        capture_output=True,
+        text=True,
+        cwd=BASE_DIR
+    )
+
+    logger.info(f"[workflow stdout]\n{result.stdout}")
+    if result.stderr:
+        logger.warning(f"[workflow stderr]\n{result.stderr}")
+
+    if result.returncode != 0:
+        logger.error(f"Workflow script '{script_name}' failed with exit code {result.returncode}")
+        raise AssertionError(
+            f"Workflow script '{script_name}' failed (exit code {result.returncode}).\n"
+            f"STDOUT: {result.stdout}\nSTDERR: {result.stderr}"
+        )
+
+    logger.info(f"[run_workflow_script] completed successfully.")
+
+
+def duplicate_post(page: Page, v):
+    """
+    复制 Post — 通过子进程调用 duplicate_post.py 脚本（独立 requests，不依赖浏览器 JS 上下文）。
+
+    流程：
+        1. duplicate_post.py 从 cookie_release.json 加载 cookie
+        2. 提取旧 JWT，调用 GET /auth/refreshToken 换新 JWT
+        3. 用新 JWT 调用 GET /posts/curator/duplicate/verify/{id}（验证）
+        4. 用新 JWT 调用 GET /posts/curator/duplicate/{id}（执行，创建草稿）
+        5. 草稿 post id 写入 .duplicate_result.json
+        6. base.py 读取结果存入 page._workflow_context
+
+    YAML 用法:
+        duplicate_post: { post_id: "xxx", capture_key: "cloned_post_id" }
+    """
+    import subprocess, json as jsonmod
+
+    post_id = v.get("post_id")
+    capture_key = v.get("capture_key", "cloned_post_id")
+
+    if not post_id:
+        raise ValueError("duplicate_post: 'post_id' 参数必填")
+
+    script_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "api", "ui_workflow", "duplicate_post.py"
+    )
+    result_file = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..", "api", "ui_workflow", ".duplicate_result.json"
+    )
+
+    logger.info(f"[duplicate_post] Running script for post_id={post_id}")
+
+    result = subprocess.run(
+        [sys.executable, script_path, jsonmod.dumps({"post_id": post_id})],
+        capture_output=True,
+        text=True,
+        cwd=os.path.dirname(script_path),
+        timeout=30,
+    )
+
+    if result.stdout:
+        logger.info(f"[duplicate_post] stdout: {result.stdout[:300]}")
+    if result.stderr:
+        logger.warning(f"[duplicate_post] stderr: {result.stderr[:300]}")
+
+    if result.returncode != 0:
+        raise AssertionError(f"[duplicate_post] script failed (exit {result.returncode}): {result.stderr[:200]}")
+
+    # 读取结果文件
+    if os.path.exists(result_file):
+        with open(result_file, "r", encoding="utf-8") as f:
+            data = jsonmod.load(f)
+        new_post_id = data.get("new_post_id") or data.get("id")
+        logger.info(f"[duplicate_post] Done: {post_id} -> {new_post_id}")
+    else:
+        new_post_id = None
+        logger.warning(f"[duplicate_post] Result file not found: {result_file}")
+
+    # 存入 context
+    if not hasattr(page, "_workflow_context"):
+        page._workflow_context = {}
+    page._workflow_context[capture_key] = new_post_id
+    logger.info(f"[duplicate_post] Stored {capture_key} = {new_post_id} in workflow context")
 
 def verify_value(page: Page, v: dict):
     target_name = v.get("name")

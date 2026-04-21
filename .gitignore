@@ -25,6 +25,8 @@ env/
 # === Sensitive / Auth ===
 # Cookie files contain real auth tokens - NEVER commit
 test_case/UI/Test_Katana/cookie_*.json
+# API token for ui_workflow scripts
+test_case/UI/Test_Katana/api/ui_workflow/api_token.txt
 test_case/UI/Test_Katana/staging_cookie.json
 tools/get_cookie.py
 *.env

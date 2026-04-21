@@ -172,23 +172,32 @@ def context(
 # --- THE DYNAMIC ENGINE ---
 def pytest_generate_tests(metafunc):
     if "smokecases1" in metafunc.fixturenames:
-        yaml_file = metafunc.config.getoption("--yaml")
-        if not yaml_file:
-            yaml_file = "Storefront_module.yaml"
-            
-        yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file)
+        yaml_files = metafunc.config.getoption("--yaml")
+        if not yaml_files:
+            yaml_files = "Storefront_module.yaml"
         
-        if os.path.exists(yaml_path):
-            with open(yaml_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
-            if data:
-                argvalues = []
-                ids = []
-                for k, v in data.items():
-                    if isinstance(v, dict):
-                        v["__yaml_path__"] = yaml_path
-                        argvalues.append({k: v})
-                        ids.append(k)
-                metafunc.parametrize("smokecases1", argvalues, ids=ids)
-        else:
-            logger.error(f"YAML file not found at: {yaml_path}")
+        # 支持逗号分隔的多个 yaml
+        yaml_file_list = [f.strip() for f in yaml_files.split(",")]
+        
+        all_argvalues = []
+        all_ids = []
+        
+        for yaml_file in yaml_file_list:
+            # 使用 os.sep 确保路径分隔符正确
+            yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file.replace('/', os.sep).replace('\\', os.sep))
+            
+            if os.path.exists(yaml_path):
+                with open(yaml_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if data:
+                    for k, v in data.items():
+                        if isinstance(v, dict):
+                            v["__yaml_path__"] = yaml_path
+                            all_argvalues.append({k: v})
+                            # 加上 yaml 前缀避免 id 冲突
+                            all_ids.append(f"{yaml_file}::{k}")
+            else:
+                logger.error(f"YAML file not found at: {yaml_path}")
+        
+        if all_argvalues:
+            metafunc.parametrize("smokecases1", all_argvalues, ids=all_ids)

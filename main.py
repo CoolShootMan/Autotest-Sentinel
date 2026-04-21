@@ -38,9 +38,12 @@ def start_autotest():
     allure_data_dir = os.path.join(BASE_DIR, 'allure-results', now_time)
     allure_report_dir = os.path.join(BASE_DIR, 'report', 'html', now_time)
     test_results = os.path.join(BASE_DIR, 'report', 'video', now_time)
-    storage_state_path = os.path.join(BASE_DIR, 'test_case', 'UI', 'Test_Katana', 'cookie_release_demi.json')
+    storage_state_path = os.path.join(BASE_DIR, 'test_case', 'UI', 'Test_Katana', 'cookie_release.json')
 
     logger.info(f"Allure data directory: {allure_data_dir}")
+    
+    # 要执行的 YAML 文件列表，逗号分隔（路径相对于 Test_Katana/All_YAML/）
+    yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml,All_YAML/Post/Post_setting.yaml"
     
     pytest_args = [
         "python",
@@ -48,10 +51,12 @@ def start_autotest():
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
         '--headed',
+        f'--yaml={yaml_files}',
         f"--storage-state={storage_state_path}",
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}'
     ]
+    logger.info(f"Running with YAMLs: {yaml_files}")
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")
