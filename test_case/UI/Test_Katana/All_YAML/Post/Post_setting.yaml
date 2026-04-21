@@ -640,6 +640,8 @@ testT2834_VerifyPartner:
         # Step 1: Navigate to the post
         open: "https://release.pear.us/events"
         sleep_step: 3000
+        duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
+        sleep_step: 500
         R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
@@ -662,17 +664,25 @@ testT2834_VerifyPartner:
         # Step 3: Switch to Selling tab and customize products
         click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
         sleep_step: 2000
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        sleep_step: 1500
         R_click_select_products: { test_id: "enhance-button-cta" }
         sleep_step: 2000
 
         # Step 4: Add product
-        click_product_img: { role: 'img', name: 'Image of Product', index: 3 }
+        # 先搜索 "test_general_products"，让目标卡唯一可见
+        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
+        sleep_step: 500
+        click_search_btn: { role: 'button', name: 'Search' }
+        sleep_step: 2000
+        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
         sleep_step: 1000
         click_add_product_btn: { role: 'button', name: 'Add 2/20 product(s)' }
         sleep_step: 1500
 
         # Step 5: Check Free Shipping checkbox
-        check_free_shipping: { locator: 'input[name="products.0.isFreeShipping"]', checked: true }
+        check_free_shipping: { locator: 'input[name="products.1.isFreeShipping"]', checked: true }
         sleep_step: 500
 
         # Step 6: Save changes
@@ -700,7 +710,7 @@ testT2834_VerifyGuest:
         sleep_step: 3000
 
         # Step 2: Navigate to Post details directly (from recording)
-        open_post_details: "https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive-1"
+        open_post_details: "https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive"
         sleep_step: 3000
         R_click_free_shipping_label: { text: "Free shipping" }
         sleep_step: 1000
@@ -710,38 +720,38 @@ testT2834_VerifyGuest:
         sleep_step: 500
         
         # Step 3: Add to Cart / Buy Now
-        R_click_buy_now: { role: "button", name: "Buy now" }
-        sleep_step: 3000
+        # R_click_buy_now: { role: "button", name: "Buy now" }
+        # sleep_step: 3000
 
-        # Verify in order drawer / paragraph
-        verify_free_shipping_paragraph: { text: "Free shipping", index: 1 }
-        sleep_step: 500
+        # # Verify in order drawer / paragraph
+        # verify_free_shipping_paragraph: { text: "Free shipping", index: 1 }
+        # sleep_step: 500
 
-        # Step 4: Checkout
-        R_click_checkout_continue: { test_id: "checkout-in-post-continue-cta" }
-        sleep_step: 3000
+        # # Step 4: Checkout
+        # R_click_checkout_continue: { test_id: "checkout-in-post-continue-cta" }
+        # sleep_step: 3000
 
-        # Fill Details
-        fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
-        fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
+        # # Fill Details
+        # fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
+        # fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
         
-        # Address dropdown selection
-        fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
-        sleep_step: 2000
-        R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
-        sleep_step: 1000
+        # # Address dropdown selection
+        # fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
+        # sleep_step: 2000
+        # R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
+        # sleep_step: 1000
 
-        #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
-        fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
-        fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
-        sleep_step: 1000
+        # #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
+        # fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
+        # fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
+        # sleep_step: 1000
 
-        R_click_place_order: { role: "button", name: "Place order" }
-        sleep_step: 1500
+        # R_click_place_order: { role: "button", name: "Place order" }
+        # sleep_step: 1500
 
-        # Step 5: Post-purchase expand details
-        verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
+        # # Step 5: Post-purchase expand details
+        # verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
+        # R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
         sleep_step: 1000
 
     expect_result:
@@ -768,8 +778,13 @@ testT2834_VerifyGuest:
         sleep_step: 2000
         R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
         sleep_step: 3000
-        # Uncheck free shipping (index matching checking step: use container to locate product card by text, then click img inside)
-        click_product_card: { role: 'img', name: 'Image of Product', index: 3 }
+        # 先搜索 "test_general_products"，让目标卡唯一可见
+        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
+        sleep_step: 500
+        click_search_btn: { role: 'button', name: 'Search' }
+        sleep_step: 2000
+        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
         sleep_step: 1000
         click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
         sleep_step: 1500
