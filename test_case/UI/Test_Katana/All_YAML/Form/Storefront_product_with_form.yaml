@@ -1,9 +1,14 @@
 testT5007:
   description: "Verify adding a product with form to cart from storefront"
-  guest: true
+  #  guest: true
   test_step:
     open: "https://release.pear.us/catalog"
     sleep_after_open: 3000
+
+    click_more_action: { locator: 'a:has-text("autotest product title - do not delete") >> xpath=./ancestor::*[contains(@class,"MuiTableRow-root")] >> [aria-label="More action"] >> nth=0'
+    }
+    sleep_after_click_action: 5000
+    click_qr_view: { locator: '.MuiTypography-body1:has-text("Create QR Code for Sharing")'}
 
     # Open product
     R_click_product: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
