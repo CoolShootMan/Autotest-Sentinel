@@ -10,7 +10,7 @@ def click_module_edit_button(page: Page, v: dict):
     # Then click the second button (usually the 'More/Edit' icon)
     container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button")).last
     container.scroll_into_view_if_needed()
-    btn = container.get_by_role("button").nth(1)
+    btn = container.get_by_role("button").nth(-1)
     btn.wait_for(state="visible", timeout=10000)
     btn.click(timeout=15000)
     page.wait_for_timeout(1000) # Wait for potential UI transitions

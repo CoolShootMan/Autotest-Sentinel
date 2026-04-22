@@ -152,6 +152,7 @@ testT3555:
         sleep_after_publish: 3000
         R_click_got_it: { role: 'button', name: 'Got it' }
         sleep_after_got_it: 5000
+        auto_handle_modals: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         click_module_post_view_event_cta: { module_name: 'Updated module', post_title: 'Test - add new post for deletion', button_index: -1 }
         R_click_edit_post_muen: { role: "button", name: 'Remove from this module', exact: true }
         R_click_confirm_button: { locator: "button[data-track-location='Dialog']", name: 'Remove', exact: true }
@@ -159,7 +160,7 @@ testT3555:
         click_module_edit_button: { module_name: 'Updated module' }
         R_click_delete_module: { role: 'button', name: 'Delete module' }
         sleep_after_delete_click: 1500
-        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete' , exact: true}
+        click_confirm_button_1: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete' , exact: true}
         sleep_after_confirm: 5000
     expect_result:
         description: "Verify that the module is deleted successfully"
@@ -225,7 +226,9 @@ testAddNewPost:
 testT3788:
     description: "Verify adding products to a new module"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: 
+            url: "https://release.pear.us/partnercoseller997"
+            cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
         sleep_after_open: 5000
         R_click_module_btn: { role: 'button', name: 'Module' }
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
@@ -238,7 +241,7 @@ testT3788:
         R_click_add_from_my_posts: { role: 'button', name: 'Add from my posts' }
         sleep_before_add_from_my_posts: 3000
         R_click_combobox: { role: "combobox" }
-        R_click_post_url: { text: "/autotestshop/post/demi-0320-new", exact: false }
+        R_click_post_url: { role: 'option', text: "auto test T3788" }
         R_click_post_icon_1: { locator: "//div[@data-index='0']"}
         R_click_post_icon_2: { locator: "//div[@data-index='1']" }
         R_click_final_post_add: { role: 'button', name: 'Add' }
@@ -254,38 +257,42 @@ testT3788:
         description: "Verify that the new module 'Module-products' is added successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "General Admission 001"
+              text: "test_general_products"
             - assertion_type: "element_visible_by_text"
-              text: "Ladies Free RSVP"
+              text: "autotest product title - do not delete"
 
 testT3789:
     guest: true
     description: "Verify the resale process. The consumer purchases module-Products(Shared with me)"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "https://release.pear.us/partnercoseller997"
         sleep_after_open: 5000
-        click_container_button: { container: 'Module-products', container_locator: "../..", button: "//div[@data-media-absolute='bottomRight']", button_index: 1}
+        click_container_button: { container: 'Module-products', container_locator: "../..", button: "//div[@data-media-absolute='bottomRight']", button_index: 0}
         sleep_after_click_container_button: 2000
         R_click_checkout_cta: { locator: 'button[data-track-location="Notification"]', name: "Checkout" }
         sleep_aftet_click_checkout_cta: 5000
-        fill_contact_first_name: { locator: 'input[name="contact.firstName"]',  value: 'Lida' }
-        fill_contact_last_name: { locator: 'input[name="contact.lastName"]',  value: 'Zhou' }
-        fill_contact_phone_name: { locator: 'input[name="contact.phoneNumber"]',  value: '(301) 842-7082' }
-        fill_contact_email_name: { locator: 'input[name="contact.email"]',  value: 'yuxiao.zhu.ext+10000@1m.app' }
-        fill_stripe_iframe:
-            card_number: '4242424242424242'
-            expiry: '02/45'
-            cvc: '345'
-            card_name: 'linda 4650'
-            zipcode: '90021'
+         # Fill Details
+        fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
+        fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
+        
+        # Address dropdown selection
+        fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
+        sleep_step: 2000
+        R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
+        sleep_step: 1000
+
+        #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
+        fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
+        fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
+        sleep_step: 1000
         R_click_place_order: { role: "button", name: "Place order"}
         sleep_after_click_place_order: 5000
 
     expect_result:
-        description: "Verify that the new module 'Module-products' is added successfully"
+        description: "Verify The consumer purchases module-Products successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "$1.8" 
+              text: "$0.00" 
 
 
 # ------------------ Module - link -> general link ------------------------
@@ -473,7 +480,9 @@ testT4264:
         upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
         wait_for_upload_and_ui_update1: { timeout: 5000 }
         R_click_done: { role: 'button', name: 'Done', exact: true }
-        sleep_before_done: 2000
+        sleep_before_done: 5000
+        R_click_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_before_add_1: 5000
         verify_element_contains_text: { container: 'test image link', locator: '../..', text: ['test aotu image']}
 
     expect_result:
@@ -548,7 +557,8 @@ testT4816:
         fill_spotify_link: { locator: 'input[name="additionalInfo.services.0.src"]', value: 'https://open.spotify.com/album/46NAV9AiBwqlDZbpHXAt7A' }
         fill_apple_music_link: { locator: 'input[name="additionalInfo.services.1.src"]', value: 'https://music.apple.com/cn/album/%E5%90%8C%E5%90%8D%E5%B0%88%E8%BC%AF-remastered/990152978' }
         sleep_after_final_add: 5000
-        R_click_final_add: { role: 'button', name: 'Add', exact: true }
+        R_click_final_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_final_add_1: 5000
 
     expect_result:
         description: "Verify that the Music module is created successfully"
@@ -584,10 +594,10 @@ testT3886_long:
         R_click_add_new_link: { role: 'button', name: 'Add new link' }
         sleep_after_add_new_link: 2000
         fill_youtube_link: { placeholder: 'YouTube link only', value: 'https://www.youtube.com/watch?v=ydGPSqqVBXM' }
-        sleep_after_fill: 3000
-        # Click to confirm/add the link
-        click_confirm_button: { locator: "[role='dialog'] [data-testid='enhance-button']", name: 'Add' }
-        sleep_after_confirm: 2000
+        R_click_type_1: { locator: 'input[name="title"]', name: '', exact: true  }
+        sleep_after_fill: 5000
+        click_confirm_button: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_confirm: 5000
         verify_child_element_count: { container: "Test - module - video", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 1 }
     expect_result:
         description: "Verify that the Video module is created successfully"
@@ -618,10 +628,11 @@ testT3886_short:
         R_click_add_new_link: { role: 'button', name: 'Add new link' }
         sleep_after_add_new_link: 2000
         fill_youtube_link: { placeholder: 'YouTube Shorts', value: 'www.tiktok.com/@auyeu.marvi/video/7540458722930216222?is_from_webapp=1&sender_device=pc' }
+        R_click_type_1: { locator: 'input[name="title"]', name: '', exact: true  }
         sleep_after_fill: 3000
         # Click to confirm/add the link
-        click_confirm_button: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Add' , exact: true}
-        sleep_after_confirm: 2000
+        click_confirm_button: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_confirm: 5000
         verify_child_element_count: { container: "Test - module - video - short", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 1 }
     expect_result:
         description: "Verify that the Video module is created successfully"
@@ -641,12 +652,6 @@ testT3841:
         R_click_ticket_event_type: { text: 'Ticket / Event' }
         R_click_add_module: { role: 'button', name: 'Add' }
         sleep_after_add_module: 3000
-        # Add ticket/event link
-        click_module_edit_button_1: { module_name: 'Test Ticket Event module' }
-        R_click_add_from_links: { role: 'button', name: 'Add from my links' }
-        R_click_link_rect_1: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Ticket / event' }
-        R_click_add_1: { role: 'button', name: 'Add' }
-        sleep_after_first_add: 2000
         # Fill event details
         click_module_edit_button_2: { module_name: 'Test Ticket Event module' }
         R_click_add_new_links: { role: 'button', name: 'Add new link' }
@@ -704,19 +709,17 @@ testT4852:
         sleep_before_add_posts: 1000
         R_click_add_from_posts: { role: 'button', name: 'Add from my posts' }
         sleep_after_posts_click: 2000
-        R_click_post_item: { role: 'button', name: 'Image of Product demi 0320' }
+        R_click_post_item: { role: 'button', name: 'auto test T3788' }
         sleep_after_post_select: 1000
-        R_click_add_1: { role: 'button', name: 'Add' }
-        sleep_after_first_add: 2000
+        R_click_add_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_first_add: 5000
         # Add from my products
         click_module_edit_button_2: { module_name: 'Mixed module type' }
-        sleep_before_add_products: 2000
         R_click_add_from_products: { role: 'button', name: 'Add from my products' }
-        sleep_after_products_click: 2000
         R_click_first_product_icon: { locator: "//div[@data-index='0']" }
         sleep_after_product_select: 1000
-        R_click_add_2: { role: 'button', name: 'Add' }
-        sleep_after_second_add: 2000
+        R_click_add_2: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_second_add: 5000
         #Add from my links (first selection)
         click_module_edit_button_3: { module_name: 'Mixed module type' }
         sleep_before_add_links_1: 2000
@@ -729,17 +732,14 @@ testT4852:
         R_click_link_rect_5: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Music' }
         R_click_link_rect_6: { locator: "[role='dialog'] [data-testid='mui-stack'] .MuiTypography-root", name: 'Product' }
         sleep_after_link_select_1: 1000
-        R_click_add_3: { role: 'button', name: 'Add' }
-        sleep_after_third_add: 2000
+        R_click_add_3: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_third_add: 5000
         # Add from my forms
         click_module_edit_button_4: { module_name: 'Mixed module type' }
-        sleep_before_add_forms: 2000
         R_click_add_from_forms: { role: 'button', name: 'Add from my forms' }
-        sleep_after_forms_click: 2000
         R_click_form_rect: { locator: "[role='dialog'] [data-testid='mui-stack']" }
-        sleep_after_form_select: 1000
-        R_click_add_4: { role: 'button', name: 'Add' }
-        sleep_after_final_add: 3000
+        R_click_add_4: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_final_add: 5000
         verify_child_element_count_2: { container: 'Mixed module type', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 9 }
     expect_result:
         description: "Verify that the mixed content module is created successfully with all content types"
@@ -807,9 +807,11 @@ testT4556:
         sleep_after_view_st: 5000
         R_click_edit_event: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive' , exact: true}
         sleep_after_edit_event: 2000
+        R_click_edit_event_2: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event_1: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
         R_click_status_completed: { role: 'menuitem', name: 'Completed' }
-        sleep_after_edit_event: 2000
+        sleep_after_edit_event_2: 2000
         R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
         R_click_save_edit: { role: 'button', name: 'Save' }
         R_click_close_modal: { role: 'button', name: 'Close' }
@@ -842,7 +844,7 @@ testT5105:
         # ========================================
         # Co-seller
         # ========================================
-        session_user_coseller__open: {url: "https://release.pear.us/your-business-name-yuu7" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
+        session_user_coseller__open: {url: "https://release.pear.us/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
         session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive']}
         sleep_after_close: 2000

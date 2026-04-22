@@ -78,7 +78,7 @@ def open_url(page: Page, v):
         logger.info(">>> Auto-handling modals after page load")
         try:
             # Wait for page to fully render before detecting modals
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(10000)
             auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
         except Exception as e:
             # Failure in bullet layer processing does not affect the main process
@@ -2364,6 +2364,7 @@ def auto_handle_modals(page: Page, v: dict):
                 {"class": "MuiSnackbar-root"},
                 {"class": "toast"},
                 {"role": "alert"},
+                {"role": "presentation", "name": "Continue creating"},
                 {"selector": "div[data-track-location='Dialog']"},
             ],
             "button_selectors": [
