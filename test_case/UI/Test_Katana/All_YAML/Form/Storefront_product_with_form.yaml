@@ -197,7 +197,7 @@ testT4860:
           }
         }).then(r=>r.json()).then(res=>{
           // 283bf638-e996-4dfd-85a4-1d33ad1a7bbe
-          alert(res.data)
+          window.open(`https://release.pear.us/post/${res.data}/edit?c=POST_PAGE`);
         })
       "
     # Click Description to focus editor, then insert CTA Button
