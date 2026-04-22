@@ -179,10 +179,10 @@ testPartner_create_form:
 test_guest_submission_1:
   guest: true
   is_mobile: true
-  description: "Verify guest can submit the Auto test Form on demi-release page"
+  description: "Verify guest can submit the Auto test Form on autotestshop page"
   test_step:
     open_demi_release:
-      url: "https://release.pear.us/demi-release"
+      url: "https://release.pear.us/autotestshop"
     R_click_auto_test_form:
       role: "button"
       name: "Partner_create_form"
@@ -292,7 +292,10 @@ test_guest_submission_2:
   description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
   test_step:
     open_demi_release:
-      url: "https://demi0214.notip.com.cn/form/0d95efc9-c0ad-441d-b901-dc3b9ee2084d"
+      url: "https://release.pear.us/autotestshop"
+    R_click_auto_test_form:
+      role: "button"
+      name: "Partner_create_form"
 
     # submit
     R_click_submit:
@@ -319,7 +322,9 @@ test_guest_submission_2:
     description: "Form should be submitted successfully with Got it confirmation"
     assertions:
       - assertion_type: "element_visible_by_text"
-        text: "Partner_create_form_001"
+        text: "Partner_create_form"
+      - assertion_type: "element_visible_by_text"
+        text: "Please enter some information before submitting."
 
 testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
