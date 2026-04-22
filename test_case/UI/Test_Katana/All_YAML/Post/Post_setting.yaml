@@ -750,8 +750,8 @@ testT2834_VerifyPartner:
         # Step 1: Navigate to the post
         open: "https://release.pear.us/events"
         sleep_step: 3000
-        duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
-        sleep_step: 500
+        # duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
+        # sleep_step: 500
         R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
