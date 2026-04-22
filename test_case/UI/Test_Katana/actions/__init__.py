@@ -27,18 +27,27 @@ from .base import (
     verify_value_near,
     verify_all_commission_values,
     reload_page,
+    go_back,
+    page_scroll,
+    scroll_tab_content,
     execute_not_recognized_scan,
+    run_workflow_script,
+    duplicate_post,
     wait_toast,
     scroll_to_bottom,
     drag_element,
     drag_and_drop_by_coordinates,
     swipe_to_element,
     fill_stripe_iframe,
+    smart_click_optional,
+    smart_click_retry,
     handle_modal,
     auto_handle_modals,
     create_session,
     switch_session,
     close_session,
+    delete_coseller_if_exists,
+    execute_js,
 )
 
 from .module import (
@@ -185,12 +194,21 @@ ACTIONS = {
     "click_by_coordinates": click_by_coordinates,
     "click_relative_to_selector": click_relative_to_selector,
     "reload": reload_page,
+    "go_back": go_back,
+    "page_scroll": page_scroll,
+    "scroll_tab_content": scroll_tab_content,
     "execute_not_recognized_scan": execute_not_recognized_scan,
+    "run_workflow_script": run_workflow_script,
+    "duplicate_post": duplicate_post,
     "download_submission_csv": download_submission_csv,
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
     "scroll_to_bottom": scroll_to_bottom,
     "fill_stripe_iframe": fill_stripe_iframe,
+    "smart_click_optional": smart_click_optional,
+    "smart_click_retry": smart_click_retry,
+    "delete_coseller_if_exists": delete_coseller_if_exists,
+    "execute_js": execute_js,
 }
 
 
@@ -245,6 +263,10 @@ def get_action(name):
 
     if name.startswith("R_click_scan") or name.startswith("click_scan"):
         return smart_click_scan
+    if name.startswith("smart_click_optional"):
+        return smart_click_optional
+    if name.startswith("smart_click_retry"):
+        return smart_click_retry
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("if_"):
@@ -275,8 +297,12 @@ def get_action(name):
         return open_url
     elif name.startswith("reload"):
         return reload_page
+    elif name.startswith("go_back"):
+        return go_back
     elif name.startswith("wait_toast"):
         return wait_toast
+    elif name.startswith("page_scroll"):
+        return page_scroll
     elif name.startswith("wait_"):
         return smart_wait
 
@@ -303,6 +329,8 @@ def get_action(name):
         
     if name.startswith("select_a_for_b") or name.startswith("select_b_for_c"):
         return select_replacement_product
+    if name.startswith("execute_js"):
+        return execute_js
         
     # Add other prefix handlers here as we migrate them
     

@@ -1042,4 +1042,67 @@ testT4603:
             - assertion_type: "element_visible_by_text"
               text: "products"
 
+# ------------------ Module - link -> general link text align ------------------------
+testT5210_5211_5212:
+    description: "Verify that the user can set text alignment (center/right) on General Link cards within a module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 5000
+        # Step 1: Create module with General Link type
+        R_click_module: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'general link text align' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        click_general_link: { text: 'General Link', exact: true }
+        sleep_before_add: 2000
+        R_click_add: { role: 'button', name: 'Add' }
+        sleep_after_add: 3000
+        # Step 2: Add a new link card to the module
+        click_module_add_new: { module_name: 'general link text align' }
+        sleep_wait_form: 1500
+        fill_url: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title: { placeholder: 'As the bold title on your', value: 'test align' }
+        R_click_add_link: { locator: "button", text: 'Add', exact: true }
+        sleep_after_add_link: 3000
+        # Verify default text alignment is left
+        verify_element_style_left: { container: 'general link text align', container_filter: '../..', locator: '.link_title', property: 'textAlign', expected: 'left' }
+        
+        # Step 3: Edit link card and set Align center
+        click_module_item_more_icon: { module_name: 'general link text align', index: -1 }
+        sleep_after_card_action: 1000
+        R_click_edit: { role: 'button', name: 'Edit' }
+        sleep_after_edit: 1000
+        click_align_center: { label: 'Align center' }
+        sleep_after_align_center: 500
+        R_click_save: { locator: "button", text: 'Save', exact: true }
+        sleep_after_save: 3000
+        # Verify text alignment changed to center
+        verify_element_style_center: { container: 'general link text align', container_filter: '../..', locator: '.link_title', property: 'textAlign', expected: 'center' }
+        # Step 4: Edit link card again and set Align right
+        click_module_item_more_icon_2: { module_name: 'general link text align', index: -1 }
+        sleep_after_card_action_2: 1000
+        R_click_edit_2: { role: 'button', name: 'Edit' }
+        sleep_after_edit_2: 1000
+        click_align_right: { label: 'Align right' }
+        R_click_save_2: { locator: "button", text: 'Save', exact: true }
+        sleep_after_save_2: 3000
+        # Verify text alignment changed to right
+        verify_element_style_right: { container: 'general link text align', container_filter: '../..', locator: '.link_title', property: 'textAlign', expected: 'right' }
+        # Step 5: Verify module menu - Add from my links
+        click_module_edit_button: { module_name: 'general link text align' }
+        R_click_add_from_my_links: { role: 'button', name: 'Add from my links' }
+        sleep_after_my_links: 2000
+        verify_element_style_my_links_align:
+            locator: "xpath=//*[@role='dialog']//p[contains(text(), 'test align')]/../.."
+            property: "alignItems"
+            expected: "flex-end"
+        R_click_close: { role: 'button', name: 'Close' }
+        
+    expect_result:
+        description: "Verify that General Link card text alignment can be set to center and right successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "general link text align"
+            - assertion_type: "element_visible_by_text"
+              text: "test align"
+
 

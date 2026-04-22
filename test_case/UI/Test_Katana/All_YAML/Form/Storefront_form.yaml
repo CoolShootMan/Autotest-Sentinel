@@ -17,14 +17,18 @@ testPartner_create_form:
     # 1. Short text
     click_add_field_1: { role: 'button', name: 'Add new field'}
     sleep_1: 500
+    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
+    sleep_click_1: 200
     fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
     click_add_1: { role: 'button', name: 'Add' }
 
     # 2. Long text (Paragraph)
     click_add_field_2: { role: 'button', name: 'Add new field' }
     sleep_2: 500
+    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
+    sleep_click_2: 200
     fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
-    click_add_2: { role: 'button', name: 'Add', locator: "div:has(> *:text-is('Add a field'))" }
+    click_add_2: { role: 'button', name: 'Add' }
 
     # 3. Email
     click_add_field_3: { role: 'button', name: 'Add new field', exact: true }
@@ -57,8 +61,9 @@ testPartner_create_form:
     sleep_7: 500
     click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
     fill_single_title: { role: 'textbox', name: 'Enter title of the field', value: 'are you happy?' }
-    fill_single_opt1: { locator: 'input[placeholder="Enter option"]', index: 0, value: 'Yes' }
-    fill_single_opt2: { locator: 'input[placeholder="Enter option"]', index: 1, value: 'No' }
+    # todo: index 有bug
+    fill_single_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: 'Yes' }
+    fill_single_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: 'No' }
     click_add_7: { role: 'button', name: 'Add', exact: true }
 
     # 8. Multiple choice
@@ -67,9 +72,9 @@ testPartner_create_form:
     click_multiple_choice: { role: 'text', name: 'Multiple choice', locator: "div:has(> *:text-is('Multiple choice'))" }
     fill_multi_title: { role: 'textbox', name: 'Enter title of the field', value: 'Multiple' }
     click_add_multi_opt: { role: 'button', name: 'Add option' }
-    fill_multi_opt1: { locator: 'input[placeholder="Enter option"]', index: 0, value: '1' }
-    fill_multi_opt2: { locator: 'input[placeholder="Enter option"]', index: 1, value: '2' }
-    fill_multi_opt3: { locator: 'input[placeholder="Enter option"]', index: 2, value: '3' }
+    fill_multi_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: '1' }
+    fill_multi_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: '2' }
+    fill_multi_opt3: { locator: 'input[placeholder="Enter option"] >> nth=2', value: '3' }
     click_add_8: { role: 'button', name: 'Add', exact: true }
 
     # 9. Social - Instagram
@@ -174,10 +179,10 @@ testPartner_create_form:
 test_guest_submission_1:
   guest: true
   is_mobile: true
-  description: "Verify guest can submit the Auto test Form on demi-release page"
+  description: "Verify guest can submit the Auto test Form on autotestshop page"
   test_step:
     open_demi_release:
-      url: "https://release.pear.us/demi-release"
+      url: "https://release.pear.us/autotestshop"
     R_click_auto_test_form:
       role: "button"
       name: "Partner_create_form"
@@ -287,7 +292,10 @@ test_guest_submission_2:
   description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
   test_step:
     open_demi_release:
-      url: "https://demi0214.notip.com.cn/form/0d95efc9-c0ad-441d-b901-dc3b9ee2084d"
+      url: "https://release.pear.us/autotestshop"
+    R_click_auto_test_form:
+      role: "button"
+      name: "Partner_create_form"
 
     # submit
     R_click_submit:
@@ -314,13 +322,24 @@ test_guest_submission_2:
     description: "Form should be submitted successfully with Got it confirmation"
     assertions:
       - assertion_type: "element_visible_by_text"
-        text: "Partner_create_form_001"
+        text: "Partner_create_form"
+      - assertion_type: "element_visible_by_text"
+        text: "Please enter some information before submitting."
 
 testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
   test_step:
-    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
-    sleep_after_open: 5000
+#    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
+#    sleep_after_open: 5000
+    open_shop: "https://release.pear.us/autotestshop"
+    sleep_after_open_shop: 1000
+
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    sleep_after_form_tab: 200
+    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
+    sleep_after_more_cta: 200
+    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
+
 
     # Dynamic Count Capture & Search
     capture_total_count: { }
