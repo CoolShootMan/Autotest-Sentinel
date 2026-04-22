@@ -436,7 +436,7 @@ testT4847:
     sleep_after_open: 3000
 
     # Open form creation
-    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_after_click: 1000
 
     # Fill form title and subtitle
