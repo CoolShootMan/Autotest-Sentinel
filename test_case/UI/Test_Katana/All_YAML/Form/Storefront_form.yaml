@@ -329,8 +329,17 @@ test_guest_submission_2:
 testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
   test_step:
-    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
-    sleep_after_open: 5000
+#    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
+#    sleep_after_open: 5000
+    open_shop: "https://release.pear.us/autotestshop"
+    sleep_after_open_shop: 1000
+
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    sleep_after_form_tab: 200
+    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
+    sleep_after_more_cta: 200
+    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
+
 
     # Dynamic Count Capture & Search
     capture_total_count: { }
