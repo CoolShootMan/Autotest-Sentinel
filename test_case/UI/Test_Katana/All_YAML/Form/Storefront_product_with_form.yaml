@@ -2,8 +2,13 @@ testT5007:
   description: "Verify adding a product with form to cart from storefront"
   guest: true
   test_step:
-    open: "https://release.pear.us/autotestshop/p/exo646"
+    open: "https://release.pear.us/catalog"
     sleep_after_open: 3000
+
+    # Open product
+    R_click_product: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
+    sleep_after_open_product: 1000
+
     R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
     sleep_after_form: 1000
     fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
