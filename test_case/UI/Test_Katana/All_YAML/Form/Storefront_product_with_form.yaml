@@ -183,11 +183,12 @@ testT4970:
       - assertion_type: "element_visible_by_text"
         text: "test form verify error"
 
+# // todo: 这里的 create 完成的 id test 无法得知
 testT4860:
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
-    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    open: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     sleep_after_open: 3000
 
     # Click Description to focus editor, then insert CTA Button
@@ -239,7 +240,7 @@ testT4867:
   guest: false
   description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
   test_step:
-    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    open: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     sleep_after_open: 3000
 
     # Click on CTA button in editor to select it
@@ -275,7 +276,7 @@ testT4281:
     sleep_after_open: 3000
 
     # Open "Add new" form configuration
-    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_after_click: 1000
 
     # Step 5: Clear recipient email and try to save
@@ -309,8 +310,11 @@ testT4276:
     open: "https://release.pear.us/autotestshop"
     sleep_after_open: 3000
 
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
+    sleep_after_form_tab: 200
+
     # Open form creation
-    R_click_more_options: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_after_click: 1000
 
     # --- Step 1: Empty title -> verify error ---
@@ -357,7 +361,7 @@ testT4866:
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
     # --- Part 1: Create CTA form button (same as testT4866) ---
-    open: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    open: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     sleep_after_open: 3000
 
     R_click_description: { role: 'textbox', name: 'Description' }
@@ -387,7 +391,7 @@ testT4866:
     sleep_after_update_1: 3000
 
     # --- Part 2: Edit button text ---
-    open_edit: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    open_edit: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     sleep_after_open_edit: 3000
 
     R_click_cta_btn_in_editor: { locator: '[data-testid="rich-text-button"]' }
@@ -409,7 +413,7 @@ testT4866:
     verify_updated_btn: { text: 'test form update1' }
 
     # --- Part 4: Delete the CTA button ---
-    open_delete: "https://release.pear.us/post/77bb3ea4-04cc-4ef6-8080-5fbfd408dd6c/edit?c=POST_PAGE"
+    open_delete: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     sleep_after_open_delete: 3000
     R_click_cta_btn_delete: { locator: '[data-testid="rich-text-button"]' }
     sleep_after_select_delete: 500
@@ -518,8 +522,14 @@ testT4539:
   guest: false
   description: "Verify batch select submissions and export selected data"
   test_step:
-    open: "https://release.pear.us/curator/submission?formId=7a9ae2eb-68f6-4c62-96b1-48c85e488977"
-    sleep_after_open: 3000
+    open_shop: "https://release.pear.us/autotestshop"
+    sleep_after_open_shop: 1000
+
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
+    sleep_after_form_tab: 200
+    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
+    sleep_after_more_cta: 200
+    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]' }
 
     # Step 1: Click "Batch select" button -> checkboxes appear
     R_click_batch_select: { locator: '[data-testid="mui-button"]' }
