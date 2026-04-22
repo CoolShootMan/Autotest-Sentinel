@@ -47,6 +47,7 @@ from .base import (
     switch_session,
     close_session,
     delete_coseller_if_exists,
+    execute_js,
 )
 
 from .module import (
@@ -207,6 +208,7 @@ ACTIONS = {
     "smart_click_optional": smart_click_optional,
     "smart_click_retry": smart_click_retry,
     "delete_coseller_if_exists": delete_coseller_if_exists,
+    "execute_js": execute_js,
 }
 
 
@@ -327,6 +329,8 @@ def get_action(name):
         
     if name.startswith("select_a_for_b") or name.startswith("select_b_for_c"):
         return select_replacement_product
+    if name.startswith("execute_js"):
+        return execute_js
         
     # Add other prefix handlers here as we migrate them
     
