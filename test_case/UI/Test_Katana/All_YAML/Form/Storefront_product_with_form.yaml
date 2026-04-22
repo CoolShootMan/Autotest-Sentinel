@@ -115,9 +115,10 @@ testT4970:
     open: "https://release.pear.us/autotestshop"
     sleep_after_open: 3000
 
-    # Click "Add new" to create form
-    click_add_new: { role: 'button', name: 'Add new' }
-    sleep_add: 3000
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
+    sleep_after_form_tab: 200
+
+    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
 
     # Fill form title and subtitle
     fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test form verify error' }
