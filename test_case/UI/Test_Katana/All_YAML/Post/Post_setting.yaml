@@ -68,7 +68,10 @@ testT1742:
         sleep_step: 2000
 
         # Step 5: Verify Post Card displays "Offer up to 10%"
-        verify_post_offer: { text: "Offer up to 10%" }
+        verify_post_offer:
+            scope: { text: "auto-test-post-setting-t1742" }
+            text: "Offer up to 10%"
+            timeout: 5000
 
         # Step 6: Reopen Events to verify
         open_again: "https://release.pear.us/events"
@@ -83,7 +86,7 @@ testT1742:
         # Restore settings: re-enter event -> post -> Selling -> Customize, revert commission to 8%
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
-        R_click_post_teardown: { role: 'button', name: 'Get Tickets', index: 0 }
+        R_click_post_teardown: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
         R_click_selling_teardown: { role: 'tab', name: 'Selling' }
         sleep_step: 2000
@@ -107,8 +110,12 @@ testT1742:
 
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_end: 1000
-        # Step 5: Verify Post Card displays "Offer up to 8%"
-        verify_post_offer: { text: "Offer up to 8%" }
+        # Step 5: Verify Post Card auto-test-post-setting-t1742 displays "Offer up to 8%"
+        # Use scope to limit search within the specific post card containing auto-test-post-setting-t1742
+        verify_post_offer:
+            scope: { text: "auto-test-post-setting-t1742" }
+            text: "Offer up to 8%"
+            timeout: 5000
 
 
 
