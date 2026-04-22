@@ -17,14 +17,18 @@ testPartner_create_form:
     # 1. Short text
     click_add_field_1: { role: 'button', name: 'Add new field'}
     sleep_1: 500
+    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
+    sleep_click_1: 200
     fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
     click_add_1: { role: 'button', name: 'Add' }
 
     # 2. Long text (Paragraph)
     click_add_field_2: { role: 'button', name: 'Add new field' }
     sleep_2: 500
+    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
+    sleep_click_2: 200
     fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
-    click_add_2: { role: 'button', name: 'Add', locator: "div:has(> *:text-is('Add a field'))" }
+    click_add_2: { role: 'button', name: 'Add' }
 
     # 3. Email
     click_add_field_3: { role: 'button', name: 'Add new field', exact: true }
