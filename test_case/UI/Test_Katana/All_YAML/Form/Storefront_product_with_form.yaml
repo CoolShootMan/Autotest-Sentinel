@@ -570,7 +570,15 @@ testT4540:
     verify_update_success: { text: 'Update Success!' }
 
     # --- Part 2: Verify submission times show CST ---
-    open_submission: "https://release.pear.us/curator/submission?formId=7a9ae2eb-68f6-4c62-96b1-48c85e488977"
+    open_shop: "https://release.pear.us/autotestshop"
+    sleep_after_open_shop: 1000
+
+    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
+    sleep_after_form_tab: 200
+    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
+    sleep_after_more_cta: 200
+    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]' }
+
     sleep_after_open_submission: 3000
     verify_table_cst: { text: '(CST)' }
 
@@ -678,7 +686,7 @@ testT5006_curator:
   guest: false
   description: "Verify disabling product form in catalog product settings"
   test_step:
-    open: "https://release.pear.us/catalog/0638b6d9-191b-4c6c-a1d9-184684593c35"
+    open: "https://release.pear.us/catalog"
     sleep_after_open: 3000
 
     # Open product menu and edit
@@ -715,7 +723,7 @@ testT3794:
     sleep_after_open: 3000
 
     # Create a new form
-    R_click_add_new: { locator: '[data-testid="base-more-horiz-icon-cta"]', index: 1 }
+    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_after_click: 1000
     fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'form will be delete xxyyzz' }
     R_click_continue: { role: 'button', name: 'Continue' }
