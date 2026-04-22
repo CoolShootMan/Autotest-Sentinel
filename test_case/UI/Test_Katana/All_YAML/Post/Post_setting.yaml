@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -1564,6 +1564,53 @@ testT2069:
         R_click_save_teardown: { role: 'button', name: 'Save' }
         sleep_step: 3000
         wait_toast_save_teardown: { message: "Post promotions updated", timeout: 15000 }
+
+
+# ==============================================================================
+# Test Case: T3963 Verify shipping fee logic(Catalog_Fulfillment)
+# ==============================================================================
+
+testT3963_VerifyGuestCheckoutShippingFee:
+    guest: true
+    description: "Verify shipping fee logic on the checkout page as a guest"
+    test_step:
+        # Step 1: Open shop
+        open: "https://release.pear.us/autotestshop"
+        sleep_step: 3000
+
+        # Step 2: Click the product image to enter product details
+        R_click_product_img: { locator: "xpath=//div[contains(@class, 'card__container') and .//p[text()='test_general_products']]//img" }
+        sleep_step: 3000
+
+        # Step 3: Click Buy Now
+        R_click_buy_now: { test_id: "post-product-buy-now" }
+        sleep_step: 3000
+
+        # Step 4: Verify Free shipping label initially (1 item)
+        verify_free_shipping_1: { text: "Free shipping" }
+        sleep_step: 500
+
+        # Step 5: Add one more quantity (now 2 items)
+        R_click_add_one_more_1: { role: "button", name: "Add one more Default Title" }
+        sleep_step: 1500
+
+        # Step 6: Verify Free shipping label is still visible (for 2 items)
+        verify_free_shipping_2: { text: "Free shipping" }
+        sleep_step: 500
+
+        # Step 7: Add one more quantity again (now 3 items)
+        R_click_add_one_more_2: { role: "button", name: "Add one more Default Title" }
+        sleep_step: 1500
+
+        # Step 8: Verify Shipping fee is calculated and shown (for 3 items)
+        verify_shipping_fee: { text: "Shipping fee $" }
+        sleep_step: 500
+
+    expect_result:
+        description: "The shipping fee should be calculated and displayed after the 3rd item is added"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Shipping fee $"
 
 
 
