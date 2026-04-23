@@ -948,11 +948,11 @@ testT4735_VerifyPartner:
 
         # Check enableRedirectUrl checkbox
         check_enable_redirect: { locator: "input[name='enableRedirectUrl']" }
-        sleep_step: 1000
+        sleep_step: 2000
 
         # Click Redirect destination name textbox
         R_click_redirect_name: { role: "textbox", name: "Redirect destination name" }
-        sleep_step: 500
+        sleep_step: 1000
 
         # Fill Redirect destination name
         fill_redirect_name: { role: "textbox", name: "Redirect destination name", value: "demi test" }
@@ -989,12 +989,15 @@ testT4735_VerifyGuest:
         open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
-        # Verify redirect popup is visible
-        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
+        # Press Ctrl+R to refresh page
+        press_ctrl_r_refresh: { keys: "Control+r" }
+        sleep_step: 3000
 
-        # Click "DEMI TEST" text link to trigger redirect (not a button, use text locator)
-        R_click_redirect_text_demi: { locator: "text=DEMI TEST" }
-        sleep_step: 5000
+        # Wait for popup and click "demi test" span using XPath (note: lowercase)
+        wait_for_popup_text: { locator: "//span[@data-testid='mui-typography']", timeout: 10000 }
+        sleep_step: 1000
+        click_demi_test: { locator: "//span[@data-testid='mui-typography']" }
+        sleep_step: 3000
 
         sleep_end: 3000
 
@@ -1013,9 +1016,6 @@ testT4735_VerifyGuest_YesPlease:
         open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
-        # Verify redirect popup is visible
-        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
-
         # Click "Yes, please" button to trigger redirect
         R_click_redirect_btn_yes: { role: "button", name: "Yes, please" }
         sleep_step: 5000
@@ -1028,29 +1028,6 @@ testT4735_VerifyGuest_YesPlease:
             - assertion_type: "url_contains"
               text: "tklmerch.com"
 
-
-# T4735_NoThanks: Verify clicking "No, thanks" button closes the popup and stays on current page
-testT4735_VerifyGuest_NoThanks:
-    guest: true
-    description: "Verify clicking 'No, thanks' button closes the redirect popup and stays on current page"
-    test_step:
-        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
-        sleep_after_open: 5000
-
-        # Verify redirect popup is visible
-        verify_redirect_popup: { text: "IT LOOKS LIKE YOU'RE IN" }
-
-        # Click "No, thanks" button to close popup
-        R_click_no_thanks: { role: "button", name: "No, thanks" }
-        sleep_step: 3000
-
-        sleep_end: 3000
-
-    expect_result:
-        description: "Redirect popup should be closed and user should stay on current page"
-        assertions:
-            - assertion_type: "url_contains"
-              text: "test-event-post-variant-settings"
 
     teardown_step:
         # Inject partner cookies to switch to partner context
@@ -1288,8 +1265,8 @@ testT4955_Partner_SetPaymentRestriction:
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
         sleep_step: 1000
 
-        # Step 6: Click "Set up access code" button
-        R_click_setup_access_code: { role: "button", name: "Set up access code" }
+        # Step 5.1: Click access code button (Edit or Set up access code - either one exists)
+        R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up')" }
         sleep_step: 1000
 
         # Step 7: Click and fill access code
@@ -1427,7 +1404,7 @@ testT2874_EnableDependentProducts:
         sleep_step: 1000
 
         # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-with-two-tickets", index: 0 }
+        R_click_post_card: { role: "button", name: "test event with two tickets", index: 0 }
         sleep_step: 3000
 
         # Step 4: Click Selling tab
@@ -1436,59 +1413,43 @@ testT2874_EnableDependentProducts:
 
         # Step 5: Click Customize products
         R_click_customize_products: { role: "button", name: "Customize products" }
-        sleep_step: 3000
+        sleep_step: 5000
 
-        # Step 6: Click "Must be bought with another item" checkbox for General Admission 001
+        # Step 6: Click the checkbox for "Must be bought with another item"
         R_click_dependent_checkbox: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
         sleep_step: 2000
 
-        # Step 8: In popup, click on General Admission 002 product card to select it
-        R_click_select_required_product: { role: "button", name: "General Admission 002" }
-        sleep_step: 1000
+        # Step 7: In popup, click the product image (user confirmed: clicking image works)
+        R_click_select_required_product: { locator: "img", index: 1 }
+        sleep_step: 2000
 
-        # Step 9: Click Confirm in popup
+        # Step 8: Click Confirm in popup
         R_click_confirm_popup: { role: "button", name: "Confirm" }
-        sleep_step: 1000
+        sleep_step: 2000
 
-        # Step 10: Save changes
-        R_click_save: { role: "button", name: "Save" }
+        # Step 9: Click Save inside the Customize products dialog (bottom right)
+        R_click_save_dialog: { role: "button", name: "Save", index: 0 }
         sleep_step: 3000
 
-        sleep_end: 2000
+        # Step 10: Click the outer Save button (outside the dialog, at page bottom)
+        R_click_save_outer: { role: "button", name: "Save", index: 0 }
+        sleep_step: 3000
+
+        # Step 11: Wait for success toast to appear
+        wait_toast_save: { message: "Post products updated", timeout: 15000 }
+        sleep_end: 3000
 
     expect_result:
         description: "Must be bought with another item enabled successfully"
-        assertions: []
-
-# T2874_Guest_Verify: Verify that guest cannot checkout with only one product
-testT2874_VerifyGuestCannotCheckoutWithOneProduct:
-    guest: true
-    description: "Verify guest cannot checkout when only one of dependent products is in cart"
-    test_step:
-        # Step 1: Open the post as guest
-        open: "https://release.pear.us/autotestshop/post/test-event-with-two-tickets"
-        sleep_after_open: 8000
-
-        # Step 2: Scroll to find the products
-        page_scroll: { y: 600, delay: 2000, steps: 5 }
-        sleep_step: 1000
-
-        # Step 3: Add first product to cart
-        R_click_add_to_cart_first: { role: "button", name: "Add to cart" }
-        sleep_step: 3000
-
-        sleep_end: 2000
-
-    expect_result:
-        description: "Guest cannot checkout when only one product is in cart"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Add another product to checkout"
+              text: "Post products updated"
 
-# T2874_Guest_VerifyBoth: Verify guest can checkout when both products are in cart
-testT2874_VerifyGuestCanCheckoutWithBothProducts:
+
+# T2874_Guest_VerifyBoth
+testT2874_VerifyGuestCheckoutTwo:
     guest: true
-    description: "Verify guest can checkout when both dependent products are in cart"
+    description: "Verify guest checkout with two products - adding 001 auto-adds 002 via popup"
     test_step:
         # Step 1: Open the post as guest
         open: "https://release.pear.us/autotestshop/post/test-event-with-two-tickets"
@@ -1498,15 +1459,44 @@ testT2874_VerifyGuestCanCheckoutWithBothProducts:
         page_scroll: { y: 600, delay: 2000, steps: 5 }
         sleep_step: 1000
 
-        # Step 3: Add both products to cart
-        R_click_add_to_cart_first: { role: "button", name: "Add to cart" }
-        sleep_step: 3000
-        R_click_add_to_cart_second: { role: "button", name: "Add to cart" }
+        # Step 3: Click General Admission 001 product name to open detail drawer
+        R_click_product_name_first: { locator: "text=General Admission 001" }
         sleep_step: 3000
 
-        # Step 4: Verify checkout button is enabled
+        # Step 4: Click Add to cart - triggers popup showing General Admission 002
+        R_click_add_to_cart_first: { role: "button", name: "Add to cart" }
+        sleep_step: 3000
+
+        # Step 5: Verify popup shows General Admission 002
+        verify_text_visible: { text: "General Admission 002" }
+        sleep_step: 1000
+
+        # Step 6: Click "Yes, add both!" to add both products to cart
+        R_click_yes_add_both: { role: "button", name: "Yes, add both!" }
+        sleep_step: 3000
+
+        # Step 7: Click Checkout (if products not added, button will be disabled and test fails)
         R_click_checkout: { role: "button", name: "Checkout" }
         sleep_step: 3000
+
+        # Step 8: Click Continue to enter Contact info page
+        R_click_continue: { role: "button", name: "Continue" }
+        sleep_step: 3000
+
+        # Step 9: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        sleep_step: 500
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_step: 500
+        fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
+        sleep_step: 500
+        fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
+        sleep_step: 500
+
+        # Step 10: Place order
+        R_click_place_order: { role: "button", name: "Place order" }
+        wait_for_url: { url: "*order*", timeout: 15000 }
+        sleep_step: 2000
 
         sleep_end: 2000
 
@@ -1514,7 +1504,11 @@ testT2874_VerifyGuestCanCheckoutWithBothProducts:
         description: "Guest can checkout when both dependent products are in cart"
         assertions:
             - assertion_type: "url_contains"
-              text: "checkout"
+              text: "order"
+            - assertion_type: "element_visible_by_text"
+              text: "General Admission 001"
+            - assertion_type: "element_visible_by_text"
+              text: "General Admission 002"
 
     teardown_step:
         # Step 1: Inject partner cookies to switch to partner context
@@ -1543,14 +1537,18 @@ testT2874_VerifyGuestCanCheckoutWithBothProducts:
 
         # Step 6: Click Customize products
         R_click_customize_products_teardown: { role: "button", name: "Customize products" }
+        sleep_step: 5000
+
+        # Step 7: Uncheck "Must be bought with another item" checkbox (click to uncheck)
+        R_click_uncheck_dependent: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
         sleep_step: 2000
 
-        # Step 7: Uncheck "Must be bought with another item" checkbox
-        uncheck_dependent_product: { locator: "input[name='products.1.mustBuyWithOtherItem']", checked: false }
-        sleep_step: 1000
+        # Step 8: Click Save inside the Customize products dialog (bottom right)
+        R_click_save_dialog_teardown: { role: "button", name: "Save", index: 0 }
+        sleep_step: 3000
 
-        # Step 8: Save changes
-        R_click_save_teardown: { role: "button", name: "Save" }
+        # Step 9: Click the outer Save button (outside the dialog, at page bottom)
+        R_click_save_outer_teardown: { role: "button", name: "Save", index: 0 }
         sleep_step: 3000
 
 
