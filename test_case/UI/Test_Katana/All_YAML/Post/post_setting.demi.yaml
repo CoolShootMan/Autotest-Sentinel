@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -1425,18 +1425,18 @@ testT2874_EnableDependentProducts:
         sleep_step: 3000
 
         # Step 6: Click "Must be bought with another item" checkbox for General Admission 001
-        R_click_dependent_checkbox: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
+        R_click_dependent_checkbox: { locator: "label:has-text('Must be bought with another item') input[type='checkbox']" }
         sleep_step: 2000
 
-        # Step 8: In popup, click on General Admission 002 product card to select it
-        R_click_select_required_product: { role: "button", name: "General Admission 002" }
+        # Step 7: In popup, click the checkbox for General Admission 002
+        R_click_select_required_product: { locator: "input[type='checkbox']", index: 1 }
         sleep_step: 1000
 
-        # Step 9: Click Confirm in popup
+        # Step 8: Click Confirm in popup
         R_click_confirm_popup: { role: "button", name: "Confirm" }
         sleep_step: 1000
 
-        # Step 10: Save changes
+        # Step 9: Save changes
         R_click_save: { role: "button", name: "Save" }
         sleep_step: 3000
 
