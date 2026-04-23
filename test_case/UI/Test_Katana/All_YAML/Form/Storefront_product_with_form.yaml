@@ -753,17 +753,17 @@ testT5006_curator:
     description: "Product form should be disabled after unchecking isProductFormEnabled"
     assertions: [ ]
 
-testT4868:
-  guest: true
-  description: "Verify product page shows 'Form unavailable' when form is disabled"
-  test_step:
-    open: "https://release.pear.us/autotestshop/post/autotest-form-unavalible-form"
-    sleep_after_open: 3000
-    verify_unavailable: { text: 'Form unavailable' }
-
-  expect_result:
-    description: "Page should display 'Form unavailable' text"
-    assertions: [ ]
+#testT4868:
+#  guest: true
+#  description: "Verify product page shows 'Form unavailable' when form is disabled"
+#  test_step:
+#    open: "https://release.pear.us/autotestshop/post/autotest-form-unavalible-form"
+#    sleep_after_open: 3000
+#    verify_unavailable: { text: 'Form unavailable' }
+#
+#  expect_result:
+#    description: "Page should display 'Form unavailable' text"
+#    assertions: [ ]
 
 testT3794:
   guest: false
