@@ -189,17 +189,21 @@ testT4860:
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
 #    open: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
-    execute_js:
-      scripts: "
-        fetch('https://kv.js.work/namespaces/pear-autotest/kv/name', {
-          headers: {
-            'Authorization': 'Bearer ns_9001222efa7da80b' 
-          }
-        }).then(r=>r.json()).then(res=>{
-          // 283bf638-e996-4dfd-85a4-1d33ad1a7bbe
-          window.open(`https://release.pear.us/post/${res.data}/edit?c=POST_PAGE`);
-        })
-      "
+    # Step 1: Events list page -> click Event card
+    open: "https://release.pear.us/events"
+    sleep_step1: 3000
+    # "event-for-rte-insert-form" is a DIV element (not BUTTON), use exact text match
+    R_click_my_event: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
+    sleep_step2: 3000
+
+    # Step 2: Event detail page -> click Post card (link text)
+    R_click_post: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
+    sleep_step3: 3000
+
+    # Step 3: Event detail page -> click Post card (link text)
+    R_click_edit: { locator: '[data-testid="mui-list-item-text"]:has-text("Edit")', exact: true, index: 0 }
+    sleep_step4: 3000
+
     # Click Description to focus editor, then insert CTA Button
     R_click_description: { role: 'textbox', name: 'Description' }
     R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
@@ -235,7 +239,7 @@ testT4860:
     verify_published: { text: 'Post published!' }
 
     # Verify CTA button on storefront opens form modal
-    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-2"
     sleep_after_open_storefront: 3000
     R_click_test_form_btn: { role: 'button', text: 'test form' }
     sleep_after_modal: 2000
@@ -268,7 +272,7 @@ testT4867:
     verify_published: { text: 'Post published!' }
 
     # Verify CTA button no longer exists on storefront
-    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-2"
     sleep_after_open_storefront: 3000
     verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
 
@@ -417,7 +421,7 @@ testT4866:
     sleep_after_update_2: 3000
 
     # --- Part 3: Verify updated text on storefront ---
-    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-1"
+    open_storefront: "https://release.pear.us/autotestshop/post/test-form-in-a-post-2"
     sleep_after_open_storefront: 3000
     verify_updated_btn: { text: 'test form update1' }
 
