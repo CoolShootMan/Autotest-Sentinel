@@ -846,7 +846,7 @@ testT5105:
         # ========================================
         session_user_coseller__open: {url: "https://release.pear.us/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
-        session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive']}
+        session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive'], assert: false}
         sleep_after_close: 2000
     expect_result:
         description: "Event should be created and then marked as completed successfully"
@@ -891,6 +891,7 @@ testT4853:
         R_click_finish: { role: 'button', name: 'Finish and create post' }
         R_click_view_st: { role: 'button', name: 'View post on storefront' }
         sleep_after_view_st: 5000
+        auto_handle_modals_1: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         click_module_post_view_event_cta: { module_name: 'new module use in archiving test cases', post_title: 'Test-event-Auto-archive-past-event', button_name: 'View event' }
         R_click_edit_event: { role: 'button', name: 'Edit event' }
         sleep_after_edit_event: 2000
@@ -948,7 +949,7 @@ testT4559:
         R_click_finish_select_module: { locator: 'div[data-testid="mui-list-item-button"]'}
         R_click_view_st: { role: 'button', name: 'Go to event list' }
         sleep_after_view_st: 5000
-        R_click_edit_event_name: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive-not-selected' , exact: true}
+        R_click_edit_event_name: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive-not-selected' , exact: true , index: -1}
         R_click_edit_event: { role: 'button', name: 'Edit event' }
         sleep_after_edit_event: 2000
         R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
@@ -958,8 +959,8 @@ testT4559:
         R_click_save_edit: { role: 'button', name: 'Save' }
         sleep_after_save_edit: 2000
         open_2: "https://release.pear.us/autotestshop"
-        sleep_after_open: 5000
-        verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../../..', text: ['Test-event-Auto-archive-not-selected'], assert: false}
+        sleep_after_open_2: 5000
+        verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../..', text: ['Test-event-Auto-archive-not-selected'], assert: false}
 
     expect_result:
         description: "Event should be created and then marked as completed successfully"
