@@ -625,7 +625,7 @@ testT4540:
 
     click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
     sleep_after_form_tab: 200
-    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
+    click_right_more_cta: { locator: '.form-card:has-text("Partner_create_form") [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
     sleep_after_more_cta: 200
     click_submission_link: { locator: 'a[href^="/curator/submission?formId="]' }
 
@@ -633,7 +633,7 @@ testT4540:
     verify_table_cst: { text: '(CST)' }
 
     # --- Part 3: Click submission row, verify dialog shows CST ---
-    R_click_submission_row: { role: 'cell', name: 'imsg', index: 1 }
+    R_click_submission_row: {  locator: '.MuiTypography-body1:has-text("Pear Partner Cooperation Inquiry")' }
     sleep_after_click: 2000
     verify_dialog_cst: { text: '(CST)' }
 
