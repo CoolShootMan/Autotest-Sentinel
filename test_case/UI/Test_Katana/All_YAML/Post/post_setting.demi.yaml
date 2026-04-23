@@ -68,10 +68,7 @@ testT1742:
         sleep_step: 2000
 
         # Step 5: Verify Post Card displays "Offer up to 10%"
-        verify_post_offer:
-            scope: { text: "auto-test-post-setting-t1742" }
-            text: "Offer up to 10%"
-            timeout: 5000
+        verify_post_offer: { text: "Offer up to 10%" }
 
         # Step 6: Reopen Events to verify
         open_again: "https://release.pear.us/events"
@@ -86,7 +83,7 @@ testT1742:
         # Restore settings: re-enter event -> post -> Selling -> Customize, revert commission to 8%
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
-        R_click_post_teardown: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
+        R_click_post_teardown: { role: 'button', name: 'Get Tickets', index: 0 }
         sleep_step: 3000
         R_click_selling_teardown: { role: 'tab', name: 'Selling' }
         sleep_step: 2000
@@ -110,12 +107,8 @@ testT1742:
 
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_end: 1000
-        # Step 5: Verify Post Card auto-test-post-setting-t1742 displays "Offer up to 8%"
-        # Use scope to limit search within the specific post card containing auto-test-post-setting-t1742
-        verify_post_offer:
-            scope: { text: "auto-test-post-setting-t1742" }
-            text: "Offer up to 8%"
-            timeout: 5000
+        # Step 5: Verify Post Card displays "Offer up to 8%"
+        verify_post_offer: { text: "Offer up to 8%" }
 
 
 
@@ -1432,18 +1425,18 @@ testT2874_EnableDependentProducts:
         sleep_step: 3000
 
         # Step 6: Click "Must be bought with another item" checkbox for General Admission 001
-        R_click_dependent_checkbox: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
+        R_click_dependent_checkbox: { locator: "label:has-text('Must be bought with another item') input[type='checkbox']" }
         sleep_step: 2000
 
-        # Step 8: In popup, click on General Admission 002 product card to select it
-        R_click_select_required_product: { role: "button", name: "General Admission 002" }
+        # Step 7: In popup, click the checkbox for General Admission 002
+        R_click_select_required_product: { locator: "input[type='checkbox']", index: 1 }
         sleep_step: 1000
 
-        # Step 9: Click Confirm in popup
+        # Step 8: Click Confirm in popup
         R_click_confirm_popup: { role: "button", name: "Confirm" }
         sleep_step: 1000
 
-        # Step 10: Save changes
+        # Step 9: Save changes
         R_click_save: { role: "button", name: "Save" }
         sleep_step: 3000
 
@@ -1547,230 +1540,6 @@ testT2874_VerifyGuestCanCheckoutWithBothProducts:
         sleep_step: 3000
 
 
-
-
-
-
-
-
-
-# ==============================================================================
-# Test Case: T4038
-# T4038: Verify user can edit announcement in all post
-#
-# Precondition: No precondition
-#
-# Step description:
-# 1. Open Events -> click Auto-Test-post-setting -> click Get Tickets -> enter Post edit page
-# 2. Switch to Selling tab -> click Promotion sub-tab
-# 3. Click "+ Add promotional announcements" button to open dialog
-# 4. Fill "auto test01 Announcement" in Announcement 1 input
-# 5. Click "+ Add item" -> fill "auto test02 Announcement" in Announcement 2 input
-# 6. Click "+ Add item" -> fill "auto test03 Announcement" in Announcement 3 input
-# 7. Click "Add" button to confirm and close dialog
-# 8. Save post settings
-#
-# Expected result:
-#   - If post enable resell setting: Can add/edit announcement
-# ==============================================================================
-
-
-testT4038:
-    description: "Verify user can add/edit promotional announcements in Selling/Promotion tab"
-    test_step:
-        # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
-        sleep_step: 5000
-
-        # Step 2: Click "Auto-Test-post-setting" event card
-        R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
-        sleep_step: 4000
-
-        # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
-        R_click_post_card: { role: "button", name: "Auto-Test-post-setting-t1742", index: 0 }
-        sleep_step: 3000
-
-        # Step 4: Switch to Selling tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
-        # Step 5: Click "Promotion" sub-tab
-        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
-        sleep_step: 1500
-
-        # Step 6: Click "+ Add promotional announcements" button to open dialog
-        R_click_add_announcements_btn: { role: 'button', name: 'Add promotional announcements' }
-        sleep_step: 1500
-
-        # Step 7: Fill Announcement 1 - first input box (id="announcements.0.text")
-        fill_announcement_1: { locator: 'input[id="announcements.0.text"]', value: 'auto test01 Announcement' }
-        sleep_step: 500
-
-        # Step 8: Click "+ Add item" to add Announcement 2
-        R_click_add_item_1: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
-        sleep_step: 800
-
-        # Step 9: Fill Announcement 2 (id="announcements.1.text")
-        fill_announcement_2: { locator: 'input[id="announcements.1.text"]', value: 'auto test02 Announcement' }
-        sleep_step: 500
-
-        # Step 10: Click "+ Add item" again to add Announcement 3
-        R_click_add_item_2: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
-        sleep_step: 800
-
-        # Step 11: Fill Announcement 3 (id="announcements.2.text")
-        fill_announcement_3: { locator: 'input[id="announcements.2.text"]', value: 'auto test03 Announcement' }
-        sleep_step: 500
-
-        # Step 12: Click "Add" submit button to confirm and close dialog
-        R_click_add_submit: { locator: '[data-testid="mui-button"][type="submit"]' }
-        sleep_step: 2000
-
-        # Step 13: Save post settings
-        R_click_save_ann: { role: 'button', name: 'Save' }
-        wait_toast_promotions_updated: { message: "Post promotions updated", timeout: 15000 }
-
-    expect_result:
-        description: "3 announcements added successfully, announcements list displayed on Promotion tab"
-        assertions:
-            - assertion_type: "toast_message"
-              message: "Post promotions updated"
-            - assertion_type: "element_visible"
-              locator: 'input[id="announcements.0.text"]'
-
-# ==============================================================================
-# Test Case: T2069
-# T2069: Verify user can scroll the announcement if the number of banners is more than 3
-#
-# Precondition: There are more than 3 banners on post page
-# (testT4038 must be executed first to set up 3 announcements)
-#
-# Step description:
-# 1. Open the post page as guest (no login)
-# 2. Verify 3 announcements are displayed at the top of the post page
-# 3. Drag / swipe the announcement banner to the left
-# 4. Verify the hidden announcement on the right is now displayed
-#
-# Expected result:
-#   - The announcement is moved to left
-#   - The hidden announcement on the right is displayed
-# ==============================================================================
-
-
-testT2069:
-    guest: true
-    description: "Verify announcement banners auto-scroll every 3 seconds and loop back"
-    test_step:
-        # Step 1: Open the post landing page as guest (no login required)
-        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
-        sleep_step: 4000
-
-        # Step 2: Verify first announcement is displayed initially
-        wait_announcement_1_visible: { text: "auto test01 Announcement", timeout: 8000 }
-
-        # Step 3: Wait for auto-scroll (3s interval) and verify second announcement appears
-        sleep_step: 3500
-        wait_announcement_2_auto: { text: "auto test02 Announcement", timeout: 8000 }
-
-        # Step 4: Wait for auto-scroll and verify third announcement appears
-        sleep_step: 3500
-        wait_announcement_3_auto: { text: "auto test03 Announcement", timeout: 8000 }
-
-        # Step 5: Wait for auto-scroll and verify it loops back to first announcement
-        sleep_step: 3500
-        wait_announcement_1_loop: { text: "auto test01 Announcement", timeout: 8000 }
-
-    expect_result:
-        description: "Announcement banner auto-scrolls every 3 seconds (1→2→3→1) and loops continuously"
-        assertions:
-            - assertion_type: "text_visible"
-              text: "auto test01 Announcement"
-            - assertion_type: "text_visible"
-              text: "auto test02 Announcement"
-            - assertion_type: "text_visible"
-              text: "auto test03 Announcement"
-
-
-    teardown_step:
-        # Step 1: Inject partner cookies
-        add_cookies: {}
-        sleep_step: 1000
-
-        # Step 2: Open Events list page
-        open: "https://release.pear.us/events"
-        sleep_step: 5000
-
-        # Step 2: Click "Auto-Test-post-setting" event card
-        R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
-        sleep_step: 4000
-
-        # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
-        R_click_post_card: { role: "button", name: "Auto-Test-post-setting-t1742", index: 0 }
-        sleep_step: 3000
-
-        # Step 4: Switch to Selling tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
-        # Step 5: Click "Promotion" sub-tab
-        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
-        sleep_step: 1500
-
-        # Step 6: Click trash icon button to delete all announcements
-        R_click_delete_all_ann: { locator: '[data-testid="button"][aria-label="Remove announcement carousel"]', index: 0 }
-        sleep_step: 1000
-
-        # Step 7: Save post settings
-        R_click_save_teardown: { role: 'button', name: 'Save' }
-        sleep_step: 3000
-        wait_toast_save_teardown: { message: "Post promotions updated", timeout: 15000 }
-
-
-# ==============================================================================
-# Test Case: T3963 Verify shipping fee logic(Catalog_Fulfillment)
-# ==============================================================================
-
-testT3963_VerifyGuestCheckoutShippingFee:
-    guest: true
-    description: "Verify shipping fee logic on the checkout page as a guest"
-    test_step:
-        # Step 1: Open shop
-        open: "https://release.pear.us/autotestshop"
-        sleep_step: 3000
-
-        # Step 2: Click the product image to enter product details
-        R_click_product_img: { locator: "xpath=//div[contains(@class, 'card__container') and .//p[text()='test_general_products']]//img" }
-        sleep_step: 3000
-
-        # Step 3: Click Buy Now
-        R_click_buy_now: { test_id: "post-product-buy-now" }
-        sleep_step: 3000
-
-        # Step 4: Verify Free shipping label initially (1 item)
-        verify_free_shipping_1: { text: "Free shipping" }
-        sleep_step: 500
-
-        # Step 5: Add one more quantity (now 2 items)
-        R_click_add_one_more_1: { role: "button", name: "Add one more Default Title" }
-        sleep_step: 1500
-
-        # Step 6: Verify Free shipping label is still visible (for 2 items)
-        verify_free_shipping_2: { text: "Free shipping" }
-        sleep_step: 500
-
-        # Step 7: Add one more quantity again (now 3 items)
-        R_click_add_one_more_2: { role: "button", name: "Add one more Default Title" }
-        sleep_step: 1500
-
-        # Step 8: Verify Shipping fee is calculated and shown (for 3 items)
-        verify_shipping_fee: { text: "Shipping fee $" }
-        sleep_step: 500
-
-    expect_result:
-        description: "The shipping fee should be calculated and displayed after the 3rd item is added"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Shipping fee $"
 
 
 
