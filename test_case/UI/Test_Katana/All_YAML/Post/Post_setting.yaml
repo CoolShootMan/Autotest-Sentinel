@@ -35,17 +35,17 @@ testT1742:
         sleep_step: 2000
 
         # Handle optional "Set resale earnings" dialog -> click "Start Customizing"
-        # smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
-        # sleep_step: 1000
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        sleep_step: 1000
 
         #Handle optional "Choose a resale model" tooltip/popover -> click "Done"
         #注意：Done 是 <p> 元素，不是 <button>，需要用 text 定位
         #现在 base.py 已支持 tooltip/popover 选择器，text 定位应该能正常工作
-        # smart_click_optional_done: { name: 'Done' }
-        # sleep_step: 1000
+        smart_click_optional_done: { name: 'Done' }
+        sleep_step: 1000
 
         # smart_click_optional_done_1: { name: 'Done' }
-        # sleep_step: 1000
+        sleep_step: 1000
 
         sleep_step: 3000
         R_click_batch_set: { role: 'button', name: 'Batch set commission rates' }
