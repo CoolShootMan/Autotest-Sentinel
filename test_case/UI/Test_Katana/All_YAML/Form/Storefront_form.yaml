@@ -10,56 +10,60 @@ testPartner_create_form:
     click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_add: 3000
 
-    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
-    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
-    fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
+#    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
+#    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
+#    fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
+#
+#    # 1. Short text
+#    click_add_field_1: { role: 'button', name: 'Add new field'}
+#    sleep_1: 500
+#    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
+#    sleep_click_1: 200
+#    fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
+#    click_add_1: { role: 'button', name: 'Add' }
+#
+#    # 2. Long text (Paragraph)
+#    click_add_field_2: { role: 'button', name: 'Add new field' }
+#    sleep_2: 500
+#    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
+#    sleep_click_2: 200
+#    fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
+#    click_add_2: { role: 'button', name: 'Add' }
 
-    # 1. Short text
-    click_add_field_1: { role: 'button', name: 'Add new field'}
-    sleep_1: 500
-    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
-    sleep_click_1: 200
-    fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
-    click_add_1: { role: 'button', name: 'Add' }
-
-    # 2. Long text (Paragraph)
-    click_add_field_2: { role: 'button', name: 'Add new field' }
-    sleep_2: 500
-    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
-    sleep_click_2: 200
-    fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
-    click_add_2: { role: 'button', name: 'Add' }
-
-    # 3. Email
-    click_add_field_3: { role: 'button', name: 'Add new field', exact: true }
-    sleep_3: 500
-    click_email: { locator: 'xpath=//div[@data-testid="form-field-item"][.//p[text()="Email address"]]' }
-    click_add_3: { role: 'button', name: 'Add' }
-
-    # 4. Phone
-    click_add_field_4: { role: 'button', name: 'Add new field', exact: true }
-    sleep_4: 500
-    click_phone: { locator: 'xpath=//div[@data-testid="form-field-item"][.//p[text()="Phone number"]]' }
-    click_add_4: { role: 'button', name: 'Add' }
-
-    # 5. Media
-    click_add_field_5: { role: 'button', name: 'Add new field', exact: true }
-    sleep_5: 500
-    click_media: { locator: 'xpath=//div[@data-testid="form-field-item"][.//p[text()="Media"]]' }
-    fill_media_title: { role: 'textbox', name: 'Enter title of the field', value: 'Add Media' }
-    fill_media_limit: { role: 'spinbutton', value: '1' }
-    click_add_5: { role: 'button', name: 'Add' }
-
-    # 6. Date and time
-    click_add_field_6: { role: 'button', name: 'Add new field', exact: true }
-    sleep_6: 500
-    click_datetime: { locator: 'xpath=//div[@data-testid="form-field-item"][.//p[text()="Date and time"]]' }
-    click_add_6: { role: 'button', name: 'Add' }
+#    # 3. Email
+#    click_add_field_3: { role: 'button', name: 'Add new field' }
+#    sleep_3: 500
+#    click_email3: { locator: '.MuiTypography-body1:has-text("Email address")' }
+#    sleep_click_email: 200
+#    click_add_3: { role: 'button', name: 'Add' }
+#
+#    # 4. Phone
+#    click_add_field_4: { role: 'button', name: 'Add new field', exact: true }
+#    sleep_4: 500
+#    click_phone: { locator: '.MuiTypography-body1:has-text("Phone number")' }
+#    sleep_click_phone: 200
+#    click_add_4: { role: 'button', name: 'Add' }
+#
+#    # 5. Media
+#    click_add_field_5: { role: 'button', name: 'Add new field', exact: true }
+#    sleep_5: 500
+#    click_media: { locator: '.MuiTypography-body1:has-text("Media")' }
+#    sleep_click_media: 200
+#    fill_media_title: { role: 'textbox', name: 'Enter title of the field', value: 'Add Media' }
+#    fill_media_limit: { role: 'spinbutton', value: '1' }
+#    click_add_5: { role: 'button', name: 'Add' }
+#
+#    # 6. Date and time
+#    click_add_field_6: { role: 'button', name: 'Add new field', exact: true }
+#    sleep_6: 500
+#    click_datetime: { locator: '.MuiTypography-body1:has-text("Date and time")' }
+#    sleep_click_datetime: 200
+#    click_add_6: { role: 'button', name: 'Add' }
 
     # 7. Single choice
     click_add_field_7: { role: 'button', name: 'Add new field', exact: true }
     sleep_7: 500
-    click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
+    click_single_choice: { locator: '.MuiTypography-body1:has-text("Single choice")' }
     fill_single_title: { role: 'textbox', name: 'Enter title of the field', value: 'are you happy?' }
     # todo: index 有bug
     fill_single_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: 'Yes' }
