@@ -303,9 +303,10 @@ testT3683_T3684:
 
         # Step 10: Place Order
         R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_step: 5000
 
-        # Wait for checkout modal to close and navigate to order placed page
-        wait_for_order_placed: { url: '*order*', timeout: 15000 }
+        # Wait for order confirmation page to load ("Access Your Order" button appears)
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
         sleep_step: 2000
 
         # T3684 Expected: Verify confirmation note is displayed (no manual scroll needed, wait_for will auto-wait for visibility)
@@ -387,13 +388,16 @@ testT3686_CosellerResell:
         R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
         sleep_step: 2000
 
+
+
+
         # Wait for toast message "Post published and added to your shop."
         wait_toast_publish: { message: "Post published and added to your shop.", timeout: 10000 }
         sleep_step: 3000
 
-# =========================================================================
-# T3686: Verify Order confirmation note is inherited and non-editable in Coseller's Post
-# =========================================================================
+        # =========================================================================
+        # T3686: Verify Order confirmation note is inherited and non-editable in Coseller's Post
+        # =========================================================================
 
         # Step 3.1: Navigate to Coseller's shop page
         open_coseller_shop: "https://release.pear.us/autotest-coseller"
