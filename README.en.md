@@ -415,6 +415,104 @@ click_confirm: { test_id: 'confirm-button' }
 
 ---
 
-**Version:** v4.1  
-**Last Updated:** 2026-04-15  
+## V4.2 New Features (2026-04-23)
+
+### verify_no_sibling_text — Verify Element/Text Absence
+
+**Use Case**: Verify that a specific text is **NOT visible** within a given scope. For example, verifying "Choose call-to-action type" is invisible when the CTA options are collapsed.
+
+**Location**: `actions/base.py` → `verify_no_sibling_text()`
+
+**Two Patterns**:
+
+```yaml
+# Pattern 1: Anchor on an element, verify its siblings do NOT contain the text
+verify_no_sibling_add_new:
+    locator: '[data-testid="base-more-horiz-icon-cta"]'
+    index: -1
+    text: 'Add new'
+
+# Pattern 2: Directly verify text is NOT visible within a container scope (recommended)
+verify_cta_type_4:
+    text: 'Choose call-to-action type'
+    container: 'test_general_products'
+```
+
+**Parameters**:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `locator` | string | - | Element selector to anchor on (mutually exclusive with `container`) |
+| `index` | int | -1 | Element index, supports negative (e.g., -1 = last) |
+| `text` | string | required | Text that should NOT exist |
+| `container` | string | - | Container scope text (mutually exclusive with `locator`) |
+| `timeout` | int | 5000 | Timeout in milliseconds |
+
+### execute_js — Execute JavaScript
+
+**Use Case**: Run arbitrary JavaScript directly in the browser context for custom operations, DOM data extraction, or triggering special events.
+
+**Location**: `actions/base.py` → `execute_js()`
+
+```yaml
+# 1. Inline script (automatically wrapped as arrow function)
+execute_js: { script: "document.title" }
+
+# 2. Script with arguments
+execute_js:
+    script: "(selector) => document.querySelector(selector).innerText"
+    args: "h1"
+
+# 3. Multiple arguments
+execute_js:
+    script: "(a, b) => a + b"
+    args: [1, 2]
+
+# 4. External JS file
+execute_js: { file: "scripts/scroll_to_top.js" }
+
+# 5. Assert return value
+execute_js:
+    script: "() => document.querySelectorAll('.item').length"
+    assert_equals: 5
+
+# 6. Save return value to workflow context
+execute_js:
+    script: "() => document.querySelector('.price').textContent"
+    save_as: "price_text"
+```
+
+### Allure HTTP Server — Share Reports Over LAN
+
+**Context**: Running `allure open` in CI/CD blocks the main process, and machines with multiple virtual NICs may report random IPs, making it hard for LAN colleagues to access the report.
+
+**Solution**: `http_server.py` runs as an independent subprocess HTTP server, auto-detecting the LAN IP (excluding VirtualBox/VMware/Hyper-V virtual NICs).
+
+**Usage**:
+
+```bash
+# Start (independent window, does not block pytest main process)
+python http_server.py <report_dir> <port>
+
+# Example
+python http_server.py report/html/2026-04-23_11-00 8080
+```
+
+**Auto-print after startup**:
+
+```
+Allure report server started!
+====================================
+LAN access: http://192.168.50.92:8080
+Local Allure: auto-opened
+====================================
+Press Ctrl+C to stop
+```
+
+**main.py Integration**: `main.py` automatically starts the HTTP Server and prints the LAN access address after test completion.
+
+---
+
+**Version:** v4.2  
+**Last Updated:** 2026-04-23  
 **Maintained by:** Autotest-monster Team

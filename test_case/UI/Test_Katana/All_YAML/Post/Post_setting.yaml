@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -254,9 +254,9 @@ testT3683_T3684:
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_step: 2000
 
-        # =========================================================================
-        # T3684: Guest checkout to verify confirmation note display
-        # =========================================================================
+# =========================================================================
+# T3684: Guest checkout to verify confirmation note display
+# =========================================================================
 
         # Step 5.1: Log out from Curator account
         open_account: "https://release.pear.us/account"
@@ -391,9 +391,9 @@ testT3686_CosellerResell:
         wait_toast_publish: { message: "Post published and added to your shop.", timeout: 10000 }
         sleep_step: 3000
 
-        # =========================================================================
-        # T3686: Verify Order confirmation note is inherited and non-editable in Coseller's Post
-        # =========================================================================
+# =========================================================================
+# T3686: Verify Order confirmation note is inherited and non-editable in Coseller's Post
+# =========================================================================
 
         # Step 3.1: Navigate to Coseller's shop page
         open_coseller_shop: "https://release.pear.us/autotest-coseller"
@@ -762,9 +762,9 @@ testT2834_VerifyPartner:
         # Step 1: Navigate to the post
         open: "https://release.pear.us/events"
         sleep_step: 3000
-        # duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
+        #duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
         # sleep_step: 500
-        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
+        R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
         sleep_step: 2000
@@ -786,25 +786,28 @@ testT2834_VerifyPartner:
         # Step 3: Switch to Selling tab and customize products
         click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
         sleep_step: 2000
-        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
-        sleep_step: 1500
+        #smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
+        #sleep_step: 1500
         R_click_select_products: { test_id: "enhance-button-cta" }
-        sleep_step: 2000
+        sleep_step: 1000
 
         # Step 4: Add product
         # 先搜索 "test_general_products"，让目标卡唯一可见
         fill_product_search_1: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
         sleep_step: 500
-        click_search_btn: { role: 'button', name: 'Search' }
+        click_search_btn: { role: 'button', name: 'Search', exact: true }
         sleep_step: 2000
         # 此时只有一张卡，直接用 role+name 点击，不需要 index
-        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
+        click_product_card_1: { role: 'img', name: 'Image of Product', index: 0 }
 
         # Step 5: Check Free Shipping checkbox
-        check_free_shipping: { locator: 'input[name="products.1.isFreeShipping"]', checked: true }
+        
         sleep_step: 500
         click_add_product_btn_1: { role: 'button', name: 'Add 2/20 product(s)' }
-        sleep_step: 1500
+        sleep_step: 1000
+        page_scroll: { y: 800, delay: 1500, steps: 3 }
+        sleep_step: 1000
+        check_free_shipping: { locator: 'input[name="products.1.isFreeShipping"]', checked: true }
 
         # Step 6: Save changes
         R_click_save: { role: "button", name: "Save" }
@@ -824,14 +827,14 @@ testT2834_VerifyGuest:
     description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
     test_step:
         # Step 1: Shop page
-        open: "https://release.pear.us/autotestshop"
-        sleep_step: 3000
+        # open: "https://release.pear.us/autotestshop"
+        # sleep_step: 3000
         # Click the specific product image (as in recording)
-        R_click_product_img: { role: "button", name: "Image of Product verify-co" }
-        sleep_step: 3000
+        # R_click_product_img: { role: "button", name: "Image of Product verify-co" }
+        # sleep_step: 3000
 
         # Step 2: Navigate to Post details directly (from recording)
-        open_post_details: "https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive-1"
+        open_post_details: "https://release.pear.us/autotestshop/post/verify-post-shipping-fee"
         sleep_step: 3000
         R_click_free_shipping_label: { text: "Free shipping" }
         sleep_step: 1000
@@ -889,7 +892,7 @@ testT2834_VerifyGuest:
         # Step 2: Open post URL as partner
         open_teardown: "https://release.pear.us/events"
         sleep_step: 3000
-        R_click_event: { role: "cell", name: "verify-co-seller-auto-archive", optional: false }
+        R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
         sleep_step: 2000
@@ -905,7 +908,7 @@ testT2834_VerifyGuest:
         click_search_btn: { role: 'button', name: 'Search' }
         sleep_step: 2000
         # 此时只有一张卡，直接用 role+name 点击，不需要 index
-        click_product_card: { role: 'img', name: 'Image of Product', index: 0 }
+        click_product_card_2: { role: 'img', name: 'Image of Product', index: 0 }
         sleep_step: 1000
         click_add_product_btn_2: { role: 'button', name: 'Add 1/20 product(s)' }
         sleep_step: 1500
@@ -1773,7 +1776,143 @@ testT3963_VerifyGuestCheckoutShippingFee:
               text: "Shipping fee $"
 
 
+# ==============================================================================
+# Test Case: T5033_5034 Verify the "Choose call-to-action type" function of the event post
+# ==============================================================================
+testT5033_5034_VerifyPartner:
+    description: "Verify that partner can set a product to have free shipping"
+    test_step:
+        # Step 1: Duplicate ticket
+        open: "https://release.pear.us/events"
+        sleep_step: 3000
+        R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
+        sleep_step: 2000
+        R_click_tickets_tab_1: { role: 'tab', name: 'Tickets' }
+        sleep_after_tickets_tab: 1500
+        # 点击 More 按钮（三个点图标）
+        click_more_button_1: { role: "button", name: "More action" }
+        sleep_step: 500
+        # 从菜单中点击 Duplicate
+        R_click_duplicate_menuitem_1: { role: "menuitem", name: "Duplicate" }
+        sleep_step: 500
+        R_click_duplicate_1: { role: "button", name: "Duplicate" }
+        sleep_step: 500
+        # R_click_gotit_1: { role: "button", name: "Got it", optional: true }
+        # sleep_step: 500
+        click_more_button_2: { role: "button", name: "More action" }
+        sleep_step: 500
+        R_click_duplicate_menuitem_2: { role: "menuitem", name: "Duplicate" }
+        sleep_step: 500
+        R_click_duplicate_2: { role: "button", name: "Duplicate" }
+        sleep_step: 500
+        # R_click_gotit_2: { role: "button", name: "Got it", optional: true }
+        # sleep_step: 500
+        click_more_button_3: { role: "button", name: "More action" }
+        sleep_step: 500
+        R_click_duplicate_menuitem_3: { role: "menuitem", name: "Duplicate" }
+        sleep_step: 500
+        R_click_duplicate_3: { role: "button", name: "Duplicate" }
+        sleep_step: 500
+        # R_click_gotit_3: { role: "button", name: "Got it", optional: true }
+        # sleep_step: 500
+        # click_confirm_button: { test_id: "confirm-button", optional: true }
+        # sleep_step: 1000
+        verify_toast: { text: "Product duplicated successfully" }
+
+        # Step 2: Create a post
+        sleep_step: 2000
+        R_click_event_tab_2: { role: 'tab', name: 'Event', exact:true }
+        R_click_Create_post: {role: "button", name: "Create a post"}
+        sleep_after_create_post: 2000
+        # #smart_click_optional_confirm: { role: "button", name: "Confirm" }
+        click_confirm: { role: "button", name: "Confirm" }
+        sleep_step: 1500
+        R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
+        sleep_step: 2000
+        R_click_post: { test_id: "mui-card-action-area" }
+        sleep_step: 2000
+
+        # Step 3: Switch to Selling tab and customize products
+        click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
+        sleep_step: 1500
+        R_click_select_products: { test_id: "enhance-button-cta" }
+        sleep_step: 2000
+
+        # Step 4: Add product
+         # 先搜索 "test_general_products"，让general唯一可见
+        fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
+        sleep_step: 500
+        click_search_btn_2: { role: 'button', name: 'Search', exact: true }
+        sleep_step: 1500
+        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        click_product_card_5: { role: 'img', name: 'Image of Product' }
+        click_add_product_btn_1: { role: 'button', name: 'Add 5/20 product(s)' }
+        sleep_step: 1000
+        page_scroll: { y: 800, delay: 1500, steps: 3 }
+        # sleep_step: 1000
+        check_cta_type_1: { locator: 'input[name="products.0.isCtaCustomized"]', checked: true }
+        sleep_step: 500
+        # Product 0: 点击 Buy now -> 选择 View options
+        R_click_buy_now_0: { role: "button", name: "Buy now", index: 0 }
+        R_click_option_view_options: { role: "option", name: "View options" }
+        sleep_step: 500
+        check_cta_type_2: { locator: 'input[name="products.1.isCtaCustomized"]', checked: true }
+        # Product 1: 点击 Buy now -> 选择 Add to cart
+        R_click_buy_now_1: { role: "button", name: "Buy now", index: 0 }
+        R_click_option_add_to_cart: { role: "option", name: "Add to cart" }
+        sleep_step: 500
+        check_cta_type_3: { locator: 'input[name="products.2.isCtaCustomized"]', checked: true }
+        # Product 2: 点击 Buy now -> 选择 View Product
+        R_click_buy_now_2: { role: "button", name: "Buy now", index: 0 }
+        sleep_step: 500
+        R_click_option_view_product: { role: "option", name: "View Product" }
+
+        check_cta_type_4: { locator: 'input[name="products.3.isCtaCustomized"]', checked: true }
+        verify_cta_type_4:
+            text: 'Choose call-to-action type'
+            container: 'test_general_products'
 
 
+        # Step 5: Save changes
+        R_click_save: { role: "button", name: "Save" }
+        sleep_step: 1000
+        R_click_save_again: { role: "button", name: "Save" }
+        sleep_step: 3000
+        
+    expect_result:
+        description: "Post products updated successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Post products updated"
+
+
+# testT5033_5034_VerifyGuest:
+#     guest: true
+#     description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
+#     test_step:
+#         # Step 1: Shop page
+#         open: "https://release.pear.us/autotestshop"
+#         sleep_step: 3000
+#         # Click the specific product image (as in recording)
+#         R_click_product_img: { role: "button", name: "Image of Product verify-co" }
+#         sleep_step: 3000
+
+#         # Step 2: Navigate to Post details directly (from recording)
+#         open_post_details: "https://release.pear.us/autotestshop/post/verify-post-shipping_fee-1"
+#         sleep_step: 3000
+#         # Verify on post details
+#         verify_free_shipping_drawer: { text: "Free shipping", index: 1 }
+#         sleep_step: 500
+
+#         # Step 3: Post-purchase expand details
+#         verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
+#         R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
+#         sleep_step: 1000
+
+#     expect_result:
+#         description: "The free shipping label should be visible on the final order page"
+#         assertions:
+#             - assertion_type: "element_visible_by_text"
+#               text: "Free shipping"
 
 
