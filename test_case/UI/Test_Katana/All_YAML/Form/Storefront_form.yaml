@@ -5,49 +5,49 @@ testPartner_create_form:
     open: "https://release.pear.us/autotestshop"
     sleep_open: 3000
 
-#    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
-#    sleep_click_add_my_form: 1000
+    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
+    sleep_click_add_my_form: 1000
     click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_add: 3000
 
-#    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
-#    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
-#    fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
-#
-#    # 1. Short text
-#    click_add_field_1: { role: 'button', name: 'Add new field'}
-#    sleep_1: 500
-#    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
-#    sleep_click_1: 200
-#    fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
-#    click_add_1: { role: 'button', name: 'Add' }
-#
-#    # 2. Long text (Paragraph)
-#    click_add_field_2: { role: 'button', name: 'Add new field' }
-#    sleep_2: 500
-#    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
-#    sleep_click_2: 200
-#    fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
-#    click_add_2: { role: 'button', name: 'Add' }
+    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
+    fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
+
+    # 1. Short text
+    click_add_field_1: { role: 'button', name: 'Add new field'}
+    sleep_1: 500
+    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
+    sleep_click_1: 200
+    fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
+    click_add_1: { role: 'button', name: 'Add' }
+
+    # 2. Long text (Paragraph)
+    click_add_field_2: { role: 'button', name: 'Add new field' }
+    sleep_2: 500
+    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
+    sleep_click_2: 200
+    fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
+    click_add_2: { role: 'button', name: 'Add' }
 
     # 3. Email
     click_add_field_3: { role: 'button', name: 'Add new field' }
     sleep_3: 500
-    click_email3: { locator: '.MuiTypography-body1:has-text("Email address")' }
+    click_email3: { locator: '.link-card-disable:has-text("Email address")' }
     sleep_click_email: 200
     click_add_3: { role: 'button', name: 'Add' }
 
     # 4. Phone
     click_add_field_4: { role: 'button', name: 'Add new field', exact: true }
     sleep_4: 500
-    click_phone: { locator: '.MuiTypography-body1:has-text("Phone number")' }
+    click_phone: { locator: '.link-card-disable:has-text("Phone number")' }
     sleep_click_phone: 200
     click_add_4: { role: 'button', name: 'Add' }
 
     # 5. Media
     click_add_field_5: { role: 'button', name: 'Add new field', exact: true }
     sleep_5: 500
-    click_media: { locator: '.MuiTypography-body1:has-text("Media")' }
+    click_media: { locator: '.link-card-disable:has-text("Media")' }
     sleep_click_media: 200
     fill_media_title: { role: 'textbox', name: 'Enter title of the field', value: 'Add Media' }
     fill_media_limit: { role: 'spinbutton', value: '1' }
@@ -56,14 +56,14 @@ testPartner_create_form:
     # 6. Date and time
     click_add_field_6: { role: 'button', name: 'Add new field', exact: true }
     sleep_6: 500
-    click_datetime: { locator: '.MuiTypography-body1:has-text("Date and time")' }
+    click_datetime: { locator: '.link-card-disable:has-text("Date and time")' }
     sleep_click_datetime: 200
     click_add_6: { role: 'button', name: 'Add' }
 
     # 7. Single choice
     click_add_field_7: { role: 'button', name: 'Add new field', exact: true }
     sleep_7: 500
-    click_single_choice: { locator: '.MuiTypography-body1:has-text("Single choice")' }
+    click_single_choice: { locator: '.link-card-disable:has-text("Single choice")' }
     fill_single_title: { role: 'textbox', name: 'Enter title of the field', value: 'are you happy?' }
     # todo: index 有bug
     fill_single_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: 'Yes' }
@@ -73,7 +73,7 @@ testPartner_create_form:
     # 8. Multiple choice
     click_add_field_8: { role: 'button', name: 'Add new field', exact: true }
     sleep_8: 500
-    click_multiple_choice: { role: 'text', name: 'Multiple choice', locator: "div:has(> *:text-is('Multiple choice'))" }
+    click_multiple_choice: { locator: '.link-card-disable:has-text("Multiple choice")' }
     fill_multi_title: { role: 'textbox', name: 'Enter title of the field', value: 'Multiple' }
     click_add_multi_opt: { role: 'button', name: 'Add option' }
     fill_multi_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: '1' }
@@ -84,7 +84,7 @@ testPartner_create_form:
     # 9. Social - Instagram
     click_add_field_9: { role: 'button', name: 'Add new field', exact: true }
     sleep_9: 500
-    click_social_1: { locator: 'xpath=//div[@data-testid="form-field-item"][.//p[text()="Social"]]' }
+    click_social_1: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_1: { role: 'combobox' }
     click_insta: { role: 'option', name: 'Instagram' }
     click_add_9: { role: 'button', name: 'Add' }
@@ -92,7 +92,7 @@ testPartner_create_form:
     # 10. Social - Facebook
     click_add_field_10: { role: 'button', name: 'Add new field', exact: true }
     sleep_10: 500
-    click_social_2: { text: 'Social', exact: true }
+    click_social_2: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_2: { role: 'combobox' }
     click_fb: { role: 'option', name: 'Facebook' }
     click_add_10: { role: 'button', name: 'Add' }
@@ -100,7 +100,7 @@ testPartner_create_form:
     # 11. Social - TikTok
     click_add_field_11: { role: 'button', name: 'Add new field', exact: true }
     sleep_11: 500
-    click_social_3: { text: 'Social', exact: true }
+    click_social_3: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_3: { role: 'combobox' }
     click_tiktok: { role: 'option', name: 'TikTok' }
     click_add_11: { role: 'button', name: 'Add' }
@@ -108,7 +108,7 @@ testPartner_create_form:
     # 12. Social - X
     click_add_field_12: { role: 'button', name: 'Add new field', exact: true }
     sleep_12: 500
-    click_social_4: { text: 'Social', exact: true }
+    click_social_4: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_4: { role: 'combobox' }
     click_x: { role: 'option', name: 'X', exact: true }
     click_add_12: { role: 'button', name: 'Add' }
@@ -116,7 +116,7 @@ testPartner_create_form:
     # 13. Social - YouTube
     click_add_field_13: { role: 'button', name: 'Add new field', exact: true }
     sleep_13: 500
-    click_social_5: { text: 'Social', exact: true }
+    click_social_5: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_5: { role: 'combobox' }
     click_yt: { role: 'option', name: 'YouTube' }
     click_add_13: { role: 'button', name: 'Add' }
@@ -124,7 +124,7 @@ testPartner_create_form:
     # 14. Social - Linkedin
     click_add_field_14: { role: 'button', name: 'Add new field', exact: true }
     sleep_14: 500
-    click_social_6: { text: 'Social', exact: true }
+    click_social_6: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_6: { role: 'combobox' }
     click_linkedin: { role: 'option', name: 'Linkedin' }
     click_add_14: { role: 'button', name: 'Add' }
@@ -132,7 +132,7 @@ testPartner_create_form:
     # 15. Social - Threads (Unrequired)
     click_add_field_15: { role: 'button', name: 'Add new field', exact: true }
     sleep_15: 500
-    click_social_7: { text: 'Social', exact: true }
+    click_social_7: { locator: '.link-card-disable:has-text("Social")' }
     click_social_combo_7: { role: 'combobox' }
     click_threads: { role: 'option', name: 'Threads' }
     check_required: { role: 'checkbox', name: 'Required', checked: false }
