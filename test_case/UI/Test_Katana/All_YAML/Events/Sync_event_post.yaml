@@ -1,8 +1,12 @@
 testT4984_partner:
   description: "Verify adding products to a post via the enhance button in Selling tab"
   test_step:
-    open: "https://release.pear.us/events/2d5a0cea-4ee2-4b98-a7b1-68f5910ec4cd/view"
+    open: "https://release.pear.us/events"
     sleep_after_open: 5000
+
+    click_view_event: { role: 'cell', name: "verify-post-shipping_fee" }
+    sleep_after_view_event: 2000
+
     # Create a post
     click_create_post: { role: "button", name: "Create a post" }
     sleep_after_create_post: 2000
@@ -58,11 +62,11 @@ testT4984_partner:
     sleep_after_check_content: 1500
     click_insert_1: { role: "button", name: "Insert", exact: true, index: 1 }
     sleep_after_insert_1: 1500
-    click_cta_elements:
+    R_click_cta_elements:
       locator: "li"
       text: "CTA Elements"
     sleep_after_hover_cta: 1500
-    click_cta_product_banner: { role: "menuitem", name: "CTA Product Banner" }
+    R_click_cta_product_banner: { role: "menuitem", name: "CTA Product Banner" }
     sleep_after_cta_banner: 1500
     click_product_img_2: { role: "img", name: "Image of Product", index: 1 }
     sleep_after_img_2: 1500
@@ -88,16 +92,10 @@ testT4984_guest:
     sleep_after_open: 3000
 
     click_buy_now:
-      locator: '[data-testid="post-product-banner-card-action"] [data-testid="post-product-buy-now"]'
+      locator: '[data-testid="pear-event-banner-container"] [data-testid="post-product-buy-now"]'
     sleep_after_buy_now: 1500
 
-    fill_fill_out: { role: "textbox", placeholder: "Please fill this out", value: "123" }
-    sleep_after_fill_out: 1000
-
-    click_save: { role: "button", name: "Save" }
-    sleep_after_save: 1500
-
-    click_continue_cta: { locator: '[data-testid="checkout-in-post-continue-cta"]' }
+    click_continue_cta: { locator: '[data-testid="checkout-in-post-credit-card-cta"]' }
     sleep_after_continue: 1500
 
     fill_first_name: { locator: 'input[name="contact.firstName"]', value: "Test" }
@@ -112,9 +110,24 @@ testT4984_guest:
     fill_phone: { role: "textbox", name: "Phone number", value: "(815) 672-5345" }
     sleep_after_phone: 1000
 
-    click_place_order_2: { role: "button", name: "Place order" }
-    sleep_after_place_order_2: 5000
+    fill_stripe_iframe:
+      card_number: '4242424242424242'
+      expiry: '02/45'
+      cvc: '345'
+      card_name: 'linda 4650'
+      zipcode: '90021'
+    sleep_step: 1000
+
+    R_click_place_order_2: { role: "button", name: "Place order" }
+
+    # Wait for order confirmation page to load ("Access Your Order" button appears)
+    wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+    sleep_step: 2000
+
+    verify_note_on_order_placed: { text: 'Thanks for your payment!' }
+    sleep_end: 3000
 
   expect_result:
-    description: "Order should be placed successfully"
-    assertions: []
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your payment!"
