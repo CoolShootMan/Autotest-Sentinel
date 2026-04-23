@@ -48,14 +48,15 @@ from .base import (
     close_session,
     delete_coseller_if_exists,
     execute_js,
+    verify_no_sibling_text,
 )
 
 from .module import (
     click_module_edit_button, click_module_paragraph, click_add_new_product,
     click_module_add_new, click_module_post_view_event_cta, click_module_item_more_icon,
     click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded,
-    verify_element_style, verify_child_element_count, verify_no_sibling_text,
-    verify_element_contains_text,verify_carousel_scroll, verify_carousel_nav_hidden_at_last,
+    verify_element_style, verify_child_element_count,
+    verify_element_contains_text, verify_carousel_scroll, verify_carousel_nav_hidden_at_last,
     click_container_button
 )
 from .product import (
@@ -188,6 +189,7 @@ ACTIONS = {
     "verify_value": verify_value,
     "verify_value_near": verify_value_near,
     "verify_all_commission": verify_all_commission_values,
+    "verify_cta_type_4": verify_no_sibling_text,
     "click_module_add_new": click_module_add_new,
     "verify_product_visible": verify_text_visible,
     "select_replacement_product": select_replacement_product,

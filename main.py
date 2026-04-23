@@ -16,6 +16,7 @@ import time
 import subprocess # Import subprocess
 import shutil
 import sys
+import socket
 
 def start_autotest():
     logger.remove()
@@ -43,8 +44,8 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # 要执行的 YAML 文件列表，逗号分隔（路径相对于 Test_Katana/All_YAML/）
-    # yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml,All_YAML/Post/Post_setting.yaml"
-    yaml_files = "All_YAML/Module/Module.yaml"
+    yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml,All_YAML/Post/Post_setting.yaml"
+    # yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml"
     pytest_args = [
         "python",
         "-m",
@@ -81,10 +82,40 @@ def start_autotest():
     logger.info(f"Running command: {' '.join(generate_cmd)}")
     subprocess.run(generate_cmd, check=True)
     
-    logger.info(f"Opening Allure report...")
+    # 获取局域网 IP（192.168.x.x 段，排除虚拟网卡）
+    def get_lan_ip():
+        try:
+            addrs = socket.getaddrinfo(socket.gethostname(), None)
+            for addr in addrs:
+                ip = addr[4][0]
+                if ip.startswith("192.168.") and not any(ip.startswith(f"192.168.{x}.") for x in ["56", "88", "23"]):
+                    return ip
+            for addr in addrs:
+                ip = addr[4][0]
+                if not ip.startswith("127.") and ":" not in ip:
+                    return ip
+        except Exception:
+            pass
+        return "127.0.0.1"
+
+    lan_ip = get_lan_ip()
+    http_port = 8080
+
+    logger.info(f"Opening Allure report (local only)...")
     open_cmd = [allure_bat, "open", allure_report_dir]
     logger.info(f"Running command: {' '.join(open_cmd)}")
-    subprocess.run(open_cmd)
+    # 立即启动 HTTP 服务器（独立窗口，不被 open 阻塞影响）
+    http_server_script = os.path.join(BASE_DIR, "http_server.py")
+    http_cmd = [sys.executable, http_server_script, allure_report_dir, str(http_port)]
+    subprocess.Popen(http_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0)
+    logger.info(f"====================================")
+    logger.info(f"局域网报告地址: http://{lan_ip}:{http_port}")
+    logger.info(f"本机 Allure: 自动已打开")
+    logger.info(f"====================================")
+    try:
+        subprocess.run(open_cmd)
+    except Exception:
+        pass
 
 
 

@@ -1,7 +1,7 @@
 import re as _re
 from playwright.sync_api import Page
 from loguru import logger
-from .base import smart_click
+from .base import smart_click, verify_no_sibling_text
 
 def click_module_edit_button(page: Page, v: dict):
     module_name = v.get("module_name")
@@ -136,56 +136,7 @@ def verify_module_expanded(page: Page, v: dict):
     raise AssertionError(f"Module '{module_name}' did not expand. Current Height: {box['height']:.1f}px")
 
 
-def verify_no_sibling_text(page: Page, v: dict):
-    """
-    Verify that an element's siblings do NOT contain the specified text.
-    
-    Supported parameters:
-    - locator: Element locator (required)
-    - index: Element index, supports negative values like -1 for last (default: -1)
-    - text: The text that should NOT exist in sibling elements (required)
-    - timeout: Timeout in milliseconds (default: 5000)
-    
-    Usage in YAML:
-        verify_no_sibling_add_new:
-            locator: '[data-testid="base-more-horiz-icon-cta"]'
-            index: -1
-            text: 'Add new'
-    """
-    locator_str = v.get("locator")
-    text = v.get("text", "Add new")
-    target_index = v.get("index", -1)
-    timeout = v.get("timeout", 5000)
-    
-    if not locator_str:
-        raise ValueError("verify_no_sibling_text: 'locator' parameter is required")
-    
-    logger.info(f"Verifying no sibling with text '{text}' for element: {locator_str}[{target_index}]")
-    
-    # Find the target element
-    el = page.locator(locator_str).nth(target_index)
-    el.wait_for(state="visible", timeout=timeout)
-    
-    # Check parent container for siblings containing the text
-    parent = el.locator("xpath=..")
-    sibling_with_text = parent.locator(f":text-is('{text}')").or_(
-        parent.locator(f"button:has-text('{text}')")
-    ).or_(
-        parent.locator(f"[data-testid]:has-text('{text}')")
-    )
-    
-    count = sibling_with_text.count()
-    if count > 0:
-        # Also check visibility
-        for i in range(count):
-            if sibling_with_text.nth(i).is_visible():
-                page.screenshot(path=f"fail_sibling_{text[:10]}.png")
-                raise AssertionError(
-                    f"Found sibling element with text '{text}' near '{locator_str}[{target_index}]', "
-                    f"but it should NOT exist for co-seller."
-                )
-    
-    logger.info(f"Confirmed: no sibling with text '{text}' found near '{locator_str}[{target_index}]'")
+
 
 
 def verify_element_style(page: Page, v: dict):

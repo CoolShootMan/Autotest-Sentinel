@@ -2748,6 +2748,83 @@ def execute_js(page: Page, v):
     return result
 
 
+def verify_no_sibling_text(page: Page, v: dict):
+    """
+    Verify that an element's siblings do NOT contain the specified text,
+    OR directly verify that a text is NOT visible anywhere on the page/scope.
+
+    Supported parameters:
+    - locator: Element locator to anchor on (optional if 'text' is provided alone)
+    - index: Element index, supports negative values like -1 for last (default: -1)
+    - text: The text that should NOT exist (required)
+    - container: Scope container text — search within this container's element (optional)
+    - timeout: Timeout in milliseconds (default: 5000)
+
+    Usage in YAML:
+        # Pattern 1: Verify siblings of a specific element do NOT contain text
+        verify_no_sibling_add_new:
+            locator: '[data-testid="base-more-horiz-icon-cta"]'
+            index: -1
+            text: 'Add new'
+
+        # Pattern 2: Directly verify text is NOT visible within a scope (recommended for absent elements)
+        verify_no_cta_checkbox:
+            text: 'Choose call-to-action type'
+            container: 'test_general_products'
+    """
+    locator_str = v.get("locator")
+    text = v.get("text", "Add new")
+    target_index = v.get("index", -1)
+    container_text = v.get("container")
+    timeout = v.get("timeout", 5000)
+
+    if not text:
+        raise ValueError("verify_no_sibling_text: 'text' parameter is required")
+
+    # Pattern 2: No locator, just search for text absence within a scope
+    if not locator_str and container_text:
+        logger.info(f"Verifying text '{text}' is NOT visible within container: {container_text}")
+        scope = page.locator("div", has_text=container_text).last
+        matches = scope.locator(f":text-is('{text}'), button:has-text('{text}'), [data-testid]:has-text('{text}')")
+        for i in range(min(matches.count(), 10)):
+            if matches.nth(i).is_visible():
+                page.screenshot(path=f"fail_visible_{text[:10]}.png")
+                raise AssertionError(
+                    f"Text '{text}' was found and is VISIBLE within '{container_text}', "
+                    f"but it should NOT exist."
+                )
+        logger.info(f"Confirmed: text '{text}' is NOT visible within '{container_text}'")
+        return
+
+    # Pattern 1: Original sibling-check logic
+    if not locator_str:
+        raise ValueError("verify_no_sibling_text: either 'locator' or 'container' parameter is required")
+
+    logger.info(f"Verifying no sibling with text '{text}' for element: {locator_str}[{target_index}]")
+
+    el = page.locator(locator_str).nth(target_index)
+    el.wait_for(state="visible", timeout=timeout)
+
+    parent = el.locator("xpath=..")
+    sibling_with_text = parent.locator(f":text-is('{text}')").or_(
+        parent.locator(f"button:has-text('{text}')")
+    ).or_(
+        parent.locator(f"[data-testid]:has-text('{text}')")
+    )
+
+    count = sibling_with_text.count()
+    if count > 0:
+        for i in range(count):
+            if sibling_with_text.nth(i).is_visible():
+                page.screenshot(path=f"fail_sibling_{text[:10]}.png")
+                raise AssertionError(
+                    f"Found sibling element with text '{text}' near '{locator_str}[{target_index}]', "
+                    f"but it should NOT exist."
+                )
+
+    logger.info(f"Confirmed: no sibling with text '{text}' found near '{locator_str}[{target_index}]'")
+
+
 def delete_coseller_if_exists(page: Page, v: dict):
     """
     Complete flow to delete co-seller (if exists).
