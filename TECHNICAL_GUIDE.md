@@ -224,6 +224,8 @@ testT{编号}:
 | 填充 | `fill_email: { role: "textbox", name: "Email", value: "test@test.com" }` | |
 | 上传 | `upload_file: { text: "Upload", file_path: "data/img.jpg" }` | |
 | 勾选 | `check_agree: { role: "checkbox", name: "I agree" }` | |
+| 执行 JS | `execute_js: { script: "document.title" }` | 浏览器上下文执行 JS |
+| 验证文本不存在 | `verify_no_sibling_text: { text: "xxx", container: "yyy" }` | 验证文本在容器内不可见 |
 
 ### 5.3 断言类型
 
@@ -590,4 +592,162 @@ if name.startswith("smart_click_retry"):
         ├── 点击不稳定（动画/遮罩）→ smart_click_retry
         └── 点击稳定 → smart_click 或 R_click
 ```
+
+---
+
+## 11. verify_no_sibling_text — 验证元素/文本不存在
+
+### 11.1 适用场景
+
+验证"某个文本在指定区域内**不存在**"，常用于：
+- 验证 CTA 选项折叠状态下，相关文案不可见
+- 验证表单未填写时，错误提示不显示
+- 验证弹框关闭后，内容消失
+
+### 11.2 实现位置
+
+`actions/base.py` → `verify_no_sibling_text()`，已注册到 `actions/__init__.py`。
+
+### 11.3 两种用法
+
+**Pattern 1: 锚定元素，检查兄弟节点**
+
+```yaml
+verify_no_sibling_add_new:
+    locator: '[data-testid="base-more-horiz-icon-cta"]'
+    index: -1
+    text: 'Add new'
+```
+
+**Pattern 2: 直接验证文本在容器区域内不可见（推荐）**
+
+```yaml
+# 验证 "Choose call-to-action type" 在 test_general_products 容器内不可见
+verify_cta_type_4:
+    text: 'Choose call-to-action type'
+    container: 'test_general_products'
+```
+
+### 11.4 参数说明
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `locator` | string | - | 锚定元素选择器（与 container 二选一） |
+| `index` | int | -1 | 元素索引，支持负数（如 -1 为最后一个） |
+| `text` | string | 必填 | 要验证**不存在**的文本 |
+| `container` | string | - | 搜索范围容器文本（与 locator 二选一，推荐） |
+| `timeout` | int | 5000 | 超时(ms) |
+
+### 11.5 注意事项
+
+- `locator` 和 `container` 互斥，必须提供其中一个
+- Pattern 2（container）更稳定，不依赖可能不存在的锚点元素
+- 文本不可见时直接通过，不抛异常；文本可见时截图并抛 AssertionError
+
+---
+
+## 12. execute_js — 执行 JavaScript
+
+### 12.1 适用场景
+
+- 读取 DOM 数据（如元素文本、属性、计算后的样式）
+- 触发 Playwright 不直接支持的事件
+- 执行自定义业务逻辑
+- 调用外部 JS 脚本文件
+
+### 12.2 实现位置
+
+`actions/base.py` → `execute_js()`，已注册到 `actions/__init__.py`。
+
+### 12.3 用法示例
+
+```yaml
+# 1. 读取页面标题
+execute_js: { script: "document.title" }
+
+# 2. 读取元素文本
+execute_js:
+    script: "(sel) => document.querySelector(sel).textContent"
+    args: ".price"
+
+# 3. 断言返回值
+execute_js:
+    script: "() => document.querySelectorAll('.item').length"
+    assert_equals: 5
+
+# 4. 保存到上下文供后续使用
+execute_js:
+    script: "() => document.querySelector('.price').textContent"
+    save_as: "price_text"
+
+# 5. 外部 JS 文件
+execute_js: { file: "scripts/scroll_to_top.js" }
+```
+
+### 12.4 参数说明
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `script` | string | JS 代码（自动包装为 `() => (...)`） |
+| `file` | string | 外部 JS 文件路径（与 script 二选一） |
+| `args` | string/list | 传给脚本的参数 |
+| `assert_equals` | any | 断言返回值等于指定值 |
+| `assert_contains` | string | 断言返回值包含指定字符串 |
+| `save_as` | string | 将返回值保存到 `page._workflow_context[key]` |
+
+---
+
+## 13. Allure HTTP Server — 局域网共享报告
+
+### 13.1 背景问题
+
+1. **阻塞问题**: `allure open` 阻塞主进程，HTTP 线程随进程退出被强制终止
+2. **IP 问题**: 机器有多块虚拟网卡时，`socket.gethostbyname` 随机返回虚拟网卡 IP（如 `192.168.56.1`），同事无法访问
+
+### 13.2 解决方案
+
+`http_server.py` 独立子进程 HTTP 服务器：
+
+```python
+# 自动检测局域网 IP（排除 VirtualBox/VMware/Hyper-V 虚拟网卡）
+# 监听 0.0.0.0:port，不阻塞 pytest 主进程
+# 静默日志，减少干扰
+```
+
+### 13.3 使用方法
+
+```bash
+# 手动启动
+python http_server.py <report_dir> <port>
+
+# 示例：共享 2026-04-23 的报告
+python http_server.py report/html/2026-04-23_11-00 8080
+```
+
+### 13.4 main.py 集成
+
+`main.py` 在测试完成后自动：
+1. 启动 `http_server.py` 独立子进程（`CREATE_NEW_CONSOLE`）
+2. 打印局域网访问地址供同事查看
+
+```python
+subprocess.Popen(http_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+logger.info(f"局域网报告地址: http://{lan_ip}:{http_port}")
+```
+
+### 13.5 文件清单
+
+| 文件 | 说明 |
+|------|------|
+| `http_server.py` | 独立 HTTP 服务器脚本 |
+| `main.py` | 集成启动逻辑（子进程 + 局域网 IP 检测） |
+
+---
+
+## 附录: 安全注意事项
+
+以下文件包含敏感信息，已在 `.gitignore` 中排除，**禁止提交到 Git**：
+- `cookie_*.json` — 包含真实的认证 Token
+- `.env` — 包含 Gemini API Keys
+- `ai_healing_screenshots/` — 包含系统截图（可能暴露业务数据）
 

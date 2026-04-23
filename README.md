@@ -346,4 +346,102 @@ click_confirm: { test_id: 'confirm-button' }
 
 ---
 
-**版本:** v4.1 | **最后更新:** 2026-04-16 | **维护者:** Autotest-monster Team
+## v4.2 新增功能 (2026-04-23)
+
+### verify_no_sibling_text — 验证元素/文本不存在
+
+**适用场景**: 验证"某个文本在指定区域内**不存在**"，例如验证 CTA 选项未展开时 "Choose call-to-action type" 不可见。
+
+**实现位置**: `actions/base.py` → `verify_no_sibling_text()`
+
+**两种用法**:
+
+```yaml
+# Pattern 1: 锚定元素，检查其兄弟节点不包含指定文本
+verify_no_sibling_add_new:
+    locator: '[data-testid="base-more-horiz-icon-cta"]'
+    index: -1
+    text: 'Add new'
+
+# Pattern 2: 直接验证文本在指定容器区域内不可见（推荐）
+verify_cta_type_4:
+    text: 'Choose call-to-action type'
+    container: 'test_general_products'
+```
+
+**参数说明**:
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `locator` | string | - | 锚定元素选择器（与 container 二选一） |
+| `index` | int | -1 | 元素索引，支持负数（如 -1 为最后一个） |
+| `text` | string | 必填 | 要验证**不存在**的文本 |
+| `container` | string | - | 搜索范围容器文本（与 locator 二选一） |
+| `timeout` | int | 5000 | 超时(ms) |
+
+### execute_js — 执行 JavaScript
+
+**适用场景**: 直接在浏览器上下文中执行 JavaScript，适用于自定义操作、读取 DOM 数据、触发特殊事件等。
+
+**实现位置**: `actions/base.py` → `execute_js()`
+
+```yaml
+# 1. 内联脚本（自动包装为箭头函数）
+execute_js: { script: "document.title" }
+
+# 2. 脚本带参数
+execute_js:
+    script: "(selector) => document.querySelector(selector).innerText"
+    args: "h1"
+
+# 3. 多参数
+execute_js:
+    script: "(a, b) => a + b"
+    args: [1, 2]
+
+# 4. 外部 JS 文件
+execute_js: { file: "scripts/scroll_to_top.js" }
+
+# 5. 断言返回值
+execute_js:
+    script: "() => document.querySelectorAll('.item').length"
+    assert_equals: 5
+
+# 6. 保存返回值到 workflow context
+execute_js:
+    script: "() => document.querySelector('.price').textContent"
+    save_as: "price_text"
+```
+
+### Allure HTTP Server — 局域网共享测试报告
+
+**背景**: CI/CD 环境下运行 `allure open` 会阻塞主进程，且机器可能有多块虚拟网卡导致 IP 随机，不便于局域网同事访问报告。
+
+**解决方案**: `http_server.py` 独立子进程 HTTP 服务器，自动检测局域网 IP（排除 VirtualBox/VMware/Hyper-V 虚拟网卡）。
+
+**使用方法**:
+
+```bash
+# 启动（独立窗口，不阻塞 pytest 主进程）
+python http_server.py <report_dir> <port>
+
+# 示例
+python http_server.py report/html/2026-04-23_11-00 8080
+```
+
+**启动后自动打印**:
+
+```
+Allure 报告服务已启动!
+====================================
+同事访问: http://192.168.50.92:8080
+本机 Allure: 自动已打开
+====================================
+按 Ctrl+C 停止服务
+```
+
+**main.py 集成**: `main.py` 已在测试完成后自动启动 HTTP Server 并打印局域网访问地址。
+
+---
+
+**版本:** v4.2 | **最后更新:** 2026-04-23 | **维护者:** Autotest-monster Team
