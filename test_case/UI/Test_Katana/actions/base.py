@@ -78,7 +78,7 @@ def open_url(page: Page, v):
         logger.info(">>> Auto-handling modals after page load")
         try:
             # Wait for page to fully render before detecting modals
-            page.wait_for_timeout(1000)
+            page.wait_for_timeout(10000)
             auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
         except Exception as e:
             # Failure in bullet layer processing does not affect the main process
@@ -2364,6 +2364,7 @@ def auto_handle_modals(page: Page, v: dict):
                 {"class": "MuiSnackbar-root"},
                 {"class": "toast"},
                 {"role": "alert"},
+                {"role": "presentation", "name": "Continue creating"},
                 {"selector": "div[data-track-location='Dialog']"},
             ],
             "button_selectors": [
@@ -2659,6 +2660,92 @@ def _inject_cookies_to_context(page: Page, cookie_file: str):
     # Add cookies to context
     context.add_cookies(cookies_to_add)
     logger.info(f"✓ Loaded {len(cookies_to_add)} cookies to context (ready for authenticated page load)")
+
+
+def execute_js(page: Page, v):
+    """
+    Execute JavaScript in the browser page context.
+
+    YAML 用法:
+        # 1. 内联脚本
+        execute_js: { script: "document.title" }
+
+        # 2. 脚本带参数
+        execute_js:
+            script: "(selector) => document.querySelector(selector).innerText"
+            args: "h1"
+
+        # 3. 多参数
+        execute_js:
+            script: "(a, b) => a + b"
+            args: [1, 2]
+
+        # 4. 外部 JS 文件
+        execute_js: { file: "scripts/scroll_to_top.js" }
+
+        # 5. 断言返回值
+        execute_js:
+            script: "() => document.querySelectorAll('.item').length"
+            assert_equals: 5
+
+        # 6. 保存返回值到 workflow context
+        execute_js:
+            script: "() => document.querySelector('.price').textContent"
+            save_as: "price_text"
+    """
+    import json as json_mod
+
+    script = v.get("script")
+    file = v.get("file")
+    args = v.get("args")
+    assert_equals = v.get("assert_equals")
+    assert_contains = v.get("assert_contains")
+    save_as = v.get("save_as")
+    timeout = v.get("timeout", 10000)
+
+    if not script and not file:
+        raise ValueError("execute_js: 'script' or 'file' is required")
+
+    if file:
+        file_path = file if os.path.isabs(file) else os.path.join(BASE_DIR, file)
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"execute_js: file not found: {file_path}")
+        with open(file_path, "r", encoding="utf-8") as f:
+            script = f.read()
+        logger.info(f"execute_js: loaded script from {file_path}")
+
+    # Ensure script is a callable expression
+    # If script doesn't look like a function, wrap it in an IIFE
+    stripped = script.strip()
+    if not stripped.startswith("(") and not stripped.startswith("function"):
+        # It's a raw expression, wrap it
+        script = f"() => ({stripped})"
+
+    logger.info(f"execute_js: executing script (length={len(script)})")
+
+    result = page.evaluate(script, args)
+
+    logger.info(f"execute_js: result = {result}")
+
+    # Assertions
+    if assert_equals is not None:
+        if result != assert_equals:
+            raise AssertionError(f"execute_js: expected {assert_equals!r}, got {result!r}")
+        logger.info(f"execute_js: assert_equals passed ({result})")
+
+    if assert_contains is not None:
+        if assert_contains not in str(result):
+            raise AssertionError(f"execute_js: expected result to contain {assert_contains!r}, got {result!r}")
+        logger.info(f"execute_js: assert_contains passed")
+
+    # Save to workflow context
+    if save_as:
+        if not hasattr(page, "_workflow_context"):
+            page._workflow_context = {}
+        page._workflow_context[save_as] = result
+        logger.info(f"execute_js: saved result as '{save_as}' = {result!r}")
+
+    return result
 
 
 def delete_coseller_if_exists(page: Page, v: dict):
