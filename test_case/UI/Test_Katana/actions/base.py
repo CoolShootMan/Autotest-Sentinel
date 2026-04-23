@@ -2308,7 +2308,7 @@ def auto_handle_modals(page: Page, v: dict):
 
     timeout = v.get("timeout", 3000)
     ignore_if_not_found = v.get("ignore_if_not_found", True)
-    max_iterations = v.get("max_iterations", 3)
+    max_iterations = v.get("max_iterations", 4)
 
     # Early exit: skip if no modal/popup elements present on page
     # MuiPopover-paper: visible only when a popover/modal is open
@@ -2408,7 +2408,7 @@ def auto_handle_modals(page: Page, v: dict):
         if handled_this_round > 0:
             total_handled += handled_this_round
             # Wait a bit for next modal to appear (multi-step scenarios)
-            page.wait_for_timeout(500)
+            page.wait_for_timeout(1000)
         else:
             # No modals found/handled in this iteration, stop looping
             logger.info(f"No modals found in iteration {iteration}, stopping auto-handle")
