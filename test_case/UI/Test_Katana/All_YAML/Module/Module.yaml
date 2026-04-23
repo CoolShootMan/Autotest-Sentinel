@@ -345,7 +345,7 @@ testT3843:
               text: "test link2"
 
 # ------------------ Module - carousel nav buttons ------------------------
-testT4602:
+testT4600_4602:
     description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
     test_step:
         open: "https://release.pear.us/autotestshop"

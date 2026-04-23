@@ -2308,7 +2308,7 @@ def auto_handle_modals(page: Page, v: dict):
 
     timeout = v.get("timeout", 3000)
     ignore_if_not_found = v.get("ignore_if_not_found", True)
-    max_iterations = v.get("max_iterations", 4)
+    max_iterations = v.get("max_iterations", 5)
 
     # Early exit: skip if no modal/popup elements present on page
     # MuiPopover-paper: visible only when a popover/modal is open

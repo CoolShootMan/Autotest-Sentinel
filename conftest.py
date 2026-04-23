@@ -77,9 +77,13 @@ def pytest_runtest_makereport(item, call):
             smokecases1 = item.funcargs.get('smokecases1')
             if smokecases1:
                 test_case_name = list(smokecases1.keys())[0]
+                test_case_data = list(smokecases1.values())[0]
                 match = re.search(r'T\d+', test_case_name)
                 if match:
-                    logger.info(f"TEST_STATUS: {match.group(0)} - {'passed' if rep.passed else 'failed'}")
+                    # 获取 YAML 文件名用于日志追踪
+                    yaml_path = test_case_data.get("__yaml_path__", "")
+                    yaml_name = os.path.basename(yaml_path) if yaml_path else "unknown"
+                    logger.info(f"TEST_STATUS: [{yaml_name}] {match.group(0)} - {'passed' if rep.passed else 'failed'}")
         except Exception:
             pass
 
