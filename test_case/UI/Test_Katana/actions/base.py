@@ -14,10 +14,11 @@ from page.home import page_element_role_click, page_element_label_click, page_op
 from ..utils.ai_vision import ai_vision
 
 def open_url(page: Page, v):
-    logger.info(f">>> Current Step: open_url")
+    logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
     if url:
         params = v if isinstance(v, dict) else {}
+        logger.info(f">>> open_url params keys: {list(params.keys())}")
         # --- Context-level configuration (must be set before page navigation) ---
         ctx = page.context
 
@@ -75,14 +76,18 @@ def open_url(page: Page, v):
         page_open(page, url)
 
         # Automatically handle pop-ups that appear after page loading
-        logger.info(">>> Auto-handling modals after page load")
-        try:
-            # Wait for page to fully render before detecting modals
-            page.wait_for_timeout(10000)
-            auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
-        except Exception as e:
-            # Failure in bullet layer processing does not affect the main process
-            logger.debug(f"Auto modal handling skipped or failed: {e}")
+        auto_handle_modals_enabled = params.get("auto_handle_modals", True)
+        if auto_handle_modals_enabled:
+            logger.info(">>> Auto-handling modals after page load")
+            try:
+                # Wait for page to fully render before detecting modals
+                page.wait_for_timeout(10000)
+                auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
+            except Exception as e:
+                # Failure in bullet layer processing does not affect the main process
+                logger.debug(f"Auto modal handling skipped or failed: {e}")
+        else:
+            logger.info(">>> Auto-handling modals is disabled")
 
 def swipe_avoid_plus(page: Page, v: dict):
     x = v.get("x", 0)
