@@ -5,9 +5,9 @@ testPartner_create_form:
     open: "https://release.pear.us/autotestshop"
     sleep_open: 3000
 
-#    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
+#    R_click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
 #    sleep_click_add_my_form: 1000
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
+    R_click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_add: 3000
 
     fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
@@ -15,163 +15,163 @@ testPartner_create_form:
     fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
 
     # 1. Short text
-    click_add_field_1: { role: 'button', name: 'Add new field'}
-    sleep_1: 500
-    click_short_1: { locator: '.link-card-disable:has-text("Short answer")'}
+    R_click_add_field_1: { role: 'button', name: 'Add new field'}
+    sleep_1: 200
+    R_click_short_1: { locator: '.link-card-disable:has-text("Short answer")'}
     sleep_click_1: 200
     fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
-    click_add_1: { role: 'button', name: 'Add' }
+    R_click_add_1: { role: 'button', name: 'Add' }
 
     # 2. Long text (Paragraph)
-    click_add_field_2: { role: 'button', name: 'Add new field' }
-    sleep_2: 500
-    click_short_2: { locator: '.link-card-disable:has-text("Paragraph")' }
+    R_click_add_field_2: { role: 'button', name: 'Add new field' }
+    sleep_2: 200
+    R_click_short_2: { locator: '.link-card-disable:has-text("Paragraph")' }
     sleep_click_2: 200
     fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
-    click_add_2: { role: 'button', name: 'Add' }
+    R_click_add_2: { role: 'button', name: 'Add' }
 
     # 3. Email
-    click_add_field_3: { role: 'button', name: 'Add new field' }
-    sleep_3: 500
-    click_email3: { locator: '.link-card-disable:has-text("Email address")' }
+    R_click_add_field_3: { role: 'button', name: 'Add new field' }
+    sleep_3: 200
+    R_click_email3: { locator: '.link-card-disable:has-text("Email address")' }
     sleep_click_email: 200
-    click_add_3: { role: 'button', name: 'Add' }
+    R_click_add_3: { role: 'button', name: 'Add' }
 
     # 4. Phone
-    click_add_field_4: { role: 'button', name: 'Add new field', exact: true }
-    sleep_4: 500
-    click_phone: { locator: '.link-card-disable:has-text("Phone number")' }
+    R_click_add_field_4: { role: 'button', name: 'Add new field', exact: true }
+    sleep_4: 200
+    R_click_phone: { locator: '.link-card-disable:has-text("Phone number")' }
     sleep_click_phone: 200
-    click_add_4: { role: 'button', name: 'Add' }
+    R_click_add_4: { role: 'button', name: 'Add' }
 
     # 5. Media
-    click_add_field_5: { role: 'button', name: 'Add new field', exact: true }
-    sleep_5: 500
-    click_media: { locator: '.link-card-disable:has-text("Media")' }
+    R_click_add_field_5: { role: 'button', name: 'Add new field', exact: true }
+    sleep_5: 200
+    R_click_media: { locator: '.link-card-disable:has-text("Media")' }
     sleep_click_media: 200
     fill_media_title: { role: 'textbox', name: 'Enter title of the field', value: 'Add Media' }
     fill_media_limit: { role: 'spinbutton', value: '1' }
-    click_add_5: { role: 'button', name: 'Add' }
+    R_click_add_5: { role: 'button', name: 'Add' }
 
     # 6. Date and time
-    click_add_field_6: { role: 'button', name: 'Add new field', exact: true }
-    sleep_6: 500
-    click_datetime: { locator: '.link-card-disable:has-text("Date and time")' }
+    R_click_add_field_6: { role: 'button', name: 'Add new field', exact: true }
+    sleep_6: 200
+    R_click_datetime: { locator: '.link-card-disable:has-text("Date and time")' }
     sleep_click_datetime: 200
-    click_add_6: { role: 'button', name: 'Add' }
+    R_click_add_6: { role: 'button', name: 'Add' }
 
     # 7. Single choice
-    click_add_field_7: { role: 'button', name: 'Add new field', exact: true }
-    sleep_7: 500
-    click_single_choice: { locator: '.link-card-disable:has-text("Single choice")' }
+    R_click_add_field_7: { role: 'button', name: 'Add new field', exact: true }
+    sleep_7: 200
+    R_click_single_choice: { locator: '.link-card-disable:has-text("Single choice")' }
     fill_single_title: { role: 'textbox', name: 'Enter title of the field', value: 'are you happy?' }
     # todo: index 有bug
     fill_single_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: 'Yes' }
     fill_single_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: 'No' }
-    click_add_7: { role: 'button', name: 'Add', exact: true }
+    R_click_add_7: { role: 'button', name: 'Add', exact: true }
 
     # 8. Multiple choice
-    click_add_field_8: { role: 'button', name: 'Add new field', exact: true }
-    sleep_8: 500
-    click_multiple_choice: { locator: '.link-card-disable:has-text("Multiple choice")' }
+    R_click_add_field_8: { role: 'button', name: 'Add new field', exact: true }
+    sleep_8: 200
+    R_click_multiple_choice: { locator: '.link-card-disable:has-text("Multiple choice")' }
     fill_multi_title: { role: 'textbox', name: 'Enter title of the field', value: 'Multiple' }
-    click_add_multi_opt: { role: 'button', name: 'Add option' }
+    R_click_add_multi_opt: { role: 'button', name: 'Add option' }
     fill_multi_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: '1' }
     fill_multi_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: '2' }
     fill_multi_opt3: { locator: 'input[placeholder="Enter option"] >> nth=2', value: '3' }
-    click_add_8: { role: 'button', name: 'Add', exact: true }
+    R_click_add_8: { role: 'button', name: 'Add', exact: true }
 
     # 9. Social - Instagram
-    click_add_field_9: { role: 'button', name: 'Add new field', exact: true }
-    sleep_9: 500
-    click_social_1: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_1: { role: 'combobox' }
-    click_insta: { role: 'option', name: 'Instagram' }
-    click_add_9: { role: 'button', name: 'Add' }
+    R_click_add_field_9: { role: 'button', name: 'Add new field', exact: true }
+    sleep_9: 200
+    R_click_social_1: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_1: { role: 'combobox' }
+    R_click_insta: { role: 'option', name: 'Instagram' }
+    R_click_add_9: { role: 'button', name: 'Add' }
 
     # 10. Social - Facebook
-    click_add_field_10: { role: 'button', name: 'Add new field', exact: true }
-    sleep_10: 500
-    click_social_2: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_2: { role: 'combobox' }
-    click_fb: { role: 'option', name: 'Facebook' }
-    click_add_10: { role: 'button', name: 'Add' }
+    R_click_add_field_10: { role: 'button', name: 'Add new field', exact: true }
+    sleep_10: 200
+    R_click_social_2: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_2: { role: 'combobox' }
+    R_click_fb: { role: 'option', name: 'Facebook' }
+    R_click_add_10: { role: 'button', name: 'Add' }
 
     # 11. Social - TikTok
-    click_add_field_11: { role: 'button', name: 'Add new field', exact: true }
-    sleep_11: 500
-    click_social_3: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_3: { role: 'combobox' }
-    click_tiktok: { role: 'option', name: 'TikTok' }
-    click_add_11: { role: 'button', name: 'Add' }
+    R_click_add_field_11: { role: 'button', name: 'Add new field', exact: true }
+    sleep_11: 200
+    R_click_social_3: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_3: { role: 'combobox' }
+    R_click_tiktok: { role: 'option', name: 'TikTok' }
+    R_click_add_11: { role: 'button', name: 'Add' }
 
     # 12. Social - X
-    click_add_field_12: { role: 'button', name: 'Add new field', exact: true }
-    sleep_12: 500
-    click_social_4: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_4: { role: 'combobox' }
-    click_x: { role: 'option', name: 'X', exact: true }
-    click_add_12: { role: 'button', name: 'Add' }
+    R_click_add_field_12: { role: 'button', name: 'Add new field', exact: true }
+    sleep_12: 200
+    R_click_social_4: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_4: { role: 'combobox' }
+    R_click_x: { role: 'option', name: 'X', exact: true }
+    R_click_add_12: { role: 'button', name: 'Add' }
 
     # 13. Social - YouTube
-    click_add_field_13: { role: 'button', name: 'Add new field', exact: true }
-    sleep_13: 500
-    click_social_5: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_5: { role: 'combobox' }
-    click_yt: { role: 'option', name: 'YouTube' }
-    click_add_13: { role: 'button', name: 'Add' }
+    R_click_add_field_13: { role: 'button', name: 'Add new field', exact: true }
+    sleep_13: 200
+    R_click_social_5: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_5: { role: 'combobox' }
+    R_click_yt: { role: 'option', name: 'YouTube' }
+    R_click_add_13: { role: 'button', name: 'Add' }
 
     # 14. Social - Linkedin
-    click_add_field_14: { role: 'button', name: 'Add new field', exact: true }
-    sleep_14: 500
-    click_social_6: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_6: { role: 'combobox' }
-    click_linkedin: { role: 'option', name: 'Linkedin' }
-    click_add_14: { role: 'button', name: 'Add' }
+    R_click_add_field_14: { role: 'button', name: 'Add new field', exact: true }
+    sleep_14: 200
+    R_click_social_6: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_6: { role: 'combobox' }
+    R_click_linkedin: { role: 'option', name: 'Linkedin' }
+    R_click_add_14: { role: 'button', name: 'Add' }
 
     # 15. Social - Threads (Unrequired)
-    click_add_field_15: { role: 'button', name: 'Add new field', exact: true }
-    sleep_15: 500
-    click_social_7: { locator: '.link-card-disable:has-text("Social")' }
-    click_social_combo_7: { role: 'combobox' }
-    click_threads: { role: 'option', name: 'Threads' }
+    R_click_add_field_15: { role: 'button', name: 'Add new field', exact: true }
+    sleep_15: 200
+    R_click_social_7: { locator: '.link-card-disable:has-text("Social")' }
+    R_click_social_combo_7: { role: 'combobox' }
+    R_click_threads: { role: 'option', name: 'Threads' }
     check_required: { role: 'checkbox', name: 'Required', checked: false }
-    click_add_15: { role: 'button', name: 'Add' }
+    R_click_add_15: { role: 'button', name: 'Add' }
 
     # Deleting excess options (as in codegen)
     # Using exact codegen steps
-    click_view_name_3: { role: 'button', name: 'View Name options', exact: true }
-    click_delete_name_3: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_name_3: 500
-    click_delete_name_4: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_name_4: 500
+    R_click_view_name_3: { role: 'button', name: 'View Name options', exact: true }
+    R_click_delete_name_3: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_name_3: 200
+    R_click_delete_name_4: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_name_4: 200
 
-    click_view_phone: { role: 'button', name: 'View Phone options', exact: true }
-    click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_phone_1: 500
-    click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_phone_2: 500
+    R_click_view_phone: { role: 'button', name: 'View Phone options', exact: true }
+    R_click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_1: 200
+    R_click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_2: 200
 
-    click_view_email: { role: 'button', name: 'View Email options', exact: true }
-    click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_email_1: 500
-    click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
-    sleep_delete_email_2: 500
+    R_click_view_email: { role: 'button', name: 'View Email options', exact: true }
+    R_click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_1: 200
+    R_click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_2: 200
 
     # Finalization
-    click_preview: { role: 'button', name: 'Preview form', exact: true }
-    sleep_preview: 3000
-    click_close_preview: { role: 'button', name: 'Close', exact: true }
-    sleep_close_preview: 2000
+    R_click_preview: { role: 'button', name: 'Preview form', exact: true }
+    sleep_preview: 1000
+    R_click_close_preview: { role: 'button', name: 'Close', exact: true }
+    sleep_close_preview: 1000
 
-    click_continue: { role: 'button', name: 'Continue' }
-    sleep_continue: 1000
+    R_click_continue: { role: 'button', name: 'Continue' }
+    sleep_continue: 500
 
     # Custom success message changes
-    click_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!' }
+    R_click_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!' }
     fill_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!', value: 'Hi thank you' }
 
-    click_save: { role: 'button', name: 'Save' }
+    R_click_save: { role: 'button', name: 'Save' }
     sleep_save: 3000
 
   expect_result:
@@ -222,10 +222,10 @@ test_guest_submission_1:
     R_click_choose_date:
       role: "textbox"
       name: "Choose date"
-    click_date_12:
+    R_click_date_12:
       role: "gridcell"
       name: "12"
-    click_ok:
+    R_click_ok:
       role: "button"
       name: "OK"
 
@@ -338,11 +338,11 @@ testPartner_verify_commission:
     open_shop: "https://release.pear.us/autotestshop"
     sleep_after_open_shop: 1000
 
-    click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
     sleep_after_form_tab: 200
-    click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
+    R_click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
     sleep_after_more_cta: 200
-    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
+    R_click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
 
 
     # Dynamic Count Capture & Search
@@ -372,7 +372,7 @@ testPartner_verify_commission:
     verify_linkedin: { text: '@pear-partner-official' }
     #verify_threads: { text: '@pear_partner_official' }
 
-    click_submission_details_back: { }
+    R_click_submission_details_back: { }
     sleep_after_back: 2000
 
     # CSV Verification (Export Data)
