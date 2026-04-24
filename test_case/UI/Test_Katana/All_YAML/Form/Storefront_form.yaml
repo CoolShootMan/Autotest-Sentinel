@@ -5,8 +5,8 @@ testPartner_create_form:
     open: "https://release.pear.us/autotestshop"
     sleep_open: 3000
 
-    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
-    sleep_click_add_my_form: 1000
+#    click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
+#    sleep_click_add_my_form: 1000
     click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
     sleep_add: 3000
 
@@ -17,7 +17,7 @@ testPartner_create_form:
     # 1. Short text
     click_add_field_1: { role: 'button', name: 'Add new field'}
     sleep_1: 500
-    click_short_1: { locator: '.MuiTypography-body1:has-text("Short answer")'}
+    click_short_1: { locator: '.link-card-disable:has-text("Short answer")'}
     sleep_click_1: 200
     fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
     click_add_1: { role: 'button', name: 'Add' }
@@ -25,7 +25,7 @@ testPartner_create_form:
     # 2. Long text (Paragraph)
     click_add_field_2: { role: 'button', name: 'Add new field' }
     sleep_2: 500
-    click_short_2: { locator: '.MuiTypography-body1:has-text("Paragraph")' }
+    click_short_2: { locator: '.link-card-disable:has-text("Paragraph")' }
     sleep_click_2: 200
     fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' }
     click_add_2: { role: 'button', name: 'Add' }
