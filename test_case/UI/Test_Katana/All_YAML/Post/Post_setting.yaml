@@ -1971,6 +1971,10 @@ testT3779:
         R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
         sleep_step: 1500
 
+
+        # Step 3.5: Enable "Hide Coupon Box at Checkout"
+        check_hide_coupon_box: { locator: 'input[name="hideCouponBox"]', skip_if_checked: true }
+        sleep_step: 500
         # Step 4: Click "Create a coupon" button
         R_click_create_coupon_btn: { role: 'button', name: 'Create a coupon' }
         sleep_step: 1500
