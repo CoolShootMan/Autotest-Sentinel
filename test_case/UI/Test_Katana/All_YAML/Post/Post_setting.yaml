@@ -535,6 +535,24 @@ testT2705_VerifyPartner:
     R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
     sleep_step: 3000
 
+    # Step 3.1: Click "Edit post" button
+    R_click_edit_post: { role: "button", name: "Edit post" }
+    sleep_step: 3000
+
+    # Step 3.2: Click "Style" tab in Edit post dialog
+    R_click_style_tab: { role: "tab", name: "Style" }
+    sleep_step: 2000
+
+    # Step 3.3: Click Layout dropdown and select "Collection"
+    R_click_layout_dropdown: { locator: "[role='combobox']" }
+    sleep_step: 1000
+    R_click_collection_option: { locator: "text=Collection" }
+    sleep_step: 1000
+
+    # Step 3.4: Click "Update" to save Edit post changes
+    R_click_update: { role: "button", name: "Update" }
+    sleep_step: 3000
+
     # Step 4: Click Selling tab
     R_click_selling_tab: { role: "tab", name: "Selling" }
     sleep_step: 2000
@@ -577,13 +595,9 @@ testT2705_VerifyGuest:
     open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
     sleep_after_open: 5000
 
-    # Scroll down to reveal product cards
-    swipe_avoid_plus: { x: 0, y: 500 }
-    sleep_after_scroll: 1000
-
-    # Click the product card with image to open detail page
-    R_click_product_card_with_image: { locator: "xpath=//img[ancestor::div[contains(@class,'product')]]/ancestor::div[contains(@class,'product')][1]", index: 0 }
-    sleep_after_click: 5000
+    # Click product card to open product drawer
+    R_click_product_card: { role: "img", name: "Image of Product", index: 0 }
+    sleep_step: 2000
 
     # Scroll down to the variant section in the detail page
     swipe_to_variant: { x: 0, y: 600 }
@@ -634,7 +648,7 @@ testT2705_VerifyGuest:
     uncheck_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1, checked: false }
     R_click_save_reset: { role: "button", name: "Save" }
     R_click_save_reset1: { role: "button", name: "Save" }
-    sleep_step: 3000
+    sleep_step: 4000
 
 
 # T2830: Partner hides a post on the storefront
@@ -1038,8 +1052,20 @@ testT4735_VerifyGuest_YesPlease:
         add_cookies: {}
         sleep_step: 2000
 
-        # Open post as partner and disable redirect URL
-        open_teardown: "https://release.pear.us/post/955bdb27-328e-40e4-b6ea-e93c269fb40a/view"
+        # Open events list page
+        open_teardown: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        # Click "Test event post variant settings" event
+        R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
+        sleep_step: 4000
+
+        # Scroll down to reveal post card
+        swipe_avoid_plus: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Click post card to enter post landing page
+        R_click_post_card_teardown: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
         # Click Advanced tab
@@ -1114,9 +1140,9 @@ testT2515_VerifyDisabled_WithVariant:
         swipe_avoid_plus: { x: 0, y: 500 }
         sleep_step: 1000
 
-        # Step 3: Click product card to open product drawer
-        R_click_product_card: { role: "img", name: "Image of Product", index: 0 }
-        sleep_step: 2000
+        # Step 3: Click General Admission product name to open detail drawer
+        R_click_product_name_first: { locator: "text=General Admission" }
+        sleep_step: 3000
 
         # Step 4: Select variant "5 people", set qty=2, Add to cart
         R_click_variant_5people: { locator: "text=5 people" }
@@ -1158,12 +1184,12 @@ testT2515_VerifyDisabled_WithVariant:
 
         # Step 9: Place order
         R_click_place_order: { role: "button", name: "Place order" }
-        wait_for_url: { url: "*order*", timeout: 15000 }
+        wait_for_url: { url: "*order*", timeout: 2000 }
         sleep_step: 2000
 
         # Step 10: Order successful, go back to post detail page
         go_back: {}
-        sleep_step: 3000
+        sleep_step: 2000
 
         # Step 10.1: Click product card to open product detail drawer
         R_click_product_card_reopen: { role: "img", name: "Image of Product", index: 0 }
@@ -1311,9 +1337,9 @@ testT4955_Guest_VerifyAccessCode:
         swipe_avoid_plus: { x: 0, y: 500 }
         sleep_step: 1000
 
-        # Step 3: Click product card to open product drawer
-        R_click_product_card: { role: "img", name: "Image of Product", index: 0 }
-        sleep_step: 2000
+        # Step 3: Click General Admission product name to open detail drawer
+        R_click_product_name_first: { locator: "text=General Admission" }
+        sleep_step: 3000
 
         # Step 4: Click Buy now - triggers "Access code required" dialog
         R_click_buy_now: { locator: "text=Buy now", disable_ai: true }
