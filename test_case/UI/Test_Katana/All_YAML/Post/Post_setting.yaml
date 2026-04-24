@@ -1731,6 +1731,8 @@ testT2069:
         wait_toast_save_teardown: { message: "Post promotions updated", timeout: 15000 }
 
 
+
+
 # ==============================================================================
 # Test Case: T3963 Verify shipping fee logic(Catalog_Fulfillment)
 # ==============================================================================
@@ -1916,5 +1918,206 @@ testT5033_5034_VerifyPartner:
 #         assertions:
 #             - assertion_type: "element_visible_by_text"
 #               text: "Free shipping"
+
+
+
+
+
+
+
+
+
+
+
+
+# ==============================================================================
+# Test Case: T3779
+# T3779: Set up auto-applied coupon on post "verify auto coupon apply"
+#
+# Precondition:
+#   Curator is logged in; event "verify auto coupon apply" exists with post "verify auto coupon apply"
+#
+# Step description:
+#   Navigate to post Promotion tab → Create a coupon → Enable auto-apply toggle →
+#   Fill title/description "autotest3779" → Set value 100 → Click Create →
+#   If info drawer appears click Got it → Save → Verify toast "Post promotions updated"
+#
+# Expected result:
+#   Coupon created successfully with auto-apply enabled; toast "Post promotions updated" shown
+# ==============================================================================
+
+testT3779:
+    description: "Create an auto-applied coupon on post verify auto coupon apply"
+    test_step:
+        # Step 1: Navigate to event "verify auto coupon apply"
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Scroll down to reveal post card
+        scroll_to_bottom: { iterations: 5, delay: 500 }
+        sleep_step: 2000
+
+        # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
+        R_click_post_card: { locator: "text=verify auto coupon apply", exact: true, index: 1 }
+        sleep_step: 4000
+
+        # Step 3: Switch to Selling tab → Promotion tab
+        R_click_selling_tab: { role: 'tab', name: 'Selling' }
+        sleep_step: 1500
+
+        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
+        sleep_step: 1500
+
+        # Step 4: Click "Create a coupon" button
+        R_click_create_coupon_btn: { role: 'button', name: 'Create a coupon' }
+        sleep_step: 1500
+
+        # Step 5: Enable "Automatically applied at checkout" toggle
+        check_auto_apply: { locator: 'input[name="autoApplied"]', skip_if_checked: true }
+        sleep_step: 500
+
+        # Step 6: Fill in Coupon display title
+        fill_coupon_title: { locator: 'input[placeholder="Coupon display title"]', value: 'autotest3779' }
+        sleep_step: 300
+
+        # Step 7: Fill in Coupon display description
+        fill_coupon_desc: { locator: 'input[placeholder="Coupon display description"]', value: 'autotest3779' }
+        sleep_step: 300
+
+        # Step 8: Fill in Customer benefits value (100)
+        fill_coupon_value: { locator: 'input[name="betterDeals.0.value"]', value: '100' }
+        sleep_step: 300
+
+        # Step 9: Click "Create" to submit
+        R_click_create: { role: 'button', name: 'Create' }
+        sleep_step: 2000
+
+        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Got it"
+        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        sleep_step: 1000
+
+        # Step 11: Save and verify toast
+        R_click_save: { role: 'button', name: 'Save' }
+        wait_toast_saved: { message: "Post promotions updated", timeout: 15000 }
+
+    expect_result:
+        description: "Auto-applied coupon 'autotest3779' created successfully; Post promotions updated toast shown"
+        assertions:
+            - assertion_type: "toast_visible"
+              text: "Post promotions updated"
+
+
+# ==============================================================================
+# Test Case: T3767
+# T3767: Verify "Hide Coupon Box at Checkout" is checked automatically if all coupons are auto-applied
+#
+# Precondition:
+#   T3779 has been executed to set up the auto-applied coupon
+#   Curator has created event "verify auto coupon apply" with post "verify auto coupon apply"
+#
+# Step description:
+#   Guest accesses the post as buyer → Add product to cart → Checkout →
+#   Verify info drawer appears confirming "Hide Coupon Box at Checkout" is enabled
+#
+# Expected result:
+#   Guest checkout successful; info drawer shown confirming coupon auto-applied and Hide Coupon Box enabled
+# ==============================================================================
+
+testT3767:
+    guest: true
+    description: "Verify Hide Coupon Box auto-checked when guest checkout with auto-applied coupon"
+    test_step:
+        # Step 1: Open the post as guest
+        open: "https://release.pear.us/autotestshop/post/verify-auto-coupon-apply"
+        sleep_after_open: 8000
+
+        # Step 2: Scroll to find the product
+        page_scroll: { y: 600, delay: 2000, steps: 5 }
+        sleep_step: 1000
+
+        # Step 3: Click Buy Ticket
+        R_click_buy_ticket: { role: "button", name: "Buy Ticket" }
+        sleep_step: 3000
+
+
+        # Step 4.1: Verify coupon "verify auto coupon apply" is displayed
+        verify_coupon_exists: { text: "verify auto coupon apply", timeout: 5000 }
+        sleep_step: 1000
+
+        # Step 5: Click Continue to enter Contact info page
+        R_click_continue: { role: "button", name: "Continue" }
+        sleep_step: 3000
+
+        # Step 6: Fill Contact info
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'autoTest' }
+        sleep_step: 500
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_step: 500
+        fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
+        sleep_step: 500
+        fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
+        sleep_step: 500
+
+        # Step 7: Place order
+        R_click_place_order: { role: "button", name: "Place order" }
+        wait_for_url: { url: "*order*", timeout: 15000 }
+        sleep_step: 2000
+
+
+    expect_result:
+        description: "Guest checkout successful with auto-applied coupon; order page displayed"
+        assertions:
+            - assertion_type: "url_contains"
+              text: "order"
+
+
+    teardown_step:
+        # Partner cleans up: Delete the coupon via Edit -> Delete
+        add_cookies: {}
+        sleep_step: 1000
+
+        open: "https://release.pear.us/events"
+        sleep_step: 5000
+
+        R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
+        sleep_step: 4000
+
+        # Step 2: Scroll down to reveal post card
+        scroll_to_bottom: { iterations: 5, delay: 500 }
+        sleep_step: 2000
+
+        # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
+        R_click_post_card: { locator: "text=verify auto coupon apply", exact: true, index: 1 }
+        sleep_step: 4000
+
+        R_click_selling_tab_td: { role: 'tab', name: 'Selling' }
+        sleep_step: 1500
+
+        R_click_promotion_tab_td: { role: 'tab', name: 'Promotion' }
+        sleep_step: 1500
+
+        # Step 1: Click Edit icon to open coupon edit mode
+        click_edit_coupon: { locator: '[data-testid="enhance-button"]', index: 2 }
+        sleep_step: 1000
+
+        # Step 2: Click Delete icon to delete the coupon
+        R_click_delete_coupon: { locator: '[data-testid="enhance-button"]', index: 7 }
+        sleep_step: 1000
+
+        # Step 3: Confirm delete
+        smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 3000 }
+        sleep_step: 1000
+
+        # Step 4: Save changes
+        R_click_save_td: { role: 'button', name: 'Save' }
+        wait_toast_td: { message: "Post promotions updated", timeout: 15000 }
+
+
+
+
+
 
 
