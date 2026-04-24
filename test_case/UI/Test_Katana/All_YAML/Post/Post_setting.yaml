@@ -986,7 +986,9 @@ testT4735_VerifyGuest:
     guest: true
     description: "Verify redirect popup appears for non-US guest users when accessing post with redirect enabled"
     test_step:
-        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        open:
+          url: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+          auto_handle_modals: false
         sleep_after_open: 5000
 
         # Press Ctrl+R to refresh page
@@ -1013,7 +1015,9 @@ testT4735_VerifyGuest_YesPlease:
     guest: true
     description: "Verify clicking 'Yes, please' button in redirect popup also redirects to tklmerch.com"
     test_step:
-        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        open:
+          url: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+          auto_handle_modals: false
         sleep_after_open: 5000
 
         # Click "Yes, please" button to trigger redirect
