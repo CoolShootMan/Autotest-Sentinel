@@ -376,7 +376,7 @@ testPartner_verify_commission:
     sleep_after_back: 100
 
     # CSV Verification (Export Data)
-    download_submission_csv: { text: 'Export all data', role: 'button' }
+    download_submission_csv: { name: 'Export all data', role: 'button' }
     verify_csv_data:
       expected_row: {
         'short': 'Pear Partner Cooperation Inquiry',
