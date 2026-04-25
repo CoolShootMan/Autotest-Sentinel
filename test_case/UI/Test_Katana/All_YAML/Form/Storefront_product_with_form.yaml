@@ -681,7 +681,9 @@ testT3690:
   guest: true
   description: "Verify product form data persists through cart, checkout, and order confirmation"
   test_step:
-    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    open:
+      url: "https://release.pear.us/autotestshop/p/bxasz9"
+      auto_handle_modals: false
     sleep_after_open: 3000
 
     # Add to cart with form data
@@ -693,7 +695,7 @@ testT3690:
 
     # View cart
     R_click_view_cart: { role: 'button', name: 'View cart' }
-    sleep_after_view_cart: 2000
+    wait_for_place_order_button1: { role: 'button', name: 'Checkout', timeout: 5000 }
 
     # Verify form data in cart dialog
     R_click_enhance_1: { locator: '[data-testid="enhance-button"]', index: 0 }
@@ -704,7 +706,7 @@ testT3690:
 
     # Confirm cart
     R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    wait_for_place_order_button: { role: 'button', name: 'Place order', timeout: 5000 }
+    wait_for_place_order_button2: { role: 'button', name: 'Place order', timeout: 5000 }
 
     # Verify form data after confirm
     R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
@@ -722,11 +724,10 @@ testT3690:
     R_click_address_option: { role: 'button', name: '100 East Rich Street,' }
     fill_address_line2: { locator: 'input[name="address.line2"]', value: '10' }
     fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 939-2929' }
-    sleep_after_shipping: 1000
 
     # Place order
     R_click_place_order: { role: 'button', name: 'Place order' }
-    sleep_after_place_order: 2000
+    sleep_after_place_order: 1000
 
 
   expect_result:
