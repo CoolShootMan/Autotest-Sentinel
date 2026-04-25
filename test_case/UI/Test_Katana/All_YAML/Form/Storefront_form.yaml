@@ -372,11 +372,11 @@ testPartner_verify_commission:
     verify_linkedin: { text: '@pear-partner-official' }
     #verify_threads: { text: '@pear_partner_official' }
 
-    R_click_submission_details_back: { }
-    sleep_after_back: 2000
+    R_click_submission_details_back: { locator: '[aria-label="Close"]' }
+    sleep_after_back: 100
 
     # CSV Verification (Export Data)
-    download_submission_csv: { name: 'Export all data', role: 'button' }
+    download_submission_csv: { text: 'Export all data', role: 'button' }
     verify_csv_data:
       expected_row: {
         'short': 'Pear Partner Cooperation Inquiry',
