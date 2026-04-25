@@ -414,20 +414,25 @@ def _smart_click_core(page: Page, v: dict):
     """
     核心点击逻辑（不含 Page-level Search 和 AI 自愈）。
     smart_click 和 smart_click_scan 共用此核心函数。
-    """
-    # 优化：is_visible 加 5s 超时（原来无超时，可能等 30s）
-    try:
-        if page.get_by_text("Something went wrong!", exact=True).is_visible(timeout=5000):
-            logger.error("Application Crashed!")
-            raise Exception("Application Crashed")
-    except: pass
 
-    # Wait for loading overlays/backdrops to disappear before clicking anything
-    # 优化：timeout 从 8s 降至 2s；用 detach 状态检测（不阻塞主流程）
-    try:
-        backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
-        backdrop.wait_for(state="detached", timeout=2000)  # 2s 超时，避免卡住
-    except: pass
+    quick: true 时跳过 crash 检查和 backdrop 等待，用于已确认页面正常的快速点击场景。
+    """
+    quick = v.get("quick", False)
+
+    if not quick:
+        # 优化：is_visible 加 5s 超时（原来无超时，可能等 30s）
+        try:
+            if page.get_by_text("Something went wrong!", exact=True).is_visible(timeout=5000):
+                logger.error("Application Crashed!")
+                raise Exception("Application Crashed")
+        except: pass
+
+        # Wait for loading overlays/backdrops to disappear before clicking anything
+        # 优化：timeout 从 8s 降至 2s；用 detach 状态检测（不阻塞主流程）
+        try:
+            backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
+            backdrop.wait_for(state="detached", timeout=2000)  # 2s 超时，避免卡住
+        except: pass
 
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
