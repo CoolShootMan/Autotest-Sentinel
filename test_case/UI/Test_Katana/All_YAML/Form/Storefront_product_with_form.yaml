@@ -551,6 +551,25 @@ testT4847_view:
     description: "Help text tooltips should be visible when clicking the info icon on form fields"
     assertions: [ ]
 
+#testT4847_destroy:
+#  guest: false
+#  description: "Remove the auto_test help-text form from module (cleanup)"
+#  test_step:
+#    open: "https://release.pear.us/autotestshop"
+#    sleep_after_open: 3000
+#
+#    # Remove form from module - locate by title
+#    R_click_more_options: { locator: '[data-testid="base-form-card-container"]:has-text("auto_test help-text") >> [data-testid="base-more-horiz-icon-cta"]' }
+#    sleep_after_click: 500
+#    R_click_remove: { role: 'button', name: 'Remove from this module' }
+#    sleep_after_remove: 500
+#    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
+#    sleep_after_confirm: 2000
+#
+#  expect_result:
+#    description: "Form should be removed from module"
+#    assertions: [ ]
+
 testT4539:
   guest: false
   description: "Verify batch select submissions and export selected data"
