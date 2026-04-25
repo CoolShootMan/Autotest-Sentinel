@@ -381,23 +381,20 @@ testT4866:
   guest: false
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
-    # --- Part 1: Create CTA form button (same as testT4866) ---
-#    # Step 1: Events list page -> click Event card
-#    open: "https://release.pear.us/events"
-#    sleep_p1_step1: 3000
-#    R_click_my_event_p1: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
-#    sleep_p1_step2: 3000
-#
-#    # Step 2: Event detail page -> click Post card (link text)
-#    R_click_post_p1: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
-#    sleep_p1_step3: 3000
-#
-#    # Step 3: Event detail page -> click Post card (link text)
-#    R_click_edit_p1: { locator: '[data-testid="mui-list-item-text"]:has-text("Edit")', exact: true, index: 0 }
-#    sleep_p1_step4: 3000
+    # Step 1: Events list page -> click Event card
+    open: "https://release.pear.us/events"
+    sleep_step1: 3000
+    # "event-for-rte-insert-form" is a DIV element (not BUTTON), use exact text match
+    R_click_my_event: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
+    sleep_step2: 3000
 
-    open: 'https://release.pear.us/post/f65335af-7268-4444-9810-60bc98a606e5/edit?c=POST_PAGE'
-    sleep_1: 3000
+    # Step 2: Event detail page -> click Post card (link text)
+    R_click_post: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
+    sleep_step3: 3000
+
+    # Step 3: Event detail page -> click Post card (link text)
+    R_click_edit: { locator: '[data-testid="mui-list-item-text"]:has-text("Edit")', exact: true, index: 0 }
+    sleep_step4: 3000
 
     R_click_description: { role: 'textbox', name: 'Description' }
     R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
@@ -424,7 +421,9 @@ testT4866:
     sleep_after_update_1: 3000
 
     # --- Part 2: Edit button text ---
-    open_edit: "https://release.pear.us/events"
+    open_edit:
+      url: "https://release.pear.us/events"
+      auto_handle_modals: false
     sleep_p2_step1: 3000
     R_click_my_event_p2: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
     sleep_p2_step2: 3000
@@ -449,12 +448,16 @@ testT4866:
     sleep_after_update_2: 3000
 
     # --- Part 3: Verify updated text on storefront ---
-    open_storefront: "https://release.pear.us/autotestshop/post/event-for-rte-insert-form"
+    open_storefront:
+      url: "https://release.pear.us/autotestshop/post/event-for-rte-insert-form"
+      auto_handle_modals: false
     sleep_after_open_storefront: 3000
     verify_updated_btn: { text: 'test form update1' }
 
     # --- Part 4: Delete the CTA button ---
-    open_delete: "https://release.pear.us/events"
+    open_delete:
+      url: "https://release.pear.us/events"
+      auto_handle_modals: false
     sleep_p4_step1: 3000
     R_click_my_event_p4: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
     sleep_p4_step2: 3000
