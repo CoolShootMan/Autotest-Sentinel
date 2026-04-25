@@ -704,7 +704,7 @@ testT3690:
 
     # Confirm cart
     R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm: 2000
+    sleep_after_confirm: 5000
 
     # Verify form data after confirm
     R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
@@ -713,9 +713,6 @@ testT3690:
     R_click_close_2: { locator: '.modal-header-close-btn[aria-label="Close"]' }
     sleep_after_close_2: 500
 
-    # Place order
-    R_click_place_order: { role: 'button', name: 'Place order' }
-    sleep_after_place_order: 2000
 
     # Fill shipping info
     fill_email: { locator: 'input[name="contact.email"]', value: 'xx@qq.com' }
@@ -726,6 +723,11 @@ testT3690:
     fill_address_line2: { locator: 'input[name="address.line2"]', value: '10' }
     fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 939-2929' }
     sleep_after_shipping: 1000
+
+    # Place order
+    R_click_place_order: { role: 'button', name: 'Place order' }
+    sleep_after_place_order: 2000
+
 
   expect_result:
     description: "Form data should persist through cart and checkout flow"
