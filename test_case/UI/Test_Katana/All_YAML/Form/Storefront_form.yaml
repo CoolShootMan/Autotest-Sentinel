@@ -211,7 +211,7 @@ test_guest_submission_1:
     # phone - realistic US phone number format
     fill_phone:
       placeholder: "Phone number"
-      value: "+13105558976"
+      value: "13105558976"
 
     # upload media - corrected filename with realistic asset path
     upload_media:
@@ -275,9 +275,9 @@ test_guest_submission_1:
       value: "pear-partner-official"
 
     # Threads - realistic username
-    # fill_threads:
-    #   locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
-    #   value: "pear_partner_official"
+    fill_threads:
+       locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
+       value: "pear_partner_official"
 
     # submit
     R_click_submit:
@@ -358,7 +358,7 @@ testPartner_verify_commission:
     verify_short: { text: 'Pear Partner Cooperation Inquiry' }
     verify_long: { text: 'I am interested in establishing a long-term partnership with Pear' }
     verify_email: { text: 'cooperation.business@gmail.com' }
-    verify_phone: { text: '+13105558976' }
+    verify_phone: { text: '13105558976' }
     verify_date: { text: 'Sun, Apr 12, 2026 12:00 AM' }
     verify_choice: { text: 'Yes' }
     verify_multi: { text: '1' }
