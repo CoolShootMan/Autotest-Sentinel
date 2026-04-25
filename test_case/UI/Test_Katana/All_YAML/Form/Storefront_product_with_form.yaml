@@ -704,7 +704,7 @@ testT3690:
 
     # Confirm cart
     R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm: 5000
+    wait_for_place_order_button: { role: 'button', name: 'Place order', timeout: 5000 }
 
     # Verify form data after confirm
     R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
