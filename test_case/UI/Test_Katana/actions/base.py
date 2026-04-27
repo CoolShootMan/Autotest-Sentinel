@@ -2355,6 +2355,7 @@ def auto_handle_modals(page: Page, v: dict):
                 {"role": "presentation", "name": "Preview your shop"},
                 {"role": "presentation", "name": "Introduce content tabs"},
                 {"role": "presentation", "name": "Rearrange modules"},
+                {"role": "presentation", "name": "You've added products — great start!"},
                 {"class": "MuiPopover-paper"},
                 {"selector": "div[role='presentation'] .MuiPopover-paper"},
             ],
@@ -2366,6 +2367,7 @@ def auto_handle_modals(page: Page, v: dict):
                 {"role": "button","name": "Finish"},
                 {"test_id": "button"},
                 {"selector": "div[role='presentation'] button[data-track-location='Dialog']"},
+                {"selector": "div[role='presentation'] button[aria-label='Close']"},
             ]
         },
         # Notification toasts
