@@ -142,8 +142,11 @@ testT3555:
         click_media_icon_2: { locator: 'div[data-testid="shop-brand"]', index: 1 }
         # Add products
         R_click_add_products: { locator: "button[data-track-location='Dialog']", name: 'Add 2/20 product(s)', exact: true }
+        sleep_after_add_products: 1000
+        auto_handle_modals_1: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         # Switch to Content tab
         R_click_content_tab: { role: 'tab', name: 'Content' }
+
         # Fill post title
         fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'Test - add new post for deletion' }
         # Confirm and publish
@@ -203,6 +206,8 @@ testAddNewPost:
         # Add products
         R_click_add_products: { locator: "button[data-track-location='Dialog']", name: 'Add 2/20 product(s)', exact: true }
         # Switch to Content tab
+        sleep_after_add_products: 1000
+        auto_handle_modals_1: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         R_click_content_tab: { role: 'tab', name: 'Content' }
         # Fill post title
         fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'Test - add new post' }
@@ -251,7 +256,7 @@ testT3788:
         sleep_before_add_from_my_products: 5000
         R_click_icon_1: { locator: "//div[@data-testid='shop-brand']", index: 0 }
         R_click_final_product_add: { role: 'button', name: 'Add' }
-        sleep_after_add: 3000
+        sleep_after_add: 5000
         verify_child_element_count: { container: "Module-products", parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 3 }
     expect_result:
         description: "Verify that the new module 'Module-products' is added successfully"
