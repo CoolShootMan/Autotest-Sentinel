@@ -202,6 +202,18 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                         page.screenshot(path=f"fail_assert_{caseno}.png")
                         pytest.fail(f"Assertion failed: Element {role} '{name}' not found or visible.")
             
+            elif assertion_type == "element_visible_by_locator":
+                locator = assertion.get("locator")
+                if locator:
+                    logger.info(f"Verifying visibility of locator: '{locator}'")
+                    try:
+                        page.locator(locator).first.wait_for(state="visible", timeout=10000)
+                        logger.info(f"Assertion success: Locator '{locator}' is visible.")
+                    except:
+                        logger.error(f"Assertion failed: Locator '{locator}' not found or visible.")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Locator '{locator}' not found or visible.")
+            
             elif assertion_type == "element_not_visible":
                 role = assertion.get("role")
                 name = assertion.get("name")
@@ -223,6 +235,46 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 except Exception as e:
                     # is_visible returning False or throwing means not visible - which is what we want
                     logger.info(f"Assertion success: Element is correctly NOT visible (role={role}, name={name}, locator={locator}).")
+            
+            elif assertion_type == "element_checked":
+                locator = assertion.get("locator")
+                role = assertion.get("role")
+                index = assertion.get("index", 0)
+                logger.info(f"Verifying element is checked: locator='{locator}', role='{role}', index={index}")
+                try:
+                    if locator:
+                        is_checked = page.locator(locator).nth(index).is_checked()
+                    elif role:
+                        is_checked = page.get_by_role(role).nth(index).is_checked()
+                    else:
+                        is_checked = False
+                    if not is_checked:
+                        logger.error(f"Assertion failed: Element (locator='{locator}', role='{role}', index={index}) should be checked but it is NOT.")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Element should be checked but it is NOT.")
+                    else:
+                        logger.info(f"Assertion success: Element is correctly checked.")
+                except Exception as e:
+                    logger.error(f"Assertion failed: Element is NOT checked (exception: {e}).")
+                    page.screenshot(path=f"fail_assert_{caseno}.png")
+                    pytest.fail(f"Assertion failed: Element is NOT checked (exception: {e}).")
+            
+            elif assertion_type == "element_not_checked":
+                locator = assertion.get("locator")
+                logger.info(f"Verifying element is NOT checked: locator='{locator}'")
+                try:
+                    if locator:
+                        is_checked = page.locator(locator).first.is_checked()
+                    else:
+                        is_checked = False
+                    if is_checked:
+                        logger.error(f"Assertion failed: Element '{locator}' should NOT be checked but it is.")
+                        page.screenshot(path=f"fail_assert_{caseno}.png")
+                        pytest.fail(f"Assertion failed: Element '{locator}' should NOT be checked but it is.")
+                    else:
+                        logger.info(f"Assertion success: Element '{locator}' is correctly NOT checked.")
+                except Exception as e:
+                    logger.info(f"Assertion success: Element '{locator}' is correctly NOT checked (exception: {e}).")
             
             elif assertion_type == "element_not_visible_by_text":
                 text = assertion.get("text")
