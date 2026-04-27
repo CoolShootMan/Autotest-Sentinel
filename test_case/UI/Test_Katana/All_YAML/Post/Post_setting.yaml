@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -2150,8 +2150,535 @@ testT3767:
         wait_toast_td: { message: "Post promotions updated", timeout: 15000 }
 
 
+# ==============================================================================
+# Test Case: T2281
+# T2281: Verify that duplicating a post copies Advanced settings (allowExpire)
+#        and the setting can be modified independently in the duplicate
+#
+# Step description:
+# 1. Create a new post with title "test case 2281 post", enable "Allow expire" in Advanced tab
+# 2. Publish the post
+# 3. Open the post and duplicate it via enhance-button menu
+# 4. In the duplicate, change title to "test case 2281 post duplicate" and disable "Allow expire"
+# 5. Publish the duplicate
+# 6. Open the duplicate and navigate through tabs to verify the allowExpire setting is unchecked
+#
+# Expected result:
+#   - Original post created successfully with allowExpire enabled
+#   - Duplicate post created successfully with allowExpire disabled
+#   - The duplicate's allowExpire setting is independent from the original
+# ==============================================================================
+
+testT2281:
+    description: "Verify duplicate post copies Advanced settings (allowExpire) and can be modified independently"
+    test_step:
+        # Step 1: Open post creation page
+        open: "https://release.pear.us/post/create?c=POST_PAGE"
+        sleep_after_open: 5000
+
+        # Step 2: Click Content tab and fill title
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        sleep_step: 1000
+        R_click_title_input: { role: 'textbox', name: 'Pick a bold title for your' }
+        fill_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 2281 post' }
+        sleep_step: 500
+
+        # Step 3: Click Advanced tab and enable allowExpire
+        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_step: 2000
+        check_allow_expire: { locator: 'input[name="allowExpire"]' }
+        sleep_step: 2000
+
+        # Step 4: Click confirm button
+        R_click_confirm: { test_id: 'confirm-button' }
+        sleep_step: 2000
+
+        # Step 5: Click Publish
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_step: 3000
+
+        # Step 6: Click Got it (success dialog)
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_step: 3000
+
+        # Step 7: Click on the created post card to open it
+        R_click_post_card: { locator: "text=test case 2281 post", index: 0 }
+        sleep_step: 3000
+
+        # Step 8: Click enhance-button (3rd) to open actions menu
+        R_click_enhance_button: { locator: '[data-testid="enhance-button"]', index: 2 }
+        sleep_step: 2000
+
+        # Step 9: Click "Duplicate this post"
+        R_click_duplicate: { role: 'button', name: 'Duplicate this post' }
+        sleep_step: 3000
+
+        # Step 10: In the duplicate, click Content tab and change title
+        R_click_content_tab_2: { role: 'tab', name: 'Content' }
+        sleep_step: 21000
+        R_click_title_input_2: { role: 'textbox', name: 'Pick a bold title for your' }
+        fill_title_duplicate: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 2281 post duplicate' }
+        sleep_step: 500
+
+        # Step 11: Click Advanced tab and uncheck allowExpire
+        R_click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
+        sleep_step: 2000
+        uncheck_allow_expire: { locator: 'input[name="allowExpire"]', checked: false }
+        sleep_step: 5000
+
+        # Step 12: Click confirm button
+        R_click_confirm_2: { test_id: 'confirm-button' }
+        sleep_step: 1000
+
+        # Step 13: Click Publish (publish the duplicate)
+        R_click_publish_2: { role: 'button', name: 'Publish' }
+        sleep_step: 3000
+
+        # Step 14: Click Got it (success dialog)
+        R_click_got_it_2: { role: 'button', name: 'Got it' }
+        sleep_step: 3000
+
+        # Step 15: Click on the duplicate post card (newest post, index: 0)
+        R_click_duplicate_post_card: { locator: "text=test case 2281 post", index: 0 }
+        sleep_step: 3000
+
+        # Step 16: Navigate through tabs to verify settings
+        R_click_selling_tab: { role: 'tab', name: 'Advanced' }
+        sleep_step: 1000
+
+        sleep_end: 2000
+
+    expect_result:
+        description: "Duplicate post created with allowExpire setting independently modified (unchecked)"
+        assertions:
+            - assertion_type: "element_not_checked"
+              locator: 'input[name="allowExpire"]'
+
+testT2537:
+    description: "Verify that user can set access restricted by phone number"
+    test_step:
+        open: "https://release.pear.us/post/create"
+        sleep_step: 3000
+
+        click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        sleep_step: 1000
+
+        check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
+        sleep_step: 1000
+
+        check_phone_checkbox: { role: 'checkbox', index: 0 }
+        sleep_step: 1000
+
+        fill_phone_number_1: { role: 'textbox', name: 'Phone number', value: '1 (202) 555-0147' }
+        sleep_step: 500
+
+        click_add_1: { role: 'button', name: 'Add' }
+        sleep_step: 1000
+
+        fill_phone_number_2: { role: 'textbox', name: 'Phone number', value: '(202) 555-0148' }
+        sleep_step: 500
+
+        click_add_2: { role: 'button', name: 'Add' }
+        sleep_step: 1000
+
+        click_remove_first: { text: 'Remove', index: 0 }
+        sleep_step: 1000
+
+        click_confirm_remove: { role: 'button', name: 'Confirm' }
+        sleep_step: 1000
+
+        click_confirm_advanced: { test_id: 'confirm-button' }
+        sleep_step: 1000
+
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 2537' }
+        sleep_step: 1000
+
+        click_confirm_title: { test_id: 'confirm-button' }
+        sleep_step: 1000
+
+        click_publish: { role: 'button', name: 'Publish' }
+        sleep_step: 3000
+
+        click_got_it: { role: 'button', name: 'Got it' }
+        sleep_step: 3000
+
+        click_created_post: { text: 'test case 2537', index: 0 }
+        sleep_step: 3000
+
+        click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
+        sleep_step: 1000
+
+        click_manage: { role: 'button', name: 'Manage' }
+        sleep_step: 1000
+
+    expect_result:
+        description: "Post restricted access phone number added and removed correctly"
+        assertions:
+            - assertion_type: "element_checked"
+              role: "checkbox"
+              index: 0
+            - assertion_type: "element_visible_by_text"
+              text: "555-0147"
+
+# ==============================================================================
+# Test Case: T3108
+# ==============================================================================
+
+testT3108:
+    description: "Verify setCustomizePrice check"
+    test_step:
+        open: { url: "https://release.pear.us/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step: 3000
+
+        R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_shared_with_me_tab: { role: 'tab', name: 'Shared with me' }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon_first: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
+        sleep_step: 1000
+
+        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
+        sleep_step: 1000
+
+        R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
+        sleep_step: 3000
+
+    expect_result:
+        description: "Products setCustomizePrice is not checked"
+        assertions:
+            - assertion_type: "element_not_checked"
+              locator: 'input[name="products.0.setCustomizePrice"]'
+
+# ==============================================================================
+# Test Case: T3110
+# ==============================================================================
+
+testT3110:
+    description: "Verify setCustomizePrice check, uncheck and save flow"
+    test_step:
+        open: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step: 3000
+
+        R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_shared_with_me_tab: { role: 'tab', name: 'Shared with me' }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon_first: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
+        sleep_step: 1000
+
+        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
+        sleep_step: 1000
+
+        R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
+        sleep_step: 1000
+
+        check_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: true }
+        sleep_step: 1000
+
+        R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
+        sleep_step: 1500
+
+        R_click_save_as_draft: { role: 'button', name: 'Save as draft' }
+        sleep_step: 1500
+
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 3110' }
+        sleep_step: 1000
+
+        R_click_save_as_draft_2: { role: 'button', name: 'Save as draft' }
+        sleep_step: 2000
+
+        R_click_got_it: { role: 'button', name: 'Got it', optional: true }
+        sleep_step: 1500
+
+        R_click_customize_products_btn_2: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        uncheck_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: false }
+        sleep_step: 1000
+
+        uncheck_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: false }
+        sleep_step: 1000
+
+        R_click_save_btn_2: { role: 'button', name: 'Save', index: 0 }
+        sleep_step: 1500
+
+        R_click_confirm: { test_id: 'confirm-button', optional: true }
+        sleep_step: 1500
+
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_step: 3000
+
+        click_created_post: { text: 'test case 3110', index: 0 }
+        sleep_step: 3000
+
+        R_click_selling_tab: { role: 'tab', name: 'Selling', exact: true }
+        sleep_step: 2000
+
+        R_click_customize_products_btn_3: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        R_click_save_btn_3: { role: 'button', name: 'Save', index: 0 }
+        sleep_step: 1500
+
+        R_click_close_btn_2: { role: 'button', name: 'Close', optional: true }
+        sleep_step: 1500
+
+    expect_result:
+        description: "Verify setCustomizePrice workflow completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test case 3110"
 
 
+# ==============================================================================
+# Test Case: T1928
+# ==============================================================================
 
+testT1928:
+    description: "Verify customize price and catalog price update synchronization"
+    test_step:
+        # Create product logic first
+        open_dashboard: { url: "https://release.pear.us/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step_p1: 8000
+        
+        R_click_content_tab: { locator: "[data-testid='content']", index: 0 }
+        sleep_step_p2: 3000
+        
+        R_click_general_type: { text: 'General' }
+        sleep_step_p3: 3000
+        
+        fill_product_title: { role: 'textbox', name: 'Product title', value: 'test 1928 product' }
+        sleep_step_p4: 1000
+        
+        R_click_add_media: { role: 'button', name: 'Add Media' }
+        sleep_step_p5: 2000
+        
+        upload_product_image: { text: 'Upload', file_path: 'data/test imag.jpeg' }
+        sleep_step_p7: 5000
+        
+        R_click_media_done: { role: 'button', name: 'Done' }
+        sleep_step_p8: 2000
+        
+        check_has_variants: { locator: "input[type='checkbox']", checked: true, no_modal_scope: true }
+        sleep_step_p9: 2000
+        
+        R_click_add_option_btn: { role: 'button', name: 'Add an option' }
+        sleep_step_p10: 1000
+        
+        fill_variant_option_name: { role: 'textbox', name: 'What do you want to call this', value: 'group' }
+        sleep_step_p11: 1000
+        
+        fill_option_value_0: { locator: "input[name='0']", value: 'v1' }
+        fill_option_value_1: { locator: "input[name='1']", value: 'v2' }
+        sleep_step_p12: 1000
+        
+        fill_variant_spec_0: { placeholder: 'What is this specific variant', index: 0, value: 'size1' }
+        sleep_step_p13: 1000
+        
+        fill_variant_spec_1: { placeholder: 'What is this specific variant', index: 1, value: 'size2' }
+        sleep_step_p13_b: 1000
+        
+        R_click_variant_add: { role: 'button', name: 'Add', exact: true }
+        sleep_step_p14: 2000
+        
+        smart_click_optional_variant_done: { role: 'button', name: 'Done', timeout: 3000 }
+        sleep_step_p15: 2000
+        
+        fill_variant_price_0: { locator: "input[name='variants.0.price']", value: '499' }
+        fill_variant_price_1: { locator: "input[name='variants.1.price']", value: '899', optional: true }
+        sleep_step_p17: 1000
+        
+        R_click_confirm_product: { test_id: 'confirm-button' }
+        sleep_step_p18: 5000
 
+        # Then proceed with post creation
+        open: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step: 3000
 
+        smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
+        sleep_step: 1000
+
+        R_click_enhance_cta: { test_id: "enhance-button-cta" }
+        sleep_step: 1000
+
+        R_click_test_1928_product: { locator: "text=test 1928 product", index: 0 }
+        sleep_step: 1000
+
+        R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
+        sleep_step: 1000
+
+        smart_click_optional_close_btn_1: { role: 'button', name: 'Close', timeout: 3000 }
+        sleep_step: 1000
+
+        R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
+        sleep_step: 1000
+
+        R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
+        sleep_step: 1500
+
+        smart_click_optional_confirm: { test_id: 'confirm-button', timeout: 3000 }
+        sleep_step: 1500
+
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 1928' }
+        sleep_step: 1000
+
+        smart_click_optional_confirm_2: { test_id: 'confirm-button', timeout: 3000 }
+        sleep_step: 1500
+
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_step: 3000
+
+        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        sleep_step: 3000
+
+        # Navigate to Catalogs to update product price
+        R_click_storefront: { text: 'Storefront' }
+        sleep_step: 2000
+        
+        R_click_catalogs: { text: 'Catalogs' }
+        sleep_step: 3000
+
+        R_click_more_action: { locator: '//tr[.//text()[contains(., "test 1928 product")]]//button[@aria-label="More action"]' }
+        sleep_step: 1000
+
+        R_click_edit: { role: 'menuitem', name: 'Edit' }
+        sleep_step: 2000
+
+        fill_variants_0_price: { locator: 'input[name="variants.0.price"]', value: '1' }
+        fill_variants_1_price: { locator: 'input[name="variants.1.price"]', value: '2' }
+        sleep_step: 1000
+
+        R_click_confirm_3: { test_id: 'confirm-button' }
+        sleep_step: 2000
+
+        # Navigate to Storefront to verify the post
+        R_click_storefront_2: { text: 'Storefront' }
+        sleep_step: 2000
+        
+        R_click_storefront_link: { text: 'Storefront', exact: true }
+        sleep_step: 3000
+
+        
+
+    expect_result:
+        description: "Verify T1928 workflow completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test case 1928"
+            - assertion_type: "element_visible_by_locator"
+              locator: "//div[contains(@class, 'MuiStack-root') and .//span[text()='test case 1928']]//span[contains(@class, 'price') and text()='$499.00 - $899.00']"
+
+# ==============================================================================
+# Test Case: T3811
+# ==============================================================================
+
+testT3811:
+    description: "Verify customize price setting and unsetting in post creation and editing"
+    test_step:
+        # Step 1: Open create post page with specific partner/coseller cookies
+        open_create_post: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step: 3000
+
+        # Step 4: Discard draft if present
+        smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
+        sleep_step: 1000
+
+        # Step 5: Add product
+        R_click_enhance_cta: { test_id: "enhance-button-cta" }
+        sleep_step: 1500
+
+        # Step 6: Select first product image
+        R_click_product_img: { role: 'img', name: 'Image of Product', index: 0 }
+        sleep_step: 1000
+
+        # Step 7: Add product to post
+        R_click_add_products: { role: 'button', name: 'Add 1/20 product(s)' }
+        sleep_step: 1500
+
+        # Step 8: Close product selection modal
+        R_click_close_modal: { role: 'button', name: 'Close' }
+        sleep_step: 1000
+
+        # Step 9: Customize products
+        R_click_customize_products: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        # Step 10: Check setCustomizePrice
+        check_set_customize_price: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
+        sleep_step: 1000
+
+        # Step 11: Save customization
+        R_click_save_customization: { role: 'button', name: 'Save' }
+        sleep_step: 1500
+
+        # Step 12: Confirm customization
+        R_click_confirm_customization: { test_id: 'confirm-button' }
+        sleep_step: 1500
+
+        # Step 13: Fill post title
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 3811' }
+        sleep_step: 1000
+
+        # Step 14: Confirm title/post
+        R_click_confirm_post: { test_id: 'confirm-button' }
+        sleep_step: 1500
+
+        # Step 15: Publish post
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_step: 4000
+
+        # Step 16: Click Got it
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_step: 3000
+
+        # Step 17: Click the post card to enter details
+        R_click_post_card: { test_id: 'mui-card-action-area', index: 0 }
+        sleep_step: 3000
+
+        # Step 18: Click Selling tab
+        R_click_selling_tab: { role: 'tab', name: 'Selling', exact: true }
+        sleep_step: 2000
+
+        # Step 19: Customize products again
+        R_click_customize_products_edit: { role: 'button', name: 'Customize products' }
+        sleep_step: 2000
+
+        # Step 20: Uncheck setCustomizePrice
+        uncheck_set_customize_price: { locator: 'input[name="products.0.setCustomizePrice"]', checked: false }
+        sleep_step: 1000
+
+        # Step 21: Save
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        sleep_step: 1500
+
+        # Step 22: Save again (confirm/final save)
+        R_click_save_final: { role: 'button', name: 'Save' }
+        sleep_end: 2000
+
+    expect_result:
+        description: "Verify that customize price can be enabled during creation and disabled during editing"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test case 3811"

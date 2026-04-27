@@ -88,3 +88,4 @@ tools/__pycache__/*.pyc
 # gfl config
 .gfl.config.yml
 data/*.xlsx
+.cline
