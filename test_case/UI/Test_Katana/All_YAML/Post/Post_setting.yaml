@@ -1005,10 +1005,6 @@ testT4735_VerifyGuest:
           auto_handle_modals: false
         sleep_after_open: 5000
 
-        # Press Ctrl+R to refresh page
-        press_ctrl_r_refresh: { keys: "Control+r" }
-        sleep_step: 3000
-
         # Wait for popup and click "demi test" span using XPath (note: lowercase)
         wait_for_popup_text: { locator: "//span[@data-testid='mui-typography']", timeout: 10000 }
         sleep_step: 1000
