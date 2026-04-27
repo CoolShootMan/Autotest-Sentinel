@@ -89,3 +89,6 @@ tools/__pycache__/*.pyc
 .gfl.config.yml
 data/*.xlsx
 .cline
+
+# Ignore debug htmL fiLes
+debug_*.html
