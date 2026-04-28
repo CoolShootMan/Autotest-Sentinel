@@ -55,6 +55,22 @@ def start_autotest():
         f'--alluredir={allure_data_dir}'
     ]
     logger.info(f"Running with YAMLs: {yaml_files}")
+
+    # ── 1. 先获取三个测试账号的 Cookie ──
+    cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
+    logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
+    cookie_result = subprocess.run(
+        [sys.executable, cookie_script],
+        capture_output=True, text=True
+    )
+    logger.info(f"Cookie script stdout: {cookie_result.stdout}")
+    if cookie_result.returncode != 0:
+        logger.error(f"Cookie script FAILED (exit {cookie_result.returncode}): {cookie_result.stderr}")
+        # 不阻断，继续跑用例（cookie 可能已存在）
+    else:
+        logger.info("All cookies fetched successfully.")
+
+    # ── 2. 正式运行 pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")
