@@ -802,7 +802,7 @@ testT2834_VerifyPartner:
         sleep_step: 1500
 
         # Step 3: Switch to Selling tab and customize products
-        click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
+        click_container_button_1: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1}
         sleep_step: 2000
         #smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing' }
         #sleep_step: 1500
@@ -916,7 +916,7 @@ testT2834_VerifyGuest:
         sleep_step: 2000
         
         # Step 3: Revert Selling tab Free Shipping
-        click_container_button_2: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2 }
+        click_container_button_2: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1 }
         sleep_step: 2000
         R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
         sleep_step: 1500
@@ -1863,7 +1863,7 @@ testT5033_5034_VerifyPartner:
         sleep_step: 2000
 
         # Step 3: Switch to Selling tab and customize products
-        click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 2}
+        click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1}
         sleep_step: 1500
         R_click_select_products: { test_id: "enhance-button-cta" }
         sleep_step: 2000
