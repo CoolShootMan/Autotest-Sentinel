@@ -43,11 +43,29 @@ def click_module_post_view_event_cta(page: Page, v: dict):
     button_name = v.get("button_name")
     button_index = v.get("button_index", 0)
     logger.info(f"Clicking button for module: {module_name} and post title: {post_title}")
-    container = page.locator("div", has_text=module_name).filter(has_text=post_title).last
+
+    # Step 1: Locate module header using double-filter pattern (exact text + button presence)
+    header = page.locator("div").filter(
+        has=page.get_by_text(module_name, exact=True)
+    ).filter(
+        has=page.get_by_role("button")
+    ).last
+    header.scroll_into_view_if_needed()
+
+    # Step 2: Navigate up to the full module container (header + body with post cards)
+    module_container = header.locator("xpath=..")
+
+    # Step 3: Find the post card within module body by post_title
+    post_card = module_container.locator(".post-card").filter(
+        has=page.get_by_text(post_title, exact=True)
+    ).last
+    post_card.scroll_into_view_if_needed()
+
+    # Step 4: Click the target button on the post card
     if button_name:
-        container.get_by_role("button", name=button_name).nth(button_index).click(timeout=1000)
+        post_card.get_by_role("button", name=button_name).nth(button_index).click(timeout=10000)
     else:
-        container.locator("button").nth(button_index).click(timeout=1000)
+        post_card.locator("button").nth(button_index).click(timeout=10000)
 
 def click_module_item_more_icon(page: Page, v: dict):
     """Click the 'more' (horiz icon) button on a post/card item inside a module using data-testid='base-more-horiz-icon-cta'.
