@@ -1,0 +1,23 @@
+test_intro_text_create:
+  is_mobile: true
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_open: 3000
+
+test_intro_text_update:
+  is_mobile: true
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_open: 3000
+
+test_intro_text_view:
+  is_mobile: true
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_open: 3000
+
+test_intro_text_destroy:
+  is_mobile: true
+  test_step:
+    open: "https://release.pear.us/autotestshop"
+    sleep_open: 3000
