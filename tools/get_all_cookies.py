@@ -38,7 +38,7 @@ def login_and_save(playwright, account: dict):
     context = browser.new_context()
     page = context.new_page()
 
-    page.goto("https://release.pear.us/login", timeout=90000)
+    page.goto("https://release.pear.us/login", timeout=20000)
     page.wait_for_timeout(2000)
 
     # 如果有"Log in with password"按钮先点一下
