@@ -95,18 +95,30 @@ def start_autotest():
     logger.info(f"Running command: {' '.join(generate_cmd)}")
     subprocess.run(generate_cmd, check=True)
     
-    # 获取局域网 IP（192.168.x.x 段，排除虚拟网卡）
+    # 获取局域网 IP（192.168.x.x 段，排除虚拟网卡/WSL）
     def get_lan_ip():
         try:
             addrs = socket.getaddrinfo(socket.gethostname(), None)
             for addr in addrs:
                 ip = addr[4][0]
+                # 排除 WSL/Hyper-V 虚拟网段 (172.16-31.x.x)
+                if ip.startswith("172."):
+                    octet2 = int(ip.split(".")[1])
+                    if 16 <= octet2 <= 31:
+                        continue
+                # 优先返回真实局域网 192.168.x.x（排除已知虚拟网段）
                 if ip.startswith("192.168.") and not any(ip.startswith(f"192.168.{x}.") for x in ["56", "88", "23"]):
                     return ip
+            # 回退：任何非 127、非 172.16-31、非 IPv6 的地址
             for addr in addrs:
                 ip = addr[4][0]
-                if not ip.startswith("127.") and ":" not in ip:
-                    return ip
+                if ip.startswith("127.") or ":" in ip:
+                    continue
+                if ip.startswith("172."):
+                    octet2 = int(ip.split(".")[1])
+                    if 16 <= octet2 <= 31:
+                        continue
+                return ip
         except Exception:
             pass
         return "127.0.0.1"
