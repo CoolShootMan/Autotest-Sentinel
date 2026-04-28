@@ -1,4 +1,4 @@
-intro_text_create:
+intro_text_create_update:
   description: "Create a form with intro text"
   test_step:
     open:
@@ -48,7 +48,9 @@ intro_text_create:
     fill_field_intro_text: { role: 'textbox', name: 'Enter a brief intro', value: 'intro-text' , quick: true }
     R_click_add2: { role: 'button', name: 'Add' , quick: true }
 
-    R_click_text_aling: { locator: '.MuiButtonBase-root[aria-label="Align center"]', quick: true }
+    R_click_text_align: { locator: '.MuiButtonBase-root[aria-label="Align center"]', quick: true }
+
+    verify_element_style_center: { locator: '.MuiButtonBase-root[aria-label="Align center"]', property: 'textAlign', expected: 'center' }
 
     R_click_continue: { role: 'button', name: 'Continue' , quick: true }
     sleep_continue: 500
