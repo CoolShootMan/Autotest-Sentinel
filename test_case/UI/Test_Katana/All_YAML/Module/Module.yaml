@@ -271,20 +271,14 @@ testT3789:
     description: "Verify the resale process. The consumer purchases module-Products(Shared with me)"
     test_step:
         open: "https://release.pear.us/partnercoseller997"
-        sleep_after_open: 5000
+        #sleep_after_open: 5000
         click_container_button: { container: 'Module-products', container_locator: "../..", button: "//div[@data-media-absolute='bottomRight']", button_index: 0}
         sleep_after_click_container_button: 2000
         R_click_checkout_cta: { locator: 'button[data-track-location="Notification"]', name: "Checkout" }
-        sleep_aftet_click_checkout_cta: 5000
+        sleep_aftet_click_checkout_cta: 1500
          # Fill Details
-        fill_first_name: { locator: 'input[name="address.firstName"]', value: "t1" }
-        fill_last_name: { locator: 'input[name="address.lastName"]', value: "t2" }
-        
-        # Address dropdown selection
-        fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
-        sleep_step: 2000
-        R_click_address_option: { role: "button", name: "Cannon Drive, Columbus, OH, USA" }
-        sleep_step: 1000
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: "t1" }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: "t2" }
 
         #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
         fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
