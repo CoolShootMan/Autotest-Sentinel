@@ -1,0 +1,68 @@
+intro_text_create:
+  description: "Create a form with intro text"
+  test_step:
+    open:
+      url: "https://release.pear.us/autotestshop"
+      auto_handle_modals: false
+    wait_for_add_new_form: { locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")', timeout: 5000 }
+
+
+    R_click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")', quick: true }
+    sleep_add: 3000
+
+
+    # Deleting excess options (as in codegen)
+    # Using exact codegen steps
+    R_click_view_name_3: { role: 'button', name: 'View Name options', exact: true , quick: true }
+    R_click_delete_name_3: { role: 'button', name: 'Delete', index: 0 , quick: true }
+    sleep_delete_name_3: 50
+    R_click_delete_name_4: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_name_4: 50
+
+    R_click_view_phone: { role: 'button', name: 'View Phone options', exact: true , quick: true }
+    R_click_delete_phone_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_1: 50
+    R_click_delete_phone_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_phone_2: 50
+
+    R_click_view_email: { role: 'button', name: 'View Email options', exact: true , quick: true }
+    R_click_delete_email_1: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_1: 50
+    R_click_delete_email_2: { role: 'button', name: 'Delete', index: 0 }
+    sleep_delete_email_2: 50
+
+
+    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Enrich_forms_test' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
+
+    # 4. Phone
+    R_click_add_field: { role: 'button', name: 'Add new field', exact: true, quick: true }
+    sleep_1: 50
+    R_click_intro_text: { locator: '.link-card-disable .MuiTypography-root:has-text("Intro text")', quick: true }
+    sleep_click_phone: 50
+    R_click_add_4: { role: 'button', name: 'Add' , quick: true }
+
+    fill_field_title: { role: 'textbox', name: 'Enter a title, e.g. "Introduction"', value: 'intro-title' , quick: true }
+    R_click_add1: { role: 'button', name: 'Add' , quick: true }
+
+    fill_field_intro_text: { role: 'textbox', name: 'Enter a brief intro', value: 'intro-text' , quick: true }
+    R_click_add2: { role: 'button', name: 'Add' , quick: true }
+
+    R_click_text_aling: { locator: '.MuiButtonBase-root[aria-label="Align center"]', quick: true }
+
+    R_click_continue: { role: 'button', name: 'Continue' , quick: true }
+    sleep_continue: 500
+
+    # Custom success message changes
+    R_click_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!' , quick: true }
+    fill_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!', value: 'Hi thank you' }
+
+    R_click_save: { role: 'button', name: 'Save' , quick: true }
+    sleep_save: 3000
+
+  expect_result:
+    description: "Form should be submitted successfully with Got it confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Got it"
+
