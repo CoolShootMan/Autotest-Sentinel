@@ -894,6 +894,7 @@ testT4853:
         R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
         sleep_before_finish: 2000
         R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_select_module_1: { locator: "button[data-track-location='Dialog']", name: 'new module use in archiving test cases', exact: true }
         R_click_view_st: { role: 'button', name: 'View post on storefront' }
         sleep_after_view_st: 5000
         auto_handle_modals_1: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
@@ -990,7 +991,7 @@ testT4605:
         sleep_after_add_module: 3000
 
         # Step 2: Select the first post from the dialog and add to module
-        R_click_select_post: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click_select_post: { locator: "button[data-testid='mui-card-action-area']", name: 'auto test T3788' }
         R_click_add_post: { role: 'button', name: 'Add', exact: true }
         sleep_after_add_post: 3000
 
