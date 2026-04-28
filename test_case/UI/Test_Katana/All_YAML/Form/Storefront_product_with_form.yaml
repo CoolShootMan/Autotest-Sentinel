@@ -61,7 +61,7 @@ testT5007:
 #    R_click_product: { locator: '.MuiTypography-body1:has-text("product form must be filled")' }
 #    sleep_after_open_product: 1000
 
-    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_form: 1000
     fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
     R_click_save: { role: 'button', name: 'Save' }
@@ -690,7 +690,7 @@ testT3690:
     sleep_after_open: 3000
 
     # Add to cart with form data
-    R_click_add_to_cart: { locator: '[data-testid="post-product-add-to-cart"]' }
+    R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_click: 1000
     fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
     R_click_save: { role: 'button', name: 'Save' }
