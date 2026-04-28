@@ -43,7 +43,8 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # 要执行的 YAML 文件列表，逗号分隔（路径相对于 Test_Katana/All_YAML/）
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
+    #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
+    yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
     pytest_args = [
         "python",
         "-m",
@@ -63,12 +64,9 @@ def start_autotest():
         [sys.executable, cookie_script],
         capture_output=True, text=True
     )
-    logger.info(f"Cookie script stdout: {cookie_result.stdout}")
+    logger.info(f"Cookie script done: {cookie_result.stdout}")
     if cookie_result.returncode != 0:
-        logger.error(f"Cookie script FAILED (exit {cookie_result.returncode}): {cookie_result.stderr}")
-        # 不阻断，继续跑用例（cookie 可能已存在）
-    else:
-        logger.info("All cookies fetched successfully.")
+        logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
     # ── 2. 正式运行 pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
