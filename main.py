@@ -68,7 +68,18 @@ def start_autotest():
     if cookie_result.returncode != 0:
         logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
-    # ── 2. 正式运行 pytest ──
+    # ── 2. 用最新 cookie 登录各账号，点掉 EDU 弹窗 ──
+    dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
+    logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
+    dismiss_result = subprocess.run(
+        [sys.executable, dismiss_script],
+        capture_output=True, text=True
+    )
+    logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
+    if dismiss_result.returncode != 0:
+        logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+
+    # ── 3. 正式运行 pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")
