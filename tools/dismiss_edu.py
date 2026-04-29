@@ -92,26 +92,26 @@ def handle_selling_customize(page: "Page") -> None:
         pass
 
 
-def handle_customers(page: "Page") -> None:
-    """Customers → Followers 页面 EDU 处理。"""
-    try:
-        page.goto("https://release.pear.us/customers", timeout=60000)
-        page.wait_for_timeout(2000)
-        dismiss_edu_popups(page)
-    except Exception:
-        pass
+# def handle_customers(page: "Page") -> None:
+#     """Customers → Followers 页面 EDU 处理。"""
+#     try:
+#         page.goto("https://release.pear.us/customers", timeout=60000)
+#         page.wait_for_timeout(2000)
+#         dismiss_edu_popups(page)
+#     except Exception:
+#         pass
 
-    try:
-        page.get_by_role("tab", name="Followers").click(timeout=5000)
-        page.wait_for_timeout(1000)
-        dismiss_edu_popups(page)
-    except Exception:
-        pass
+#     try:
+#         page.get_by_role("tab", name="Followers").click(timeout=5000)
+#         page.wait_for_timeout(1000)
+#         dismiss_edu_popups(page)
+#     except Exception:
+#         pass
 
-    try:
-        page.get_by_role("button", name="Close").click(timeout=3000)
-    except Exception:
-        pass
+#     try:
+#         page.get_by_role("button", name="Close").click(timeout=3000)
+#     except Exception:
+#         pass
 
 
 def dismiss_for_account(playwright, account: dict):

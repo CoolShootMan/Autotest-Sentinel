@@ -265,7 +265,7 @@ testT4867:
     sleep_step4: 3000
 
     # Click on CTA button in editor to select it
-    R_click_cta_btn: { locator: '[data-testid="rich-text-button"]' }
+    R_click_cta_btn: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
     sleep_after_select: 500
 
     # Delete the CTA button
@@ -434,7 +434,7 @@ testT4866:
     R_click_edit_p2: { locator: '[data-testid="mui-list-item-text"]:has-text("Edit")', exact: true, index: 0 }
     sleep_p2_step4: 3000
 
-    R_click_cta_btn_in_editor: { locator: '[data-testid="rich-text-button"]' }
+    R_click_cta_btn_in_editor: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
     sleep_after_select_btn: 500
     R_click_edit_button: { role: 'button', name: 'Edit' }
     sleep_after_edit_click: 1000
@@ -467,7 +467,7 @@ testT4866:
 
     R_click_edit_p4: { locator: '[data-testid="mui-list-item-text"]:has-text("Edit")', exact: true, index: 0 }
     sleep_p4_step4: 3000
-    R_click_cta_btn_delete: { locator: '[data-testid="rich-text-button"]' }
+    R_click_cta_btn_delete: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
     sleep_after_select_delete: 500
     R_click_delete_btn: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
