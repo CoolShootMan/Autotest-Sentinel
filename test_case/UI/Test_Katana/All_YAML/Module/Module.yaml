@@ -1070,6 +1070,7 @@ testT5210_5211_5212:
         sleep_wait_form: 1500
         fill_url: { locator: 'input[name="url"]', value: 'baidu.com' }
         fill_title: { placeholder: 'As the bold title on your', value: 'test align' }
+        click_align_left: { label: 'Align left' }
         R_click_add_link: { locator: "button", text: 'Add', exact: true }
         sleep_after_add_link: 3000
         # Verify default text alignment is left
@@ -1101,7 +1102,7 @@ testT5210_5211_5212:
         R_click_add_from_my_links: { role: 'button', name: 'Add from my links' }
         sleep_after_my_links: 2000
         verify_element_style_my_links_align:
-            locator: "xpath=//*[@role='dialog']//p[contains(text(), 'test align')]/../.."
+            locator: "xpath=//*[@role='dialog']//p[contains(text(), 'test align')]/../../.."
             property: "alignItems"
             expected: "flex-end"
         R_click_close: { role: 'button', name: 'Close' }
