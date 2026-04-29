@@ -2,28 +2,44 @@
 关闭三个账号在各页面可能出现的 EDU 弹窗。
 依赖已存在的 cookie 文件，通过 storage_state 登录，无需密码。
 用法：python tools/dismiss_edu.py
+
+Cookie 文件名和 URL 根据当前环境（config/env_config.yaml）动态读取。
 """
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+import yaml
 
 PROJECT_ROOT = Path(__file__).parent.parent
+CONFIG_FILE = PROJECT_ROOT / "config" / "env_config.yaml"
 COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
+
+
+def load_env():
+    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+        cfg = yaml.safe_load(f)
+    envs = cfg.get("envs", {})
+    current = cfg.get("current_env", "release")
+    base = envs.get(current, {}).get("base", "https://release.pear.us")
+    return current, base
+
+
+ACCOUNT_ENV, ENV_BASE = load_env()
 
 ACCOUNTS = [
     {
         "name": "main (+999)",
-        "cookie_file": "cookie_release.json",
-        "home_url": "https://release.pear.us/autotestshop",
+        "cookie_file": f"cookie_{ACCOUNT_ENV}.json",
+        "home_url": f"{ENV_BASE}/autotestshop",
     },
     {
         "name": "co-seller (+998)",
-        "cookie_file": "cookie_release_co_seller.json",
-        "home_url": "https://release.pear.us/autotest-coseller",
+        "cookie_file": f"cookie_{ACCOUNT_ENV}_co_seller.json",
+        "home_url": f"{ENV_BASE}/autotest-coseller",
     },
     {
         "name": "partner co-seller (+997)",
-        "cookie_file": "cookie_partner_coseller_release.json",
-        "home_url": "https://release.pear.us/partnercoseller997",
+        "cookie_file": f"cookie_{ACCOUNT_ENV}_partner_coseller.json",
+        "home_url": f"{ENV_BASE}/partnercoseller997",
     },
 ]
 

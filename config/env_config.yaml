@@ -1,0 +1,20 @@
+envs:
+  staging:
+    base: https://staging.pear.us
+    desc: 开发环境
+  release:
+    base: https://release.pear.us
+    desc: 测试环境
+  prod:
+    base: https://pear.us
+    desc: 生产环境
+scan_patterns:
+- test_case/**/*.yaml
+- test_case/**/*.py
+- tools/get_*.py
+- tools/dismiss_edu.py
+cookie_env_patterns:
+  staging: cookie_staging
+  release: cookie_release
+  prod: cookie_prod
+current_env: release
