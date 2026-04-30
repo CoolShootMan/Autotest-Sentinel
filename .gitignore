@@ -44,6 +44,10 @@ t4264_log.txt
 ai_healing_screenshots/
 ai_healing_*.png
 
+# === smart_wait failure screenshots (generated at runtime) ===
+fail_wait_*.png
+fail_wait_*
+
 # === Debug files (temporary) ===
 gemini-tasks/
 debug_*.py
@@ -92,3 +96,6 @@ data/*.xlsx
 
 # Ignore debug htmL fiLes
 debug_*.html
+
+# === Performance Test (local pressure test only, do not commit) ===
+test_case/UI/Test_Katana/All_YAML/Performance/
