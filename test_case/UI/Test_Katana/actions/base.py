@@ -2842,13 +2842,13 @@ def delete_coseller_if_exists(page: Page, v: dict):
     Complete flow to delete co-seller (if exists).
     
     This is a compound action that encapsulates 4 steps:
-    1. Click More button (three dots)
-    2. Click Delete menu option
-    3. Confirm delete in dialog
-    4. Verify delete success toast
+    1. Check if co-seller data exists in the list
+    2. Click More button (three dots)
+    3. Click Delete menu option
+    4. Confirm delete in dialog
+    5. Verify delete success toast
     
-    If step 1 cannot find the More button (no co-seller present), 
-    the entire flow is skipped silently without error.
+    If no co-seller data exists, the entire flow is skipped silently without error.
     
     YAML usage:
         delete_coseller_if_exists: { timeout: 10000 }
@@ -2862,11 +2862,55 @@ def delete_coseller_if_exists(page: Page, v: dict):
     
     logger.info("delete_coseller_if_exists: checking if co-seller exists...")
     
-    # Step 1: Check if More button exists (indicates co-seller present)
+    # Step 0 (Pre-check): Verify co-seller data exists in the list
+    # Look for co-seller entries - if none exist, skip the entire flow
+    has_coseller_data = page.evaluate("""
+        () => {
+            // Look for indicators that co-seller data exists:
+            // 1. Check for the last MoreHorizIcon button (co-seller row's button)
+            // 2. Check if there's text indicating co-seller count > 0
+            
+            const moreBtns = document.querySelectorAll('button');
+            let moreHorizBtns = 0;
+            for (const btn of moreBtns) {
+                if (btn.querySelector('svg[data-testid="MoreHorizIcon"]')) {
+                    moreHorizBtns++;
+                }
+            }
+            
+            // Also check for co-seller specific elements
+            const pageText = document.body.innerText;
+            const hasCoSellerSection = /Co-sellers?\\s*\\(\\d+\\)/.test(pageText);
+            
+            // If there's only 1 MoreHorizIcon (Post-level), no co-seller exists
+            if (moreHorizBtns <= 1) {
+                return false;
+            }
+            
+            // If Co-sellers section shows (0), no co-seller exists
+            if (/Co-sellers?\\s*\\(0\\)/.test(pageText)) {
+                return false;
+            }
+            
+            return true;
+        }
+    """)
+    
+    if not has_coseller_data:
+        logger.info("delete_coseller_if_exists: no co-seller data found, skipping entire delete flow")
+        return
+    
+    # Step 1: Find the co-seller row's More button (the LAST one on page)
+    # Page has 3 More buttons: Post-level (top), Action button, co-seller row (last)
     try:
-        more_button = page.locator("button:has(svg[data-testid='MoreHorizIcon'])").nth(0)
+        all_more_buttons = page.locator("button:has(svg[data-testid='MoreHorizIcon'])")
+        count = all_more_buttons.count()
+        logger.info(f"delete_coseller_if_exists: found {count} More buttons on page")
+        
+        # Use the LAST More button - that's the co-seller row's button
+        more_button = all_more_buttons.last
         more_button.wait_for(state="visible", timeout=timeout)
-        logger.info("delete_coseller_if_exists: co-seller found, proceeding with delete flow")
+        logger.info("delete_coseller_if_exists: co-seller found (last More button), proceeding with delete flow")
     except Exception:
         logger.info("delete_coseller_if_exists: no co-seller found (More button not present), skipping")
         return
@@ -2892,13 +2936,30 @@ def delete_coseller_if_exists(page: Page, v: dict):
         return
     
     # Step 4: Confirm delete in dialog
+    # From co-seller row's More menu -> Delete, the dialog title is always "Delete the selected posts"
     try:
-        # Wait for dialog to appear first
         dialog = page.locator("div[role='dialog']").filter(has_text="Delete the selected posts")
         dialog.wait_for(state="visible", timeout=timeout)
-        
-        # Find Delete button within the dialog - use locator to find the button with specific class or text
-        confirm_button = dialog.locator("button").filter(has_text="Delete")
+        logger.info("delete_coseller_if_exists: confirmation dialog appeared")
+
+        # Pre-check: If dialog shows "No items selected" or "You haven't selected any items",
+        # the co-seller post is already deleted - skip the delete flow
+        dialog_text = dialog.inner_text()
+        if "no item" in dialog_text.lower() or "haven't selected" in dialog_text.lower() or "not selected" in dialog_text.lower():
+            logger.info("delete_coseller_if_exists: dialog shows no items selected, co-seller already deleted - skipping")
+            # Close the dialog (click Cancel or press Escape)
+            try:
+                cancel_btn = dialog.get_by_role("button", name="Cancel")
+                if cancel_btn.is_visible():
+                    cancel_btn.click()
+                else:
+                    page.keyboard.press("Escape")
+            except:
+                page.keyboard.press("Escape")
+            return
+
+        # Click the Delete button (not Cancel) inside the dialog
+        confirm_button = dialog.get_by_role("button", name="Delete")
         confirm_button.wait_for(state="visible", timeout=timeout)
         confirm_button.click()
         logger.info("delete_coseller_if_exists: clicked Confirm Delete button")

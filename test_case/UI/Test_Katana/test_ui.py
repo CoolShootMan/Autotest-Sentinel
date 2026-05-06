@@ -53,6 +53,25 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     allure_step_no(f'description:{description}')
     allure_step_no(f'test_step:{str(test_step)}')
 
+    # --- Pre-condition Phase ---
+    pre_condition = val.get("pre_condition", {})
+    if pre_condition:
+        pre_steps = pre_condition.get("test_step", {})
+        pre_desc = pre_condition.get("description", "pre_condition")
+        logger.info(f">>> Starting Pre-condition Phase: {pre_desc}")
+        allure_step_no(f'pre_condition:{pre_desc}')
+        for pk, pv in pre_steps.items():
+            logger.info(f">>> Pre-condition Step: {pk}")
+            p_action = get_action(pk)
+            if p_action:
+                try:
+                    p_action(page, pv)
+                except Exception as e:
+                    logger.warning(f"Pre-condition step '{pk}' failed (non-blocking): {e}")
+            else:
+                logger.warning(f"Pre-condition step '{pk}' not found in Action Registry, skipping.")
+        logger.info(">>> Pre-condition Phase completed")
+
     # --- Core Execution Engine ---
     for k, v in test_step.items():
         logger.info(f">>> Current Step: {k}")
