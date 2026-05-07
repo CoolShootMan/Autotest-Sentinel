@@ -1,4 +1,4 @@
-testT3695_config_form:
+testT3695_config_form:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Configure product form: enable form, set title/subtitle, add short text field"
   test_step:
@@ -50,7 +50,7 @@ testT3695_config_form:
     assertions: [ ]
 
 
-testT5007:
+testT5007:  # [LAST: PASSED 2026-05-06]
   description: "Verify adding a product with form to cart from storefront"
   guest: true
   test_step:
@@ -73,7 +73,7 @@ testT5007:
       - assertion_type: "element_visible_by_text"
         text: "Added to cart"
 
-testT4790:
+testT4790:  # [LAST: PASSED 2026-05-06]
   description: "Verify guest can submit a form with media upload on standalone form page"
   guest: true
   test_step:
@@ -108,7 +108,7 @@ testT4790:
       - assertion_type: "element_visible_by_text"
         text: "Thanks for your submission!"
 
-testT4970:
+testT4970:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify single choice field validation errors: single option, zero options, empty options, duplicate options"
   test_step:
@@ -183,7 +183,7 @@ testT4970:
       - assertion_type: "element_visible_by_text"
         text: "test form verify error"
 
-testT4860:
+testT4860:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
@@ -246,7 +246,7 @@ testT4860:
     description: "CTA form button should be inserted and post published successfully"
     assertions: [ ]
 
-testT4867:
+testT4867:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
   test_step:
@@ -289,7 +289,7 @@ testT4867:
     assertions: [ ]
 
 
-testT4281:
+testT4281:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify recipient email validation when creating a new form"
   test_step:
@@ -324,7 +324,7 @@ testT4281:
     assertions: [ ]
 
 
-testT4276:
+testT4276:  # [LAST: FAILED 2026-05-06]
   guest: false
   description: "Verify form title/subtitle/email icon validation and save combinations"
   test_step:
@@ -377,7 +377,7 @@ testT4276:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
     assertions: [ ]
 
-testT4866:
+testT4866:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
@@ -480,7 +480,7 @@ testT4866:
     description: "CTA form button text should be updated and visible on storefront, then deleted"
     assertions: [ ]
 
-testT4847:
+testT4847:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify adding field help text (description) to form fields"
   test_step:
@@ -522,7 +522,7 @@ testT4847:
     description: "Form fields should support help text descriptions"
     assertions: [ ]
 
-testT4847_view:
+testT4847_view:  # [LAST: PASSED 2026-05-06]
   guest: true
   description: "Verify help text tooltips are visible on storefront form fields"
   test_step:
@@ -570,7 +570,7 @@ testT4847_view:
 #    description: "Form should be removed from module"
 #    assertions: [ ]
 
-testT4539:
+testT4539:  # [LAST: BROKEN 2026-05-06]
   guest: false
   description: "Verify batch select submissions and export selected data"
   test_step:
@@ -605,7 +605,7 @@ testT4539:
     assertions: [ ]
 
 
-testT4540:
+testT4540:  # [LAST: BROKEN 2026-05-06]
   guest: false
   description: "Verify timezone setting affects submission time display (CST)"
   test_step:
@@ -656,7 +656,7 @@ testT4540:
     assertions: [ ]
 
 
-testT3695_curator:
+testT3695_curator:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
   test_step:
@@ -668,7 +668,7 @@ testT3695_curator:
     description: "Custom Text 'product form must be filled' should not be visible on the page"
     assertions: [ ]
 
-testT3695_guest:
+testT3695_guest:  # [LAST: PASSED 2026-05-06]
   guest: true
   description: "Verify the Custom Text input field is visible on the Guest view"
   test_step:
@@ -680,7 +680,7 @@ testT3695_guest:
     description: "Custom Text 'product form must be filled' should be visible on the guest page"
     assertions: [ ]
 
-testT3690:
+testT3690:  # [LAST: PASSED 2026-05-06]
   guest: true
   description: "Verify product form data persists through cart, checkout, and order confirmation"
   test_step:
@@ -737,7 +737,7 @@ testT3690:
     description: "Form data should persist through cart and checkout flow"
     assertions: [ ]
 
-testT5006_curator:
+testT5006_curator:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify disabling product form in catalog product settings"
   test_step:
@@ -770,7 +770,7 @@ testT5006_curator:
 #    description: "Page should display 'Form unavailable' text"
 #    assertions: [ ]
 
-testT3794:
+testT3794:  # [LAST: FAILED 2026-05-06]
   guest: false
   description: "Verify creating a form and then deleting it, confirming it disappears from both list and storefront"
   test_step:

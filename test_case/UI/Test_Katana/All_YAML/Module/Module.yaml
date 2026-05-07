@@ -1,5 +1,5 @@
 #--------- Module - Create / Edit / Deteletd / Rearrange / Show / Collapse -------------
-testT3554:
+testT3554:  # [LAST: PASSED 2026-05-06]
     description: "Verify adding a new module in shop page"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -19,7 +19,7 @@ testT3554:
             - assertion_type: "element_visible_by_text"
               text: "Verify Add module"
 
-testT3556:
+testT3556:  # [LAST: FAILED 2026-05-06]
     description: "Verify editing an existing module"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -38,7 +38,7 @@ testT3556:
         assertions:
             - { assertion_type: "element_visible_by_text", text: "Updated module", exact: false }
 
-testT3577:
+testT3577:  # [LAST: PASSED 2026-05-06]
     description: "Verify that curator modifies the sorting of module and the sorting of module contents"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -57,7 +57,7 @@ testT3577:
         assertions:
             - { assertion_type: "element_visible_by_text", text: "The storefront has been updated!" }
 
-testT4903:
+testT4903:  # [LAST: FAILED 2026-05-06]
     description: "Verify two methods that can convert the module to the draft state"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -76,7 +76,7 @@ testT4903:
             - assertion_type: "element_visible_by_text"
               text: []
 
-testT4622:
+testT4622:  # [LAST: PASSED 2026-05-06]
     description: "Verify module collapse and expand toggle functionality"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -119,7 +119,7 @@ testT4622:
         description: "Module should collapse then expand correctly"
         assertions: []
 
-testT3555:
+testT3555:  # [LAST: PASSED 2026-05-06]
     description: "Verify module delete functionality"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -172,7 +172,7 @@ testT3555:
               text: "Delete module success"
 
 # ------------------ Module - post  ---------------------------
-testAddNewPost: 
+testAddNewPost:   # [LAST: BROKEN 2026-05-06]
     description: "Verify adding new post module in shop page"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -228,12 +228,12 @@ testAddNewPost:
 
 
 # ------------------ Module - product ------------------------
-testT3788:
+testT3788:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding products to a new module"
     test_step:
         open: 
             url: "https://release.pear.us/partnercoseller997"
-            cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
+            cookie_file: "test_case/UI/Test_Katana/cookie_release_partner_coseller.json"
         sleep_after_open: 5000
         R_click_module_btn: { role: 'button', name: 'Module' }
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
@@ -266,7 +266,7 @@ testT3788:
             - assertion_type: "element_visible_by_text"
               text: "autotest product title - do not delete"
 
-testT3789:
+testT3789:  # [LAST: BROKEN 2026-05-06]
     guest: true
     description: "Verify the resale process. The consumer purchases module-Products(Shared with me)"
     test_step:
@@ -295,7 +295,7 @@ testT3789:
 
 
 # ------------------ Module - link -> general link ------------------------
-testT3843:
+testT3843:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -344,7 +344,7 @@ testT3843:
               text: "test link2"
 
 # ------------------ Module - carousel nav buttons ------------------------
-testT4600_4602:
+testT4600_4602:  # [LAST: BROKEN 2026-05-06]
     description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -421,7 +421,7 @@ testT4600_4602:
         sleep_after_confirm_delete: 5000
 
 # ------------------ Module -link ->  product ------------------------
-testT3842:
+testT3842:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a new product to an existing module"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -456,7 +456,7 @@ testT3842:
 
 
 # ------------------ Module -link ->  image ------------------------
-testT4264:
+testT4264:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -492,7 +492,7 @@ testT4264:
 
 
 # ------------------ Module -link ->  music ------------------------
-testT4660:
+testT4660:  # [LAST: BROKEN 2026-05-06]
     is_mobile: true
     description: "Verify adding a Music module and track, then deleting it"
     test_step:
@@ -531,7 +531,7 @@ testT4660:
             - assertion_type: "element_visible_by_text"
               text: "Delete module success"
 
-testT4816:
+testT4816:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a Music module with Spotify and Apple Music links"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -571,7 +571,7 @@ testT4816:
 
 
 # ------------------ Module -link ->  video ------------------------
-testT3886_long:
+testT3886_long:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a long Video link module with YouTube link"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -604,7 +604,7 @@ testT3886_long:
             - assertion_type: "element_visible_by_text"
               text: []
 
-testT3886_short:
+testT3886_short:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a short Video link module with Tiktok link"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -640,7 +640,7 @@ testT3886_short:
               text: []
 
 # ------------------ Module -link ->  ticket / event ------------------------
-testT3841:
+testT3841:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of Ticket/Event on the shop page(modules) and module menu"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -672,7 +672,7 @@ testT3841:
               text: "Ticket/event"
 
 # This use case relies on T3841
-testT4908:
+testT4908:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the date of “tikcet/event”module link inputs remain consistent and are not shifted by browser or system time zone offsets. "
     test_step:
         open: 
@@ -691,7 +691,7 @@ testT4908:
               text: []
 
 # ------------------  Mixed Module -------------------
-testT4852:
+testT4852:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a mixed content type module with posts, products, links, and forms"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -747,7 +747,7 @@ testT4852:
               text: []
 
 # ------------------ Archiving ---------------------
-testAddNewUpdateModule:
+testAddNewUpdateModule:  # [LAST: PASSED 2026-05-06]
     description: "Verify the addition of a new module to the store page for use in archiving test cases"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -767,7 +767,7 @@ testAddNewUpdateModule:
               text: "new module use in archiving test cases"
 
 
-testT4556:
+testT4556:  # [LAST: PASSED 2026-05-06]
     description: "Verify event creation and completion (archiving)"
     test_step:
         open_2: "https://release.pear.us/events/settings"
@@ -821,7 +821,7 @@ testT4556:
             - assertion_type: "element_visible_by_text"
               text: "Test-event-Auto-archive"
 
-testT5105:
+testT5105:  # [LAST: BROKEN 2026-05-06]
     description: "Verify  co-seller  “Auto-archive completed event posts“ , and remove the completed event posts from the module"
     test_step:
         # ========================================
@@ -853,7 +853,7 @@ testT5105:
             - assertion_type: "element_visible_by_text"
               text: []
 
-testT4853:
+testT4853:  # [LAST: PASSED 2026-05-06]
     description: "Verify that when the status of the new merchant's event automatically becomes 'Completed', the system will automatically create the 'Past event' module and archive the event post."
     test_step:
         open_2: "https://release.pear.us/events/settings"
@@ -912,7 +912,7 @@ testT4853:
               text: []
 
 # The use case for T4557 is the same as that for T4559
-testT4559:
+testT4559:  # [LAST: BROKEN 2026-05-06]
     description: 'Verify enable "Auto-archive completed event posts", but do not select any module'
     test_step:
         open: "https://release.pear.us/events/settings"
@@ -970,7 +970,7 @@ testT4559:
 
 
 # ------------------ Module - Post Duplicate ---------------------------
-testT4605:
+testT4605:  # [LAST: BROKEN 2026-05-06]
     description: "Verify duplicating a post within a carousel module results in two posts in the module"
     test_step:
         open: "https://release.pear.us/autotestshop"
@@ -1019,7 +1019,7 @@ testT4605:
         sleep_after_confirm_delete: 5000
 
 # ------------------ CoSeller Module ---------------------------
-testT4603:
+testT4603:  # [LAST: FAILED 2026-05-06]
     is_coseller: true
     description: "Verify co-seller can add a Products module on the shop page"
     test_step:
@@ -1046,7 +1046,7 @@ testT4603:
               text: "products"
 
 # ------------------ Module - link -> general link text align ------------------------
-testT5210_5211_5212:
+testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user can set text alignment (center/right) on General Link cards within a module"
     test_step:
         open: "https://release.pear.us/autotestshop"

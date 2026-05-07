@@ -1,7 +1,7 @@
 testT3370:
     description: "Verify set the product card alignment at the store level"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_init: 1000
         goto_storefront_top_aligned:
@@ -12,10 +12,10 @@ testT3370:
             timeout: 15000
         publish_button_click_top_aligned: {}
         verify_navigation_after_publish_top_aligned:
-            url_regex: "https://release.pear.us/demi-release"
+            url_regex: "https://release.pear.us/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/demi-release"
+            fallback_url: "https://release.pear.us/autotestshop"
             fallback_timeout: 30000
         click_mui_svg_icon_top_aligned: { locator: 'svg[data-testid="StorefrontIcon"]', name: 'Storefront nav icon' }
         click_products_text_top_aligned: {}
@@ -27,7 +27,7 @@ testT3370:
             screenshot_path: "recordings/top_aligned_failure.png"
             threshold: 5
         screenshot_final:
-            name: "demi_release_page.png"
+            name: "autotestshop_page.png"
         goto_storefront_waterfall:
             url: "https://release.pear.us/storefront-modules#Storefront"
             timeout: 30000
@@ -36,10 +36,10 @@ testT3370:
             timeout: 15000
         publish_button_click_waterfall: {}
         verify_navigation_after_publish_waterfall:
-            url_regex: "https://release.pear.us/demi-release"
+            url_regex: "https://release.pear.us/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/demi-release"
+            fallback_url: "https://release.pear.us/autotestshop"
             fallback_timeout: 30000
         click_mui_svg_icon_waterfall: {}
         click_products_text_waterfall: {}
@@ -47,10 +47,10 @@ testT3370:
             index: 1
             timeout: 6000
         verify_waterfall_layout:
-            url_regex: "https://release.pear.us/demi-release"
+            url_regex: "https://release.pear.us/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/demi-release"
+            fallback_url: "https://release.pear.us/autotestshop"
             fallback_timeout: 30000
             wait_for_timeout: 1500
             wait_for_cards_timeout: 6000
@@ -72,7 +72,7 @@ testT1993:
 testT855:
     description: "Verify the Share button functionality"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
         R_click_share: { role: 'button', name: 'Share' }
         sleep_after_click: 2000
@@ -85,7 +85,7 @@ testT855:
 testT1747:
     description: "Verify whether clicking the 'Save as draft' button in the lower left corner of the Create Post page can save it as a draft Post"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
         R_click_plus_button: { role: 'button', name: '0', exact: True }
         sleep_after_plus: 2000
@@ -111,12 +111,8 @@ testT1747:
 testT1520:
     description: "Verify follow and unfollow store functionality"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotest-coseller"
         sleep_after_open: 3000
-        R_click_explore: { role: 'button', name: 'Explore' }
-        sleep_after_explore: 2000
-        R_click_store_link: { role: 'link', name: "ccc", exact: True }
-        sleep_after_store: 2000
         R_click_logo: { role: 'img', name: 'Logo' }
         sleep_after_logo: 1000
         R_click_follow: { role: 'button', name: 'Follow', exact: True }
@@ -159,35 +155,36 @@ testT1520:
             - assertion_type: "element_visible_by_text"
               text: "Unfollowed. You'll no longer"
 
-testT4306:
-    description: "Verify viewing user form submissions"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        sleep_after_open: 5000
-        click_form_more_menu: { form_name: 'Please leave any questions you may have.' }
-        sleep_after_more_click: 2000
-        R_click_view_submissions: { role: 'link', name: 'View submissions' }
-        sleep_after_view: 4000
-        R_click_submission: { text: 'test auto send' }
-        sleep_after_select: 2000
-        verify_submission_details: { name: 'Submission details' }
-        verify_message_content: { text: "test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto" }
-        verify_email_content: { text: "yuxiao.zhu.ext@1m.app" }
-        verify_phone_content: { text: '+13018427082' }
-        click_submission_details_back: {}
-        sleep_after_back: 1000
-    expect_result:
-        description: "Form submissions should be viewable and match T4279 data"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "test auto send"
-            - assertion_type: "element_visible_by_text"
-              text: "yuxiao.zhu.ext@1m.app"
+# [已迁移至 All_YAML/Form/] testT4306: (Form 提交记录查看)
+# testT4306:
+#     description: "Verify viewing user form submissions"
+#     test_step:
+#         open: "https://release.pear.us/autotestshop"
+#         sleep_after_open: 5000
+#         click_form_more_menu: { form_name: 'Please leave any questions you may have.' }
+#         sleep_after_more_click: 2000
+#         R_click_view_submissions: { role: 'link', name: 'View submissions' }
+#         sleep_after_view: 4000
+#         R_click_submission: { text: 'test auto send' }
+#         sleep_after_select: 2000
+#         verify_submission_details: { name: 'Submission details' }
+#         verify_message_content: { text: "test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto test auto" }
+#         verify_email_content: { text: "yuxiao.zhu.ext@1m.app" }
+#         verify_phone_content: { text: '+13018427082' }
+#         click_submission_details_back: {}
+#         sleep_after_back: 1000
+#     expect_result:
+#         description: "Form submissions should be viewable and match T4279 data"
+#         assertions:
+#             - assertion_type: "element_visible_by_text"
+#               text: "test auto send"
+#             - assertion_type: "element_visible_by_text"
+#               text: "yuxiao.zhu.ext@1m.app"
 
 testT2129:
     description: "Verify the Product card can create post success on my shop page"
     test_step:
-        open: "https://release.pear.us/demi-release"
+        open: "https://release.pear.us/autotestshop"
         sleep_after_open: 3000
         R_click_more_action: { role: 'button', name: 'More action' }
         sleep_after_more: 1500
@@ -245,7 +242,7 @@ testT4777:
 #     guest: true
 #     description: "Verify submitting the contact form"
 #     test_step:
-#         open: "https://release.pear.us/demi-release"
+#         open: "https://release.pear.us/autotestshop"
 #         swipe_avoid_plus: { x: 0, y: 300 }
 #         sleep_after_open: 3000
 #         R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }
@@ -397,37 +394,38 @@ testT4259_guest:
             - assertion_type: "element_visible_by_text"
               text: "General CFREE"
 
-testT4279:
-    guest: true
-    description: "Verify submitting the contact form"
-    test_step:
-        open: "https://release.pear.us/demi-release"
-        swipe_avoid_plus: { x: 0, y: 300 }
-        sleep_after_open: 3000
-        R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }
-        sleep_after_click_form: 3000
-        fill_note:
-            locator: 'input[placeholder="Please fill this out"]'
-            value: "I'm John Thomson."
-        fill_message:
-            locator: 'textarea[placeholder="Please fill this out"]'
-            value: "The experience of purchasing tickets on Pear is simply amazing!!!"
-        fill_email:
-            role: "textbox"
-            name: "Enter your email address"
-            value: "yuxiao.zhu.ext@1m.app"
-        fill_phone:
-            role: "textbox"
-            name: "Phone number"
-            value: "+13018427082"
-        R_click_submit: { role: 'button', name: 'Submit' }
-        sleep_after_submit: 3000
-        verify_text_visible: { text: "Thanks for your submission!" }
-        R_click_got_it: { role: 'button', name: 'Got it' }
-        sleep_after_got_it: 1500
-    expect_result:
-        description: "Form should be submitted successfully"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Thanks for your submission!"
+# [已迁移至 All_YAML/Form/] testT4279: (Form 访客提交)
+# testT4279:
+#     guest: true
+#     description: "Verify submitting the contact form"
+#     test_step:
+#         open: "https://release.pear.us/autotestshop"
+#         swipe_avoid_plus: { x: 0, y: 300 }
+#         sleep_after_open: 3000
+#         R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }
+#         sleep_after_click_form: 3000
+#         fill_note:
+#             locator: 'input[placeholder="Please fill this out"]'
+#             value: "I'm John Thomson."
+#         fill_message:
+#             locator: 'textarea[placeholder="Please fill this out"]'
+#             value: "The experience of purchasing tickets on Pear is simply amazing!!!"
+#         fill_email:
+#             role: "textbox"
+#             name: "Enter your email address"
+#             value: "yuxiao.zhu.ext@1m.app"
+#         fill_phone:
+#             role: "textbox"
+#             name: "Phone number"
+#             value: "+13018427082"
+#         R_click_submit: { role: 'button', name: 'Submit' }
+#         sleep_after_submit: 3000
+#         verify_text_visible: { text: "Thanks for your submission!" }
+#         R_click_got_it: { role: 'button', name: 'Got it' }
+#         sleep_after_got_it: 1500
+#     expect_result:
+#         description: "Form should be submitted successfully"
+#         assertions:
+#             - assertion_type: "element_visible_by_text"
+#               text: "Thanks for your submission!"
 

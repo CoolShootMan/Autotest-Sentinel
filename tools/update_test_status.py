@@ -133,9 +133,9 @@ def update_ones(test_results: dict, test_plan_name: str = None):
         print("\n[2/6] 进入测试管理...")
         
         # 3. 找到测试计划
-        print(f"\n[3/6] 查找测试计划: {test_plan_name or 'refactor regression'}...")
+        print(f"\n[3/6] 查找测试计划: {test_plan_name or 'KAT-11058'}...")
         
-        plan_regex = re.compile(test_plan_name or "refactor regression", re.IGNORECASE)
+        plan_regex = re.compile(test_plan_name or "KAT-11058", re.IGNORECASE)
         
         try:
             page.get_by_text(plan_regex).first.wait_for(state="visible", timeout=10000)
@@ -244,7 +244,7 @@ def update_ones(test_results: dict, test_plan_name: str = None):
 
 if __name__ == "__main__":
     report_dir = sys.argv[1] if len(sys.argv) > 1 else None
-    test_plan_name = "refactor regression"
+    test_plan_name = "KAT-11058"
     
     if report_dir:
         if not os.path.isabs(report_dir):
