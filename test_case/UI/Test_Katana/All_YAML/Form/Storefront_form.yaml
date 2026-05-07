@@ -1,4 +1,7 @@
-testPartner_create_form:
+# 覆盖用例: T4277（配置发布表单基本信息）, T4274（字段 required/optional 配置）,
+#           T4792（添加 Date and time 字段）, T4786（添加 Media 字段）,
+#           T4969（单选/多选字段配置）, T4972（Social 字段配置与多平台选择）
+testPartner_create_form:  # [LAST: BROKEN 2026-05-06]
   is_mobile: true
   description: "Create a complete form"
   test_step:
@@ -180,7 +183,8 @@ testPartner_create_form:
       - assertion_type: "element_visible_by_text"
         text: "Partner_create_form"
 
-test_guest_submission_1:
+# 覆盖用例: T4279（访客完整填写所有字段并成功提交）, T4969（单选/多选字段端到端提交验证）
+test_guest_submission_1:  # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
   description: "Verify guest can submit the Auto test Form on autotestshop page"
@@ -290,7 +294,8 @@ test_guest_submission_1:
       - assertion_type: "element_visible_by_text"
         text: "Got it"
 
-test_guest_submission_2:
+# 覆盖用例: T4280（空提交时所有必填字段报错验证）, T4973（Social 字段空值与格式校验）
+test_guest_submission_2:  # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
   description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
@@ -330,7 +335,8 @@ test_guest_submission_2:
       - assertion_type: "element_visible_by_text"
         text: "Please enter some information before submitting."
 
-testPartner_verify_commission:
+# 覆盖用例: T4306（商家查看表单提交记录两种入口）, T4537（提交记录页搜索栏关键字筛选）
+testPartner_verify_commission:  # [LAST: BROKEN 2026-05-06]
   description: "Verify viewing and exporting user form submissions"
   test_step:
 #    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'

@@ -1,0 +1,702 @@
+# smoke_testing.yaml
+# Smoke Testing 已实现用例汇总
+# 来源：use_cases/2026 Apr 30  Smoke testing on Prod env.xlsx
+# 命中 12 个 Smoke Case IDs，共 15 条 YAML 用例
+#
+# Smoke Case IDs 覆盖情况:
+#   T2705, T3108                              → Post_setting.yaml
+#   T3554, T3555, T3556, T3841, T4264, T4556, T4600 → Module.yaml
+#   T3981                                     → Scanner.yaml
+#   T4279, T4306                              → Storefront_form.yaml
+
+# ============================================================
+# Post 发帖设置
+# ============================================================
+
+# T2705: Partner hides the variant and sets the default variant
+testT2705_VerifyPartner:
+  guest: false
+  description: "Partner hides the variant and sets the default variant on the management page"
+  test_step:
+    # Step 1: Open Events list page
+    open: "https://release.pear.us/events"
+    sleep_after_open: 5000
+
+    # Step 2: Find and click "Test event post variant settings" event
+    R_click_event: { locator: "text=Test event post variant settings", exact: true }
+    sleep_step: 4000
+
+    # Step 2.1: Scroll down to reveal post card
+    swipe_avoid_plus: { x: 0, y: 500 }
+    sleep_step: 1000
+
+    # Step 3: Click post card to enter post landing page
+    R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+    sleep_step: 3000
+
+    # Step 3.1: Click "Edit post" button
+    R_click_edit_post: { role: "button", name: "Edit post" }
+    sleep_step: 3000
+
+    # Step 3.2: Click "Style" tab in Edit post dialog
+    R_click_style_tab: { role: "tab", name: "Style" }
+    sleep_step: 2000
+
+    # Step 3.3: Click Layout dropdown and select "Collection"
+    R_click_layout_dropdown: { locator: "[role='combobox']" }
+    sleep_step: 1000
+    R_click_collection_option: { locator: "text=Collection" }
+    sleep_step: 1000
+
+    # Step 3.4: Click "Update" to save Edit post changes
+    R_click_update: { role: "button", name: "Update" }
+    sleep_step: 3000
+
+    # Step 4: Click Selling tab
+    R_click_selling_tab: { role: "tab", name: "Selling" }
+    sleep_step: 2000
+
+    # Step 5: Click Customize products
+    R_click_customize: { role: "button", name: "Customize products" }
+    sleep_before_scroll: 2000
+
+    # Scroll down the drawer to reveal the variants table
+    swipe_avoid_plus: { x: 0, y: 500 }
+    sleep_before_horizontal_scroll: 1000
+
+    # Scroll the variant table to the right
+    swipe_right: { x: 800, y: 0 }
+    sleep_after_scroll: 1000
+
+    # The exclude checkbox for '5 people' (1st column checkbox, index=0)
+    check_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0 }
+
+    # The default variant checkbox for '9 people' (2nd column checkbox, index=1)
+    check_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1 }
+
+    # Save and Save1
+    R_click_save: { role: "button", name: "Save" }
+    R_click_save1: { role: "button", name: "Save" }
+    sleep_after_update: 5000
+
+  expect_result:
+    description: "Curator successfully saves the operation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Post products updated"
+
+# Separate verification for Guest
+testT2705_VerifyGuest:
+  guest: true
+  description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
+  test_step:
+    open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+    sleep_after_open: 5000
+
+    # Click product card to open product drawer
+    R_click_product_card: { role: "img", name: "Image of Product", index: 0 }
+    sleep_step: 2000
+
+    # Scroll down to the variant section in the detail page
+    swipe_to_variant: { x: 0, y: 600 }
+
+  expect_result:
+    description: "The variant '5 people' should be completely hidden and '9 people' variant should be the default variant"
+    assertions:
+      - assertion_type: "element_not_visible_by_text"
+        text: "5 people"
+      - assertion_type: "element_not_visible_by_text"
+        text: "5people"
+      - assertion_type: "element_visible_by_text"
+        text: "9 people"
+
+  teardown_step:
+    # Step 1: Inject partner cookies
+    add_cookies: {}
+    sleep_step: 1000
+
+    # Step 2: Open Events list page
+    open: "https://release.pear.us/events"
+    sleep_step: 5000
+
+    # Step 3: Find and click "Test event post variant settings" event
+    R_click_event: { locator: "text=Test event post variant settings", exact: true }
+    sleep_step: 4000
+
+    # Step 2.1: Scroll down to reveal post card
+    swipe_reset: { x: 0, y: 500 }
+    sleep_step: 1000
+
+    # Step 3: Click post card to enter post landing page
+    R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+    sleep_step: 3000
+
+    # Step 4: Click Selling tab
+    R_click_selling_tab_reset: { role: "tab", name: "Selling" }
+    sleep_step: 2000
+
+    # Step 5: Click Customize products
+    R_click_customize_reset: { role: "button", name: "Customize products" }
+    sleep_step: 2000
+    swipe_reset2: { x: 0, y: 500 }
+    sleep_step: 1000
+    swipe_right_reset: { x: 800, y: 0 }
+    sleep_step: 1000
+    uncheck_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0, checked: false }
+    uncheck_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1, checked: false }
+    R_click_save_reset: { role: "button", name: "Save" }
+    R_click_save_reset1: { role: "button", name: "Save" }
+    sleep_step: 4000
+
+# ==============================================================================
+# Test Case: T3108
+# ==============================================================================
+
+testT3108:
+    description: "Verify setCustomizePrice check"
+    test_step:
+        open: { url: "https://release.pear.us/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        sleep_step: 3000
+
+        R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_shared_with_me_tab: { role: 'tab', name: 'Shared with me' }
+        sleep_step: 1000
+
+        R_click_mui_svg_icon_first: { role: 'img', name: 'Image of Product', index: 0, optional: true }
+        sleep_step: 1000
+
+        R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
+        sleep_step: 1000
+
+        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
+        sleep_step: 1000
+
+        R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
+        sleep_step: 3000
+
+    expect_result:
+        description: "Products setCustomizePrice is not checked"
+        assertions:
+            - assertion_type: "element_not_checked"
+              locator: 'input[name="products.0.setCustomizePrice"]'
+
+# ============================================================
+# Module 模块
+# ============================================================
+
+#--------- Module - Create / Edit / Deteletd / Rearrange / Show / Collapse -------------
+testT3554:
+    description: "Verify adding a new module in shop page"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_wait_product: 5000
+        R_click5: { locator: "div[data-track-location='Dialog']  button[data-testid='mui-card-action-area']" }
+        R_click7: { locator: "button[data-track-location='Dialog']", name: 'Add', index: -1 }
+        sleep_before_verify: 2000
+    expect_result:
+        description: "Verify that the new module is visible on the page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Verify Add module"
+
+testT3555:
+    description: "Verify module delete functionality"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        #Click module button to trigger post creation flow
+        click_module_add_new: { module_name: 'Updated module' }
+        R_click_no: { locator: "button[data-track-location='Dialog']", name: 'No', exact: true }
+        sleep_after_add: 5000
+        if_discard_drawer:
+            condition:
+                role: "button"
+                name: "Discard"
+            then:
+                click_discard: { role: "button", name: "Discard" }
+                sleep_after_discard: 1500
+        click_enhance_button: { test_id: 'enhance-button-cta' }
+        sleep_after_enhance_click: 2000
+        # Select media items (first two)
+        click_media_icon_1: { locator: 'div[data-testid="shop-brand"]' }
+        click_media_icon_2: { locator: 'div[data-testid="shop-brand"]', index: 1 }
+        # Add products
+        R_click_add_products: { locator: "button[data-track-location='Dialog']", name: 'Add 2/20 product(s)', exact: true }
+        sleep_after_add_products: 1000
+        auto_handle_modals_1: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
+        # Switch to Content tab
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+
+        # Fill post title
+        fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'Test - add new post for deletion' }
+        # Confirm and publish
+        click_confirm_button: { test_id: 'confirm-button' }
+        R_click_publish: { role: 'button', name: 'Publish' }
+        sleep_after_publish: 3000
+        R_click_got_it: { role: 'button', name: 'Got it' }
+        sleep_after_got_it: 5000
+        auto_handle_modals: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
+        click_module_post_view_event_cta: { module_name: 'Updated module', post_title: 'Test - add new post for deletion', button_index: -1 }
+        R_click_edit_post_muen: { role: "button", name: 'Remove from this module', exact: true }
+        R_click_confirm_button: { locator: "button[data-track-location='Dialog']", name: 'Remove', exact: true }
+        sleep_after_click_event: 2000
+        click_module_edit_button: { module_name: 'Updated module' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        sleep_after_delete_click: 1500
+        click_confirm_button_1: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete' , exact: true}
+        sleep_after_confirm: 5000
+    expect_result:
+        description: "Verify that the module is deleted successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Delete module success"
+
+testT3556:
+    description: "Verify editing an existing module"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        click_module_edit_button: { module_name: 'Verify Add module' }
+        sleep_after_edit_click: 1500
+        R_click_edit_module: { role: 'button', name: 'Edit module' }
+        sleep_after_edit_module: 1000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Updated module' }
+        R_click_vertical_scroll: { text: 'Vertical Scroll', index: 0 }
+        sleep_before_save: 1000
+        R_click_save: { role: 'button', name: 'Save' }
+        sleep_after_save: 3000
+    expect_result:
+        description: "Module should be edited successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Updated module", exact: false }
+
+# ------------------ Module -link ->  ticket / event ------------------------
+testT3841:
+    description: "Verify that the user adds the link card of Ticket/Event on the shop page(modules) and module menu"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        sleep_after_open: 3000
+        R_click_module_btn: { role: 'button', name: 'Module' }
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Ticket Event module' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        R_click_ticket_event_type: { text: 'Ticket / Event' }
+        R_click_add_module: { role: 'button', name: 'Add' }
+        sleep_after_add_module: 3000
+        # Fill event details
+        click_module_edit_button_2: { module_name: 'Test Ticket Event module' }
+        R_click_add_new_links: { role: 'button', name: 'Add new link' }
+        fill_event_url: { locator: 'input[name="url"]', value: 'www.baidu.com' }
+        fill_event_title: { placeholder: 'As the bold title on your', value: 'Ticket/event' }
+        R_click_date_picker: { locator: 'input[placeholder="MM/DD/YYYY"]' }
+        fill_event_date: { placeholder: 'MM/DD/YYYY', value: '12/12/2030' }
+        fill_event_venue: { placeholder: 'Enter a position', value: 'Test Venue' }
+        upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
+        sleep_after_upload: 8000
+        R_click_final_add: { locator: "button", text: 'Add', exact: true }
+        sleep_after_final_add: 3000
+    expect_result:
+        description: "Verify that the Ticket/Event module is created successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test Ticket Event module"
+            - assertion_type: "element_visible_by_text"
+              text: "Ticket/event"
+
+# ------------------ Module -link ->  image ------------------------
+testT4264:
+    description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+        R_click3: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 5000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_after_add_new: 2000
+        R_click_image: { locator: 'div[data-testid="link-type-item"]', name: 'Image', exact: true }
+        sleep_after_click_image: 2000
+        check2: { role: 'radio', name: 'Carousel Carousel' }
+        sleep_before_add: 2000
+        R_click4: { role: 'button', name: 'Add' }
+        sleep_after_add: 2000
+        click_module_add_new: { module_name: 'test image link',exact: true }
+        fill_by_placeholder_and_locator1: { placeholder: 'https://example.com', locator: 'input[name="url"]', value: 'www.baidu.com' }
+        fill2: { placeholder: 'As the bold title on your link card', value: 'test aotu image' }
+        upload1: { text: 'Upload', file_path: 'data/test imag.jpeg' }
+        wait_for_upload_and_ui_update1: { timeout: 5000 }
+        R_click_done: { role: 'button', name: 'Done', exact: true }
+        sleep_before_done: 5000
+        R_click_add: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_before_add_1: 5000
+        verify_element_contains_text: { container: 'test image link', locator: '../..', text: ['test aotu image']}
+
+    expect_result:
+        description: "Verify that the new image link card is visible on the page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: []
+
+testT4556:
+    description: "Verify event creation and completion (archiving)"
+    test_step:
+        open_2: "https://release.pear.us/events/settings"
+        sleep_after_open: 5000
+        R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive: 1000
+        R_click_auto_archive_2: { locator: 'input[name="autoArchive"]' }
+        sleep_after_auto_archive_2: 2000
+        R_click_selected_past_event: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]', name: 'new module use in archiving test cases', optional: true}
+        R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
+        sleep_after_apply_1: 2000
+        open: "https://release.pear.us/events/create"
+        sleep_after_open: 5000
+        fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
+        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
+        fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
+        sleep_after_address_fill: 1500
+        R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
+        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_date_30: { role: 'gridcell', name: '30' }
+        sleep_after_select_calender: 1000
+        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
+        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        sleep_before_tickets: 2000
+        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
+        sleep_before_tickets: 2000
+        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
+        fill_quantity: { placeholder: 'Quantity', value: '36' }
+        fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
+        sleep_after_ticket_fill: 2000
+        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
+        sleep_before_finish: 2000
+        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_view_st: { role: 'button', name: 'Go to event list' }
+        sleep_after_view_st: 5000
+        R_click_edit_event: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive' , exact: true}
+        sleep_after_edit_event: 2000
+        R_click_edit_event_2: { role: 'button', name: 'Edit event' }
+        sleep_after_edit_event_1: 2000
+        R_click_status_dropdown: { locator: "[data-testid='KeyboardArrowDownIcon']", index: 0 }
+        R_click_status_completed: { role: 'menuitem', name: 'Completed' }
+        sleep_after_edit_event_2: 2000
+        R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
+        R_click_save_edit: { role: 'button', name: 'Save' }
+        R_click_close_modal: { role: 'button', name: 'Close' }
+        sleep_after_close: 2000
+    expect_result:
+        description: "Event should be created and then marked as completed successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Test-event-Auto-archive"
+
+# ------------------ Module - carousel nav buttons ------------------------
+testT4600_4602:
+    description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
+    test_step:
+        open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
+        sleep_after_open: 5000
+
+        # Step 1: Create module with General Link + Carousel type
+        # This creates the LAST module on the page, ensuring we operate on the correct one
+        R_click_module: { role: 'button', name: 'Module' }
+        sleep_after_module_click: 2000
+        fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test nav buttons' }
+        R_click_continue: { role: 'button', name: 'Continue' }
+        sleep_before_select: 2000
+        click_general_link: { text: "General Link", exact: true }
+        sleep_before_type_select: 2000
+        check_carousel: { role: 'radio', name: 'Carousel Carousel' }
+        sleep_before_add: 2000
+        R_click_add_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_module: 3000
+
+        # Step 2: Add 3 links to the last module (click_module_add_new targets last matching module)
+        # Link 1: title1
+        click_module_add_new_1: { module_name: 'test nav buttons' }
+        sleep_wait_form_1: 1500
+        fill_url_1: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_1: { placeholder: 'As the bold title on your', value: 'title1' }
+        R_click_add_link_1: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_1: 3000
+
+        # Link 2: title2
+        click_module_add_new_2: { module_name: 'test nav buttons' }
+        sleep_wait_form_2: 1500
+        fill_url_2: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_2: { placeholder: 'As the bold title on your', value: 'title2' }
+        R_click_add_link_2: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_2: 3000
+
+        # Link 3: title3
+        click_module_add_new_3: { module_name: 'test nav buttons' }
+        sleep_wait_form_3: 1500
+        fill_url_3: { locator: 'input[name="url"]', value: 'baidu.com' }
+        fill_title_3: { placeholder: 'As the bold title on your', value: 'title3' }
+        R_click_add_link_3: { locator: "//*[@data-testid='button']", text: "Add", exact: true }
+        sleep_after_add_link_3: 3000
+
+        # Step 3: Verify carousel scroll behavior
+        # - Hover over module to reveal nav buttons
+        # - Click next: verify scroll distance = one link card width
+        # - Click prev: verify scroll distance = one link card width (smooth back)
+        # - Navigate to last element: verify next button is hidden
+        verify_carousel_scroll_module:
+            module_name: 'test nav buttons'
+            link_item_selector: 'a'
+            tolerance: 10
+
+    expect_result:
+        description: "Verify carousel navigation: clicking next/prev slides content by exactly one link width, next button hidden at last element, nav buttons only visible on hover"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test nav buttons"
+            - assertion_type: "element_visible_by_text"
+              text: "title1"
+            - assertion_type: "element_visible_by_text"
+              text: "title2"
+            - assertion_type: "element_visible_by_text"
+              text: "title3"
+
+    teardown_step:
+        # Delete the module after verification (cleanup)
+        click_module_edit_button_del: { module_name: 'test nav buttons' }
+        R_click_delete_module: { role: 'button', name: 'Delete module' }
+        sleep_after_delete_click: 1500
+        click_confirm_delete: { locator: "[role='dialog'] [data-track-location='Dialog']", name: 'Delete', exact: true }
+        sleep_after_confirm_delete: 5000
+
+# ============================================================
+# Events 扫码检票
+# ============================================================
+
+# --- Original Scan Cases ---
+testT3981_Verified:
+    is_mobile: true
+    description: "Verify QR scanner can successfully verify a valid ticket (Verified)"
+    test_step:
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_verified: { text: "Code Verified", timeout: 20000 }
+    expect_result:
+        description: "Ticket should be verified successfully"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Verified" }
+
+testT3981_Already:
+    is_mobile: true
+    description: "Verify QR scanner shows 'Already Redeemed' for an already used ticket"
+    test_step:
+        open: "https://s.pear.us/iyR93K"
+        sleep_wait_for_scan: 5000
+        verify_already: { text: "Code Already Redeemed", timeout: 20000 }
+    expect_result:
+        description: "Should display Already Redeemed status"
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "Code Already Redeemed" }
+
+testT3981_NotRecognized:
+    is_mobile: true
+    description: "Verify QR scanner shows error for an unrecognized/invalid code"
+    test_step:
+        execute_not_recognized_scan: "run"
+    expect_result:
+        description: "Should display Code Not Recognized error"
+        assertions: []
+
+# ============================================================
+# Form 表单
+# ============================================================
+
+# 覆盖用例: T4279（访客完整填写所有字段并成功提交）, T4969（单选/多选字段端到端提交验证）
+test_guest_submission_1:
+  guest: true
+  is_mobile: true
+  description: "Verify guest can submit the Auto test Form on autotestshop page"
+  test_step:
+    open_demi_release:
+      url: "https://release.pear.us/autotestshop"
+    R_click_auto_test_form:
+      role: "button"
+      name: "Partner_create_form"
+
+    # short answer - realistic business description
+    fill_short_text:
+      placeholder: "Please fill this out"
+      index: 0
+      value: "Pear Partner Cooperation Inquiry"
+
+    # long paragraph - realistic long text
+    fill_long_text:
+      placeholder: "Please fill this out"
+      index: 1
+      value: "I am interested in establishing a long-term partnership with Pear. My team focuses on content creation and brand promotion, and we hope to collaborate on official events and marketing campaigns."
+
+    # email - realistic business email
+    fill_email:
+      placeholder: "Enter your email address"
+      value: "cooperation.business@gmail.com"
+
+    # phone - realistic US phone number format
+    fill_phone:
+      placeholder: "Phone number"
+      value: "13105558976"
+
+    # upload media - corrected filename with realistic asset path
+    upload_media:
+      text: "Add media"
+      file_path: "data/test imag.jpeg"
+
+    # date time - select a real date in the current month
+    R_click_choose_date:
+      role: "textbox"
+      name: "Choose date"
+    R_click_date_12:
+      role: "gridcell"
+      name: "12"
+    R_click_ok:
+      role: "button"
+      name: "OK"
+
+    # single choice: Yes
+    check_yes:
+      role: "radio"
+      name: "Yes"
+
+    # multiple choice: 1,2
+    check_1:
+      role: "checkbox"
+      name: "1"
+    check_2:
+      role: "checkbox"
+      name: "2"
+
+    # Instagram - realistic username
+    fill_instagram:
+      locator: 'xpath=//div[text()="Instagram"]/following-sibling::div//input'
+      value: "pear_partner_official"
+
+    # Facebook - realistic username
+    fill_facebook:
+      locator: 'xpath=//div[text()="Facebook"]/following-sibling::div//input'
+      wait_for: 2000
+      scroll_into_view: true  # 强制滚动到元素
+      value: "PearPartnerOfficial"
+
+    # Tiktok - realistic username
+    fill_tiktok:
+      locator: 'xpath=//div[text()="Tiktok"]/following-sibling::div//input'
+      value: "pear_partner"
+
+    # X (Twitter) - realistic username
+    fill_x:
+      locator: 'xpath=//div[text()="X"]/following-sibling::div//input'
+      value: "PearPartnerHQ"
+
+    # Youtube - realistic username
+    fill_youtube:
+      locator: 'xpath=//div[text()="Youtube"]/following-sibling::div//input'
+      value: "PearPartnerChannel"
+
+    # Linkedin - realistic username
+    fill_linkedin:
+      locator: 'xpath=//div[text()="Linkedin"]/following-sibling::div//input'
+      value: "pear-partner-official"
+
+    # Threads - realistic username
+    fill_threads:
+       locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
+       value: "pear_partner_official"
+
+    # submit
+    R_click_submit:
+      role: "button"
+      name: "Submit"
+
+  expect_result:
+    description: "Form should be submitted successfully with Got it confirmation"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Got it"
+
+# 覆盖用例: T4306（商家查看表单提交记录两种入口）, T4537（提交记录页搜索栏关键字筛选）
+testPartner_verify_commission:
+  description: "Verify viewing and exporting user form submissions"
+  test_step:
+#    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
+#    sleep_after_open: 5000
+    open_shop: "https://release.pear.us/autotestshop"
+    sleep_after_open_shop: 1000
+
+    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    sleep_after_form_tab: 200
+    R_click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
+    sleep_after_more_cta: 200
+    R_click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
+
+
+    # Dynamic Count Capture & Search
+    capture_total_count: { }
+    sleep_before_search: 2000
+    fill_search: { role: 'textbox', name: 'Search', value: 'Pear Partner' }
+    sleep_search: 2000
+    R_click_submission: { text: 'Pear Partner Cooperation Inquiry' }
+    sleep_after_open_details: 3000
+
+    # Verify every field in the modal (Comprehensive UI check)
+    verify_details_header: { text: 'Submission details' }
+    verify_short: { text: 'Pear Partner Cooperation Inquiry' }
+    verify_long: { text: 'I am interested in establishing a long-term partnership with Pear' }
+    verify_email: { text: 'cooperation.business@gmail.com' }
+    verify_phone: { text: '13105558976' }
+    verify_date: { text: 'Sun, Apr 12, 2026 12:00 AM' }
+    verify_choice: { text: 'Yes' }
+    verify_multi: { text: '1' }
+    verify_multi_2: { text: '2' }
+    # Social Media fields verification
+    verify_instagram: { text: '@pear_partner_official' }
+    verify_facebook: { text: '@PearPartnerOfficial' }
+    verify_tiktok: { text: '@pear_partner' }
+    verify_x: { text: '@PearPartnerHQ' }
+    verify_youtube: { text: '@PearPartnerChannel' }
+    verify_linkedin: { text: '@pear-partner-official' }
+    #verify_threads: { text: '@pear_partner_official' }
+
+    R_click_submission_details_back: { locator: '[aria-label="Close"]' }
+    sleep_after_back: 100
+
+    # CSV Verification (Export Data)
+    download_submission_csv: { name: 'Export all data', role: 'button' }
+    verify_csv_data:
+      expected_row: {
+        'short': 'Pear Partner Cooperation Inquiry',
+        'Email address': 'cooperation.business@gmail.com',
+        'Phone number': '3105558976',
+        'are you happy?': 'Yes',
+        'Multiple': '1, 2',
+        'Instagram': '@pear_partner_official',
+        'Facebook': '@PearPartnerOfficial',
+        'Tiktok': '@pear_partner',
+        'X': '@PearPartnerHQ',
+        'Youtube': '@PearPartnerChannel',
+        'Linkedin': '@pear-partner-official',
+        #'Threads': '@pear_partner_official'
+      }
+
+  expect_result:
+    description: "All form submission fields (including social media) should be viewable in UI and accurately exported in CSV, with export count matching UI total count."
+    assertions:
+      - { assertion_type: 'element_visible_by_text', text: 'Pear Partner Cooperation Inquiry' }
