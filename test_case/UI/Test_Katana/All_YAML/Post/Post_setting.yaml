@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # Test Case: T1742 Verify that the Post commission rate can be Batch setting to a Fix value
 # Step description:
 # 1. MC puts two Items when creating a Post, one is a self_listing product and the other is a resale product. 
@@ -567,6 +567,10 @@ testT2705_VerifyPartner:
 
     # Step 3.4: Click "Update" to save Edit post changes
     R_click_update: { role: "button", name: "Update" }
+    sleep_step: 2000
+
+    # Step 3.5: Click "Update" in confirmation popup "Update This Post?"
+    R_click_update_confirm: { role: "button", name: "Update" }
     sleep_step: 3000
 
     # Step 4: Click Selling tab
@@ -579,11 +583,7 @@ testT2705_VerifyPartner:
 
     # Scroll down the drawer to reveal the variants table
     swipe_avoid_plus: { x: 0, y: 500 }
-    sleep_before_horizontal_scroll: 1000
-
-    # Scroll the variant table to the right
-    swipe_right: { x: 800, y: 0 }
-    sleep_after_scroll: 1000
+    sleep_step: 1000
 
     # The exclude checkbox for '5 people' (1st column checkbox, index=0)
     check_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0 }
@@ -1235,10 +1235,10 @@ testT2515_VerifyDisabled_WithVariant:
 
         # Step 11: Place order - should fail with error
         R_click_place_order_9: { role: "button", name: "Place order" }
-        sleep_step: 3000
+        sleep_step: 5000
 
-        # Step 12: Verify error message is displayed
-        verify_error_message: { text: "Cannot read properties of undefined (reading 'orderNumbers')", optional: true }
+        # Step 12: Verify error message is displayed (text may appear on page or in toast)
+        verify_error_message: { text: "Each customer can buy up to 5 items from this post." }
         sleep_end: 3000
 
     expect_result:
