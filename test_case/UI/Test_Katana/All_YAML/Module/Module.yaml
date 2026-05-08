@@ -1050,6 +1050,7 @@ testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user can set text alignment (center/right) on General Link cards within a module"
     test_step:
         open: "https://release.pear.us/autotestshop"
+        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         # Step 1: Create module with General Link type
         R_click_module: { role: 'button', name: 'Module' }
@@ -1075,7 +1076,7 @@ testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
         sleep_after_card_action: 1000
         R_click_edit: { role: 'button', name: 'Edit' }
         sleep_after_edit: 1000
-        click_align_center: { label: 'Align left' }
+        click_align_center: { label: 'Align center' }
         sleep_after_align_center: 500
         R_click_save: { locator: "button", text: 'Save', exact: true }
         sleep_after_save: 3000
@@ -1098,7 +1099,7 @@ testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
         verify_element_style_my_links_align:
             locator: "xpath=//*[@role='dialog']//p[contains(text(), 'test align')]/../../.."
             property: "alignItems"
-            expected: "flex-end"
+            expected: "center"
         R_click_close: { role: 'button', name: 'Close' }
         
     expect_result:
