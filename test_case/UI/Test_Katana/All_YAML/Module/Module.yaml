@@ -153,7 +153,7 @@ testT3555:  # [LAST: PASSED 2026-05-06]
         click_confirm_button: { test_id: 'confirm-button' }
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_after_got_it: 5000
         auto_handle_modals: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         click_module_post_view_event_cta: { module_name: 'Updated module', post_title: 'Test - add new post for deletion', button_index: -1 }
@@ -215,7 +215,7 @@ testAddNewPost:   # [LAST: BROKEN 2026-05-06]
         click_confirm_button: { test_id: 'confirm-button' }
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_after_got_it: 5000
         verify_child_element_count_2: { container: 'Verify Add post module', parent_locator: '..', child_locator: '+div>div>div:nth-child(2)>div', expected: 2 }
         sleep_after_got_it: 5000
