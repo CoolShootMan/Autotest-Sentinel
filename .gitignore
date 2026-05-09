@@ -31,9 +31,9 @@ test_case/UI/Test_Katana/staging_cookie.json
 tools/get_cookie.py
 # 环境变量文件（含敏感配置，不提交）
 .env
-*.env
+.env.*
 # .env.example 是模板文件，需要提交
-!*.env.example
+!.env.example
 
 # === WorkBuddy (local AI context, not for repo) ===
 .workbuddy/

@@ -42,14 +42,23 @@ def _resolve_base_url():
     return os.environ.get("BASE_URL", "https://release.pear.us")
 
 
-def _replace_placeholders(obj, base_url):
-    """递归替换字典/列表/字符串中所有 {BASE_URL} 占位符"""
+# 根据 BASE_URL 反推环境名，用于 cookie 文件命名
+_ENV_MAP = {
+    "https://staging.pear.us": "staging",
+    "https://release.pear.us": "release",
+    "https://pear.us": "prod",
+}
+CURRENT_ENV = _ENV_MAP.get(_resolve_base_url(), "release")
+
+
+def _replace_placeholders(obj, base_url, env_name):
+    """递归替换字典/列表/字符串中的 {BASE_URL} 和 {ENV} 占位符"""
     if isinstance(obj, str):
-        return obj.replace("{BASE_URL}", base_url)
+        return obj.replace("{BASE_URL}", base_url).replace("{ENV}", env_name)
     elif isinstance(obj, dict):
-        return {k: _replace_placeholders(v, base_url) for k, v in obj.items()}
+        return {k: _replace_placeholders(v, base_url, env_name) for k, v in obj.items()}
     elif isinstance(obj, list):
-        return [_replace_placeholders(item, base_url) for item in obj]
+        return [_replace_placeholders(item, base_url, env_name) for item in obj]
     return obj
 
 
@@ -185,8 +194,8 @@ def context(
     elif storage_state:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
-        # Check if local conftest defined a default cookie_release.json
-        local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", "cookie_release.json")
+        # 根据 CURRENT_ENV 动态选择 cookie 文件
+        local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", f"cookie_{CURRENT_ENV}.json")
         if os.path.exists(local_cookie):
             context = browser.new_context(storage_state=local_cookie, **browser_context_args)
         else:
@@ -220,7 +229,7 @@ def pytest_generate_tests(metafunc):
                 if data:
                     # 运行时替换 {BASE_URL} 占位符
                     base_url = _resolve_base_url()
-                    data = _replace_placeholders(data, base_url)
+                    data = _replace_placeholders(data, base_url, CURRENT_ENV)
                     for k, v in data.items():
                         if isinstance(v, dict):
                             v["__yaml_path__"] = yaml_path

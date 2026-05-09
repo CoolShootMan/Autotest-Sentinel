@@ -233,7 +233,7 @@ testT3788:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: 
             url: "{BASE_URL}/partnercoseller997"
-            cookie_file: "test_case/UI/Test_Katana/cookie_release_partner_coseller.json"
+            cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json"
         sleep_after_open: 5000
         R_click_module_btn: { role: 'button', name: 'Module' }
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
@@ -843,7 +843,7 @@ testT5105:  # [LAST: BROKEN 2026-05-06]
         # ========================================
         # Co-seller
         # ========================================
-        session_user_coseller__open: {url: "{BASE_URL}/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
+        session_user_coseller__open: {url: "{BASE_URL}/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
         session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive'], assert: false}
         sleep_after_close: 2000

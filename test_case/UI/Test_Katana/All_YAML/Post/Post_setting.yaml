@@ -374,7 +374,7 @@ testT3686_CosellerResell:
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
         open_post: 
           url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
-          # cookie_file: 'test_case/UI/Test_Katana/cookie_release_co_seller.json"'
+          # cookie_file: 'test_case/UI/Test_Katana/cookie_{ENV}_co_seller.json"'
         sleep_step: 5000
 
         # Click "Add to shop" button to resell the Post (is_coseller: true)
@@ -2339,7 +2339,7 @@ testT2537:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2376,7 +2376,7 @@ testT3108:
 testT3110:
     description: "Verify setCustomizePrice check, uncheck and save flow"
     test_step:
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2469,7 +2469,7 @@ testT1928:
     description: "Verify customize price and catalog price update synchronization"
     test_step:
         # Create product logic first
-        open_dashboard: { url: "{BASE_URL}/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open_dashboard: { url: "{BASE_URL}/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
         sleep_step_p1: 8000
         
         R_click_content_tab: { locator: "[data-testid='content']", index: 0 }
@@ -2523,7 +2523,7 @@ testT1928:
         sleep_step_p18: 5000
 
         # Then proceed with post creation
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
         sleep_step: 3000
 
         smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
@@ -2610,7 +2610,7 @@ testT3811:
     description: "Verify customize price setting and unsetting in post creation and editing"
     test_step:
         # Step 1: Open create post page with specific partner/coseller cookies
-        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
         sleep_step: 3000
 
         # Step 4: Discard draft if present
