@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional
 import allure
 import yaml
 import pytest
+from dotenv import load_dotenv
 from playwright.sync_api import (
     Browser,
     BrowserContext,
@@ -31,6 +32,18 @@ from playwright.sync_api import (
 )
 from slugify import slugify
 import re
+
+# 加载项目根目录的 .env 文件
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+# 根据 BASE_URL 反推环境名，用于 cookie 文件命名
+_BASE_URL = os.environ.get("BASE_URL", "https://release.pear.us")
+_ENV_MAP = {
+    "https://staging.pear.us": "staging",
+    "https://release.pear.us": "release",
+    "https://pear.us": "prod",
+}
+CURRENT_ENV = _ENV_MAP.get(_BASE_URL, "release")
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
@@ -142,16 +155,16 @@ def context(
             pass
 
         if is_coseller:
-            coseller_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release_co_seller.json")
+            coseller_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"cookie_{CURRENT_ENV}_co_seller.json")
             if os.path.exists(coseller_cookie_path):
                 storage_state = coseller_cookie_path
-                logger.info(f"COSeller MODE detected: Using cookie_release_co_seller.json")
+                logger.info(f"COSeller MODE detected: Using cookie_{CURRENT_ENV}_co_seller.json")
             else:
                 logger.warning(f"COSeller cookie file not found: {coseller_cookie_path}, falling back to default")
 
         # Optimize: automatically load the default cookie state if it exists
         if not storage_state:
-            default_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookie_release.json")
+            default_cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"cookie_{CURRENT_ENV}.json")
             if os.path.exists(default_cookie_path):
                 storage_state = default_cookie_path
             

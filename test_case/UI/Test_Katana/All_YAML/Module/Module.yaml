@@ -2,7 +2,7 @@
 testT3554:  # [LAST: PASSED 2026-05-06]
     description: "Verify adding a new module in shop page"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -22,7 +22,7 @@ testT3554:  # [LAST: PASSED 2026-05-06]
 testT3556:  # [LAST: FAILED 2026-05-06]
     description: "Verify editing an existing module"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         click_module_edit_button: { module_name: 'Verify Add module' }
         sleep_after_edit_click: 1500
@@ -41,7 +41,7 @@ testT3556:  # [LAST: FAILED 2026-05-06]
 testT3577:  # [LAST: PASSED 2026-05-06]
     description: "Verify that curator modifies the sorting of module and the sorting of module contents"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_1: { locator: 'button[data-testid="enhance-button"]', name: 'Rearrange', exact: true }
         sleep_after_click: 3000
@@ -60,7 +60,7 @@ testT3577:  # [LAST: PASSED 2026-05-06]
 testT4903:  # [LAST: FAILED 2026-05-06]
     description: "Verify two methods that can convert the module to the draft state"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         click_module_edit_button: { module_name: 'Updated module' }
         R_click_hide_module: { role: 'button', name: 'Hide module' }
@@ -79,7 +79,7 @@ testT4903:  # [LAST: FAILED 2026-05-06]
 testT4622:  # [LAST: PASSED 2026-05-06]
     description: "Verify module collapse and expand toggle functionality"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
 
@@ -122,7 +122,7 @@ testT4622:  # [LAST: PASSED 2026-05-06]
 testT3555:  # [LAST: PASSED 2026-05-06]
     description: "Verify module delete functionality"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         #Click module button to trigger post creation flow
         click_module_add_new: { module_name: 'Updated module' }
@@ -175,7 +175,7 @@ testT3555:  # [LAST: PASSED 2026-05-06]
 testAddNewPost:   # [LAST: BROKEN 2026-05-06]
     description: "Verify adding new post module in shop page"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
         fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add post module' }
@@ -232,8 +232,8 @@ testT3788:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding products to a new module"
     test_step:
         open: 
-            url: "https://release.pear.us/partnercoseller997"
-            cookie_file: "test_case/UI/Test_Katana/cookie_release_partner_coseller.json"
+            url: "{BASE_URL}/partnercoseller997"
+            cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json"
         sleep_after_open: 5000
         R_click_module_btn: { role: 'button', name: 'Module' }
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
@@ -270,7 +270,7 @@ testT3789:  # [LAST: BROKEN 2026-05-06]
     guest: true
     description: "Verify the resale process. The consumer purchases module-Products(Shared with me)"
     test_step:
-        open: "https://release.pear.us/partnercoseller997"
+        open: "{BASE_URL}/partnercoseller997"
         #sleep_after_open: 5000
         click_container_button: { container: 'Module-products', container_locator: "../..", button: "//div[@data-media-absolute='bottomRight']", button_index: 0}
         sleep_after_click_container_button: 2000
@@ -298,7 +298,7 @@ testT3789:  # [LAST: BROKEN 2026-05-06]
 testT3843:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click_module: { role: 'button', name: 'Module' }
@@ -347,7 +347,7 @@ testT3843:  # [LAST: BROKEN 2026-05-06]
 testT4600_4602:  # [LAST: BROKEN 2026-05-06]
     description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
 
@@ -424,7 +424,7 @@ testT4600_4602:  # [LAST: BROKEN 2026-05-06]
 testT3842:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a new product to an existing module"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -459,7 +459,7 @@ testT3842:  # [LAST: BROKEN 2026-05-06]
 testT4264:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
@@ -496,7 +496,7 @@ testT4660:  # [LAST: BROKEN 2026-05-06]
     is_mobile: true
     description: "Verify adding a Music module and track, then deleting it"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
         R_click_module: { role: 'button', name: 'Module' }
@@ -534,7 +534,7 @@ testT4660:  # [LAST: BROKEN 2026-05-06]
 testT4816:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a Music module with Spotify and Apple Music links"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
@@ -574,7 +574,7 @@ testT4816:  # [LAST: BROKEN 2026-05-06]
 testT3886_long:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a long Video link module with YouTube link"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
@@ -607,7 +607,7 @@ testT3886_long:  # [LAST: BROKEN 2026-05-06]
 testT3886_short:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a short Video link module with Tiktok link"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
@@ -643,7 +643,7 @@ testT3886_short:  # [LAST: BROKEN 2026-05-06]
 testT3841:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of Ticket/Event on the shop page(modules) and module menu"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Ticket Event module' }
@@ -676,7 +676,7 @@ testT4908:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the date of “tikcet/event”module link inputs remain consistent and are not shifted by browser or system time zone offsets. "
     test_step:
         open: 
-            url: "https://release.pear.us/autotestshop"
+            url: "{BASE_URL}/autotestshop"
             geolocation: {"latitude": 40.71, "longitude": -74.01}
             timezone_id: "America/New_York"
             locale: "en-US"
@@ -694,7 +694,7 @@ testT4908:  # [LAST: BROKEN 2026-05-06]
 testT4852:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a mixed content type module with posts, products, links, and forms"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
@@ -750,7 +750,7 @@ testT4852:  # [LAST: BROKEN 2026-05-06]
 testAddNewUpdateModule:  # [LAST: PASSED 2026-05-06]
     description: "Verify the addition of a new module to the store page for use in archiving test cases"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
         R_click3: { role: 'button', name: 'Module' }
         fill1: { role: 'textbox', name: 'Enter title of the module', value: 'new module use in archiving test cases' }
@@ -770,7 +770,7 @@ testAddNewUpdateModule:  # [LAST: PASSED 2026-05-06]
 testT4556:  # [LAST: PASSED 2026-05-06]
     description: "Verify event creation and completion (archiving)"
     test_step:
-        open_2: "https://release.pear.us/events/settings"
+        open_2: "{BASE_URL}/events/settings"
         sleep_after_open: 5000
         R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
         sleep_after_auto_archive: 1000
@@ -779,7 +779,7 @@ testT4556:  # [LAST: PASSED 2026-05-06]
         R_click_selected_past_event: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]', name: 'new module use in archiving test cases', optional: true}
         R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
         sleep_after_apply_1: 2000
-        open: "https://release.pear.us/events/create"
+        open: "{BASE_URL}/events/create"
         sleep_after_open: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
@@ -827,7 +827,7 @@ testT5105:  # [LAST: BROKEN 2026-05-06]
         # ========================================
         # Partner 
         # ========================================
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
         click_module_post_view_event_cta: { module_name: 'Upcoming Events', post_title: 'verify-co-seller-auto-archive', button_name: 'View event' }
         sleep_after_click_event: 2000
@@ -843,7 +843,7 @@ testT5105:  # [LAST: BROKEN 2026-05-06]
         # ========================================
         # Co-seller
         # ========================================
-        session_user_coseller__open: {url: "https://release.pear.us/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"}
+        session_user_coseller__open: {url: "{BASE_URL}/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
         session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive'], assert: false}
         sleep_after_close: 2000
@@ -856,7 +856,7 @@ testT5105:  # [LAST: BROKEN 2026-05-06]
 testT4853:  # [LAST: PASSED 2026-05-06]
     description: "Verify that when the status of the new merchant's event automatically becomes 'Completed', the system will automatically create the 'Past event' module and archive the event post."
     test_step:
-        open_2: "https://release.pear.us/events/settings"
+        open_2: "{BASE_URL}/events/settings"
         sleep_after_open: 5000
         R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
         sleep_after_auto_archive: 1000
@@ -865,7 +865,7 @@ testT4853:  # [LAST: PASSED 2026-05-06]
         R_click_selected_past_event: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]', name: 'Past Events', optional: true}
         R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
         sleep_after_apply_1: 2000
-        open_back: "https://release.pear.us/events/create"
+        open_back: "{BASE_URL}/events/create"
         sleep_after_open_back: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-past-event' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
@@ -901,7 +901,7 @@ testT4853:  # [LAST: PASSED 2026-05-06]
         R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
         R_click_save_edit: { role: 'button', name: 'Save' }
         sleep_after_save_edit: 2000
-        open_back_2: "https://release.pear.us/autotestshop"
+        open_back_2: "{BASE_URL}/autotestshop"
         sleep_after_open_back_2: 5000
         verify_element_contains_text: { container: 'Past Events', locator: '../..', text: ['Test-event-Auto-archive-past-event']}
         
@@ -915,7 +915,7 @@ testT4853:  # [LAST: PASSED 2026-05-06]
 testT4559:  # [LAST: BROKEN 2026-05-06]
     description: 'Verify enable "Auto-archive completed event posts", but do not select any module'
     test_step:
-        open: "https://release.pear.us/events/settings"
+        open: "{BASE_URL}/events/settings"
         sleep_after_open: 5000
         R_click_auto_archive: { locator: 'input[name="autoArchive"]' }
         sleep_after_auto_archive: 1000
@@ -923,7 +923,7 @@ testT4559:  # [LAST: BROKEN 2026-05-06]
         sleep_after_auto_archive_2: 2000
         R_click_apply_1: { locator: 'button[data-track-location="Drawer"]', name: 'Apply' }
         sleep_after_apply_1: 2000
-        open_back: "https://release.pear.us/events/create"
+        open_back: "{BASE_URL}/events/create"
         sleep_after_open_back: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-not-selected' }
         fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
@@ -958,7 +958,7 @@ testT4559:  # [LAST: BROKEN 2026-05-06]
         R_click_mark_completed_confirm: {  role: 'button', name: 'Mark as Completed' }
         R_click_save_edit: { role: 'button', name: 'Save' }
         sleep_after_save_edit: 2000
-        open_2: "https://release.pear.us/autotestshop"
+        open_2: "{BASE_URL}/autotestshop"
         sleep_after_open_2: 5000
         verify_element_contains_text: { container: 'new module use in archiving test cases', locator: '../..', text: ['Test-event-Auto-archive-not-selected'], assert: false}
 
@@ -973,7 +973,7 @@ testT4559:  # [LAST: BROKEN 2026-05-06]
 testT4605:  # [LAST: BROKEN 2026-05-06]
     description: "Verify duplicating a post within a carousel module results in two posts in the module"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
 
         # Step 1: Create a new carousel module (post type by default)
@@ -1023,7 +1023,7 @@ testT4603:  # [LAST: FAILED 2026-05-06]
     is_coseller: true
     description: "Verify co-seller can add a Products module on the shop page"
     test_step:
-        open: "https://release.pear.us/autotest-coseller"
+        open: "{BASE_URL}/autotest-coseller"
         sleep_after_open: 5000
         R_click_module_btn: { role: 'button', name: 'Module' }
         sleep_after_module_click: 2000
@@ -1049,7 +1049,7 @@ testT4603:  # [LAST: FAILED 2026-05-06]
 testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user can set text alignment (center/right) on General Link cards within a module"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         # Step 1: Create module with General Link type

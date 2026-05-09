@@ -20,7 +20,7 @@ testE1001_basic_cookie_optimization:
   test_step:
     # ✨ NEW: Open with cookies in ONE step (faster!)
     open:
-      url: "https://release.pear.us/autotestshop"
+      url: "{BASE_URL}/autotestshop"
       cookie_file: "test_case/UI/Test_Katana/cookie_release.json"
 
     # Page loads already authenticated - no reload needed!
@@ -40,7 +40,7 @@ testE1002_multi_user_session_isolation:
     # ========================================
     # ✨ Cookies injected before page opens - Partner is already logged in
     partner__open:
-      url: "https://release.pear.us/autotestshop"
+      url: "{BASE_URL}/autotestshop"
       cookie_file: "test_case/UI/Test_Katana/cookie_partner_release.json"
 
     # Auto-handle modals (multi-step tours handled automatically)
@@ -75,7 +75,7 @@ testE1002_multi_user_session_isolation:
     # ========================================
     # ✨ Cookies injected before page opens - Co-seller is already logged in
     coseller__open:
-      url: "https://release.pear.us/your-business-name-yuu7"
+      url: "{BASE_URL}/your-business-name-yuu7"
       cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
 
     # Auto-handle modals specific to co-seller
@@ -121,7 +121,7 @@ testE1003_coseller_auto_archive_best_practice:
     # ========================================
     # ✨ Optimized: Cookies injected before opening page
     partner__open:
-      url: "https://release.pear.us/autotestshop"
+      url: "{BASE_URL}/autotestshop"
       cookie_file: "test_case/UI/Test_Katana/cookie_partner_release.json"
 
     # Auto-handle modals (Cookie banner, Welcome tour, etc.)
@@ -163,7 +163,7 @@ testE1003_coseller_auto_archive_best_practice:
     # ========================================
     # ✨ Optimized: Different cookie file for co-seller
     coseller__open:
-      url: "https://release.pear.us/your-business-name-yuu7"
+      url: "{BASE_URL}/your-business-name-yuu7"
       cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
 
     # Auto-handle modals for co-seller
@@ -198,7 +198,7 @@ testE1004_ecommerce_buyer_seller_workflow:
     # Seller Session - Add product
     # ========================================
     seller__open:
-      url: "https://release.pear.us/seller"
+      url: "{BASE_URL}/seller"
       cookie_file: "cookies/seller_release.json"
 
     # Auto-handle seller modals
@@ -229,7 +229,7 @@ testE1004_ecommerce_buyer_seller_workflow:
     # Buyer Session - Browse and purchase
     # ========================================
     buyer__open:
-      url: "https://release.pear.us/shop"
+      url: "{BASE_URL}/shop"
       cookie_file: "cookies/buyer_release.json"
 
     # Auto-handle buyer modals
@@ -318,7 +318,7 @@ testE1005_performance_comparison_old_way:
   description: "OLD WAY - Slower (2 page loads)"
   test_step:
     # Step 1: Open page (not logged in)
-    open: "https://release.pear.us/dashboard"
+    open: "{BASE_URL}/dashboard"
 
     # Step 2: Inject cookies
     inject_cookies:
@@ -337,7 +337,7 @@ testE1006_performance_comparison_new_way:
   test_step:
     # ✨ Single step: Cookies injected + Page opens (already authenticated)
     open:
-      url: "https://release.pear.us/dashboard"
+      url: "{BASE_URL}/dashboard"
       cookie_file: "test_case/UI/Test_Katana/cookie_release.json"
 
     # ✅ Page loads once, already logged in!
@@ -356,7 +356,7 @@ testE1007_error_handling_missing_cookie:
   test_step:
     # If cookie file doesn't exist, logs warning but continues
     open:
-      url: "https://release.pear.us/dashboard"
+      url: "{BASE_URL}/dashboard"
       cookie_file: "cookies/nonexistent.json"
 
     # ⚠️ Warning logged, but test continues with unauthenticated session
@@ -376,7 +376,7 @@ testE1008_mixed_auth_scenarios:
   test_step:
     # Admin - Logged in
     admin__open:
-      url: "https://release.pear.us/admin"
+      url: "{BASE_URL}/admin"
       cookie_file: "cookies/admin_release.json"
 
     admin__verify_admin_panel:
@@ -390,7 +390,7 @@ testE1008_mixed_auth_scenarios:
         exact: false
 
     # Guest - Not logged in (no cookie_file)
-    guest__open: "https://release.pear.us/shop"
+    guest__open: "{BASE_URL}/shop"
 
     guest__verify_public_access:
       verify_text_visible:

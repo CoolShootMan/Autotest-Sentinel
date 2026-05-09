@@ -1,4 +1,4 @@
-    page.goto("https://release.pear.us/events")
+    page.goto("{BASE_URL}/events")
     page.get_by_role("cell", name="verify-co-seller-auto-archive").get_by_role("paragraph").click()
     page.get_by_test_id("mui-card-action-area").click()
     page.get_by_role("button", name="Edit post").click()

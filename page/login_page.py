@@ -1,6 +1,10 @@
 
+import os
 import re
+from dotenv import load_dotenv
 from playwright.sync_api import Page, expect
+
+load_dotenv()
 
 class LoginPage:
     def __init__(self, page: Page):
@@ -15,8 +19,10 @@ class LoginPage:
         self.switch_account_format_button_abs = "xpath=/html/body/div/div/div[2]/div/div/div/form/div/div/div/button"
         self.send_code_button_abs = "xpath=/html/body/div/div/div[2]/div/div/div/form/div/button"
 
-    def navigate(self, url="https://release.pear.us/login"):
+    def navigate(self, url=None):
         """Navigates to the login page."""
+        if url is None:
+            url = os.environ.get("BASE_URL", "https://release.pear.us") + "/login"
         self.page.goto(url)
 
     def switch_to_password_login(self):

@@ -1,6 +1,6 @@
-    page.goto("https://release.pear.us/autotestshop")
+    page.goto("{BASE_URL}/autotestshop")
     page.get_by_role("button", name="Image of Product verify-co-").click()
-    page.goto("https://release.pear.us/autotestshop/post/verify-co-seller-auto-archive-1")
+    page.goto("{BASE_URL}/autotestshop/post/verify-co-seller-auto-archive-1")
     page.get_by_text("Free shipping").click()
     page.locator("#productDrawerScrollContainer").get_by_text("Free shipping").visible()
     page.get_by_role("button", name="Buy now").click()

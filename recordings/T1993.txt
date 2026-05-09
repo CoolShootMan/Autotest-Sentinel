@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/demi-release")
+    page.goto("{BASE_URL}/demi-release")
     page.get_by_role("button", name="Copy").click()
     page.get_by_role("button", name="Manage").click()
     page.get_by_role("button", name="CopyOutlineIcon").nth(1).click()

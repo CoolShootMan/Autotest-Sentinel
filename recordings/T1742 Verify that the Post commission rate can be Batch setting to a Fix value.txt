@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/lindazhoupromoter1")
+    page.goto("{BASE_URL}/lindazhoupromoter1")
     page.get_by_role("button", name="My shop").click()
     page.get_by_role("button", name="Image of Product test 7995").click()
     page.get_by_role("button", name="Image of Product test 7995").first.click()

@@ -1,180 +1,267 @@
 # 覆盖用例: T4277（配置发布表单基本信息）, T4274（字段 required/optional 配置）,
 #           T4792（添加 Date and time 字段）, T4786（添加 Media 字段）,
 #           T4969（单选/多选字段配置）, T4972（Social 字段配置与多平台选择）
-testPartner_create_form:  # [LAST: BROKEN 2026-05-06]
+testPartner_create_form: # [LAST: BROKEN 2026-05-06]
   is_mobile: true
   description: "Create a complete form"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_open: 3000
 
-#    R_click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
-#    sleep_click_add_my_form: 1000
-    R_click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")', quick: true }
+    #    R_click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
+    #    sleep_click_add_my_form: 1000
+    R_click_add_new_form:
+      {
+        role: "button",
+        locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")',
+        quick: true,
+      }
     sleep_add: 3000
 
-    fill_title: { role: 'textbox', name: 'Enter a title', value: 'Partner_create_form' }
-    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test subtitle' }
-    fill_description: { role: 'textbox', name: 'Enter a description', value: 'Description' }
+    fill_title:
+      { role: "textbox", name: "Enter a title", value: "Partner_create_form" }
+    fill_subtitle:
+      { role: "textbox", name: "Enter subtitle", value: "test subtitle" }
+    fill_description:
+      { role: "textbox", name: "Enter a description", value: "Description" }
 
     # 1. Short text
-    R_click_add_field_1: { role: 'button', name: 'Add new field', quick: true , exact: true}
+    R_click_add_field_1:
+      { role: "button", name: "Add new field", quick: true, exact: true }
     sleep_1: 50
-    R_click_short_1: { locator: '.link-card-disable:has-text("Short answer")', quick: true}
+    R_click_short_1: { role: "combobox" }
+    sleep_click_0: 50
+    R_click_select_item_0: { role: "option", name: "Short answer" }
     sleep_click_1: 50
-    fill_field_title_1: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
-    R_click_add_1: { role: 'button', name: 'Add' , quick: true}
+    fill_field_title_1:
+      { role: "textbox", name: "Enter title of the field", value: "short" }
+    R_click_add_1: { role: "button", name: "Add", quick: true }
 
     # 2. Long text (Paragraph)
-    R_click_add_field_2: { role: 'button', name: 'Add new field' , quick: true}
+    R_click_add_field_2: { role: "button", name: "Add new field", quick: true }
     sleep_2: 50
-    R_click_short_2: { locator: '.link-card-disable:has-text("Paragraph")' , quick: true}
+    R_click_short_2: { testid: "base-form-field-select", quick: true }
+    R_click_select_item_1:
+      { testid: "base-form-field-menu-item-PARAGRAPH", quick: true }
     sleep_click_2: 50
-    fill_field_title_2: { role: 'textbox', name: 'Enter title of the field', value: 'long' , quick: true}
-    R_click_add_2: { role: 'button', name: 'Add' , quick: true}
+    fill_field_title_2:
+      {
+        role: "textbox",
+        name: "Enter title of the field",
+        value: "long",
+        quick: true,
+      }
+    R_click_add_2: { role: "button", name: "Add", quick: true }
 
     # 3. Email
-    R_click_add_field_3: { role: 'button', name: 'Add new field' , quick: true}
+    R_click_add_field_3: { role: "button", name: "Add new field", quick: true }
     sleep_3: 50
-    R_click_email3: { locator: '.link-card-disable:has-text("Email address")' , quick: true}
+    R_click_email3: { testid: "base-form-field-select", quick: true }
+    R_clickselect_item_2:
+      { testid: "base-form-field-menu-item-EMAIL_ADDRESS", quick: true }
     sleep_click_email: 50
-    R_click_add_3: { role: 'button', name: 'Add' , quick: true}
+    R_click_add_3: { role: "button", name: "Add", quick: true }
 
     # 4. Phone
-    R_click_add_field_4: { role: 'button', name: 'Add new field', exact: true, quick: true }
+    R_click_add_field_4:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_4: 50
-    R_click_phone: { locator: '.link-card-disable:has-text("Phone number")', quick: true }
+    R_click_phone: { testid: "base-form-field-select", quick: true }
+    R_clicselect_item_3:
+      { testid: "base-form-field-menu-item-EMAIL_ADDRESS", quick: true }
     sleep_click_phone: 50
-    R_click_add_4: { role: 'button', name: 'Add' , quick: true}
+    R_click_add_4: { role: "button", name: "Add", quick: true }
 
     # 5. Media
-    R_click_add_field_5: { role: 'button', name: 'Add new field', exact: true, quick: true }
+    R_click_add_field_5:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_5: 50
-    R_click_media: { locator: '.link-card-disable:has-text("Media")', quick: true }
+    R_click_media: { testid: "base-form-field-select", quick: true }
+    R_clicselect_item_4:
+      { testid: "base-form-field-menu-item-ATTACHMENT", quick: true }
     sleep_click_media: 50
-    fill_media_title: { role: 'textbox', name: 'Enter title of the field', value: 'Add Media' , quick: true}
-    fill_media_limit: { role: 'spinbutton', value: '1' }
-    R_click_add_5: { role: 'button', name: 'Add' , quick: true}
+    fill_media_title:
+      {
+        role: "textbox",
+        name: "Enter title of the field",
+        value: "Add Media",
+        quick: true,
+      }
+    fill_media_limit: { role: "spinbutton", value: "1" }
+    R_click_add_5: { role: "button", name: "Add", quick: true }
 
     # 6. Date and time
-    R_click_add_field_6: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_6:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_6: 50
-    R_click_datetime: { locator: '.link-card-disable:has-text("Date and time")' , quick: true}
+    R_click_datetime: { testid: "base-form-field-select", quick: true }
+    R_click_dselect_item_5:
+      { testid: "base-form-field-menu-item-DATETIME", quick: true }
     sleep_click_datetime: 50
-    R_click_add_6: { role: 'button', name: 'Add' , quick: true}
+    R_click_add_6: { role: "button", name: "Add", quick: true }
 
     # 7. Single choice
-    R_click_add_field_7: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_7:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_7: 50
-    R_click_single_choice: { locator: '.link-card-disable:has-text("Single choice")' , quick: true}
-    fill_single_title: { role: 'textbox', name: 'Enter title of the field', value: 'are you happy?' }
+    R_click_single_choice: { testid: "base-form-field-select", quick: true }
+    R_click_singleselect_item_6:
+      { testid: "base-form-field-menu-item-SINGLE_CHOICE", quick: true }
+    fill_single_title:
+      {
+        role: "textbox",
+        name: "Enter title of the field",
+        value: "are you happy?",
+      }
     # todo: index 有bug
-    fill_single_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: 'Yes' }
-    fill_single_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: 'No' }
-    R_click_add_7: { role: 'button', name: 'Add', exact: true , quick: true}
+    fill_single_opt1:
+      { locator: 'input[placeholder="Enter option"] >> nth=0', value: "Yes" }
+    fill_single_opt2:
+      { locator: 'input[placeholder="Enter option"] >> nth=1', value: "No" }
+    R_click_add_7: { role: "button", name: "Add", exact: true, quick: true }
 
     # 8. Multiple choice
-    R_click_add_field_8: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_8:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_8: 50
-    R_click_multiple_choice: { locator: '.link-card-disable:has-text("Multiple choice")' , quick: true}
-    fill_multi_title: { role: 'textbox', name: 'Enter title of the field', value: 'Multiple' }
-    R_click_add_multi_opt: { role: 'button', name: 'Add option' }
-    fill_multi_opt1: { locator: 'input[placeholder="Enter option"] >> nth=0', value: '1' }
-    fill_multi_opt2: { locator: 'input[placeholder="Enter option"] >> nth=1', value: '2' }
-    fill_multi_opt3: { locator: 'input[placeholder="Enter option"] >> nth=2', value: '3' }
-    R_click_add_8: { role: 'button', name: 'Add', exact: true , quick: true}
+    R_click_multiple_choice: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_7:
+      { testid: "base-form-field-menu-item-MULTIPLE_CHOICE", quick: true }
+    fill_multi_title:
+      { role: "textbox", name: "Enter title of the field", value: "Multiple" }
+    R_click_add_multi_opt: { role: "button", name: "Add option" }
+    fill_multi_opt1:
+      { locator: 'input[placeholder="Enter option"] >> nth=0', value: "1" }
+    fill_multi_opt2:
+      { locator: 'input[placeholder="Enter option"] >> nth=1', value: "2" }
+    fill_multi_opt3:
+      { locator: 'input[placeholder="Enter option"] >> nth=2', value: "3" }
+    R_click_add_8: { role: "button", name: "Add", exact: true, quick: true }
 
     # 9. Social - Instagram
-    R_click_add_field_9: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_9:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_9: 50
-    R_click_social_1: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_1: { role: 'combobox' , quick: true}
-    R_click_insta: { role: 'option', name: 'Instagram' , quick: true}
-    R_click_add_9: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_1: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_8:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_1: { role: "combobox", quick: true }
+    R_click_insta: { role: "option", name: "Instagram", quick: true }
+    R_click_add_9: { role: "button", name: "Add", quick: true }
 
     # 10. Social - Facebook
-    R_click_add_field_10: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_10:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_10: 50
-    R_click_social_2: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_2: { role: 'combobox' , quick: true}
-    R_click_fb: { role: 'option', name: 'Facebook' , quick: true}
-    R_click_add_10: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_2: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_9:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_2: { role: "combobox", quick: true }
+    R_click_fb: { role: "option", name: "Facebook", quick: true }
+    R_click_add_10: { role: "button", name: "Add", quick: true }
 
     # 11. Social - TikTok
-    R_click_add_field_11: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_11:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_11: 50
-    R_click_social_3: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_3: { role: 'combobox' , quick: true}
-    R_click_tiktok: { role: 'option', name: 'TikTok' , quick: true}
-    R_click_add_11: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_3: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_10:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_3: { role: "combobox", quick: true }
+    R_click_tiktok: { role: "option", name: "TikTok", quick: true }
+    R_click_add_11: { role: "button", name: "Add", quick: true }
 
     # 12. Social - X
-    R_click_add_field_12: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_12:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_12: 50
-    R_click_social_4: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_4: { role: 'combobox' , quick: true}
-    R_click_x: { role: 'option', name: 'X', exact: true , quick: true}
-    R_click_add_12: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_4: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_11:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_4: { role: "combobox", quick: true }
+    R_click_x: { role: "option", name: "X", exact: true, quick: true }
+    R_click_add_12: { role: "button", name: "Add", quick: true }
 
     # 13. Social - YouTube
-    R_click_add_field_13: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_13:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_13: 50
-    R_click_social_5: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_5: { role: 'combobox' , quick: true}
-    R_click_yt: { role: 'option', name: 'YouTube' , quick: true}
-    R_click_add_13: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_5: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_12:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_5: { role: "combobox", quick: true }
+    R_click_yt: { role: "option", name: "YouTube", quick: true }
+    R_click_add_13: { role: "button", name: "Add", quick: true }
 
     # 14. Social - Linkedin
-    R_click_add_field_14: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_14:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_14: 50
-    R_click_social_6: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_6: { role: 'combobox' , quick: true}
-    R_click_linkedin: { role: 'option', name: 'Linkedin' , quick: true}
-    R_click_add_14: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_6: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_13:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_6: { role: "combobox", quick: true }
+    R_click_linkedin: { role: "option", name: "Linkedin", quick: true }
+    R_click_add_14: { role: "button", name: "Add", quick: true }
 
     # 15. Social - Threads (Unrequired)
-    R_click_add_field_15: { role: 'button', name: 'Add new field', exact: true , quick: true}
+    R_click_add_field_15:
+      { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_15: 50
-    R_click_social_7: { locator: '.link-card-disable:has-text("Social")' , quick: true}
-    R_click_social_combo_7: { role: 'combobox' , quick: true}
-    R_click_threads: { role: 'option', name: 'Threads' , quick: true}
-    check_required: { role: 'checkbox', name: 'Required', checked: false }
-    R_click_add_15: { role: 'button', name: 'Add' , quick: true}
+    R_click_social_7: { testid: "base-form-field-select", quick: true }
+    R_click_multipleselect_item_14:
+      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_combo_7: { role: "combobox", quick: true }
+    R_click_threads: { role: "option", name: "Threads", quick: true }
+    check_required: { role: "checkbox", name: "Required", checked: false }
+    R_click_add_15: { role: "button", name: "Add", quick: true }
 
     # Deleting excess options (as in codegen)
     # Using exact codegen steps
-    R_click_view_name_3: { role: 'button', name: 'View Name options', exact: true , quick: true}
-    R_click_delete_name_3: { role: 'button', name: 'Delete', index: 0 , quick: true}
+    R_click_view_name_3:
+      { role: "button", name: "View Name options", exact: true, quick: true }
+    R_click_delete_name_3:
+      { role: "button", name: "Delete", index: 0, quick: true }
     sleep_delete_name_3: 50
-    R_click_delete_name_4: { role: 'button', name: 'Delete', index: 0 }
+    R_click_delete_name_4: { role: "button", name: "Delete", index: 0 }
     sleep_delete_name_4: 50
 
-    R_click_view_phone: { role: 'button', name: 'View Phone options', exact: true , quick: true}
-    R_click_delete_phone_1: { role: 'button', name: 'Delete', index: 0}
+    R_click_view_phone:
+      { role: "button", name: "View Phone options", exact: true, quick: true }
+    R_click_delete_phone_1: { role: "button", name: "Delete", index: 0 }
     sleep_delete_phone_1: 50
-    R_click_delete_phone_2: { role: 'button', name: 'Delete', index: 0}
+    R_click_delete_phone_2: { role: "button", name: "Delete", index: 0 }
     sleep_delete_phone_2: 50
 
-    R_click_view_email: { role: 'button', name: 'View Email options', exact: true , quick: true}
-    R_click_delete_email_1: { role: 'button', name: 'Delete', index: 0}
+    R_click_view_email:
+      { role: "button", name: "View Email options", exact: true, quick: true }
+    R_click_delete_email_1: { role: "button", name: "Delete", index: 0 }
     sleep_delete_email_1: 50
-    R_click_delete_email_2: { role: 'button', name: 'Delete', index: 0}
+    R_click_delete_email_2: { role: "button", name: "Delete", index: 0 }
     sleep_delete_email_2: 50
 
     # Finalization
-    R_click_preview: { role: 'button', name: 'Preview form', exact: true , quick: true}
+    R_click_preview:
+      { role: "button", name: "Preview form", exact: true, quick: true }
     sleep_preview: 1000
-    R_click_close_preview: { role: 'button', name: 'Close', exact: true , quick: true}
+    R_click_close_preview:
+      { role: "button", name: "Close", exact: true, quick: true }
     sleep_close_preview: 1000
 
-    R_click_continue: { role: 'button', name: 'Continue' , quick: true}
+    R_click_continue: { role: "button", name: "Continue", quick: true }
     sleep_continue: 500
 
     # Custom success message changes
-    R_click_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!' , quick: true}
-    fill_thanks_msg: { role: 'textbox', name: 'Thanks for your submission!', value: 'Hi thank you' }
+    R_click_thanks_msg:
+      { role: "textbox", name: "Thanks for your submission!", quick: true }
+    fill_thanks_msg:
+      {
+        role: "textbox",
+        name: "Thanks for your submission!",
+        value: "Hi thank you",
+      }
 
-    R_click_save: { role: 'button', name: 'Save' , quick: true}
+    R_click_save: { role: "button", name: "Save", quick: true }
     sleep_save: 3000
 
   expect_result:
@@ -184,13 +271,13 @@ testPartner_create_form:  # [LAST: BROKEN 2026-05-06]
         text: "Partner_create_form"
 
 # 覆盖用例: T4279（访客完整填写所有字段并成功提交）, T4969（单选/多选字段端到端提交验证）
-test_guest_submission_1:  # [LAST: BROKEN 2026-05-06]
+test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
   description: "Verify guest can submit the Auto test Form on autotestshop page"
   test_step:
     open_demi_release:
-      url: "https://release.pear.us/autotestshop"
+      url: "{BASE_URL}/autotestshop"
     R_click_auto_test_form:
       role: "button"
       name: "Partner_create_form"
@@ -255,7 +342,7 @@ test_guest_submission_1:  # [LAST: BROKEN 2026-05-06]
     fill_facebook:
       locator: 'xpath=//div[text()="Facebook"]/following-sibling::div//input'
       wait_for: 2000
-      scroll_into_view: true  # 强制滚动到元素
+      scroll_into_view: true # 强制滚动到元素
       value: "PearPartnerOfficial"
 
     # Tiktok - realistic username
@@ -280,8 +367,8 @@ test_guest_submission_1:  # [LAST: BROKEN 2026-05-06]
 
     # Threads - realistic username
     fill_threads:
-       locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
-       value: "pear_partner_official"
+      locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
+      value: "pear_partner_official"
 
     # submit
     R_click_submit:
@@ -295,13 +382,13 @@ test_guest_submission_1:  # [LAST: BROKEN 2026-05-06]
         text: "Got it"
 
 # 覆盖用例: T4280（空提交时所有必填字段报错验证）, T4973（Social 字段空值与格式校验）
-test_guest_submission_2:  # [LAST: BROKEN 2026-05-06]
+test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
   description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
   test_step:
     open_demi_release:
-      url: "https://release.pear.us/autotestshop"
+      url: "{BASE_URL}/autotestshop"
     R_click_auto_test_form:
       role: "button"
       name: "Partner_create_form"
@@ -311,21 +398,21 @@ test_guest_submission_2:  # [LAST: BROKEN 2026-05-06]
       role: "button"
       name: "Submit"
     # Verify every field in the modal (Comprehensive UI check)
-    verify_short: { text: 'This field is required. Please fill it in.' }
-    verify_long: { text: 'This field is required. Please fill it in.' }
-    verify_email: { text: 'Enter a valid e-mail address' }
-    verify_phone: { text: 'Enter a valid phone number' }
-    verify_date: { text: 'This field is required. Please fill it in.' }
-    verify_choice: { text: 'This field is required. Please fill it in.' }
-    verify_multi: { text: 'This field is required. Please fill it in.' }
-    verify_multi_2: { text: '2' }
+    verify_short: { text: "This field is required. Please fill it in." }
+    verify_long: { text: "This field is required. Please fill it in." }
+    verify_email: { text: "Enter a valid e-mail address" }
+    verify_phone: { text: "Enter a valid phone number" }
+    verify_date: { text: "This field is required. Please fill it in." }
+    verify_choice: { text: "This field is required. Please fill it in." }
+    verify_multi: { text: "This field is required. Please fill it in." }
+    verify_multi_2: { text: "2" }
     # Social Media fields verification
-    verify_instagram: { text: 'This field is required. Please fill it in.' }
-    verify_facebook: { text: 'This field is required. Please fill it in.' }
-    verify_tiktok: { text: 'This field is required. Please fill it in.' }
-    verify_x: { text: 'This field is required. Please fill it in.' }
-    verify_youtube: { text: 'This field is required. Please fill it in.' }
-    verify_linkedin: { text: 'This field is required. Please fill it in.' }
+    verify_instagram: { text: "This field is required. Please fill it in." }
+    verify_facebook: { text: "This field is required. Please fill it in." }
+    verify_tiktok: { text: "This field is required. Please fill it in." }
+    verify_x: { text: "This field is required. Please fill it in." }
+    verify_youtube: { text: "This field is required. Please fill it in." }
+    verify_linkedin: { text: "This field is required. Please fill it in." }
 
   expect_result:
     description: "Form should be submitted successfully with Got it confirmation"
@@ -336,70 +423,79 @@ test_guest_submission_2:  # [LAST: BROKEN 2026-05-06]
         text: "Please enter some information before submitting."
 
 # 覆盖用例: T4306（商家查看表单提交记录两种入口）, T4537（提交记录页搜索栏关键字筛选）
-testPartner_verify_commission:  # [LAST: BROKEN 2026-05-06]
+testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
   description: "Verify viewing and exporting user form submissions"
   test_step:
-#    open: 'https://release.pear.us/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
-#    sleep_after_open: 5000
-    open_shop: "https://release.pear.us/autotestshop"
+    #    open: '{BASE_URL}/curator/submission?formId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d'
+    #    sleep_after_open: 5000
+    open_shop: "{BASE_URL}/autotestshop"
     sleep_after_open_shop: 1000
 
-    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
     sleep_after_form_tab: 200
-    R_click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
+    R_click_right_more_cta:
+      {
+        locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0',
+      }
     sleep_after_more_cta: 200
-    R_click_submission_link: { locator: 'a[href^="/curator/submission?formId="]'}
-
+    R_click_submission_link:
+      { locator: 'a[href^="/curator/submission?formId="]' }
 
     # Dynamic Count Capture & Search
-    capture_total_count: { }
+    capture_total_count: {}
     sleep_before_search: 2000
-    fill_search: { role: 'textbox', name: 'Search', value: 'Pear Partner' }
+    fill_search: { role: "textbox", name: "Search", value: "Pear Partner" }
     sleep_search: 2000
-    R_click_submission: { text: 'Pear Partner Cooperation Inquiry' }
+    R_click_submission: { text: "Pear Partner Cooperation Inquiry" }
     sleep_after_open_details: 3000
 
     # Verify every field in the modal (Comprehensive UI check)
-    verify_details_header: { text: 'Submission details' }
-    verify_short: { text: 'Pear Partner Cooperation Inquiry' }
-    verify_long: { text: 'I am interested in establishing a long-term partnership with Pear' }
-    verify_email: { text: 'cooperation.business@gmail.com' }
-    verify_phone: { text: '13105558976' }
-    verify_date: { text: 'Sun, Apr 12, 2026 12:00 AM' }
-    verify_choice: { text: 'Yes' }
-    verify_multi: { text: '1' }
-    verify_multi_2: { text: '2' }
+    verify_details_header: { text: "Submission details" }
+    verify_short: { text: "Pear Partner Cooperation Inquiry" }
+    verify_long:
+      {
+        text: "I am interested in establishing a long-term partnership with Pear",
+      }
+    verify_email: { text: "cooperation.business@gmail.com" }
+    verify_phone: { text: "13105558976" }
+    verify_date: { text: "Sun, Apr 12, 2026 12:00 AM" }
+    verify_choice: { text: "Yes" }
+    verify_multi: { text: "1" }
+    verify_multi_2: { text: "2" }
     # Social Media fields verification
-    verify_instagram: { text: '@pear_partner_official' }
-    verify_facebook: { text: '@PearPartnerOfficial' }
-    verify_tiktok: { text: '@pear_partner' }
-    verify_x: { text: '@PearPartnerHQ' }
-    verify_youtube: { text: '@PearPartnerChannel' }
-    verify_linkedin: { text: '@pear-partner-official' }
+    verify_instagram: { text: "@pear_partner_official" }
+    verify_facebook: { text: "@PearPartnerOfficial" }
+    verify_tiktok: { text: "@pear_partner" }
+    verify_x: { text: "@PearPartnerHQ" }
+    verify_youtube: { text: "@PearPartnerChannel" }
+    verify_linkedin: { text: "@pear-partner-official" }
     #verify_threads: { text: '@pear_partner_official' }
 
     R_click_submission_details_back: { locator: '[aria-label="Close"]' }
     sleep_after_back: 100
 
     # CSV Verification (Export Data)
-    download_submission_csv: { name: 'Export all data', role: 'button' }
+    download_submission_csv: { name: "Export all data", role: "button" }
     verify_csv_data:
       expected_row: {
-        'short': 'Pear Partner Cooperation Inquiry',
-        'Email address': 'cooperation.business@gmail.com',
-        'Phone number': '3105558976',
-        'are you happy?': 'Yes',
-        'Multiple': '1, 2',
-        'Instagram': '@pear_partner_official',
-        'Facebook': '@PearPartnerOfficial',
-        'Tiktok': '@pear_partner',
-        'X': '@PearPartnerHQ',
-        'Youtube': '@PearPartnerChannel',
-        'Linkedin': '@pear-partner-official',
-        #'Threads': '@pear_partner_official'
-      }
+          "short": "Pear Partner Cooperation Inquiry",
+          "Email address": "cooperation.business@gmail.com",
+          "Phone number": "3105558976",
+          "are you happy?": "Yes",
+          "Multiple": "1, 2",
+          "Instagram": "@pear_partner_official",
+          "Facebook": "@PearPartnerOfficial",
+          "Tiktok": "@pear_partner",
+          "X": "@PearPartnerHQ",
+          "Youtube": "@PearPartnerChannel",
+          "Linkedin": "@pear-partner-official",
+          #'Threads': '@pear_partner_official'
+        }
 
   expect_result:
     description: "All form submission fields (including social media) should be viewable in UI and accurately exported in CSV, with export count matching UI total count."
     assertions:
-      - { assertion_type: 'element_visible_by_text', text: 'Pear Partner Cooperation Inquiry' }
+      - {
+          assertion_type: "element_visible_by_text",
+          text: "Pear Partner Cooperation Inquiry",
+        }

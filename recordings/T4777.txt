@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(storage_state="D:\\new test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
     page = context.new_page()
-    page.goto("https://release.pear.us/events")
+    page.goto("{BASE_URL}/events")
     page.get_by_role("link", name="Settings").click()
     page.get_by_role("heading", name="Off").click()
     page.get_by_label("", exact=True).check()

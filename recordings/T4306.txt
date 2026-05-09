@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/yu-xiao")
+    page.goto("{BASE_URL}/yu-xiao")
     page.locator("div:nth-child(3) > .MuiStack-root.katana-10r081p > .MuiStack-root.katana-1bc4u47 > .MuiButtonBase-root").first.click()
     page.get_by_role("link", name="View submissions").click()
     page.get_by_text("test auto send").click()

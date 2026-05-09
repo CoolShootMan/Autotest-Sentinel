@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 from playwright.sync_api import Page, expect
+
+load_dotenv()
 
 class MyShopPage:
     def __init__(self, page: Page):
@@ -9,7 +13,8 @@ class MyShopPage:
     def click_customize_shop(self):
         """Clicks the button and waits for the customization page to load."""
         print("Clicking 'Customize Shop' button and waiting for navigation...")
-        with self.page.expect_navigation(url="https://release.pear.us/storefront-modules#Storefront"):
+        base_url = os.environ.get("BASE_URL", "https://release.pear.us")
+        with self.page.expect_navigation(url=f"{base_url}/storefront-modules#Storefront"):
             self.customize_button.click()
         print("Navigation to Customize Shop page successful.")
         # Assert that a key element on the Customize Shop page is visible

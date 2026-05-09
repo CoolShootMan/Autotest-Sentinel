@@ -55,7 +55,7 @@ def run(playwright: Playwright) -> None:
     page.get_by_role("button", name="Add from my links").click()
     page.locator(".MuiStack-root.katana-jtiajk").first.click()
     page.get_by_role("button", name="Add").click()
-    page.goto("https://release.pear.us/demi-release#Links")
+    page.goto("{BASE_URL}/demi-release#Links")
 
     # ---------------------
     context.close()

@@ -26,8 +26,41 @@ from playwright.sync_api import (
 )
 from slugify import slugify
 import re
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+
+def _resolve_base_url():
+    """
+    获取 BASE_URL，优先级：系统环境变量 > .env 文件 > 默认值
+    默认值: https://release.pear.us
+    """
+    return os.environ.get("BASE_URL", "https://release.pear.us")
+
+
+# 根据 BASE_URL 反推环境名，用于 cookie 文件命名
+_ENV_MAP = {
+    "https://staging.pear.us": "staging",
+    "https://release.pear.us": "release",
+    "https://pear.us": "prod",
+}
+CURRENT_ENV = _ENV_MAP.get(_resolve_base_url(), "release")
+
+
+def _replace_placeholders(obj, base_url, env_name):
+    """递归替换字典/列表/字符串中的 {BASE_URL} 和 {ENV} 占位符"""
+    if isinstance(obj, str):
+        return obj.replace("{BASE_URL}", base_url).replace("{ENV}", env_name)
+    elif isinstance(obj, dict):
+        return {k: _replace_placeholders(v, base_url, env_name) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_replace_placeholders(item, base_url, env_name) for item in obj]
+    return obj
+
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
@@ -161,8 +194,8 @@ def context(
     elif storage_state:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
-        # Check if local conftest defined a default cookie_release.json
-        local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", "cookie_release.json")
+        # 根据 CURRENT_ENV 动态选择 cookie 文件
+        local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", f"cookie_{CURRENT_ENV}.json")
         if os.path.exists(local_cookie):
             context = browser.new_context(storage_state=local_cookie, **browser_context_args)
         else:
@@ -194,6 +227,9 @@ def pytest_generate_tests(metafunc):
                 with open(yaml_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if data:
+                    # 运行时替换 {BASE_URL} 占位符
+                    base_url = _resolve_base_url()
+                    data = _replace_placeholders(data, base_url, CURRENT_ENV)
                     for k, v in data.items():
                         if isinstance(v, dict):
                             v["__yaml_path__"] = yaml_path

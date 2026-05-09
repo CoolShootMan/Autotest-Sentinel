@@ -7,10 +7,15 @@ Time             : 2024/04/14
 """
 
 import sys
+import os
 import subprocess
 import re
 from pathlib import Path
 from typing import List, Dict, Tuple, Set
+from dotenv import load_dotenv
+
+# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # 定义常量路径
 BASE_DIR = Path("test_case/UI/Test_Katana")
@@ -316,6 +321,10 @@ def parse_args() -> Tuple[List[str], str, List[str]]:
     return test_names, logic_op, additional_args
 
 def main():
+    # 确保子进程也能拿到 BASE_URL（.env 已在模块级别加载）
+    if "BASE_URL" not in os.environ:
+        os.environ["BASE_URL"] = "https://release.pear.us"
+
     if len(sys.argv) < 2:
         print("💡 未提供测试用例名称，进入交互式层级选择模式...")
         if not YAML_DIR.exists():

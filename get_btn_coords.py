@@ -1,4 +1,8 @@
+import os
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
+
+load_dotenv()
 
 def get_forms_button_coords():
     with sync_playwright() as p:
@@ -11,7 +15,7 @@ def get_forms_button_coords():
             has_touch=True
         )
         page = context.new_page()
-        page.goto('https://release.pear.us/demi-release')
+        page.goto(os.environ.get("BASE_URL", "https://release.pear.us") + '/demi-release')
         page.wait_for_timeout(5000)
         
         # Methodology: Find "Forms" text, go to grandparent, find "Add new" button

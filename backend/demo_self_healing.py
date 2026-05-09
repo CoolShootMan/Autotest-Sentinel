@@ -1,8 +1,11 @@
 import asyncio
 import os
 import base64
+from dotenv import load_dotenv
 from playwright.async_api import async_playwright
 from core.ai_vision import AIVisionService
+
+load_dotenv()
 
 async def demo_self_healing():
     print("🚀 Starting Self-Healing Demo...")
@@ -22,7 +25,7 @@ async def demo_self_healing():
         print("🌐 Navigating to Release Page...")
         for attempt in range(3):
             try:
-                await page.goto("https://release.pear.us/yu-xiao", timeout=60000)
+                await page.goto(os.environ.get("BASE_URL", "https://release.pear.us") + "/yu-xiao", timeout=60000)
                 await page.wait_for_load_state("domcontentloaded")
                 await asyncio.sleep(5) # Buffer for UI
                 break

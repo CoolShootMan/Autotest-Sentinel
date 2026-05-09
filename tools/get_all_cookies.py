@@ -5,25 +5,26 @@
 Cookie 文件名根据当前环境动态生成（如 cookie_release.json），
 确保不同环境不会互相覆盖。
 """
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
-import yaml
+
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 PROJECT_ROOT = Path(__file__).parent.parent
-CONFIG_FILE = PROJECT_ROOT / "config" / "env_config.yaml"
 COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
 
+# 从 BASE_URL 环境变量读取，默认 release 环境
+ENV_BASE = os.environ.get("BASE_URL", "https://release.pear.us")
 
-def load_env():
-    with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        cfg = yaml.safe_load(f)
-    envs = cfg.get("envs", {})
-    current = cfg.get("current_env", "release")
-    base = envs.get(current, {}).get("base", "https://release.pear.us")
-    return current, base
-
-
-CURRENT_ENV, ENV_BASE = load_env()
+# 根据域名反推环境名，用于 cookie 文件命名
+_ENV_MAP = {
+    "https://staging.pear.us": "staging",
+    "https://release.pear.us": "release",
+    "https://pear.us": "prod",
+}
+CURRENT_ENV = _ENV_MAP.get(ENV_BASE, "release")
 
 ACCOUNTS = [
     {

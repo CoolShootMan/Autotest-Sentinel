@@ -1,7 +1,7 @@
 testT4984_partner:
   description: "Verify adding products to a post via the enhance button in Selling tab"
   test_step:
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_after_open: 5000
 
     click_view_event: { role: 'cell', name: "verify-post-shipping_fee" }
@@ -88,7 +88,7 @@ testT4984_guest:
   description: "Verify guest user can buy a product from event post"
   guest: true
   test_step:
-    open: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+    open: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
     sleep_after_open: 3000
 
     click_buy_now:
