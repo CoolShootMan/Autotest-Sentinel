@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(storage_state="D:\\monster_test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
     page = context.new_page()
-    page.goto("https://release.pear.us/post/create")
+    page.goto("{BASE_URL}/post/create")
     page.get_by_role("tab", name="Content").click()
     page.get_by_role("textbox", name="Pick a bold title for your").fill("test_3991")
     page.get_by_role("tab", name="Advanced").click()

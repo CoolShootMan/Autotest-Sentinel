@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/yu-xiao")
+    page.goto("{BASE_URL}/yu-xiao")
     page.get_by_label("Share").click()
     page.get_by_text("Shop link copied — ready to").click()
 

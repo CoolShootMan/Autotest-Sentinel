@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/demi-release")
+    page.goto("{BASE_URL}/demi-release")
     page.get_by_role("button", name="Module", exact=True).click()
     page.get_by_role("textbox", name="Enter title of the module").click()
     page.get_by_role("textbox", name="Enter title of the module").fill("test new module")

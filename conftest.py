@@ -26,8 +26,32 @@ from playwright.sync_api import (
 )
 from slugify import slugify
 import re
+from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
+
+def _resolve_base_url():
+    """
+    获取 BASE_URL，优先级：系统环境变量 > .env 文件 > 默认值
+    默认值: https://release.pear.us
+    """
+    return os.environ.get("BASE_URL", "https://release.pear.us")
+
+
+def _replace_placeholders(obj, base_url):
+    """递归替换字典/列表/字符串中所有 {BASE_URL} 占位符"""
+    if isinstance(obj, str):
+        return obj.replace("{BASE_URL}", base_url)
+    elif isinstance(obj, dict):
+        return {k: _replace_placeholders(v, base_url) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_replace_placeholders(item, base_url) for item in obj]
+    return obj
+
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
@@ -194,6 +218,9 @@ def pytest_generate_tests(metafunc):
                 with open(yaml_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if data:
+                    # 运行时替换 {BASE_URL} 占位符
+                    base_url = _resolve_base_url()
+                    data = _replace_placeholders(data, base_url)
                     for k, v in data.items():
                         if isinstance(v, dict):
                             v["__yaml_path__"] = yaml_path

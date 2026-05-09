@@ -17,6 +17,9 @@ import sys
 import base64
 import urllib.parse
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ========== 配置 ==========
 # 硬编码绝对路径，避免动态路径计算错误
@@ -55,8 +58,8 @@ def refresh_token(cookie_str: str) -> str:
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
         "authorization": f"Bearer {HARDCODED_VALID_JWT}",
         "content-type": "application/json;charset=utf-8",
-        "origin": "https://release.pear.us",
-        "referer": "https://release.pear.us/",
+        "origin": os.environ.get("BASE_URL", "https://release.pear.us"),
+        "referer": os.environ.get("BASE_URL", "https://release.pear.us") + "/",
         "cookie": cookie_str,
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
         "sec-ch-ua": '"Google Chrome";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',

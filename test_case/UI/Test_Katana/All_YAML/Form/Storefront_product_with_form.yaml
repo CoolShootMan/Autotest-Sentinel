@@ -2,7 +2,7 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Configure product form: enable form, set title/subtitle, add short text field"
   test_step:
-    open: "https://release.pear.us/catalog"
+    open: "{BASE_URL}/catalog"
     sleep_after_open: 3000
 
     # Open product
@@ -17,7 +17,7 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
     R_click_save1: { locator: '[data-testid="confirm-button"]' }
     sleep_after_save1: 3000
 
-    open_again: "https://release.pear.us/catalog"
+    open_again: "{BASE_URL}/catalog"
     sleep_after_open2: 3000
     # Open product
     R_click_product2: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
@@ -54,7 +54,7 @@ testT5007:  # [LAST: PASSED 2026-05-06]
   description: "Verify adding a product with form to cart from storefront"
   guest: true
   test_step:
-    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    open: "{BASE_URL}/autotestshop/p/bxasz9"
     sleep_after_open: 3000
 
     # Open product
@@ -77,7 +77,7 @@ testT4790:  # [LAST: PASSED 2026-05-06]
   description: "Verify guest can submit a form with media upload on standalone form page"
   guest: true
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     click_form_10media:
@@ -112,7 +112,7 @@ testT4970:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify single choice field validation errors: single option, zero options, empty options, duplicate options"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
@@ -187,9 +187,9 @@ testT4860:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
-#    open: "https://release.pear.us/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
+#    open: "{BASE_URL}/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     # Step 1: Events list page -> click Event card
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_step1: 3000
     # "event-for-rte-insert-form" is a DIV element (not BUTTON), use exact text match
     R_click_my_event: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
@@ -236,7 +236,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
     verify_published: { text: 'Post published!' }
 
     # Verify CTA button on storefront opens form modal
-    open_storefront: "https://release.pear.us/autotestshop/post/event-for-rte-insert-form"
+    open_storefront: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
     sleep_after_open_storefront: 3000
     R_click_test_form_btn: { role: 'button', text: 'test form' }
     sleep_after_modal: 2000
@@ -251,7 +251,7 @@ testT4867:  # [LAST: PASSED 2026-05-06]
   description: "Verify deleting CTA form button from post and confirming button is removed on storefront"
   test_step:
     # Step 1: Events list page -> click Event card
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_step1: 3000
     R_click_my_event: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
     sleep_step2: 3000
@@ -280,7 +280,7 @@ testT4867:  # [LAST: PASSED 2026-05-06]
     verify_published: { text: 'Post published!' }
 
     # Verify CTA button no longer exists on storefront
-    open_storefront: "https://release.pear.us/autotestshop/post/event-for-rte-insert-form"
+    open_storefront: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
     sleep_after_open_storefront: 3000
     verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
 
@@ -293,7 +293,7 @@ testT4281:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify recipient email validation when creating a new form"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     # Open "Add new" form configuration
@@ -328,7 +328,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
   guest: false
   description: "Verify form title/subtitle/email icon validation and save combinations"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
@@ -382,7 +382,7 @@ testT4866:  # [LAST: PASSED 2026-05-06]
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
     # Step 1: Events list page -> click Event card
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_step1: 3000
     # "event-for-rte-insert-form" is a DIV element (not BUTTON), use exact text match
     R_click_my_event: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
@@ -422,7 +422,7 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     # --- Part 2: Edit button text ---
     open_edit:
-      url: "https://release.pear.us/events"
+      url: "{BASE_URL}/events"
       auto_handle_modals: false
     sleep_p2_step1: 3000
     R_click_my_event_p2: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
@@ -449,14 +449,14 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     # --- Part 3: Verify updated text on storefront ---
     open_storefront:
-      url: "https://release.pear.us/autotestshop/post/event-for-rte-insert-form"
+      url: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
       auto_handle_modals: false
     sleep_after_open_storefront: 3000
     verify_updated_btn: { text: 'test form update1' }
 
     # --- Part 4: Delete the CTA button ---
     open_delete:
-      url: "https://release.pear.us/events"
+      url: "{BASE_URL}/events"
       auto_handle_modals: false
     sleep_p4_step1: 3000
     R_click_my_event_p4: { locator: "text=event-for-rte-insert-form", exact: true, index: 0 }
@@ -484,7 +484,7 @@ testT4847:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify adding field help text (description) to form fields"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     # Open form creation
@@ -526,7 +526,7 @@ testT4847_view:  # [LAST: PASSED 2026-05-06]
   guest: true
   description: "Verify help text tooltips are visible on storefront form fields"
   test_step:
-    open: "https://release.pear.us/autotestshop"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     # Click on the form card by title
@@ -555,7 +555,7 @@ testT4847_view:  # [LAST: PASSED 2026-05-06]
 #  guest: false
 #  description: "Remove the auto_test help-text form from module (cleanup)"
 #  test_step:
-#    open: "https://release.pear.us/autotestshop"
+#    open: "{BASE_URL}/autotestshop"
 #    sleep_after_open: 3000
 #
 #    # Remove form from module - locate by title
@@ -574,7 +574,7 @@ testT4539:  # [LAST: BROKEN 2026-05-06]
   guest: false
   description: "Verify batch select submissions and export selected data"
   test_step:
-    open_shop: "https://release.pear.us/autotestshop"
+    open_shop: "{BASE_URL}/autotestshop"
     sleep_after_open_shop: 1000
 
     click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
@@ -610,7 +610,7 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
   description: "Verify timezone setting affects submission time display (CST)"
   test_step:
     # --- Part 1: Set timezone to GMT+8:00 Shanghai ---
-    open: "https://release.pear.us/edit-profile#BusinessOperation"
+    open: "{BASE_URL}/edit-profile#BusinessOperation"
     sleep_after_open: 3000
     R_click_timezone: { locator: '#timeZone_select + .MuiInputBase-root' }
     sleep_after_click_timezone: 300
@@ -622,7 +622,7 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     verify_update_success: { text: 'Update Success!' }
 
     # --- Part 2: Verify submission times show CST ---
-    open_shop: "https://release.pear.us/autotestshop"
+    open_shop: "{BASE_URL}/autotestshop"
     sleep_after_open_shop: 1000
 
     click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
@@ -640,7 +640,7 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     verify_dialog_cst: { text: '(CST)' }
 
     # --- Part 4: Reset timezone back to GMT-8:00 Los_Angeles ---
-    open_reset: "https://release.pear.us/edit-profile#BusinessOperation"
+    open_reset: "{BASE_URL}/edit-profile#BusinessOperation"
     sleep_after_open_reset: 3000
     R_click_timezone_reset: { locator: '#timeZone_select + .MuiInputBase-root' }
     sleep_after_click_timezone_reset: 300
@@ -660,7 +660,7 @@ testT3695_curator:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
   test_step:
-    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    open: "{BASE_URL}/autotestshop/p/bxasz9"
     sleep_after_open: 3000
     verify_text_not_visible: { text: 'product form must be filled', assert_not_visible: true }
 
@@ -672,7 +672,7 @@ testT3695_guest:  # [LAST: PASSED 2026-05-06]
   guest: true
   description: "Verify the Custom Text input field is visible on the Guest view"
   test_step:
-    open: "https://release.pear.us/autotestshop/p/bxasz9"
+    open: "{BASE_URL}/autotestshop/p/bxasz9"
     sleep_after_open: 3000
     verify_text_visible: { text: 'product form must be filled' }
 
@@ -685,7 +685,7 @@ testT3690:  # [LAST: PASSED 2026-05-06]
   description: "Verify product form data persists through cart, checkout, and order confirmation"
   test_step:
     open:
-      url: "https://release.pear.us/autotestshop/p/bxasz9"
+      url: "{BASE_URL}/autotestshop/p/bxasz9"
       auto_handle_modals: false
     sleep_after_open: 3000
 
@@ -741,7 +741,7 @@ testT5006_curator:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify disabling product form in catalog product settings"
   test_step:
-    open: "https://release.pear.us/catalog"
+    open: "{BASE_URL}/catalog"
     sleep_after_open: 3000
 
     # Open product menu and edit
@@ -762,7 +762,7 @@ testT5006_curator:  # [LAST: PASSED 2026-05-06]
 #  guest: true
 #  description: "Verify product page shows 'Form unavailable' when form is disabled"
 #  test_step:
-#    open: "https://release.pear.us/autotestshop/post/autotest-form-unavalible-form"
+#    open: "{BASE_URL}/autotestshop/post/autotest-form-unavalible-form"
 #    sleep_after_open: 3000
 #    verify_unavailable: { text: 'Form unavailable' }
 #
@@ -774,7 +774,7 @@ testT3794:  # [LAST: FAILED 2026-05-06]
   guest: false
   description: "Verify creating a form and then deleting it, confirming it disappears from both list and storefront"
   test_step:
-    open: "https://release.pear.us/autotestshop#Form"
+    open: "{BASE_URL}/autotestshop#Form"
     sleep_after_open: 3000
 
     # Create a new form

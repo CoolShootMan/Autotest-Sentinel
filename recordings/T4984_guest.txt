@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/autotestshop/post/test-event-auto-archive-14")
+    page.goto("{BASE_URL}/autotestshop/post/test-event-auto-archive-14")
     page.get_by_test_id("post-product-banner-card-action").get_by_test_id("post-product-buy-now").click()
     page.get_by_role("textbox", name="Please fill this out").click()
     page.get_by_role("textbox", name="Please fill this out").fill("123")

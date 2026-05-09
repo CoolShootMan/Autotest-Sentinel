@@ -1,21 +1,21 @@
 testT3370:
     description: "Verify set the product card alignment at the store level"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         swipe_avoid_plus: { x: 0, y: 300 }
         sleep_init: 1000
         goto_storefront_top_aligned:
-            url: "https://release.pear.us/storefront-modules#Storefront"
+            url: "{BASE_URL}/storefront-modules#Storefront"
             timeout: 30000
         check_label_top_aligned:
             label: "Top aligned"
             timeout: 15000
         publish_button_click_top_aligned: {}
         verify_navigation_after_publish_top_aligned:
-            url_regex: "https://release.pear.us/autotestshop"
+            url_regex: "{BASE_URL}/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/autotestshop"
+            fallback_url: "{BASE_URL}/autotestshop"
             fallback_timeout: 30000
         click_mui_svg_icon_top_aligned: { locator: 'svg[data-testid="StorefrontIcon"]', name: 'Storefront nav icon' }
         click_products_text_top_aligned: {}
@@ -29,17 +29,17 @@ testT3370:
         screenshot_final:
             name: "autotestshop_page.png"
         goto_storefront_waterfall:
-            url: "https://release.pear.us/storefront-modules#Storefront"
+            url: "{BASE_URL}/storefront-modules#Storefront"
             timeout: 30000
         check_label_waterfall:
             label: "Waterfall"
             timeout: 15000
         publish_button_click_waterfall: {}
         verify_navigation_after_publish_waterfall:
-            url_regex: "https://release.pear.us/autotestshop"
+            url_regex: "{BASE_URL}/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/autotestshop"
+            fallback_url: "{BASE_URL}/autotestshop"
             fallback_timeout: 30000
         click_mui_svg_icon_waterfall: {}
         click_products_text_waterfall: {}
@@ -47,10 +47,10 @@ testT3370:
             index: 1
             timeout: 6000
         verify_waterfall_layout:
-            url_regex: "https://release.pear.us/autotestshop"
+            url_regex: "{BASE_URL}/autotestshop"
             timeout: 30000
             warning_message: "Shop page redirect after publish timed out. Directly navigating to Shop page."
-            fallback_url: "https://release.pear.us/autotestshop"
+            fallback_url: "{BASE_URL}/autotestshop"
             fallback_timeout: 30000
             wait_for_timeout: 1500
             wait_for_cards_timeout: 6000
@@ -61,7 +61,7 @@ testT3370:
 testT1993:
     description: "Verify the function of generating invitation link"
     test_step:
-        open: "https://release.pear.us/collabs"
+        open: "{BASE_URL}/collabs"
         verify_invitation_link_clipboard: {}
     expect_result:
         description: "An invite link should be generated with the option to copy or share"
@@ -72,7 +72,7 @@ testT1993:
 testT855:
     description: "Verify the Share button functionality"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_share: { role: 'button', name: 'Share' }
         sleep_after_click: 2000
@@ -85,7 +85,7 @@ testT855:
 testT1747:
     description: "Verify whether clicking the 'Save as draft' button in the lower left corner of the Create Post page can save it as a draft Post"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_plus_button: { role: 'button', name: '0', exact: True }
         sleep_after_plus: 2000
@@ -111,7 +111,7 @@ testT1747:
 testT1520:
     description: "Verify follow and unfollow store functionality"
     test_step:
-        open: "https://release.pear.us/autotest-coseller"
+        open: "{BASE_URL}/autotest-coseller"
         sleep_after_open: 3000
         R_click_logo: { role: 'img', name: 'Logo' }
         sleep_after_logo: 1000
@@ -159,7 +159,7 @@ testT1520:
 # testT4306:
 #     description: "Verify viewing user form submissions"
 #     test_step:
-#         open: "https://release.pear.us/autotestshop"
+#         open: "{BASE_URL}/autotestshop"
 #         sleep_after_open: 5000
 #         click_form_more_menu: { form_name: 'Please leave any questions you may have.' }
 #         sleep_after_more_click: 2000
@@ -184,7 +184,7 @@ testT1520:
 testT2129:
     description: "Verify the Product card can create post success on my shop page"
     test_step:
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         R_click_more_action: { role: 'button', name: 'More action' }
         sleep_after_more: 1500
@@ -210,7 +210,7 @@ testT2129:
 testT4777:
     description: "Verify product details in a post by: 1. Start on Events page."
     test_step:
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         wait_for_url: { url: "**/events" }
         sleep_after_open: 5000
         R_click_FAB: { role: 'button', name: 'Add' }
@@ -242,7 +242,7 @@ testT4777:
 #     guest: true
 #     description: "Verify submitting the contact form"
 #     test_step:
-#         open: "https://release.pear.us/autotestshop"
+#         open: "{BASE_URL}/autotestshop"
 #         swipe_avoid_plus: { x: 0, y: 300 }
 #         sleep_after_open: 3000
 #         R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }
@@ -258,7 +258,7 @@ testT4777:
 testT3348_partner:
     description: "Verify partner can enable 'checkout within the post' for a product in an event"
     test_step:
-        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        open: "{BASE_URL}/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
         sleep_after_open: 5000
         R_click_post_product: { role: 'button', name: 'Image of Product auto test', exact: false }
         sleep_after_click_product: 2000
@@ -300,7 +300,7 @@ testT3348_guest:
 testT4259_partner:
     description: "Verify partner can set up product auto-replacement chain A->B->C"
     test_step:
-        open: "https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
+        open: "{BASE_URL}/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts"
         sleep_after_open: 5000
         R_click_tickets_tab: { role: 'tab', name: 'Tickets' }
         sleep_after_tickets_tab: 2000
@@ -399,7 +399,7 @@ testT4259_guest:
 #     guest: true
 #     description: "Verify submitting the contact form"
 #     test_step:
-#         open: "https://release.pear.us/autotestshop"
+#         open: "{BASE_URL}/autotestshop"
 #         swipe_avoid_plus: { x: 0, y: 300 }
 #         sleep_after_open: 3000
 #         R_click_auto_test_form: { role: 'button', name: 'Please leave any questions you may have.' }

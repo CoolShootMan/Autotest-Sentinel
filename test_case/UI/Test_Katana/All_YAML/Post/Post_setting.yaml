@@ -20,7 +20,7 @@ testT1742:
         expect_result: "Co-seller post deleted successfully or no data to delete"
         test_step:
             # Step 1: Events list page -> click Event card
-            open: "https://release.pear.us/events"
+            open: "{BASE_URL}/events"
             sleep_step: 5000
 
             # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
@@ -90,7 +90,7 @@ testT1742:
             timeout: 5000
 
         # Step 6: Reopen Events to verify
-        open_again: "https://release.pear.us/events"
+        open_again: "{BASE_URL}/events"
         sleep_end: 3000
 
     expect_result:
@@ -142,7 +142,7 @@ testT1742:
 testT3991:
     description: "Verify that partner can set a note for co-sellers in a post"
     test_step:
-        open: "https://release.pear.us/post/create"
+        open: "{BASE_URL}/post/create"
         sleep_after_open: 5000
         
         click_content_tab: { role: 'tab', name: 'Content' }
@@ -233,7 +233,7 @@ testT3683_T3684:
     description: "Verify Order Confirmation Note - Edit in Advanced Tab and Verify Display on Order Page"
     test_step:
         # Step 1: Events list page -> click Event card
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
@@ -275,14 +275,14 @@ testT3683_T3684:
 # =========================================================================
 
         # Step 5.1: Log out from Curator account
-        open_account: "https://release.pear.us/account"
+        open_account: "{BASE_URL}/account"
         sleep_step: 3000
 
         R_click_logout: { role: 'button', name: 'Log out' }
         sleep_step: 3000
 
         # Step 6: Directly access Post page for Guest ticket purchase
-        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
         sleep_step: 3000
 
         # Step 7: Select product "General Admission 01", click its Buy Ticket button
@@ -373,7 +373,7 @@ testT3686_CosellerResell:
 
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
         open_post: 
-          url: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+          url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
           # cookie_file: 'test_case/UI/Test_Katana/cookie_release_co_seller.json"'
         sleep_step: 5000
 
@@ -416,7 +416,7 @@ testT3686_CosellerResell:
         # =========================================================================
 
         # Step 3.1: Navigate to Coseller's shop page
-        open_coseller_shop: "https://release.pear.us/autotest-coseller"
+        open_coseller_shop: "{BASE_URL}/autotest-coseller"
         sleep_step: 3000
 
         # Step 3.2: Find and click the resold Post to edit
@@ -438,14 +438,14 @@ testT3686_CosellerResell:
         # =========================================================================
 
         # T3686 Step 3: Log out from Coseller account
-        open_account: "https://release.pear.us/account"
+        open_account: "{BASE_URL}/account"
         sleep_step: 3000
 
         R_click_logout: { role: 'button', name: 'Log out' }
         sleep_step: 3000
 
         # T3686 Step 4: Navigate to Coseller's resold Post page as guest
-        open_resold_post: "https://release.pear.us/autotest-coseller/post/auto-test-post-setting-t1742"
+        open_resold_post: "{BASE_URL}/autotest-coseller/post/auto-test-post-setting-t1742"
         sleep_step: 3000
 
         # T3686 Step 5: Guest clicks Buy Ticket (from Coseller's shop General Admission 01)
@@ -504,7 +504,7 @@ testT3686_teardown:
     expect_result: "Co-seller post deleted successfully or no data to delete"
     test_step:
         # Step 1: Events list page -> click Event card
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # "Auto-Test-post-setting" is a DIV element (not BUTTON), use exact text match
@@ -536,7 +536,7 @@ testT2705_VerifyPartner:
   description: "Partner hides the variant and sets the default variant on the management page"
   test_step:
     # Step 1: Open Events list page
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_after_open: 5000
 
     # Step 2: Find and click "Test event post variant settings" event
@@ -608,7 +608,7 @@ testT2705_VerifyGuest:
   guest: true
   description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
   test_step:
-    open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+    open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
     sleep_after_open: 5000
 
     # Click product card to open product drawer
@@ -634,7 +634,7 @@ testT2705_VerifyGuest:
     sleep_step: 1000
 
     # Step 2: Open Events list page
-    open: "https://release.pear.us/events"
+    open: "{BASE_URL}/events"
     sleep_step: 5000
 
     # Step 3: Find and click "Test event post variant settings" event
@@ -672,7 +672,7 @@ testT2830_VerifyPartner:
     description: "Verify hiding a post from the store via Advanced settings"
     test_step:
         # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_after_open: 5000
 
         # Step 2: Find and click "Test event post variant settings" event
@@ -707,7 +707,7 @@ testT2830_VerifyGuest:
     description: "Verify that the post should be hidden from the store for guest users after curator action"
     test_step:
         # Open the autotestshop page
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
         
         # Scroll to Posts tab location first
@@ -744,7 +744,7 @@ testT2830_VerifyGuest:
         sleep_step: 1000
 
         # Step 2: Open Events list page
-        open_teardown: "https://release.pear.us/events"
+        open_teardown: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 3: Find and click "Test event post variant settings" event
@@ -773,7 +773,7 @@ testT2830_VerifyGuest:
         sleep_step: 1000
 
         # Step 8: Verify in guest context that the post is now visible
-        open_guest_shop: "https://release.pear.us/autotestshop"
+        open_guest_shop: "{BASE_URL}/autotestshop"
         sleep_step: 5000
         
         # Scroll down to find Posts tab
@@ -794,7 +794,7 @@ testT2834_VerifyPartner:
     description: "Verify that partner can set a product to have free shipping"
     test_step:
         # Step 1: Navigate to the post
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 3000
         #duplicate_post: { post_id: "fa40fcd8-9cf9-4ce9-8d4f-37c88093c56e" }
         # sleep_step: 500
@@ -861,14 +861,14 @@ testT2834_VerifyGuest:
     description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
     test_step:
         # Step 1: Shop page
-        # open: "https://release.pear.us/autotestshop"
+        # open: "{BASE_URL}/autotestshop"
         # sleep_step: 3000
         # Click the specific product image (as in recording)
         # R_click_product_img: { role: "button", name: "Image of Product verify-co" }
         # sleep_step: 3000
 
         # Step 2: Navigate to Post details directly (from recording)
-        open_post_details: "https://release.pear.us/autotestshop/post/verify-post-shipping-fee"
+        open_post_details: "{BASE_URL}/autotestshop/post/verify-post-shipping-fee"
         sleep_step: 3000
         R_click_free_shipping_label: { text: "Free shipping" }
         sleep_step: 1000
@@ -924,7 +924,7 @@ testT2834_VerifyGuest:
         sleep_step: 3000
         
         # Step 2: Open post URL as partner
-        open_teardown: "https://release.pear.us/events"
+        open_teardown: "{BASE_URL}/events"
         sleep_step: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
@@ -957,7 +957,7 @@ testT4735_VerifyPartner:
     description: "Enable redirect URL for post and configure redirect settings"
     test_step:
         # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_after_open: 5000
 
         # Step 2: Find and click "Test event post variant settings" event
@@ -1017,7 +1017,7 @@ testT4735_VerifyGuest:
     description: "Verify redirect popup appears for non-US guest users when accessing post with redirect enabled"
     test_step:
         open:
-          url: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+          url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
           auto_handle_modals: false
         sleep_after_open: 5000
 
@@ -1042,7 +1042,7 @@ testT4735_VerifyGuest_YesPlease:
     description: "Verify clicking 'Yes, please' button in redirect popup also redirects to tklmerch.com"
     test_step:
         open:
-          url: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+          url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
           auto_handle_modals: false
         sleep_after_open: 5000
 
@@ -1065,7 +1065,7 @@ testT4735_VerifyGuest_YesPlease:
         sleep_step: 2000
 
         # Open events list page
-        open_teardown: "https://release.pear.us/events"
+        open_teardown: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Click "Test event post variant settings" event
@@ -1098,7 +1098,7 @@ testT2515_SetLimit_WithVariant:
     description: "Partner sets Purchase quantity limit=5 for a several-variants item in post"
     test_step:
         # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_after_open: 5000
 
         # Step 2: Find and click "Test event post variant settings" event
@@ -1145,7 +1145,7 @@ testT2515_VerifyDisabled_WithVariant:
     description: "Verify Buy now button is disabled after buying 5 variants (limit=5)"
     test_step:
         # Step 1: Open post detail page as guest
-        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
         # Step 2: Scroll down to load product cards
@@ -1250,7 +1250,7 @@ testT2515_VerifyDisabled_WithVariant:
         sleep_step: 1000
 
         # Step 2: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 3: Find and click "Test event post variant settings" event
@@ -1284,7 +1284,7 @@ testT4955_Partner_SetPaymentRestriction:
     description: "Partner enables Payment Restriction and sets access code 'demi123'"
     test_step:
         # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_after_open: 5000
 
         # Step 2: Find and click "Test event post variant" event
@@ -1342,7 +1342,7 @@ testT4955_Guest_VerifyAccessCode:
     description: "Guest verifies that access code is required to purchase when Payment Restriction is enabled"
     test_step:
         # Step 1: Open post detail page as guest
-        open: "https://release.pear.us/autotestshop/post/test-event-post-variant-settings"
+        open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
         # Step 2: Scroll down to load product cards
@@ -1399,7 +1399,7 @@ testT4955_Guest_VerifyAccessCode:
         sleep_step: 2000
 
         # Step 2: Open Events list page
-        open_teardown: "https://release.pear.us/events"
+        open_teardown: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 3: Find and click "Test event post variant settings" event
@@ -1434,7 +1434,7 @@ testT2874_EnableDependentProducts:
     description: "Enable 'Must be bought with another item' for a product in Customize products"
     test_step:
         # Step 1: Navigate to the post
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 2: Find and click "Test event post variant settings" event
@@ -1494,7 +1494,7 @@ testT2874_VerifyGuestCheckoutTwo:
     description: "Verify guest checkout with two products - adding 001 auto-adds 002 via popup"
     test_step:
         # Step 1: Open the post as guest
-        open: "https://release.pear.us/autotestshop/post/test-event-with-two-tickets"
+        open: "{BASE_URL}/autotestshop/post/test-event-with-two-tickets"
         sleep_after_open: 8000
 
         # Step 2: Scroll to find the products
@@ -1558,7 +1558,7 @@ testT2874_VerifyGuestCheckoutTwo:
         sleep_step: 2000
 
         # Step 2: Open Events list page
-        open_teardown: "https://release.pear.us/events"
+        open_teardown: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 3: Find and click "Test event post variant settings" event
@@ -1626,7 +1626,7 @@ testT4038:
     description: "Verify user can add/edit promotional announcements in Selling/Promotion tab"
     test_step:
         # Step 1: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 2: Click "Auto-Test-post-setting" event card
@@ -1709,7 +1709,7 @@ testT2069:
     description: "Verify announcement banners auto-scroll every 3 seconds and loop back"
     test_step:
         # Step 1: Open the post landing page as guest (no login required)
-        open_post: "https://release.pear.us/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
         sleep_step: 4000
 
         # Step 2: Verify first announcement is displayed initially
@@ -1744,7 +1744,7 @@ testT2069:
         sleep_step: 1000
 
         # Step 2: Open Events list page
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         # Step 2: Click "Auto-Test-post-setting" event card
@@ -1784,7 +1784,7 @@ testT3963_VerifyGuestCheckoutShippingFee:
     description: "Verify shipping fee logic on the checkout page as a guest"
     test_step:
         # Step 1: Open shop
-        open: "https://release.pear.us/autotestshop"
+        open: "{BASE_URL}/autotestshop"
         sleep_step: 3000
 
         # Step 2: Click the product image to enter product details
@@ -1829,7 +1829,7 @@ testT5033_5034_VerifyPartner:
     description: "Verify that partner can set a product to have free shipping"
     test_step:
         # Step 1: Duplicate ticket
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
@@ -1937,14 +1937,14 @@ testT5033_5034_VerifyPartner:
 #     description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
 #     test_step:
 #         # Step 1: Shop page
-#         open: "https://release.pear.us/autotestshop"
+#         open: "{BASE_URL}/autotestshop"
 #         sleep_step: 3000
 #         # Click the specific product image (as in recording)
 #         R_click_product_img: { role: "button", name: "Image of Product verify-co" }
 #         sleep_step: 3000
 
 #         # Step 2: Navigate to Post details directly (from recording)
-#         open_post_details: "https://release.pear.us/autotestshop/post/verify-post-shipping_fee-1"
+#         open_post_details: "{BASE_URL}/autotestshop/post/verify-post-shipping_fee-1"
 #         sleep_step: 3000
 #         # Verify on post details
 #         verify_free_shipping_drawer: { text: "Free shipping", index: 1 }
@@ -1992,7 +1992,7 @@ testT3779:
     description: "Create an auto-applied coupon on post verify auto coupon apply"
     test_step:
         # Step 1: Navigate to event "verify auto coupon apply"
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
@@ -2077,7 +2077,7 @@ testT3767:
     description: "Verify Hide Coupon Box auto-checked when guest checkout with auto-applied coupon"
     test_step:
         # Step 1: Open the post as guest
-        open: "https://release.pear.us/autotestshop/post/verify-auto-coupon-apply"
+        open: "{BASE_URL}/autotestshop/post/verify-auto-coupon-apply"
         sleep_after_open: 8000
 
         # Step 2: Scroll to find the product
@@ -2125,7 +2125,7 @@ testT3767:
         add_cookies: {}
         sleep_step: 1000
 
-        open: "https://release.pear.us/events"
+        open: "{BASE_URL}/events"
         sleep_step: 5000
 
         R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
@@ -2185,7 +2185,7 @@ testT2281:
     description: "Verify duplicate post copies Advanced settings (allowExpire) and can be modified independently"
     test_step:
         # Step 1: Open post creation page
-        open: "https://release.pear.us/post/create?c=POST_PAGE"
+        open: "{BASE_URL}/post/create?c=POST_PAGE"
         sleep_after_open: 5000
 
         # Step 2: Click Content tab and fill title
@@ -2269,7 +2269,7 @@ testT2281:
 testT2537:
     description: "Verify that user can set access restricted by phone number"
     test_step:
-        open: "https://release.pear.us/post/create"
+        open: "{BASE_URL}/post/create"
         sleep_step: 3000
 
         click_advanced_tab: { role: 'tab', name: 'Advanced' }
@@ -2339,7 +2339,7 @@ testT2537:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "https://release.pear.us/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2376,7 +2376,7 @@ testT3108:
 testT3110:
     description: "Verify setCustomizePrice check, uncheck and save flow"
     test_step:
-        open: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2469,7 +2469,7 @@ testT1928:
     description: "Verify customize price and catalog price update synchronization"
     test_step:
         # Create product logic first
-        open_dashboard: { url: "https://release.pear.us/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open_dashboard: { url: "{BASE_URL}/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
         sleep_step_p1: 8000
         
         R_click_content_tab: { locator: "[data-testid='content']", index: 0 }
@@ -2523,7 +2523,7 @@ testT1928:
         sleep_step_p18: 5000
 
         # Then proceed with post creation
-        open: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
         sleep_step: 3000
 
         smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
@@ -2610,7 +2610,7 @@ testT3811:
     description: "Verify customize price setting and unsetting in post creation and editing"
     test_step:
         # Step 1: Open create post page with specific partner/coseller cookies
-        open_create_post: { url: "https://release.pear.us/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
         sleep_step: 3000
 
         # Step 4: Discard draft if present

@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context()
     page = context.new_page()
-    page.goto("https://release.pear.us/login")
+    page.goto("{BASE_URL}/login")
     page.get_by_text("Login with password").click()
     page.get_by_text("+1Use Email").click()
     page.get_by_role("button", name="Use Email").click()

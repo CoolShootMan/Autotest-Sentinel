@@ -17,8 +17,16 @@ import subprocess # Import subprocess
 import shutil
 import sys
 import socket
+from dotenv import load_dotenv
+
+# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 def start_autotest():
+    # 确保子进程也能拿到 BASE_URL（.env 已在模块级别加载）
+    if "BASE_URL" not in os.environ:
+        os.environ["BASE_URL"] = "https://release.pear.us"
+
     logger.remove()
     create_date = time.strftime('%Y_%m_%d', time.localtime(time.time()))
     logger.add(f'log/{create_date}.log', enqueue=True, encoding='utf-8', retention=30)

@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(storage_state="D:\\new test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
     page = context.new_page()
-    page.goto("https://release.pear.us/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts")
+    page.goto("{BASE_URL}/events/fc0e43a0-4466-4f1c-bb4b-761c3f245b4a/view#eventTab=Posts")
     page.get_by_role("tab", name="Tickets").click()
     page.get_by_text("General A").click()
     page.get_by_placeholder("Quantity").fill("1")

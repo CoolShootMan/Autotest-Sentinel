@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(storage_state="/Users/yujiaqi/Documents/GitHub/Autotest-monster/test_case/UI/Test_Katana/cookie_release.json")
     page = context.new_page()
-    page.goto("https://release.pear.us/demi-release")
+    page.goto("{BASE_URL}/demi-release")
     page.locator("div").nth(4).click()
     page.get_by_role("button", name="Storefront").click()
     page.get_by_role("link", name="Events").click()

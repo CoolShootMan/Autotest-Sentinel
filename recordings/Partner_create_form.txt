@@ -6,7 +6,7 @@ def run(playwright: Playwright) -> None:
     browser = playwright.chromium.launch(headless=False)
     context = browser.new_context(storage_state="D:\\new test\\Autotest-monster\\test_case\\UI\\Test_Katana\\cookie_release.json")
     page = context.new_page()
-    page.goto("https://release.pear.us/demi-release")
+    page.goto("{BASE_URL}/demi-release")
     page.locator("div").filter(has_text=re.compile(r"^FormsAdd new$")).get_by_role("button").first.click()
     page.get_by_role("textbox", name="Enter a title, e.g. \"contact").fill("Auto test Form")
     page.get_by_role("textbox", name="Enter subtitle, e.g. \"Updates\"").fill("test subtitle")
