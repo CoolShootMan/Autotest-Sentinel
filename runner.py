@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """
 Filename         : runner.py
-Description      : 自动查找测试用例所在的 YAML 文件并运行 pytest
+Description      : Auto-locate YAML files containing test cases and run pytest
 Time             : 2024/04/14
 """
 
@@ -14,20 +14,20 @@ from pathlib import Path
 from typing import List, Dict, Tuple, Set
 from dotenv import load_dotenv
 
-# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+# Load .env file from project root (does not override existing environment variables)
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-# 定义常量路径
+# Define constant paths
 BASE_DIR = Path("test_case/UI/Test_Katana")
 YAML_DIR = BASE_DIR / "All_YAML"
 TEST_FILE = BASE_DIR / "test_ui.py"
 
 def get_test_cases_from_yaml(yaml_path: str) -> List[Dict[str, str]]:
     """
-    从指定的 yaml 文件中解析出所有的测试用例名称和描述
-    假设测试用例的定义以 test 且顶格开头，如 'testT4718:'
-    紧接着的行可能是 '  description: "xxx"'
-    返回一个包含 {"name": "test_name", "desc": "description"} 字典的列表
+    Parse all test case names and descriptions from the specified yaml file.
+    Assumes test case definitions start at column 0 with 'test', e.g. 'testT4718:'
+    The next line may be '  description: "xxx"'
+    Returns a list of dicts: {"name": "test_name", "desc": "description"}
     """
     test_cases = []
     abs_path = BASE_DIR / yaml_path
@@ -53,16 +53,16 @@ def get_test_cases_from_yaml(yaml_path: str) -> List[Dict[str, str]]:
                 test_cases.append(current_test)
                 
     except Exception as e:
-        print(f"⚠️ 读取配置文件 {abs_path} 时出错: {e}")
+        print(f"⚠️ Error reading config file {abs_path}: {e}")
         
     return test_cases
 
 def run_single_pytest(test_name: str, yaml_path: str, additional_args: List[str]) -> bool:
     """
-    执行单个 pytest 命令，并返回执行结果状态
+    Execute a single pytest command and return the execution result status.
     """
     print(f"\n{'*' * 50}")
-    print(f"🧪 开始执行测试用例: {test_name}" if test_name else "🧪 开始执行整个文件")
+    print(f"🧪 Running test case: {test_name}" if test_name else "🧪 Running entire file")
     print(f"{'*' * 50}\n")
     
     cmd = [
@@ -81,48 +81,48 @@ def run_single_pytest(test_name: str, yaml_path: str, additional_args: List[str]
     else:
         cmd.extend(additional_args)
         
-    print(f"💻 执行命令: {' '.join(cmd)}\n")
+    print(f"💻 Command: {' '.join(cmd)}\n")
     
     try:
         result = subprocess.run(cmd, check=False)
         print(f"\n{'-' * 50}")
         if result.returncode != 0:
-            print(f"❌ 用例 {test_name or '全部'} 执行失败！")
+            print(f"❌ Test case '{test_name or 'all'}' failed!")
             print(f"{'-' * 50}\n")
             return False
         
-        print(f"✅ 用例 {test_name or '全部'} 执行成功！")
+        print(f"✅ Test case '{test_name or 'all'}' passed!")
         print(f"{'-' * 50}\n")
         return True
     except KeyboardInterrupt:
-        print("\n🛑 测试执行被用户中断。")
+        print("\n🛑 Test execution interrupted by user.")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ 执行命令时出错: {e}")
+        print(f"\n❌ Error executing command: {e}")
         return False
 
 def execute_yamls(yaml_paths: List[str], k_expression: str, additional_args: List[str]) -> bool:
     """
-    按配置文件执行测试。如果 k_expression 为空，则找出 yaml 内所有用例依次执行。
+    Execute tests by config file. If k_expression is empty, find all cases in yaml and run them one by one.
     """
     has_error = False
     
     for i, p in enumerate(yaml_paths, 1):
         print(f"\n{'#' * 60}")
-        print(f"▶️  开始处理配置文件 [{i}/{len(yaml_paths)}]: {p}")
+        print(f"▶️  Processing config file [{i}/{len(yaml_paths)}]: {p}")
         print(f"{'#' * 60}")
         
         if not k_expression:
             test_cases = get_test_cases_from_yaml(p)
             if not test_cases:
-                print(f"⚠️ 未在 {p} 中找到有效的测试用例 (以 test 开头)。将尝试直接执行整个文件。")
+                print(f"⚠️ No valid test cases (starting with 'test') found in {p}. Attempting to run the entire file.")
                 if not run_single_pytest("", p, additional_args):
                     has_error = True
             else:
                 names = [tc['name'] for tc in test_cases]
-                print(f"🔍 在该配置文件中找到 {len(test_cases)} 个用例: {', '.join(names)}")
+                print(f"🔍 Found {len(test_cases)} test case(s) in this file: {', '.join(names)}")
                 for idx, tc in enumerate(test_cases, 1):
-                    print(f"\n⏳ 进度: 配置文件 [{i}/{len(yaml_paths)}] -> 用例 [{idx}/{len(test_cases)}]")
+                    print(f"\n⏳ Progress: config [{i}/{len(yaml_paths)}] -> case [{idx}/{len(test_cases)}]")
                     if not run_single_pytest(tc['name'], p, additional_args):
                         has_error = True
         else:
@@ -133,10 +133,10 @@ def execute_yamls(yaml_paths: List[str], k_expression: str, additional_args: Lis
 
 def find_yaml_for_tests(test_names: List[str]) -> List[str]:
     """
-    在 All_YAML 目录下搜索包含指定测试用例名称的 YAML 文件
+    Search All_YAML directory for YAML files containing the specified test case names.
     """
     if not YAML_DIR.exists():
-        print(f"❌ 错误: 找不到目录 {YAML_DIR}")
+        print(f"❌ Error: Directory not found: {YAML_DIR}")
         return []
         
     found_yamls: Set[str] = set()
@@ -146,53 +146,53 @@ def find_yaml_for_tests(test_names: List[str]) -> List[str]:
             content = filepath.read_text(encoding='utf-8')
             for test_name in test_names:
                 if f"{test_name}:" in content:
-                    # 使用 as_posix 保证路径在 Windows 上也能正确被 pytest 解析
+                    # Use as_posix to ensure path is correctly parsed by pytest on Windows
                     rel_path = filepath.relative_to(BASE_DIR).as_posix()
                     found_yamls.add(rel_path)
         except Exception as e:
-            print(f"⚠️ 读取文件 {filepath} 时出错: {e}")
+            print(f"⚠️ Error reading file {filepath}: {e}")
                     
     return list(found_yamls)
 
 def prompt_user_selection(options: List[str]) -> str:
     """
-    如果找到了多个 YAML 文件，提示用户选择一个或者全部执行
+    If multiple YAML files are found, prompt the user to select one or run all.
     """
-    print("\n⚠️ 警告: 找到了多个 YAML 配置文件:")
+    print("\n⚠️ Warning: Multiple YAML config files found:")
     for idx, opt in enumerate(options, 1):
         print(f"  [{idx}] {opt}")
     
     all_option_idx = len(options) + 1
-    print(f"  [{all_option_idx}] ⚡ 全部执行 (不在命令行指定单个 YAML，交由 pytest -k 自动在所有文件中匹配)")
+    print(f"  [{all_option_idx}] ⚡ Run all (do not specify a single YAML on command line, let pytest -k match across all files)")
     
     while True:
         try:
-            choice = input(f"\n👉 请选择要执行的配置 (1-{all_option_idx}): ")
+            choice = input(f"\n👉 Select config to run (1-{all_option_idx}): ")
             choice_idx = int(choice.strip()) - 1
             if 0 <= choice_idx < len(options):
                 return options[choice_idx]
             if choice_idx == len(options):
                 return "ALL"
             
-            print(f"❌ 无效的选择，请输入 1 到 {all_option_idx} 之间的数字。")
+            print(f"❌ Invalid selection. Please enter a number between 1 and {all_option_idx}.")
         except ValueError:
-            print("❌ 无效的输入，请输入数字。")
+            print("❌ Invalid input. Please enter a number.")
         except KeyboardInterrupt:
-            print("\n🛑 操作被用户取消。")
+            print("\n🛑 Operation cancelled by user.")
             sys.exit(1)
 
 def interactive_directory_selection(base_dir: Path) -> Tuple[str, Path]:
     """
-    提供一个交互式的层级菜单，让用户选择要执行的目录或具体的 YAML 文件
+    Provide an interactive hierarchical menu for selecting a directory or specific YAML file to run.
     """
     current_dir = base_dir
     
     while True:
-        print(f"\n📂 当前目录: {current_dir}")
+        print(f"\n📂 Current directory: {current_dir}")
         try:
             items = sorted(current_dir.iterdir(), key=lambda x: (x.is_file(), x.name))
         except Exception as e:
-            print(f"❌ 读取目录失败: {e}")
+            print(f"❌ Failed to read directory: {e}")
             sys.exit(1)
             
         dirs = [item for item in items if item.is_dir()]
@@ -201,10 +201,10 @@ def interactive_directory_selection(base_dir: Path) -> Tuple[str, Path]:
         options = []
         
         if dirs or yamls:
-            options.append({"label": "⚡ 执行当前目录 (及子目录) 下的所有测试", "type": "execute_all", "path": current_dir})
+            options.append({"label": "⚡ Run all tests in current directory (and subdirectories)", "type": "execute_all", "path": current_dir})
             
         if current_dir != base_dir:
-            options.append({"label": "🔙 返回上一级目录", "type": "back", "path": current_dir.parent})
+            options.append({"label": "🔙 Go back to parent directory", "type": "back", "path": current_dir.parent})
             
         for d in dirs:
             options.append({"label": f"📁 {d.name}/", "type": "dir", "path": d})
@@ -213,16 +213,16 @@ def interactive_directory_selection(base_dir: Path) -> Tuple[str, Path]:
             options.append({"label": f"📄 {y.name}", "type": "file", "path": y})
             
         if not options:
-            print("⚠️ 此目录为空或没有 YAML 文件。")
+            print("⚠️ This directory is empty or has no YAML files.")
             current_dir = current_dir.parent
             continue
             
-        print("\n请选择:")
+        print("\nSelect:")
         for idx, opt in enumerate(options, 1):
             print(f"  [{idx}] {opt['label']}")
             
         try:
-            choice = input(f"\n👉 请输入序号 (1-{len(options)}) 或按 Ctrl+C 退出: ")
+            choice = input(f"\n👉 Enter number (1-{len(options)}) or Ctrl+C to exit: ")
             choice_idx = int(choice.strip()) - 1
             if 0 <= choice_idx < len(options):
                 selected = options[choice_idx]
@@ -232,27 +232,27 @@ def interactive_directory_selection(base_dir: Path) -> Tuple[str, Path]:
                 else:
                     return selected["type"], selected["path"]
             else:
-                print(f"❌ 无效的选择，请输入 1 到 {len(options)} 之间的数字。")
+                print(f"❌ Invalid selection. Please enter a number between 1 and {len(options)}.")
         except ValueError:
-            print("❌ 无效的输入，请输入数字。")
+            print("❌ Invalid input. Please enter a number.")
         except KeyboardInterrupt:
-            print("\n🛑 操作被用户取消。")
+            print("\n🛑 Operation cancelled by user.")
             sys.exit(1)
 
 def interactive_test_case_selection(yaml_rel_path: str) -> str:
     """
-    提供一个交互式的菜单，让用户选择要执行的测试用例（支持多选或全选）
+    Provide an interactive menu for selecting test cases to run (supports multi-select or run all).
     """
     test_cases = get_test_cases_from_yaml(yaml_rel_path)
     
     if not test_cases:
-        print(f"\n⚠️ 配置文件 {yaml_rel_path} 中未找到有效的测试用例，将尝试执行整个文件。")
+        print(f"\n⚠️ No valid test cases found in {yaml_rel_path}. Will attempt to run the entire file.")
         return ""
         
-    print(f"\n📄 已选择文件: {yaml_rel_path}")
-    print(f"🔍 找到以下测试用例:")
+    print(f"\n📄 Selected file: {yaml_rel_path}")
+    print(f"🔍 Found the following test cases:")
     
-    options = [{"label": "⚡ 全部执行", "value": "ALL"}]
+    options = [{"label": "⚡ Run all", "value": "ALL"}]
     for tc in test_cases:
         desc_str = f" - {tc['desc']}" if tc["desc"] else ""
         options.append({"label": f"🧪 {tc['name']}{desc_str}", "value": tc['name']})
@@ -262,7 +262,7 @@ def interactive_test_case_selection(yaml_rel_path: str) -> str:
         
     while True:
         try:
-            choice_input = input(f"\n👉 请输入序号选择测试用例 (例如 '1', '2,4', '2-4') 或按 Ctrl+C 退出: ")
+            choice_input = input(f"\n👉 Enter number to select test case (e.g. '1', '2,4', '2-4') or Ctrl+C to exit: ")
             raw_parts = re.split(r'[,\s]+', choice_input.strip())
             selected_indices = set()
             
@@ -276,11 +276,11 @@ def interactive_test_case_selection(yaml_rel_path: str) -> str:
                     selected_indices.add(int(part) - 1)
             
             if not selected_indices:
-                print("❌ 无效的输入。")
+                print("❌ Invalid input.")
                 continue
                 
             if any(i < 0 or i >= len(options) for i in selected_indices):
-                print(f"❌ 包含了无效的序号。请确保输入的序号在 1 到 {len(options)} 之间。")
+                print(f"❌ Contains invalid index. Please enter numbers between 1 and {len(options)}.")
                 continue
                 
             selected_options = [options[i] for i in sorted(list(selected_indices))]
@@ -291,14 +291,14 @@ def interactive_test_case_selection(yaml_rel_path: str) -> str:
             return " or ".join(opt["value"] for opt in selected_options)
             
         except ValueError:
-            print("❌ 无效的输入格式，请输入数字组合 (如 '1', '2,4', '2-4')。")
+            print("❌ Invalid input format. Please enter a number combination (e.g. '1', '2,4', '2-4').")
         except KeyboardInterrupt:
-            print("\n🛑 操作被用户取消。")
+            print("\n🛑 Operation cancelled by user.")
             sys.exit(1)
 
 def parse_args() -> Tuple[List[str], str, List[str]]:
     """
-    解析命令行参数，分离出测试用例名称、逻辑操作符和额外的 pytest 参数
+    Parse command-line arguments, separating test case names, logic operator, and extra pytest args.
     """
     args = sys.argv[1:]
     test_names = []
@@ -321,14 +321,14 @@ def parse_args() -> Tuple[List[str], str, List[str]]:
     return test_names, logic_op, additional_args
 
 def main():
-    # 确保子进程也能拿到 BASE_URL（.env 已在模块级别加载）
+    # Ensure subprocess can also access BASE_URL (.env already loaded at module level)
     if "BASE_URL" not in os.environ:
         os.environ["BASE_URL"] = "https://release.pear.us"
 
     if len(sys.argv) < 2:
-        print("💡 未提供测试用例名称，进入交互式层级选择模式...")
+        print("💡 No test case name provided. Entering interactive directory selection mode...")
         if not YAML_DIR.exists():
-            print(f"❌ 错误: 找不到基础 YAML 目录 {YAML_DIR}")
+            print(f"❌ Error: Base YAML directory not found: {YAML_DIR}")
             sys.exit(1)
             
         sel_type, sel_path = interactive_directory_selection(YAML_DIR)
@@ -340,12 +340,12 @@ def main():
         else: # dir_all
             all_yamls = [p.relative_to(BASE_DIR).as_posix() for p in sel_path.rglob("*.y*ml")]
             if not all_yamls:
-                print(f"❌ 目录 {sel_path} 下没有找到任何 YAML 文件。")
+                print(f"❌ No YAML files found in directory {sel_path}.")
                 sys.exit(1)
             yaml_paths = all_yamls
             k_expression = ""
             
-        print(f"\n✅ 选定执行 {len(yaml_paths)} 个 YAML 配置文件。")
+        print(f"\n✅ Selected {len(yaml_paths)} YAML config file(s) to run.")
         success = execute_yamls(yaml_paths, k_expression, [])
         sys.exit(0 if success else 1)
         
@@ -353,19 +353,19 @@ def main():
         test_names, logic_op, additional_args = parse_args()
 
         if not test_names:
-            print("❌ 未提供任何测试用例名称。")
+            print("❌ No test case names provided.")
             sys.exit(1)
 
         k_expression = f" {logic_op} ".join(test_names)
 
-        print(f"🔍 正在解析，提取到测试用例: {test_names}，连接逻辑: {logic_op}")
-        print(f"🔍 生成的 -k 表达式: '{k_expression}'")
-        print(f"🔍 正在搜索对应的 YAML 配置文件...")
+        print(f"🔍 Parsed test cases: {test_names}, logic operator: {logic_op}")
+        print(f"🔍 Generated -k expression: '{k_expression}'")
+        print(f"🔍 Searching for matching YAML config files...")
         
         yaml_paths = find_yaml_for_tests(test_names)
 
         if not yaml_paths:
-            print("❌ 未能在 All_YAML/ 目录下找到包含以上测试用例的配置文件。")
+            print("❌ No config files containing the above test cases found in All_YAML/.")
             sys.exit(1)
 
         if len(yaml_paths) > 1:
@@ -375,7 +375,7 @@ def main():
 
         if yaml_path == "ALL":
             print(f"\n{'=' * 60}")
-            print(f"🚀 选定配置: ⚡ 全部执行 (将依次运行以下 {len(yaml_paths)} 个配置文件)")
+            print(f"🚀 Selected: ⚡ Run all ({len(yaml_paths)} config files)")
             for idx, p in enumerate(yaml_paths, 1):
                 print(f"   [{idx}] {p}")
             print(f"{'=' * 60}\n")
@@ -384,15 +384,15 @@ def main():
                     
             print(f"\n{'=' * 60}")
             if not success:
-                print("⚠️  全部执行完成，但部分测试存在错误。请检查上方日志。")
+                print("⚠️  All runs completed, but some tests failed. Check logs above.")
                 print(f"{'=' * 60}")
                 sys.exit(1)
             else:
-                print("🎉 所有测试均已成功执行完成！")
+                print("🎉 All tests completed successfully!")
                 print(f"{'=' * 60}")
                 sys.exit(0)
         else:
-            print(f"\n✅ 选定配置: {yaml_path}")
+            print(f"\n✅ Selected config: {yaml_path}")
             success = execute_yamls([yaml_path], k_expression, additional_args)
             sys.exit(0 if success else 1)
 

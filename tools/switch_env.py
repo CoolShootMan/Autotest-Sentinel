@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-环境切换脚本 - 一键替换 YAML/Python 中的 URL 前缀
+Environment switch script — one-command replacement of URL prefixes in YAML/Python files
 
-用法:
-    python tools/switch_env.py --to=staging   # 切换到开发环境
-    python tools/switch_env.py --to=release   # 切换到测试环境
-    python tools/switch_env.py --to=prod       # 切换到生产环境
-    python tools/switch_env.py --dry-run=staging  # 预览模式（不改文件）
-    python tools/switch_env.py --list          # 列出所有环境
+Usage:
+    python tools/switch_env.py --to=staging   # Switch to development environment
+    python tools/switch_env.py --to=release   # Switch to test environment
+    python tools/switch_env.py --to=prod       # Switch to production environment
+    python tools/switch_env.py --dry-run=staging  # Preview mode (no file changes)
+    python tools/switch_env.py --list          # List all environments
 """
 
 import argparse
@@ -24,24 +24,24 @@ CONFIG_FILE = BASE_DIR / "config" / "env_config.yaml"
 
 
 def load_config():
-    """加载环境配置"""
+    """Load environment configuration"""
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def save_config(cfg):
-    """保存环境配置"""
+    """Save environment configuration"""
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         yaml.safe_dump(cfg, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
 
 def get_target_files(scan_patterns):
-    """获取需要扫描的文件列表（排除 example 和 __pycache__）"""
+    """Get list of files to scan (excludes example files and __pycache__)"""
     files = []
     for pattern in scan_patterns:
         full_pattern = BASE_DIR / pattern
         for path in glob.glob(str(full_pattern), recursive=True):
-            # 排除 example 文件和 pycache
+            # Exclude example files and pycache
             if "__pycache__" in path or "example" in path.lower():
                 continue
             files.append(Path(path))
@@ -50,29 +50,28 @@ def get_target_files(scan_patterns):
 
 def replace_content(text, old_base, new_base, old_env, new_env):
     """
-    在文本中替换 URL 前缀和 cookie 文件名。
-    替换内容：
+    Replace URL prefixes and cookie filenames in text.
+    Replacements:
       1. URL: https://release.pear.us → https://staging.pear.us
-      2. Cookie 文件名: cookie_release.json → cookie_staging.json 等
+      2. Cookie filenames: cookie_release.json → cookie_staging.json etc.
     """
-    # 1. 替换 URL 前缀
+    # 1. Replace URL prefix
     url_pattern = re.escape(old_base) + r"(?=/|\?|#|$)"
     text = re.sub(url_pattern, new_base, text)
 
-    # 2. 替换 cookie 文件名（统一用 _{env}.json 后缀）
-    # 匹配形如 "cookie_旧环境名" 的文件名引用
+    # 2. Replace cookie filenames (uniform _{env}.json suffix)
+    # Match filename references of the form "cookie_<old_env>"
     cookie_patterns = [
-        # 标准命名: cookie_release.json → cookie_staging.json
+        # Standard naming: cookie_release.json → cookie_staging.json
         (re.escape(f"cookie_{old_env}.json"), f"cookie_{new_env}.json"),
         # co_seller: cookie_release_co_seller.json → cookie_staging_co_seller.json
         (re.escape(f"cookie_{old_env}_co_seller.json"), f"cookie_{new_env}_co_seller.json"),
-        # partner_coseller: cookie_partner_coseller_release.json → cookie_partner_coseller_staging.json
-        #                   cookie_partner_release.json → cookie_partner_staging.json
+        # partner_coseller variants
         (re.escape(f"cookie_partner_coseller_{old_env}.json"), f"cookie_partner_coseller_{new_env}.json"),
         (re.escape(f"cookie_partner_{old_env}.json"), f"cookie_partner_{new_env}.json"),
         (re.escape(f"cookie_{old_env}_partner_coseller.json"), f"cookie_{new_env}_partner_coseller.json"),
         (re.escape(f"cookie_{old_env}_partner.json"), f"cookie_{new_env}_partner.json"),
-        # standalone: cookie_release_co_seller.json (old pattern)
+        # Legacy patterns
         (re.escape(f"cookie_release_co_seller.json"), f"cookie_{new_env}_co_seller.json"),
         (re.escape(f"cookie_partner_coseller_release.json"), f"cookie_partner_coseller_{new_env}.json"),
     ]
@@ -83,18 +82,18 @@ def replace_content(text, old_base, new_base, old_env, new_env):
 
 
 def process_file(filepath, old_base, new_base, old_env, new_env, dry_run=False, verbose=False):
-    """处理单个文件，返回替换数量"""
+    """Process a single file, return number of replacements made"""
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        print(f"  [跳过] {filepath} - 读取失败: {e}")
+        print(f"  [SKIP] {filepath} - read failed: {e}")
         return 0
 
     new_content = replace_content(content, old_base, new_base, old_env, new_env)
 
     if new_content == content:
-        return 0  # 无变化
+        return 0  # No changes
 
     url_count = len(re.findall(re.escape(old_base) + r"(?=/|\?|#|$)", content))
     cookie_count = 0
@@ -113,27 +112,27 @@ def process_file(filepath, old_base, new_base, old_env, new_env, dry_run=False, 
     total_count = url_count + cookie_count
 
     if dry_run:
-        print(f"  [DRY] {filepath}  →  将替换 {total_count} 处 (URL:{url_count} + cookie:{cookie_count})")
+        print(f"  [DRY] {filepath}  →  would replace {total_count} occurrences (URL:{url_count} + cookie:{cookie_count})")
         if verbose:
             lines = content.split("\n")
             new_lines = new_content.split("\n")
             for i, (old_l, new_l) in enumerate(zip(lines, new_lines)):
                 if old_l != new_l:
-                    print(f"       行 {i+1}: {old_l.strip()[:80]}")
-                    print(f"       →    {new_l.strip()[:80]}")
+                    print(f"       line {i+1}: {old_l.strip()[:80]}")
+                    print(f"       →     {new_l.strip()[:80]}")
     else:
-        # 备份
+        # Create backup
         backup_path = filepath.with_suffix(filepath.suffix + ".bak")
         shutil.copy2(filepath, backup_path)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(new_content)
-        print(f"  [修改] {filepath}  ({total_count} 处: URL×{url_count} cookie×{cookie_count})  |  备份: {backup_path.name}")
+        print(f"  [MODIFIED] {filepath}  ({total_count} occurrences: URL×{url_count} cookie×{cookie_count})  |  backup: {backup_path.name}")
 
     return total_count
 
 
 def preview_change(content, old_base, new_base):
-    """预览替换后的差异（简单字符差异）"""
+    """Preview diff after replacement (simple string diff)"""
     new_content = replace_content(content, old_base, new_base)
     if new_content == content:
         return None
@@ -141,32 +140,32 @@ def preview_change(content, old_base, new_base):
 
 
 def switch_env(target_env, dry_run=False, verbose=False):
-    """执行环境切换"""
+    """Execute environment switch"""
     cfg = load_config()
     envs = cfg.get("envs", {})
 
     if target_env not in envs:
-        print(f"[错误] 未知环境: {target_env}")
-        print("可用环境:", list(envs.keys()))
+        print(f"[ERROR] Unknown environment: {target_env}")
+        print("Available environments:", list(envs.keys()))
         return False
 
     current_env = cfg.get("current_env", "release")
     if target_env == current_env and not dry_run:
-        print(f"[提示] 当前已是 {target_env} ({envs[target_env]['desc']})，无需切换。")
+        print(f"[INFO] Already on {target_env} ({envs[target_env]['desc']}), no switch needed.")
         return True
 
     old_base = envs[current_env]["base"]
     new_base = envs[target_env]["base"]
 
     print(f"\n{'='*60}")
-    print(f"环境切换:  {current_env} ({old_base})")
-    print(f"       →  {target_env} ({new_base})")
-    print(f"模式:     {'DRY-RUN（预览，不改文件）' if dry_run else '正式执行'}")
+    print(f"Switching:  {current_env} ({old_base})")
+    print(f"       →   {target_env} ({new_base})")
+    print(f"Mode:      {'DRY-RUN (preview, no file changes)' if dry_run else 'Execute'}")
     print(f"{'='*60}\n")
 
     scan_patterns = cfg.get("scan_patterns", [])
     files = get_target_files(scan_patterns)
-    print(f"扫描文件数: {len(files)}\n")
+    print(f"Files to scan: {len(files)}\n")
 
     total_replacements = 0
     for filepath in files:
@@ -176,40 +175,40 @@ def switch_env(target_env, dry_run=False, verbose=False):
 
     print(f"\n{'='*60}")
     if dry_run:
-        print(f"DRY-RUN 完成: 共发现 {total_replacements} 处需要替换")
-        print("运行时不加 --dry-run 即可正式执行替换。")
+        print(f"DRY-RUN COMPLETE: {total_replacements} occurrences would be replaced")
+        print("Run without --dry-run to apply the changes.")
     else:
-        print(f"切换完成: {total_replacements} 处已替换")
-        print(f"备份文件 (*.bak) 在各自目录中，可手动删除。")
-        # 更新当前环境
+        print(f"Switch complete: {total_replacements} occurrences replaced")
+        print(f"Backup files (*.bak) are in their respective directories and can be deleted manually.")
+        # Update current environment
         cfg["current_env"] = target_env
         save_config(cfg)
-        print(f"\n[OK] config/env_config.yaml 已更新，当前环境 = {target_env}")
+        print(f"\n[OK] config/env_config.yaml updated, current_env = {target_env}")
     print(f"{'='*60}\n")
     return True
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="一键切换测试环境 URL",
+        description="One-command test environment URL switcher",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-示例:
-  python tools/switch_env.py --to=staging    # 切换到开发环境
-  python tools/switch_env.py --to=prod         # 切换到生产环境
-  python tools/switch_env.py --dry-run=release # 预览切换到测试环境（不改文件）
-  python tools/switch_env.py --list            # 列出所有环境
-  python tools/switch_env.py --to=staging -v   # 显示详细替换行
+Examples:
+  python tools/switch_env.py --to=staging    # Switch to development environment
+  python tools/switch_env.py --to=prod         # Switch to production environment
+  python tools/switch_env.py --dry-run=release # Preview switch to test environment (no file changes)
+  python tools/switch_env.py --list            # List all environments
+  python tools/switch_env.py --to=staging -v   # Show detailed replacement lines
         """
     )
-    parser.add_argument("--to", dest="target", help="目标环境 (staging / release / prod)")
-    parser.add_argument("--dry-run", dest="dry_run", help="预览模式，值为目标环境")
-    parser.add_argument("--list", action="store_true", help="列出所有可用环境")
-    parser.add_argument("-v", "--verbose", action="store_true", help="显示详细替换行")
+    parser.add_argument("--to", dest="target", help="Target environment (staging / release / prod)")
+    parser.add_argument("--dry-run", dest="dry_run", help="Preview mode, value is target environment")
+    parser.add_argument("--list", action="store_true", help="List all available environments")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed replacement lines")
 
     args = parser.parse_args()
 
-    # 优先级: --dry-run > --to > --list
+    # Priority: --dry-run > --to > --list
     if args.dry_run:
         success = switch_env(args.dry_run, dry_run=True, verbose=args.verbose)
     elif args.target:

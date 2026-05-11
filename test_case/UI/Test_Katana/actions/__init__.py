@@ -81,11 +81,11 @@ from .collabs import verify_invitation_link_clipboard
 
 def smart_click_scan(page: Page, v: dict):
     """
-    完整兜底点击（等效于 smart_click + fallback_scan=True）。
-    等同于在 YAML 中写：R_click: { name: 'xxx', fallback_scan: true }
+    Full fallback click (equivalent to smart_click + fallback_scan=True).
+    Same as writing: R_click: { name: 'xxx', fallback_scan: true } in YAML.
 
-    推荐场景：弹窗嵌套、多层 Drawer、元素被外层容器遮盖等传统定位困难的步骤。
-    普通用例请继续使用 R_click 或 click（默认快速定位，不触发 Page-level Search）。
+    Recommended for: nested dialogs, multi-layer Drawers, elements obscured by container overlays.
+    For regular test cases, continue using R_click or click (fast locate by default, no Page-level Search).
     """
     if isinstance(v, dict):
         v = {**v, "fallback_scan": True}
@@ -100,7 +100,7 @@ ACTIONS = {
     # Generic overrides
     "click_modal_close": click_modal_close,
     "R_click": smart_click,
-    "R_click_scan": smart_click_scan,   # 显式启用 Page-level Search + AI 兜底
+    "R_click_scan": smart_click_scan,   # Explicitly enable Page-level Search + AI fallback
     "fill": smart_fill,
     "check": smart_check,
     "swipe": smart_swipe,

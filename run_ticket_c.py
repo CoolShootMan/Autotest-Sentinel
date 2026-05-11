@@ -36,8 +36,8 @@ def run_isolated_scan_c():
                             const v = JSON.parse(JSON.stringify(constraints.video));
                             if (v.facingMode && v.facingMode.exact) { v.facingMode = { ideal: v.facingMode.exact }; }
                             if (v.deviceId && v.deviceId.exact) { delete v.deviceId; }
-                            // 关键修复：删除网页前端强加的 16:9 分辨率限制
-                            // 防止 Chromium 为了适配 1280x720 而对 1080x1080 的 Ticket_C 进行裁切或拉伸
+                            // Key fix: remove the 16:9 resolution constraint imposed by the web frontend
+                            // Prevents Chromium from cropping or stretching 1080x1080 Ticket_C images to fit 1280x720
                             if (v.width) delete v.width;
                             if (v.height) delete v.height;
                             constraints = { ...constraints, video: v };

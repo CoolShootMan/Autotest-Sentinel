@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-从 Allure 报告的 behaviors.json 解析测试用例状态，
-处理合并编号（如 T5033_5034），生成 ONES 更新用的状态映射。
+Parse test case statuses from Allure report's behaviors.json,
+handle merged case numbers (e.g. T5033_5034), and generate a status map for ONES updates.
 """
 
 import json
@@ -13,15 +13,15 @@ from datetime import datetime
 
 def _extract_test_case_ids(name: str) -> list:
     """
-    从测试函数名提取所有 T 编号。
+    Extract all T-numbers from a test function name.
     
-    处理多种格式:
+    Handles multiple formats:
     - testT3981_Verified -> ['T3981']
     - testT5033_5034_VerifyPartner -> ['T5033', 'T5034']
     - testT5210_5211_5212_Verify -> ['T5210', 'T5211', 'T5212']
     - testT3683_T3684_Guest -> ['T3683', 'T3684']
     """
-    # 找第一个 T 编号
+    # Find the first T-number
     m = re.match(r'^.*?T(\d+)(.*)', name)
     if not m:
         return []
@@ -30,7 +30,7 @@ def _extract_test_case_ids(name: str) -> list:
     rest = m.group(2)
     result = ['T' + first_num]
     
-    # 从 rest 中找 _T数字 或 _数字
+    # Find additional _Tnumber or _number in the remainder
     nums = re.findall(r'[&_]T?(\d+)', rest)
     for num in nums:
         result.append('T' + num)
@@ -40,8 +40,8 @@ def _extract_test_case_ids(name: str) -> list:
 
 def parse_behaviors_json(report_dir: str) -> dict:
     """
-    解析 Allure behaviors.json，返回测试用例状态。
-    返回格式: { "T3981": "passed", "T5033": "failed", ... }
+    Parse Allure behaviors.json and return test case statuses.
+    Return format: { "T3981": "passed", "T5033": "failed", ... }
     """
     behaviors_path = os.path.join(report_dir, "data", "behaviors.json")
 
@@ -55,33 +55,33 @@ def parse_behaviors_json(report_dir: str) -> dict:
     test_results = {}
 
     def extract_test_cases(item):
-        """递归提取所有测试用例"""
-        # item 可能是测试用例
+        """Recursively extract all test cases"""
+        # item may represent a test case
         if "name" in item and "status" in item:
             name = item.get("name", "")
             status = item.get("status", "").lower()
 
-            # 映射状态
+            # Map status values
             if status == "passed":
                 status = "passed"
             elif status == "failed":
                 status = "failed"
             elif status in ("skipped", "broken"):
-                status = "failed"  # ONES 没有"中断"，用"失败"
+                status = "failed"  # ONES has no "broken" status, map to "failed"
             else:
-                return  # 未知状态，跳过
+                return  # Unknown status, skip
 
-            # 从 name 提取 T 编号
-            # 格式: testT3981_Verified -> T3981
-            # 格式: testT5033_5034_VerifyPartner -> T5033, T5034
-            # 格式: testT5210_5211_5212_Verify -> T5210, T5211, T5212
-            # 格式: testT3683_T3684_Guest -> T3683, T3684
+            # Extract T-numbers from name
+            # Format: testT3981_Verified -> T3981
+            # Format: testT5033_5034_VerifyPartner -> T5033, T5034
+            # Format: testT5210_5211_5212_Verify -> T5210, T5211, T5212
+            # Format: testT3683_T3684_Guest -> T3683, T3684
             tc_list = _extract_test_case_ids(name)
             for tc in tc_list:
-                # 如果同一个编号有多个结果，以最后一个为准（取最新）
+                # If the same number appears multiple times, use the last result (most recent)
                 test_results[tc] = status
 
-        # 递归处理 children
+        # Recurse into children
         if "children" in item:
             for child in item["children"]:
                 extract_test_cases(child)
@@ -95,8 +95,8 @@ def parse_behaviors_json(report_dir: str) -> dict:
 
 def parse_test_cases_from_yaml(yaml_files: list) -> dict:
     """
-    从 YAML 文件读取用例列表，用于确认哪些用例需要更新。
-    返回格式: { "Scanner.yaml": ["T3981", "T3981_Already", ...], ... }
+    Read test case list from YAML files to determine which cases need updating.
+    Return format: { "Scanner.yaml": ["T3981", "T3981_Already", ...], ... }
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     yaml_dir = os.path.join(base_dir, "test_case", "UI", "Test_Katana")
@@ -123,7 +123,7 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
 
 
 def get_latest_report_dir(base_dir: str = None) -> str:
-    """获取最新的 Allure 报告目录"""
+    """Get the latest Allure HTML report directory"""
     if base_dir is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -133,7 +133,7 @@ def get_latest_report_dir(base_dir: str = None) -> str:
         print(f"[ERROR] HTML report directory not found: {html_dir}")
         return None
 
-    # 获取所有子目录，按修改时间排序
+    # Get all subdirectories sorted by modification time
     subdirs = [d for d in os.listdir(html_dir) if os.path.isdir(os.path.join(html_dir, d))]
     subdirs.sort(key=lambda x: os.path.getmtime(os.path.join(html_dir, x)), reverse=True)
 
@@ -148,8 +148,8 @@ def get_latest_report_dir(base_dir: str = None) -> str:
 
 def generate_status_mapping(test_results: dict, yaml_cases: dict = None) -> dict:
     """
-    生成最终的状态映射。
-    如果指定了 yaml_cases，则只保留这些用例的状态。
+    Generate the final status mapping.
+    If yaml_cases is provided, only retain statuses for those cases.
     """
     if yaml_cases:
         all_yaml_tc = set()
@@ -161,7 +161,7 @@ def generate_status_mapping(test_results: dict, yaml_cases: dict = None) -> dict
             if tc in all_yaml_tc:
                 filtered[tc] = status
             else:
-                print(f"  跳过 {tc} (不在指定的 YAML 文件中)")
+                print(f"  Skipping {tc} (not in specified YAML files)")
         return filtered
 
     return test_results
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     import sys
 
     # ============================================================
-    # 配置区
+    # Configuration
     # ============================================================
     YAML_FILES = [
         "All_YAML/Events/Scanner.yaml",
@@ -182,35 +182,35 @@ if __name__ == "__main__":
         "All_YAML/Post/Post_setting.yaml",
     ]
 
-    # 报告目录，默认使用最新的
-    REPORT_DIR = None  # 自动选择最新
+    # Report directory — defaults to latest
+    REPORT_DIR = None  # Auto-select latest
 
     # ============================================================
 
     print("=" * 60)
-    print("ONES 测试状态生成工具")
+    print("ONES Test Status Generator")
     print("=" * 60)
 
-    # 1. 获取报告目录
+    # 1. Locate report directory
     if REPORT_DIR:
         report_dir = REPORT_DIR
     else:
-        print("\n[1] 查找最新报告目录...")
+        print("\n[1] Finding latest report directory...")
         report_dir = get_latest_report_dir()
 
     if not report_dir:
         sys.exit(1)
 
-    # 2. 解析 behaviors.json
-    print("\n[2] 解析 behaviors.json...")
+    # 2. Parse behaviors.json
+    print("\n[2] Parsing behaviors.json...")
     test_results = parse_behaviors_json(report_dir)
-    print(f"    解析到 {len(test_results)} 个测试用例状态")
+    print(f"    Parsed {len(test_results)} test case statuses")
 
-    # 3. 可选：从 YAML 过滤
+    # 3. Optional: filter by YAML
     # yaml_cases = parse_test_cases_from_yaml(YAML_FILES)
     # test_results = generate_status_mapping(test_results, yaml_cases)
 
-    # 4. 输出结果
+    # 4. Output results
     print("\n[3] Test Status Summary:")
     print("-" * 40)
 
@@ -229,6 +229,6 @@ if __name__ == "__main__":
     print("Status Mapping (for ONES update):")
     print("=" * 60)
 
-    # 输出 JSON 格式，方便后续使用
+    # Output as JSON for downstream consumption
     import json
     print(json.dumps(test_results, indent=2, ensure_ascii=False))

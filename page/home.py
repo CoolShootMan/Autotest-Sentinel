@@ -14,22 +14,22 @@ from loguru import logger
 
 
 def page_element_click(page: Page, selector, index=0):
-    """ 页面点击事件(Demo用)
-        selector: 选择器
-        index 匹配的选择器, 默认匹配第1个
+    """ Page click event (Demo)
+        selector: element selector
+        index: index of matched selector, default is first (0)
     """
-    with allure.step(f'点击了元素-{selector}'):
-        logger.info(f'点击了元素-{selector}')
+    with allure.step(f'Clicked element - {selector}'):
+        logger.info(f'Clicked element - {selector}')
     page.locator(selector=selector).nth(index).click()
 
 def page_element_role_click(page: Page, role, name, index=None, exact=False, force=False):
-    """ 页面点击事件
-        role: 内置定位器，定位效果比selector更好
+    """ Page click event
+        role: built-in locator, better accuracy than selector
     """
-    with allure.step(f'点击了元素-{role},出现文本-{name}'):
-        logger.info(f'点击了元素-{role},出现文本-{name}')
-    with allure.step(f'点击了元素-{role},出现文本-{name}'):
-        logger.info(f'点击了元素-{role},出现文本-{name}')
+    with allure.step(f'Clicked element - {role}, visible text - {name}'):
+        logger.info(f'Clicked element - {role}, visible text - {name}')
+    with allure.step(f'Clicked element - {role}, visible text - {name}'):
+        logger.info(f'Clicked element - {role}, visible text - {name}')
     if index is not None:
         locator = page.get_by_role(role=role, name=name, exact=exact).nth(index=index)
         # locator.scroll_into_view_if_needed()
@@ -40,55 +40,55 @@ def page_element_role_click(page: Page, role, name, index=None, exact=False, for
         locator.click(force=force, timeout=15000)
 
 def page_element_label_click(page: Page, text, index=0):
-    """ 页面点击事件
-        label: 标签定位器，定位效果比selector更好
+    """ Page click event
+        label: label locator, better accuracy than selector
     """
-    with allure.step(f'点击了元素-{text}'):
-        logger.info(f'点击了元素-{text}')
+    with allure.step(f'Clicked element - {text}'):
+        logger.info(f'Clicked element - {text}')
     page.get_by_label(text=text).nth(index).click(timeout=15000)
 
-def page_element_input_fill(page: Page, selector,value):
-    """ 页面input框文本填充(Demo用) """
-    with allure.step(f'元素-{selector},填充文本-{value}'):
-        logger.info(f'元素-{selector},填充文本-{value}')
+def page_element_input_fill(page: Page, selector, value):
+    """ Fill text input (Demo) """
+    with allure.step(f'Element - {selector}, fill text - {value}'):
+        logger.info(f'Element - {selector}, fill text - {value}')
     page.locator(selector=selector).fill(value=value)
 
 def page_element_input_role_fill(page: Page, role, name, value, exact=False):
-    """ 页面input框文本填充 """
-    with allure.step(f'元素-{role} ({name}),填充文本-{value}'):
-        logger.info(f'元素-{role} ({name}),填充文本-{value}')
+    """ Fill text input """
+    with allure.step(f'Element - {role} ({name}), fill text - {value}'):
+        logger.info(f'Element - {role} ({name}), fill text - {value}')
     page.get_by_role(role=role, name=name, exact=exact).fill(value=value)
 
 def page_element_input_placeholder_fill(page: Page, placeholder, value):
-    """ 页面input框文本填充 """
-    with allure.step(f'元素-{placeholder},填充文本-{value}'):
-        logger.info(f'元素-{placeholder},填充文本-{value}')
+    """ Fill text input """
+    with allure.step(f'Element - {placeholder}, fill text - {value}'):
+        logger.info(f'Element - {placeholder}, fill text - {value}')
     page.get_by_placeholder(placeholder).fill(value=value)
 
 def page_element_input_by_placeholder_and_locator_fill(page: Page, placeholder, locator, value):
-    """ 页面input框文本填充 """
-    with allure.step(f'元素-{placeholder},填充文本-{value}'):
-        logger.info(f'元素-{placeholder},填充文本-{value}')
+    """ Fill text input """
+    with allure.step(f'Element - {placeholder}, fill text - {value}'):
+        logger.info(f'Element - {placeholder}, fill text - {value}')
     page.get_by_placeholder(placeholder).click()
     page.locator(locator).fill(value=value)
 
 
 def page_swipe(page: Page, x, y):
-    """ 页面滚动条方法封装 """
-    with allure.step(f'滑动元素,坐标-{x, y}'):
-        logger.info(f'滑动元素,坐标-{x, y}')
+    """ Page scroll method """
+    with allure.step(f'Scroll/swipe element, coordinates - {x, y}'):
+        logger.info(f'Scroll/swipe element, coordinates - {x, y}')
     page.mouse.wheel(delta_x=x, delta_y=y)
 
 def page_element_input_role_press(page: Page, role, key):
-    """ 页面按键方法封装 """
-    with allure.step(f'对元素使用了按键-{role}'):
-        logger.info(f'对元素使用了按键-{role}')
+    """ Page keyboard press method """
+    with allure.step(f'Key pressed on element - {role}'):
+        logger.info(f'Key pressed on element - {role}')
     page.get_by_role(role=role).press(key=key)
 
 def page_open(page: Page, url):
-    """ 打开页面方法封装 """
-    with allure.step(f'打开-{url}'):
-        logger.info(f'打开-{url}')
+    """ Open page method """
+    with allure.step(f'Opening - {url}'):
+        logger.info(f'Opening - {url}')
     page.goto(url=url, wait_until="load", timeout=120000)
     
     # DEBUG: Proof of cookies for user

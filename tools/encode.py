@@ -15,10 +15,10 @@ import json
 from tools import logger
 def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> json:
   """
-  Description: 入参加密方法
+  Description: Request parameter encryption method
   ---------
-  Arguments: url: 入参加密链接
-             plaintext_data: 明文入参
+  Arguments: url: Encryption endpoint URL
+             plaintext_data: Plaintext request parameters
   ---------
   Returns:
   -------
@@ -26,7 +26,7 @@ def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> json:
   try: 
     raw_url = f"{url}/IM/encode/request/?apiId=100008&transNo=159463662161357829085&reqTime=20200713063705&reqChannelNo={ChannelNo}&rspChannelNo={ChannelNo}"
     request_payload = json.dumps(plaintext_data)
-    logger.debug(f"请求的明文入参:{request_payload}")
+    logger.debug(f"Plaintext request parameters: {request_payload}")
     req_response = requests.request("POST", raw_url, data=request_payload)
     return req_response.json()
   except BaseException as e:
@@ -35,11 +35,11 @@ def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> json:
 def decode_request(url, ciphertext_data) -> string:
   """
   
-  Description: 入参解密方法
+  Description: Request parameter decryption method
   ---------
   
-  Arguments: url: 入参解密链接 
-             ciphertext_data: 密文入参
+  Arguments: url: Decryption endpoint URL
+             ciphertext_data: Ciphertext request parameters
   ---------
   
   
@@ -48,26 +48,26 @@ def decode_request(url, ciphertext_data) -> string:
   
   """
   url = f"{url}/IM/decode/request"
-  decode_request_payload = json.dumps(ciphertext_data) # 转化为json传输
+  decode_request_payload = json.dumps(ciphertext_data) # Convert to JSON for transmission
   headers = {
     'Content-Type': 'application/json'
   }
   response = requests.request("POST", url, headers=headers, data=decode_request_payload)
-  logger.debug(f"入参解密后：{response.text}")
+  logger.debug(f"Decrypted request parameter: {response.text}")
   return response.text
   
 def encode_respone(url, ciphertext_data) -> string:
   """
   
-  Description: 出参加密 
+  Description: Response parameter encryption
   ---------
   
-  Arguments:url：  需要加密的接口链接
-            api_path: 接口路径 如 /IM/calculateIRR
-            ciphertext_data:  加密入参
+  Arguments: url: API endpoint URL to encrypt
+             api_path: API path, e.g. /IM/calculateIRR
+             ciphertext_data: Encrypted request parameters
   ---------
 
-  Returns: 返回json格式响应数据
+  Returns: JSON-format response data
   -------
   
   """
@@ -76,7 +76,7 @@ def encode_respone(url, ciphertext_data) -> string:
     'Content-Type': 'application/json'
   }
   encode_response = requests.request("POST", url=url, headers=headers, data=json.dumps(ciphertext_data))
-  logger.debug(f"出参加密:{encode_response.text}")
+  logger.debug(f"Encrypted response: {encode_response.text}")
   return encode_response.text
 
 
@@ -87,7 +87,7 @@ def decode_response(url, data) -> string:
       'Content-Type': 'application/json'
     }
     response = requests.request("POST", url=decode_response_url, headers=headers, data=data)
-    logger.debug(f"出参解密后：{response.text}")
+    logger.debug(f"Decrypted response: {response.text}")
     return json.loads(response.text)
   except BaseException as e:
     logger.error(f'decode_response error-{e}')

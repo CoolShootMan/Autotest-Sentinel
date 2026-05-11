@@ -19,11 +19,11 @@ import sys
 import socket
 from dotenv import load_dotenv
 
-# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+# Load .env file from project root (does not override existing environment variables)
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 def start_autotest():
-    # 确保子进程也能拿到 BASE_URL（.env 已在模块级别加载）
+    # Ensure subprocess can also access BASE_URL (.env already loaded at module level)
     if "BASE_URL" not in os.environ:
         os.environ["BASE_URL"] = "https://release.pear.us"
 
@@ -50,7 +50,7 @@ def start_autotest():
 
     logger.info(f"Allure data directory: {allure_data_dir}")
     
-    # 要执行的 YAML 文件列表，逗号分隔（路径相对于 Test_Katana/All_YAML/）
+    # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
     yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
     #yaml_files = "All_YAML/Module/Module.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
@@ -65,7 +65,7 @@ def start_autotest():
     ]
     logger.info(f"Running with YAMLs: {yaml_files}")
 
-    # ── 1. 先获取三个测试账号的 Cookie ──
+    # ── 1. Fetch cookies for all 3 test accounts ──
     cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
     logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
     cookie_result = subprocess.run(
@@ -76,7 +76,7 @@ def start_autotest():
     if cookie_result.returncode != 0:
         logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
-    # ── 2. 用最新 cookie 登录各账号，点掉 EDU 弹窗 ──
+    # ── 2. Login with latest cookies and dismiss EDU popups ──
     dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
     logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
     dismiss_result = subprocess.run(
@@ -87,7 +87,7 @@ def start_autotest():
     if dismiss_result.returncode != 0:
         logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
 
-    # ── 3. 正式运行 pytest ──
+    # ── 3. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")
@@ -112,21 +112,21 @@ def start_autotest():
     logger.info(f"Running command: {' '.join(generate_cmd)}")
     subprocess.run(generate_cmd, check=True)
     
-    # 获取局域网 IP（192.168.x.x 段，排除虚拟网卡/WSL）
+    # Get LAN IP (192.168.x.x range, excluding virtual NICs/WSL)
     def get_lan_ip():
         try:
             addrs = socket.getaddrinfo(socket.gethostname(), None)
             for addr in addrs:
                 ip = addr[4][0]
-                # 排除 WSL/Hyper-V 虚拟网段 (172.16-31.x.x)
+                # Exclude WSL/Hyper-V virtual subnets (172.16-31.x.x)
                 if ip.startswith("172."):
                     octet2 = int(ip.split(".")[1])
                     if 16 <= octet2 <= 31:
                         continue
-                # 优先返回真实局域网 192.168.x.x（排除已知虚拟网段）
+                # Prefer real LAN 192.168.x.x (exclude known virtual subnets)
                 if ip.startswith("192.168.") and not any(ip.startswith(f"192.168.{x}.") for x in ["56", "88", "23"]):
                     return ip
-            # 回退：任何非 127、非 172.16-31、非 IPv6 的地址
+            # Fallback: any address that is not 127.x, 172.16-31.x, or IPv6
             for addr in addrs:
                 ip = addr[4][0]
                 if ip.startswith("127.") or ":" in ip:
@@ -146,13 +146,13 @@ def start_autotest():
     logger.info(f"Opening Allure report (local only)...")
     open_cmd = [allure_bat, "open", allure_report_dir]
     logger.info(f"Running command: {' '.join(open_cmd)}")
-    # 立即启动 HTTP 服务器（独立窗口，不被 open 阻塞影响）
+    # Start HTTP server immediately (in separate window, not blocked by allure open)
     http_server_script = os.path.join(BASE_DIR, "http_server.py")
     http_cmd = [sys.executable, http_server_script, allure_report_dir, str(http_port)]
     subprocess.Popen(http_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0)
     logger.info(f"====================================")
-    logger.info(f"局域网报告地址: http://{lan_ip}:{http_port}")
-    logger.info(f"本机 Allure: 自动已打开")
+    logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
+    logger.info(f"Local Allure: auto-opened")
     logger.info(f"====================================")
     try:
         subprocess.run(open_cmd)

@@ -1,9 +1,9 @@
 """
-关闭三个账号在各页面可能出现的 EDU 弹窗。
-依赖已存在的 cookie 文件，通过 storage_state 登录，无需密码。
-用法：python tools/dismiss_edu.py
+Dismiss EDU popups for three accounts on various pages.
+Relies on existing cookie files, logs in via storage_state — no password needed.
+Usage: python tools/dismiss_edu.py
 
-Cookie 文件名和 URL 根据环境变量 BASE_URL 动态读取。
+Cookie filenames and URLs are resolved dynamically from the BASE_URL environment variable.
 """
 import os
 from pathlib import Path
@@ -15,10 +15,10 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 PROJECT_ROOT = Path(__file__).parent.parent
 COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
 
-# 从 BASE_URL 环境变量读取，默认 release 环境
+# Read from BASE_URL environment variable, default to release environment
 ENV_BASE = os.environ.get("BASE_URL", "https://release.pear.us")
 
-# 根据域名反推环境名，用于 cookie 文件命名
+# Reverse-map domain to environment name for cookie file naming
 _ENV_MAP = {
     "https://staging.pear.us": "staging",
     "https://release.pear.us": "release",
@@ -46,7 +46,7 @@ ACCOUNTS = [
 
 
 def dismiss_edu_popups(page: "Page", retries: int = 5) -> None:
-    """点掉页面上所有可能出现的 EDU 弹窗按钮（Next / Got it / Try it now）。"""
+    """Click away all EDU popup buttons that may appear on the page (Next / Got it / Try it now)."""
     for _ in range(retries):
         clicked = False
         for text in ("Next", "Got it"):
@@ -64,7 +64,7 @@ def dismiss_edu_popups(page: "Page", retries: int = 5) -> None:
 
 
 def handle_selling_customize(page: "Page") -> None:
-    """Selling tab → Customize products 页面的 EDU 处理流程。"""
+    """Selling tab → Customize products page EDU handling flow."""
     try:
         page.get_by_role("tab", name="Selling", exact=True).click(timeout=5000)
         page.wait_for_timeout(1000)
@@ -110,7 +110,7 @@ def handle_selling_customize(page: "Page") -> None:
 
 
 # def handle_customers(page: "Page") -> None:
-#     """Customers → Followers 页面 EDU 处理。"""
+#     """Customers → Followers page EDU handling."""
 #     try:
 #         page.goto("https://release.pear.us/customers", timeout=60000)
 #         page.wait_for_timeout(2000)
@@ -137,22 +137,22 @@ def dismiss_for_account(playwright, account: dict):
     home_url = account["home_url"]
 
     if not cookie_path.exists():
-        print(f"[{name}] Cookie 文件不存在，跳过: {cookie_path}")
+        print(f"[{name}] Cookie file not found, skipping: {cookie_path}")
         return
 
-    print(f"\n[{name}] 加载 cookie，开始处理 EDU...")
+    print(f"\n[{name}] Loading cookie, starting EDU dismissal...")
 
     browser = playwright.chromium.launch(headless=False)
-    # 通过 storage_state 加载已登录状态，而非 add_init_script
+    # Load authenticated state via storage_state (not add_init_script)
     context = browser.new_context(storage_state=str(cookie_path))
     page = context.new_page()
 
-    # ── ① shop 主页 EDU ──
+    # ── ① Shop home page EDU ──
     page.goto(home_url, timeout=60000)
     page.wait_for_timeout(2000)
     dismiss_edu_popups(page)
 
-    # ── ② 进入Post编辑页，触发该页 EDU ──
+    # ── ② Navigate to Post edit page to trigger its EDU ──
     try:
         page.get_by_role("button", name="Image of Product Test event").first.click(timeout=5000)
         page.wait_for_timeout(1500)
@@ -166,14 +166,14 @@ def dismiss_for_account(playwright, account: dict):
     # ── ④ Customers → Followers ──
     handle_customers(page)
 
-    # ── ⑤ 回到 storefront 收尾 ──
+    # ── ⑤ Return to storefront to finish up ──
     page.goto(home_url, timeout=60000)
     page.wait_for_timeout(2000)
     dismiss_edu_popups(page)
 
-    # ── 保存已处理 EDU 后的 cookie ──
+    # ── Save cookie after EDU processing ──
     context.storage_state(path=str(cookie_path))
-    print(f"[{name}] EDU 处理完毕，cookie 已更新 -> {cookie_path}")
+    print(f"[{name}] EDU dismissal complete, cookie updated -> {cookie_path}")
 
     page.close()
     context.close()
@@ -181,11 +181,11 @@ def dismiss_for_account(playwright, account: dict):
 
 
 def main():
-    print("=== 开始关闭 EDU 弹窗 ===")
+    print("=== Starting EDU popup dismissal ===")
     with sync_playwright() as pw:
         for account in ACCOUNTS:
             dismiss_for_account(pw, account)
-    print("\n=== 全部完成 ===")
+    print("\n=== All accounts processed ===")
 
 
 if __name__ == "__main__":
