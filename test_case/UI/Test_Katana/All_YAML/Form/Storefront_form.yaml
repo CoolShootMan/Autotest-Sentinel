@@ -40,9 +40,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     # 2. Long text (Paragraph)
     R_click_add_field_2: { role: "button", name: "Add new field", quick: true }
     sleep_2: 50
-    R_click_short_2: { testid: "base-form-field-select", quick: true }
-    R_click_select_item_1:
-      { testid: "base-form-field-menu-item-PARAGRAPH", quick: true }
+    R_click_short_2: { role: "combobox" }
+    sleep_click_1: 50
+    R_click_select_item_1: { role: "option", name: "Paragraph" }
     sleep_click_2: 50
     fill_field_title_2:
       {
@@ -56,9 +56,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     # 3. Email
     R_click_add_field_3: { role: "button", name: "Add new field", quick: true }
     sleep_3: 50
-    R_click_email3: { testid: "base-form-field-select", quick: true }
-    R_clickselect_item_2:
-      { testid: "base-form-field-menu-item-EMAIL_ADDRESS", quick: true }
+    R_click_email3: { role: "combobox" }
+    sleep_click_2: 50
+    R_click_select_item_2: { role: "option", name: "Email" }
     sleep_click_email: 50
     R_click_add_3: { role: "button", name: "Add", quick: true }
 
@@ -66,9 +66,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_4:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_4: 50
-    R_click_phone: { testid: "base-form-field-select", quick: true }
-    R_clicselect_item_3:
-      { testid: "base-form-field-menu-item-EMAIL_ADDRESS", quick: true }
+    R_click_phone: { role: "combobox" }
+    sleep_click_3: 50
+    R_click_select_item_3: { role: "option", name: "Phone" }
     sleep_click_phone: 50
     R_click_add_4: { role: "button", name: "Add", quick: true }
 
@@ -76,9 +76,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_5:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_5: 50
-    R_click_media: { testid: "base-form-field-select", quick: true }
-    R_clicselect_item_4:
-      { testid: "base-form-field-menu-item-ATTACHMENT", quick: true }
+    R_click_media: { role: "combobox" }
+    sleep_click_4: 50
+    R_click_select_item_4: { role: "option", name: "Media" }
     sleep_click_media: 50
     fill_media_title:
       {
@@ -94,9 +94,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_6:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_6: 50
-    R_click_datetime: { testid: "base-form-field-select", quick: true }
-    R_click_dselect_item_5:
-      { testid: "base-form-field-menu-item-DATETIME", quick: true }
+    R_click_datetime: { role: "combobox" }
+    sleep_click_5: 50
+    R_click_select_item_5: { role: "option", name: "Date and time" }
     sleep_click_datetime: 50
     R_click_add_6: { role: "button", name: "Add", quick: true }
 
@@ -104,9 +104,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_7:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_7: 50
-    R_click_single_choice: { testid: "base-form-field-select", quick: true }
-    R_click_singleselect_item_6:
-      { testid: "base-form-field-menu-item-SINGLE_CHOICE", quick: true }
+    R_click_single_choice: { role: "combobox" }
+    sleep_click_6: 50
+    R_click_select_item_6: { role: "option", name: "Single choice" }
     fill_single_title:
       {
         role: "textbox",
@@ -124,9 +124,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_8:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_8: 50
-    R_click_multiple_choice: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_7:
-      { testid: "base-form-field-menu-item-MULTIPLE_CHOICE", quick: true }
+    R_click_multiple_choice: { role: "combobox" }
+    sleep_click_7: 50
+    R_click_select_item_7: { role: "option", name: "Multiple choice" }
     fill_multi_title:
       { role: "textbox", name: "Enter title of the field", value: "Multiple" }
     R_click_add_multi_opt: { role: "button", name: "Add option" }
@@ -142,9 +142,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_9:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_9: 50
-    R_click_social_1: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_8:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_1: { role: "combobox" }
+    sleep_click_8: 50
+    R_click_select_item_8: { role: "option", name: "Social" }
     R_click_social_combo_1: { role: "combobox", quick: true }
     R_click_insta: { role: "option", name: "Instagram", quick: true }
     R_click_add_9: { role: "button", name: "Add", quick: true }
@@ -153,9 +153,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_10:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_10: 50
-    R_click_social_2: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_9:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_2: { role: "combobox" }
+    sleep_click_9: 50
+    R_click_select_item_9: { role: "option", name: "Social" }
     R_click_social_combo_2: { role: "combobox", quick: true }
     R_click_fb: { role: "option", name: "Facebook", quick: true }
     R_click_add_10: { role: "button", name: "Add", quick: true }
@@ -164,9 +164,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_11:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_11: 50
-    R_click_social_3: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_10:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_3: { role: "combobox" }
+    sleep_click_10: 50
+    R_click_select_item_10: { role: "option", name: "Social" }
     R_click_social_combo_3: { role: "combobox", quick: true }
     R_click_tiktok: { role: "option", name: "TikTok", quick: true }
     R_click_add_11: { role: "button", name: "Add", quick: true }
@@ -175,9 +175,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_12:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_12: 50
-    R_click_social_4: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_11:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_4: { role: "combobox" }
+    sleep_click_11: 50
+    R_click_select_item_11: { role: "option", name: "Social" }
     R_click_social_combo_4: { role: "combobox", quick: true }
     R_click_x: { role: "option", name: "X", exact: true, quick: true }
     R_click_add_12: { role: "button", name: "Add", quick: true }
@@ -186,9 +186,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_13:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_13: 50
-    R_click_social_5: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_12:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_5: { role: "combobox" }
+    sleep_click_12: 50
+    R_click_select_item_12: { role: "option", name: "Social" }
     R_click_social_combo_5: { role: "combobox", quick: true }
     R_click_yt: { role: "option", name: "YouTube", quick: true }
     R_click_add_13: { role: "button", name: "Add", quick: true }
@@ -197,9 +197,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_14:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_14: 50
-    R_click_social_6: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_13:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_6: { role: "combobox" }
+    sleep_click_13: 50
+    R_click_select_item_13: { role: "option", name: "Social" }
     R_click_social_combo_6: { role: "combobox", quick: true }
     R_click_linkedin: { role: "option", name: "Linkedin", quick: true }
     R_click_add_14: { role: "button", name: "Add", quick: true }
@@ -208,9 +208,9 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_15:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_15: 50
-    R_click_social_7: { testid: "base-form-field-select", quick: true }
-    R_click_multipleselect_item_14:
-      { testid: "base-form-field-menu-item-SOCIAL", quick: true }
+    R_click_social_7: { role: "combobox" }
+    sleep_click_14: 50
+    R_click_select_item_14: { role: "option", name: "Social" }
     R_click_social_combo_7: { role: "combobox", quick: true }
     R_click_threads: { role: "option", name: "Threads", quick: true }
     check_required: { role: "checkbox", name: "Required", checked: false }

@@ -1,15 +1,15 @@
 """
-duplicate_post.py — 复制 Post（独立脚本，不依赖浏览器上下文）
+duplicate_post.py — Duplicate a Post (standalone script, no browser context dependency)
 
-流程：
-  1. 从 cookie_release.json 读取 cookie
-  2. 使用硬编码的旧 JWT token 调用 GET /auth/refreshToken 换新 JWT
-  3. 用新 JWT 调用 GET /posts/curator/duplicate/verify/{id}（验证）
-  4. 用新 JWT 调用 GET /posts/curator/duplicate/{id}（执行，创建草稿）
+Workflow:
+  1. Load cookie from cookie_release.json
+  2. Use hardcoded JWT token to call GET /auth/refreshToken to get a new JWT
+  3. Use new JWT to call GET /posts/curator/duplicate/verify/{id} (verify)
+  4. Use new JWT to call GET /posts/curator/duplicate/{id} (execute, creates a draft)
 
-输出：
-  - 新草稿 post id 写入当前目录的 .duplicate_result.json
-  - 供 base.py  duplicate_post action 读取
+Output:
+  - New draft post id written to .duplicate_result.json in current directory
+  - Read by base.py duplicate_post action
 """
 import json
 import os
@@ -21,14 +21,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ========== 配置 ==========
-# 硬编码绝对路径，避免动态路径计算错误
+# ========== Configuration ==========
+# Hardcoded absolute path to avoid dynamic path calculation errors
 COOKIE_FILE = "d:/monster_test/Autotest-monster/test_case/UI/Test_Katana/cookie_release.json"
 API_BASE = "https://release.katana-api.1m.app"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULT_FILE = os.path.join(SCRIPT_DIR, ".duplicate_result.json")
 
-# 硬编码有效的旧JWT token（用于刷新获取新token）
+# Hardcoded valid old JWT token (used to refresh and get a new token)
 HARDCODED_VALID_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0OTkzMjFhNi1lNWRiLTQ1ZjItYjQ0MC1mZWI4NGQ1NWQ0ZjciLCJlbnYiOiJyZWxlYXNlIiwiaWF0IjoxNzc2NzQwNDA4LCJleHAiOjE4MDgyOTgwMDh9.6sZCDIfP33GIjZ8HQXNiAO_FX8srJckicKnTA1qn-as"
 
 print(f"[DEBUG] COOKIE_FILE={COOKIE_FILE}", flush=True)
@@ -36,7 +36,7 @@ print(f"[DEBUG] EXISTS={os.path.exists(COOKIE_FILE)}", flush=True)
 
 
 def load_cookies():
-    """从 storage_state JSON 加载 cookie 字符串"""
+    """Load cookie string from Playwright storage-state JSON"""
     cookie_file = COOKIE_FILE
     with open(cookie_file, "r", encoding="utf-8") as f:
         state = json.load(f)
@@ -48,11 +48,11 @@ def load_cookies():
     return cookie_str, state.get("cookies", [])
 
 
-# extract_jwt_from_cookie 函数已不再需要，已删除
+# extract_jwt_from_cookie function is no longer needed and has been removed
 
 
 def refresh_token(cookie_str: str) -> str:
-    """使用硬编码JWT换取新JWT"""
+    """Use hardcoded JWT to obtain a new JWT"""
     headers = {
         "accept": "application/json",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
@@ -83,7 +83,7 @@ def refresh_token(cookie_str: str) -> str:
 
 
 def duplicate_verify(new_jwt: str, post_id: str, cookie_str: str) -> dict:
-    """Step 1: 验证 duplicate"""
+    """Step 1: Verify duplicate"""
     headers = {
         "authorization": f"Bearer {new_jwt}",
         "accept": "application/json",
@@ -97,7 +97,7 @@ def duplicate_verify(new_jwt: str, post_id: str, cookie_str: str) -> dict:
 
 
 def duplicate_execute(new_jwt: str, post_id: str, cookie_str: str) -> str:
-    """Step 2: 执行 duplicate（返回草稿 post id）"""
+    """Step 2: Execute duplicate (returns draft post id)"""
     headers = {
         "authorization": f"Bearer {new_jwt}",
         "accept": "application/json",
@@ -112,7 +112,7 @@ def duplicate_execute(new_jwt: str, post_id: str, cookie_str: str) -> str:
     new_post_id = (
         data.get("id")
         or (data.get("data") or {}).get("id")
-        or data.get("copyFromPostId")  # 有时直接返回原 post
+        or data.get("copyFromPostId")  # sometimes the original post id is returned directly
     )
     return new_post_id
 
@@ -130,12 +130,12 @@ def run(params) -> bool:
 
     print(f"[duplicate_post] post_id={post_id}")
 
-    # 1. 加载 cookie
+    # 1. Load cookie
     cookie_str, cookies = load_cookies()
     print(f"[duplicate_post] Cookie loaded ({len(cookies)} entries)")
     print(f"[duplicate_post] Using hardcoded JWT (prefix={HARDCODED_VALID_JWT[:30]}...)")
 
-    # 2. 检查 cookie 是否存在（仅作记录，不再强制要求）
+    # 2. Check if cookie exists (log only, not required)
     refresh_cookie_found = False
     for c in cookies:
         if c.get("name") == "release_katana_web_auth_token_refresh":
@@ -146,7 +146,7 @@ def run(params) -> bool:
     if not refresh_cookie_found:
         print("[WARNING] release_katana_web_auth_token_refresh cookie not found, using hardcoded JWT instead")
 
-    # 3. 刷新 token（使用硬编码JWT）
+    # 3. Refresh token (using hardcoded JWT)
     new_jwt = refresh_token(cookie_str)
     print(f"[duplicate_post] New JWT refreshed (prefix={new_jwt[:30]}...)")
 
@@ -158,7 +158,7 @@ def run(params) -> bool:
     new_post_id = duplicate_execute(new_jwt, post_id, cookie_str)
     print(f"[duplicate_post] Done: {post_id} -> {new_post_id}")
 
-    # 6. 写入结果文件，供 base.py 读取
+    # 6. Write result file for base.py to read
     result = {"post_id": post_id, "new_post_id": new_post_id}
     with open(RESULT_FILE, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False)
@@ -168,13 +168,13 @@ def run(params) -> bool:
 
 
 if __name__ == "__main__":
-    # 支持两种调用方式：
+    # Supports two calling styles:
     # 1. python duplicate_post.py '{"post_id": "xxx"}'
     # 2. python duplicate_post.py --post-id xxx
     args = {}
     if len(sys.argv) > 1:
         if sys.argv[1].startswith("--"):
-            # 命令行参数风格
+            # CLI argument style
             for i in range(1, len(sys.argv)):
                 if sys.argv[i] == "--post-id" and i + 1 < len(sys.argv):
                     args["post_id"] = sys.argv[i + 1]

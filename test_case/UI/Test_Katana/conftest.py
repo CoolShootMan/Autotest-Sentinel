@@ -33,10 +33,10 @@ from playwright.sync_api import (
 from slugify import slugify
 import re
 
-# 加载项目根目录的 .env 文件
+# Load .env file from project root
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-# 根据 BASE_URL 反推环境名，用于 cookie 文件命名
+# Infer environment name from BASE_URL for cookie file naming
 _BASE_URL = os.environ.get("BASE_URL", "https://release.pear.us")
 _ENV_MAP = {
     "https://staging.pear.us": "staging",

@@ -17,9 +17,9 @@ from tools import logger
 def email_send(subject, email_content):
     """
     
-    Description: 邮件发送方法
+    Description: Email send method
     ---------
-    Arguments:  subject 邮件主题， email_content 邮件正文
+    Arguments:  subject - email subject, email_content - email body
     --------- 
     Returns:  
     -------
@@ -27,17 +27,17 @@ def email_send(subject, email_content):
     """
     emai_config = ReadFile.read_config('$.emai')
     sender = emai_config['sender']
-    receivers = emai_config['receivers']  # 接收邮件，可设置为你的QQ邮箱或者其他邮箱
-    # 三个参数：第一个为文本内容，第二个 plain 设置文本格式，第三个 utf-8 设置编码
+    receivers = emai_config['receivers']  # Recipient email addresses (QQ mail or others)
+    # Three parameters: text content, 'plain' format, 'utf-8' encoding
     message = MIMEText(email_content, 'plain', 'utf-8')
-    message['From'] = Header(sender, 'utf-8')   # 发送者
+    message['From'] = Header(sender, 'utf-8')   # Sender
     message['Subject'] = Header(subject, 'utf-8')
-        # 接收者
+        # Recipient
     try:
         smtpObj = smtplib.SMTP(emai_config['mail_host'])
         for receiver in receivers:
             message['To'] =  Header(receiver, 'utf-8')
         smtpObj.sendmail(sender, receivers, message.as_string())
-        return logger.info(f'邮件发送成功,接收者{receivers}')
+        return logger.info(f'Email sent successfully, recipients: {receivers}')
     except smtplib.SMTPException as e:
-        return logger.error(f'邮件发送失败-{e}')
+        return logger.error(f'Email send failed - {e}')

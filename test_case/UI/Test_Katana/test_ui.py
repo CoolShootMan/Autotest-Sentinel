@@ -26,8 +26,8 @@ from page.home import *
 from test_case.UI.Test_Katana.actions import get_action
 from .actions import get_action, create_session
 
-@allure.testcase('https://ones.cn/project/#/testcase/team/T7u1zXum/plan/QCuFwDdq/library/XcAFFViB/module/6mi4qiVp', 'ONS测试用例链接')
-@allure.title("测试执行")
+@allure.testcase('https://ones.cn/project/#/testcase/team/T7u1zXum/plan/QCuFwDdq/library/XcAFFViB/module/6mi4qiVp', 'ONS Test Case Link')
+@allure.title("Test Execution")
 def test_case(smokecases1, page: Page, browser: Browser, request):
     val = list(smokecases1.values())[0]
     

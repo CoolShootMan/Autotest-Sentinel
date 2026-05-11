@@ -139,7 +139,7 @@ testT4970:  # [LAST: PASSED 2026-05-06]
     # Add Single choice field
     click_add_new_field: { role: 'button', name: 'Add new field', exact: true }
     sleep_after_add_field: 500
-    click_single_choice: { role: 'text', name: 'Single choice', locator: "div:has(> *:text-is('Single choice'))" }
+    R_click_select_item_0: { role: "option", name: "Single choice" }
     fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'single' }
     fill_field_description: { role: 'textbox', name: 'Enter a description', value: 'xx' }
 

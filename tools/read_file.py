@@ -74,7 +74,7 @@ class ReadFile:
         query_sql = 'select CaseNo, Summary, Domain, RquestHeader, InterfacePath, IsExecute, Encode, MethodType, ParamsType, UploadFile, Params, `Sql` , extract, APIExpectResult, SqlExpectResult from Api_test_detail;'
         try:
             cursor = conn.cursor()  
-            cursor.execute(query_sql)  # 游标执行sql语句
+            cursor.execute(query_sql)  # Execute SQL statement via cursor
             results = cursor.fetchall()
             for row in results:
                 lst = []

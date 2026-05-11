@@ -30,19 +30,19 @@ from dotenv import load_dotenv
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 加载项目根目录的 .env 文件（不覆盖已存在的环境变量）
+# Load .env file from project root (does not override existing environment variables)
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 def _resolve_base_url():
     """
-    获取 BASE_URL，优先级：系统环境变量 > .env 文件 > 默认值
-    默认值: https://release.pear.us
+    Resolve BASE_URL with priority: system env > .env file > default value.
+    Default: https://release.pear.us
     """
     return os.environ.get("BASE_URL", "https://release.pear.us")
 
 
-# 根据 BASE_URL 反推环境名，用于 cookie 文件命名
+# Infer environment name from BASE_URL for cookie file naming
 _ENV_MAP = {
     "https://staging.pear.us": "staging",
     "https://release.pear.us": "release",
@@ -52,7 +52,7 @@ CURRENT_ENV = _ENV_MAP.get(_resolve_base_url(), "release")
 
 
 def _replace_placeholders(obj, base_url, env_name):
-    """递归替换字典/列表/字符串中的 {BASE_URL} 和 {ENV} 占位符"""
+    """Recursively replace {BASE_URL} and {ENV} placeholders in dicts, lists, and strings"""
     if isinstance(obj, str):
         return obj.replace("{BASE_URL}", base_url).replace("{ENV}", env_name)
     elif isinstance(obj, dict):
@@ -113,7 +113,7 @@ def pytest_runtest_makereport(item, call):
                 test_case_data = list(smokecases1.values())[0]
                 match = re.search(r'T\d+', test_case_name)
                 if match:
-                    # 获取 YAML 文件名用于日志追踪
+                    # Get YAML filename for log tracing
                     yaml_path = test_case_data.get("__yaml_path__", "")
                     yaml_name = os.path.basename(yaml_path) if yaml_path else "unknown"
                     logger.info(f"TEST_STATUS: [{yaml_name}] {match.group(0)} - {'passed' if rep.passed else 'failed'}")
@@ -194,7 +194,7 @@ def context(
     elif storage_state:
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
-        # 根据 CURRENT_ENV 动态选择 cookie 文件
+        # Dynamically select cookie file based on CURRENT_ENV
         local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", f"cookie_{CURRENT_ENV}.json")
         if os.path.exists(local_cookie):
             context = browser.new_context(storage_state=local_cookie, **browser_context_args)
@@ -213,28 +213,28 @@ def pytest_generate_tests(metafunc):
         if not yaml_files:
             yaml_files = "Storefront_module.yaml"
         
-        # 支持逗号分隔的多个 yaml
+        # Support comma-separated multiple yaml files
         yaml_file_list = [f.strip() for f in yaml_files.split(",")]
         
         all_argvalues = []
         all_ids = []
         
         for yaml_file in yaml_file_list:
-            # 使用 os.sep 确保路径分隔符正确
+            # Use os.sep to ensure correct path separator
             yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file.replace('/', os.sep).replace('\\', os.sep))
             
             if os.path.exists(yaml_path):
                 with open(yaml_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f)
                 if data:
-                    # 运行时替换 {BASE_URL} 占位符
+                    # Replace {BASE_URL} placeholder at runtime
                     base_url = _resolve_base_url()
                     data = _replace_placeholders(data, base_url, CURRENT_ENV)
                     for k, v in data.items():
                         if isinstance(v, dict):
                             v["__yaml_path__"] = yaml_path
                             all_argvalues.append({k: v})
-                            # 加上 yaml 前缀避免 id 冲突
+                            # Add yaml prefix to avoid id conflicts
                             all_ids.append(f"{yaml_file}::{k}")
             else:
                 logger.error(f"YAML file not found at: {yaml_path}")

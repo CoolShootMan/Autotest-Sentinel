@@ -154,7 +154,7 @@ class AIVisionService:
         Return raw JSON only.
         """
 
-        for attempt in range(len(self.api_keys) * 3): # 增加到 3 倍 Key 的重试次数
+        for attempt in range(len(self.api_keys) * 3): # Increased to 3x the number of keys for retries
             try:
                 logger.info(f"Connecting to Gemini (Self-Healing) - Attempt {attempt+1}...")
                 response = self.model_pro.generate_content([
@@ -167,13 +167,13 @@ class AIVisionService:
                 return res
             except Exception as e:
                 logger.error(f"AI Pure Vision Error on Attempt {attempt+1}: {e}")
-                # 如果是限频，等待时间略增加
+                # If rate-limited, increase the wait time slightly
                 sleep_time = 3 if "429" in str(e) else 1
                 if not self._rotate_key(): 
                      logger.warning("No more keys to rotate, sleep and retry same key.")
                      sleep(sleep_time)
                 else:
-                     sleep(sleep_time) # 略等一下让轮转生效
+                     sleep(sleep_time) # Brief pause to let the key rotation take effect
         return {"found": False}
 
     def _parse_json(self, text):

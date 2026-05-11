@@ -1,13 +1,13 @@
 envs:
   staging:
     base: https://staging.pear.us
-    desc: 开发环境
+    desc: Development environment
   release:
     base: https://release.pear.us
-    desc: 测试环境
+    desc: Testing environment
   prod:
     base: https://pear.us
-    desc: 生产环境
+    desc: Production environment
 scan_patterns:
 - test_case/**/*.yaml
 - test_case/**/*.py

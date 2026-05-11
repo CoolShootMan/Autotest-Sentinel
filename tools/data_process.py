@@ -87,7 +87,7 @@ class DataProcess:
     def assert_result(cls, response: dict, api_expect_str: str, sql_result: dict, sql_expect_str: str):
         """ 
         :param response: the acctual result
-        :param expect_str: the expect result，get it form excel
+        :param expect_str: the expect result, get it from excel
         return None
         """
         allure_step("the available extract in the paramters pool currently", cls.extra_pool)
@@ -101,14 +101,13 @@ class DataProcess:
                 logger.info(
                 f'the {sql_index}th sql assert,sql acctual result:{sql_result} | sql expect result:{sql_expect_dict} the assert result:{sql_result_actual == sql_v}')
                 logger.info(
-                f'第{sql_index}个断言,sql实际结果:{sql_result} | sql预期结果:{sql_expect_dict} sql断言结果 {sql_result_actual == sql_v}\n')
+                f'the {sql_index}th sql assert,sql acctual result:{sql_result} | sql expect result:{sql_expect_dict} the assert result:{sql_result_actual == sql_v}\n')
                 allure_step(f'the {sql_index}th sql assert', f'sql acctual result:{sql_result} contains sql expect result:{sql_expect_dict}')
                 try:
                     assert sql_result_actual == sql_v
                 except AssertionError:
                     raise AssertionError(
-                        f'the {sql_index}th sql assert failed -|- sql acctual result:{sql_result} || sql expect result: {sql_expect_dict}\n',
-                        f'第{sql_index}个sql断言失败 -|- sql实际结果:{sql_result} || sql预期结果: {sql_expect_dict}')
+                        f'the {sql_index}th sql assert failed -|- sql acctual result:{sql_result} || sql expect result: {sql_expect_dict}\n')
 
         api_expect = rep_expr(api_expect_str, cls.extra_pool)
         api_expect_dict = convert_json(api_expect)
@@ -117,12 +116,10 @@ class DataProcess:
             actual = extractor(response, k)
             index += 1
             logger.info(
-                f"the {index}th api assert, acctual result:{actual} | expect result:{v} the assert result:{actual == v}\n",
-                f"第{index}个api接口断言,实际结果:{actual} | 预期结果:{v} 断言结果 {actual == v}")
+                f"the {index}th api assert, acctual result:{actual} | expect result:{v} the assert result:{actual == v}\n")
             allure_step(f'the {index}th api assert', f'acctual result:{actual} = expect result:{v}')
             try:
                 assert actual == v
             except AssertionError:
                 raise AssertionError(
-                    f'the {index}th api assert failed -|- acctual result:{actual} || expect result: {v}\n',
-                    f'第{index}个api接口断言失败 -|- 实际结果:{actual} || 预期结果: {v}')
+                    f'the {index}th api assert failed -|- acctual result:{actual} || expect result: {v}\n')

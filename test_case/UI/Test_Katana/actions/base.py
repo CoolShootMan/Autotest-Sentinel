@@ -272,7 +272,7 @@ def smart_fill(page: Page, v: dict):
             target_id = v.get("index", 0)
             filled = False
             for c in candidates:
-                if c.nth(target_id).is_visible(timeout=2000):    # 加超时：原来无超时可能等 30s
+                if c.nth(target_id).is_visible(timeout=2000):    # Added timeout: original had no timeout, could wait 30s
                     c.nth(target_id).fill(str(target_value), timeout=fill_timeout)
                     filled = True
                     break
@@ -412,15 +412,15 @@ def smart_upload(page: Page, v: dict):
 
 def _smart_click_core(page: Page, v: dict):
     """
-    核心点击逻辑（不含 Page-level Search 和 AI 自愈）。
-    smart_click 和 smart_click_scan 共用此核心函数。
+    Core click logic (without Page-level Search and AI self-healing).
+    Shared by smart_click and smart_click_scan.
 
-    quick: true 时跳过 crash 检查和 backdrop 等待，用于已确认页面正常的快速点击场景。
+    When quick=True, skips crash check and backdrop wait — use for fast clicks on confirmed stable pages.
     """
     quick = v.get("quick", False)
 
     if not quick:
-        # 优化：is_visible 加 5s 超时（原来无超时，可能等 30s）
+        # Optimization: add 5s timeout to is_visible (original had no timeout, could wait 30s)
         try:
             if page.get_by_text("Something went wrong!", exact=True).is_visible(timeout=5000):
                 logger.error("Application Crashed!")
@@ -428,10 +428,10 @@ def _smart_click_core(page: Page, v: dict):
         except: pass
 
         # Wait for loading overlays/backdrops to disappear before clicking anything
-        # 优化：timeout 从 8s 降至 2s；用 detach 状态检测（不阻塞主流程）
+        # Optimization: timeout reduced from 8s to 2s; use detached state (non-blocking)
         try:
             backdrop = page.locator(".MuiBackdrop-root, [class*='Backdrop'], .loading-overlay").first
-            backdrop.wait_for(state="detached", timeout=2000)  # 2s 超时，避免卡住
+            backdrop.wait_for(state="detached", timeout=2000)  # 2s timeout to avoid stalling
         except: pass
 
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
@@ -487,7 +487,7 @@ def _smart_click_core(page: Page, v: dict):
         except: pass
     active_modal = visible_modals[-1] if visible_modals else None
 
-    # Save / Publish: 优先 Playwright 快速定位，失败后再走 JS fallback
+    # Save / Publish: try Playwright fast locate first, fall back to JS if failed
     if target_name in ("Save", "Publish"):
         playwright_failed_for_special = False
 
@@ -550,7 +550,7 @@ def _smart_click_core(page: Page, v: dict):
         except Exception as e:
             logger.debug(f"JS {target_name} fallback error: {e}")
 
-    # ---- 通用定位策略 1-4 ----
+    # ---- General location strategies 1-4 ----
     # Restore standard scoping: if there is an active modal, restrict all searches to it by default.
     root = active_modal if active_modal else page
 
@@ -564,20 +564,21 @@ def _smart_click_core(page: Page, v: dict):
         except: pass
 
     # 2. Standard locator
-    # 优化：直接 click()，不先 is_visible（Playwright click 内部自带检查）
+    # Optimization: call click() directly without is_visible first (Playwright click has built-in checks)
     if target_locator:
         try:
             if target_locator.startswith("/") or target_locator.startswith("xpath="):
                 xpath_locator = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
                 el = page.locator(xpath_locator).nth(target_index)
             else:
-                # 修复: 自定义 CSS locator 退回使用全局 page.locator() 进行查找。
-                # 由于这些 locator 通常是从 body/html 开始的完整特征路径，将它们约束在 active_modal 之下会导致层叠错误 (如 dialog 内部再找一个 dialog）。
+                # Fix: custom CSS locators fall back to global page.locator().
+                # These locators typically start from body/html, scoping them under active_modal
+                # causes nesting errors (e.g. finding a dialog inside a dialog).
                 el = page.locator(target_locator).nth(target_index)
 
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
-            el.click(force=force, timeout=5000)  # 直接点击，不先 is_visible
+            el.click(force=force, timeout=5000)  # Click directly, no is_visible check first
             logger.info(f"Clicked via locator: {target_name or target_locator}")
             return
         except Exception as e:
@@ -586,28 +587,28 @@ def _smart_click_core(page: Page, v: dict):
                 return
             logger.debug(f"Locator attempt failed: {e}")
 
-    # 3. Aria-label fallback（按钮很少有 aria-label，timeout 极短，避免白等）
+    # 3. Aria-label fallback (buttons rarely have aria-label, very short timeout to avoid stalling)
     if target_name:
         try:
             el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            el.click(force=force, timeout=3000)  # 直接点击
+            el.click(force=force, timeout=3000)  # Click directly
             logger.info(f"Clicked via aria-label fallback: {target_name}")
             return
         except: pass
 
     # 4. Role / text fallback
-    # 优化：移除 scroll_into_view_if_needed（会阻塞且浪费时间）
-    # - Playwright click() 内部自带滚动，不需要显式 scroll
-    # - 直接 click()，失败再 force
+    # Optimization: removed scroll_into_view_if_needed (blocks and wastes time)
+    # - Playwright click() has built-in scrolling, no explicit scroll needed
+    # - Click directly, fall back to force on failure
     try:
         if target_role:
             el = root.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
         elif target_name:
             el = root.get_by_text(target_name, exact=target_exact).nth(target_index)
         if el:
-            # 先尝试正常点击（Playwright click 内部自带 scroll + 可见性检查）
+            # Try normal click first (Playwright click has built-in scroll + visibility check)
             try:
-                el.click(timeout=5000)  # 5s 超时，不 force
+                el.click(timeout=5000)  # 5s timeout, no force
                 logger.info(f"Clicked '{target_name}'")
                 if target_role == 'option':
                     page.keyboard.press("Escape")
@@ -616,7 +617,7 @@ def _smart_click_core(page: Page, v: dict):
             except Exception as click_e:
                 logger.debug(f"Normal click failed ({click_e}), trying force...")
 
-            # 点击失败，尝试 force（跳过所有检查）
+            # Click failed, try force (bypass all checks)
             try:
                 el.click(force=True, timeout=3000)
                 logger.info(f"Force-clicked '{target_name}'")
@@ -641,42 +642,42 @@ def _smart_click_core(page: Page, v: dict):
 
 def smart_click(page: Page, v: dict):
     """
-    快速点击 — 仅使用传统 Playwright 定位策略。
+    Fast click — uses traditional Playwright location strategies only.
 
-    参数：
-        fallback_scan: bool, 默认为 False。
-            - False: 精准定位失败后直接抛出异常，不触发 Page-level Search。
-                      **适用于 95% 的普通用例，获得最优性能。**
-            - True:  精准定位失败后，触发 Page-level Search + AI 自愈兜底。
-                      **适用于弹窗嵌套、多层遮罩等传统定位困难的场景。**
+    Parameters:
+        fallback_scan: bool, default False.
+            - False: throw exception directly on locate failure, no Page-level Search triggered.
+                      **Suitable for 95% of normal test cases, best performance.**
+            - True:  trigger Page-level Search + AI self-healing on locate failure.
+                      **For nested dialogs, multi-layer overlays, and hard-to-locate elements.**
 
-    YAML 用法示例：
-        # 普通点击（快速）
+    YAML usage examples:
+        # Normal click (fast)
         click_save: { name: 'Save' }
 
-        # 困难场景（带 Page-level Search，耗时但更稳定）
+        # Difficult scenario (with Page-level Search, slower but more stable)
         click_save: { name: 'Save', fallback_scan: true }
 
-        # 困难场景（显式名称，语义更清晰）
+        # Difficult scenario (explicit name, clearer semantics)
         R_click_save_hard: { name: 'Save', fallback_scan: true }
     """
     try:
         _smart_click_core(page, v)
-        return  # 核心定位成功，直接返回
+        return  # Core locate succeeded, return immediately
     except Exception as primary_error:
         if not v.get("fallback_scan", False):
-            # fallback_scan=False（默认）：精准定位失败 → 直接抛异常，不拖泥带水
+            # fallback_scan=False (default): locate failed → raise immediately, no extra steps
             logger.debug(f"smart_click (fast): {primary_error}")
             raise primary_error
 
-        # fallback_scan=True：进入 Page-level Search + AI 兜底链路
+        # fallback_scan=True: enter Page-level Search + AI fallback chain
         _smart_click_with_fallback(page, v, primary_error)
 
 
 def _smart_click_with_fallback(page: Page, v, primary_error):
     """
-    完整兜底点击 — 包含 Page-level Search 和 AI 自愈。
-    仅在 fallback_scan=True 时由 smart_click 调用。
+    Full fallback click — includes Page-level Search and AI self-healing.
+    Only called by smart_click when fallback_scan=True.
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_role = v.get("role")
@@ -685,8 +686,8 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
 
     logger.info(f"smart_click (fallback_scan=True): Page-level Search triggered for '{target_name or target_role}'")
 
-    # ---- 5. Page-level Search: 全页面按钮枚举 ----
-    # 优化：is_visible 超时从 2000ms 降至 500ms，减少等待时间
+    # ---- 5. Page-level Search: enumerate all buttons on the page ----
+    # Optimization: is_visible timeout reduced from 2000ms to 500ms to reduce wait time
     if target_role == 'button' or target_name in {"Get Tickets", "Selling", "Customize products", "Batch set commission rates"}:
         try:
             if target_name:
@@ -697,7 +698,7 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
                 logger.debug(f"Page-level search for '{target_name}': {len(all_matches)} total elements")
                 for idx, candidate in enumerate(all_matches):
                     try:
-                        # 优化：无超时，快速判断可见性 (避免每个隐藏元素阻塞 500ms)
+                        # Optimization: no timeout, fast visibility check (avoids 500ms wait per hidden element)
                         is_vis = candidate.is_visible()
                         if is_vis:
                             logger.info(f"Page-level found '{target_name}' #{idx}, clicking with force")
@@ -727,7 +728,7 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
                 all_btns = page.get_by_role("button", name=target_name, exact=target_exact).all()
                 for btn in reversed(all_btns):
                     try:
-                        if btn.is_visible(timeout=1000):           # 优化：加 1s 超时（原来无超时等 30s）
+                        if btn.is_visible(timeout=1000):           # Optimization: add 1s timeout (previously no timeout, would wait 30s)
                             try:
                                 btn.scroll_into_view_if_needed(timeout=3000)
                             except: pass
@@ -802,7 +803,7 @@ def click_modal_close(page: Page, v: dict):
     logger.info("Attempting to close modal...")
     try:
         close_btn = page.locator("div[role='dialog'] button[aria-label='close'], .MuiDialog-root button.close").first
-        if close_btn.is_visible(timeout=3000):            # 加超时：原来无超时可能等 30s
+        if close_btn.is_visible(timeout=3000):            # Added timeout: previously no timeout could wait 30s
             close_btn.click()
         else:
             page.keyboard.press("Escape")
@@ -828,7 +829,7 @@ def verify_text_visible(page: Page, v: dict):
             el.wait_for(state="hidden", timeout=timeout)
             logger.info(f"Confirmed element is not visible: {text or v.get('locator')}")
         except:
-            if el.is_visible(timeout=3000):                   # 加超时：原来无超时可能等 30s
+            if el.is_visible(timeout=3000):                   # Added timeout: previously no timeout could wait 30s
                 page.screenshot(path=f"fail_not_visible_{str(text or v.get('locator'))[:10]}.png")
                 raise AssertionError(f"Element '{text or v.get('locator')}' is still visible but should not be.")
         return
@@ -1156,18 +1157,18 @@ def run_workflow_script(page: Page, v):
     Generic workflow script runner for api/ui_workflow/*.py scripts.
     Allows QA to write Python API/script workflows callable from YAML.
 
-    YAML 用法:
+    YAML usage:
         run_workflow_script: { script: "create_test_post.py", args: { title: "Test" } }
 
-    脚本规范:
-        - 推荐使用 Playwright APIRequestContext（自动携带浏览器 cookie + JS auth header）
-        - 旧方案：subprocess + requests（需手动处理 token，已废弃）
+    Script conventions:
+        - Recommended: use Playwright APIRequestContext (automatically carries browser cookies + JS auth header)
+        - Legacy approach: subprocess + requests (requires manual token handling, deprecated)
     """
     import json
 
     script_name = v.get("script")
     if not script_name:
-        raise ValueError("run_workflow_script: 'script' 参数必填，格式: { script: 'filename.py' }")
+        raise ValueError("run_workflow_script: 'script' parameter is required, format: { script: 'filename.py' }")
 
     if not script_name.endswith(".py"):
         script_name += ".py"
@@ -1175,10 +1176,10 @@ def run_workflow_script(page: Page, v):
     script_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", "api", "ui_workflow", script_name)
 
     if not os.path.exists(script_path):
-        raise FileNotFoundError(f"run_workflow_script: 脚本不存在: {script_path}")
+        raise FileNotFoundError(f"run_workflow_script: script not found: {script_path}")
 
-    # 新方案：用 Playwright APIRequestContext（自动共享浏览器 cookie + JS auth header）
-    # 注意：需要脚本支持 --api-context 模式，这里先保留 subprocess 旧逻辑用于兼容
+    # New approach: use Playwright APIRequestContext (automatically shares browser cookies + JS auth header)
+    # Note: requires the script to support --api-context mode; subprocess legacy logic is kept here for compatibility
     args = v.get("args", {})
     args_json = json.dumps(args)
 
@@ -1207,17 +1208,17 @@ def run_workflow_script(page: Page, v):
 
 def duplicate_post(page: Page, v):
     """
-    复制 Post — 通过子进程调用 duplicate_post.py 脚本（独立 requests，不依赖浏览器 JS 上下文）。
+    Duplicate Post — calls duplicate_post.py as a subprocess (standalone requests, independent of browser JS context).
 
-    流程：
-        1. duplicate_post.py 从 cookie_release.json 加载 cookie
-        2. 提取旧 JWT，调用 GET /auth/refreshToken 换新 JWT
-        3. 用新 JWT 调用 GET /posts/curator/duplicate/verify/{id}（验证）
-        4. 用新 JWT 调用 GET /posts/curator/duplicate/{id}（执行，创建草稿）
-        5. 草稿 post id 写入 .duplicate_result.json
-        6. base.py 读取结果存入 page._workflow_context
+    Flow:
+        1. duplicate_post.py loads cookies from cookie_release.json
+        2. Extracts old JWT, calls GET /auth/refreshToken to obtain a new JWT
+        3. Uses new JWT to call GET /posts/curator/duplicate/verify/{id} (verify)
+        4. Uses new JWT to call GET /posts/curator/duplicate/{id} (execute, creates draft)
+        5. Draft post id is written to .duplicate_result.json
+        6. base.py reads the result and stores it in page._workflow_context
 
-    YAML 用法:
+    YAML usage:
         duplicate_post: { post_id: "xxx", capture_key: "cloned_post_id" }
     """
     import subprocess, json as jsonmod
@@ -1226,7 +1227,7 @@ def duplicate_post(page: Page, v):
     capture_key = v.get("capture_key", "cloned_post_id")
 
     if not post_id:
-        raise ValueError("duplicate_post: 'post_id' 参数必填")
+        raise ValueError("duplicate_post: 'post_id' parameter is required")
 
     script_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -1255,7 +1256,7 @@ def duplicate_post(page: Page, v):
     if result.returncode != 0:
         raise AssertionError(f"[duplicate_post] script failed (exit {result.returncode}): {result.stderr[:200]}")
 
-    # 读取结果文件
+    # Read result file
     if os.path.exists(result_file):
         with open(result_file, "r", encoding="utf-8") as f:
             data = jsonmod.load(f)
@@ -1265,7 +1266,7 @@ def duplicate_post(page: Page, v):
         new_post_id = None
         logger.warning(f"[duplicate_post] Result file not found: {result_file}")
 
-    # 存入 context
+    # Store in context
     if not hasattr(page, "_workflow_context"):
         page._workflow_context = {}
     page._workflow_context[capture_key] = new_post_id
@@ -1347,7 +1348,7 @@ def wait_toast(page: Page, v: dict):
         )
         for toast in toast_locator.all():
             try:
-                if toast.is_visible(timeout=1000):        # 加超时：原来无超时可能等 30s/个
+                if toast.is_visible(timeout=1000):        # Added timeout: previously no timeout could wait 30s per item
                     content = toast.inner_text()
                     if message in content:
                         logger.info(f"Toast found: '{content.strip()[:80]}'")
@@ -1629,7 +1630,7 @@ def swipe_to_element(page: Page, v: dict):
 
     # Check if element is already visible
     try:
-        if target_elem.is_visible(timeout=3000):           # 加超时：原来无超时可能等 30s
+        if target_elem.is_visible(timeout=3000):           # Added timeout: previously no timeout could wait 30s
             logger.info("Element is already visible")
             return
     except:
@@ -1757,7 +1758,7 @@ def fill_stripe_iframe(page: Page, v: dict):
                 if "stripe" not in url.lower():
                     continue
                     
-                # 在每个 frame 中尝试填写
+                # Try to fill fields in each frame
                 fields_to_fill = [
                     ("cardnumber", card_number),
                     ("exp-date", expiry),
@@ -1767,7 +1768,7 @@ def fill_stripe_iframe(page: Page, v: dict):
                 for name, value in fields_to_fill:
                     if value:
                         try:
-                            # 使用 focus + type 方法，而不是 fill
+                            # Use focus + type approach instead of fill
                             el = frame.locator(f'input[name="{name}"]')
                             if el.count() > 0:
                                 el.click(timeout=3000)
@@ -1775,7 +1776,7 @@ def fill_stripe_iframe(page: Page, v: dict):
                                 logger.info(f"fill_stripe_iframe: filled {name} in frame")
                                 filled_count += 1
                         except Exception as e:
-                            pass  # 静默失败，尝试下一个 frame
+                            pass  # Silent failure, try next frame
             except:
                 continue
         
@@ -1802,10 +1803,10 @@ def fill_stripe_iframe(page: Page, v: dict):
     
     if filled_count == 0:
         logger.warning("fill_stripe_iframe: could not fill Stripe fields after all retries, they may require manual input")
-        # 截图以便调试
+        # Take screenshot for debugging
         page.screenshot(path="stripe_iframe_debug.png")
 
-    # 填写主页面字段
+    # Fill main page fields
     if card_name:
         try:
             page.fill('input[name="cardName"]', card_name)
@@ -1820,7 +1821,7 @@ def fill_stripe_iframe(page: Page, v: dict):
         except Exception as e:
             logger.warning(f"fill_stripe_iframe: failed to fill zipcode ({e})")
 
-    # 填写 card name 和 zipcode（这些通常在主页面，不在 iframe 里）
+    # Fill card name and zipcode (these are usually on the main page, not inside the iframe)
     if card_name:
         try:
             page.fill('input[name="cardName"]', card_name)
@@ -1844,15 +1845,15 @@ def fill_stripe_iframe(page: Page, v: dict):
 
 def smart_click_optional(page: Page, v: dict):
     """
-    可选点击 — 元素不存在时静默跳过，不报错。
-    专用于处理"可能出现也可能不出现"的弹框/提示。
+    Optional click — silently skips if the element does not exist, no error raised.
+    Designed for modals/tooltips that may or may not appear.
 
-    YAML 用法：
+    YAML usage:
         R_click_done: { role: 'button', name: 'Done' }
 
-    与 smart_click + optional: true 的区别：
-    - smart_click 的 optional 只在 target_locator 路径生效
-    - smart_click_optional 在所有定位策略上都支持 optional 跳过
+    Difference from smart_click + optional: true:
+    - smart_click's optional only applies on the target_locator path
+    - smart_click_optional supports optional skipping on ALL location strategies
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
@@ -1872,8 +1873,8 @@ def smart_click_optional(page: Page, v: dict):
             logger.debug(f"smart_click_optional: click failed for '{desc}' ({e})")
             return False
 
-    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
-    # 支持: dialog, modal, tooltip, popover 等浮动层
+    # Find visible modal/tooltip scopes (iterate in reverse, prioritise newest modal)
+    # Supports: dialog, modal, tooltip, popover and other floating layers
     modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
     raw_modals = page.locator(modal_selector).all()
     visible_modals = []
@@ -1885,7 +1886,7 @@ def smart_click_optional(page: Page, v: dict):
             pass
 
     def _find_and_click_in_scope(scope, desc_prefix=""):
-        """在指定范围内查找并点击元素"""
+        """Find and click element within the given scope"""
         desc = f"{desc_prefix}{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
 
         # 1. Test ID
@@ -1932,15 +1933,15 @@ def smart_click_optional(page: Page, v: dict):
 
         return False
 
-    # 搜索策略：先弹框（从后往前，新的弹框优先），再 page 级别
-    # 这样做是因为弹框通常包含用户正在操作的元素
+    # Search strategy: try modals first (newest first), then page level
+    # Rationale: modals typically contain the element the user is currently interacting with
 
-    # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+    # 1. Try all visible modals first (newest modal first, reverse order)
     for modal in reversed(visible_modals):
         if _find_and_click_in_scope(modal, f"modal[{visible_modals.index(modal)}]:"):
             return
 
-    # 2. 最后在 page 级别尝试（处理没有弹框的情况）
+    # 2. Finally try at page level (handles cases with no modal)
     if _find_and_click_in_scope(page, "page:"):
         return
 
@@ -1950,18 +1951,18 @@ def smart_click_optional(page: Page, v: dict):
 
 def smart_click_retry(page: Page, v: dict):
     """
-    带重试的稳定点击 — 元素一定存在但点击不稳定时使用。
+    Stable click with retry — use when the element is guaranteed to exist but clicks are flaky.
 
-    与 smart_click_optional 的区别：
-    - smart_click_optional: 找不到元素就跳过（用于可能不存在的元素）
-    - smart_click_retry: 元素一定存在，失败时自动重试（用于稳定存在的元素）
+    Difference from smart_click_optional:
+    - smart_click_optional: skips if element not found (for elements that may not exist)
+    - smart_click_retry: element is guaranteed present, auto-retries on failure (for reliably present elements)
 
-    YAML 用法：
+    YAML usage:
         smart_click_retry_publish: { role: 'button', name: 'Publish', retry: 3, delay: 500 }
 
-    新增参数：
-    - retry: 重试次数，默认 3
-    - delay: 重试间隔(ms)，默认 500
+    Additional parameters:
+    - retry: number of retry attempts, default 3
+    - delay: delay between retries (ms), default 500
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
@@ -1974,8 +1975,8 @@ def smart_click_retry(page: Page, v: dict):
     retry_count = v.get("retry", 3)
     delay_ms = v.get("delay", 500)
 
-    # Find visible modal/tooltip scopes (从后往前遍历，最新的弹框优先)
-    # 支持: dialog, modal, tooltip, popover 等浮动层
+    # Find visible modal/tooltip scopes (iterate in reverse, prioritise newest modal)
+    # Supports: dialog, modal, tooltip, popover and other floating layers
     modal_selector = "div[role='dialog'], .MuiDialog-root, .MuiModal-root, .MuiTooltip-popper, .MuiPopper-root, [role='tooltip'], [role='popover'], .MuiAutocomplete-popper, .MuiMenu-paper"
     raw_modals = page.locator(modal_selector).all()
     visible_modals = []
@@ -1987,7 +1988,7 @@ def smart_click_retry(page: Page, v: dict):
             pass
 
     def _find_element_in_scope(scope):
-        """在指定范围内查找元素"""
+        """Find element within the given scope"""
         # 1. Test ID
         if target_test_id:
             try:
@@ -2033,13 +2034,13 @@ def smart_click_retry(page: Page, v: dict):
         return None
 
     def _find_element():
-        """遍历所有可见弹框 + page 查找元素"""
-        # 1. 先在所有可见弹框中尝试（从后往前，最新的弹框优先）
+        """Search all visible modals + page for the element"""
+        # 1. Try all visible modals first (newest modal first, reverse order)
         for modal in reversed(visible_modals):
             el = _find_element_in_scope(modal)
             if el is not None:
                 return el
-        # 2. 最后在 page 级别尝试
+        # 2. Finally try at page level
         return _find_element_in_scope(page)
 
     desc = f"{target_role}:{target_name}" if target_role and target_name else (target_name or target_locator or f"test_id={target_test_id}")
@@ -2056,10 +2057,10 @@ def smart_click_retry(page: Page, v: dict):
                     logger.warning(f"smart_click_retry: element '{desc}' not found after {retry_count} attempts")
                     raise Exception(f"Element not found: {desc}")
 
-            # 等待元素动画完成后再点击
+            # Wait for element animation to complete before clicking
             page.wait_for_timeout(200)
 
-            # 点击（Playwright 的 click 本身会等待元素可点击）
+            # Click (Playwright's click already waits for the element to be clickable)
             el.click(force=force, timeout=timeout)
             logger.info(f"smart_click_retry: successfully clicked '{desc}' (attempt {attempt}/{retry_count})")
             return
@@ -2678,29 +2679,29 @@ def execute_js(page: Page, v):
     """
     Execute JavaScript in the browser page context.
 
-    YAML 用法:
-        # 1. 内联脚本
+    YAML usage:
+        # 1. Inline script
         execute_js: { script: "document.title" }
 
-        # 2. 脚本带参数
+        # 2. Script with arguments
         execute_js:
             script: "(selector) => document.querySelector(selector).innerText"
             args: "h1"
 
-        # 3. 多参数
+        # 3. Multiple arguments
         execute_js:
             script: "(a, b) => a + b"
             args: [1, 2]
 
-        # 4. 外部 JS 文件
+        # 4. External JS file
         execute_js: { file: "scripts/scroll_to_top.js" }
 
-        # 5. 断言返回值
+        # 5. Assert return value
         execute_js:
             script: "() => document.querySelectorAll('.item').length"
             assert_equals: 5
 
-        # 6. 保存返回值到 workflow context
+        # 6. Save return value to workflow context
         execute_js:
             script: "() => document.querySelector('.price').textContent"
             save_as: "price_text"
