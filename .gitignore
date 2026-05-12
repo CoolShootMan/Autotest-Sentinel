@@ -29,6 +29,8 @@ test_case/UI/Test_Katana/cookie_*.json
 test_case/UI/Test_Katana/api/ui_workflow/api_token.txt
 test_case/UI/Test_Katana/staging_cookie.json
 tools/get_cookie.py
+tools/check_chinese.py
+tools/translate_yaml_comments.py
 # 环境变量文件（含敏感配置，不提交）
 .env
 .env.*
