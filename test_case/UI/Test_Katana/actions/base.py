@@ -2638,7 +2638,7 @@ def _inject_cookies_to_context(page: Page, cookie_file: str):
 
     Args:
         page: Playwright page object
-        cookie_file: Path to cookie JSON file
+        cookie_file: Path to cookie JSON file (supports relative paths from project root)
 
     Raises:
         FileNotFoundError: If cookie file doesn't exist
@@ -2647,8 +2647,15 @@ def _inject_cookies_to_context(page: Page, cookie_file: str):
     import json
     import os
 
+    # Resolve relative paths against project root (BASE_DIR)
+    if not os.path.isabs(cookie_file) and not os.path.exists(cookie_file):
+        resolved_path = os.path.join(BASE_DIR, cookie_file)
+        if os.path.exists(resolved_path):
+            cookie_file = resolved_path
+            logger.info(f"Resolved cookie file path: {cookie_file}")
+
     if not os.path.exists(cookie_file):
-        raise FileNotFoundError(f"Cookie file not found: {cookie_file}")
+        raise FileNotFoundError(f"Cookie file not found: {cookie_file} (resolved from CWD: {os.getcwd()})")
 
     # Get current browser context
     context = page.context

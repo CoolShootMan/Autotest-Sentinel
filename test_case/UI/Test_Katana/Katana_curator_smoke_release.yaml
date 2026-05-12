@@ -155,7 +155,7 @@ testT1520:
             - assertion_type: "element_visible_by_text"
               text: "Unfollowed. You'll no longer"
 
-# [已迁移至 All_YAML/Form/] testT4306: (Form 提交记录查看)
+# [Migrated to All_YAML/Form/] testT4306: (Form submission record viewing)
 # testT4306:
 #     description: "Verify viewing user form submissions"
 #     test_step:
@@ -394,7 +394,7 @@ testT4259_guest:
             - assertion_type: "element_visible_by_text"
               text: "General CFREE"
 
-# [已迁移至 All_YAML/Form/] testT4279: (Form 访客提交)
+# [Migrated to All_YAML/Form/] testT4279: (Form guest submission)
 # testT4279:
 #     guest: true
 #     description: "Verify submitting the contact form"

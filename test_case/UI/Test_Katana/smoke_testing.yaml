@@ -1,16 +1,16 @@
 # smoke_testing.yaml
-# Smoke Testing 已实现用例汇总
-# 来源：use_cases/2026 Apr 30  Smoke testing on Prod env.xlsx
-# 命中 12 个 Smoke Case IDs，共 15 条 YAML 用例
+# Smoke Testing - Implemented Use Cases Summary
+# Source: use_cases/2026 Apr 30  Smoke testing on Prod env.xlsx
+# Hit 12 Smoke Case IDs, total 15 YAML test cases
 #
-# Smoke Case IDs 覆盖情况:
+# Smoke Case IDs Coverage:
 #   T2705, T3108                              → Post_setting.yaml
 #   T3554, T3555, T3556, T3841, T4264, T4556, T4600 → Module.yaml
 #   T3981                                     → Scanner.yaml
 #   T4279, T4306                              → Storefront_form.yaml
 
 # ============================================================
-# Post 发帖设置
+# Post Settings
 # ============================================================
 
 # T2705: Partner hides the variant and sets the default variant
@@ -186,7 +186,7 @@ testT3108:
               locator: 'input[name="products.0.setCustomizePrice"]'
 
 # ============================================================
-# Module 模块
+# Module
 # ============================================================
 
 #--------- Module - Create / Edit / Deteletd / Rearrange / Show / Collapse -------------
@@ -480,7 +480,7 @@ testT4600_4602:
         sleep_after_confirm_delete: 5000
 
 # ============================================================
-# Events 扫码检票
+# Events QR Code Check-in
 # ============================================================
 
 # --- Original Scan Cases ---
@@ -518,10 +518,10 @@ testT3981_NotRecognized:
         assertions: []
 
 # ============================================================
-# Form 表单
+# Form
 # ============================================================
 
-# 覆盖用例: T4279（访客完整填写所有字段并成功提交）, T4969（单选/多选字段端到端提交验证）
+# Covered use cases: T4279 (guest fills all fields and submits successfully), T4969 (single/multi select end-to-end validation)
 test_guest_submission_1:
   guest: true
   is_mobile: true
@@ -593,7 +593,7 @@ test_guest_submission_1:
     fill_facebook:
       locator: 'xpath=//div[text()="Facebook"]/following-sibling::div//input'
       wait_for: 2000
-      scroll_into_view: true  # 强制滚动到元素
+      scroll_into_view: true  # Force scroll to element
       value: "PearPartnerOfficial"
 
     # Tiktok - realistic username
@@ -632,7 +632,7 @@ test_guest_submission_1:
       - assertion_type: "element_visible_by_text"
         text: "Got it"
 
-# 覆盖用例: T4306（商家查看表单提交记录两种入口）, T4537（提交记录页搜索栏关键字筛选）
+# Covered use cases: T4306 (merchant views form submissions via two entry points), T4537 (submission page search bar keyword filter)
 testPartner_verify_commission:
   description: "Verify viewing and exporting user form submissions"
   test_step:

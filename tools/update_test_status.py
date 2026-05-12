@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import time
+import yaml
 from playwright.sync_api import sync_playwright
 
 
@@ -33,6 +34,84 @@ def _extract_test_case_ids(name: str) -> list:
     return result
 
 
+def _extract_covered_cases_from_yaml(yaml_path: str) -> dict:
+    """
+    Extract covered T-case numbers from YAML file comments.
+    
+    Returns a dict mapping function names to their covered T-cases.
+    Comments belong to the FUNCTION THAT FOLLOWS THEM, not the one before.
+    
+    Example:
+        # 覆盖用例: T1234
+        function_name:   <- T1234 belongs to function_name
+    """
+    if not os.path.exists(yaml_path):
+        return {}
+    
+    try:
+        with open(yaml_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+        
+        result = {}
+        pending_comments = []  # Comments collected for the NEXT function
+        last_was_comment = False
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Check if this is a comment line (starts with #)
+            if stripped.startswith('#'):
+                # Add to pending comments if it has T-numbers or is continuation
+                if 'T' in stripped or last_was_comment:
+                    pending_comments.append(stripped)
+                    last_was_comment = True
+                    continue
+            
+            # Reset flag
+            last_was_comment = False
+            
+            # Only consider TOP-LEVEL keys (no indentation) as test functions
+            indent = len(line) - len(line.lstrip())
+            func_match = re.match(r'^(\w+)\s*:', stripped)
+            
+            if func_match and indent == 0:
+                func_name = func_match.group(1)
+                
+                # Save pending comments to THIS function (they belong to this function!)
+                if pending_comments:
+                    all_t_cases = []
+                    for comment in pending_comments:
+                        t_numbers = re.findall(r'T(\d+)', comment)
+                        all_t_cases.extend(['T' + n for n in t_numbers])
+                    if all_t_cases:
+                        result[func_name] = all_t_cases
+                    pending_comments = []
+                
+                # Start tracking (may get more comments later)
+        
+        # Any remaining comments at end of file are not associated with a function
+        # (they would have been saved when we hit the next function)
+        
+        return result
+    except Exception as e:
+        print(f"    [WARN] Failed to parse YAML {yaml_path}: {e}")
+        return {}
+
+
+def _get_yaml_path_from_params(parameters: list) -> str:
+    """Extract __yaml_path__ from Allure parameters."""
+    for param in parameters:
+        if isinstance(param, str) and '__yaml_path__' in param:
+            # Extract the path from the JSON-like string
+            match = re.search(r"'__yaml_path__':\s*'([^']+)'", param)
+            if match:
+                path = match.group(1)
+                # Convert escaped Windows paths
+                path = path.replace('\\\\', '/').replace('\\', '/')
+                return path
+    return None
+
+
 def parse_behaviors_json(report_dir: str) -> dict:
     """Parse test case statuses from Allure behaviors.json."""
     behaviors_path = os.path.join(report_dir, "data", "behaviors.json")
@@ -50,11 +129,27 @@ def parse_behaviors_json(report_dir: str) -> dict:
         if "name" in item and "status" in item:
             name = item.get("name", "")
             status = item.get("status", "").lower()
+            parameters = item.get("parameters", [])
             
-            if status not in ("passed", "failed"):
-                status = "failed"
+            # Allure uses "passed"/"failed", ONES uses "通过"/"失败"
+            if status == "passed":
+                status = "通过"
+            elif status == "failed":
+                status = "失败"
             
+            # First try to extract T-numbers from function name
             tc_list = _extract_test_case_ids(name)
+            
+            # If no T-numbers found, try to get covered cases from YAML comments
+            if not tc_list:
+                yaml_path = _get_yaml_path_from_params(parameters)
+                if yaml_path:
+                    covered_cases_dict = _extract_covered_cases_from_yaml(yaml_path)
+                    # Get the covered cases for this specific function
+                    tc_list = covered_cases_dict.get(name, [])
+                    if tc_list:
+                        print(f"    [INFO] {name} -> YAML covered: {tc_list}")
+            
             for tc in tc_list:
                 test_results[tc] = status
         
@@ -95,8 +190,8 @@ def update_ones(test_results: dict, test_plan_name: str = None):
     Log in to ONES and update test case statuses.
     """
     status_map = {
-        "passed": "Pass",
-        "failed": "Fail"
+        "通过": "通过",
+        "失败": "失败"
     }
     
     total = len(test_results)
@@ -120,11 +215,11 @@ def update_ones(test_results: dict, test_plan_name: str = None):
             print("    [ERROR] Login page load timed out")
             return
         
-        page.get_by_role("textbox", name="* Email").fill("yuxiao.zhu.ext@1m.app")
-        page.get_by_role("textbox", name="* Password").fill("zyx@1032970941")
-        page.get_by_role("button", name="Log in").click()
+        page.get_by_role("textbox", name="* 邮箱").fill("yuxiao.zhu.ext@1m.app")
+        page.get_by_role("textbox", name="* 密码").fill("zyx@1032970941")
+        page.get_by_role("button", name="登录").click()
         page.wait_for_timeout(500)
-        page.get_by_role("link", name="Test Management").click()
+        page.get_by_role("link", name="测试管理").click()
         page.wait_for_timeout(2000)
         
         print("    [OK] Login successful")
@@ -133,9 +228,9 @@ def update_ones(test_results: dict, test_plan_name: str = None):
         print("\n[2/6] Entering Test Management...")
         
         # 3. Find the test plan
-        print(f"\n[3/6] Finding test plan: {test_plan_name or 'KAT-11058'}...")
+        print(f"\n[3/6] Finding test plan: {test_plan_name or 'KAT-11128'}...")
         
-        plan_regex = re.compile(test_plan_name or "KAT-11058", re.IGNORECASE)
+        plan_regex = re.compile(test_plan_name or "KAT-11128", re.IGNORECASE)
         
         try:
             page.get_by_text(plan_regex).first.wait_for(state="visible", timeout=10000)
@@ -209,12 +304,12 @@ def update_ones(test_results: dict, test_plan_name: str = None):
                 # Change status
                 website_status = status_map.get(status, status)
                 if website_status:
-                    page.get_by_role("button", name="Change execution result").click()
+                    page.get_by_role("button", name="更改执行结果").click()
                     page.wait_for_timeout(500)
                     # Find status option inside modal
                     page.locator(".ones-modal-wrap").get_by_text(website_status, exact=True).click()
-                    page.get_by_role("button", name="Confirm").click()
-                    page.get_by_role("button", name="Confirm").wait_for(state="hidden", timeout=5000)
+                    page.get_by_role("button", name="确定").click()
+                    page.get_by_role("button", name="确定").wait_for(state="hidden", timeout=5000)
                 
                 # Uncheck the checkbox
                 if checkbox.is_checked():
@@ -244,7 +339,7 @@ def update_ones(test_results: dict, test_plan_name: str = None):
 
 if __name__ == "__main__":
     report_dir = sys.argv[1] if len(sys.argv) > 1 else None
-    test_plan_name = "KAT-11058"
+    test_plan_name = "KAT-11128"
     
     if report_dir:
         if not os.path.isabs(report_dir):
@@ -264,8 +359,8 @@ if __name__ == "__main__":
     
     print("\n[2/3] Parsing test statuses...")
     test_results = parse_behaviors_json(report_dir)
-    passed = sum(1 for v in test_results.values() if v == "passed")
-    failed = sum(1 for v in test_results.values() if v == "failed")
+    passed = sum(1 for v in test_results.values() if v == "通过")
+    failed = sum(1 for v in test_results.values() if v == "失败")
     print(f"    Total: {len(test_results)} (Passed: {passed}, Failed: {failed})")
     
     if test_results:

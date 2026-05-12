@@ -55,8 +55,8 @@ testT1742:
         sleep_step: 1000
 
         #Handle optional "Choose a resale model" tooltip/popover -> click "Done"
-        #注意：Done 是 <p> 元素，不是 <button>，需要用 text 定位
-        #现在 base.py 已支持 tooltip/popover 选择器，text 定位应该能正常工作
+        #Note: Done is a <p> element, not <button>, need to use text locator
+        #Now base.py supports tooltip/popover selectors, text locator should work normally
         smart_click_optional_done: { name: 'Done' }
         sleep_step: 1000
 
@@ -382,7 +382,24 @@ testT3686_CosellerResell:
         sleep_step: 3000
 
         # Handle onboarding modal: check "Do not show me this again" and click "Customize Now"
-        # check_do_not_show: { locator: "input[name='display']", optional: true }
+        check_do_not_show: { locator: "input[name='display']", optional: true }
+        sleep_step: 500
+        R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
+        sleep_step: 3000
+
+        # Click Publish button to publish the resold post (first click may open confirmation dialog)
+        # Using smart_click_retry: element exists for sure, but click may be unstable (animation overlay etc.), needs retry
+        smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
+        sleep_step: 2000
+
+        # Second click on Publish confirmation dialog (modal button)
+        # Confirm popup appears with delay, increase wait time and retry count; only 1 Publish in popup, use index: 0
+        smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
+        sleep_step: 1000
+
+
+        # Handle optional success dialog after publishing: check "Do not show me this again" and click Save
+        # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
         # sleep_step: 500
         # R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
         # sleep_step: 3000
@@ -826,12 +843,12 @@ testT2834_VerifyPartner:
         sleep_step: 1000
 
         # Step 4: Add product
-        # 先搜索 "test_general_products"，让目标卡唯一可见
+        # First search for "test_general_products" to make target card only visible
         fill_product_search_1: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
         sleep_step: 500
         click_search_btn: { role: 'button', name: 'Search', exact: true }
         sleep_step: 2000
-        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        # At this time only one card, directly click using role+name, no index needed
         click_product_card_1: { role: 'img', name: 'Image of Product', index: 0 }
 
         # Step 5: Check Free Shipping checkbox
@@ -936,12 +953,12 @@ testT2834_VerifyGuest:
         sleep_step: 2000
         R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
         sleep_step: 1500
-        # 先搜索 "test_general_products"，让目标卡唯一可见
+        # First search for "test_general_products" to make target card only visible
         fill_product_search:_2: { locator: 'input[placeholder=“Search product"]', value: 'test_general_products' }
         sleep_step: 500
         click_search_btn: { role: 'button', name: 'Search' }
         sleep_step: 2000
-        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        # At this time only one card, directly click using role+name, no index needed
         click_product_card_2: { role: 'img', name: 'Image of Product', index: 0 }
         sleep_step: 1000
         click_add_product_btn_2: { role: 'button', name: 'Add 1/20 product(s)' }
@@ -1835,10 +1852,10 @@ testT5033_5034_VerifyPartner:
         sleep_step: 2000
         R_click_tickets_tab_1: { role: 'tab', name: 'Tickets' }
         sleep_after_tickets_tab: 1500
-        # 点击 More 按钮（三个点图标）
+        # Click More button (three-dot icon)
         click_more_button_1: { role: "button", name: "More action" }
         sleep_step: 500
-        # 从菜单中点击 Duplicate
+        # Click Duplicate from menu
         R_click_duplicate_menuitem_1: { role: "menuitem", name: "Duplicate" }
         sleep_step: 500
         R_click_duplicate_1: { role: "button", name: "Duplicate" }
@@ -1885,12 +1902,12 @@ testT5033_5034_VerifyPartner:
         sleep_step: 2000
 
         # Step 4: Add product
-         # 先搜索 "test_general_products"，让general唯一可见
+         # First search for "test_general_products" to make general only visible
         fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
         sleep_step: 500
         click_search_btn_2: { role: 'button', name: 'Search', exact: true }
         sleep_step: 1500
-        # 此时只有一张卡，直接用 role+name 点击，不需要 index
+        # At this time only one card, directly click using role+name, no index needed
         click_product_card_5: { role: 'img', name: 'Image of Product' }
         click_add_product_btn_1: { role: 'button', name: 'Add 5/20 product(s)' }
         sleep_step: 1000
@@ -1898,17 +1915,17 @@ testT5033_5034_VerifyPartner:
         # sleep_step: 1000
         check_cta_type_1: { locator: 'input[name="products.0.isCtaCustomized"]', checked: true }
         sleep_step: 500
-        # Product 0: 点击 Buy now -> 选择 View options
+        # Product 0: Click Buy now -> select View options
         R_click_buy_now_0: { role: "button", name: "Buy now", index: 0 }
         R_click_option_view_options: { role: "option", name: "View options" }
         sleep_step: 500
         check_cta_type_2: { locator: 'input[name="products.1.isCtaCustomized"]', checked: true }
-        # Product 1: 点击 Buy now -> 选择 Add to cart
+        # Product 1: Click Buy now -> select Add to cart
         R_click_buy_now_1: { role: "button", name: "Buy now", index: 0 }
         R_click_option_add_to_cart: { role: "option", name: "Add to cart" }
         sleep_step: 500
         check_cta_type_3: { locator: 'input[name="products.2.isCtaCustomized"]', checked: true }
-        # Product 2: 点击 Buy now -> 选择 View Product
+        # Product 2: Click Buy now -> select View Product
         R_click_buy_now_2: { role: "button", name: "Buy now", index: 0 }
         sleep_step: 500
         R_click_option_view_product: { role: "option", name: "View Product" }
@@ -2041,8 +2058,8 @@ testT3779:
         R_click_create: { role: 'button', name: 'Create' }
         sleep_step: 2000
 
-        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Got it"
-        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
+        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
         sleep_step: 1000
 
         # Step 11: Save and verify toast
@@ -2209,8 +2226,8 @@ testT2281:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        # Step 6: Click Got it (success dialog)
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        # Step 6: Click Save (success dialog)
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         # Step 7: Click on the created post card to open it
@@ -2246,8 +2263,8 @@ testT2281:
         R_click_publish_2: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        # Step 14: Click Got it (success dialog)
-        R_click_got_it_2: { role: 'button', name: 'Got it' }
+        # Step 14: Click Save (success dialog)
+        R_click_got_it_2: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         # Step 15: Click on the duplicate post card (newest post, index: 0)
@@ -2311,7 +2328,7 @@ testT2537:
         click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        click_got_it: { role: 'button', name: 'Got it' }
+        click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         click_created_post: { text: 'test case 2537', index: 0 }
@@ -2339,7 +2356,7 @@ testT2537:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2376,7 +2393,7 @@ testT3108:
 testT3110:
     description: "Verify setCustomizePrice check, uncheck and save flow"
     test_step:
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -2409,16 +2426,16 @@ testT3110:
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
         sleep_step: 1500
 
-        R_click_save_as_draft: { role: 'button', name: 'Save as draft' }
+        R_click_save_as_draft: { role: 'button', name: 'Unpublish' }
         sleep_step: 1500
 
         fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 3110' }
         sleep_step: 1000
 
-        R_click_save_as_draft_2: { role: 'button', name: 'Save as draft' }
+        R_click_save_as_draft_2: { role: 'button', name: 'Unpublish' }
         sleep_step: 2000
 
-        R_click_got_it: { role: 'button', name: 'Got it', optional: true }
+        R_click_got_it: { role: 'button', name: 'Save', optional: true }
         sleep_step: 1500
 
         R_click_customize_products_btn_2: { role: 'button', name: 'Customize products' }
@@ -2469,7 +2486,7 @@ testT1928:
     description: "Verify customize price and catalog price update synchronization"
     test_step:
         # Create product logic first
-        open_dashboard: { url: "{BASE_URL}/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
+        open_dashboard: { url: "{BASE_URL}/sell/product/create", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step_p1: 8000
         
         R_click_content_tab: { locator: "[data-testid='content']", index: 0 }
@@ -2523,7 +2540,7 @@ testT1928:
         sleep_step_p18: 5000
 
         # Then proceed with post creation
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
@@ -2562,7 +2579,7 @@ testT1928:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
         sleep_step: 3000
 
         # Navigate to Catalogs to update product price
@@ -2610,7 +2627,7 @@ testT3811:
     description: "Verify customize price setting and unsetting in post creation and editing"
     test_step:
         # Step 1: Open create post page with specific partner/coseller cookies
-        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json" }
+        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         # Step 4: Discard draft if present
@@ -2661,8 +2678,8 @@ testT3811:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 4000
 
-        # Step 16: Click Got it
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        # Step 16: Click Save
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         # Step 17: Click the post card to enter details

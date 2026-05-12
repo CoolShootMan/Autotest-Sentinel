@@ -107,12 +107,12 @@ testT4622:  # [LAST: PASSED 2026-05-06]
         # Step 1: Click collapse icon (arrow-up) to fold module content
         click_module_collapse: { module_name: "Updated module" }
         sleep_after_collapse: 1500
-        # 直击本质的断言 1：验证整个模块的物理高度已坍塌（小于150px）
+        # Core assertion 1: Verify the entire module's physical height has collapsed (less than 150px)
         verify_module_collapsed: { module_name: "Updated module" }
-        # Step 2: Click expand icon (arrow-up-icon依然是那个节点)
+        # Step 2: Click expand icon (arrow-up-icon is still the same element)
         click_module_expand: { module_name: "Updated module" }
         sleep_after_expand: 1500
-        # 直击本质的断言 2：验证整个模块的物理高度已恢复（大于150px）
+        # Core assertion 2: Verify the entire module's physical height has restored (greater than 150px)
         verify_module_expanded: { module_name: "Updated module" }
 
     expect_result:
@@ -843,7 +843,7 @@ testT5105:  # [LAST: BROKEN 2026-05-06]
         # ========================================
         # Co-seller
         # ========================================
-        session_user_coseller__open: {url: "{BASE_URL}/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_{ENV}.json"}
+        session_user_coseller__open: {url: "{BASE_URL}/partnercoseller997" , cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json"}
         session_user_coseller__sleep_after_inject_cookies: 5000
         session_user_coseller__verify_element_contains_text: { container: 'Expired events', locator: '../..', text: ['verify-co-seller-auto-archive'], assert: false}
         sleep_after_close: 2000
@@ -999,7 +999,7 @@ testT4605:  # [LAST: BROKEN 2026-05-06]
         # Step 4: Publish changes
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_after_got_it: 5000
 
         # Step 5: Verify 2 posts exist in the module after duplication
