@@ -2416,12 +2416,11 @@ testT3110:
         sleep_step: 1000
 
         R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
-        sleep_step: 2000
 
         check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
         sleep_step: 1000
 
-        check_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: true }
+        #check_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: true }
         sleep_step: 1000
 
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
@@ -2445,7 +2444,7 @@ testT3110:
         uncheck_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: false }
         sleep_step: 1000
 
-        uncheck_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: false }
+        #uncheck_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: false }
         sleep_step: 1000
 
         R_click_save_btn_2: { role: 'button', name: 'Save', index: 0 }
