@@ -1,6 +1,6 @@
-# 覆盖用例: T4277（配置发布表单基本信息）, T4274（字段 required/optional 配置）,
-#           T4792（添加 Date and time 字段）, T4786（添加 Media 字段）,
-#           T4969（单选/多选字段配置）, T4972（Social 字段配置与多平台选择）
+# Covered use cases: T4277 (configure basic form info), T4274 (field required/optional config),
+#           T4792 (add Date and time field), T4786 (add Media field),
+#           T4969 (single/multi select field config), T4972 (Social field config with multi-platform select)
 testPartner_create_form: # [LAST: BROKEN 2026-05-06]
   is_mobile: true
   description: "Create a complete form"
@@ -113,7 +113,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
         name: "Enter title of the field",
         value: "are you happy?",
       }
-    # todo: index 有bug
+    # todo: index has bug
     fill_single_opt1:
       { locator: 'input[placeholder="Enter option"] >> nth=0', value: "Yes" }
     fill_single_opt2:
@@ -270,7 +270,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
       - assertion_type: "element_visible_by_text"
         text: "Partner_create_form"
 
-# 覆盖用例: T4279（访客完整填写所有字段并成功提交）, T4969（单选/多选字段端到端提交验证）
+# Covered use cases: T4279 (guest fills all fields and submits successfully), T4969 (single/multi select end-to-end validation)
 test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
@@ -381,7 +381,7 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
       - assertion_type: "element_visible_by_text"
         text: "Got it"
 
-# 覆盖用例: T4280（空提交时所有必填字段报错验证）, T4973（Social 字段空值与格式校验）
+# Covered use cases: T4280 (empty submit validation for required fields), T4973 (Social field empty value and format validation)
 test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
   guest: true
   is_mobile: true
@@ -422,7 +422,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
       - assertion_type: "element_visible_by_text"
         text: "Please enter some information before submitting."
 
-# 覆盖用例: T4306（商家查看表单提交记录两种入口）, T4537（提交记录页搜索栏关键字筛选）
+# Covered use cases: T4306 (merchant views form submissions via two entry points), T4537 (submission page search bar keyword filter)
 testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
   description: "Verify viewing and exporting user form submissions"
   test_step:

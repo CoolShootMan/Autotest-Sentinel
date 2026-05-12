@@ -51,8 +51,8 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
-    #yaml_files = "All_YAML/Module/Module.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
+    #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
+    yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
         "python",
         "-m",
