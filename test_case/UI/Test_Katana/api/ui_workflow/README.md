@@ -33,10 +33,11 @@ test_step:
 ```
 api/
 └── ui_workflow/
-    ├── README.md           # 本文件
-    ├── __init__.py         # 包初始化（勿删）
-    ├── api_token.txt       # Token 文件（已 gitignore，勿提交）
-    └── *.py                # 工作流脚本
+    ├── README.md              # 本文件（中文）
+    ├── README.en.md           # English version
+    ├── __init__.py            # 包初始化（勿删）
+    ├── api_token.txt           # Token 文件（已 gitignore，勿提交）
+    └── *.py                   # 工作流脚本
 ```
 
 ## 新增专用 Action 流程

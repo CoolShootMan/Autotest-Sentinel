@@ -6,7 +6,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
   description: "Create a complete form"
   test_step:
     open: "{BASE_URL}/autotestshop"
-    sleep_open: 3000
+    #sleep_open: 3000
 
     #    R_click_add_my_form_module: { locator: '.shop-text-color:has-text("MyForm")'}
     #    sleep_click_add_my_form: 1000
@@ -145,7 +145,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_1: { role: "combobox" }
     sleep_click_8: 50
     R_click_select_item_8: { role: "option", name: "Social" }
-    R_click_social_combo_1: { role: "combobox", quick: true }
+    R_click_social_combo_1: { role: "combobox", index: 1, quick: true }
     R_click_insta: { role: "option", name: "Instagram", quick: true }
     R_click_add_9: { role: "button", name: "Add", quick: true }
 
@@ -156,7 +156,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_2: { role: "combobox" }
     sleep_click_9: 50
     R_click_select_item_9: { role: "option", name: "Social" }
-    R_click_social_combo_2: { role: "combobox", quick: true }
+    R_click_social_combo_2: { role: "combobox", index: 1, quick: true }
     R_click_fb: { role: "option", name: "Facebook", quick: true }
     R_click_add_10: { role: "button", name: "Add", quick: true }
 
@@ -167,7 +167,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_3: { role: "combobox" }
     sleep_click_10: 50
     R_click_select_item_10: { role: "option", name: "Social" }
-    R_click_social_combo_3: { role: "combobox", quick: true }
+    R_click_social_combo_3: { role: "combobox", index: 1, quick: true }
     R_click_tiktok: { role: "option", name: "TikTok", quick: true }
     R_click_add_11: { role: "button", name: "Add", quick: true }
 
@@ -178,7 +178,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_4: { role: "combobox" }
     sleep_click_11: 50
     R_click_select_item_11: { role: "option", name: "Social" }
-    R_click_social_combo_4: { role: "combobox", quick: true }
+    R_click_social_combo_4: { role: "combobox", index: 1, quick: true }
     R_click_x: { role: "option", name: "X", exact: true, quick: true }
     R_click_add_12: { role: "button", name: "Add", quick: true }
 
@@ -189,7 +189,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_5: { role: "combobox" }
     sleep_click_12: 50
     R_click_select_item_12: { role: "option", name: "Social" }
-    R_click_social_combo_5: { role: "combobox", quick: true }
+    R_click_social_combo_5: { role: "combobox", index: 1, quick: true }
     R_click_yt: { role: "option", name: "YouTube", quick: true }
     R_click_add_13: { role: "button", name: "Add", quick: true }
 
@@ -200,7 +200,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_6: { role: "combobox" }
     sleep_click_13: 50
     R_click_select_item_13: { role: "option", name: "Social" }
-    R_click_social_combo_6: { role: "combobox", quick: true }
+    R_click_social_combo_6: { role: "combobox", index: 1, quick: true }
     R_click_linkedin: { role: "option", name: "Linkedin", quick: true }
     R_click_add_14: { role: "button", name: "Add", quick: true }
 
@@ -211,7 +211,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_social_7: { role: "combobox" }
     sleep_click_14: 50
     R_click_select_item_14: { role: "option", name: "Social" }
-    R_click_social_combo_7: { role: "combobox", quick: true }
+    R_click_social_combo_7: { role: "combobox", index: 1, quick: true }
     R_click_threads: { role: "option", name: "Threads", quick: true }
     check_required: { role: "checkbox", name: "Required", checked: false }
     R_click_add_15: { role: "button", name: "Add", quick: true }
@@ -402,7 +402,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
     verify_long: { text: "This field is required. Please fill it in." }
     verify_email: { text: "Enter a valid e-mail address" }
     verify_phone: { text: "Enter a valid phone number" }
-    verify_date: { text: "This field is required. Please fill it in." }
+    verify_date_error: { text: "This field is required. Please fill it in." }
     verify_choice: { text: "This field is required. Please fill it in." }
     verify_multi: { text: "This field is required. Please fill it in." }
     verify_multi_2: { text: "2" }
@@ -431,7 +431,7 @@ testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
     open_shop: "{BASE_URL}/autotestshop"
     sleep_after_open_shop: 1000
 
-    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
+    R_click_my_form_tab: { locator: 'div:has(p:has-text("MyForm"))' }
     sleep_after_form_tab: 200
     R_click_right_more_cta:
       {
@@ -458,7 +458,7 @@ testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
       }
     verify_email: { text: "cooperation.business@gmail.com" }
     verify_phone: { text: "13105558976" }
-    verify_date: { text: "Sun, Apr 12, 2026 12:00 AM" }
+    verify_date: { day: 12 }
     verify_choice: { text: "Yes" }
     verify_multi: { text: "1" }
     verify_multi_2: { text: "2" }

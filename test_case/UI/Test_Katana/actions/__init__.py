@@ -70,7 +70,7 @@ from .product import (
 from .form import (
     verify_submission_details, verify_message_content, click_form_more_menu,
     click_submission_details_back, click_contact_form,
-    download_submission_csv, verify_csv_data, capture_total_count
+    download_submission_csv, verify_csv_data, capture_total_count, verify_date
 )
 from .layout import (
     verify_top_aligned_layout, verify_waterfall_layout,
@@ -205,6 +205,7 @@ ACTIONS = {
     "download_submission_csv": download_submission_csv,
     "verify_csv_data": verify_csv_data,
     "capture_total_count": capture_total_count,
+    "verify_date": verify_date,
     "scroll_to_bottom": scroll_to_bottom,
     "fill_stripe_iframe": fill_stripe_iframe,
     "smart_click_optional": smart_click_optional,
