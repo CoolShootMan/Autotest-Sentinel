@@ -1139,11 +1139,11 @@ def execute_not_recognized_scan(page: Page, v):
     Bypasses Playwright video source limitations by launching a fresh browser.
     """
     logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
+    script_path = os.path.join(os.path.dirname(BASE_DIR), "tools", "run_invalid_qr.py")
     result = subprocess.run(
-        [sys.executable, "run_invalid_qr.py"],
+        [sys.executable, script_path],
         capture_output=True,
-        text=True,
-        cwd=BASE_DIR
+        text=True
     )
     if "SUCCESS" in result.stdout:
         logger.info("Successfully verified 'Code Not Recognized' via subprocess")

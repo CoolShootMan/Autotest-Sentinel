@@ -46,17 +46,51 @@ setup_env.bat
 ```
 *(注：如果您想手动配置环境，请参考[环境管理](#环境管理)部分)*
 
-### 2. API Key 配置
+### 2. 环境配置（`.env` 文件）
 
-在项目**根目录**下创建 `.env` 文件，配置 Gemini API Keys（支持配置多个 Key 自动轮换以避免频率限制）：
+克隆项目后，在项目**根目录**创建 `.env` 文件。项目提供了 `.env.example` 作为模板，直接复制后按需修改即可：
+
+```bash
+cp .env.example .env   # macOS/Linux
+copy .env.example .env  # Windows
+```
+
+`.env` 文件包含以下两类配置：
+
+#### 2-1. 测试环境（`BASE_URL`）
+
+`BASE_URL` 决定用例运行时的目标环境，**同时**控制三件事：
+
+| 影响范围 | 说明 |
+|----------|------|
+| `{BASE_URL}` 占位符 | YAML 用例中的域名替换 |
+| Cookie 文件 | 自动匹配对应环境的 `cookie_<env>.json`（如 `cookie_release.json`） |
+| `{ENV}` 占位符 | YAML 中环境标识字段的替换值 |
+
+可选值：
 
 ```env
-# 必填：Gemini API Key (推荐使用复数形式配置多个，逗号分隔)
+BASE_URL=https://staging.pear.us   # 开发环境
+BASE_URL=https://release.pear.us   # 测试环境（默认）
+BASE_URL=https://pear.us           # 生产环境
+```
+
+> **💡 提示**：不配置 `BASE_URL` 时，框架默认使用 `release` 环境（`https://release.pear.us`）。  
+> 通过命令行传入 `--env staging` 可以临时覆盖 `.env` 中的配置。
+
+#### 2-2. Gemini AI Keys（`GEMINI_API_KEYS`）
+
+配置 Gemini API Keys，支持多个 Key 自动轮换以避免频率限制：
+
+```env
+# 推荐：配置多个 Key，逗号分隔，框架自动轮换
 GEMINI_API_KEYS=key1,key2,key3
 
-# 或者配置单个 Key (兼容旧版本)
+# 或者配置单个 Key（兼容旧版本）
 GEMINI_API_KEY=your_single_key_here
 ```
+
+> **⚠️ 注意**：`.env` 文件包含敏感信息，已被加入 `.gitignore`，**请勿提交到代码仓库**。
 
 ### 3. 一键运行测试
 

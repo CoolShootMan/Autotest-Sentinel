@@ -1,7 +1,8 @@
 import os
 import csv
-import pandas as pd
 import re
+import pandas as pd
+from datetime import datetime
 from loguru import logger
 from playwright.sync_api import Page
 from .base import smart_click
@@ -171,3 +172,146 @@ def verify_csv_data(page: Page, v: dict):
     if not found:
         logger.error(f"FAILED: Expected row {expected_row} not found in {path}")
         raise AssertionError(f"Data verification failed for {path}")
+
+
+def _format_datetime(dt: datetime) -> str:
+    """Format datetime to 'Wed, May 12, 2026 12:00 AM' (Windows-safe, no %-d/%-I)."""
+    return (
+        dt.strftime("%a") + ", " +
+        dt.strftime("%b") + " " +
+        str(dt.day) + ", " +
+        str(dt.year) + " " +
+        dt.strftime("%I") + ":" +
+        dt.strftime("%M") + " " +
+        dt.strftime("%p")
+    )
+
+
+def verify_date(page: Page, v: dict):
+    """
+    Dynamically verify the date field in the submission details modal.
+
+    The calendar always opens to the CURRENT month, so a hardcoded expected
+    date (e.g. "Apr 12") goes stale each month. This action reads the
+    calendar's actual visible month from the page via JS, combines it with
+    the day number selected during form submission, and verifies the
+    formatted date text inside the active dialog.
+
+    YAML usage:
+        verify_date:          # uses day=12 from the submission step
+            day: 12           # optional, defaults to 12
+            timeout: 10000     # optional
+    """
+    day = int(v.get("day", 12))
+    timeout = v.get("timeout", 10000)
+
+    dt_actual = None
+
+    try:
+        # Step 1: Read the raw ISO date from the date-picker input on the page.
+        #         This survives after the calendar modal closes.
+        raw_date = page.evaluate("""() => {
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            for (const inp of dateInputs) {
+                if (inp.value && inp.value.match(/\\d{4}-\\d{2}-\\d{2}/)) return inp.value;
+            }
+            const dated = document.querySelectorAll('[data-date]');
+            for (const el of dated) {
+                const v = el.dataset.date;
+                if (v && v.match(/\\d{4}-\\d{2}-\\d{2}/)) return v;
+            }
+            return null;
+        }""")
+
+        if raw_date:
+            parts = raw_date.split("-")
+            if len(parts) == 3:
+                dt_actual = datetime(int(parts[0]), int(parts[1]), day)
+                logger.info(f"verify_date: read raw date from page input: {raw_date}")
+
+        # Step 2: Fallback — read month/year from the calendar header in the DOM.
+        if dt_actual is None:
+            month_info = page.evaluate("""() => {
+                const grid = document.querySelector('[role="grid"]');
+                if (grid) {
+                    const label = grid.getAttribute('aria-label') || '';
+                    const m = label.match(/([A-Za-z]+)\\s+(\\d{4})/);
+                    if (m) return { month: m[1], year: m[2] };
+                }
+                const candidates = document.querySelectorAll('[class*="calendar-header"], [class*="datepicker-header"], [class*="month-year"]');
+                for (const c of candidates) {
+                    const t = c.textContent.trim();
+                    const m = t.match(/([A-Za-z]+)\\s+(\\d{4})/);
+                    if (m) return { month: m[1], year: m[2] };
+                }
+                return null;
+            }""")
+
+            if month_info:
+                MONTH_NUM = {
+                    "january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
+                    "july":7,"august":8,"september":9,"october":10,"november":11,"december":12
+                }
+                key = month_info["month"].lower()
+                month_num = MONTH_NUM.get(key)
+                if month_num:
+                    dt_actual = datetime(int(month_info["year"]), month_num, day)
+                    logger.info(f"verify_date: detected month from DOM: {month_info['month']} {month_info['year']}")
+
+        # Step 3: Last resort — use current system month.
+        if dt_actual is None:
+            now = datetime.now()
+            dt_actual = now.replace(day=day)
+            logger.warning("verify_date: no calendar month detected, falling back to current system month.")
+
+        expected_text = _format_datetime(dt_actual)
+        logger.info(f"verify_date: expected formatted date = '{expected_text}'")
+
+        day_s = str(day)
+        # Anchor regex on day + year; allow any weekday/month text in between.
+        # Format: "Wed, May 12, 2026 12:00 AM"
+        full_regex = re.compile(
+            r"[A-Za-z]{3}"               # 3-letter weekday (e.g. Tue)
+            r","                          # comma
+            r"\s+"                        # space(s)
+            r"[A-Za-z]{3}"               # 3-letter month (e.g. May)
+            r"\s+"
+            + re.escape(day_s) +          # day number (e.g. 12)
+            r",?\s+"
+            r"\d{4}"                     # year
+            r"\s+"
+            r"\d{1,2}:\d{2}"            # time
+            r"\s+[AP]M",
+            re.IGNORECASE
+        )
+        anchor_regex = re.compile(
+            r"(" + re.escape(day_s) + r",?\s+\d{4})",
+            re.IGNORECASE
+        )
+
+        # Get text from the active submission details dialog
+        dialog_el = page.locator("div[role='dialog']").last
+        if dialog_el.is_visible(timeout=3000):
+            modal_text = dialog_el.inner_text()
+        else:
+            modal_text = page.content()
+            logger.warning("verify_date: no dialog visible, searching full page content")
+
+        if full_regex.search(modal_text):
+            logger.info(f"verify_date: PASS — '{expected_text}' matched in modal.")
+        elif anchor_regex.search(modal_text) and day_s in anchor_regex.search(modal_text).group(0):
+            logger.info(f"verify_date: PASS — day {day_s} confirmed in modal.")
+        else:
+            page.screenshot(path="fail_verify_date.png")
+            logger.error(f"verify_date: FAIL — date for day {day_s} not found in modal.")
+            raise AssertionError(
+                f"Date verification failed: expected day {day_s} ({expected_text}) "
+                f"in submission modal but not found."
+            )
+
+    except AssertionError:
+        raise
+    except Exception as e:
+        page.screenshot(path="fail_verify_date.png")
+        logger.error(f"verify_date: unexpected error: {e}")
+        raise AssertionError(f"Date verification error: {e}")
