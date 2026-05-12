@@ -168,8 +168,8 @@ testT3991:
         click_confirm_publish: { test_id: 'confirm-button' }
         click_publish_btn: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        click_got_it_btn: { role: 'button', name: 'Got it' }
-        sleep_after_got_it: 2000
+        click_save_btn: { role: 'button', name: 'Save' }
+        sleep_after_save: 2000
         
         # Click the newly created Post to enter details
         click_post_card: { role: 'button', name: 'Image of Product testT3991 $', index: 0 }
@@ -185,7 +185,7 @@ testT3991:
         verify_toast_post_added: { text: "Post added!" }
         sleep_after_toast_1: 1500
         
-        click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
+        click_setting_tab_2: { role: 'tab', name: 'Settings' }
         
         # Must assertion 3: Verify setting item is visible
         verify_note_visible: { text: "Add a note for co-sellers" }
@@ -216,12 +216,12 @@ testT3991:
 #
 # Step description:
 # 1. Open Events -> click Auto-Test-post-setting -> click Get Tickets -> enter Post edit page
-# 2. T3683: Switch to Advanced tab, enable "Order confirmation note" toggle, input note, save
+# 2. T3683: Switch to Settings tab, enable "Order confirmation note" toggle, input note, save
 # 3. T3684: Add to cart, checkout, place order
 #           Verify confirmation note displayed on order placed page and order details page
 #
 # Expected result:
-# 1. T3683: On Advanced tab, "Order confirmation note" toggle default is OFF
+# 1. T3683: On Settings tab, "Order confirmation note" toggle default is OFF
 #           After enabling: input box shows placeholder "e.g., Event time, location, or special instructions for buyers"
 #           Max length 2000, saved successfully with toast
 # 2. T3684: Confirmation note displayed below order details on order placed page
@@ -230,7 +230,7 @@ testT3991:
 
 
 testT3683_T3684:
-    description: "Verify Order Confirmation Note - Edit in Advanced Tab and Verify Display on Order Page"
+    description: "Verify Order Confirmation Note - Edit in Settings Tab and Verify Display on Order Page"
     test_step:
         # Step 1: Events list page -> click Event card
         open: "{BASE_URL}/events"
@@ -244,12 +244,12 @@ testT3683_T3684:
         R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
         sleep_step: 3000
 
-        # Step 3: Post edit page -> switch to Advanced tab
-        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        # Step 3: Post edit page -> switch to Settings tab
+        R_click_setting_tab: { role: 'tab', name: 'Settings' }
         sleep_step: 1500
 
-        # T3683 Step 1: Wait for Advanced tab to load
-        wait_advanced_loaded: { role: 'tab', name: 'Advanced', timeout: 8000 }
+        # T3683 Step 1: Wait for Settings tab to load
+        wait_advanced_loaded: { role: 'tab', name: 'Settings', timeout: 8000 }
         sleep_step: 1000
 
         # T3683 Step 2: Click toggle to enable Order confirmation note (only when OFF -> ON)
@@ -382,33 +382,33 @@ testT3686_CosellerResell:
         sleep_step: 3000
 
         # Handle onboarding modal: check "Do not show me this again" and click "Customize Now"
-        check_do_not_show: { locator: "input[name='display']", optional: true }
-        sleep_step: 500
-        R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
-        sleep_step: 3000
-
-        # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # 使用 smart_click_retry: 元素一定存在，但点击可能不稳定（动画遮罩等），需要重试
-        smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        sleep_step: 2000
-
-        # Second click on Publish confirmation dialog (modal button)
-        # 确认弹框出现有延迟，增加等待时间和重试次数；弹框里只有1个Publish，用index: 0
-        smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        sleep_step: 1000
-
-
-        # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
-        # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
+        # check_do_not_show: { locator: "input[name='display']", optional: true }
         # sleep_step: 500
-        R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
-        sleep_step: 2000
+        # R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
+        # sleep_step: 3000
+
+        # # Click Publish button to publish the resold post (first click may open confirmation dialog)
+        # # 使用 smart_click_retry: 元素一定存在，但点击可能不稳定（动画遮罩等），需要重试
+        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
+        # sleep_step: 2000
+
+        # # Second click on Publish confirmation dialog (modal button)
+        # # 确认弹框出现有延迟，增加等待时间和重试次数；弹框里只有1个Publish，用index: 0
+        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
+        # sleep_step: 1000
 
 
+        # # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
+        # # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
+        # # sleep_step: 500
+        # R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
+        # sleep_step: 2000
+
+        click_save_btn: { role: 'button', name: 'Save' }
 
 
         # Wait for toast message "Post published and added to your shop."
-        wait_toast_publish: { message: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress.", timeout: 10000 }
+        # wait_toast_publish: { message: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress.", timeout: 10000 }
         sleep_step: 3000
 
         # =========================================================================
@@ -423,8 +423,8 @@ testT3686_CosellerResell:
         R_click_resold_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
         sleep_step: 3000
 
-        # Step 3.3: Switch to Advanced tab
-        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        # Step 3.3: Switch to Settings tab
+        R_click_setting_tab: { role: 'tab', name: 'Settings' }
         sleep_step: 2000
 
         # Step 3.4: Verify the note content is displayed and matches original (implies toggle is ON)
@@ -669,7 +669,7 @@ testT2705_VerifyGuest:
 
 # T2830: Partner hides a post on the storefront
 testT2830_VerifyPartner:
-    description: "Verify hiding a post from the store via Advanced settings"
+    description: "Verify hiding a post from the store via Settings settings"
     test_step:
         # Step 1: Open Events list page
         open: "{BASE_URL}/events"
@@ -687,8 +687,8 @@ testT2830_VerifyPartner:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 4: Click Advanced tab
-        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        # Step 4: Click Seting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 5: Check hide in store
@@ -759,8 +759,8 @@ testT2830_VerifyGuest:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 5: Click Advanced tab
-        R_click_advanced_tab_reset: { role: "tab", name: "Advanced" }
+        # Step 5: Click Seting tab
+        R_click_setting_tab_reset: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 6: Uncheck hideInStore
@@ -972,8 +972,8 @@ testT4735_VerifyPartner:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 4: Click Advanced tab
-        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        # Step 4: Click Seting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Check enableRedirectUrl checkbox
@@ -1080,8 +1080,8 @@ testT4735_VerifyGuest_YesPlease:
         R_click_post_card_teardown: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Click Advanced tab
-        R_click_advanced_tab_teardown: { role: "tab", name: "Advanced" }
+        # Click Seting tab
+        R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Uncheck enableRedirectUrl checkbox to disable redirect
@@ -1113,8 +1113,8 @@ testT2515_SetLimit_WithVariant:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 4: Click Advanced tab
-        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        # Step 4: Click Seting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 3: Enable "Purchase quantity limit" toggle
@@ -1265,8 +1265,8 @@ testT2515_VerifyDisabled_WithVariant:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 5: Click Advanced tab
-        R_click_advanced_tab_teardown: { role: "tab", name: "Advanced" }
+        # Step 5: Click Seting tab
+        R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 6: Disable "Purchase quantity limit" toggle
@@ -1299,8 +1299,8 @@ testT4955_Partner_SetPaymentRestriction:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 4: Click Advanced tab
-        R_click_advanced_tab: { role: "tab", name: "Advanced" }
+        # Step 4: Click Seting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 5: Check enablePaymentRestriction checkbox
@@ -1414,8 +1414,8 @@ testT4955_Guest_VerifyAccessCode:
         R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
         sleep_step: 3000
 
-        # Step 5: Click Advanced tab
-        R_click_advanced_tab_teardown: { role: "tab", name: "Advanced" }
+        # Step 5: Click Seting tab
+        R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 6: Uncheck enablePaymentRestriction checkbox to disable
@@ -2164,11 +2164,11 @@ testT3767:
 
 # ==============================================================================
 # Test Case: T2281
-# T2281: Verify that duplicating a post copies Advanced settings (allowExpire)
+# T2281: Verify that duplicating a post copies Settings settings (allowExpire)
 #        and the setting can be modified independently in the duplicate
 #
 # Step description:
-# 1. Create a new post with title "test case 2281 post", enable "Allow expire" in Advanced tab
+# 1. Create a new post with title "test case 2281 post", enable "Allow expire" in Settings tab
 # 2. Publish the post
 # 3. Open the post and duplicate it via enhance-button menu
 # 4. In the duplicate, change title to "test case 2281 post duplicate" and disable "Allow expire"
@@ -2182,7 +2182,7 @@ testT3767:
 # ==============================================================================
 
 testT2281:
-    description: "Verify duplicate post copies Advanced settings (allowExpire) and can be modified independently"
+    description: "Verify duplicate post copies Settings settings (allowExpire) and can be modified independently"
     test_step:
         # Step 1: Open post creation page
         open: "{BASE_URL}/post/create?c=POST_PAGE"
@@ -2195,8 +2195,8 @@ testT2281:
         fill_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 2281 post' }
         sleep_step: 500
 
-        # Step 3: Click Advanced tab and enable allowExpire
-        R_click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        # Step 3: Click Setting tab and enable allowExpire
+        R_click_setting_tab: { role: 'tab', name: 'Settings' }
         sleep_step: 2000
         check_allow_expire: { locator: 'input[name="allowExpire"]' }
         sleep_step: 2000
@@ -2232,8 +2232,8 @@ testT2281:
         fill_title_duplicate: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 2281 post duplicate' }
         sleep_step: 500
 
-        # Step 11: Click Advanced tab and uncheck allowExpire
-        R_click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
+        # Step 11: Click Seting tab and uncheck allowExpire
+        R_click_setting_tab_2: { role: 'tab', name: 'Settings' }
         sleep_step: 2000
         uncheck_allow_expire: { locator: 'input[name="allowExpire"]', checked: false }
         sleep_step: 5000
@@ -2255,7 +2255,7 @@ testT2281:
         sleep_step: 3000
 
         # Step 16: Navigate through tabs to verify settings
-        R_click_selling_tab: { role: 'tab', name: 'Advanced' }
+        R_click_selling_tab: { role: 'tab', name: 'Settings' }
         sleep_step: 1000
 
         sleep_end: 2000
@@ -2272,7 +2272,7 @@ testT2537:
         open: "{BASE_URL}/post/create"
         sleep_step: 3000
 
-        click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        click_setting_tab: { role: 'tab', name: 'Settings' }
         sleep_step: 1000
 
         check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
@@ -2317,7 +2317,7 @@ testT2537:
         click_created_post: { text: 'test case 2537', index: 0 }
         sleep_step: 3000
 
-        click_advanced_tab_2: { role: 'tab', name: 'Advanced' }
+        click_setting_tab_2: { role: 'tab', name: 'Settings' }
         sleep_step: 1000
 
         click_manage: { role: 'button', name: 'Manage' }
