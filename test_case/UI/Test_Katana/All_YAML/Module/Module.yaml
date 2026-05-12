@@ -999,7 +999,7 @@ testT4605:  # [LAST: BROKEN 2026-05-06]
         # Step 4: Publish changes
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_after_got_it: 5000
 
         # Step 5: Verify 2 posts exist in the module after duplication

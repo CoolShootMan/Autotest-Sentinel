@@ -398,7 +398,7 @@ testT3686_CosellerResell:
         sleep_step: 1000
 
 
-        # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
+        # Handle optional success dialog after publishing: check "Do not show me this again" and click Save
         # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
         # sleep_step: 500
         # R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
@@ -2058,8 +2058,8 @@ testT3779:
         R_click_create: { role: 'button', name: 'Create' }
         sleep_step: 2000
 
-        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Got it"
-        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
+        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
         sleep_step: 1000
 
         # Step 11: Save and verify toast
@@ -2226,8 +2226,8 @@ testT2281:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        # Step 6: Click Got it (success dialog)
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        # Step 6: Click Save (success dialog)
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         # Step 7: Click on the created post card to open it
@@ -2263,8 +2263,8 @@ testT2281:
         R_click_publish_2: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        # Step 14: Click Got it (success dialog)
-        R_click_got_it_2: { role: 'button', name: 'Got it' }
+        # Step 14: Click Save (success dialog)
+        R_click_got_it_2: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         # Step 15: Click on the duplicate post card (newest post, index: 0)
@@ -2328,7 +2328,7 @@ testT2537:
         click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        click_got_it: { role: 'button', name: 'Got it' }
+        click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
         click_created_post: { text: 'test case 2537', index: 0 }
@@ -2426,16 +2426,16 @@ testT3110:
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
         sleep_step: 1500
 
-        R_click_save_as_draft: { role: 'button', name: 'Save as draft' }
+        R_click_save_as_draft: { role: 'button', name: 'Unpublish' }
         sleep_step: 1500
 
         fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'test case 3110' }
         sleep_step: 1000
 
-        R_click_save_as_draft_2: { role: 'button', name: 'Save as draft' }
+        R_click_save_as_draft_2: { role: 'button', name: 'Unpublish' }
         sleep_step: 2000
 
-        R_click_got_it: { role: 'button', name: 'Got it', optional: true }
+        R_click_got_it: { role: 'button', name: 'Save', optional: true }
         sleep_step: 1500
 
         R_click_customize_products_btn_2: { role: 'button', name: 'Customize products' }
@@ -2579,7 +2579,7 @@ testT1928:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 3000
 
-        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 3000 }
+        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
         sleep_step: 3000
 
         # Navigate to Catalogs to update product price
@@ -2678,7 +2678,7 @@ testT3811:
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_step: 4000
 
-        # Step 16: Click Got it
+        # Step 16: Click Save
         R_click_got_it: { role: 'button', name: 'Save' }
         sleep_step: 3000
 

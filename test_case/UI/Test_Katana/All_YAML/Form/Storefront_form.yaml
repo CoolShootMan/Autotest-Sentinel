@@ -376,10 +376,10 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
       name: "Submit"
 
   expect_result:
-    description: "Form should be submitted successfully with Got it confirmation"
+    description: "Form should be submitted successfully with Save confirmation"
     assertions:
       - assertion_type: "element_visible_by_text"
-        text: "Got it"
+        text: "Save"
 
 # Covered use cases: T4280 (empty submit validation for required fields), T4973 (Social field empty value and format validation)
 test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
@@ -415,7 +415,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
     verify_linkedin: { text: "This field is required. Please fill it in." }
 
   expect_result:
-    description: "Form should be submitted successfully with Got it confirmation"
+    description: "Form should be submitted successfully with Save confirmation"
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Partner_create_form"
