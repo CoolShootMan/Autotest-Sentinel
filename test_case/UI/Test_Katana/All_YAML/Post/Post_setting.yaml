@@ -148,7 +148,7 @@ testT3991:
         click_content_tab: { role: 'tab', name: 'Content' }
         fill_post_title: { role: 'textbox', name: 'Pick a bold title for your', value: 'testT3991' }
         
-        click_advanced_tab: { role: 'tab', name: 'Advanced' }
+        click_advanced_tab: { role: 'tab', name: 'Settings' }
         
         # Must assertion 1: Verify advanced settings are visible
         verify_allow_copy_visible: { text: "Allow others to copy" }
@@ -182,7 +182,7 @@ testT3991:
         click_add_btn: { role: 'button', name: 'Add' }
         
         # Must assertion 2: Toast message after successfully adding co-seller
-        verify_toast_post_added: { text: "Post added!" }
+        verify_toast_post_added: { text: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress." }
         sleep_after_toast_1: 1500
         
         click_setting_tab_2: { role: 'tab', name: 'Settings' }
@@ -193,11 +193,12 @@ testT3991:
         check_enable_downline_note: { locator: 'input[name="enableDownlineNote"]' }
         fill_note: { role: 'textbox', name: 'Enter a short message for', value: 'test_3991' }
         click_apply_btn: { role: 'button', name: 'Apply' }
-        click_save_btn: { role: 'button', name: 'Save' }
-        sleep_after_save: 3000
+        sleep_after_apply: 1000
+        click_save_settings_btn: { role: 'button', name: 'Save' }
+        sleep_after_save_settings: 3000
 
         # Must assertion 4: Toast message after configuration is complete
-        verify_toast_settings_updated: { text: "Post advanced settings updated" }
+        verify_toast_settings_updated: { text: "Post settings updated" }
         
     expect_result:
         description: "Partner should be able to set a note for co-sellers successfully."
