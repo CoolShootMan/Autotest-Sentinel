@@ -570,12 +570,12 @@ testT2705_VerifyPartner:
     sleep_step: 3000
 
     # Step 3.1: Click "Edit post" button
-    R_click_edit_post: { role: "button", name: "Edit post" }
+    R_click_edit_post: { role: "button", name: "Edit style" }
     sleep_step: 3000
 
     # Step 3.2: Click "Style" tab in Edit post dialog
-    R_click_style_tab: { role: "tab", name: "Style" }
-    sleep_step: 2000
+    # R_click_style_tab: { role: "tab", name: "Style" }
+    # sleep_step: 2000
 
     # Step 3.3: Click Layout dropdown and select "Collection"
     R_click_layout_dropdown: { locator: "[role='combobox']" }
