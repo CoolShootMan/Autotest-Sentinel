@@ -164,7 +164,7 @@ def dismiss_for_account(playwright, account: dict):
     handle_selling_customize(page)
 
     # ── ④ Customers → Followers ──
-    handle_customers(page)
+    # handle_customers(page)
 
     # ── ⑤ Return to storefront to finish up ──
     page.goto(home_url, timeout=60000)
