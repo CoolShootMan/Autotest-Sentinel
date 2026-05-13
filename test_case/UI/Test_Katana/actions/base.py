@@ -318,6 +318,7 @@ def smart_check(page: Page, v: dict):
     target_role = v.get("role")
     target_index = v.get("index", 0)
     no_modal_scope = v.get("no_modal_scope", False)
+    optional = v.get("optional", False)
     logger.info(f"Checking '{target_name or target_locator}' to {checked}")
 
     def _get_el(root):
@@ -354,6 +355,9 @@ def smart_check(page: Page, v: dict):
 
     # --- Strategy 2: Modal-scoped (only when page-level times out & not suppressed) ---
     if no_modal_scope:
+        if optional:
+            logger.info(f"Optional check: element '{target_name or target_locator}' not found (no_modal_scope=True), skipping.")
+            return
         logger.error(f"Check failed at page-level and no_modal_scope=True, giving up.")
         raise Exception(f"smart_check: element '{target_name or target_locator}' not found on page.")
 
@@ -366,6 +370,11 @@ def smart_check(page: Page, v: dict):
             el.set_checked(checked, timeout=5000)
             logger.info(f"Checked '{target_name or target_locator}' via modal scope.")
             return
+        else:
+            # No modal found and page-level also failed
+            if optional:
+                logger.info(f"Optional check: element '{target_name or target_locator}' not found on page or modal, skipping.")
+                return
     except Exception as e2:
         if "Clicking the checkbox did not change its state" in str(e2) or "intercepts pointer events" in str(e2):
             try:
@@ -373,6 +382,9 @@ def smart_check(page: Page, v: dict):
                 return
             except Exception as fe2:
                 logger.error(f"MUI modal fallback also failed: {fe2}")
+        if optional:
+            logger.info(f"Optional check: modal-scoped attempt also failed for '{target_name or target_locator}', skipping. ({e2})")
+            return
         logger.error(f"Modal-scoped check also failed: {e2}")
         raise
 

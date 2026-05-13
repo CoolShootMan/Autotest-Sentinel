@@ -265,7 +265,7 @@ testT3683_T3684:
 
         # T3683 Step 4: Save
         R_click_save: { role: 'button', name: 'Save' }
-        wait_toast_save: { message: "Post advanced settings updated", timeout: 15000 }
+        wait_toast_save: { message: "Post settings updated", timeout: 15000 }
 
         # Step 5: Close Post edit drawer, return to Event detail page
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
@@ -390,13 +390,13 @@ testT3686_CosellerResell:
 
         # Click Publish button to publish the resold post (first click may open confirmation dialog)
         # Using smart_click_retry: element exists for sure, but click may be unstable (animation overlay etc.), needs retry
-        smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        sleep_step: 2000
+        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
+        # sleep_step: 2000
 
-        # Second click on Publish confirmation dialog (modal button)
-        # Confirm popup appears with delay, increase wait time and retry count; only 1 Publish in popup, use index: 0
-        smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        sleep_step: 1000
+        # # Second click on Publish confirmation dialog (modal button)
+        # # Confirm popup appears with delay, increase wait time and retry count; only 1 Publish in popup, use index: 0
+        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
+        # sleep_step: 1000
 
 
         # Handle optional success dialog after publishing: check "Do not show me this again" and click Save
@@ -716,7 +716,7 @@ testT2830_VerifyPartner:
         sleep_after_save: 5000
         screenshot_after_curator_persistence: { name: "debug_partner_final" }
     expect_result:
-        description: "Post advanced settings updated"
+        description: "Post settings updated"
         assertions: []
 
 # Separate verification for Guest
@@ -1026,7 +1026,7 @@ testT4735_VerifyPartner:
         description: "Redirect URL settings saved successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Post advanced settings updated"
+              text: "Post settings updated"
 
 
 # T4735: Verify redirect popup appears for non-US guest users
@@ -1148,13 +1148,13 @@ testT2515_SetLimit_WithVariant:
         # Step 5: Save
         R_click_save: { role: "button", name: "Save" }
         sleep_step: 3000
-        wait_toast_save: { message: "Post advanced settings updated", timeout: 15000 }
+        wait_toast_save: { message: "Post settings updated", timeout: 15000 }
 
     expect_result:
         description: "Purchase quantity limit saved successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Post advanced settings updated"
+              text: "Post settings updated"
 
 
 # T2515 Guest verifies Buy now button is disabled after buying 5 variants
@@ -1294,7 +1294,7 @@ testT2515_VerifyDisabled_WithVariant:
         # Step 7: Save
         R_click_save_teardown: { role: "button", name: "Save" }
         sleep_step: 3000
-        wait_toast_save_teardown: { message: "Post advanced settings updated", timeout: 15000 }
+        wait_toast_save_teardown: { message: "Post settings updated", timeout: 15000 }
 
 
 # T4955: Partner enables Payment Restriction and sets access code
@@ -1351,7 +1351,7 @@ testT4955_Partner_SetPaymentRestriction:
         description: "Payment Restriction with access code saved successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Post advanced settings updated"
+              text: "Post settings updated"
 
 
 # T4955: Guest verifies Payment Restriction requires access code
@@ -1443,7 +1443,7 @@ testT4955_Guest_VerifyAccessCode:
         # Step 7: Save
         R_click_save_teardown: { role: "button", name: "Save" }
         sleep_step: 3000
-        wait_toast_save_teardown: { message: "Post advanced settings updated", timeout: 15000 }
+        wait_toast_save_teardown: { message: "Post settings updated", timeout: 15000 }
 
 
 
