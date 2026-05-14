@@ -46,10 +46,10 @@ ACCOUNTS = [
 
 
 def dismiss_edu_popups(page: "Page", retries: int = 5) -> None:
-    """Click away all EDU popup buttons that may appear on the page (Next / Got it / Try it now)."""
+    """Click away all EDU popup buttons that may appear on the page (Next / Save / Got it / Try it now)."""
     for _ in range(retries):
         clicked = False
-        for text in ("Next", "Got it"):
+        for text in ("Next", "Save", "Got it"):
             try:
                 page.locator("button").filter(has_text=text).click(timeout=1500)
                 clicked = True
