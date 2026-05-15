@@ -1955,14 +1955,16 @@ testT5033_5034_VerifyPartner:
         # Step 2: Create a post
         sleep_step: 2000
         R_click_event_tab_2: { role: 'tab', name: 'Event', exact:true }
-        R_click_Create_post: {role: "button", name: "Create a post"}
+        R_click_posts_tab: { role: "tab", name: "Posts" }
+        sleep_step: 2000
+        R_click_Create_post: {role: "button", name: "Create new post"}
         sleep_after_create_post: 2000
         # #smart_click_optional_confirm: { role: "button", name: "Confirm" }
         click_confirm: { role: "button", name: "Confirm" }
         sleep_step: 1500
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab_2: { role: "tab", name: "Posts" }
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
         sleep_step: 2000
