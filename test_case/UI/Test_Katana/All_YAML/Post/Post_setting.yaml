@@ -587,9 +587,6 @@ testT2705_VerifyPartner:
     R_click_update: { role: "button", name: "Update" }
     sleep_step: 2000
 
-    # Step 3.5: Click "Update" in confirmation popup "Update This Post?"
-    R_click_update_confirm: { role: "button", name: "Update" }
-    sleep_step: 3000
 
     # Step 4: Click Selling tab
     R_click_selling_tab: { role: "tab", name: "Selling" }
@@ -611,7 +608,7 @@ testT2705_VerifyPartner:
 
     # Save and Save1
     R_click_save: { role: "button", name: "Save" }
-    R_click_save1: { role: "button", name: "Save" }
+    R_click_save1: { role: "button", name: "Save"}
     sleep_after_update: 5000
 
   expect_result:
@@ -820,11 +817,9 @@ testT2834_VerifyPartner:
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
         sleep_step: 2000
-        R_click_edit_post: { role: "button", name: "Edit post" }
-        sleep_step: 3000
 
         # Step 2: Edit Style (as recorded in T2834partner)
-        R_click_style_tab: { role: "tab", name: "Style" }
+        R_click_style_tab: { role: "tab", name: "Edit style" }
         sleep_step: 1000
         R_click_layout_combobox: { role: "combobox" }
         sleep_step: 500
