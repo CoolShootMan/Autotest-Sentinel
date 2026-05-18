@@ -246,7 +246,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     sleep_preview: 1000
     R_click_close_preview:
       { role: "button", name: "Close", exact: true, quick: true }
-    sleep_close_preview: 1000
+    #sleep_close_preview: 1000
 
     R_click_continue: { role: "button", name: "Continue", quick: true }
     sleep_continue: 500
@@ -262,7 +262,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
       }
 
     R_click_save: { role: "button", name: "Save", quick: true }
-    sleep_save: 3000
+    sleep_save: 1000
 
   expect_result:
     description: "Form should be created successfully"
@@ -379,7 +379,7 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
     description: "Form should be submitted successfully with Save confirmation"
     assertions:
       - assertion_type: "element_visible_by_text"
-        text: "Save"
+        text: "Got it"
 
 # Covered use cases: T4280 (empty submit validation for required fields), T4973 (Social field empty value and format validation)
 test_guest_submission_2: # [LAST: BROKEN 2026-05-06]

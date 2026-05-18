@@ -7,7 +7,7 @@ def run_isolated_scan():
     # Detect BASE_DIR
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # Use forward slashes for safer Chromium argument parsing on Windows
-    y4m_path = os.path.join(current_dir, "data", "error_prod.y4m").replace("\\", "/")
+    y4m_path = os.path.join(current_dir, "..", "data", "error_prod.y4m").replace("\\", "/")
     url = "https://s.pear.us/iyR93K"
     
     print(f"DEBUG: Starting isolated scan for 'Code Not Recognized'")

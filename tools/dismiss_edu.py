@@ -46,19 +46,117 @@ ACCOUNTS = [
 
 
 def dismiss_edu_popups(page: "Page", retries: int = 5) -> None:
-    """Click away all EDU popup buttons that may appear on the page (Next / Got it / Try it now)."""
+    """Click away all EDU popup buttons that may appear on the page (Next / Save / Got it / Try it now)."""
     for _ in range(retries):
         clicked = False
-        for text in ("Next", "Got it"):
+        for text in ("Next", "Save", "Got it"):
             try:
-                page.locator("button").filter(has_text=text).click(timeout=1500)
+                page.locator("button").filter(has_text=text).click(timeout=800)
                 clicked = True
             except Exception:
                 pass
         if not clicked:
             break
     try:
-        page.get_by_role("button", name="Try it now").click(timeout=1500)
+        page.get_by_role("button", name="Try it now").click(timeout=800)
+    except Exception:
+        pass
+
+    # Dismiss the "Your shop is ready" onboarding modal (new-account feature)
+    try:
+        page.get_by_role("button", name="I'll do it later").click(timeout=800)
+    except Exception:
+        pass
+    try:
+        page.get_by_role("button", name="No, take me to my shop").click(timeout=800)
+    except Exception:
+        pass
+
+
+def handle_create_post_edu(page: "Page", base_url: str) -> None:
+    """Trigger Post EDU by navigating directly to create page and adding a product.
+    Works universally across all accounts regardless of existing Post cards.
+    After dismissing EDU, closes the draft without saving.
+    """
+    # Close any blocking modal first ("Your shop is ready" etc.)
+    try:
+        page.get_by_role("button", name="Close").click(timeout=800)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+
+    # Navigate directly to create post page via URL
+    try:
+        page.goto(f"{base_url}/post/create", timeout=30000)
+        page.wait_for_timeout(800)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
+
+    # Dismiss "Creating a post for one of your events?" dialog — always choose No
+    # (accounts with events would get redirected to event post flow if Yes is chosen)
+    try:
+        page.get_by_role("button", name="No").click(timeout=800)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+
+    # Step through the post creation wizard EDU steps
+    for btn_name in ("Next", "Next", "Start Creating"):
+        try:
+            page.get_by_role("button", name=btn_name).click(timeout=1500)
+            page.wait_for_timeout(200)
+            dismiss_edu_popups(page)
+        except Exception:
+            pass
+
+    # Click enhance CTA to trigger product-selection EDU
+    try:
+        page.get_by_test_id("enhance-button-cta").click(timeout=1500)
+        page.wait_for_timeout(200)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
+
+    # Select a product image to trigger product EDU
+    try:
+        page.get_by_role("img", name="Image of Product").first.click(timeout=1500)
+        page.wait_for_timeout(200)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
+
+    # Confirm adding the product
+    try:
+        page.get_by_role("button", name="Add 1/20 product(s)").click(timeout=1500)
+        page.wait_for_timeout(200)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
+
+    # Dismiss "You've added products" EDU popup — check "Do not show me this again" first, then close
+    try:
+        # Check the "Do not show me this again" checkbox
+        page.get_by_role("checkbox", name="Do not show me this again").check(timeout=1500)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+    try:
+        # Click the X button to close the EDU popup
+        page.locator("[data-testid='CloseIcon']").first.click(timeout=800)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+
+    # Close the post editor without saving (go back to storefront)
+    try:
+        page.get_by_role("button", name="Close").click(timeout=800)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+    try:
+        page.get_by_role("button", name="Discard").click(timeout=800)
+        page.wait_for_timeout(200)
     except Exception:
         pass
 
@@ -66,69 +164,69 @@ def dismiss_edu_popups(page: "Page", retries: int = 5) -> None:
 def handle_selling_customize(page: "Page") -> None:
     """Selling tab → Customize products page EDU handling flow."""
     try:
-        page.get_by_role("tab", name="Selling", exact=True).click(timeout=5000)
-        page.wait_for_timeout(1000)
+        page.get_by_role("tab", name="Selling", exact=True).click(timeout=1500)
+        page.wait_for_timeout(300)
         dismiss_edu_popups(page)
     except Exception:
         pass
 
     try:
-        page.get_by_role("button", name="Customize products").click(timeout=5000)
-        page.wait_for_timeout(1500)
+        page.get_by_role("button", name="Customize products").click(timeout=1500)
+        page.wait_for_timeout(300)
         dismiss_edu_popups(page)
     except Exception:
         pass
 
     try:
-        page.get_by_role("checkbox").check(timeout=3000)
+        page.get_by_role("checkbox").check(timeout=800)
     except Exception:
         pass
 
     try:
-        page.get_by_role("button", name="Start Customizing").click(timeout=5000)
-        page.wait_for_timeout(1000)
+        page.get_by_role("button", name="Start Customizing").click(timeout=1500)
+        page.wait_for_timeout(300)
         dismiss_edu_popups(page)
     except Exception:
         pass
 
     for _ in range(3):
         try:
-            page.locator("button").filter(has_text="Done").click(timeout=3000)
-            page.wait_for_timeout(500)
+            page.locator("button").filter(has_text="Done").click(timeout=800)
+            page.wait_for_timeout(200)
         except Exception:
             break
 
     try:
-        page.get_by_role("button", name="Save").click(timeout=5000)
+        page.get_by_role("button", name="Save").click(timeout=1500)
     except Exception:
         pass
 
     try:
-        page.get_by_role("button", name="Close").click(timeout=5000)
+        page.get_by_role("button", name="Close").click(timeout=800)
     except Exception:
         pass
 
 
-# def handle_customers(page: "Page") -> None:
-#     """Customers → Followers page EDU handling."""
-#     try:
-#         page.goto("https://release.pear.us/customers", timeout=60000)
-#         page.wait_for_timeout(2000)
-#         dismiss_edu_popups(page)
-#     except Exception:
-#         pass
+def handle_customers(page: "Page") -> None:
+    """Customers → Followers page EDU handling."""
+    try:
+        page.goto(f"{ENV_BASE}/customers", timeout=60000)
+        page.wait_for_timeout(2000)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
 
-#     try:
-#         page.get_by_role("tab", name="Followers").click(timeout=5000)
-#         page.wait_for_timeout(1000)
-#         dismiss_edu_popups(page)
-#     except Exception:
-#         pass
+    try:
+        page.get_by_role("tab", name="Followers").click(timeout=5000)
+        page.wait_for_timeout(1000)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
 
-#     try:
-#         page.get_by_role("button", name="Close").click(timeout=3000)
-#     except Exception:
-#         pass
+    try:
+        page.get_by_role("button", name="Close").click(timeout=3000)
+    except Exception:
+        pass
 
 
 def dismiss_for_account(playwright, account: dict):
@@ -149,26 +247,25 @@ def dismiss_for_account(playwright, account: dict):
 
     # ── ① Shop home page EDU ──
     page.goto(home_url, timeout=60000)
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(1500)
+    dismiss_edu_popups(page)
+    page.wait_for_timeout(500)
     dismiss_edu_popups(page)
 
-    # ── ② Navigate to Post edit page to trigger its EDU ──
-    try:
-        page.get_by_role("button", name="Image of Product Test event").first.click(timeout=5000)
-        page.wait_for_timeout(1500)
-        dismiss_edu_popups(page)
-    except Exception:
-        pass
+    # ── ② Create a Post to trigger Post-related EDU (universal across all accounts) ──
+    handle_create_post_edu(page, ENV_BASE)
 
     # ── ③ Selling tab → Customize products ──
     handle_selling_customize(page)
 
     # ── ④ Customers → Followers ──
-    # handle_customers(page)
+    handle_customers(page)
 
     # ── ⑤ Return to storefront to finish up ──
     page.goto(home_url, timeout=60000)
-    page.wait_for_timeout(2000)
+    page.wait_for_timeout(1500)
+    dismiss_edu_popups(page)
+    page.wait_for_timeout(500)
     dismiss_edu_popups(page)
 
     # ── Save cookie after EDU processing ──

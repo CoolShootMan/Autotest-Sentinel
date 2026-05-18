@@ -80,8 +80,13 @@ def open_url(page: Page, v):
         if auto_handle_modals_enabled:
             logger.info(">>> Auto-handling modals after page load")
             try:
-                # Wait for page to fully render before detecting modals
-                page.wait_for_timeout(10000)
+                # Wait dynamically for page network activity to settle (max 8s)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+                # Tiny buffer for JS to render the modal after network resolves
+                page.wait_for_timeout(1000)
                 auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
             except Exception as e:
                 # Failure in bullet layer processing does not affect the main process
@@ -649,6 +654,9 @@ def _smart_click_core(page: Page, v: dict):
     except Exception as e:
             logger.debug(f"Standard click failed: {e}")
 
+    if optional:
+        logger.info(f"Optional click: element '{target_name or target_locator}' not found after all standard strategies, skipping.")
+        return
     raise Exception(f"smart_click: element not found: {target_name or target_locator}")
 
 
@@ -1151,7 +1159,7 @@ def execute_not_recognized_scan(page: Page, v):
     Bypasses Playwright video source limitations by launching a fresh browser.
     """
     logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
-    script_path = os.path.join(os.path.dirname(BASE_DIR), "tools", "run_invalid_qr.py")
+    script_path = os.path.join(BASE_DIR, "tools", "run_invalid_qr.py")
     result = subprocess.run(
         [sys.executable, script_path],
         capture_output=True,
@@ -2201,7 +2209,8 @@ def handle_modal(page: Page, v: dict):
                     continue
 
                 # Check if modal is visible
-                if modal_locator.is_visible(timeout=1000):
+                visibility_timeout = v.get("visibility_timeout", 100)
+                if modal_locator.is_visible(timeout=visibility_timeout):
                     logger.info(f"✓ Modal found using: {modal_id}")
                     modal_found = True
                     break
@@ -2222,7 +2231,7 @@ def handle_modal(page: Page, v: dict):
     if not modal_found:
         if ignore_if_not_found:
             logger.info("Modal not found, but ignoring as per configuration")
-            return
+            return False
         else:
             logger.error(f"Modal not found after {max_attempts} attempts")
             page.screenshot(path="modal_not_found.png")
@@ -2260,11 +2269,13 @@ def handle_modal(page: Page, v: dict):
 
     if buttons_clicked > 0:
         logger.info(f"✓ Modal handled successfully, clicked {buttons_clicked} button(s)")
+        return True
     else:
         logger.warning("⚠ No buttons were clicked in modal")
         if not ignore_if_not_found:
             page.screenshot(path="modal_button_not_found.png")
             raise AssertionError("No clickable buttons found in modal")
+        return False
 
 
 def find_button_in_modal(page: Page, modal_locator, button_id):
@@ -2415,15 +2426,18 @@ def auto_handle_modals(page: Page, v: dict):
         for modal_config in common_modals:
             try:
                 # Try to find and handle the modal
-                handle_modal(page, {
+                handled = handle_modal(page, {
                     **modal_config,
                     "timeout": timeout,
                     "ignore_if_not_found": True,
-                    "wait_before_click": 1000
+                    "wait_before_click": 1000,
+                    "max_attempts": 2,
+                    "visibility_timeout": 100
                 })
-                handled_this_round += 1
-                modal_found_this_round = True
-                logger.info(f"✓ Modal handled in iteration {iteration}")
+                if handled:
+                    handled_this_round += 1
+                    modal_found_this_round = True
+                    logger.info(f"✓ Modal handled in iteration {iteration}")
 
             except Exception as e:
                 # Continue to next modal pattern
