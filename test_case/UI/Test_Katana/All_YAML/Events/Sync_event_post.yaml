@@ -7,8 +7,12 @@ testT4984_partner:
     click_view_event: { role: 'cell', name: "verify-post-shipping_fee" }
     sleep_after_view_event: 2000
 
+    # Click Posts tab before creating a post
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_after_posts_tab: 1000
+
     # Create a post
-    click_create_post: { role: "button", name: "Create a post" }
+    click_create_post: { role: "button", name: "Create new post" }
     sleep_after_create_post: 2000
     click_confirm: { role: "button", name: "Confirm" }
     sleep_after_confirm: 3000

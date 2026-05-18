@@ -5,7 +5,7 @@ testT3981_Verified:
     test_step:
         open: "https://s.pear.us/iyR93K"
         sleep_wait_for_scan: 5000
-        verify_verified: { text: "Code Verified", timeout: 20000 }
+        verify_verified: { text: "Code Verified", timeout: 5000 }
     expect_result:
         description: "Ticket should be verified successfully"
         assertions:
@@ -17,7 +17,7 @@ testT3981_Already:
     test_step:
         open: "https://s.pear.us/iyR93K"
         sleep_wait_for_scan: 5000
-        verify_already: { text: "Code Already Redeemed", timeout: 20000 }
+        verify_already: { text: "Code Already Redeemed", timeout: 5000 }
     expect_result:
         description: "Should display Already Redeemed status"
         assertions:
