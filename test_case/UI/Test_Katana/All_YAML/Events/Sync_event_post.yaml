@@ -9,7 +9,7 @@ testT4984_partner:
 
     # Click Posts tab before creating a post
     R_click_posts_tab: { role: "tab", name: "Posts" }
-    sleep_after_posts_tab: 2000
+    sleep_after_posts_tab: 1000
 
     # Create a post
     click_create_post: { role: "button", name: "Create new post" }

@@ -134,6 +134,20 @@ def handle_create_post_edu(page: "Page", base_url: str) -> None:
     except Exception:
         pass
 
+    # Dismiss "You've added products" EDU popup — check "Do not show me this again" first, then close
+    try:
+        # Check the "Do not show me this again" checkbox
+        page.get_by_role("checkbox", name="Do not show me this again").check(timeout=1500)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+    try:
+        # Click the X button to close the EDU popup
+        page.locator("[data-testid='CloseIcon']").first.click(timeout=800)
+        page.wait_for_timeout(200)
+    except Exception:
+        pass
+
     # Close the post editor without saving (go back to storefront)
     try:
         page.get_by_role("button", name="Close").click(timeout=800)
@@ -193,26 +207,26 @@ def handle_selling_customize(page: "Page") -> None:
         pass
 
 
-# def handle_customers(page: "Page") -> None:
-#     """Customers → Followers page EDU handling."""
-#     try:
-#         page.goto("https://release.pear.us/customers", timeout=60000)
-#         page.wait_for_timeout(2000)
-#         dismiss_edu_popups(page)
-#     except Exception:
-#         pass
+def handle_customers(page: "Page") -> None:
+    """Customers → Followers page EDU handling."""
+    try:
+        page.goto(f"{ENV_BASE}/customers", timeout=60000)
+        page.wait_for_timeout(2000)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
 
-#     try:
-#         page.get_by_role("tab", name="Followers").click(timeout=5000)
-#         page.wait_for_timeout(1000)
-#         dismiss_edu_popups(page)
-#     except Exception:
-#         pass
+    try:
+        page.get_by_role("tab", name="Followers").click(timeout=5000)
+        page.wait_for_timeout(1000)
+        dismiss_edu_popups(page)
+    except Exception:
+        pass
 
-#     try:
-#         page.get_by_role("button", name="Close").click(timeout=3000)
-#     except Exception:
-#         pass
+    try:
+        page.get_by_role("button", name="Close").click(timeout=3000)
+    except Exception:
+        pass
 
 
 def dismiss_for_account(playwright, account: dict):
@@ -245,7 +259,7 @@ def dismiss_for_account(playwright, account: dict):
     handle_selling_customize(page)
 
     # ── ④ Customers → Followers ──
-    # handle_customers(page)
+    handle_customers(page)
 
     # ── ⑤ Return to storefront to finish up ──
     page.goto(home_url, timeout=60000)

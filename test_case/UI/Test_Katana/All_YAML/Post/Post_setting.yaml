@@ -604,8 +604,8 @@ testT2705_VerifyPartner:
     sleep_step: 2000
 
     # Step 3.5: Click "Update" in confirmation popup "Update This Post?"
-    R_click_update_confirm: { role: "button", name: "Update" }
-    sleep_step: 3000
+    # R_click_update_confirm: { role: "button", name: "Update" }
+    # sleep_step: 3000
 
     # Step 4: Click Selling tab
     R_click_selling_tab: { role: "tab", name: "Selling" }
@@ -850,7 +850,7 @@ testT2834_VerifyPartner:
         sleep_step: 2000
         R_click_post: { test_id: "mui-card-action-area" }
         sleep_step: 2000
-        R_click_edit_post: { role: "button", name: "Edit post" }
+        R_click_edit_post: { role: "button", name: "Edit style" }
         sleep_step: 3000
 
         # Step 2: Edit Style (as recorded in T2834partner)
@@ -1375,7 +1375,7 @@ testT4955_Partner_SetPaymentRestriction:
         sleep_step: 1000
 
         # Step 5.1: Click access code button (Edit or Set up access code - either one exists)
-        R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up')" }
+        R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code')" }
         sleep_step: 1000
 
         # Step 7: Click and fill access code
@@ -1871,7 +1871,7 @@ testT3963_VerifyGuestCheckoutShippingFee:
     description: "Verify shipping fee logic on the checkout page as a guest"
     test_step:
         # Step 1: Open shop
-        open: "{BASE_URL}/autotestshop"
+        open: "{BASE_URL}/autotestshop#Products"
         sleep_step: 3000
 
         # Step 2: Click the product image to enter product details
@@ -1920,10 +1920,10 @@ testT5033_5034_VerifyPartner:
         sleep_step: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        R_click_tickets_tab_1: { role: 'tab', name: 'Tickets' }
-        sleep_after_tickets_tab: 1500
+        # R_click_tickets_tab_1: { role: 'tab', name: 'Tickets' }
+        # sleep_after_tickets_tab: 1500
         # Click More button (three-dot icon)
-        click_more_button_1: { role: "button", name: "More action" }
+        click_more_button_1: { role: "button", name: "More action", index: 1 }
         sleep_step: 500
         # Click Duplicate from menu
         R_click_duplicate_menuitem_1: { role: "menuitem", name: "Duplicate" }
@@ -1932,7 +1932,7 @@ testT5033_5034_VerifyPartner:
         sleep_step: 500
         # R_click_gotit_1: { role: "button", name: "Got it", optional: true }
         # sleep_step: 500
-        click_more_button_2: { role: "button", name: "More action" }
+        click_more_button_2: { role: "button", name: "More action", index: 1  }
         sleep_step: 500
         R_click_duplicate_menuitem_2: { role: "menuitem", name: "Duplicate" }
         sleep_step: 500
@@ -1940,7 +1940,7 @@ testT5033_5034_VerifyPartner:
         sleep_step: 500
         # R_click_gotit_2: { role: "button", name: "Got it", optional: true }
         # sleep_step: 500
-        click_more_button_3: { role: "button", name: "More action" }
+        click_more_button_3: { role: "button", name: "More action", index: 1  }
         sleep_step: 500
         R_click_duplicate_menuitem_3: { role: "menuitem", name: "Duplicate" }
         sleep_step: 500
@@ -2284,7 +2284,7 @@ testT2281:
     description: "Verify duplicate post copies Settings settings (allowExpire) and can be modified independently"
     test_step:
         # Step 1: Open post creation page
-        open: "{BASE_URL}/post/create?c=POST_PAGE"
+        open: "{BASE_URL}/post/create"
         sleep_after_open: 5000
 
         # Step 2: Click Content tab and fill title
@@ -2317,7 +2317,7 @@ testT2281:
         sleep_step: 3000
 
         # Step 8: Click enhance-button (3rd) to open actions menu
-        R_click_enhance_button: { locator: '[data-testid="enhance-button"]', index: 2 }
+        R_click_enhance_button: { locator: '[data-testid="enhance-button"]', index: 1 }
         sleep_step: 2000
 
         # Step 9: Click "Duplicate this post"
@@ -2456,8 +2456,8 @@ testT3108:
         R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
         sleep_step: 1000
 
-        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
-        sleep_step: 1000
+        # R_click_close_btn: { role: 'button', name: 'Close', optional: true }
+        # sleep_step: 1000
 
         R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
         sleep_step: 3000

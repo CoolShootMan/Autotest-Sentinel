@@ -30,17 +30,21 @@ testT2705_VerifyPartner:
     swipe_avoid_plus: { x: 0, y: 500 }
     sleep_step: 1000
 
+    # Step 2.2: Click Posts tab to ensure post cards are visible
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_step: 2000
+
     # Step 3: Click post card to enter post landing page
     R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
     sleep_step: 3000
 
     # Step 3.1: Click "Edit post" button
-    R_click_edit_post: { role: "button", name: "Edit post" }
+    R_click_edit_post: { role: "button", name: "Edit style" }
     sleep_step: 3000
 
     # Step 3.2: Click "Style" tab in Edit post dialog
-    R_click_style_tab: { role: "tab", name: "Style" }
-    sleep_step: 2000
+    # R_click_style_tab: { role: "tab", name: "Style" }
+    # sleep_step: 2000
 
     # Step 3.3: Click Layout dropdown and select "Collection"
     R_click_layout_dropdown: { locator: "[role='combobox']" }
@@ -62,11 +66,11 @@ testT2705_VerifyPartner:
 
     # Scroll down the drawer to reveal the variants table
     swipe_avoid_plus: { x: 0, y: 500 }
-    sleep_before_horizontal_scroll: 1000
+    sleep_step: 1000
 
     # Scroll the variant table to the right
     swipe_right: { x: 800, y: 0 }
-    sleep_after_scroll: 1000
+    sleep_step: 1000
 
     # The exclude checkbox for '5 people' (1st column checkbox, index=0)
     check_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0 }
@@ -127,6 +131,10 @@ testT2705_VerifyGuest:
     swipe_reset: { x: 0, y: 500 }
     sleep_step: 1000
 
+    # Step 2.2: Click Posts tab to ensure post cards are visible
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_step: 2000
+
     # Step 3: Click post card to enter post landing page
     R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
     sleep_step: 3000
@@ -155,7 +163,7 @@ testT2705_VerifyGuest:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
@@ -173,8 +181,8 @@ testT3108:
         R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
         sleep_step: 1000
 
-        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
-        sleep_step: 1000
+        # R_click_close_btn: { role: 'button', name: 'Close', optional: true }
+        # sleep_step: 1000
 
         R_click_customize_products_btn: { role: 'button', name: 'Customize products' }
         sleep_step: 3000
@@ -244,7 +252,7 @@ testT3555:
         click_confirm_button: { test_id: 'confirm-button' }
         R_click_publish: { role: 'button', name: 'Publish' }
         sleep_after_publish: 3000
-        R_click_got_it: { role: 'button', name: 'Got it' }
+        R_click_got_it: { role: 'button', name: 'Save' }
         sleep_after_got_it: 5000
         auto_handle_modals: { timeout: 10000, ignore_if_not_found: true, max_iterations: 3 }
         click_module_post_view_event_cta: { module_name: 'Updated module', post_title: 'Test - add new post for deletion', button_index: -1 }
@@ -363,7 +371,7 @@ testT4556:
         open: "{BASE_URL}/events/create"
         sleep_after_open: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
-        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_note: { placeholder:: 'Note (shown on each ticket. e.g., 21+)', value: 'Test - note', index: 2 }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
@@ -490,7 +498,7 @@ testT3981_Verified:
     test_step:
         open: "https://s.pear.us/iyR93K"
         sleep_wait_for_scan: 5000
-        verify_verified: { text: "Code Verified", timeout: 20000 }
+        verify_verified: { text: "Code Verified", timeout: 5000 }
     expect_result:
         description: "Ticket should be verified successfully"
         assertions:
@@ -502,7 +510,7 @@ testT3981_Already:
     test_step:
         open: "https://s.pear.us/iyR93K"
         sleep_wait_for_scan: 5000
-        verify_already: { text: "Code Already Redeemed", timeout: 20000 }
+        verify_already: { text: "Code Already Redeemed", timeout: 5000 }
     expect_result:
         description: "Should display Already Redeemed status"
         assertions:
@@ -641,7 +649,7 @@ testPartner_verify_commission:
     open_shop: "{BASE_URL}/autotestshop"
     sleep_after_open_shop: 1000
 
-    R_click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")'}
+    R_click_my_form_tab: { locator: 'div:has(p:has-text("MyForm"))' }
     sleep_after_form_tab: 200
     R_click_right_more_cta: { locator: '.form-card [data-testid="base-more-horiz-icon-cta"] >> nth=0'}
     sleep_after_more_cta: 200

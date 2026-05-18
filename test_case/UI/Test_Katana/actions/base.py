@@ -80,8 +80,13 @@ def open_url(page: Page, v):
         if auto_handle_modals_enabled:
             logger.info(">>> Auto-handling modals after page load")
             try:
-                # Wait for page to fully render before detecting modals
-                page.wait_for_timeout(10000)
+                # Wait dynamically for page network activity to settle (max 8s)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+                # Tiny buffer for JS to render the modal after network resolves
+                page.wait_for_timeout(1000)
                 auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
             except Exception as e:
                 # Failure in bullet layer processing does not affect the main process
@@ -649,6 +654,9 @@ def _smart_click_core(page: Page, v: dict):
     except Exception as e:
             logger.debug(f"Standard click failed: {e}")
 
+    if optional:
+        logger.info(f"Optional click: element '{target_name or target_locator}' not found after all standard strategies, skipping.")
+        return
     raise Exception(f"smart_click: element not found: {target_name or target_locator}")
 
 
@@ -2201,7 +2209,8 @@ def handle_modal(page: Page, v: dict):
                     continue
 
                 # Check if modal is visible
-                if modal_locator.is_visible(timeout=1000):
+                visibility_timeout = v.get("visibility_timeout", 100)
+                if modal_locator.is_visible(timeout=visibility_timeout):
                     logger.info(f"✓ Modal found using: {modal_id}")
                     modal_found = True
                     break
@@ -2421,7 +2430,9 @@ def auto_handle_modals(page: Page, v: dict):
                     **modal_config,
                     "timeout": timeout,
                     "ignore_if_not_found": True,
-                    "wait_before_click": 1000
+                    "wait_before_click": 1000,
+                    "max_attempts": 2,
+                    "visibility_timeout": 100
                 })
                 if handled:
                     handled_this_round += 1
