@@ -782,7 +782,7 @@ testT4556:  # [LAST: PASSED 2026-05-06]
         open: "{BASE_URL}/events/create"
         sleep_after_open: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
-        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_note: { locator: 'input[name="note"]', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
@@ -868,7 +868,7 @@ testT4853:  # [LAST: PASSED 2026-05-06]
         open_back: "{BASE_URL}/events/create"
         sleep_after_open_back: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-past-event' }
-        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_note: { locator: 'input[name="note"]', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
@@ -926,7 +926,7 @@ testT4559:  # [LAST: BROKEN 2026-05-06]
         open_back: "{BASE_URL}/events/create"
         sleep_after_open_back: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive-not-selected' }
-        fill_note: { role: 'textbox', name: 'Note e.g. 21+ only. No', value: 'Test - note' }
+        fill_note: { locator: 'input[name="note"]', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
