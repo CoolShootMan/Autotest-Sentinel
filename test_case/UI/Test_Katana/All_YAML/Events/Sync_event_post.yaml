@@ -12,7 +12,7 @@ testT4984_partner:
     sleep_after_posts_tab: 1000
 
     # Create a post
-    click_create_post: { role: "button", name: "Create new post" }
+    click_create_post: { role: "button", name: "Create another post" }
     sleep_after_create_post: 2000
     click_confirm: { role: "button", name: "Confirm" }
     sleep_after_confirm: 3000
