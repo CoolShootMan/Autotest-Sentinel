@@ -599,9 +599,6 @@ testT2705_VerifyPartner:
     R_click_update: { role: "button", name: "Update" }
     sleep_step: 2000
 
-    # Step 3.5: Click "Update" in confirmation popup "Update This Post?"
-    # R_click_update_confirm: { role: "button", name: "Update" }
-    # sleep_step: 3000
 
     # Step 4: Click Selling tab
     R_click_selling_tab: { role: "tab", name: "Selling" }
@@ -623,7 +620,7 @@ testT2705_VerifyPartner:
 
     # Save and Save1
     R_click_save: { role: "button", name: "Save" }
-    R_click_save1: { role: "button", name: "Save" }
+    R_click_save1: { role: "button", name: "Save"}
     sleep_after_update: 5000
 
   expect_result:
@@ -847,10 +844,10 @@ testT2834_VerifyPartner:
         # Use exact post name to avoid clicking the wrong card when multiple posts exist
         R_click_post: { role: "button", name: "verify-post-shipping-fee", index: 0 }
         sleep_step: 2000
+
         # Step 2: Click "Edit style" button (UI changed: Edit post split into Edit content / Edit style)
         click_edit_style: { role: "button", name: "Edit style" }
         sleep_step: 3000
-
         R_click_layout_combobox: { role: "combobox" }
         sleep_step: 500
         R_click_spotlight_opt: { role: "option", name: "Spotlight Highlight one" }
