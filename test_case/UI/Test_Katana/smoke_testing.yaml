@@ -38,15 +38,11 @@ testT2705_VerifyPartner:
     R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
     sleep_step: 3000
 
-    # Step 3.1: Click "Edit post" button
-    R_click_edit_post: { role: "button", name: "Edit style" }
+    # Step 3.1: Click "Edit style" button (UI changed: Edit post split into Edit content / Edit style)
+    click_edit_style: { role: "button", name: "Edit style" }
     sleep_step: 3000
 
-    # Step 3.2: Click "Style" tab in Edit post dialog
-    # R_click_style_tab: { role: "tab", name: "Style" }
-    # sleep_step: 2000
-
-    # Step 3.3: Click Layout dropdown and select "Collection"
+    # Step 3.2: Click Layout dropdown and select "Collection"
     R_click_layout_dropdown: { locator: "[role='combobox']" }
     sleep_step: 1000
     R_click_collection_option: { locator: "text=Collection" }
@@ -371,7 +367,7 @@ testT4556:
         open: "{BASE_URL}/events/create"
         sleep_after_open: 5000
         fill_event_title: { role: 'textbox', name: 'Event title', value: 'Test-event-Auto-archive' }
-        fill_note: { placeholder:: 'Note (shown on each ticket. e.g., 21+)', value: 'Test - note', index: 2 }
+        fill_note: { locator: 'input[name="note"]', value: 'Test - note' }
         fill_venue: { role: 'textbox', name: 'Venue', value: 'Test venue' }
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500

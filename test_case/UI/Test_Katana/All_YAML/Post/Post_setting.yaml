@@ -585,15 +585,11 @@ testT2705_VerifyPartner:
     R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
     sleep_step: 3000
 
-    # Step 3.1: Click "Edit post" button
-    R_click_edit_post: { role: "button", name: "Edit style" }
+    # Step 3.1: Click "Edit style" button (UI changed: Edit post split into Edit content / Edit style)
+    click_edit_style: { role: "button", name: "Edit style" }
     sleep_step: 3000
 
-    # Step 3.2: Click "Style" tab in Edit post dialog
-    # R_click_style_tab: { role: "tab", name: "Style" }
-    # sleep_step: 2000
-
-    # Step 3.3: Click Layout dropdown and select "Collection"
+    # Step 3.2: Click Layout dropdown and select "Collection"
     R_click_layout_dropdown: { locator: "[role='combobox']" }
     sleep_step: 1000
     R_click_collection_option: { locator: "text=Collection" }
@@ -848,14 +844,13 @@ testT2834_VerifyPartner:
         sleep_step: 2000
         R_click_posts_tab: { role: "tab", name: "Posts" }
         sleep_step: 2000
-        R_click_post: { test_id: "mui-card-action-area" }
+        # Use exact post name to avoid clicking the wrong card when multiple posts exist
+        R_click_post: { role: "button", name: "verify-post-shipping-fee", index: 0 }
         sleep_step: 2000
-        R_click_edit_post: { role: "button", name: "Edit style" }
+        # Step 2: Click "Edit style" button (UI changed: Edit post split into Edit content / Edit style)
+        click_edit_style: { role: "button", name: "Edit style" }
         sleep_step: 3000
 
-        # Step 2: Edit Style (as recorded in T2834partner)
-        R_click_style_tab: { role: "tab", name: "Style" }
-        sleep_step: 1000
         R_click_layout_combobox: { role: "combobox" }
         sleep_step: 500
         R_click_spotlight_opt: { role: "option", name: "Spotlight Highlight one" }
@@ -917,8 +912,9 @@ testT2834_VerifyGuest:
 
         # Step 2: Navigate to Post details directly (from recording)
         open_post_details: "{BASE_URL}/autotestshop/post/verify-post-shipping-fee"
-        sleep_step: 3000
-        R_click_free_shipping_label: { text: "Free shipping" }
+        sleep_step: 5000
+        # Free shipping label — use locator to avoid ambiguous text match
+        R_click_free_shipping_label: { locator: "text=Free shipping", index: 0 }
         sleep_step: 1000
 
         # Verify on post details
@@ -1228,6 +1224,9 @@ testT2515_VerifyDisabled_WithVariant:
         sleep_step: 2000
 
         # Step 5: Reopen product drawer (drawer closed after add to cart)
+        # Dismiss "Access code required" popup if it appears before reopening the drawer
+        R_click_dismiss_access_code_popup: { role: "button", name: "Close", optional: true }
+        sleep_step: 500
         R_click_product_card_again: { role: "img", name: "Image of Product", index: 0 }
         sleep_step: 2000
 
@@ -1374,8 +1373,8 @@ testT4955_Partner_SetPaymentRestriction:
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
         sleep_step: 1000
 
-        # Step 5.1: Click access code button (Edit or Set up access code - either one exists)
-        R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code')" }
+        # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
+        R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
         sleep_step: 1000
 
         # Step 7: Click and fill access code
