@@ -61,10 +61,14 @@ debug_drawer.py
 
 # === Test Reports & Results (generated at runtime) ===
 allure/
+allure-report/
 allure-results/
 report/
 test-result/
 test-results/
+
+# === Temp scripts (AI generated, not for repo) ===
+check_report.py
 
 # === Temp screenshots ===
 1.png
