@@ -1,4 +1,4 @@
-# Auto Test 框架 v4.0
+# Auto Test 框架 v4.3
 
 > pytest + playwright + allure + Gemini AI 实现 UI 自动化测试 + AI 自愈
 
@@ -16,6 +16,8 @@
 - **多环境支持**: 通过 `--env` 参数无缝切换 staging/release 环境。
 - **动态多断言**: 支持多种断言类型（文本可见性、元素存在性等）。
 - **跨平台支持**: 完美兼容并支持 Windows、macOS、Linux 系统。
+- **失败诊断工具**: 自动重放失败用例，截图 + DOM 快照 + 多策略探查，生成 HTML 诊断报告。
+- **闪电启动**: AI 模块默认关闭，启动时间从 ~20s 降至 ~0.6s，需要时一键启用。
 
 ---
 
@@ -91,6 +93,16 @@ GEMINI_API_KEY=your_single_key_here
 ```
 
 > **⚠️ 注意**：`.env` 文件包含敏感信息，已被加入 `.gitignore`，**请勿提交到代码仓库**。
+
+#### 2-3. AI Vision 开关（`ENABLE_AI_VISION`）
+
+AI 自愈功能（Gemini Vision + RAG 知识库）**默认关闭**，避免每次运行加载 ~20s 的模型。需要时手动开启：
+
+```env
+ENABLE_AI_VISION=1
+```
+
+> **💡 提示**：日常调试和运行测试时无需开启 AI。只有在定位器频繁失效、需要 AI 自愈介入时才打开。关闭状态下，所有 python/pytest 命令启动时间约 0.6s。
 
 ### 3. 一键运行测试
 
@@ -209,7 +221,7 @@ actions/ (Action Registry 动作注册表)
 ┌─ 传统 Playwright 定位 (role/text/locator)
 │   成功 → 继续执行
 │   失败 ↓
-└─ AI 自愈引擎 (utils/ai_vision.py)
+└─ AI 自愈引擎 (utils/ai_vision.py)  ← 默认关闭，ENABLE_AI_VISION=1 启用
        ├── 截图 + SOM 标注
        ├── RAG 知识库检索 (utils/rag_knowledge.py)
        ├── 执行历史上下文注入
@@ -218,6 +230,8 @@ actions/ (Action Registry 动作注册表)
          修复后继续执行
               ↓
          Allure 报告 + 截图/录屏
+              ↓
+    [失败用例] → diagnose_failed.py → 重放 + 截图 + DOM + 多策略探查 → HTML 诊断报告
 ```
 
 ### V4.0 AI 自愈深度解析
@@ -256,6 +270,10 @@ actions/ (Action Registry 动作注册表)
 │       ├─test_ui.py       # 核心测试执行引擎 (含执行历史追踪)
 │       └─*.yaml           # 测试用例定义
 ├─tools                    # 工具包
+│  ├─diagnose_failed.py    # [NEW v4.3] 失败用例诊断报告工具
+│  ├─ui_snapshot.py        # DOM 快照 + diff 检测
+│  ├─locator_updater.py    # YAML 定位器批量更新
+│  └─...                   # 其他辅助工具
 ├─requirements.txt         # 项目核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
 ├─setup_env.sh / .bat      # 跨平台环境一键设置脚本
 └─main.py                  # 主启动文件
@@ -292,13 +310,6 @@ actions/ (Action Registry 动作注册表)
 1. Python 版本是否符合 3.9+ 要求 (`python --version`)
 2. `.env` 文件中的 Gemini API Key 是否正确配置并未欠费/超限
 3. 控制台输出的 AI 诊断日志，以定位问题根因
-如遇问题，请检查：
-
-1. Python 版本是否符合要求（`python --version`）
-2. 虚拟环境是否正确激活
-3. 依赖包是否完整安装
-4. Playwright 浏览器是否已安装
-5. `.env` 文件中的 API Key 是否正确配置
 
 ## Page-level Search — 按需启用，避免无差别降级拖慢用例
 
@@ -478,4 +489,96 @@ Allure 报告服务已启动!
 
 ---
 
-**版本:** v4.2 | **最后更新:** 2026-04-23 | **维护者:** Autotest-monster Team
+## v4.3 新增功能 (2026-05-22)
+
+### 失败用例诊断工具 (`diagnose_failed.py`)
+
+**背景**: 测试失败后，仅靠 Allure 报告的错误信息往往不足以定位根因。需要人工打开浏览器逐步调试，耗时且低效。
+
+**解决方案**: 自动重放失败用例，逐步截图 + DOM 快照，失败时多策略探查，生成独立 HTML 报告。
+
+**使用方法**:
+```bash
+# 诊断最近一次运行的所有失败用例
+python tools/diagnose_failed.py
+
+# 指定 Allure 结果目录
+python tools/diagnose_failed.py --allure-dir 20260521_144342
+
+# 诊断单个用例
+python tools/diagnose_failed.py --case testT1928
+
+# 有头模式观察重放过程
+python tools/diagnose_failed.py --case testT1928 --headed
+```
+
+**诊断报告内容**:
+- **Summary Dashboard**: 失败用例总览 + 失败复现率
+- **Step-by-Step Replay**: 每步执行前后的截图 + DOM 快照
+- **Multi-Strategy Probing**: 失败步骤自动探查（文本搜索、角色搜索、test_id 搜索、locator 检查、弹窗检测、aria-label 搜索）
+- **Flaky 检测**: 重放通过的用例标记为可能不稳定
+- **独立 HTML**: 报告为单个 HTML 文件，截图 base64 内嵌，可直接发送给同事
+
+**核心特性**:
+- 完整执行 pre_condition（前置步骤全量重放，不是跳过）
+- Cookie 注入使用 `storage_state`（与 conftest.py 一致）
+- 项目 Action Registry 兼容（自定义 action 如 `delete_coseller_if_exists` 自动 fallback）
+- Optional 步骤自动跳过（步骤名含 "optional" 标记为 SKIPPED）
+- Mock AI 模块实现闪电启动（不触发 SentenceTransformer 加载）
+
+### AI Vision 按需加载 (`ENABLE_AI_VISION`)
+
+**背景**: SentenceTransformer + FAISS 初始化需要 ~20 秒，日常调试完全不需要 AI 自愈。
+
+**变更**: `base.py` 和 `rag_knowledge.py` 增加环境变量开关：
+
+```env
+# .env 文件
+ENABLE_AI_VISION=1    # 开启 AI 自愈 + RAG（需要 Gemini API Key）
+# 不设置或设置为 0 = 关闭（默认）
+```
+
+**生效范围**: 所有 `python` 和 `pytest` 命令，包括 `main.py`、`runner.py`、`diagnose_failed.py`。
+
+**性能收益**:
+| 模式 | 启动时间 | AI 自愈 | RAG 知识库 |
+|------|---------|---------|-----------|
+| 默认 (关闭) | ~0.6s | 不可用 | 不加载 |
+| `ENABLE_AI_VISION=1` | ~20s | 可用 | 可用 |
+
+### DOM 快照工具 (`ui_snapshot.py`)
+
+监控页面 DOM 变化，检测 UI 改版对自动化用例的影响：
+
+```bash
+# 保存基线快照
+python tools/ui_snapshot.py snapshot --env release --account main --label baseline
+
+# 保存当前快照
+python tools/ui_snapshot.py snapshot --env release --account main --label current
+
+# 对比两个快照
+python tools/ui_snapshot.py diff --env release --base baseline --target current
+
+# 一键：快照 + 对比 + 列出受影响的 YAML
+python tools/ui_snapshot.py check --env release --account main --label current --base baseline
+```
+
+### 定位器批量更新工具 (`locator_updater.py`)
+
+UI 改版后批量修复 YAML 中的定位器：
+
+```bash
+# 搜索包含某个定位器的步骤（只读）
+python tools/locator_updater.py search --role button --name "Edit post"
+
+# 预览改动（不写入）
+python tools/locator_updater.py update --role button --name "Edit post" --new-name "Edit style" --dry-run
+
+# 确认后写入
+python tools/locator_updater.py update --role button --name "Edit post" --new-name "Edit style"
+```
+
+---
+
+**版本:** v4.3 | **最后更新:** 2026-05-22 | **维护者:** Autotest-monster Team
