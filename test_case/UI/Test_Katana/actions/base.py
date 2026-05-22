@@ -11,7 +11,14 @@ while not os.path.exists(os.path.join(BASE_DIR, "test_case")) and BASE_DIR != os
     BASE_DIR = os.path.dirname(BASE_DIR)
 logger.info(f"ACTIONS_BASE_DIR: {BASE_DIR}")
 from page.home import page_element_role_click, page_element_label_click, page_open
-from ..utils.ai_vision import ai_vision
+
+# Only import AI vision modules when explicitly enabled (avoids ~20s startup delay)
+# Set ENABLE_AI_VISION=true in .env or shell to enable
+if os.getenv("ENABLE_AI_VISION", "").lower() in ("1", "true", "yes"):
+    from ..utils.ai_vision import ai_vision
+else:
+    ai_vision = None
+    logger.debug("AI vision disabled (set ENABLE_AI_VISION=1 to enable)")
 
 def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
@@ -764,6 +771,10 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
                     except: pass
             except: pass
         raise Exception(f"Element not found: {target_name}")
+
+    if ai_vision is None:
+        logger.warning("AI vision disabled. Skipping AI healing (set ENABLE_AI_VISION=1 to enable).")
+        raise Exception(f"Element not found (AI healing disabled): {target_name}")
 
     logger.error("Traditional methods failed. Triggering AI Pure Vision Healing...")
     try:

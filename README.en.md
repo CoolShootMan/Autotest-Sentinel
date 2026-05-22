@@ -1,4 +1,4 @@
-# Auto Test Framework v4.0
+# Auto Test Framework v4.3
 
 > UI Automation Testing with AI Self-Healing using Python + Pytest + Playwright + Allure + Gemini Vision AI
 
@@ -16,6 +16,8 @@ English | [简体中文](./README.md)
 - **Multi-Environment Support**: Switch between staging/release via `--env` parameter
 - **Dynamic Assertions**: Multiple assertion types (text visibility, element existence, visual height, etc.)
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
+- **Failed Case Diagnosis**: Auto-replay failed cases with screenshots + DOM snapshots + multi-strategy probing, generates HTML diagnosis reports
+- **Fast Startup**: AI modules disabled by default, startup time reduced from ~20s to ~0.6s, enable on demand
 
 ---
 
@@ -91,6 +93,16 @@ GEMINI_API_KEY=your_single_key_here
 ```
 
 > **⚠️ Note**: The `.env` file contains sensitive credentials. It is listed in `.gitignore` — **never commit it to the repository**.
+
+#### 2-3. AI Vision Toggle (`ENABLE_AI_VISION`)
+
+AI self-healing (Gemini Vision + RAG Knowledge Base) is **disabled by default** to avoid loading ~20s of models on every run. Enable it when needed:
+
+```env
+ENABLE_AI_VISION=1
+```
+
+> **💡 Tip**: No need to enable AI for daily debugging and test runs. Only turn it on when locators frequently fail and you need AI self-healing. With AI disabled, all python/pytest commands start in ~0.6s.
 
 ### 3. Run Tests
 
@@ -210,7 +222,7 @@ actions/ (Action Registry)
 ┌─ Traditional Playwright Locators (role/text/locator)
 │   Success → Continue
 │   Failure ↓
-└─ AI Self-Healing Engine (utils/ai_vision.py)
+└─ AI Self-Healing Engine (utils/ai_vision.py)  ← Disabled by default; set ENABLE_AI_VISION=1
        ├── Screenshot + SOM Overlay
        ├── RAG Knowledge Base Query (utils/rag_knowledge.py)
        ├── Execution History Context Injection
@@ -219,6 +231,8 @@ actions/ (Action Registry)
          Healed Action Continues
               ↓
          Allure Report + Screenshots/Recordings
+              ↓
+    [Failed Cases] → diagnose_failed.py → Replay + Screenshots + DOM + Multi-Strategy Probing → HTML Report
 ```
 
 ### V4.0 AI Self-Healing Deep Dive
@@ -257,6 +271,10 @@ actions/ (Action Registry)
 │       ├─test_ui.py       # Core test execution engine (with execution history)
 │       └─*.yaml           # Test case definitions
 ├─tools                    # Utilities
+│  ├─diagnose_failed.py    # [NEW v4.3] Failed test case diagnosis report tool
+│  ├─ui_snapshot.py        # DOM snapshot + diff detection
+│  ├─locator_updater.py    # YAML locator batch update tool
+│  └─...                   # Other utility scripts
 ├─requirements.txt         # Project core dependencies (pytest, playwright, allure, FAISS, Gemini, etc.)
 ├─setup_env.sh / .bat      # Cross-platform one-click environment setup script
 └─main.py                  # Main entry point
@@ -289,14 +307,9 @@ actions/ (Action Registry)
 
 ### Before Seeking Support
 
-1. Python version meets requirements (`python --version`)
+1. Python version meets 3.9+ requirement (`python --version`)
 2. `.env` file's Gemini API Key is correctly configured and not over quota
 3. Check AI diagnostic logs in console output to locate root cause
-4. Python version meets 3.9+ requirement
-5. Virtual environment is correctly activated
-6. All dependencies are fully installed
-7. Playwright browsers are installed
-8. API Key in `.env` file is correctly configured
 
 ---
 
@@ -479,4 +492,96 @@ Press Ctrl+C to stop
 
 ---
 
-**Version:** v4.2 | **Last Updated:** 2026-04-23 | **Maintained by:** Autotest-monster Team
+## v4.3 New Features (2026-05-22)
+
+### Failed Case Diagnosis Tool (`diagnose_failed.py`)
+
+**Background**: After test failures, Allure report error messages alone are often insufficient to pinpoint root causes. Manually opening a browser and debugging step by step is time-consuming.
+
+**Solution**: Automatically replay failed cases with step-by-step screenshots + DOM snapshots, multi-strategy probing at failure points, and standalone HTML report generation.
+
+**Usage**:
+```bash
+# Diagnose all failed cases from the latest run
+python tools/diagnose_failed.py
+
+# Specify a particular Allure run directory
+python tools/diagnose_failed.py --allure-dir 20260521_144342
+
+# Diagnose a single specific case
+python tools/diagnose_failed.py --case testT1928
+
+# Watch the replay in a real browser window
+python tools/diagnose_failed.py --case testT1928 --headed
+```
+
+**Report Contents**:
+- **Summary Dashboard**: Failed case overview + reproduction rate
+- **Step-by-Step Replay**: Before/after screenshots + DOM snapshots per step
+- **Multi-Strategy Probing**: At failure — text search, role search, test_id search, locator check, modal detection, aria-label search
+- **Flaky Detection**: Cases that pass on replay are flagged as potentially flaky
+- **Standalone HTML**: Single file with base64-embedded screenshots, can be sent directly to teammates
+
+**Key Features**:
+- Full pre_condition execution (all prerequisite steps replayed, not skipped)
+- Cookie injection via `storage_state` (consistent with conftest.py)
+- Compatible with project Action Registry (104 registered actions supported via fallback)
+- Optional steps auto-skipped (step names containing "optional" marked as SKIPPED)
+- Mock AI modules for fast startup (no SentenceTransformer loading)
+
+### AI Vision On-Demand Loading (`ENABLE_AI_VISION`)
+
+**Background**: SentenceTransformer + FAISS initialization takes ~20 seconds. Daily debugging rarely needs AI self-healing.
+
+**Change**: `base.py` and `rag_knowledge.py` now gate on an environment variable:
+
+```env
+# .env file
+ENABLE_AI_VISION=1    # Enable AI self-healing + RAG (requires Gemini API Key)
+# Not set or 0 = Disabled (default)
+```
+
+**Scope**: All `python` and `pytest` commands, including `main.py`, `runner.py`, and `diagnose_failed.py`.
+
+**Performance Impact**:
+| Mode | Startup Time | AI Self-Healing | RAG Knowledge |
+|------|-------------|-----------------|---------------|
+| Default (off) | ~0.6s | Unavailable | Not loaded |
+| `ENABLE_AI_VISION=1` | ~20s | Available | Available |
+
+### DOM Snapshot Tool (`ui_snapshot.py`)
+
+Monitor page DOM changes and detect the impact of UI refactors on test cases:
+
+```bash
+# Save baseline snapshot
+python tools/ui_snapshot.py snapshot --env release --account main --label baseline
+
+# Save current snapshot
+python tools/ui_snapshot.py snapshot --env release --account main --label current
+
+# Compare two snapshots
+python tools/ui_snapshot.py diff --env release --base baseline --target current
+
+# One-shot: snapshot + diff + list affected YAML files
+python tools/ui_snapshot.py check --env release --account main --label current --base baseline
+```
+
+### Locator Batch Update Tool (`locator_updater.py`)
+
+Batch-fix YAML locators after UI changes:
+
+```bash
+# Search for steps containing a specific locator (read-only)
+python tools/locator_updater.py search --role button --name "Edit post"
+
+# Preview changes without writing
+python tools/locator_updater.py update --role button --name "Edit post" --new-name "Edit style" --dry-run
+
+# Apply changes after confirmation
+python tools/locator_updater.py update --role button --name "Edit post" --new-name "Edit style"
+```
+
+---
+
+**Version:** v4.3 | **Last Updated:** 2026-05-22 | **Maintained by:** Autotest-monster Team

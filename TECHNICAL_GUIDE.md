@@ -1,4 +1,4 @@
-# Auto Test Framework v4.1 - 技术指南
+# Auto Test Framework v4.3 - 技术指南
 
 ## 目录
 - [1. 项目架构](#1-项目架构)
@@ -10,6 +10,13 @@
 - [7. 调试技巧](#7-调试技巧)
 - [8. 常见问题](#8-常见问题)
 - [9. v4.1 智能兜底机制 (Smart Fallback)](#9-v41-智能兜底机制-smart-fallback)
+- [10. 可选点击与稳定重试机制](#10-可选点击与稳定重试机制)
+- [11. verify_no_sibling_text — 验证元素/文本不存在](#11-verify_no_sibling_text--验证元素文本不存在)
+- [12. execute_js — 执行 JavaScript](#12-execute_js--执行-javascript)
+- [13. Allure HTTP Server — 局域网共享报告](#13-allure-http-server--局域网共享报告)
+- [14. 失败用例诊断工具 (diagnose_failed.py)](#14-失败用例诊断工具-diagnose_failedpy)
+- [15. AI Vision 按需加载 (ENABLE_AI_VISION)](#15-ai-vision-按需加载-enable_ai_vision)
+- [16. 辅助工具生态](#16-辅助工具生态)
 
 ---
 
@@ -43,6 +50,9 @@ autotest-monster/
 │   └── home.py                 # Playwright UI 操作封装
 ├── tools/
 │   ├── __init__.py             # Allure 集成
+│   ├── diagnose_failed.py      # [v4.3] 失败用例诊断报告工具
+│   ├── ui_snapshot.py          # DOM 快照 + diff 检测
+│   ├── locator_updater.py      # YAML 定位器批量更新
 │   └── get_cookie.py           # Cookie 获取
 └── main.py                     # 主启动入口
 ```
@@ -63,6 +73,8 @@ page/home.py (Playwright 操作)              utils/ai_vision.py (Gemini Vision)
 浏览器自动化                              utils/rag_knowledge.py (RAG 检索)
     ↓
 Allure 报告 + 截图/录屏
+    ↓
+[失败用例] → tools/diagnose_failed.py → 重放 + 截图 + DOM + 多策略探查 → HTML 诊断报告
 ```
 
 ---
@@ -112,8 +124,10 @@ Level 2a: Page-level Search (fallback_scan=True 时触发，零 Token)
     ↓ 失败
 Level 2b: MUI Controlled-Input Fallback (仅 smart_check)
     ↓ 失败
-Level 3: AI Self-Healing (fallback_scan=True 且 disable_ai=False)
+Level 3: AI Self-Healing (fallback_scan=True 且 disable_ai=False 且 ENABLE_AI_VISION=1)
 ```
+
+> **v4.3 重要变更**: AI 自愈 (Level 3) 默认关闭。需在 `.env` 设置 `ENABLE_AI_VISION=1` 才会加载 Gemini Vision + RAG 知识库。详见 [第 15 节](#15-ai-vision-按需加载-enable_ai_vision)。
 
 ### 3.2 AI Vision 服务 (`utils/ai_vision.py`)
 
@@ -322,15 +336,6 @@ testT4279:
     guest: true
     description: "访客模式测试"
 ```
-
----
-
-## 附录: 安全注意事项
-
-以下文件包含敏感信息，已在 `.gitignore` 中排除，**禁止提交到 Git**：
-- `cookie_*.json` — 包含真实的认证 Token
-- `.env` — 包含 Gemini API Keys
-- `ai_healing_screenshots/` — 包含系统截图（可能暴露业务数据）
 
 ---
 
@@ -741,6 +746,200 @@ logger.info(f"局域网报告地址: http://{lan_ip}:{http_port}")
 |------|------|
 | `http_server.py` | 独立 HTTP 服务器脚本 |
 | `main.py` | 集成启动逻辑（子进程 + 局域网 IP 检测） |
+
+---
+
+## 14. 失败用例诊断工具 (diagnose_failed.py)
+
+### 14.1 概述
+
+`tools/diagnose_failed.py` 是 v4.3 新增的失败用例自动诊断工具。它从 Allure 报告中提取失败用例，在真实浏览器中逐步重放，记录每步的截图 + DOM 快照，在失败步骤执行多策略探查，最终生成独立的 HTML 诊断报告。
+
+### 14.2 工作流程
+
+```
+Phase 1: Allure 解析
+    扫描 *-result.json → 提取 failed/broken 用例 → 解析 YAML 参数
+    ↓
+Phase 2: 浏览器重放
+    启动 Chromium → 注入 Cookie (storage_state) → 执行 pre_condition → 逐步执行 test_step
+    每步记录: before_screenshot + before_dom + after_screenshot + after_dom
+    ↓
+Phase 3: 失败探查 (仅在失败步骤)
+    6 种探查策略并行:
+    ├── 文本搜索: 查找页面中包含目标文本的元素
+    ├── 角色搜索: 查找匹配 role 的所有元素
+    ├── Test ID 搜索: 查找包含 testid 的元素
+    ├── Locator 直接检查: 统计 locator 匹配数
+    ├── 弹窗检测: 检查是否有遮挡的 dialog/popover
+    └── aria-label 搜索: 查找匹配 aria-label 的元素
+    ↓
+Phase 4: HTML 报告生成
+    生成独立 HTML 文件 (截图 base64 内嵌) → report/Error_Test_Case_Diagnosis_Report_*.html
+```
+
+### 14.3 使用方法
+
+```bash
+# 诊断最近一次运行的所有失败用例
+python tools/diagnose_failed.py
+
+# 指定 Allure 结果子目录
+python tools/diagnose_failed.py --allure-dir 20260521_144342
+
+# 诊断单个用例
+python tools/diagnose_failed.py --case testT1928
+
+# 有头模式（观察浏览器操作过程）
+python tools/diagnose_failed.py --case testT1928 --headed
+
+# 指定环境
+python tools/diagnose_failed.py --env staging
+```
+
+### 14.4 关键设计决策
+
+| 决策 | 方案 | 原因 |
+|------|------|------|
+| Cookie 注入 | `storage_state` (与 conftest.py 一致) | `add_cookies()` 无法正确恢复 localStorage/sessionStorage |
+| `{ENV}` 占位符 | 保持原样，运行时从 cookie 文件名反推环境 | 避免 YAML 中的动态变量被破坏 |
+| Pre-condition | 全量执行，走 `_execute_step` + `get_action()` | 用户要求"完完整整跑完" |
+| 自定义 Action | Fallback 到项目 `get_action()` registry | 支持 `delete_coseller_if_exists` 等 104 个注册 action |
+| Optional 步骤 | 步骤名含 "optional" → SKIPPED | 不中断重放流程 |
+| AI 模块 | `sys.modules` mock + `ENABLE_AI_VISION` 开关 | 避免每次诊断等待 20s 模型加载 |
+
+### 14.5 报告结构
+
+生成的 HTML 报告包含以下部分：
+
+- **Summary Dashboard**: 失败用例表格、复现率统计
+- **Case Detail**: 每个用例的逐步重放记录
+  - 每步: 状态(PASSED/FAILED/SKIPPED) + 配置 + 前后截图 + DOM 快照
+  - 失败步: 错误信息 + 6 种探查策略的结果
+- **Flaky Notice**: 重放通过的用例标记为可能不稳定
+
+### 14.6 注意事项
+
+- 报告文件名为 `Error_Test_Case_Diagnosis_Report_*.html`，存放在 `report/` 目录
+- HTML 文件完全独立（截图 base64 内嵌），可直接通过邮件/IM 发送
+- 诊断工具不依赖 pytest，直接使用 Playwright API
+- 大量失败用例时，重放可能需要较长时间
+
+---
+
+## 15. AI Vision 按需加载 (ENABLE_AI_VISION)
+
+### 15.1 背景
+
+`utils/rag_knowledge.py` 在模块级别导入 `SentenceTransformer`，导致每次运行 pytest/python 都会加载模型（~20s）。日常调试时完全不需要 AI 自愈，白白浪费时间。
+
+### 15.2 实现方案
+
+在 `base.py` 和 `rag_knowledge.py` 中添加环境变量开关：
+
+```python
+# base.py
+if os.getenv("ENABLE_AI_VISION", "").lower() in ("1", "true", "yes"):
+    from ..utils.ai_vision import ai_vision
+else:
+    ai_vision = None
+
+# rag_knowledge.py
+_ENABLE_RAG = os.getenv("ENABLE_AI_VISION", "").lower() in ("1", "true", "yes")
+
+class RAGKnowledgeBase:
+    def __init__(self):
+        if _ENABLE_RAG:
+            from sentence_transformers import SentenceTransformer  # 延迟导入
+            self._load_and_index()
+        else:
+            logger.debug("RAG disabled")
+```
+
+### 15.3 使用方式
+
+```bash
+# 日常调试（默认，快速启动）
+python runner.py testT4718
+
+# 需要 AI 自愈时
+ENABLE_AI_VISION=1 python runner.py testT4718     # macOS/Linux
+set ENABLE_AI_VISION=1 && python runner.py testT4718  # Windows CMD
+```
+
+或在 `.env` 文件中永久设置：
+```env
+ENABLE_AI_VISION=1
+```
+
+### 15.4 影响范围
+
+**所有** python/pytest 命令：
+- `python main.py`
+- `python runner.py`
+- `pytest ...`
+- `python tools/diagnose_failed.py`
+
+### 15.5 关闭状态下的行为
+
+- `smart_click` 在 Level 1/2 失败后直接抛出异常（跳过 AI 自愈）
+- RAG 知识库不加载（`SentenceTransformer` 不导入）
+- `ai_vision` 变量为 `None`，在 `_smart_click_with_fallback` 末尾检查：
+  ```python
+  if ai_vision is None:
+      raise Exception(f"Element not found (AI healing disabled): {target_name}")
+  ```
+
+---
+
+## 16. 辅助工具生态
+
+### 16.1 工具总览
+
+| 工具 | 用途 | 典型场景 |
+|------|------|---------|
+| `diagnose_failed.py` | 失败用例诊断报告 | 测试失败后自动定位根因 |
+| `ui_snapshot.py` | DOM 快照 + diff | UI 改版前后对比、检测元素变动 |
+| `locator_updater.py` | YAML 定位器批量更新 | UI 文案/组件变更后批量修复 |
+| `allure_summary.py` | Allure 报告摘要 | 快速查看测试通过率 |
+| `translate_yaml_comments.py` | YAML 注释翻译 | 多语言团队协作 |
+| `codegen.py` | Playwright 录制 | 快速录制新用例的交互流程 |
+| `http_server.py` | 局域网报告共享 | CI/CD 环境下共享 Allure 报告 |
+
+### 16.2 典型工作流
+
+**UI 改版后的处理流程**:
+
+```
+1. 运行测试 → 发现失败
+   python main.py
+
+2. 生成诊断报告 → 定位失败原因
+   python tools/diagnose_failed.py
+
+3. 如果是定位器变更 → 批量搜索受影响步骤
+   python tools/locator_updater.py search --role button --name "旧文案"
+
+4. 预览修改 → 确认后写入
+   python tools/locator_updater.py update --role button --name "旧文案" --new-name "新文案" --dry-run
+   python tools/locator_updater.py update --role button --name "旧文案" --new-name "新文案"
+
+5. 重新运行验证
+   python main.py
+```
+
+**预防性 DOM 监控**:
+
+```
+1. 建立基线快照
+   python tools/ui_snapshot.py snapshot --env release --account main --label baseline
+
+2. 定期或改版后保存新快照
+   python tools/ui_snapshot.py snapshot --env release --account main --label current
+
+3. 对比差异
+   python tools/ui_snapshot.py check --env release --account main --label current --base baseline
+```
 
 ---
 

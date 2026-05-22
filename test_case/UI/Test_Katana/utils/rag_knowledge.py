@@ -1,8 +1,12 @@
 import os
 import faiss
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from loguru import logger
+
+# Only auto-initialize when AI vision is explicitly enabled
+# This avoids loading SentenceTransformer (~20s) on every pytest/python run
+_ENABLE_RAG = os.getenv("ENABLE_AI_VISION", "").lower() in ("1", "true", "yes")
+
 
 class RAGKnowledgeBase:
     _instance = None
@@ -20,11 +24,17 @@ class RAGKnowledgeBase:
         self.index = None
         self.model = None
         
-        self._load_and_index()
+        if _ENABLE_RAG:
+            from sentence_transformers import SentenceTransformer
+            self._load_and_index()
+        else:
+            logger.debug("RAG Knowledge Base disabled (set ENABLE_AI_VISION=1 to enable)")
+        
         self.initialized = True
 
     def _load_and_index(self):
         try:
+            from sentence_transformers import SentenceTransformer
             logger.info("Initializing RAG Knowledge Base... Loading model (this might take a moment).")
             # Use a fast, small model
             self.model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -50,7 +60,7 @@ class RAGKnowledgeBase:
             if not self.chunks:
                 logger.warning("No valid chunks extracted from Knowledge Base.")
                 return
-                
+                    
             logger.info(f"Encoding {len(self.chunks)} knowledge chunks...")
             embeddings = self.model.encode(self.chunks)
             
@@ -63,7 +73,7 @@ class RAGKnowledgeBase:
         except Exception as e:
             logger.error(f"Failed to initialize RAG Knowledge Base: {e}")
             self.chunks = []
-
+            
     def query(self, query_text: str, top_k: int = 2) -> str:
         """Query the knowledge base and return relevant text."""
         if not self.index or not self.chunks:
@@ -77,7 +87,7 @@ class RAGKnowledgeBase:
             for idx in I[0]:
                 if idx != -1 and idx < len(self.chunks):
                     # Re-add prefix for context
-                    results.append(f"- {self.chunks[idx][:300]}...") # truncate for prompt
+                    results.append(f"- {self.chunks[idx][:300]}...")  # truncate for prompt
             
             if results:
                 return "Retrieved Knowledge Context:\n" + "\n".join(results)
@@ -86,5 +96,5 @@ class RAGKnowledgeBase:
             logger.error(f"RAG query failed: {e}")
             return ""
 
-# Global instance
+# Global instance — creation is cheap; model loading only happens if _ENABLE_RAG is True
 rag_kb = RAGKnowledgeBase()
