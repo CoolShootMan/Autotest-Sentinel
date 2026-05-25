@@ -1,4 +1,4 @@
-# Auto Test 框架 v4.3
+# Auto Test 框架 v4.4
 
 > pytest + playwright + allure + Gemini AI 实现 UI 自动化测试 + AI 自愈
 
@@ -16,7 +16,9 @@
 - **多环境支持**: 通过 `--env` 参数无缝切换 staging/release 环境。
 - **动态多断言**: 支持多种断言类型（文本可见性、元素存在性等）。
 - **跨平台支持**: 完美兼容并支持 Windows、macOS、Linux 系统。
-- **失败诊断工具**: 自动重放失败用例，截图 + DOM 快照 + 多策略探查，生成 HTML 诊断报告。
+- **失败诊断工具**: 自动重放失败用例，截图 + DOM 快照 + 9 种探查策略，生成 HTML 诊断报告。
+- **AI RAG 智能建议**: DOM 向量知识库 + Gemini 自动生成定位修复建议，规则建议与 AI 建议同时展示。
+- **模型降级链**: Gemini 配额耗尽时自动切换 Key，Key 用完自动降级模型（2.5-flash → 2.0-flash → 2.0-flash-lite）。
 - **闪电启动**: AI 模块默认关闭，启动时间从 ~20s 降至 ~0.6s，需要时一键启用。
 
 ---
@@ -82,15 +84,20 @@ BASE_URL=https://pear.us           # 生产环境
 
 #### 2-2. Gemini AI Keys（`GEMINI_API_KEYS`）
 
-配置 Gemini API Keys，支持多个 Key 自动轮换以避免频率限制：
+配置 Gemini API Keys，支持**多 Key 自动轮换 + 模型降级链**：
 
 ```env
-# 推荐：配置多个 Key，逗号分隔，框架自动轮换
+# 推荐：配置多个 Key，逗号分隔
 GEMINI_API_KEYS=key1,key2,key3
 
 # 或者配置单个 Key（兼容旧版本）
 GEMINI_API_KEY=your_single_key_here
 ```
+
+**配额耗尽时的自动降级策略**：
+1. 当前 Key 配额耗尽 → 自动切换到下一个 Key（同模型）
+2. 所有 Key 都耗尽 → 自动降级到下一个模型
+3. 降级链：`gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-2.0-flash-lite`
 
 > **⚠️ 注意**：`.env` 文件包含敏感信息，已被加入 `.gitignore`，**请勿提交到代码仓库**。
 
@@ -270,9 +277,10 @@ actions/ (Action Registry 动作注册表)
 │       ├─test_ui.py       # 核心测试执行引擎 (含执行历史追踪)
 │       └─*.yaml           # 测试用例定义
 ├─tools                    # 工具包
-│  ├─diagnose_failed.py    # [NEW v4.3] 失败用例诊断报告工具
+│  ├─diagnose_failed.py    # [v4.4] 失败用例诊断报告工具（9 种探查 + AI RAG 建议）
 │  ├─ui_snapshot.py        # DOM 快照 + diff 检测
 │  ├─locator_updater.py    # YAML 定位器批量更新
+│  ├─dom_kb.py             # [NEW v4.4] DOM 向量知识库（FAISS + RAG）
 │  └─...                   # 其他辅助工具
 ├─requirements.txt         # 项目核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
 ├─setup_env.sh / .bat      # 跨平台环境一键设置脚本
@@ -489,6 +497,55 @@ Allure 报告服务已启动!
 
 ---
 
+## v4.4 新增功能 (2026-05-25)
+
+### DOM 向量知识库 (`dom_kb.py`)
+
+**背景**: 失败诊断时，仅凭当前页面的 DOM 快照往往无法判断"这个元素以前长什么样"。需要一个历史 DOM 知识库来辅助定位修复。
+
+**解决方案**: 使用 FAISS + SentenceTransformers 构建 DOM 元素的向量知识库，支持语义相似度检索。
+
+**使用方法**:
+```bash
+# 从基线快照构建知识库索引
+python tools/dom_kb.py build --env release
+
+# 查询相似元素（用于调试）
+python tools/dom_kb.py query --role button --name "Edit post"
+```
+
+**核心特性**:
+- 自动从 `ui_snapshots/baseline__release_*.json` 加载交互元素
+- 使用 `all-MiniLM-L6-v2` 生成 384 维向量，FAISS `IndexFlatIP` 存储
+- 支持增量更新：`diagnose_failed.py` 每步成功后自动将当前 DOM 追加到索引
+- 独立模块，不依赖 pytest
+
+### AI RAG 智能建议 (Probe 9)
+
+**背景**: 传统规则建议（Probe 7/8）在 UI 大幅改版时效果有限，需要 AI 理解语义来生成更准确的定位修复。
+
+**解决方案**: 失败诊断时，用 DOM 知识库做向量检索找到相似元素，再让 Gemini 判断最佳匹配并生成 YAML 定位修复建议。
+
+**工作流程**:
+```
+失败步骤 → DOM KB 向量检索 (Top-5 相似元素)
+              ↓
+         Gemini 判断最佳匹配 + 生成 YAML 修复
+              ↓
+         与规则建议（Probe 7/8）同时展示在报告中
+```
+
+**展示方式**:
+- **HTML 报告**: AI 建议（蓝色 🤖）与规则建议（绿色 💡）同时展示，按 confidence 排序
+- AI 建议卡片带 "View all RAG candidates" 折叠面板，可查看完整检索结果
+- **终端**: `[AI RAG]` / `[Rule]` 标签区分来源，支持逐个确认应用
+
+**模型降级链**:
+- 优先 `gemini-2.5-flash` → 配额耗尽自动切换 Key → Key 用完降级 `gemini-2.0-flash` → 最后 `gemini-2.0-flash-lite`
+- 无需手动干预，全自动处理配额问题
+
+---
+
 ## v4.3 新增功能 (2026-05-22)
 
 ### 失败用例诊断工具 (`diagnose_failed.py`)
@@ -515,7 +572,8 @@ python tools/diagnose_failed.py --case testT1928 --headed
 **诊断报告内容**:
 - **Summary Dashboard**: 失败用例总览 + 失败复现率
 - **Step-by-Step Replay**: 每步执行前后的截图 + DOM 快照
-- **Multi-Strategy Probing**: 失败步骤自动探查（文本搜索、角色搜索、test_id 搜索、locator 检查、弹窗检测、aria-label 搜索）
+- **Multi-Strategy Probing**: 9 种探查策略（文本/角色/test_id/locator/弹窗/aria-label/模糊定位/状态回溯/**AI RAG 建议**）
+- **Auto-Fix Suggestions**: 规则建议与 AI 建议同时展示，按 confidence 排序
 - **Flaky 检测**: 重放通过的用例标记为可能不稳定
 - **独立 HTML**: 报告为单个 HTML 文件，截图 base64 内嵌，可直接发送给同事
 
@@ -581,4 +639,4 @@ python tools/locator_updater.py update --role button --name "Edit post" --new-na
 
 ---
 
-**版本:** v4.3 | **最后更新:** 2026-05-22 | **维护者:** Autotest-monster Team
+**版本:** v4.4 | **最后更新:** 2026-05-25 | **维护者:** Autotest-monster Team

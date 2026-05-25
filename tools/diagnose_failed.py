@@ -27,10 +27,12 @@ import ast
 import argparse
 import base64
 import datetime
+import difflib
 import glob
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -43,7 +45,7 @@ import yaml
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).parent.parent
 ALLURE_RESULTS_DIR = PROJECT_ROOT / "allure-results"
-REPORT_OUTPUT_DIR = PROJECT_ROOT / "report"
+REPORT_OUTPUT_DIR = PROJECT_ROOT / "Error_Test_Case_Diagnosis_Report"
 COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
 
 # Ensure project root is on sys.path so we can import test_case.* modules
@@ -59,6 +61,258 @@ _mock_ai_vision = MagicMock()
 _mock_rag_kb = MagicMock()
 sys.modules.setdefault("test_case.UI.Test_Katana.utils.ai_vision", _mock_ai_vision)
 sys.modules.setdefault("test_case.UI.Test_Katana.utils.rag_knowledge", _mock_rag_kb)
+
+# ---------------------------------------------------------------------------
+# Gemini AI + DOM Knowledge Base (lazy-loaded for Probe 9)
+# ---------------------------------------------------------------------------
+_gemini_model = None
+_gemini_api_keys = []  # all available keys for fallback
+_gemini_current_key_idx = 0
+_gemini_model_idx = 0  # current model in fallback chain
+_dom_kb_loaded = False
+
+# Model fallback chain: preferred → fallback → lite
+# Each model has independent quota; if all keys for current model fail,
+# downgrade to next model.
+_GEMINI_MODEL_CHAIN = [
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-2.0-flash-lite",
+]
+
+
+def _load_gemini(force_model: str = None):
+    """Lazy-load Gemini model using keys from backend/.env.
+
+    Supports model fallback chain + multiple API key rotation:
+    1. Try preferred model (gemini-2.5-flash) with key[0]
+    2. On quota error → rotate to next key for same model
+    3. All keys exhausted for current model → downgrade to next model
+    """
+    global _gemini_model, _gemini_api_keys, _gemini_current_key_idx, _gemini_model_idx
+    if _gemini_model is not None and force_model is None:
+        return _gemini_model
+    try:
+        import google.generativeai as genai
+        from dotenv import load_dotenv as _ld
+        # Load keys from backend/.env
+        _backend_env = os.path.join(PROJECT_ROOT, "backend", ".env")
+        if os.path.exists(_backend_env):
+            _ld(_backend_env, override=True)
+        keys_str = os.getenv("GEMINI_API_KEYS", "")
+        if not keys_str:
+            return None
+        keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+        if not keys:
+            return None
+        _gemini_api_keys = keys
+        _gemini_current_key_idx = 0
+        model_name = force_model or _GEMINI_MODEL_CHAIN[_gemini_model_idx]
+        genai.configure(api_key=keys[0])
+        _gemini_model = genai.GenerativeModel(model_name)
+        return _gemini_model
+    except Exception:
+        return None
+
+
+def _rotate_gemini_key():
+    """Rotate to next API key for the current model.
+    Returns True if rotated, False if all keys for current model exhausted.
+    """
+    global _gemini_model, _gemini_current_key_idx
+    if len(_gemini_api_keys) <= 1:
+        return False
+    _gemini_current_key_idx = (_gemini_current_key_idx + 1) % len(_gemini_api_keys)
+    # If we've cycled back to key 0, all keys exhausted for this model
+    if _gemini_current_key_idx == 0:
+        return False
+    try:
+        import google.generativeai as genai
+        model_name = _GEMINI_MODEL_CHAIN[_gemini_model_idx]
+        genai.configure(api_key=_gemini_api_keys[_gemini_current_key_idx])
+        _gemini_model = genai.GenerativeModel(model_name)
+        return True
+    except Exception:
+        return False
+
+
+def _downgrade_gemini_model():
+    """Downgrade to next model in the fallback chain.
+    Returns True if downgraded, False if already at the last model.
+    """
+    global _gemini_model, _gemini_model_idx, _gemini_current_key_idx
+    if _gemini_model_idx >= len(_GEMINI_MODEL_CHAIN) - 1:
+        return False
+    _gemini_model_idx += 1
+    _gemini_current_key_idx = 0
+    try:
+        import google.generativeai as genai
+        model_name = _GEMINI_MODEL_CHAIN[_gemini_model_idx]
+        genai.configure(api_key=_gemini_api_keys[0])
+        _gemini_model = genai.GenerativeModel(model_name)
+        return True
+    except Exception:
+        return False
+
+
+def _query_dom_kb(step_value: dict, url_hint: str = "", top_k: int = 5):
+    """Query DOM knowledge base for similar elements. Lazy-loads dependencies."""
+    global _dom_kb_loaded
+    if not _dom_kb_loaded:
+        try:
+            tools_dir = os.path.join(PROJECT_ROOT, "tools")
+            if tools_dir not in sys.path:
+                sys.path.insert(0, tools_dir)
+            from dom_kb import query_for_failed_step, add_elements
+            import tools.dom_kb as _dk
+            _query_dom_kb._fn = _dk.query_for_failed_step
+            _query_dom_kb._add_fn = _dk.add_elements
+        except Exception:
+            _query_dom_kb._fn = None
+            _query_dom_kb._add_fn = None
+        _dom_kb_loaded = True
+    fn = getattr(_query_dom_kb, "_fn", None)
+    if fn:
+        return fn(step_value, url_hint=url_hint, top_k=top_k)
+    return []
+
+
+def _add_dom_to_kb(dom_elements: list, url_hint: str = ""):
+    """Add DOM elements to knowledge base incrementally. Silent on failure."""
+    global _dom_kb_loaded
+    if not _dom_kb_loaded:
+        # Trigger lazy-load
+        _query_dom_kb({})
+    add_fn = getattr(_query_dom_kb, "_add_fn", None)
+    if add_fn:
+        try:
+            add_fn(dom_elements, url_template=url_hint)
+        except Exception:
+            pass  # Silent: KB update is best-effort
+
+
+def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
+                            dom_snapshot: list = None, error_msg: str = "") -> Optional[dict]:
+    """Probe 9: AI RAG Suggestion.
+
+    1. Query DOM KB for top-K similar elements via vector search
+    2. Send candidates + context to Gemini
+    3. Gemini picks the best match and generates a YAML locator fix
+    4. Returns a probe dict with heuristic_suggestion, or None if unavailable
+    """
+    # Query DOM KB
+    candidates = _query_dom_kb(step_value, url_hint=url_hint, top_k=5)
+    if not candidates:
+        return None
+
+    # Build candidate descriptions for the prompt
+    candidate_descs = []
+    for i, c in enumerate(candidates):
+        el = c["element"]
+        score = c["score"]
+        candidate_descs.append(
+            f"  [{i+1}] score={score:.3f} | page={c.get('url_template','')} | "
+            f"tag={el.get('tag','')} role={el.get('role','')} "
+            f"testid={el.get('testid','')} ariaLabel={el.get('ariaLabel','')} "
+            f"text={el.get('text','')} name={el.get('name','')}"
+        )
+
+    # Build the original step description
+    if isinstance(step_value, dict):
+        orig_desc = ", ".join(f"{k}={v}" for k, v in step_value.items() if v)
+    else:
+        orig_desc = str(step_value)
+
+    prompt = f"""You are a QA automation expert. A UI test step FAILED because the element locator is outdated.
+
+FAILED STEP LOCATOR:
+  {orig_desc}
+
+ERROR MESSAGE:
+  {error_msg[:300] if error_msg else 'N/A'}
+
+The DOM Knowledge Base found these similar elements on the CURRENT page:
+
+{chr(10).join(candidate_descs)}
+
+Your task: Pick the BEST matching element and generate a YAML locator fix.
+
+Rules:
+- Pick the element that is SEMANTICALLY the same as the original (text may have changed slightly)
+- Prefer: test_id > role+name > role+ariaLabel > locator
+- If the element changed (e.g. button text changed from "Edit post" to "Edit content"), that's expected — pick the replacement
+- Return ONLY a valid JSON object with the new locator fields, e.g. {{"role": "button", "name": "Edit content"}}
+- If no good match exists, return {{"reason": "brief explanation of why no match found"}}
+
+Respond with JSON only, no markdown:."""
+
+    model = _load_gemini()
+    if model is None:
+        return None
+
+    # Retry strategy: rotate keys first, then downgrade model
+    last_error = None
+    while True:
+        try:
+            response = model.generate_content(prompt)
+            raw = response.text.strip()
+            # Strip markdown code fences if present
+            if raw.startswith("```"):
+                raw = raw.split("\n", 1)[1] if "\n" in raw else raw[3:]
+            if raw.endswith("```"):
+                raw = raw[:-3]
+            raw = raw.strip()
+            result = json.loads(raw)
+
+            # Check if AI gave a reason instead of a fix
+            if "reason" in result and len(result) == 1:
+                return {
+                    "probe": "AI RAG Analysis (no match found)",
+                    "count": 0,
+                    "matches": [],
+                    "ai_reason": result["reason"],
+                    "score": 0.0,
+                }
+
+            # Build the suggestion
+            suggested_fix = {}
+            for k in ("test_id", "role", "name", "text", "label", "placeholder", "locator"):
+                if k in result and result[k]:
+                    suggested_fix[k] = result[k]
+
+            if not suggested_fix:
+                return None
+
+            # Get the matched element from candidates for display
+            best_match = candidates[0]["element"] if candidates else {}
+            return {
+                "probe": "AI RAG Suggestion (Gemini + DOM Knowledge Base)",
+                "count": 1,
+                "matches": [best_match],
+                "heuristic_suggestion": suggested_fix,
+                "score": 0.85,
+                "ai_candidates": candidate_descs,
+            }
+        except Exception as e:
+            last_error = e
+            err_str = str(e).lower()
+            if "quota" in err_str or "429" in err_str or "resource_exhausted" in err_str:
+                # 1. Try next key for current model
+                if _rotate_gemini_key():
+                    model = _gemini_model
+                    continue
+                # 2. All keys exhausted → downgrade model
+                if _downgrade_gemini_model():
+                    model = _gemini_model
+                    continue
+                # 3. All models exhausted
+                break
+            break  # non-quota error, don't retry
+
+    return {
+        "probe": "AI RAG Suggestion",
+        "error": str(last_error),
+    }
 
 # ---------------------------------------------------------------------------
 # JS: Extract visible interactive elements from page (from ui_snapshot.py)
@@ -181,6 +435,7 @@ def extract_failed_cases(allure_dir: str, filter_case: Optional[str] = None) -> 
 
         # Extract step order from test_step
         steps_order = list(case_data.get("test_step", {}).keys())
+        start_time = d.get("start", 0)
 
         results.append({
             "name": name,
@@ -190,7 +445,36 @@ def extract_failed_cases(allure_dir: str, filter_case: Optional[str] = None) -> 
             "yaml_path": yaml_path,
             "case_data": case_data,
             "steps_order": steps_order,
+            "start": start_time,
         })
+
+    # Read yaml files to get the original order of test cases
+    yaml_order_map = {}
+    yaml_first_start = {}
+    for r in results:
+        ypath = r.get("yaml_path")
+        st = r.get("start", 0)
+        if ypath:
+            if ypath not in yaml_first_start or st < yaml_first_start[ypath]:
+                yaml_first_start[ypath] = st
+            if ypath not in yaml_order_map:
+                abs_ypath = ypath if os.path.isabs(ypath) else str(PROJECT_ROOT / ypath)
+                try:
+                    with open(abs_ypath, "r", encoding="utf-8") as yf:
+                        ydata = yaml.safe_load(yf)
+                        if isinstance(ydata, dict):
+                            yaml_order_map[ypath] = list(ydata.keys())
+                except Exception:
+                    pass
+
+    def _case_order(x):
+        ypath = x.get("yaml_path")
+        name = x.get("name")
+        idx = yaml_order_map.get(ypath, []).index(name) if ypath in yaml_order_map and name in yaml_order_map[ypath] else 9999
+        return (yaml_first_start.get(ypath, 0), idx)
+
+    # Sort results by execution start time of YAML file, then by actual YAML definition order
+    results.sort(key=_case_order)
 
     return results
 
@@ -311,6 +595,36 @@ def capture_page_summary(page) -> Dict:
         return {}
 
 
+def _capture_post_state(page) -> Dict:
+    """Lightweight post-step state snapshot for anomaly detection.
+
+    Captures only the minimal signals needed to detect state drift:
+    URL, title, modal presence, and rough DOM element count.
+    Each query is designed to be fast (< 50ms) so it doesn't
+    materially slow down the replay loop.
+    """
+    state = {"url": "", "title": "", "has_modal": False, "modal_count": 0, "dom_element_count": 0}
+    try:
+        state["url"] = page.url
+    except Exception:
+        pass
+    try:
+        state["title"] = page.title()
+    except Exception:
+        pass
+    try:
+        modal_sel = '[role="dialog"], .MuiDialog-root, .MuiModal-root, .MuiPopover-root'
+        state["modal_count"] = page.locator(modal_sel).count()
+        state["has_modal"] = state["modal_count"] > 0
+    except Exception:
+        pass
+    try:
+        state["dom_element_count"] = page.locator("body *").count()
+    except Exception:
+        pass
+    return state
+
+
 def auto_dismiss_modals(page):
     """Try to auto-dismiss common popups/modals."""
     try:
@@ -337,12 +651,14 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
     pre_condition = case_data.get("pre_condition", {})
     steps_order = case_info["steps_order"]
 
-    # Build step records list
+        # Build step records list
     step_records = []
     failed_step_name = None
     failed_step_error = ""
     failure_found = False
     probing_results = []
+    last_warning_step = None   # (step_num, step_name, warning_text) of last ambiguous click
+    first_anomaly_step_num = None  # Step number where first state anomaly was detected
 
     print(f"\n{'='*60}")
     print(f"  DIAGNOSING: {case_name}")
@@ -373,7 +689,10 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
 
         # Use storage_state if cookie file exists (same mechanism as conftest.py)
         context_args = {"viewport": {"width": 1440, "height": 900}}
-        if os.path.exists(cookie_file):
+        is_guest = case_data.get("guest", False)
+        if is_guest:
+            print("  [COOKIES] 'guest: true' detected. Running without cookies.")
+        elif os.path.exists(cookie_file):
             context_args["storage_state"] = cookie_file
             print(f"  [COOKIES] Using storage_state: {cookie_file}")
         else:
@@ -382,6 +701,31 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
         context = browser.new_context(**context_args)
         page = context.new_page()
         page.set_default_timeout(15000)
+
+        # -------------------------------------------------------------
+        # NEW: Network Request Monitoring
+        # -------------------------------------------------------------
+        failed_requests = []
+        def handle_response(response):
+            if response.status >= 500 or (response.status >= 400 and response.request.resource_type in ["fetch", "xhr"]):
+                failed_requests.append({
+                    "url": response.url,
+                    "status": response.status,
+                    "method": response.request.method,
+                })
+        
+        def handle_request_failed(request):
+            if request.resource_type in ["fetch", "xhr", "document"]:
+                failed_requests.append({
+                    "url": request.url,
+                    "status": 0,
+                    "method": request.method,
+                    "error": request.failure.strip() if request.failure else "failed",
+                })
+                
+        page.on("response", handle_response)
+        page.on("requestfailed", handle_request_failed)
+        # -------------------------------------------------------------
 
         # Also import smart_sleep so we can handle it natively
         def do_smart_sleep(page, v):
@@ -415,6 +759,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                         break
 
         # --- Core step replay ---
+        previous_step_warning = None
         for idx, step_name in enumerate(steps_order):
             step_value = test_step[step_name]
             step_num = idx + 1
@@ -434,12 +779,21 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
             after_dom = None
 
             try:
-                _execute_step(page, step_name, step_value, actual_base_url)
+                step_warn = _execute_step(page, step_name, step_value, actual_base_url)
 
                 # Success
                 after_screenshot = capture_screenshot_b64(page)
                 after_dom = capture_dom_snapshot(page)
+                # Incrementally add current page DOM to knowledge base
+                _add_dom_to_kb(after_dom, url_hint=actual_base_url)
                 print("PASSED")
+                if step_warn:
+                    previous_step_warning = step_warn
+                    last_warning_step = (step_num, step_name, step_warn)
+                    print(f"  [AMBIGUITY WARNING] Step #{step_num} '{step_name}': {step_warn}")
+                elif action_type == "click":
+                    # Only clear if this was a clean, unambiguous click
+                    previous_step_warning = None
 
                 step_records.append({
                     "step_num": step_num,
@@ -447,11 +801,13 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                     "action_type": action_type,
                     "step_value": step_value,
                     "status": "passed",
+                    "warning": step_warn or "",
                     "before_screenshot": before_screenshot,
                     "after_screenshot": after_screenshot,
                     "before_dom": before_dom,
                     "after_dom": after_dom,
                     "before_summary": before_summary,
+                    "post_state": _capture_post_state(page),
                     "error": "",
                 })
 
@@ -471,11 +827,13 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                         "action_type": action_type,
                         "step_value": step_value,
                         "status": "skipped",
+                        "warning": "",
                         "before_screenshot": before_screenshot,
                         "after_screenshot": after_screenshot,
                         "before_dom": before_dom,
                         "after_dom": after_dom,
                         "before_summary": before_summary,
+                        "post_state": _capture_post_state(page),
                         "error": f"Optional step not found: {error_msg[:120]}",
                     })
                     continue
@@ -489,7 +847,87 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
 
                     # --- Phase 3: Multi-strategy probing ---
                     print(f"  [PROBING] Running diagnosis on failed step...")
-                    probing_results = probe_failure(page, step_name, step_value, error_msg)
+                    probing_results = probe_failure(page, step_name, step_value, error_msg, after_dom)
+
+                    # --- ROOT CAUSE PREDICTION ---
+                    # Case 1: Previous click had an ambiguous match (warning was set)
+                    root_cause_parts = []
+                    if previous_step_warning and last_warning_step:
+                        root_cause_parts.append(
+                            f"Step #{last_warning_step[0]} '{last_warning_step[1]}' had an ambiguous locator match: "
+                            f"{last_warning_step[2]}  →  This click may have landed on the wrong element."
+                        )
+
+                    # Case 2: Active modal/popover is blocking the target element
+                    modal_probe = next((p for p in probing_results if "modal" in p.get("probe", "").lower() and p.get("count", 0) > 0), None)
+                    if modal_probe:
+                        modal_texts = "; ".join(m.get("text", "")[:60] for m in modal_probe.get("matches", []) if m.get("text"))
+                        root_cause_parts.append(
+                            f"A modal/dialog/popover is currently blocking the page "
+                            f"({modal_probe['count']} found: {modal_texts or 'no text'}). "
+                            f"A prior step may have accidentally triggered it."
+                        )
+
+                    # Case 3: Post-state retrospection — find first state anomaly
+                    anomalies = _detect_state_anomalies(step_records, step_num)
+                    if anomalies:
+                        first = anomalies[0]
+                        first_anomaly_step_num = first["step_num"]
+                        root_cause_parts.append(
+                            f"State anomaly detected at Step #{first['step_num']} "
+                            f"'{first['step_name']}': {first['detail']}. "
+                            f"This step caused an unexpected page state change that likely led to the current failure."
+                        )
+
+                    # Case 4: UI Change Detection — target text/aria-label exists but role changed
+                    # This catches UI redesigns where an element's role was changed
+                    # (e.g. textbox -> button, link -> button, etc.)
+                    # Extract target info from step_value (same logic as _execute_step)
+                    _target_role = step_value.get("role") if isinstance(step_value, dict) else None
+                    _target_name = None
+                    if isinstance(step_value, dict):
+                        _target_name = step_value.get("name") or step_value.get("text") or step_value.get("label") or step_value.get("placeholder")
+                    if _target_role and _target_name:
+                        # Find aria-label probe that matched the target name
+                        aria_probe = next((p for p in probing_results if "aria-label" in p.get("probe", "") and p.get("count", 0) > 0), None)
+                        role_probe = next((p for p in probing_results if f"role='{_target_role}'" in p.get("probe", "")), None)
+                        if aria_probe and role_probe:
+                            # aria-label found something, but role search found 0 or different elements
+                            role_count = role_probe.get("count", 0)
+                            aria_matches = aria_probe.get("matches", [])
+                            if role_count == 0 and aria_matches:
+                                # The text exists but the expected role doesn't
+                                actual_tags = list(set(m.get("tag", "") for m in aria_matches if m.get("tag")))
+                                actual_roles = list(set(m.get("role", "") for m in aria_matches if m.get("role")))
+                                if actual_tags or actual_roles:
+                                    tag_hint = f" (actual tag: {', '.join(actual_tags)})" if actual_tags else ""
+                                    role_hint = f" (actual role: {', '.join(actual_roles)})" if actual_roles else ""
+                                    root_cause_parts.append(
+                                        f"UI element '{_target_name}' exists but its role has changed: "
+                                        f"expected role='{_target_role}' not found, "
+                                        f"but element with matching aria-label was found as {tag_hint or role_hint}. "
+                                        f"The page may have been redesigned — update the locator to use the new role or a CSS locator."
+                                    )
+                                    # --- Inject heuristic_suggestion from Case 4 findings ---
+                                    best_match = aria_matches[0]
+                                    suggested_fix = {}
+                                    if actual_roles:
+                                        suggested_fix["role"] = actual_roles[0]
+                                    elif actual_tags:
+                                        suggested_fix["tag"] = actual_tags[0]
+                                    suggested_fix["name"] = _target_name
+                                    probing_results.append({
+                                        "probe": "UI Change Detection (role mismatch)",
+                                        "count": len(aria_matches),
+                                        "matches": aria_matches,
+                                        "heuristic_suggestion": suggested_fix,
+                                        "score": 0.95,
+                                        "reason": f"Element '{_target_name}' found with role='{actual_roles[0] if actual_roles else 'unknown'}', expected role='{_target_role}'",
+                                    })
+
+                    if root_cause_parts:
+                        error_msg += "\n\n[ROOT CAUSE PREDICTION]: " + "  |  ".join(root_cause_parts) + "\nPrevious step may have caused an unexpected page state change."
+                        failed_step_error = error_msg
 
                 step_records.append({
                     "step_num": step_num,
@@ -497,13 +935,16 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                     "action_type": action_type,
                     "step_value": step_value,
                     "status": "failed",
+                    "warning": "",
                     "before_screenshot": before_screenshot,
                     "after_screenshot": after_screenshot,
                     "before_dom": before_dom,
                     "after_dom": after_dom,
                     "before_summary": before_summary,
+                    "post_state": _capture_post_state(page),
                     "error": error_msg,
                     "probing": probing_results if failure_found and step_name == failed_step_name else [],
+                    "anomaly_step_num": first_anomaly_step_num,
                 })
 
                 # Stop replay after first failure (subsequent steps would be meaningless)
@@ -564,9 +1005,11 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
         "failed_step": failed_step_name,
         "failed_step_error": failed_step_error,
         "step_records": step_records,
+        "failed_requests": failed_requests,
         "total_steps": len(steps_order),
         "steps_passed": sum(1 for s in step_records if s["status"] == "passed"),
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "anomaly_step_nums": [a["step_num"] for a in anomalies] if failure_found and anomalies else [],
     }
 
 
@@ -674,8 +1117,7 @@ def _execute_step(page, step_name: str, step_value: Any, base_url: str):
     # --- Click steps (the most complex) ---
     if (sn.startswith("r_click") or sn.startswith("click") or sn.startswith("l_click")
             or sn.startswith("smart_click_optional") or sn.startswith("smart_click_retry")):
-        _execute_click_step(page, step_name, step_value)
-        return
+        return _execute_click_step(page, step_name, step_value)
 
     # --- Verify text visible ---
     if sn.startswith("verify_text_visible") or sn == "verify_product_visible":
@@ -813,8 +1255,7 @@ def _execute_step(page, step_name: str, step_value: Any, base_url: str):
         pass
 
     if isinstance(step_value, dict) and any(k in step_value for k in ["role", "locator", "text", "name", "test_id"]):
-        _execute_click_step(page, step_name, step_value)
-        return
+        return _execute_click_step(page, step_name, step_value)
 
     print(f"(unhandled: {step_name})")
 
@@ -833,6 +1274,8 @@ def _execute_click_step(page, step_name: str, v: dict):
     optional = v.get("optional", False)
     exact = v.get("exact", False)
 
+    warning = None  # Track ambiguous matches across ALL strategies
+
     # Skip if no actionable targets
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
@@ -843,7 +1286,7 @@ def _execute_click_step(page, step_name: str, v: dict):
             el = page.get_by_test_id(target_test_id).nth(target_index)
             if el.is_visible(timeout=3000):
                 el.click(force=force)
-                return
+                return warning
         except Exception:
             if optional:
                 return
@@ -853,20 +1296,30 @@ def _execute_click_step(page, step_name: str, v: dict):
         try:
             if target_locator.startswith("/") or target_locator.startswith("xpath="):
                 xpath_loc = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
-                el = page.locator(xpath_loc).nth(target_index)
+                loc_base = page.locator(xpath_loc)
             else:
-                el = page.locator(target_locator).nth(target_index)
+                loc_base = page.locator(target_locator)
 
             # If both locator + text/role, try combining
             if target_name:
                 try:
-                    el = el.get_by_text(target_name, exact=exact)
+                    loc_base = loc_base.get_by_text(target_name, exact=exact)
                 except Exception:
                     pass
 
+            # Ambiguity check for locator strategy
+            try:
+                loc_base.first.wait_for(state="attached", timeout=5000)
+                count = loc_base.count()
+                if count > 1 and target_name:
+                    warning = f"Ambiguous locator+name matched {count} elements (locator='{target_locator}', name='{target_name}')."
+            except Exception:
+                pass
+
+            el = loc_base.nth(target_index)
             el.click(force=force, timeout=5000)
             page.wait_for_timeout(300)
-            return
+            return warning
         except Exception as e:
             if optional:
                 return
@@ -874,33 +1327,52 @@ def _execute_click_step(page, step_name: str, v: dict):
     # 3. Aria-label fallback
     if target_name:
         try:
-            el = page.locator(f'[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
+            loc_base = page.locator(f'[aria-label="{target_name}"], [aria-label*="{target_name}"]')
+            # Ambiguity check for aria-label strategy
+            try:
+                loc_base.first.wait_for(state="attached", timeout=3000)
+                count = loc_base.count()
+                if count > 1:
+                    warning = f"Ambiguous aria-label matched {count} elements for name='{target_name}' (substring match on aria-label)."
+            except Exception:
+                pass
+
+            el = loc_base.nth(target_index)
             el.click(force=force, timeout=3000)
             page.wait_for_timeout(300)
-            return
+            return warning
         except Exception:
             pass
 
     # 4. Role / text
     try:
         if target_role:
-            el = page.get_by_role(role=target_role, name=target_name, exact=exact).nth(target_index)
+            el_base = page.get_by_role(role=target_role, name=target_name, exact=exact)
         elif target_name:
-            el = page.get_by_text(target_name, exact=exact).nth(target_index)
+            el_base = page.get_by_text(target_name, exact=exact)
         else:
             raise Exception("No locator strategy matched")
 
+        try:
+            el_base.first.wait_for(state="attached", timeout=5000)
+            count = el_base.count()
+            if count > 1:
+                warning = f"Ambiguous locator matched {count} elements (e.g. role={target_role}, name='{target_name}')."
+        except Exception:
+            pass
+
+        el = el_base.nth(target_index)
         el.click(timeout=5000)
         page.wait_for_timeout(300)
         if target_role == "option":
             page.keyboard.press("Escape")
             page.wait_for_timeout(300)
-        return
+        return warning
     except Exception:
         try:
             el.click(force=True, timeout=3000)
             page.wait_for_timeout(300)
-            return
+            return warning
         except Exception:
             pass
 
@@ -965,11 +1437,149 @@ def _execute_assertion(page, assertion: dict, base_url: str):
         return
 
 
+def _detect_state_anomalies(step_records: List[Dict], failed_step_num: int) -> List[Dict]:
+    """Retrospect step post-states to find the first state anomaly.
+
+    Scans step_records[0 .. failed_step_num-1] looking for signals that
+    indicate a step caused an unexpected page state change. Returns a
+    list of anomaly dicts sorted by step_num (earliest first).
+
+    Anomaly types:
+      A — Unexpected URL change on a non-navigation step
+      B — Modal appeared after a step and persisted through subsequent steps
+      C — Page DOM element count dropped > 50% (major restructure/navigate)
+    """
+    from urllib.parse import urlparse
+
+    anomalies = []
+
+    # Action types that are passive (don't actively change page state).
+    # URL/modal changes during these steps are side effects of prior actions,
+    # not caused by the current step itself.
+    PASSIVE_ACTIONS = {"sleep", "screenshot", "assert", "assertion"}
+
+    for i in range(len(step_records)):
+        sr = step_records[i]
+        post = sr.get("post_state")
+        if not post or not post.get("url"):
+            continue
+
+        step_num = sr["step_num"]
+        action_type = sr.get("action_type", "")
+
+        # Skip anomaly detection for passive actions entirely.
+        # Sleep/screenshot/assert don't cause state changes; any URL/modal
+        # shift during these steps is a delayed effect of prior steps.
+        if action_type in PASSIVE_ACTIONS:
+            continue
+
+        # --- Anomaly A: Unexpected URL change ---
+        # Compare with previous step's post_state URL
+        if i > 0:
+            prev_post = step_records[i - 1].get("post_state")
+            if prev_post and prev_post.get("url"):
+                prev_url = prev_post["url"]
+                curr_url = post["url"]
+
+                if curr_url != prev_url:
+                    # Ignore hash/fragment-only changes
+                    prev_path = urlparse(prev_url).path
+                    curr_path = urlparse(curr_url).path
+                    if prev_path != curr_path:
+                        # Only flag if this step isn't supposed to navigate
+                        nav_types = {"open", "navigation", "reload", "modal"}
+                        if action_type not in nav_types:
+                            anomalies.append({
+                                "step_num": step_num,
+                                "step_name": sr["step_name"],
+                                "anomaly_type": "unexpected_navigation",
+                                "detail": (
+                                    f"URL changed from {prev_path} to {curr_path} "
+                                    f"after a '{action_type}' action (expected no navigation)"
+                                ),
+                                "prev_url": prev_url,
+                                "curr_url": curr_url,
+                            })
+
+        # --- Anomaly C: DOM element count dropped > 50% ---
+        if i > 0:
+            prev_post = step_records[i - 1].get("post_state")
+            if prev_post and prev_post.get("dom_element_count") > 20:
+                prev_count = prev_post["dom_element_count"]
+                curr_count = post.get("dom_element_count", 0)
+                if curr_count > 0 and (prev_count - curr_count) / prev_count > 0.5:
+                    anomalies.append({
+                        "step_num": step_num,
+                        "step_name": sr["step_name"],
+                        "anomaly_type": "dom_restructure",
+                        "detail": (
+                            f"Page element count dropped {prev_count} -> {curr_count} "
+                            f"({round((prev_count - curr_count) / prev_count * 100)}% decrease), "
+                            f"indicating a major page restructure"
+                        ),
+                    })
+
+    # --- Anomaly B: Modal appeared and persisted ---
+    # Find the first step where has_modal became True
+    modal_appeared_step = None
+    for i in range(len(step_records)):
+        post = step_records[i].get("post_state")
+        if not post:
+            continue
+        if post.get("has_modal"):
+            # Check if this is the first appearance
+            if i == 0 or not step_records[i - 1].get("post_state", {}).get("has_modal"):
+                modal_appeared_step = step_records[i]
+                break
+
+    # If a modal appeared and persisted to the failed step, it's suspicious
+    if modal_appeared_step:
+        # Skip if the step that first showed the modal is a passive action
+        # (the modal was actually triggered by a prior step, not this one)
+        if modal_appeared_step.get("action_type", "") not in PASSIVE_ACTIONS:
+            # Check that the modal persisted through at least one subsequent step
+            modal_idx = None
+            for idx, sr in enumerate(step_records):
+                if sr["step_num"] == modal_appeared_step["step_num"]:
+                    modal_idx = idx
+                    break
+            if modal_idx is not None:
+                persisted = False
+                for j in range(modal_idx + 1, len(step_records)):
+                    later_post = step_records[j].get("post_state")
+                    if later_post and not later_post.get("has_modal"):
+                        break  # Modal was dismissed, not a problem
+                    if j == len(step_records) - 1 or step_records[j]["step_num"] >= failed_step_num:
+                        persisted = True
+                        break
+                if persisted and modal_appeared_step.get("action_type") != "modal":
+                    # Don't double-report if it's already caught by Anomaly A or existing modal probe
+                    already_reported = any(
+                        a["step_num"] == modal_appeared_step["step_num"]
+                        for a in anomalies
+                    )
+                    if not already_reported:
+                        modal_count = modal_appeared_step.get("post_state", {}).get("modal_count", 1)
+                        anomalies.append({
+                            "step_num": modal_appeared_step["step_num"],
+                            "step_name": modal_appeared_step["step_name"],
+                            "anomaly_type": "modal_persisted",
+                            "detail": (
+                                f"A modal/dialog appeared ({modal_count} found) and persisted "
+                                f"through subsequent steps without being dismissed"
+                            ),
+                        })
+
+    # Sort by step_num ascending (earliest anomaly first)
+    anomalies.sort(key=lambda a: a["step_num"])
+    return anomalies
+
+
 # ===========================================================================
 # Phase 3: Multi-strategy failure probing
 # ===========================================================================
 
-def probe_failure(page, step_name: str, step_value: dict, error_msg: str) -> List[Dict]:
+def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_snapshot: list = None) -> List[Dict]:
     """
     At the failure step, try multiple strategies to understand why the element was not found.
     Returns list of probe result dicts.
@@ -989,7 +1599,7 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str) -> Lis
         try:
             elements = page.locator("*").filter(has_text=target_name).all()
             matches = []
-            for el in elements[:10]:
+            for el in elements[:15]:
                 try:
                     tag = el.evaluate("e => e.tagName.toLowerCase()")
                     text = el.evaluate("e => (e.innerText || '').trim().substring(0, 100)")
@@ -997,16 +1607,30 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str) -> Lis
                     aria = el.get_attribute("aria-label") or ""
                     testid = el.get_attribute("data-testid") or ""
                     visible = el.is_visible()
+                    # Compute precision score: shorter text + has role/testid = more precise element
+                    text_len = len(text)
+                    precision = text_len if text_len > 0 else 9999
                     matches.append({
                         "tag": tag, "text": text, "role": role,
-                        "ariaLabel": aria, "testid": testid, "visible": visible
+                        "ariaLabel": aria, "testid": testid, "visible": visible,
+                        "_precision": precision,
                     })
                 except Exception:
                     pass
+            # Sort by precision: shortest text first (most specific element)
+            # Elements with role or testid get a boost (more likely to be interactive)
+            for m in matches:
+                if m.get("role"):
+                    m["_precision"] -= 500
+                if m.get("testid"):
+                    m["_precision"] -= 300
+                if m.get("ariaLabel"):
+                    m["_precision"] -= 200
+            matches.sort(key=lambda x: x["_precision"])
             probes.append({
                 "probe": f"Elements containing text '{target_name}'",
                 "count": len(elements),
-                "matches": matches,
+                "matches": matches[:10],
             })
         except Exception as e:
             probes.append({"probe": f"Text search for '{target_name}'", "error": str(e)})
@@ -1108,10 +1732,124 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str) -> Lis
         except Exception:
             pass
 
+    # Probe 7: Heuristic Similarity Matching (NEW)
+    if dom_snapshot:
+        try:
+            best_match = None
+            best_score = 0.0
+            
+            for el in dom_snapshot:
+                score = 0.0
+                if target_role and el.get("role") == target_role:
+                    score += 0.3
+                if target_test_id and target_test_id in el.get("testid", ""):
+                    score += 0.25
+                text_to_match = el.get("text", "") or el.get("ariaLabel", "") or el.get("placeholder", "")
+                if target_name and text_to_match:
+                    sim = difflib.SequenceMatcher(None, str(target_name).lower(), text_to_match.lower()).ratio()
+                    score += 0.45 * sim
+                
+                if score > best_score:
+                    best_score = score
+                    best_match = el
+            
+            # Lower threshold: 0.25 for low-confidence, 0.4 for confident
+            if best_match and best_score >= 0.25:
+                # Format a suggested fix
+                suggested_fix = {}
+                if best_match.get("testid"):
+                    suggested_fix["test_id"] = best_match["testid"]
+                elif best_match.get("role"):
+                    suggested_fix["role"] = best_match["role"]
+                    # Prefer ariaLabel over text (innerText can be very long with newlines)
+                    if best_match.get("ariaLabel"):
+                        suggested_fix["name"] = best_match["ariaLabel"]
+                    elif best_match.get("text"):
+                        # Clean up innerText: collapse whitespace, limit length
+                        clean_text = " ".join(best_match["text"].split())[:60]
+                        suggested_fix["name"] = clean_text
+                else:
+                    # Fallback to locator
+                    if best_match.get("text"):
+                        clean_text = " ".join(best_match["text"].split())[:60]
+                        suggested_fix["text"] = clean_text
+
+                confidence = "high" if best_score >= 0.4 else "medium"
+                probes.append({
+                    "probe": f"Heuristic Similarity Suggestion ({confidence} confidence)",
+                    "count": 1,
+                    "matches": [best_match],
+                    "heuristic_suggestion": suggested_fix,
+                    "score": best_score,
+                })
+            elif best_match and best_score > 0 and target_name:
+                # Best match exists but score is very low — still provide a hint
+                probes.append({
+                    "probe": "Heuristic Similarity (low match, no suggestion)",
+                    "count": 1,
+                    "matches": [best_match],
+                    "score": best_score,
+                })
+        except Exception as e:
+            probes.append({"probe": "Heuristic Similarity Suggestion", "error": str(e)})
+
+    # Probe 8: Fallback suggestion from Probe 1 text matches
+    # If no heuristic suggestion was generated above, but Probe 1 found visible
+    # elements containing the target text, generate a direct suggestion from those.
+    has_heuristic = any("heuristic_suggestion" in p for p in probes)
+    if not has_heuristic and target_name:
+        text_probe = next((p for p in probes if "containing" in p.get("probe", "") and "target" in p.get("probe", "").lower() and p.get("count", 0) > 0), None)
+        # Also try matching the Probe 1 format: "Elements containing 'xxx'"
+        if not text_probe:
+            text_probe = next(
+                (p for p in probes if p.get("probe", "").startswith("Elements containing") and p.get("count", 0) > 0),
+                None
+            )
+        if text_probe:
+            # Probe 1 already sorts by precision (shortest text first).
+            # Pick the first visible, non-container match.
+            _CONTAINER_TAGS = {"html", "body", "main"}
+            visible_matches = [
+                m for m in text_probe.get("matches", [])
+                if m.get("visible") and m.get("tag", "").lower() not in _CONTAINER_TAGS
+            ]
+            if visible_matches:
+                best = visible_matches[0]
+                suggested_fix = {}
+                # Build the best possible locator from available attributes
+                if best.get("testid"):
+                    suggested_fix["test_id"] = best["testid"]
+                if best.get("role"):
+                    suggested_fix["role"] = best["role"]
+                # For name: prefer ariaLabel > short clean text
+                if best.get("ariaLabel"):
+                    suggested_fix["name"] = best["ariaLabel"]
+                elif best.get("text"):
+                    clean_text = " ".join(best["text"].split())
+                    if len(clean_text) <= 80:
+                        suggested_fix["name"] = clean_text
+                if suggested_fix:
+                    probes.append({
+                        "probe": "Fallback Suggestion (from visible text match)",
+                        "count": 1,
+                        "matches": [best],
+                        "heuristic_suggestion": suggested_fix,
+                        "score": 0.3,
+                    })
+
+    # Probe 9: AI RAG Suggestion (Gemini + DOM Knowledge Base)
+    # Uses vector search + LLM to find the best replacement locator.
+    # Kept separate from rule-based probes (7/8) which are preserved for comparison.
+    ai_probe = probe_ai_rag_suggestion(
+        step_value=step_value,
+        url_hint="",  # TODO: pass URL from step context if available
+        dom_snapshot=dom_snapshot,
+        error_msg=error_msg,
+    )
+    if ai_probe:
+        probes.append(ai_probe)
+
     return probes
-
-
-def probe_assertion_failure(page, assertion: dict, error_msg: str, dom_snapshot: list) -> List[Dict]:
     """Probe assertion failures (locator/text not found)."""
     probes = []
     a_type = assertion.get("assertion_type", "")
@@ -1168,7 +1906,7 @@ def probe_assertion_failure(page, assertion: dict, error_msg: str, dom_snapshot:
 # Phase 4: HTML Report Generation
 # ===========================================================================
 
-def generate_html_report(diagnosis_results: List[Dict], env: str, allure_dir: str) -> str:
+def generate_html_report(diagnosis_results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime = None, end_time: datetime.datetime = None) -> str:
     """Generate a standalone HTML diagnosis report. Returns the file path."""
     REPORT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1176,7 +1914,7 @@ def generate_html_report(diagnosis_results: List[Dict], env: str, allure_dir: st
 
     # Build HTML
     html_parts = [_HTML_HEAD]
-    html_parts.append(_render_summary(diagnosis_results, env, allure_dir))
+    html_parts.append(_render_summary(diagnosis_results, env, allure_dir, start_time, end_time))
 
     for result in diagnosis_results:
         html_parts.append(_render_case(result))
@@ -1202,10 +1940,27 @@ def _esc(text: str) -> str:
             .replace("'", "&#039;"))
 
 
-def _render_summary(results: List[Dict], env: str, allure_dir: str) -> str:
+def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime = None, end_time: datetime.datetime = None) -> str:
     """Render the summary dashboard section."""
     total = len(results)
     ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Build time range display like Allure: "13:48:54 - 14:12:02 (23m 08s)"
+    time_range_html = ""
+    if start_time and end_time:
+        duration = end_time - start_time
+        total_seconds = int(duration.total_seconds())
+        minutes = total_seconds // 60
+        seconds = total_seconds % 60
+        duration_str = f"{minutes}m {seconds:02d}s" if minutes > 0 else f"{seconds}s"
+        start_str = start_time.strftime("%H:%M:%S")
+        end_str = end_time.strftime("%H:%M:%S")
+        date_str = start_time.strftime("%Y/%m/%d")
+        time_range_html = f"""
+        <div style="font-size:15px;color:#555;margin-bottom:15px;">
+            <span style="font-weight:bold;color:#333;">{date_str}</span>
+            <span style="color:#888;">{start_str} - {end_str} ({duration_str})</span>
+        </div>"""
 
     rows = ""
     for i, r in enumerate(results):
@@ -1224,6 +1979,7 @@ def _render_summary(results: List[Dict], env: str, allure_dir: str) -> str:
     return f"""
     <div class="summary-section">
         <h2>Summary Dashboard</h2>
+        {time_range_html}
         <div class="summary-stats">
             <div class="stat-card">
                 <div class="stat-number">{total}</div>
@@ -1268,10 +2024,32 @@ def _render_case(result: Dict) -> str:
             <pre>{_esc(result['allure_error'])}</pre>
         </div>"""
 
+    # Network Failures
+    network_section = ""
+    if result.get("failed_requests"):
+        rows = ""
+        for req in result["failed_requests"]:
+            status = req.get("status")
+            badge_cls = "badge-fail" if status >= 500 else "badge-warn"
+            badge = f'<span class="badge {badge_cls}">{status}</span>' if status else f'<span class="badge badge-fail">FAILED</span>'
+            rows += f"<tr><td>{badge}</td><td>{_esc(req.get('method', ''))}</td><td>{_esc(req.get('url', ''))}</td><td>{_esc(req.get('error', ''))}</td></tr>"
+        
+        network_section = f"""
+        <div class="network-box">
+            <div class="network-title">&#9888; Network Request Failures Detected</div>
+            <table class="data-table">
+                <thead><tr><th>Status</th><th>Method</th><th>URL</th><th>Error</th></tr></thead>
+                <tbody>{rows}</tbody>
+            </table>
+            <p style="font-size: 12px; margin-top: 5px; color: #666;">These backend or network errors might be the root cause of the UI failure.</p>
+        </div>
+        """
+
     # Step-by-step replay
+    anomaly_steps = set(result.get("anomaly_step_nums", []))
     steps_html = ""
     for sr in result["step_records"]:
-        steps_html += _render_step_record(sr)
+        steps_html += _render_step_record(sr, anomaly_steps)
 
     # If no failure found during replay
     if not result["failed_step"] and not any(s["status"] == "failed" for s in result["step_records"]):
@@ -1281,6 +2059,116 @@ def _render_case(result: Dict) -> str:
             The original Allure error was: <code>{_esc(result['allure_error'][:200])}</code>
         </div>"""
 
+    # --- Fix Suggestions (from heuristic probe) ---
+    suggestions_html = ""
+    fix_suggestions = []
+    if result.get("failed_step"):
+        for sr in result.get("step_records", []):
+            if sr.get("step_name") == result["failed_step"]:
+                # Collect ALL heuristic suggestions (rule-based + AI), show all
+                all_suggestions = []
+                for p in sr.get("probing", []):
+                    if "heuristic_suggestion" in p:
+                        all_suggestions.append({
+                            "step_name": sr["step_name"],
+                            "suggestion": p["heuristic_suggestion"],
+                            "probe": p.get("probe", ""),
+                            "score": p.get("score", 0),
+                            "reason": p.get("reason", ""),
+                            "ai_candidates": p.get("ai_candidates", []),
+                        })
+                # Sort by score descending, but keep ALL suggestions
+                if all_suggestions:
+                    all_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+                    fix_suggestions.extend(all_suggestions)
+    if fix_suggestions:
+        sugg_cards = ""
+        for fix in fix_suggestions:
+            sugg = fix["suggestion"]
+            score = fix.get("score", 0)
+            # Confidence badge color
+            if score >= 0.7:
+                conf_color = "#2e7d32"
+                conf_label = "High"
+            elif score >= 0.4:
+                conf_color = "#e65100"
+                conf_label = "Medium"
+            else:
+                conf_color = "#6a1b9a"
+                conf_label = "Low"
+
+            yaml_preview = "<br>".join(
+                f"<code style='background:#f5f5f5;padding:2px 6px;border-radius:3px;'>{_esc(k)}</code>: {_esc(str(v))}"
+                for k, v in sugg.items()
+            )
+            # Build original vs suggested comparison
+            orig_step_value = None
+            for sr2 in result.get("step_records", []):
+                if sr2.get("step_name") == fix["step_name"]:
+                    orig_step_value = sr2.get("step_value")
+                    break
+            orig_preview = ""
+            if isinstance(orig_step_value, dict):
+                orig_lines = []
+                for k in ("role", "name", "text", "label", "test_id", "locator"):
+                    if k in orig_step_value:
+                        orig_lines.append(
+                            f"<code style='background:#ffebee;padding:2px 6px;border-radius:3px;text-decoration:line-through;'>{_esc(k)}</code>: {_esc(str(orig_step_value[k]))}"
+                        )
+                if orig_lines:
+                    orig_preview = (
+                        "<div style='margin:8px 0 4px;font-size:12px;color:#888;'>Original (in YAML):</div>"
+                        + "<br>".join(orig_lines)
+                    )
+
+            reason_html = ""
+            if fix.get("reason"):
+                reason_html = f"<div style='margin-top:6px;font-size:12px;color:#666;font-style:italic;'>{_esc(fix['reason'])}</div>"
+
+            # Style differently for AI vs rule-based suggestions
+            is_ai = "AI RAG" in fix.get("probe", "")
+            if is_ai:
+                card_bg = "#e3f2fd"
+                card_border = "#90caf9"
+                title_icon = "&#x1F916;"
+                source_badge = '<span style="background:#1565c0;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:6px;">Gemini + RAG</span>'
+                # Collapsible RAG candidates detail
+                ai_candidates_html = ""
+                if fix.get("ai_candidates"):
+                    cand_items = "<br>".join(f"<div style='font-size:11px;color:#555;padding:2px 0;border-bottom:1px solid #e0e0e0;'>{_esc(c)}</div>" for c in fix["ai_candidates"])
+                    _uid = id(fix)  # unique id for toggle
+                    ai_candidates_html = f"""
+                    <div style="margin-top:8px;">
+                        <button onclick="var d=document.getElementById('rag-candidates-{_uid}');d.style.display=d.style.display==='none'?'block':'none';this.innerHTML=d.style.display==='none'?'&#9660; View all RAG candidates ({len(fix['ai_candidates'])})':'&#9650; Hide RAG candidates';" style="background:#bbdefb;color:#1565c0;border:1px solid #90caf9;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px;">&#9660; View all RAG candidates ({len(fix['ai_candidates'])})</button>
+                        <div id="rag-candidates-{_uid}" style="display:none;margin-top:6px;padding:8px;background:#fff;border:1px solid #e0e0e0;border-radius:4px;max-height:200px;overflow-y:auto;">
+                            {cand_items}
+                        </div>
+                    </div>"""
+            else:
+                card_bg = "#f1f8e9"
+                card_border = "#a5d6a7"
+                title_icon = "&#x1F4A1;"
+                source_badge = ""
+                ai_candidates_html = ""
+
+            sugg_cards += f"""
+            <div class="suggestion-card" style="margin-bottom:12px;padding:14px;background:{card_bg};border:1px solid {card_border};border-radius:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div style="font-weight:bold;color:#1565c0;">{title_icon} Suggested Fix for Step '{_esc(fix['step_name'])}'{source_badge}</div>
+                    <span style="background:{conf_color};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold;">{conf_label} Confidence ({score:.0%})</span>
+                </div>
+                {orig_preview}
+                <div style='margin:8px 0 4px;font-size:12px;color:#888;'>Suggested change:</div>
+                <div style="font-size:13px;color:#444;line-height:1.8;">{yaml_preview}</div>
+                {reason_html}
+                {ai_candidates_html}
+            </div>"""
+        suggestions_html = f"""
+        <div style="margin: 15px 0;">
+            <div style="font-weight:bold;color:#2e7d32;font-size:14px;margin-bottom:8px;">&#x1F4A1; Auto-Fix Suggestions</div>
+            {sugg_cards}
+        </div>"""
+
     return f"""
     <div class="case-section" id="{case_id}">
         <h2>Case: {_esc(result['case_name'])}</h2>
@@ -1288,16 +2176,39 @@ def _render_case(result: Dict) -> str:
             YAML: <code>{_esc(result['yaml_path'])}</code><br>
             Timestamp: {_esc(result['timestamp'])}
         </div>
+        {suggestions_html}
+        {network_section}
         {error_section}
-        <h3>Step-by-Step Replay</h3>
-        <div class="steps-container">{steps_html}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px;">
+            <h3 style="margin: 0;">Step-by-Step Replay</h3>
+            <button onclick="const content = this.parentElement.nextElementSibling; if (content.style.display === 'none') {{ content.style.display = 'block'; this.innerHTML = 'Collapse &#x25B2;'; }} else {{ content.style.display = 'none'; this.innerHTML = 'Expand &#x25BC;'; }}" style="background: #e3f2fd; color: #1e88e5; border: 1px solid #90caf9; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;">Collapse &#x25B2;</button>
+        </div>
+        <div class="steps-container" style="display:block;">{steps_html}</div>
     </div>"""
 
 
-def _render_step_record(sr: Dict) -> str:
+def _render_step_record(sr: Dict, anomaly_steps: set = None) -> str:
     """Render a single step record."""
+    if anomaly_steps is None:
+        anomaly_steps = set()
+
+    has_warning = bool(sr.get("warning"))
+    is_anomaly = sr["step_num"] in anomaly_steps and sr["status"] == "passed"
     status_class = {"passed": "step-passed", "skipped": "step-skipped"}.get(sr["status"], "step-failed")
-    status_badge = {"passed": '<span class="badge badge-pass">PASSED</span>', "skipped": '<span class="badge badge-skip">SKIPPED</span>'}.get(sr["status"], '<span class="badge badge-fail">FAILED</span>')
+    if has_warning and sr["status"] == "passed":
+        status_class = "step-warning"  # amber highlight for ambiguous-click steps
+    if is_anomaly:
+        status_class = "step-anomaly"  # amber highlight for state anomaly steps
+
+    status_badge_map = {
+        "passed": '<span class="badge badge-pass">PASSED</span>',
+        "skipped": '<span class="badge badge-skip">SKIPPED</span>',
+    }
+    status_badge = status_badge_map.get(sr["status"], '<span class="badge badge-fail">FAILED</span>')
+    if has_warning and sr["status"] == "passed":
+        status_badge = '<span class="badge badge-pass">PASSED</span> <span class="badge badge-warn">⚠️ AMBIGUOUS</span>'
+    if is_anomaly:
+        status_badge = '<span class="badge badge-pass">PASSED</span> <span class="badge badge-anomaly">⚠️ STATE ANOMALY</span>'
 
     # Step header
     header = f"""
@@ -1317,6 +2228,14 @@ def _render_step_record(sr: Dict) -> str:
     content = f"""
         <div class="step-value"><strong>Config:</strong> <code>{step_val_str}</code></div>"""
 
+    # Ambiguous locator warning box (for PASSED steps that had multiple matches)
+    if has_warning:
+        content += f"""
+        <div style="background:#fff8e1; border:2px solid #ffc107; border-radius:8px; padding:10px 14px; margin:8px 15px;">
+            <strong style="color:#e65100; font-size:13px;">⚠️ AMBIGUOUS LOCATOR WARNING</strong><br>
+            <span style="color:#664d03; font-size:12px;">{_esc(sr['warning'])}</span>
+        </div>"""
+
     # Before screenshot
     if sr.get("before_screenshot"):
         content += f"""
@@ -1333,14 +2252,61 @@ def _render_step_record(sr: Dict) -> str:
             <img src="data:image/png;base64,{sr['after_screenshot']}" class="screenshot failure-screenshot" loading="lazy">
         </details>"""
 
+    # State anomaly info box (for PASSED steps flagged by retrospection)
+    if is_anomaly and sr.get("post_state"):
+        ps = sr["post_state"]
+        anomaly_detail = ""
+        if ps.get("url"):
+            anomaly_detail += f"<strong>URL:</strong> <code>{_esc(ps['url'])}</code><br>"
+        if ps.get("has_modal"):
+            anomaly_detail += f"<strong>Modal detected:</strong> {ps['modal_count']} dialog(s) present<br>"
+        if ps.get("dom_element_count"):
+            anomaly_detail += f"<strong>DOM elements:</strong> {ps['dom_element_count']}"
+        content += f"""
+        <div style="background:#fff8e1; border:2px solid #ffc107; border-radius:8px; padding:10px 14px; margin:8px 15px;">
+            <strong style="color:#e65100; font-size:13px;">⚠️ STATE ANOMALY DETECTED</strong><br>
+            <span style="color:#664d03; font-size:12px;">This step caused an unexpected page state change that likely led to the failure.</span><br>
+            <div style="margin-top:6px; font-size:12px; color:#555;">{anomaly_detail}</div>
+        </div>"""
+
+    # Post-state snapshot (collapsible, for every step that has it)
+    if sr.get("post_state"):
+        ps = sr["post_state"]
+        state_lines = []
+        if ps.get("url"):
+            state_lines.append(f"URL: {ps['url']}")
+        if ps.get("title"):
+            state_lines.append(f"Title: {ps['title']}")
+        state_lines.append(f"Modal: {'Yes (' + str(ps['modal_count']) + ')' if ps.get('has_modal') else 'No'}")
+        if ps.get("dom_element_count"):
+            state_lines.append(f"DOM elements: {ps['dom_element_count']}")
+        state_text = "<br>".join(_esc(l) for l in state_lines)
+        content += f"""
+        <details style="margin:4px 15px;">
+            <summary style="font-size:12px; color:#888; cursor:pointer;">Page State (After Step)</summary>
+            <div style="background:#fafafa; border:1px solid #eee; border-radius:6px; padding:8px 12px; margin-top:4px; font-size:12px; color:#666; font-family:monospace;">{state_text}</div>
+        </details>"""
+
     # DOM snapshot
     if sr.get("before_dom"):
         content += _render_dom_table(sr["before_dom"], "DOM Snapshot (Before Step)")
 
     # Error message
     if sr.get("error"):
+        error_text = sr['error']
+        root_cause_html = ""
+        if "[ROOT CAUSE PREDICTION]" in error_text:
+            parts = error_text.split("[ROOT CAUSE PREDICTION]:", 1)
+            error_text = parts[0].strip()
+            if len(parts) > 1:
+                prediction_text = parts[1].strip()
+                root_cause_html = f"""
+        <div style="background:#fff3cd; border:2px solid #ffc107; border-radius:8px; padding:12px 16px; margin:8px 0;">
+            <strong style="color:#856404; font-size:14px;">⚠️ ROOT CAUSE PREDICTION</strong><br>
+            <span style="color:#664d03; font-size:13px; white-space:pre-wrap;">{_esc(prediction_text)}</span>
+        </div>"""
         content += f"""
-        <div class="error-msg"><strong>Error:</strong> <code>{_esc(sr['error'])}</code></div>"""
+        <div class="error-msg"><strong>Error:</strong> <code>{_esc(error_text)}</code></div>{root_cause_html}"""
 
     # Probing results
     if sr.get("probing"):
@@ -1395,6 +2361,55 @@ def _render_probing(probes: List[Dict]) -> str:
             <div class="probe-item">
                 <span class="probe-name">{probe_name}</span>
                 <span class="probe-error">Error: {_esc(probe['error'])}</span>
+            </div>"""
+        elif probe.get("ai_reason"):
+            html += f"""
+            <div class="probe-item" style="border:1px solid #e3f2fd;border-radius:8px;padding:10px 14px;">
+                <span class="probe-name">&#129302; {probe_name}</span>
+                <div style="font-size:12px;color:#1565c0;margin-top:6px;"><strong>AI Analysis:</strong> {_esc(probe['ai_reason'])}</div>
+            </div>"""
+        elif "heuristic_suggestion" in probe:
+            sugg = probe["heuristic_suggestion"]
+            sugg_yaml = yaml.dump(sugg, default_flow_style=False).strip()
+            score = round(probe.get("score", 0.0) * 100)
+            m = probe["matches"][0] if probe["matches"] else {}
+
+            # Different styling for AI RAG suggestions vs rule-based ones
+            is_ai = "AI RAG" in probe_name
+            card_icon = "&#129302;" if is_ai else "&#128161;"  # robot vs lightbulb
+            card_border = "#1976d2" if is_ai else "#e9ecef"
+            card_bg = "#e3f2fd" if is_ai else "#f8f9fa"
+            badge = '<span style="background:#1565c0;color:#fff;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:8px;">Gemini + RAG</span>' if is_ai else ""
+
+            # Build AI candidates detail (collapsible)
+            ai_detail = ""
+            if is_ai and probe.get("ai_candidates"):
+                cand_lines = "".join(f"<li style='margin:2px 0;font-size:11px;'>{_esc(c)}</li>" for c in probe["ai_candidates"])
+                ai_detail = f"""
+                <details style="margin-top:8px;">
+                    <summary style="font-size:11px;color:#1565c0;cursor:pointer;">View all RAG candidates ({len(probe['ai_candidates'])})</summary>
+                    <ul style="background:#fff;border:1px solid #e3f2fd;border-radius:4px;padding:8px;margin-top:4px;">{cand_lines}</ul>
+                </details>"""
+
+            html += f"""
+            <div class="probe-item suggestion-card" style="border:2px solid {card_border};border-radius:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
+                    <span class="probe-name">{card_icon} {probe_name} (Confidence: {score}%){badge}</span>
+                </div>
+                <div style="font-size: 12px; margin-bottom: 10px; color: #555;">
+                    Found a highly similar element on the page:<br>
+                    <strong>Tag:</strong> <code>{_esc(m.get('tag',''))}</code>,
+                    <strong>Role:</strong> <code>{_esc(m.get('role',''))}</code>,
+                    <strong>Text:</strong> <code>{_esc(m.get('text',''))}</code>,
+                    <strong>TestID:</strong> <code>{_esc(m.get('testid',''))}</code>
+                </div>
+                <div style="display:flex; gap: 15px;">
+                    <div style="flex:1;">
+                        <div style="font-size:11px; font-weight:bold; color:#666; margin-bottom:4px;">Suggested YAML Fix:</div>
+                        <pre style="background:{card_bg}; padding:10px; border-radius:6px; border:1px solid {card_border}; font-size:12px; margin:0;">{_esc(sugg_yaml)}</pre>
+                    </div>
+                </div>
+                {ai_detail}
             </div>"""
         else:
             matches = probe.get("matches", [])
@@ -1453,7 +2468,7 @@ h3 { color: #636e72; margin: 20px 0 10px; font-size: 18px; }
 .stat-card .stat-label { font-size: 13px; opacity: 0.9; margin-top: 5px; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 10px 0; }
 .data-table th { background: #2d3436; color: #fff; padding: 10px 12px; text-align: left; font-weight: 600; }
-.data-table td { padding: 8px 12px; border-bottom: 1px solid #eee; }
+.data-table td { padding: 8px 12px; border-bottom: 1px solid #eee; word-break: break-word; overflow-wrap: anywhere; }
 .data-table tr:hover { background: #f8f9fa; }
 .meta-info { margin-top: 15px; color: #636e72; font-size: 13px; }
 .case-section { background: #fff; border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
@@ -1467,6 +2482,8 @@ h3 { color: #636e72; margin: 20px 0 10px; font-size: 18px; }
 .step-passed .step-header { background: #e8f8f0; }
 .step-failed .step-header { background: #ffeaea; }
 .step-skipped .step-header { background: #f0f0f0; }
+.step-warning .step-header { background: #fff8e1; border-left: 4px solid #ffc107; }
+.step-anomaly .step-header { background: #fff8e1; border-left: 4px solid #ffc107; }
 .step-num { font-weight: 700; color: #636e72; min-width: 30px; }
 .step-name { font-weight: 600; font-family: 'Consolas', monospace; }
 .step-type { font-size: 11px; background: #dfe6e9; padding: 2px 8px; border-radius: 10px; color: #636e72; }
@@ -1492,6 +2509,11 @@ details summary:hover { text-decoration: underline; }
 .probe-count { color: #0984e3; margin-left: 8px; }
 .probe-error { color: #d63031; margin-left: 8px; font-size: 12px; }
 .flaky-notice { padding: 15px; background: #fff9c4; border: 1px solid #f9a825; border-radius: 8px; margin: 15px 0; font-size: 14px; }
+.network-box { background: #fff4e5; border: 1px solid #ffe0b2; border-radius: 8px; padding: 15px; margin: 15px 0; }
+.network-title { font-weight: 700; color: #e65100; margin-bottom: 8px; }
+.badge-warn { background: #f39c12; color: #fff; }
+.badge-anomaly { background: #f39c12; color: #fff; }
+.suggestion-card { background: #e3f2fd !important; border: 1px solid #90caf9 !important; border-radius: 8px; padding: 15px !important; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -1522,6 +2544,9 @@ def main():
     parser.add_argument("--headed", action="store_true",
                         help="Show browser window during replay")
     args = parser.parse_args()
+
+    # Track start time for report duration
+    start_time = datetime.datetime.now()
 
     # Resolve allure directory
     if args.allure_dir:
@@ -1558,10 +2583,30 @@ def main():
     print(f"\n--- Phase 2: Browser Replay (BASE_URL: {base_url}) ---")
 
     diagnosis_results = []
+    failed_yamls = set()
     for case_info in failed_cases:
+        ypath = case_info.get("yaml_path", "")
+        if ypath in failed_yamls:
+            print(f"  [SKIP] Skipping {case_info['name']} due to Cascade Failure (a prior case in {ypath} failed).")
+            diagnosis_results.append({
+                "case_name": case_info["name"],
+                "yaml_path": ypath,
+                "allure_error": case_info["error_message"],
+                "allure_trace": case_info["error_trace"],
+                "failed_step": "cascade_failure",
+                "failed_step_error": "Skipped due to Cascade Failure from a prior test in the same YAML.",
+                "step_records": [],
+                "total_steps": len(case_info.get("steps_order", [])),
+                "steps_passed": 0,
+                "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            })
+            continue
+
         try:
             result = replay_case(case_info, base_url, args.headed)
             diagnosis_results.append(result)
+            if result.get("failed_step") and not result.get("failed_step_error", "").startswith("Diagnosis engine error"):
+                failed_yamls.add(ypath)
         except Exception as e:
             print(f"  [FATAL] Diagnosis failed for {case_info['name']}: {e}")
             diagnosis_results.append({
@@ -1576,10 +2621,12 @@ def main():
                 "steps_passed": 0,
                 "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             })
+            failed_yamls.add(ypath)
 
     # Phase 4: Generate HTML report
     print(f"\n--- Phase 4: Generating HTML Report ---")
-    report_path = generate_html_report(diagnosis_results, args.env, os.path.basename(allure_dir))
+    end_time = datetime.datetime.now()
+    report_path = generate_html_report(diagnosis_results, args.env, os.path.basename(allure_dir), start_time, end_time)
     print(f"Report generated: {report_path}")
 
     # Summary
@@ -1592,6 +2639,54 @@ def main():
     print(f"  Passed on replay (possibly flaky): {flaky}")
     print(f"  Report: {report_path}")
     print(f"{'='*60}")
+
+    # Interactive Fix
+    # Collect all heuristic suggestions (rule-based + AI)
+    fix_suggestions = []
+    for r in diagnosis_results:
+        if r.get("failed_step"):
+            for sr in r.get("step_records", []):
+                if sr.get("step_name") == r["failed_step"]:
+                    for p in sr.get("probing", []):
+                        if "heuristic_suggestion" in p:
+                            fix_suggestions.append({
+                                "yaml_path": r["yaml_path"],
+                                "case_name": r["case_name"],
+                                "step_name": sr["step_name"],
+                                "suggestion": p["heuristic_suggestion"],
+                                "probe": p.get("probe", ""),
+                                "score": p.get("score", 0),
+                            })
+                            
+    if fix_suggestions:
+        # Sort by score descending for terminal display
+        fix_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+        print(f"\n{'='*60}")
+        print(f"  \033[92mHeuristic Auto-Fix Available ({len(fix_suggestions)} suggestions)\033[0m")
+        print(f"{'='*60}")
+        for idx, fix in enumerate(fix_suggestions):
+            is_ai = "AI RAG" in fix.get("probe", "")
+            source_tag = "\033[94m[AI RAG]\033[0m" if is_ai else "\033[92m[Rule]\033[0m"
+            print(f"\n  {source_tag} #{idx+1} (confidence: {fix.get('score', 0):.0%}) — {fix.get('probe', '')}")
+            print(f"  Case: {fix['case_name']} | Step: {fix['step_name']}")
+            print(f"  YAML: {fix['yaml_path']}")
+            print(f"  Suggested Locator Update:\n{yaml.dump(fix['suggestion'], default_flow_style=False).strip()}")
+
+            ans = input("\n  Apply this fix? [y/N/skip]: ").strip().lower()
+            if ans == 'y':
+                yaml_file = str(PROJECT_ROOT / fix['yaml_path'])
+                update_cmd = [
+                    sys.executable, str(PROJECT_ROOT / "tools" / "locator_updater.py"),
+                    "--files", yaml_file,
+                    "--target-case", fix['case_name'],
+                    "--target-step", fix['step_name'],
+                ]
+                for k, v in fix['suggestion'].items():
+                    update_cmd.extend(["--set", f"{k}={v}"])
+                
+                print(f"Executing: {' '.join(update_cmd)}")
+                subprocess.run(update_cmd)
+                print("Fix applied successfully!")
 
     return report_path
 

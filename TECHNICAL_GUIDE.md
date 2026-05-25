@@ -1,4 +1,4 @@
-# Auto Test Framework v4.3 - 技术指南
+# Auto Test Framework v4.4 - 技术指南
 
 ## 目录
 - [1. 项目架构](#1-项目架构)
@@ -17,6 +17,8 @@
 - [14. 失败用例诊断工具 (diagnose_failed.py)](#14-失败用例诊断工具-diagnose_failedpy)
 - [15. AI Vision 按需加载 (ENABLE_AI_VISION)](#15-ai-vision-按需加载-enable_ai_vision)
 - [16. 辅助工具生态](#16-辅助工具生态)
+- [17. DOM 向量知识库 (dom_kb.py)](#17-dom-向量知识库-dom_kbpy)
+- [18. AI RAG 智能建议 (Probe 9)](#18-ai-rag-智能建议-probe-9)
 
 ---
 
@@ -766,13 +768,16 @@ Phase 2: 浏览器重放
     每步记录: before_screenshot + before_dom + after_screenshot + after_dom
     ↓
 Phase 3: 失败探查 (仅在失败步骤)
-    6 种探查策略并行:
-    ├── 文本搜索: 查找页面中包含目标文本的元素
-    ├── 角色搜索: 查找匹配 role 的所有元素
-    ├── Test ID 搜索: 查找包含 testid 的元素
-    ├── Locator 直接检查: 统计 locator 匹配数
-    ├── 弹窗检测: 检查是否有遮挡的 dialog/popover
-    └── aria-label 搜索: 查找匹配 aria-label 的元素
+    9 种探查策略:
+    ├── Probe 1: 文本搜索 — 查找页面中包含目标文本的元素
+    ├── Probe 2: 角色搜索 — 查找匹配 role 的所有元素
+    ├── Probe 3: Test ID 搜索 — 查找包含 testid 的元素
+    ├── Probe 4: Locator 直接检查 — 统计 locator 匹配数
+    ├── Probe 5: 弹窗检测 — 检查是否有遮挡的 dialog/popover
+    ├── Probe 6: aria-label 搜索 — 查找匹配 aria-label 的元素
+    ├── Probe 7: 启发式相似度建议 — 基于 DOM 相似度生成定位修复
+    ├── Probe 8: 回退建议 — 从 Probe 1 的文本匹配中生成建议
+    └── Probe 9: AI RAG 建议 — DOM 知识库向量检索 + Gemini 智能修复
     ↓
 Phase 4: HTML 报告生成
     生成独立 HTML 文件 (截图 base64 内嵌) → report/Error_Test_Case_Diagnosis_Report_*.html
@@ -813,9 +818,13 @@ python tools/diagnose_failed.py --env staging
 生成的 HTML 报告包含以下部分：
 
 - **Summary Dashboard**: 失败用例表格、复现率统计
+- **Auto-Fix Suggestions**: 规则建议（Probe 7/8）与 AI RAG 建议（Probe 9）同时展示，按 confidence 排序
+  - AI 建议卡片: 蓝色主题 + 🤖 图标 + "Gemini + RAG" 徽章 + 可展开的 RAG candidates 详情
+  - 规则建议卡片: 绿色主题 + 💡 图标
 - **Case Detail**: 每个用例的逐步重放记录
-  - 每步: 状态(PASSED/FAILED/SKIPPED) + 配置 + 前后截图 + DOM 快照
-  - 失败步: 错误信息 + 6 种探查策略的结果
+  - 每步: 状态(PASSED/FAILED/SKIPPED/WARNING) + 配置 + 前后截图 + DOM 快照
+  - 失败步: 错误信息 + 9 种探查策略的结果
+  - 警告步: 模糊定位(AMBIGUOUS) 或 状态异常(STATE ANOMALY) 标记
 - **Flaky Notice**: 重放通过的用例标记为可能不稳定
 
 ### 14.6 注意事项
@@ -898,9 +907,10 @@ ENABLE_AI_VISION=1
 
 | 工具 | 用途 | 典型场景 |
 |------|------|---------|
-| `diagnose_failed.py` | 失败用例诊断报告 | 测试失败后自动定位根因 |
+| `diagnose_failed.py` | 失败用例诊断报告 | 测试失败后自动重放 + 9 种探查 + AI RAG 建议 |
 | `ui_snapshot.py` | DOM 快照 + diff | UI 改版前后对比、检测元素变动 |
 | `locator_updater.py` | YAML 定位器批量更新 | UI 文案/组件变更后批量修复 |
+| `dom_kb.py` | DOM 向量知识库 | 构建 FAISS 索引、增量更新、RAG 检索 |
 | `allure_summary.py` | Allure 报告摘要 | 快速查看测试通过率 |
 | `translate_yaml_comments.py` | YAML 注释翻译 | 多语言团队协作 |
 | `codegen.py` | Playwright 录制 | 快速录制新用例的交互流程 |
@@ -939,7 +949,121 @@ ENABLE_AI_VISION=1
 
 3. 对比差异
    python tools/ui_snapshot.py check --env release --account main --label current --base baseline
+
+4. 构建 DOM 知识库（用于 AI RAG 建议）
+   python tools/dom_kb.py build --env release
 ```
+
+---
+
+## 17. DOM 向量知识库 (`dom_kb.py`)
+
+### 17.1 概述
+
+`tools/dom_kb.py` 是 v4.4 新增的 DOM 向量知识库工具。它将 UI 快照中的交互元素向量化存储到 FAISS 索引中，支持语义相似度检索，为 `diagnose_failed.py` 的 Probe 9 (AI RAG 建议) 提供数据支撑。
+
+### 17.2 技术栈
+
+- **FAISS** (`faiss-cpu`): 向量相似度搜索（归一化内积 = 余弦相似度）
+- **SentenceTransformers** (`all-MiniLM-L6-v2`): 文本嵌入模型，384 维向量
+- **数据源**: `ui_snapshots/baseline__release_*.json`（`ui_snapshot.py` 生成的基线快照）
+
+### 17.3 使用方法
+
+```bash
+# 构建知识库（从基线快照）
+python tools/dom_kb.py build --env release
+
+# 查询相似元素（调试用途）
+python tools/dom_kb.py query --role button --name "Edit post"
+
+# 指定返回数量
+python tools/dom_kb.py query --role button --name "Edit post" --top-k 10
+```
+
+### 17.4 增量更新机制
+
+`diagnose_failed.py` 在重放过程中，**每步成功后自动调用** `_add_dom_to_kb()` 将当前页面的 DOM 元素追加到索引：
+
+```python
+# 在 _execute_step 成功后
+_add_dom_to_kb(dom_elements, url_hint=current_url)
+```
+
+- 去重：基于 `(url_template, element_key)` 避免重复
+- 静默失败：KB 更新是 best-effort，不影响诊断流程
+- 效果：跑一个用例 → 知识库自动增长，后续诊断更精准
+
+### 17.5 文件存储
+
+| 文件 | 说明 |
+|------|------|
+| `dom_kb/faiss.index` | FAISS 向量索引 |
+| `dom_kb/meta.pkl` | 元素元数据（标签、属性、URL 等） |
+
+---
+
+## 18. AI RAG 智能建议 (Probe 9)
+
+### 18.1 概述
+
+Probe 9 是 `diagnose_failed.py` 的第 9 种探查策略，也是唯一使用 AI 的策略。它在传统规则建议（Probe 7/8）之外，通过 DOM 知识库的向量检索 + Gemini LLM 生成更智能的定位修复建议。
+
+### 18.2 工作流程
+
+```
+失败步骤
+    ↓
+1. DOM KB 向量检索 — query_for_failed_step(step_value, top_k=5)
+    返回 Top-5 最相似的 DOM 元素（含 score、tag、role、text 等）
+    ↓
+2. 构建 Prompt — 包含：
+    - 失败步骤的原始定位器
+    - 错误信息
+    - Top-5 候选元素的详细描述
+    - 修复规则（test_id > role+name > ariaLabel > locator）
+    ↓
+3. Gemini 分析 — 返回 JSON 格式的修复建议
+    ↓
+4. 结果封装 — 生成 probe dict 包含 heuristic_suggestion + ai_candidates
+```
+
+### 18.3 模型降级链
+
+Gemini API 免费层配额有限，Probe 9 实现了**自动降级链**：
+
+```
+gemini-2.5-flash (首选，5 RPM / 250K TPM)
+    ↓ 配额耗尽 → 自动切换下一个 Key
+    ↓ 所有 Key 耗尽 → 降级
+gemini-2.0-flash (备选)
+    ↓ 配额耗尽 → 自动切换下一个 Key
+    ↓ 所有 Key 耗尽 → 降级
+gemini-2.0-flash-lite (最后备选)
+```
+
+**实现细节**:
+- `_load_gemini()`: 加载模型，存储所有 Keys
+- `_rotate_gemini_key()`: 同模型下切换 Key
+- `_downgrade_gemini_model()`: 降级到下一个模型
+- 重试循环: quota/429/resource_exhausted 错误 → rotate key → downgrade model
+
+### 18.4 与规则建议的协作
+
+Probe 9 与 Probe 7/8 **同时存在**，不互相替代：
+
+| 特性 | Probe 7/8 (规则) | Probe 9 (AI RAG) |
+|------|-----------------|-----------------|
+| 依赖 | 当前页面 DOM | DOM KB + Gemini API |
+| 速度 | 即时 | 3-10 秒（API 调用） |
+| 准确性 | 精确匹配 | 语义理解 |
+| 适用场景 | 文本/属性微调 | 大幅 UI 改版 |
+| Score | 0.3-0.5 | 0.85 |
+
+**报告展示**:
+- HTML 报告中，所有建议按 score 降序排列，同时展示
+- AI 建议卡片带 "View all RAG candidates" 折叠面板
+- 终端输出带 `[AI RAG]` / `[Rule]` 标签区分
 
 ---
 

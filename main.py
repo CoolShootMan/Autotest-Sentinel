@@ -52,7 +52,7 @@ def start_autotest():
     
     # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
     #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
-    yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
+    yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
         "python",
         "-m",
@@ -111,7 +111,18 @@ def start_autotest():
     generate_cmd = [allure_bat, "generate", allure_data_dir, "-o", allure_report_dir, "-c"]
     logger.info(f"Running command: {' '.join(generate_cmd)}")
     subprocess.run(generate_cmd, check=True)
-    
+
+    # ---------------------------------------------------------
+    # NEW: Trigger diagnostic tool for failed cases
+    # ---------------------------------------------------------
+    logger.info(f"Triggering diagnostic tool for failed cases...")
+    diagnose_script = os.path.join(BASE_DIR, 'tools', 'diagnose_failed.py')
+    allure_dir_name = os.path.basename(allure_data_dir)
+    diagnose_cmd = [sys.executable, diagnose_script, "--allure-dir", allure_dir_name]
+    logger.info(f"Running command: {' '.join(diagnose_cmd)}")
+    subprocess.run(diagnose_cmd)
+    # ---------------------------------------------------------
+
     # Get LAN IP (192.168.x.x range, excluding virtual NICs/WSL)
     def get_lan_ip():
         try:

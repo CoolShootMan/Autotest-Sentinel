@@ -276,7 +276,7 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
   is_mobile: true
   description: "Verify guest can submit the Auto test Form on autotestshop page"
   test_step:
-    open_demi_release:
+    open_999_release:
       url: "{BASE_URL}/autotestshop"
     R_click_auto_test_form:
       role: "button"
@@ -387,7 +387,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
   is_mobile: true
   description: "Verify whether the form submitted directly by the guest with empty content passes the validation."
   test_step:
-    open_demi_release:
+    open_999_release:
       url: "{BASE_URL}/autotestshop"
     R_click_auto_test_form:
       role: "button"
