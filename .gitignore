@@ -108,3 +108,12 @@ debug_*.html
 
 # === Performance Test (local pressure test only, do not commit) ===
 test_case/UI/Test_Katana/All_YAML/Performance/
+
+# === DOM Knowledge Base (generated index, not source data) ===
+dom_kb/
+
+# === Sentence-Transformers model cache (auto-downloaded, ~80MB) ===
+.models/
+
+# === Diagnosis Reports (generated at runtime) ===
+Error_Test_Case_Diagnosis_Report_*.html

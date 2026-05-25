@@ -203,7 +203,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
 
     # Step 3: Event detail page -> click Post card (link text)
     R_click_edit: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
-    sleep_step4: 3000
+    sleep_step4: 1500
 
     # Click Description to focus editor, then insert CTA Button
     R_click_description: { role: 'textbox', name: 'Description' }

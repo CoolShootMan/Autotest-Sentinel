@@ -1,4 +1,4 @@
-# Auto Test Framework v4.3
+# Auto Test Framework v4.4
 
 > UI Automation Testing with AI Self-Healing using Python + Pytest + Playwright + Allure + Gemini Vision AI
 
@@ -16,7 +16,9 @@ English | [简体中文](./README.md)
 - **Multi-Environment Support**: Switch between staging/release via `--env` parameter
 - **Dynamic Assertions**: Multiple assertion types (text visibility, element existence, visual height, etc.)
 - **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Failed Case Diagnosis**: Auto-replay failed cases with screenshots + DOM snapshots + multi-strategy probing, generates HTML diagnosis reports
+- **Failed Case Diagnosis**: Auto-replay failed cases with screenshots + DOM snapshots + 9-strategy probing, generates HTML diagnosis reports
+- **AI RAG Smart Suggestions**: DOM vector knowledge base + Gemini auto-generates locator fix suggestions; rule-based and AI suggestions displayed together
+- **Model Fallback Chain**: Auto-rotate API keys on quota exhaustion; auto-downgrade model when keys depleted (2.5-flash → 2.0-flash → 2.0-flash-lite)
 - **Fast Startup**: AI modules disabled by default, startup time reduced from ~20s to ~0.6s, enable on demand
 
 ---
@@ -82,15 +84,20 @@ BASE_URL=https://pear.us            # Production environment
 
 #### 2-2. Gemini AI Keys (`GEMINI_API_KEYS`)
 
-Configure Gemini API Keys for AI self-healing. Multiple keys are supported for automatic rotation to avoid rate limits:
+Configure Gemini API Keys for AI self-healing. Supports **multi-key auto-rotation + model fallback chain**:
 
 ```env
-# Recommended: multiple keys, comma-separated — the framework rotates them automatically
+# Recommended: multiple keys, comma-separated
 GEMINI_API_KEYS=key1,key2,key3
 
 # Or a single key (legacy support)
 GEMINI_API_KEY=your_single_key_here
 ```
+
+**Auto-fallback strategy on quota exhaustion**:
+1. Current key quota exhausted → auto-switch to next key (same model)
+2. All keys exhausted → auto-downgrade to next model
+3. Fallback chain: `gemini-2.5-flash` → `gemini-2.0-flash` → `gemini-2.0-flash-lite`
 
 > **⚠️ Note**: The `.env` file contains sensitive credentials. It is listed in `.gitignore` — **never commit it to the repository**.
 
@@ -271,9 +278,10 @@ actions/ (Action Registry)
 │       ├─test_ui.py       # Core test execution engine (with execution history)
 │       └─*.yaml           # Test case definitions
 ├─tools                    # Utilities
-│  ├─diagnose_failed.py    # [NEW v4.3] Failed test case diagnosis report tool
+│  ├─diagnose_failed.py    # [v4.4] Failed test case diagnosis (9 probes + AI RAG suggestions)
 │  ├─ui_snapshot.py        # DOM snapshot + diff detection
 │  ├─locator_updater.py    # YAML locator batch update tool
+│  ├─dom_kb.py             # [NEW v4.4] DOM vector knowledge base (FAISS + RAG)
 │  └─...                   # Other utility scripts
 ├─requirements.txt         # Project core dependencies (pytest, playwright, allure, FAISS, Gemini, etc.)
 ├─setup_env.sh / .bat      # Cross-platform one-click environment setup script
@@ -492,6 +500,55 @@ Press Ctrl+C to stop
 
 ---
 
+## v4.4 New Features (2026-05-25)
+
+### DOM Vector Knowledge Base (`dom_kb.py`)
+
+**Background**: During failure diagnosis, DOM snapshots alone often cannot determine "what did this element look like before?" A historical DOM knowledge base is needed to assist locator repair.
+
+**Solution**: Build a vector knowledge base of DOM elements using FAISS + SentenceTransformers, supporting semantic similarity search.
+
+**Usage**:
+```bash
+# Build knowledge base index from baseline snapshots
+python tools/dom_kb.py build --env release
+
+# Query similar elements (for debugging)
+python tools/dom_kb.py query --role button --name "Edit post"
+```
+
+**Key Features**:
+- Auto-loads interactive elements from `ui_snapshots/baseline__release_*.json`
+- Uses `all-MiniLM-L6-v2` for 384-dim vectors, stored in FAISS `IndexFlatIP`
+- Supports incremental updates: `diagnose_failed.py` auto-appends current DOM to index after each successful step
+- Standalone module, no pytest dependency
+
+### AI RAG Smart Suggestions (Probe 9)
+
+**Background**: Traditional rule-based suggestions (Probe 7/8) have limited effectiveness during major UI refactors. AI semantic understanding is needed for more accurate locator repair.
+
+**Solution**: During failure diagnosis, use the DOM knowledge base for vector retrieval to find similar elements, then let Gemini determine the best match and generate a YAML locator fix.
+
+**Workflow**:
+```
+Failed step → DOM KB vector search (Top-5 similar elements)
+              ↓
+         Gemini picks best match + generates YAML fix
+              ↓
+         Display alongside rule-based suggestions (Probe 7/8) in report
+```
+
+**Display**:
+- **HTML Report**: AI suggestions (blue 🤖) and rule-based suggestions (green 💡) displayed together, sorted by confidence
+- AI suggestion cards include "View all RAG candidates" collapsible panel showing full retrieval results
+- **Terminal**: `[AI RAG]` / `[Rule]` tags distinguish sources; supports individual confirmation
+
+**Model Fallback Chain**:
+- Preferred: `gemini-2.5-flash` → auto-rotate keys on quota exhaustion → downgrade to `gemini-2.0-flash` → finally `gemini-2.0-flash-lite`
+- Fully automatic, no manual intervention needed
+
+---
+
 ## v4.3 New Features (2026-05-22)
 
 ### Failed Case Diagnosis Tool (`diagnose_failed.py`)
@@ -518,7 +575,8 @@ python tools/diagnose_failed.py --case testT1928 --headed
 **Report Contents**:
 - **Summary Dashboard**: Failed case overview + reproduction rate
 - **Step-by-Step Replay**: Before/after screenshots + DOM snapshots per step
-- **Multi-Strategy Probing**: At failure — text search, role search, test_id search, locator check, modal detection, aria-label search
+- **Multi-Strategy Probing**: 9 strategies (text/role/test_id/locator/modal/aria-label/ambiguous/state-anomaly/**AI RAG suggestion**)
+- **Auto-Fix Suggestions**: Rule-based and AI suggestions displayed together, sorted by confidence
 - **Flaky Detection**: Cases that pass on replay are flagged as potentially flaky
 - **Standalone HTML**: Single file with base64-embedded screenshots, can be sent directly to teammates
 
@@ -584,4 +642,4 @@ python tools/locator_updater.py update --role button --name "Edit post" --new-na
 
 ---
 
-**Version:** v4.3 | **Last Updated:** 2026-05-22 | **Maintained by:** Autotest-monster Team
+**Version:** v4.4 | **Last Updated:** 2026-05-25 | **Maintained by:** Autotest-monster Team
