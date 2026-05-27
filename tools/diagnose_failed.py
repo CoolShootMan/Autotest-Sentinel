@@ -205,9 +205,33 @@ def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
     if not candidates:
         return None
 
+    # Filter out low-quality candidates before sending to Gemini
+    def _is_quality_candidate(c):
+        el = c["element"]
+        score = c.get("score", 0)
+        text = el.get("text", "")
+        role = el.get("role", "")
+        # Skip container elements
+        if role in ("dialog", "alertdialog", "presentation", "none"):
+            return False
+        # Skip elements with garbage text (e.g. "Short answer name=")
+        if "name=" in text and len(text) < 30:
+            return False
+        # Skip very low score
+        if score < 0.35:
+            return False
+        # Skip elements whose text is just a concatenation of labels (common in form dialogs)
+        if text.count(" ") > 8 and any(x in text.lower() for x in ("short", "long", "email", "phone", "paragraph")):
+            return False
+        return True
+
+    filtered_candidates = [c for c in candidates if _is_quality_candidate(c)]
+    if not filtered_candidates:
+        return None
+
     # Build candidate descriptions for the prompt
     candidate_descs = []
-    for i, c in enumerate(candidates):
+    for i, c in enumerate(filtered_candidates):
         el = c["element"]
         score = c["score"]
         candidate_descs.append(
@@ -237,12 +261,15 @@ The DOM Knowledge Base found these similar elements on the CURRENT page:
 
 Your task: Pick the BEST matching element and generate a YAML locator fix.
 
-Rules:
-- Pick the element that is SEMANTICALLY the same as the original (text may have changed slightly)
-- Prefer: test_id > role+name > role+ariaLabel > locator
-- If the element changed (e.g. button text changed from "Edit post" to "Edit content"), that's expected — pick the replacement
-- Return ONLY a valid JSON object with the new locator fields, e.g. {{"role": "button", "name": "Edit content"}}
-- If no good match exists, return {{"reason": "brief explanation of why no match found"}}
+CRITICAL RULES:
+1. Pick the element that is SEMANTICALLY the same as the original (text may have changed slightly)
+2. Prefer: test_id > role+name > role+ariaLabel > locator
+3. If the element changed (e.g. button text changed from "Edit post" to "Edit content"), that's expected — pick the replacement
+4. The "text" field in the candidates above is the element's innerText. DO NOT use it as the "name" field unless it is a SHORT, meaningful label (1-5 words). NEVER suggest values like "Short answer name=" or concatenated form labels.
+5. If a candidate has role="combobox" or role="textbox", it is likely a form INPUT field, NOT a button or link. Do NOT pick input fields unless the original step was also an input field.
+6. If no good match exists, return {{"reason": "brief explanation of why no match found"}}
+7. Return ONLY a valid JSON object with the new locator fields, e.g. {{"role": "button", "name": "Edit content"}}
+8. EVIDENCE-BASED name change: Only suggest a new "name" value if the candidate's text/aria-label EXPLICITLY provides it. If the candidate's name matches or is consistent with the original step's name, keep the ORIGINAL name. Do NOT invent or guess a name. Example: original step has name="Choose date", candidate has aria-label="Choose date" → keep name="Choose date", only change role if needed.
 
 Respond with JSON only, no markdown:."""
 
@@ -283,8 +310,8 @@ Respond with JSON only, no markdown:."""
             if not suggested_fix:
                 return None
 
-            # Get the matched element from candidates for display
-            best_match = candidates[0]["element"] if candidates else {}
+            # Get the matched element from filtered candidates for display
+            best_match = filtered_candidates[0]["element"] if filtered_candidates else {}
             return {
                 "probe": "AI RAG Suggestion (Gemini + DOM Knowledge Base)",
                 "count": 1,
@@ -1774,14 +1801,24 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_sn
                         clean_text = " ".join(best_match["text"].split())[:60]
                         suggested_fix["text"] = clean_text
 
-                confidence = "high" if best_score >= 0.4 else "medium"
-                probes.append({
-                    "probe": f"Heuristic Similarity Suggestion ({confidence} confidence)",
-                    "count": 1,
-                    "matches": [best_match],
-                    "heuristic_suggestion": suggested_fix,
-                    "score": best_score,
-                })
+                if suggested_fix:
+                    confidence = "high" if best_score >= 0.4 else "medium"
+                    probes.append({
+                        "probe": f"Heuristic Similarity Suggestion ({confidence} confidence)",
+                        "count": 1,
+                        "matches": [best_match],
+                        "heuristic_suggestion": suggested_fix,
+                        "score": best_score,
+                    })
+                else:
+                    # Found a structural match but no usable attributes — warn instead of silence
+                    probes.append({
+                        "probe": "Heuristic Similarity (match found, insufficient attributes for suggestion)",
+                        "count": 1,
+                        "matches": [best_match],
+                        "score": best_score,
+                        "warning": "Element found but has no role/testid/ariaLabel/text — cannot auto-generate locator. Manual inspection required.",
+                    })
             elif best_match and best_score > 0 and target_name:
                 # Best match exists but score is very low — still provide a hint
                 probes.append({
@@ -1789,6 +1826,7 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_sn
                     "count": 1,
                     "matches": [best_match],
                     "score": best_score,
+                    "warning": f"Best match score {best_score:.2f} is too low for a confident suggestion. Check DOM manually.",
                 })
         except Exception as e:
             probes.append({"probe": "Heuristic Similarity Suggestion", "error": str(e)})
@@ -2413,10 +2451,15 @@ def _render_probing(probes: List[Dict]) -> str:
             </div>"""
         else:
             matches = probe.get("matches", [])
+            warning_msg = probe.get("warning", "")
+            warning_html = ""
+            if warning_msg:
+                warning_html = f'<div style="margin-top:6px;padding:6px 10px;background:#fff3e0;border-left:3px solid #ff9800;border-radius:4px;font-size:12px;color:#e65100;">&#9888; {_esc(warning_msg)}</div>'
             html += f"""
             <div class="probe-item">
                 <span class="probe-name">{probe_name}</span>
                 <span class="probe-count">{count} found</span>
+                {warning_html}
                 <details>
                     <summary>View matches</summary>
                     <table class="data-table probe-table">
@@ -2543,7 +2586,39 @@ def main():
                         help="Environment: release, staging, prod (default: release)")
     parser.add_argument("--headed", action="store_true",
                         help="Show browser window during replay")
+    parser.add_argument("--fix-only", action="store_true",
+                        help="Skip replay; load saved suggestions from latest report and apply fixes interactively")
+    parser.add_argument("--fix-json", type=str, default=None,
+                        help="Path to a specific fix_suggestions.json file (used with --fix-only)")
     args = parser.parse_args()
+
+    # --fix-only mode: load saved suggestions and run interactive fix (no replay)
+    if args.fix_only:
+        json_path = args.fix_json
+        if not json_path:
+            # Find the latest fix_suggestions.json
+            json_files = sorted(REPORT_OUTPUT_DIR.glob("fix_suggestions_*.json"), reverse=True)
+            if not json_files:
+                print("ERROR: No fix_suggestions JSON found. Run diagnosis first to generate suggestions.")
+                sys.exit(1)
+            json_path = str(json_files[0])
+            print(f"Using latest fix suggestions: {json_path}")
+        else:
+            json_path = str(PROJECT_ROOT / json_path)
+
+        if not os.path.exists(json_path):
+            print(f"ERROR: Fix suggestions file not found: {json_path}")
+            sys.exit(1)
+
+        with open(json_path, "r", encoding="utf-8") as f:
+            fix_suggestions = json.load(f)
+
+        if not fix_suggestions:
+            print("No fix suggestions found in the JSON file.")
+            sys.exit(0)
+
+        _run_interactive_fix(fix_suggestions)
+        return
 
     # Track start time for report duration
     start_time = datetime.datetime.now()
@@ -2657,38 +2732,158 @@ def main():
                                 "probe": p.get("probe", ""),
                                 "score": p.get("score", 0),
                             })
-                            
-    if fix_suggestions:
-        # Sort by score descending for terminal display
-        fix_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
-        print(f"\n{'='*60}")
-        print(f"  \033[92mHeuristic Auto-Fix Available ({len(fix_suggestions)} suggestions)\033[0m")
-        print(f"{'='*60}")
-        for idx, fix in enumerate(fix_suggestions):
-            is_ai = "AI RAG" in fix.get("probe", "")
-            source_tag = "\033[94m[AI RAG]\033[0m" if is_ai else "\033[92m[Rule]\033[0m"
-            print(f"\n  {source_tag} #{idx+1} (confidence: {fix.get('score', 0):.0%}) — {fix.get('probe', '')}")
-            print(f"  Case: {fix['case_name']} | Step: {fix['step_name']}")
-            print(f"  YAML: {fix['yaml_path']}")
-            print(f"  Suggested Locator Update:\n{yaml.dump(fix['suggestion'], default_flow_style=False).strip()}")
 
-            ans = input("\n  Apply this fix? [y/N/skip]: ").strip().lower()
-            if ans == 'y':
-                yaml_file = str(PROJECT_ROOT / fix['yaml_path'])
-                update_cmd = [
-                    sys.executable, str(PROJECT_ROOT / "tools" / "locator_updater.py"),
-                    "--files", yaml_file,
-                    "--target-case", fix['case_name'],
-                    "--target-step", fix['step_name'],
-                ]
-                for k, v in fix['suggestion'].items():
-                    update_cmd.extend(["--set", f"{k}={v}"])
-                
-                print(f"Executing: {' '.join(update_cmd)}")
-                subprocess.run(update_cmd)
-                print("Fix applied successfully!")
+    # Save fix suggestions to JSON for later --fix-only use
+    if fix_suggestions:
+        fix_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        json_path = REPORT_OUTPUT_DIR / f"fix_suggestions_{ts}.json"
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(fix_suggestions, f, indent=2, ensure_ascii=False)
+        print(f"Fix suggestions saved: {json_path}")
+
+    _run_interactive_fix(fix_suggestions)
 
     return report_path
+
+
+def _run_interactive_fix(fix_suggestions: list):
+    """Run the interactive fix loop from a list of fix suggestion dicts."""
+    if not fix_suggestions:
+        return
+
+    # Sort by score descending for terminal display
+    fix_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+    print(f"\n{'='*60}")
+    print(f"  \033[92mHeuristic Auto-Fix Available ({len(fix_suggestions)} suggestions)\033[0m")
+    print(f"{'='*60}")
+    for idx, fix in enumerate(fix_suggestions):
+        is_ai = "AI RAG" in fix.get("probe", "")
+        source_tag = "\033[94m[AI RAG]\033[0m" if is_ai else "\033[92m[Rule]\033[0m"
+        print(f"\n  {source_tag} #{idx+1} (confidence: {fix.get('score', 0):.0%}) — {fix.get('probe', '')}")
+        print(f"  Case: {fix['case_name']} | Step: {fix['step_name']}")
+        print(f"  YAML: {fix['yaml_path']}")
+        print(f"  Suggested Locator Update:\n{yaml.dump(fix['suggestion'], default_flow_style=False).strip()}")
+
+        ans = input("\n  Apply this fix? [y/N/skip]: ").strip().lower()
+        if ans == 'y':
+            ok = _apply_yaml_fix(fix)
+            if ok:
+                print("  \033[92mFix applied successfully!\033[0m")
+            else:
+                print("  \033[91mFix failed. Please check the error above.\033[0m")
+
+    return report_path
+
+
+def _apply_yaml_fix(fix: dict) -> bool:
+    """Directly patch a single step in a YAML file."""
+    yaml_path = PROJECT_ROOT / fix["yaml_path"]
+    case_name = fix["case_name"]
+    step_name = fix["step_name"]
+    suggestion = fix["suggestion"]
+
+    if not yaml_path.exists():
+        print(f"  [ERROR] File not found: {yaml_path}")
+        return False
+
+    try:
+        with open(yaml_path, encoding="utf-8") as f:
+            text = f.read()
+        lines = text.splitlines(keepends=True)
+
+        # Find the case block, then the step line
+        in_case = False
+        case_indent = None
+        for i, line in enumerate(lines):
+            stripped = line.lstrip()
+            indent = len(line) - len(stripped)
+
+            # Detect case start
+            if stripped.startswith(case_name + ":"):
+                in_case = True
+                case_indent = indent
+                continue
+
+            # Detect case end (next top-level key at same or lower indent)
+            if in_case and indent <= case_indent and stripped and not stripped.startswith("#"):
+                in_case = False
+                continue
+
+            if in_case and stripped.startswith(step_name + ":"):
+                # Found the step line — parse old step, apply suggestion
+                old_step_str = stripped[len(step_name)+1:].strip()
+                # Try to parse as inline dict
+                is_inline = bool(old_step_str)
+                try:
+                    old_step = yaml.safe_load(old_step_str) if old_step_str else {}
+                    if not isinstance(old_step, dict):
+                        old_step = {}
+                except Exception:
+                    old_step = {}
+
+                # Build new step
+                new_step = dict(old_step)
+                for k, v in suggestion.items():
+                    if v is None:
+                        new_step.pop(k, None)
+                    else:
+                        new_step[k] = v
+
+                # Serialize back to inline YAML
+                parts = []
+                for k in ("role", "name", "locator", "test_id", "placeholder",
+                          "aria-label", "label", "index", "exact", "optional",
+                          "value", "checked", "timeout", "frame"):
+                    if k in new_step:
+                        v = new_step[k]
+                        if isinstance(v, str):
+                            parts.append(f"{k}: '{v}'")
+                        elif isinstance(v, bool):
+                            parts.append(f"{k}: {str(v).capitalize()}")
+                        else:
+                            parts.append(f"{k}: {v}")
+                for k, v in new_step.items():
+                    if k not in ("role", "name", "locator", "test_id", "placeholder",
+                                 "aria-label", "label", "index", "exact", "optional",
+                                 "value", "checked", "timeout", "frame"):
+                        if isinstance(v, str):
+                            parts.append(f"{k}: '{v}'")
+                        elif isinstance(v, bool):
+                            parts.append(f"{k}: {str(v).capitalize()}")
+                        else:
+                            parts.append(f"{k}: {v}")
+
+                new_line = " " * indent + step_name + ": { " + ", ".join(parts) + " }\n"
+                lines[i] = new_line
+
+                # If original was multi-line (no inline dict), delete the child lines below
+                if not is_inline:
+                    j = i + 1
+                    while j < len(lines):
+                        child_stripped = lines[j].lstrip()
+                        child_indent = len(lines[j]) - len(child_stripped)
+                        # Stop when we hit a line at same or lower indent (next step, next case, or blank)
+                        if child_stripped and child_indent <= indent:
+                            break
+                        # Also stop at case boundary
+                        if child_stripped and not child_stripped.startswith("#") and child_indent <= case_indent:
+                            break
+                        j += 1
+                    # Remove lines (i+1) through (j-1)
+                    if j > i + 1:
+                        del lines[i + 1:j]
+
+                with open(yaml_path, "w", encoding="utf-8") as f:
+                    f.write("".join(lines))
+                return True
+
+        print(f"  [ERROR] Step '{step_name}' not found in case '{case_name}' in {yaml_path}")
+        return False
+
+    except Exception as e:
+        print(f"  [ERROR] Failed to apply fix: {e}")
+        return False
 
 
 if __name__ == "__main__":

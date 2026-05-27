@@ -1,0 +1,13 @@
+[
+  {
+    "yaml_path": "D:\\monster_test\\Autotest-monster\\test_case\\UI\\Test_Katana\\All_YAML\\Form\\Storefront_form.yaml",
+    "case_name": "test_guest_submission_1",
+    "step_name": "R_click_choose_date",
+    "suggestion": {
+      "role": "combobox",
+      "name": "Date and time"
+    },
+    "probe": "AI RAG Suggestion (Gemini + DOM Knowledge Base)",
+    "score": 0.85
+  }
+]
