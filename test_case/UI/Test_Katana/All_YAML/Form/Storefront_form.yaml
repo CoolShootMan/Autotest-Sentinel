@@ -311,7 +311,7 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
 
     # date time - select a real date in the current month
     R_click_choose_date:
-      role: "textbox"
+      role: "combobox"
       name: "Choose date"
     R_click_date_12:
       role: "gridcell"
