@@ -116,4 +116,5 @@ dom_kb/
 .models/
 
 # === Diagnosis Reports (generated at runtime) ===
+Error_Test_Case_Diagnosis_Report/
 Error_Test_Case_Diagnosis_Report_*.html

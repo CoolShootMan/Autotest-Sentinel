@@ -219,22 +219,22 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     # Deleting excess options (as in codegen)
     # Using exact codegen steps
     R_click_view_name_3:
-      { role: "button", name: "View Name options", exact: true, quick: true }
+      { role: "button", name: "View Name options", exact: true }
     R_click_delete_name_3:
-      { role: "button", name: "Delete", index: 0, quick: true }
+      { role: "button", name: "Delete", index: 0 }
     sleep_delete_name_3: 50
     R_click_delete_name_4: { role: "button", name: "Delete", index: 0 }
     sleep_delete_name_4: 50
 
     R_click_view_phone:
-      { role: "button", name: "View Phone options", exact: true, quick: true }
+      { role: "button", name: "View Phone options", exact: true }
     R_click_delete_phone_1: { role: "button", name: "Delete", index: 0 }
     sleep_delete_phone_1: 50
     R_click_delete_phone_2: { role: "button", name: "Delete", index: 0 }
     sleep_delete_phone_2: 50
 
     R_click_view_email:
-      { role: "button", name: "View Email options", exact: true, quick: true }
+      { role: "button", name: "View Email options", exact: true }
     R_click_delete_email_1: { role: "button", name: "Delete", index: 0 }
     sleep_delete_email_1: 50
     R_click_delete_email_2: { role: "button", name: "Delete", index: 0 }
@@ -248,7 +248,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
       { role: "button", name: "Close", exact: true, quick: true }
     #sleep_close_preview: 1000
 
-    R_click_continue: { role: "button", name: "Continue", quick: true }
+    R_click_continue: { role: "button", name: "Continue" }
     sleep_continue: 500
 
     # Custom success message changes
@@ -311,8 +311,9 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
 
     # date time - select a real date in the current month
     R_click_choose_date:
-      role: "combobox"
-      name: "Choose date"
+      role: combobox
+      name: Choose date
+      tag: button
     R_click_date_12:
       role: "gridcell"
       name: "12"
