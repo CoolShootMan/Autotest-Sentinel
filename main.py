@@ -1,4 +1,8 @@
 #!usr/bin/env python3
+import sys, os
+_VENV_PYTHON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "venv", "bin", "python3")
+if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
+    os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
 # -*- encoding: utf-8 -*-
 '''
 Filename         : main.py
@@ -54,7 +58,7 @@ def start_autotest():
     #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
     yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
-        "python",
+        sys.executable,
         "-m",
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
@@ -104,7 +108,7 @@ def start_autotest():
     #     logger.error(f"Error running status update script: {e}")
 
     
-    allure_bat = allure_path + ".bat"
+    allure_bat = allure_path + (".bat" if sys.platform == "win32" else "")
     
     logger.info(f"Generating Allure report: {allure_report_dir}")
     # Using subprocess.run with list to safely handle Windows paths with spaces
