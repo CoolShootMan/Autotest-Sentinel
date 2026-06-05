@@ -19,6 +19,9 @@ Usage:
     # Watch the replay in a real browser window
     python tools/diagnose_failed.py --case testT1928 --headed
 
+    # Continue past failures to diagnose ALL failing steps (not just the first)
+    python tools/diagnose_failed.py --case testT1928 --continue-on-failure
+
     # Specify environment
     python tools/diagnose_failed.py --env release
 """
@@ -39,6 +42,19 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
+
+try:
+    from ruamel.yaml import YAML
+    _ruamel_available = True
+except ImportError:
+    _ruamel_available = False
+
+try:
+    from PIL import Image
+    import io as _io
+    _pillow_available = True
+except ImportError:
+    _pillow_available = False
 
 # ---------------------------------------------------------------------------
 # Project paths
@@ -65,7 +81,8 @@ sys.modules.setdefault("test_case.UI.Test_Katana.utils.rag_knowledge", _mock_rag
 # ---------------------------------------------------------------------------
 # Gemini AI + DOM Knowledge Base (lazy-loaded for Probe 9)
 # ---------------------------------------------------------------------------
-_gemini_model = None
+_gemini_client = None  # google-genai Client instance
+_gemini_model_name = None  # current model name string
 _gemini_api_keys = []  # all available keys for fallback
 _gemini_current_key_idx = 0
 _gemini_model_idx = 0  # current model in fallback chain
@@ -82,18 +99,18 @@ _GEMINI_MODEL_CHAIN = [
 
 
 def _load_gemini(force_model: str = None):
-    """Lazy-load Gemini model using keys from backend/.env.
+    """Lazy-load Gemini client using keys from backend/.env.
 
     Supports model fallback chain + multiple API key rotation:
     1. Try preferred model (gemini-2.5-flash) with key[0]
-    2. On quota error → rotate to next key for same model
-    3. All keys exhausted for current model → downgrade to next model
+    2. On quota error -> rotate to next key for same model
+    3. All keys exhausted for current model -> downgrade to next model
     """
-    global _gemini_model, _gemini_api_keys, _gemini_current_key_idx, _gemini_model_idx
-    if _gemini_model is not None and force_model is None:
-        return _gemini_model
+    global _gemini_client, _gemini_api_keys, _gemini_current_key_idx, _gemini_model_idx, _gemini_model_name
+    if _gemini_client is not None and force_model is None:
+        return _gemini_client
     try:
-        import google.generativeai as genai
+        from google import genai as genai_mod
         from dotenv import load_dotenv as _ld
         # Load keys from backend/.env
         _backend_env = os.path.join(PROJECT_ROOT, "backend", ".env")
@@ -107,10 +124,9 @@ def _load_gemini(force_model: str = None):
             return None
         _gemini_api_keys = keys
         _gemini_current_key_idx = 0
-        model_name = force_model or _GEMINI_MODEL_CHAIN[_gemini_model_idx]
-        genai.configure(api_key=keys[0])
-        _gemini_model = genai.GenerativeModel(model_name)
-        return _gemini_model
+        _gemini_model_name = force_model or _GEMINI_MODEL_CHAIN[_gemini_model_idx]
+        _gemini_client = genai_mod.Client(api_key=keys[0])
+        return _gemini_client
     except Exception:
         return None
 
@@ -119,7 +135,7 @@ def _rotate_gemini_key():
     """Rotate to next API key for the current model.
     Returns True if rotated, False if all keys for current model exhausted.
     """
-    global _gemini_model, _gemini_current_key_idx
+    global _gemini_client, _gemini_current_key_idx
     if len(_gemini_api_keys) <= 1:
         return False
     _gemini_current_key_idx = (_gemini_current_key_idx + 1) % len(_gemini_api_keys)
@@ -127,10 +143,8 @@ def _rotate_gemini_key():
     if _gemini_current_key_idx == 0:
         return False
     try:
-        import google.generativeai as genai
-        model_name = _GEMINI_MODEL_CHAIN[_gemini_model_idx]
-        genai.configure(api_key=_gemini_api_keys[_gemini_current_key_idx])
-        _gemini_model = genai.GenerativeModel(model_name)
+        from google import genai as genai_mod
+        _gemini_client = genai_mod.Client(api_key=_gemini_api_keys[_gemini_current_key_idx])
         return True
     except Exception:
         return False
@@ -140,16 +154,15 @@ def _downgrade_gemini_model():
     """Downgrade to next model in the fallback chain.
     Returns True if downgraded, False if already at the last model.
     """
-    global _gemini_model, _gemini_model_idx, _gemini_current_key_idx
+    global _gemini_client, _gemini_model_idx, _gemini_current_key_idx, _gemini_model_name
     if _gemini_model_idx >= len(_GEMINI_MODEL_CHAIN) - 1:
         return False
     _gemini_model_idx += 1
     _gemini_current_key_idx = 0
+    _gemini_model_name = _GEMINI_MODEL_CHAIN[_gemini_model_idx]
     try:
-        import google.generativeai as genai
-        model_name = _GEMINI_MODEL_CHAIN[_gemini_model_idx]
-        genai.configure(api_key=_gemini_api_keys[0])
-        _gemini_model = genai.GenerativeModel(model_name)
+        from google import genai as genai_mod
+        _gemini_client = genai_mod.Client(api_key=_gemini_api_keys[0])
         return True
     except Exception:
         return False
@@ -192,16 +205,18 @@ def _add_dom_to_kb(dom_elements: list, url_hint: str = ""):
 
 
 def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
-                            dom_snapshot: list = None, error_msg: str = "") -> Optional[dict]:
-    """Probe 9: AI RAG Suggestion.
+                            dom_snapshot: list = None, error_msg: str = "",
+                            sub_image_b64: str = None,
+                            preloaded_candidates: list = None) -> Optional[dict]:
+    """Probe 9: AI RAG Suggestion (multimodal when sub_image_b64 is provided).
 
     1. Query DOM KB for top-K similar elements via vector search
-    2. Send candidates + context to Gemini
+    2. Optionally attach a visual sub-image (focused crop of the failure area)
     3. Gemini picks the best match and generates a YAML locator fix
-    4. Returns a probe dict with heuristic_suggestion, or None if unavailable
+    4. Returns a probe dict with heuristic_suggestion + is_schema_mutation flag
     """
-    # Query DOM KB
-    candidates = _query_dom_kb(step_value, url_hint=url_hint, top_k=5)
+    # Use preloaded candidates if provided (avoids double KB query)
+    candidates = preloaded_candidates if preloaded_candidates is not None else _query_dom_kb(step_value, url_hint=url_hint, top_k=3)
     if not candidates:
         return None
 
@@ -229,16 +244,19 @@ def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
     if not filtered_candidates:
         return None
 
-    # Build candidate descriptions for the prompt
+    # Build compact candidate descriptions (reduced fields for token efficiency)
     candidate_descs = []
     for i, c in enumerate(filtered_candidates):
         el = c["element"]
         score = c["score"]
+        _name = el.get('name', '')
+        name_disp = _name if _name else "[EMPTY — accessible name unknown]"
+        _al = el.get('ariaLabel', '')
+        al_disp = _al if _al else "[EMPTY]"
         candidate_descs.append(
-            f"  [{i+1}] score={score:.3f} | page={c.get('url_template','')} | "
-            f"tag={el.get('tag','')} role={el.get('role','')} "
-            f"testid={el.get('testid','')} ariaLabel={el.get('ariaLabel','')} "
-            f"text={el.get('text','')} name={el.get('name','')}"
+            f"  [{i+1}] score={score:.3f} | role={el.get('role','')} "
+            f"testid={el.get('testid','')} ariaLabel={al_disp} "
+            f"text={el.get('text','')[:60]} name={name_disp}"
         )
 
     # Build the original step description
@@ -247,31 +265,136 @@ def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
     else:
         orig_desc = str(step_value)
 
-    prompt = f"""You are a QA automation expert. A UI test step FAILED because the element locator is outdated.
+    has_visual = sub_image_b64 is not None
 
-FAILED STEP LOCATOR:
-  {orig_desc}
+    # ------------------------------------------------------------------
+    # Build prompt — two variants: visual-semantic (with image) vs text-only
+    # ------------------------------------------------------------------
+    if has_visual:
+        prompt_text = f"""You are a senior QA automation expert with 10 years of experience.
+A UI test step FAILED because the element locator is outdated.
 
-ERROR MESSAGE:
-  {error_msg[:300] if error_msg else 'N/A'}
-
-The DOM Knowledge Base found these similar elements on the CURRENT page:
-
+# Input Data
+1. [FAILED STEP LOCATOR]: {orig_desc}
+2. [ERROR]: {error_msg[:200] if error_msg else 'N/A'}
+3. [VISUAL SUB-IMAGE]: The attached image is the actual screen area where the failure occurred.
+4. [DOM CANDIDATES] — Latest elements found by semantic search in this area:
 {chr(10).join(candidate_descs)}
 
-Your task: Pick the BEST matching element and generate a YAML locator fix.
+# Task — Chain of Thought
+Use BOTH the image AND the DOM candidates to answer:
 
-CRITICAL RULES:
-1. Pick the element that is SEMANTICALLY the same as the original (text may have changed slightly)
-2. Prefer: test_id > role+name > role+ariaLabel > locator
-3. If the element changed (e.g. button text changed from "Edit post" to "Edit content"), that's expected — pick the replacement
-4. The "text" field in the candidates above is the element's innerText. DO NOT use it as the "name" field unless it is a SHORT, meaningful label (1-5 words). NEVER suggest values like "Short answer name=" or concatenated form labels.
-5. If a candidate has role="combobox" or role="textbox", it is likely a form INPUT field, NOT a button or link. Do NOT pick input fields unless the original step was also an input field.
-6. If no good match exists, return {{"reason": "brief explanation of why no match found"}}
-7. Return ONLY a valid JSON object with the new locator fields, e.g. {{"role": "button", "name": "Edit content"}}
-8. EVIDENCE-BASED name change: Only suggest a new "name" value if the candidate's text/aria-label EXPLICITLY provides it. If the candidate's name matches or is consistent with the original step's name, keep the ORIGINAL name. Do NOT invent or guess a name. Example: original step has name="Choose date", candidate has aria-label="Choose date" → keep name="Choose date", only change role if needed.
+Step 1 VISUAL CHECK: In the image, does the element that should be "{step_value.get('name') or step_value.get('text') or ''}" still exist visually?
+  - If YES: what does it look like now? (input box, dropdown, button, etc.)
+  - This tells you whether the element still exists but changed form (schema mutation) or is genuinely missing.
 
-Respond with JSON only, no markdown:."""
+Step 2 SEMANTIC ALIGNMENT: Cross-check the DOM candidates.
+  ⚠️ CRITICAL DISTINCTION: In the DOM candidates above, "text" = innerText (what is VISIBLE on screen). "ariaLabel" = the ARIA label attribute. NEITHER of these is necessarily the "accessible name" that Playwright uses for get_by_role(role, name=...).
+  - The accessible name is computed by the browser from multiple sources (placeholder, aria-label, associated <label>, title, etc.). It may be completely DIFFERENT from the visible text.
+  - Example: a combobox may show label text "Date and time" (visible innerText) but its accessible name from placeholder is "Choose date". Playwright matches by accessible name, NOT innerText.
+  - Therefore: do NOT change "name" just because "text" or "ariaLabel" differs from the original name.
+
+Step 3 DECISION (Occam's Razor — minimal change):
+  - If visual + semantic both confirm SAME element, different role → set is_schema_mutation: true, only change "role". KEEP "name" unchanged.
+  - If the element's accessible name itself genuinely changed (e.g., placeholder changed from "Choose date" to "Select date") → set is_schema_mutation: false, update "name".
+  - If both role AND accessible name changed but same function → set is_schema_mutation: true, update both.
+  - If no confident match → return {{"reason": "brief explanation"}}.
+
+# Output Format (JSON only, no markdown)
+{{
+  "is_schema_mutation": true,
+  "visual_insight": "one sentence describing what you see in the image",
+  "analysis": "one sentence semantic reasoning",
+  "suggested_fix_delta": {{"role": "combobox"}}
+}}
+
+RULE: In suggested_fix_delta, include ONLY fields that actually changed from the original step.
+If the original "name" is still valid (ariaLabel or accessible name still matches), do NOT include "name" in the delta.
+DEFAULT BEHAVIOR when role changes but it's the same element: ONLY change "role", KEEP "name" as-is."""
+
+    else:
+        is_cascade = error_msg and "CASCADE FAILURE" in error_msg
+        if is_cascade:
+            prompt_text = f"""You are a senior QA automation expert. A test step PASSED but clicked the WRONG element, causing an unintended UI state (cascade failure).
+
+PROBLEMATIC STEP: {orig_desc}
+CASCADE CONTEXT: {error_msg[:300] if error_msg else 'N/A'}
+
+DOM Knowledge Base candidates (elements from the page, including the WRONG state):
+{chr(10).join(candidate_descs)}
+
+TASK: The original locator matched an element, but it was the WRONG one (e.g. a different button with the same visible text). Suggest a MORE PRECISE locator so it matches the CORRECT element next time.
+
+ANALYSIS STEPS (think through in your head):
+1. What was the EXPECTED outcome? (e.g. a menu should appear)
+2. What was the ACTUAL outcome? (e.g. a dialog appeared with "insert link" text)
+3. Looking at the DOM candidates, which element is likely the WRONG one that was clicked? (based on actual UI text)
+4. What MORE PRECISE locator would avoid matching the wrong element?
+   - Can you use a more specific `name` or `text` value?
+   - Is there a `test_id` or `locator` that uniquely identifies the correct element?
+   - Can you add parent context (e.g. only match within a specific section/container)?
+
+RULES:
+- The page may contain MULTIPLE elements with similar text. Your job is to DISAMBIGUATE.
+- Prefer: test_id > specific name/text > role+name > locator
+- If candidates show the SAME text on multiple elements, look for DIFFERENTIATING attributes (testid, parent section, aria-label, class).
+- If the correct element is inside a specific container (e.g. "Event Builder" vs "Text Editor"), suggest adding parent context.
+
+⚠️ CRITICAL DISTINCTION: In DOM candidates, "text" = innerText (VISIBLE on screen). "ariaLabel" = ARIA label attribute. NEITHER is necessarily the "accessible name" used by Playwright get_by_role(role, name=...).
+  - Therefore: do NOT change "name" just because "text" or "ariaLabel" differs.
+  - Focus on making the locator MORE SPECIFIC to avoid matching the wrong element.
+
+- If no confident fix, return {{"reason": "brief explanation"}}
+
+RESPOND WITH JSON ONLY (no markdown):
+{{"is_schema_mutation": false, "analysis": "<1-2 sentence reasoning>", "suggested_fix_delta": {{"field_to_change": "new_value"}}}}
+
+Only include fields that DIFFER from the original step in suggested_fix_delta. If the original field value is still correct, omit it. Do NOT include "analysis" in the delta.
+DEFAULT BEHAVIOR: Suggest the MOST SPECIFIC locator possible to avoid matching the wrong element."""
+        else:
+            prompt_text = f"""You are a QA automation expert. A UI test step FAILED because the element locator is outdated.
+
+FAILED STEP: {orig_desc}
+ERROR: {error_msg[:200] if error_msg else 'N/A'}
+
+DOM Knowledge Base candidates (current page):
+{chr(10).join(candidate_descs)}
+
+TASK: Analyze each candidate vs the original step, then output the MINIMAL fix (delta only).
+
+ANALYSIS STEPS (think through in your head):
+1. What changed? (role/text/tags shifted?)
+2. Which candidate is the SEMANTIC match? (same function, even if text changed)
+3. What fields actually need to change? (delta = changed fields only)
+
+RULES:
+- Pick the SEMANTIC match, not a text-exact match (text may have changed)
+- Prefer: test_id > role+name > role+ariaLabel > locator
+- If candidate has role="combobox"/"textbox", it's an INPUT, NOT a button/link
+
+⚠️ CRITICAL DISTINCTION: In DOM candidates, "text" = innerText (VISIBLE on screen). "ariaLabel" = ARIA label attribute. NEITHER is necessarily the "accessible name" used by Playwright get_by_role(role, name=...).
+  - The accessible name is computed by the browser from placeholder, aria-label, associated <label>, title, etc. It can be completely DIFFERENT from visible text.
+  - Example: a field shows label "Date and time" (visible text) but its accessible name from placeholder is "Choose date". Playwright matches by accessible name, NOT innerText.
+  - Therefore: do NOT change "name" just because "text" or "ariaLabel" differs.
+
+DECISION FRAMEWORK for "name":
+- SCENARIO A — UI component upgraded (role changed, but it's clearly the same element):
+  → This is the SAME element with a new component type. Keep "name" as-is, ONLY change "role".
+  Example: role textbox→combobox, same function → name stays unchanged. This is the MOST COMMON case.
+- SCENARIO B — Label/text changed (role unchanged, but text/ariaLabel differs from original name):
+  → The product renamed this element. Update "name" to the new label.
+  Example: role=button, original name="Edit post", candidate text="Edit content" → name="Edit content".
+- SCENARIO C — Both role and text changed:
+  → Use semantic judgment. If it's clearly the same function, update "role" ONLY. If you're certain the accessible name itself also changed, update both. WHEN IN DOUBT, only change "role".
+- "text" in candidates is innerText — do NOT use it to infer "name" changes. "name" must come from accessible name sources (placeholder, aria-label, computed accessible name).
+
+- If no good match, return {{"reason": "brief explanation"}}
+
+RESPOND WITH JSON ONLY (no markdown):
+{{"is_schema_mutation": true/false, "analysis": "<1-2 sentence reasoning>", "suggested_fix_delta": {{"field_to_change": "new_value"}}}}
+
+Only include fields that DIFFER from the original step in suggested_fix_delta. If the original field value is still correct, omit it. Do NOT include "analysis" in the delta.
+DEFAULT BEHAVIOR when role changes but it's the same element: ONLY change "role", KEEP "name" as-is."""
 
     model = _load_gemini()
     if model is None:
@@ -279,9 +402,26 @@ Respond with JSON only, no markdown:."""
 
     # Retry strategy: rotate keys first, then downgrade model
     last_error = None
+    probe_label = "AI RAG Suggestion (Gemini Vision + DOM)" if has_visual else "AI RAG Suggestion (Gemini + DOM Knowledge Base)"
+    _ssl_retry_count = 0
     while True:
         try:
-            response = model.generate_content(prompt)
+            # Build multimodal content parts when sub-image is available
+            if has_visual:
+                from google import genai as genai_mod
+                from google.genai import types as genai_types
+                image_part = genai_types.Part.from_bytes(
+                    data=sub_image_b64, mime_type="image/png"
+                )
+                content_parts = [prompt_text, image_part]
+                response = model.models.generate_content(
+                    model=_gemini_model_name, contents=content_parts
+                )
+            else:
+                response = model.models.generate_content(
+                    model=_gemini_model_name, contents=prompt_text
+                )
+
             raw = response.text.strip()
             # Strip markdown code fences if present
             if raw.startswith("```"):
@@ -291,6 +431,20 @@ Respond with JSON only, no markdown:."""
             raw = raw.strip()
             result = json.loads(raw)
 
+            # Extract structured fields
+            ai_analysis = result.get("analysis", "")
+            visual_insight = result.get("visual_insight", "")
+            is_schema_mutation = bool(result.get("is_schema_mutation", False))
+            delta = result.get("suggested_fix_delta", {})
+
+            # Combine analysis + visual_insight for display
+            if visual_insight and ai_analysis:
+                ai_analysis_full = f"[Visual] {visual_insight}  |  [Semantic] {ai_analysis}"
+            elif visual_insight:
+                ai_analysis_full = f"[Visual] {visual_insight}"
+            else:
+                ai_analysis_full = ai_analysis
+
             # Check if AI gave a reason instead of a fix
             if "reason" in result and len(result) == 1:
                 return {
@@ -298,14 +452,53 @@ Respond with JSON only, no markdown:."""
                     "count": 0,
                     "matches": [],
                     "ai_reason": result["reason"],
+                    "ai_analysis": ai_analysis_full,
+                    "is_schema_mutation": False,
                     "score": 0.0,
                 }
 
-            # Build the suggestion
+            # Build the suggestion from delta (only changed fields)
             suggested_fix = {}
             for k in ("test_id", "role", "name", "text", "label", "placeholder", "locator"):
-                if k in result and result[k]:
-                    suggested_fix[k] = result[k]
+                if k in delta and delta[k]:
+                    suggested_fix[k] = delta[k]
+
+            # --- Safety net: prevent AI from confusing innerText/ariaLabel with accessible name ---
+            # Unconditional: any time AI suggests a name change, verify the original name
+            # is actually gone from the candidate. If it's still present (in text, ariaLabel,
+            # or accessible name), AI is confusing visible text with accessible name.
+            if "name" in suggested_fix and filtered_candidates:
+                best_el = filtered_candidates[0].get("element", {})
+                cand_name = best_el.get("name", "")
+                cand_text = best_el.get("text", "")
+                cand_aria = best_el.get("ariaLabel", "")
+                suggested_name = str(suggested_fix["name"])
+                orig_name = step_value.get("name") or step_value.get("text") or ""
+
+                # Gate 1: Is the original name still present in the candidate at all?
+                # If yes → element was NOT renamed, AI confused text/ariaLabel with accessible name.
+                orig_name_lower = orig_name.lower()
+                name_still_present = (
+                    orig_name_lower in (cand_text or "").lower() or
+                    orig_name_lower in (cand_aria or "").lower() or
+                    orig_name == cand_name or
+                    orig_name == cand_text or
+                    orig_name == cand_aria
+                )
+                if name_still_present:
+                    del suggested_fix["name"]
+                    print(f"  [SAFETY NET] Stripped name change '{orig_name}' → '{suggested_name}' — "
+                          f"original name still present in candidate (text='{cand_text}', "
+                          f"aria='{cand_aria}', name='{cand_name}'), AI confused innerText/ariaLabel "
+                          f"with accessible name")
+                # Gate 2: Candidate has no accessible name, but AI inferred one from text/aria
+                elif not cand_name and (suggested_name == cand_text or suggested_name == cand_aria):
+                    del suggested_fix["name"]
+                    print(f"  [SAFETY NET] Stripped inferred name '{suggested_name}' — "
+                          f"matches candidate text/ariaLabel but candidate has no accessible name")
+                else:
+                    print(f"  [SAFETY NET] ALLOWED name change '{orig_name}' → '{suggested_name}' — "
+                          f"original name absent from candidate, genuine rename detected")
 
             if not suggested_fix:
                 return None
@@ -313,12 +506,14 @@ Respond with JSON only, no markdown:."""
             # Get the matched element from filtered candidates for display
             best_match = filtered_candidates[0]["element"] if filtered_candidates else {}
             return {
-                "probe": "AI RAG Suggestion (Gemini + DOM Knowledge Base)",
+                "probe": probe_label,
                 "count": 1,
                 "matches": [best_match],
                 "heuristic_suggestion": suggested_fix,
-                "score": 0.85,
+                "is_schema_mutation": is_schema_mutation,
+                "score": 0.92 if has_visual else 0.85,
                 "ai_candidates": candidate_descs,
+                "ai_analysis": ai_analysis_full,
             }
         except Exception as e:
             last_error = e
@@ -326,18 +521,30 @@ Respond with JSON only, no markdown:."""
             if "quota" in err_str or "429" in err_str or "resource_exhausted" in err_str:
                 # 1. Try next key for current model
                 if _rotate_gemini_key():
-                    model = _gemini_model
+                    model = _gemini_client
                     continue
-                # 2. All keys exhausted → downgrade model
+                # 2. All keys exhausted -> downgrade model
                 if _downgrade_gemini_model():
-                    model = _gemini_model
+                    model = _gemini_client
                     continue
                 # 3. All models exhausted
                 break
-            break  # non-quota error, don't retry
+            # SSL/network transient errors — retry up to 2 times, then rotate key
+            if any(kw in err_str for kw in ("ssl", "eof", "connection", "timeout", "network", "reset", "broken pipe")):
+                _ssl_retry_count += 1
+                if _ssl_retry_count <= 2:
+                    print(f"  [Gemini] SSL/network error, retrying ({_ssl_retry_count}/2)...")
+                    import time; time.sleep(1)
+                    continue
+                # 2 retries exhausted — try next key
+                if _rotate_gemini_key():
+                    _ssl_retry_count = 0
+                    model = _gemini_client
+                    continue
+            break  # non-quota, non-SSL error, don't retry
 
     return {
-        "probe": "AI RAG Suggestion",
+        "probe": probe_label,
         "error": str(last_error),
     }
 
@@ -614,6 +821,130 @@ def capture_screenshot_b64(page) -> Optional[str]:
         return None
 
 
+def capture_sub_image_b64(page, candidates: list, step_value: dict = None, padding: int = 200) -> Optional[str]:
+    """Capture a cropped sub-image focused on the candidate elements.
+
+    Strategy (by priority):
+    1. Try to locate the ORIGINAL failed element using step_value (name+role) —
+       this gives the most accurate bbox of where the failure actually happened.
+    2. Fall back to candidate elements if the original can't be found.
+
+    Steps:
+    - Gather bounding boxes from page DOM.
+    - Compute a bounding box union of all found elements.
+    - Expand by `padding` pixels on all sides.
+    - Crop from a viewport screenshot (no scrolling needed).
+    - Return as base64 PNG (typically < 50KB, ~200 tokens for Gemini Vision).
+
+    Falls back to None if Pillow not available, no candidates found, or any error.
+    """
+    if not _pillow_available or not candidates:
+        return None
+    try:
+        # --- 1. Take a viewport-only screenshot ---
+        buf = page.screenshot(type="png", full_page=False)
+        img = Image.open(_io.BytesIO(buf))
+        vw, vh = img.size  # actual viewport pixel size
+
+        bboxes = []
+
+        # --- 2a. PRIORITY: locate using the ORIGINAL failed step's locator ---
+        # This is the most reliable way to get the exact failure area.
+        if step_value and isinstance(step_value, dict):
+            orig_name = step_value.get("name") or step_value.get("text") or step_value.get("label") or ""
+            orig_role = step_value.get("role", "")
+            orig_testid = step_value.get("test_id", "")
+            try:
+                loc = None
+                if orig_testid:
+                    loc = page.get_by_test_id(orig_testid)
+                elif orig_role and orig_name:
+                    loc = page.get_by_role(orig_role, name=orig_name)
+                elif orig_name:
+                    loc = page.get_by_text(orig_name, exact=False)
+                if loc:
+                    bb = loc.first.bounding_box(timeout=2000)
+                    if bb and bb["width"] > 0 and bb["height"] > 0:
+                        bboxes.append(bb)
+            except Exception:
+                pass
+
+        # --- 2b. FALLBACK: use candidate elements ---
+        for c in candidates[:3]:  # limit to top-3 candidates
+            el = c.get("element", c) if isinstance(c, dict) else {}
+            aria = el.get("ariaLabel", "") or el.get("name", "")
+            text = el.get("text", "")
+            testid = el.get("testid", "")
+            role = el.get("role", "")
+
+            # Build a Playwright locator to find this element on the current page.
+            # Strategy: try role+text first (finds the actual interactive element),
+            # then label match, then generic text match (last resort — may hit wrong element).
+            loc = None
+            try:
+                if testid:
+                    loc = page.get_by_test_id(testid)
+                elif aria:
+                    loc = page.get_by_role(role, name=aria) if role else page.get_by_label(aria)
+                elif text and len(text) <= 60:
+                    if role:
+                        # Try role+text first — this targets the actual interactive element,
+                        # not just any text node (e.g., a <label> next to an input).
+                        try:
+                            loc = page.get_by_role(role, name=text)
+                            # Verify it actually exists
+                            if loc.count() == 0:
+                                loc = None
+                        except Exception:
+                            loc = None
+                    if not loc:
+                        # Try label match (e.g., text is a form label)
+                        try:
+                            loc = page.get_by_label(text, exact=False)
+                            if loc.count() == 0:
+                                loc = None
+                        except Exception:
+                            loc = None
+                    if not loc:
+                        # Last resort: generic text match
+                        loc = page.get_by_text(text, exact=False)
+                if loc:
+                    bb = loc.first.bounding_box(timeout=2000)
+                    if bb and bb["width"] > 0 and bb["height"] > 0:
+                        bboxes.append(bb)
+            except Exception:
+                continue
+
+        if not bboxes:
+            return None  # Couldn't locate any candidate on page
+
+        # --- 3. Compute union bbox ---
+        x1 = min(b["x"] for b in bboxes)
+        y1 = min(b["y"] for b in bboxes)
+        x2 = max(b["x"] + b["width"] for b in bboxes)
+        y2 = max(b["y"] + b["height"] for b in bboxes)
+
+        # --- 4. Expand with padding and clamp to viewport ---
+        # Note: Playwright coordinates are CSS pixels; PIL uses device pixels.
+        # For simplicity, assume device pixel ratio = 1 (common in headless mode).
+        x1 = max(0, int(x1) - padding)
+        y1 = max(0, int(y1) - padding)
+        x2 = min(vw, int(x2) + padding)
+        y2 = min(vh, int(y2) + padding)
+
+        if x2 - x1 < 10 or y2 - y1 < 10:
+            return None
+
+        # --- 5. Crop and encode ---
+        cropped = img.crop((x1, y1, x2, y2))
+        out = _io.BytesIO()
+        cropped.save(out, format="PNG", optimize=True)
+        return base64.b64encode(out.getvalue()).decode("utf-8")
+
+    except Exception:
+        return None
+
+
 def capture_page_summary(page) -> Dict:
     """Capture page title, URL, and body text."""
     try:
@@ -664,7 +995,7 @@ def auto_dismiss_modals(page):
         pass
 
 
-def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
+def replay_case(case_info: dict, base_url: str, headed: bool, continue_on_failure: bool = False) -> Dict:
     """
     Replay a single failed test case in the browser.
 
@@ -674,9 +1005,32 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
 
     case_name = case_info["name"]
     case_data = case_info["case_data"]
+
+    # --- Always read fresh YAML: the replay engine IS the real test runner ---
+    # Allure report is just a pointer to tell us which cases to check.
+    # We always want the latest YAML step definitions, not stale Allure data.
+    yaml_path = case_info.get("yaml_path", "")
+    if yaml_path:
+        abs_ypath = yaml_path if os.path.isabs(yaml_path) else str(PROJECT_ROOT / yaml_path)
+        try:
+            with open(abs_ypath, "r", encoding="utf-8") as yf:
+                fresh_yaml = yaml.safe_load(yf)
+            if isinstance(fresh_yaml, dict) and case_name in fresh_yaml:
+                fresh_case = fresh_yaml[case_name]
+                fresh_test_step = fresh_case.get("test_step", {})
+                fresh_pre_condition = fresh_case.get("pre_condition", {})
+                if fresh_test_step:
+                    case_data["test_step"] = fresh_test_step
+                    print(f"  [YAML] Loaded fresh test_step ({len(fresh_test_step)} steps)")
+                if fresh_pre_condition:
+                    case_data["pre_condition"] = fresh_pre_condition
+                    print(f"  [YAML] Loaded fresh pre_condition")
+        except Exception as e:
+            print(f"  [YAML] Failed to read fresh YAML: {e}")
+
     test_step = case_data.get("test_step", {})
     pre_condition = case_data.get("pre_condition", {})
-    steps_order = case_info["steps_order"]
+    steps_order = list(test_step.keys())
 
         # Build step records list
     step_records = []
@@ -684,8 +1038,11 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
     failed_step_error = ""
     failure_found = False
     probing_results = []
-    last_warning_step = None   # (step_num, step_name, warning_text) of last ambiguous click
+    # Note: previous_step_warning / last_warning_step tracking removed.
+    # get_action-based execution no longer returns ambiguity warnings.
+    # The core diagnosis (probing, root cause, AI fix) is unaffected.
     first_anomaly_step_num = None  # Step number where first state anomaly was detected
+    stale_risks = []  # Historical warnings/anomalies (shown in secondary section)
 
     print(f"\n{'='*60}")
     print(f"  DIAGNOSING: {case_name}")
@@ -712,20 +1069,81 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
         cookie_file = str(COOKIE_DIR / f"cookie_{env}.json")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=not headed, args=["--start-maximized"])
-
-        # Use storage_state if cookie file exists (same mechanism as conftest.py)
-        context_args = {"viewport": {"width": 1440, "height": 900}}
+        # Mobile mode: don't use --start-maximized (it overrides device viewport)
         is_guest = case_data.get("guest", False)
+        is_mobile = case_data.get("is_mobile", False)
+        is_coseller = case_data.get("is_coseller", False)
+
+        launch_args = [] if is_mobile else ["--start-maximized"]
+        browser = p.chromium.launch(headless=not headed, args=launch_args)
+
+        # ---------------------------------------------------------------
+        # Build context args — fully mirrors conftest.py logic
+        # ---------------------------------------------------------------
+        base_args = {
+            "ignore_https_errors": True,
+            "permissions": ["camera", "microphone"],
+        }
+
+        if is_mobile:
+            iphone = p.devices["iPhone 14 Pro Max"]
+            context_args = {**iphone, **base_args}
+            print("  [DEVICE] Mobile emulation: iPhone 14 Pro Max (matching conftest.py)")
+        else:
+            context_args = {**base_args, "viewport": {"width": 1440, "height": 900}}
+
+        # Cookie selection: mirrors conftest.py priority
+        #   is_coseller → cookie_{env}_co_seller.json
+        #   default     → cookie_{env}.json
+        #   guest       → no cookies
+        effective_cookie_file = cookie_file  # default already resolved above
+        if is_coseller:
+            coseller_cookie = str(COOKIE_DIR / f"cookie_{env}_co_seller.json")
+            if os.path.exists(coseller_cookie):
+                effective_cookie_file = coseller_cookie
+                print(f"  [COOKIES] is_coseller: Using {coseller_cookie}")
+            else:
+                print(f"  [COOKIES] is_coseller: co_seller cookie not found ({coseller_cookie}), falling back to default")
+
         if is_guest:
             print("  [COOKIES] 'guest: true' detected. Running without cookies.")
-        elif os.path.exists(cookie_file):
-            context_args["storage_state"] = cookie_file
-            print(f"  [COOKIES] Using storage_state: {cookie_file}")
+        elif os.path.exists(effective_cookie_file):
+            context_args["storage_state"] = effective_cookie_file
+            print(f"  [COOKIES] Using storage_state: {effective_cookie_file}")
         else:
-            print(f"  [COOKIES] No cookie file found at: {cookie_file}")
+            print(f"  [COOKIES] No cookie file found at: {effective_cookie_file}")
 
         context = browser.new_context(**context_args)
+
+        # Grant permissions explicitly (same as conftest.py context fixture)
+        try:
+            context.grant_permissions(["camera", "microphone"])
+        except Exception as e:
+            print(f"  [WARN] grant_permissions failed: {e}")
+
+        # getUserMedia constraint relaxation — same patch as conftest.py
+        # Needed for camera/mic steps on fake Chromium device
+        context.add_init_script("""
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                const _original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+                navigator.mediaDevices.getUserMedia = function(constraints) {
+                    if (constraints && constraints.video && typeof constraints.video === 'object') {
+                        const v = JSON.parse(JSON.stringify(constraints.video));
+                        if (v.facingMode && v.facingMode.exact) {
+                            v.facingMode = { ideal: v.facingMode.exact };
+                        }
+                        if (v.deviceId && v.deviceId.exact) {
+                            delete v.deviceId;
+                        }
+                        if (v.width) delete v.width;
+                        if (v.height) delete v.height;
+                        constraints = { ...constraints, video: v };
+                    }
+                    return _original(constraints);
+                };
+            }
+        """)
+
         page = context.new_page()
         page.set_default_timeout(15000)
 
@@ -786,7 +1204,6 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                         break
 
         # --- Core step replay ---
-        previous_step_warning = None
         for idx, step_name in enumerate(steps_order):
             step_value = test_step[step_name]
             step_num = idx + 1
@@ -806,7 +1223,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
             after_dom = None
 
             try:
-                step_warn = _execute_step(page, step_name, step_value, actual_base_url)
+                _execute_step(page, step_name, step_value, actual_base_url)
 
                 # Success
                 after_screenshot = capture_screenshot_b64(page)
@@ -814,13 +1231,18 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                 # Incrementally add current page DOM to knowledge base
                 _add_dom_to_kb(after_dom, url_hint=actual_base_url)
                 print("PASSED")
-                if step_warn:
-                    previous_step_warning = step_warn
-                    last_warning_step = (step_num, step_name, step_warn)
-                    print(f"  [AMBIGUITY WARNING] Step #{step_num} '{step_name}': {step_warn}")
-                elif action_type == "click":
-                    # Only clear if this was a clean, unambiguous click
-                    previous_step_warning = None
+
+                # --- Post-Step Forward Validation ---
+                # For interactive steps (click/fill/upload), check if the NEXT step's
+                # target is reachable in current DOM. If not, this PASSED step may
+                # have clicked the wrong element / caused an unintended state change.
+                post_step_anomaly = None
+                if action_type in ("click", "fill", "upload", "check", "click_optional", "click_retry"):
+                    next_name, next_val = _get_next_interactive_step(steps_order, test_step, idx)
+                    if next_name and next_val:
+                        post_step_anomaly = _validate_post_step_state(after_dom, next_name, next_val)
+                        if post_step_anomaly:
+                            print(f"  [CASCADE WARN] Step {step_num} may have caused wrong state: {post_step_anomaly['detail'][:100]}")
 
                 step_records.append({
                     "step_num": step_num,
@@ -828,7 +1250,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                     "action_type": action_type,
                     "step_value": step_value,
                     "status": "passed",
-                    "warning": step_warn or "",
+                    "warning": "",
                     "before_screenshot": before_screenshot,
                     "after_screenshot": after_screenshot,
                     "before_dom": before_dom,
@@ -836,6 +1258,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                     "before_summary": before_summary,
                     "post_state": _capture_post_state(page),
                     "error": "",
+                    "post_step_anomaly": post_step_anomaly,
                 })
 
             except Exception as e:
@@ -867,75 +1290,235 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
 
                 print(f"FAILED - {error_msg[:80]}")
 
-                if not failure_found:
+                # --- Phase 3: Multi-strategy probing ---
+                # In continue_on_failure mode, diagnose EVERY failed step.
+                # In normal mode, only diagnose the FIRST failure.
+                is_first_failure = not failure_found
+                if is_first_failure:
                     failure_found = True
                     failed_step_name = step_name
                     failed_step_error = error_msg
+                elif continue_on_failure:
+                    # Track last failure for return summary
+                    failed_step_name = step_name
+                    failed_step_error = error_msg
 
-                    # --- Phase 3: Multi-strategy probing ---
+                # Run probing for first failure, or all failures in continue mode
+                probing_results = []
+                root_cause = ""
+                stale_risks = []
+                first_anomaly_step_num = None
+
+                if is_first_failure or continue_on_failure:
                     print(f"  [PROBING] Running diagnosis on failed step...")
                     probing_results = probe_failure(page, step_name, step_value, error_msg, after_dom)
 
-                    # --- ROOT CAUSE PREDICTION ---
-                    # Case 1: Previous click had an ambiguous match (warning was set)
-                    root_cause_parts = []
-                    if previous_step_warning and last_warning_step:
-                        root_cause_parts.append(
-                            f"Step #{last_warning_step[0]} '{last_warning_step[1]}' had an ambiguous locator match: "
-                            f"{last_warning_step[2]}  →  This click may have landed on the wrong element."
-                        )
-
-                    # Case 2: Active modal/popover is blocking the target element
-                    modal_probe = next((p for p in probing_results if "modal" in p.get("probe", "").lower() and p.get("count", 0) > 0), None)
-                    if modal_probe:
-                        modal_texts = "; ".join(m.get("text", "")[:60] for m in modal_probe.get("matches", []) if m.get("text"))
-                        root_cause_parts.append(
-                            f"A modal/dialog/popover is currently blocking the page "
-                            f"({modal_probe['count']} found: {modal_texts or 'no text'}). "
-                            f"A prior step may have accidentally triggered it."
-                        )
-
-                    # Case 3: Post-state retrospection — find first state anomaly
+                    # --- ROOT CAUSE PREDICTION (Rule Pyramid with Short-Circuiting) ---
+                    # 1. Compute anomalies BEFORE root cause (needed for stale_risks)
                     anomalies = _detect_state_anomalies(step_records, step_num)
                     if anomalies:
-                        first = anomalies[0]
-                        first_anomaly_step_num = first["step_num"]
-                        root_cause_parts.append(
-                            f"State anomaly detected at Step #{first['step_num']} "
-                            f"'{first['step_name']}': {first['detail']}. "
-                            f"This step caused an unexpected page state change that likely led to the current failure."
-                        )
+                        first_anomaly_step_num = anomalies[0]["step_num"]
 
-                    # Case 4: UI Change Detection — target text/aria-label exists but role changed
-                    # This catches UI redesigns where an element's role was changed
-                    # (e.g. textbox -> button, link -> button, etc.)
-                    # Extract target info from step_value (same logic as _execute_step)
+                    # 2. Check for active modal (used by both root cause and stale_risks)
+                    modal_probe = next(
+                        (p for p in probing_results
+                         if "modal" in p.get("probe", "").lower() and p.get("count", 0) > 0),
+                        None
+                    )
+
+                    # 3. Run Rule Pyramid: Cascade Source > Schema Mutation > Modal > Historical
+                    root_cause, stale_risks = _predict_root_cause(
+                        step_value=step_value,
+                        probing_results=probing_results,
+                        modal_probe=modal_probe,
+                        previous_step_warning=None,
+                        last_warning_step=None,
+                        anomalies=anomalies,
+                        step_records=step_records,
+                        failed_step_num=step_num,
+                    )
+
+                    if root_cause:
+                        error_msg += f"\n\n[ROOT CAUSE PREDICTION]: {root_cause}"
+                        if is_first_failure:
+                            failed_step_error = error_msg
+
+                    # ------------------------------------------------------------------
+                    # CASCADE GUARD: When root cause is a cascade source, redirect AI RAG
+                    # analysis to the CASCADE SOURCE step (the real problem), NOT the
+                    # current failed step. AI should suggest how to fix #11, not #12.
+                    # ------------------------------------------------------------------
+                    is_cascade = root_cause and "【前序步骤导致错误状态】" in root_cause
+                    if is_cascade:
+                        cs_match = re.search(r"Step #(\d+)", root_cause)
+                        cs_step_num = int(cs_match.group(1)) if cs_match else None
+
+                        if cs_step_num and page is not None:
+                            # Find the cascade source step record
+                            cs_sr = next(
+                                (sr for sr in step_records if sr.get("step_num") == cs_step_num),
+                                None
+                            )
+                            if cs_sr:
+                                cs_step_value = cs_sr.get("step_value", {})
+                                anomaly = cs_sr.get("post_step_anomaly", {})
+                                expected_ui = anomaly.get("expected_ui_type", "element")
+                                actual_ui = anomaly.get("actual_ui_types", [])
+                                actual_texts = anomaly.get("actual_texts", [])
+                                next_target = anomaly.get("next_step_target", "")
+
+                                # Build cascade-specific error context for AI
+                                cascade_error_msg = (
+                                    f"CASCADE FAILURE: Step #{cs_step_num} '{cs_sr.get('step_name', '')}' "
+                                    f"clicked a WRONG element. Expected a {expected_ui} to appear, "
+                                    f"but instead found: {', '.join(actual_ui) or 'no popup containers'}. "
+                                    f"Visible in the wrong state: {'; '.join(actual_texts[:3])}. "
+                                    f"This made the next step's target '{next_target}' unreachable. "
+                                    f"Please analyze why the original locator matched the WRONG element "
+                                    f"and suggest a MORE PRECISE locator for Step #{cs_step_num}."
+                                )
+
+                                # Remove old AI RAG suggestion (targeted at wrong step)
+                                probing_results = [
+                                    p for p in probing_results
+                                    if "AI RAG" not in p.get("probe", "")
+                                ]
+
+                                # Run AI RAG on the CASCADE SOURCE step
+                                # IMPORTANT: Use cs_sr["before_dom"] — the DOM BEFORE the cascade
+                                # source step was executed. This contains the ambiguous elements
+                                # (e.g. multiple "+ insert" buttons) that the AI can disambiguate.
+                                # after_dom (the failed step's DOM) shows the wrong dialog state
+                                # and is useless for figuring out which button to click.
+                                cs_before_dom = cs_sr.get("before_dom") or after_dom
+                                print(f"  [CASCADE AI] Running AI RAG on cascade source Step #{cs_step_num}...")
+                                print(f"  [CASCADE AI] Using {'before_dom' if cs_sr.get('before_dom') else 'after_dom (fallback)'} of Step #{cs_step_num}")
+                                try:
+                                    # --- RAG candidates from FAISS index ---
+                                    cs_rag_candidates = _query_dom_kb(
+                                        cs_step_value, url_hint="", top_k=5
+                                    )
+
+                                    # --- Direct DOM candidates from before_dom ---
+                                    # FAISS index may not have enough to disambiguate.
+                                    # Directly scan before_dom for elements matching the target
+                                    # name/text (case-insensitive partial match) so AI sees ALL
+                                    # similarly-named elements on the page, not just FAISS picks.
+                                    cs_target_name = (
+                                        cs_step_value.get("name") or
+                                        cs_step_value.get("text") or
+                                        cs_step_value.get("label") or
+                                        cs_step_value.get("placeholder") or ""
+                                    ).lower()
+                                    cs_direct_candidates = []
+                                    if cs_before_dom and cs_target_name:
+                                        for _el in cs_before_dom:
+                                            _el_text = (_el.get("text") or "").lower()
+                                            _el_aria = (_el.get("ariaLabel") or "").lower()
+                                            _el_tid = _el.get("testid", "")
+                                            if (cs_target_name in _el_text or
+                                                    cs_target_name in _el_aria or
+                                                    cs_target_name in _el_tid.lower()):
+                                                cs_direct_candidates.append({
+                                                    "element": _el,
+                                                    "score": 0.99,  # direct match, high confidence
+                                                    "source": "direct_dom"
+                                                })
+                                        # Cap at 8 direct matches to avoid token bloat
+                                        cs_direct_candidates = cs_direct_candidates[:8]
+
+                                    # Merge: direct DOM candidates first (they're more reliable),
+                                    # then RAG candidates that aren't duplicates
+                                    seen_testids = {c["element"].get("testid", "") for c in cs_direct_candidates if c["element"].get("testid")}
+                                    cs_merged_candidates = list(cs_direct_candidates)
+                                    for rc in cs_rag_candidates:
+                                        rc_tid = rc["element"].get("testid", "")
+                                        if rc_tid not in seen_testids:
+                                            cs_merged_candidates.append(rc)
+                                            if rc_tid:
+                                                seen_testids.add(rc_tid)
+                                    cs_merged_candidates = cs_merged_candidates[:10]  # max 10 total
+
+                                    if not cs_merged_candidates:
+                                        print(f"  [CASCADE AI] No candidates found — FAISS and before_dom both empty")
+
+                                    cs_ai_probe = probe_ai_rag_suggestion(
+                                        step_value=cs_step_value,
+                                        url_hint="",
+                                        dom_snapshot=cs_before_dom,
+                                        error_msg=cascade_error_msg,
+                                        sub_image_b64=None,
+                                        preloaded_candidates=cs_merged_candidates,
+                                    )
+                                    if cs_ai_probe:
+                                        cs_ai_probe["probe"] = (
+                                            f"AI RAG Suggestion for CASCADE SOURCE (Step #{cs_step_num})"
+                                        )
+                                        cs_ai_probe["cascade_source"] = cs_step_num
+                                        cs_ai_probe["cascade_context"] = {
+                                            "expected_ui": expected_ui,
+                                            "actual_ui": actual_ui,
+                                            "actual_texts": actual_texts,
+                                            "next_target": next_target,
+                                        }
+                                        probing_results.insert(0, cs_ai_probe)
+                                    else:
+                                        probing_results.insert(0, {
+                                            "probe": f"AI RAG Suggestion for CASCADE SOURCE (Step #{cs_step_num})",
+                                            "ai_reason": (
+                                                f"AI could not generate a fix for Step #{cs_step_num}. "
+                                                f"Please manually verify the locator."
+                                            ),
+                                            "ai_analysis": (
+                                                f"Step #{cs_step_num} 点击了错误元素，导致期望的 {expected_ui} "
+                                                f"未出现。请检查该步骤的定位器是否精确。"
+                                            ),
+                                        })
+                                except Exception as e:
+                                    print(f"  [CASCADE AI] Error: {e}")
+                                    probing_results.insert(0, {
+                                        "probe": f"AI RAG Suggestion for CASCADE SOURCE (Step #{cs_step_num})",
+                                        "ai_reason": f"AI analysis failed: {str(e)}",
+                                        "ai_analysis": (
+                                            f"Step #{cs_step_num} 点击了错误元素。"
+                                            f"请手动检查该步骤的定位器。"
+                                        ),
+                                    })
+                            else:
+                                # Cascade source record not found — fall back to clarifying probe
+                                probing_results = [
+                                    p for p in probing_results
+                                    if "AI RAG" not in p.get("probe", "")
+                                ]
+                                probing_results.insert(0, {
+                                    "probe": "AI RAG Suggestion — CASCADE (source record not found)",
+                                    "ai_reason": f"Cascade source Step #{cs_step_num} record not found.",
+                                    "ai_analysis": "无法定位 cascade source 步骤记录。",
+                                })
+
+                    # 4. Inject UI Change Detection heuristic suggestion (legacy Case 4)
+                    # This runs AFTER root cause so the heuristic_suggestion is still
+                    # available for auto-fix, but root cause has already been decided.
                     _target_role = step_value.get("role") if isinstance(step_value, dict) else None
                     _target_name = None
                     if isinstance(step_value, dict):
                         _target_name = step_value.get("name") or step_value.get("text") or step_value.get("label") or step_value.get("placeholder")
                     if _target_role and _target_name:
-                        # Find aria-label probe that matched the target name
-                        aria_probe = next((p for p in probing_results if "aria-label" in p.get("probe", "") and p.get("count", 0) > 0), None)
-                        role_probe = next((p for p in probing_results if f"role='{_target_role}'" in p.get("probe", "")), None)
+                        aria_probe = next(
+                            (p for p in probing_results if "aria-label" in p.get("probe", "") and p.get("count", 0) > 0),
+                            None
+                        )
+                        role_probe = next(
+                            (p for p in probing_results if f"role='{_target_role}'" in p.get("probe", "")),
+                            None
+                        )
                         if aria_probe and role_probe:
-                            # aria-label found something, but role search found 0 or different elements
                             role_count = role_probe.get("count", 0)
                             aria_matches = aria_probe.get("matches", [])
                             if role_count == 0 and aria_matches:
-                                # The text exists but the expected role doesn't
                                 actual_tags = list(set(m.get("tag", "") for m in aria_matches if m.get("tag")))
                                 actual_roles = list(set(m.get("role", "") for m in aria_matches if m.get("role")))
                                 if actual_tags or actual_roles:
-                                    tag_hint = f" (actual tag: {', '.join(actual_tags)})" if actual_tags else ""
-                                    role_hint = f" (actual role: {', '.join(actual_roles)})" if actual_roles else ""
-                                    root_cause_parts.append(
-                                        f"UI element '{_target_name}' exists but its role has changed: "
-                                        f"expected role='{_target_role}' not found, "
-                                        f"but element with matching aria-label was found as {tag_hint or role_hint}. "
-                                        f"The page may have been redesigned — update the locator to use the new role or a CSS locator."
-                                    )
-                                    # --- Inject heuristic_suggestion from Case 4 findings ---
                                     best_match = aria_matches[0]
                                     suggested_fix = {}
                                     if actual_roles:
@@ -952,10 +1535,6 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                                         "reason": f"Element '{_target_name}' found with role='{actual_roles[0] if actual_roles else 'unknown'}', expected role='{_target_role}'",
                                     })
 
-                    if root_cause_parts:
-                        error_msg += "\n\n[ROOT CAUSE PREDICTION]: " + "  |  ".join(root_cause_parts) + "\nPrevious step may have caused an unexpected page state change."
-                        failed_step_error = error_msg
-
                 step_records.append({
                     "step_num": step_num,
                     "step_name": step_name,
@@ -970,13 +1549,18 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
                     "before_summary": before_summary,
                     "post_state": _capture_post_state(page),
                     "error": error_msg,
-                    "probing": probing_results if failure_found and step_name == failed_step_name else [],
+                    "probing": probing_results,  # Always attach probing for this failed step
                     "anomaly_step_num": first_anomaly_step_num,
+                    "stale_risks": stale_risks,
                 })
 
-                # Stop replay after first failure (subsequent steps would be meaningless)
-                print(f"  [STOP] Replay stopped at first failure.")
-                break
+                if continue_on_failure:
+                    # Continue replaying to diagnose ALL failures, not just the first
+                    print(f"  [CONTINUE] Step failed, continuing to next step (--continue-on-failure mode)")
+                else:
+                    # Stop replay after first failure (subsequent steps would be meaningless)
+                    print(f"  [STOP] Replay stopped at first failure.")
+                    break
 
         # Assertion phase check
         if not failure_found:
@@ -1037,6 +1621,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool) -> Dict:
         "steps_passed": sum(1 for s in step_records if s["status"] == "passed"),
         "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "anomaly_step_nums": [a["step_num"] for a in anomalies] if failure_found and anomalies else [],
+        "stale_risks": stale_risks,
     }
 
 
@@ -1087,24 +1672,28 @@ def _classify_step(step_name: str, step_value: Any) -> str:
 
 
 def _execute_step(page, step_name: str, step_value: Any, base_url: str):
-    """Execute a single test step using simplified Playwright logic."""
+    """Execute a single test step by delegating to the project's action registry.
+
+    Reuses the same action functions that pytest uses (test_ui.py -> get_action),
+    ensuring replay behavior is identical to the real test runner.
+    Only a few steps need special handling (open/sleep for BASE_URL replacement,
+    save_html/modal/session/screenshot which are skipped in diagnostics).
+    """
     sn = step_name.lower()
 
-    # --- Sleep steps ---
+    # --- Sleep steps (support int/float shorthand) ---
     if sn.startswith("sleep") or isinstance(step_value, (int, float)):
         ms = step_value if isinstance(step_value, (int, float)) else step_value.get("sleep_step", 1000) if isinstance(step_value, dict) else 1000
         ms = max(200, min(int(ms), 5000))
         page.wait_for_timeout(ms)
         return
 
-    # --- Open URL ---
+    # --- Open URL (needs BASE_URL replacement) ---
     if sn.startswith("open"):
         url = step_value.get("open") or step_value.get("url") if isinstance(step_value, dict) else step_value
         if not url:
             return
         url = str(url).replace("{BASE_URL}", base_url)
-
-        # Handle cookie_file
         if isinstance(step_value, dict) and "cookie_file" in step_value:
             cookie_file = step_value["cookie_file"]
             if not os.path.isabs(cookie_file):
@@ -1114,299 +1703,31 @@ def _execute_step(page, step_name: str, step_value: Any, base_url: str):
                     cookie_data = json.load(f)
                 cookies = cookie_data if isinstance(cookie_data, list) else cookie_data.get("cookies", [])
                 page.context.add_cookies(cookies)
-
         page.goto(url, wait_until="load", timeout=30000)
         page.wait_for_timeout(2000)
         auto_dismiss_modals(page)
         return
 
-    # --- Check/Uncheck ---
-    if sn.startswith("check") or sn.startswith("uncheck"):
-        should_check = sn.startswith("check")
-        loc_str = step_value.get("locator", "") if isinstance(step_value, dict) else ""
-        if loc_str:
-            el = page.locator(loc_str).first
-            if should_check:
-                el.check(timeout=5000)
-            else:
-                el.uncheck(timeout=5000)
-            return
-
-    # --- Fill ---
-    if sn.startswith("fill"):
-        loc_str = step_value.get("locator", "") if isinstance(step_value, dict) else ""
-        fill_val = step_value.get("value", "") if isinstance(step_value, dict) else ""
-        if loc_str and fill_val is not None:
-            el = page.locator(loc_str).first
-            el.fill(str(fill_val), timeout=5000)
-            return
-
-    # --- Click steps (the most complex) ---
-    if (sn.startswith("r_click") or sn.startswith("click") or sn.startswith("l_click")
-            or sn.startswith("smart_click_optional") or sn.startswith("smart_click_retry")):
-        return _execute_click_step(page, step_name, step_value)
-
-    # --- Verify text visible ---
-    if sn.startswith("verify_text_visible") or sn == "verify_product_visible":
-        text = step_value.get("text", "") if isinstance(step_value, dict) else ""
-        if text:
-            page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=10000)
-        return
-
-    # --- Verify text hidden ---
-    if sn.startswith("verify_hidden"):
-        text = step_value.get("text", "") if isinstance(step_value, dict) else ""
-        if text:
-            page.get_by_text(text, exact=False).first.wait_for(state="hidden", timeout=5000)
-        return
-
-    # --- Verify value ---
-    if sn.startswith("verify_value"):
-        loc_str = step_value.get("locator", "") if isinstance(step_value, dict) else ""
-        expected = step_value.get("value", "") if isinstance(step_value, dict) else ""
-        if loc_str:
-            el = page.locator(loc_str).first
-            actual = el.input_value(timeout=5000)
-            if str(actual) != str(expected):
-                raise AssertionError(f"Value mismatch: expected '{expected}', got '{actual}'")
-        return
-
-    # --- Wait for URL ---
-    if sn.startswith("wait_for_url") or sn.startswith("verify_navigation"):
-        url_or_pattern = step_value.get("url", "") if isinstance(step_value, dict) else ""
-        if url_or_pattern:
-            url_or_pattern = str(url_or_pattern).replace("{BASE_URL}", base_url)
-            page.wait_for_url(url_or_pattern, timeout=10000)
-        return
-
-    # --- Wait for selector ---
-    if sn.startswith("wait_for_selector"):
-        sel = step_value.get("selector", "") if isinstance(step_value, dict) else ""
-        if sel:
-            page.wait_for_selector(sel, state="visible", timeout=10000)
-        return
-
-    # --- Wait toast ---
-    if sn.startswith("wait_toast"):
-        text = step_value.get("text", "") if isinstance(step_value, dict) else ""
-        if text:
-            page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=10000)
-            page.wait_for_timeout(2000)
-        return
-
-    # --- Wait (generic) ---
-    if sn.startswith("wait_"):
-        page.wait_for_timeout(2000)
-        return
-
-    # --- Scroll ---
-    if sn.startswith("scroll") or sn.startswith("swipe") or sn.startswith("page_scroll"):
-        y = step_value.get("y", 0) if isinstance(step_value, dict) else 0
-        if y:
-            page.mouse.wheel(0, y)
-            page.wait_for_timeout(500)
-        return
-
-    # --- Press key ---
-    if sn.startswith("press"):
-        key = step_value.get("key", "") if isinstance(step_value, dict) else ""
-        if key:
-            page.keyboard.press(key)
-        return
-
-    # --- Reload ---
-    if sn.startswith("reload"):
-        page.reload(wait_until="load", timeout=30000)
-        page.wait_for_timeout(2000)
-        return
-
-    # --- Go back ---
-    if sn.startswith("go_back"):
-        page.go_back(wait_until="load", timeout=15000)
-        page.wait_for_timeout(1000)
-        return
-
-    # --- Upload ---
-    if sn.startswith("upload"):
-        loc_str = step_value.get("locator", "") if isinstance(step_value, dict) else ""
-        file_path = step_value.get("file", "") if isinstance(step_value, dict) else ""
-        if loc_str and file_path:
-            el = page.locator(loc_str).first
-            abs_path = str(PROJECT_ROOT / file_path) if not os.path.isabs(file_path) else file_path
-            el.set_input_files(abs_path, timeout=5000)
-        return
-
-    # --- Save HTML (skip in diagnostic) ---
+    # --- Steps skipped in diagnostic mode ---
     if sn.startswith("save_html"):
         return
-
-    # --- Execute JS ---
-    if sn.startswith("execute_js"):
-        script = step_value.get("script", "") if isinstance(step_value, dict) else ""
-        if script:
-            page.evaluate(script)
-        return
-
-    # --- Handle modal / auto_handle_modals (skip in diagnostic) ---
     if sn.startswith("handle_modal") or sn.startswith("auto_handle_modals"):
         return
-
-    # --- Conditional (smart_if) ---
-    if sn.startswith("smart_if"):
-        condition = step_value.get("condition", "") if isinstance(step_value, dict) else ""
-        then_steps = step_value.get("then", {}) if isinstance(step_value, dict) else {}
-        else_steps = step_value.get("else", {}) if isinstance(step_value, dict) else {}
-        # Simplified: just try then steps
-        for tk, tv in then_steps.items():
-            _execute_step(page, tk, tv, base_url)
-        return
-
-    # --- Session actions (skip) ---
     if sn.startswith("session_") or sn.startswith("create_session") or sn.startswith("switch_session") or sn.startswith("close_session"):
         print(f"(session action, skipped)")
         return
-
-    # --- screenshot step (capture but don't save file) ---
     if sn.startswith("screenshot"):
         return
 
-    # --- Unknown step: try project action registry, then click fallback ---
-    # Import project's action registry for custom actions (e.g. delete_coseller_if_exists)
-    try:
-        from test_case.UI.Test_Katana.actions import get_action
-        action_fn = get_action(step_name)
-        if action_fn:
-            action_fn(page, step_value if isinstance(step_value, dict) else {})
-            return
-    except Exception:
-        pass
-
-    if isinstance(step_value, dict) and any(k in step_value for k in ["role", "locator", "text", "name", "test_id"]):
-        return _execute_click_step(page, step_name, step_value)
-
-    print(f"(unhandled: {step_name})")
-
-
-def _execute_click_step(page, step_name: str, v: dict):
-    """Execute a click step with multiple location strategies."""
-    if not isinstance(v, dict):
+    # --- All other steps: delegate to project's action registry ---
+    # This ensures replay behavior matches pytest exactly.
+    from test_case.UI.Test_Katana.actions import get_action
+    action_fn = get_action(step_name)
+    if action_fn:
+        action_fn(page, step_value if isinstance(step_value, dict) else {})
         return
 
-    target_role = v.get("role")
-    target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
-    target_locator = v.get("locator")
-    target_test_id = v.get("test_id")
-    target_index = v.get("index", 0)
-    force = v.get("force", False)
-    optional = v.get("optional", False)
-    exact = v.get("exact", False)
-
-    warning = None  # Track ambiguous matches across ALL strategies
-
-    # Skip if no actionable targets
-    if not target_name and not target_locator and not target_role and not target_test_id:
-        return
-
-    # 1. Test ID
-    if target_test_id:
-        try:
-            el = page.get_by_test_id(target_test_id).nth(target_index)
-            if el.is_visible(timeout=3000):
-                el.click(force=force)
-                return warning
-        except Exception:
-            if optional:
-                return
-
-    # 2. Locator (CSS or XPath)
-    if target_locator:
-        try:
-            if target_locator.startswith("/") or target_locator.startswith("xpath="):
-                xpath_loc = target_locator if target_locator.startswith("xpath=") else f"xpath={target_locator}"
-                loc_base = page.locator(xpath_loc)
-            else:
-                loc_base = page.locator(target_locator)
-
-            # If both locator + text/role, try combining
-            if target_name:
-                try:
-                    loc_base = loc_base.get_by_text(target_name, exact=exact)
-                except Exception:
-                    pass
-
-            # Ambiguity check for locator strategy
-            try:
-                loc_base.first.wait_for(state="attached", timeout=5000)
-                count = loc_base.count()
-                if count > 1 and target_name:
-                    warning = f"Ambiguous locator+name matched {count} elements (locator='{target_locator}', name='{target_name}')."
-            except Exception:
-                pass
-
-            el = loc_base.nth(target_index)
-            el.click(force=force, timeout=5000)
-            page.wait_for_timeout(300)
-            return warning
-        except Exception as e:
-            if optional:
-                return
-
-    # 3. Aria-label fallback
-    if target_name:
-        try:
-            loc_base = page.locator(f'[aria-label="{target_name}"], [aria-label*="{target_name}"]')
-            # Ambiguity check for aria-label strategy
-            try:
-                loc_base.first.wait_for(state="attached", timeout=3000)
-                count = loc_base.count()
-                if count > 1:
-                    warning = f"Ambiguous aria-label matched {count} elements for name='{target_name}' (substring match on aria-label)."
-            except Exception:
-                pass
-
-            el = loc_base.nth(target_index)
-            el.click(force=force, timeout=3000)
-            page.wait_for_timeout(300)
-            return warning
-        except Exception:
-            pass
-
-    # 4. Role / text
-    try:
-        if target_role:
-            el_base = page.get_by_role(role=target_role, name=target_name, exact=exact)
-        elif target_name:
-            el_base = page.get_by_text(target_name, exact=exact)
-        else:
-            raise Exception("No locator strategy matched")
-
-        try:
-            el_base.first.wait_for(state="attached", timeout=5000)
-            count = el_base.count()
-            if count > 1:
-                warning = f"Ambiguous locator matched {count} elements (e.g. role={target_role}, name='{target_name}')."
-        except Exception:
-            pass
-
-        el = el_base.nth(target_index)
-        el.click(timeout=5000)
-        page.wait_for_timeout(300)
-        if target_role == "option":
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(300)
-        return warning
-    except Exception:
-        try:
-            el.click(force=True, timeout=3000)
-            page.wait_for_timeout(300)
-            return warning
-        except Exception:
-            pass
-
-    if optional:
-        return
-
-    raise Exception(f"Element not found: role={target_role}, name={target_name}, locator={target_locator}, test_id={target_test_id}")
+    raise Exception(f"Unknown step (not in action registry): {step_name}")
 
 
 def _execute_assertion(page, assertion: dict, base_url: str):
@@ -1462,6 +1783,558 @@ def _execute_assertion(page, assertion: dict, base_url: str):
             if is_checked:
                 raise AssertionError(f"Element should NOT be checked: {locator}")
         return
+
+
+def _predict_root_cause(
+    step_value: dict,
+    probing_results: List[Dict],
+    modal_probe: Optional[Dict],
+    previous_step_warning: Optional[str] = None,
+    last_warning_step: Optional[tuple] = None,
+    anomalies: List[Dict] = None,
+    step_records: List[Dict] = None,
+    failed_step_num: int = None,
+) -> Tuple[Optional[str], List[str]]:
+    """
+    Rule Pyramid for root cause prediction (short-circuiting).
+
+    Priority:
+      0. Cascade Source  — a preceding PASSED step caused wrong UI state
+      1. Schema Mutation  — AI/heuristic found role changed, name preserved (most precise)
+      2. Modal Blocking   — active modal/popover blocking target element
+      3. URL Mismatch     — page navigated away from expected (TODO: needs step-level expected URL)
+      4. Historical       — ambiguous locator or state anomaly from prior steps (fallback)
+
+    Returns (root_cause_str, stale_risks_list).
+    stale_risks are ALWAYS collected but only shown in the secondary "Potential Stale Risks" section.
+    """
+    stale_risks: List[str] = []
+
+    # --- Always collect historical risks (they go to stale_risks, not root cause) ---
+    if previous_step_warning and last_warning_step:
+        stale_risks.append(
+            f"Step #{last_warning_step[0]} '{last_warning_step[1]}' had an ambiguous locator match: "
+            f"{last_warning_step[2]}"
+        )
+
+    for a in (anomalies or []):
+        stale_risks.append(
+            f"Step #{a['step_num']} '{a['step_name']}': {a['detail']}"
+        )
+
+    # Extract original step attributes
+    original_role = step_value.get("role") if isinstance(step_value, dict) else None
+    original_name = None
+    if isinstance(step_value, dict):
+        original_name = step_value.get("name") or step_value.get("text") or step_value.get("label") or step_value.get("placeholder")
+
+    # ==========================================================================
+    # Priority 0: Cascade Source (前序步骤导致错误状态)
+    # ==========================================================================
+    # A preceding PASSED step clicked the wrong element or caused an unintended
+    # UI state change, making the current step's target unreachable.
+    # This is detected by post_step_anomaly set during forward validation.
+    if step_records and failed_step_num is not None:
+        # Scan preceding steps for cascade_source anomaly
+        cascade_source = None
+        for sr in step_records:
+            if sr.get("step_num") >= failed_step_num:
+                break
+            anomaly = sr.get("post_step_anomaly")
+            if anomaly and anomaly.get("anomaly_type") == "cascade_source":
+                cascade_source = sr
+                # Keep the closest one to the failed step
+        if cascade_source:
+            cs = cascade_source
+            anomaly = cs["post_step_anomaly"]
+            expected_ui = anomaly.get("expected_ui_type", "element")
+            actual_ui = anomaly.get("actual_ui_types", [])
+            actual_texts = anomaly.get("actual_texts", [])
+            detail = anomaly.get("detail", "")
+
+            # Build a human-readable root cause
+            state_desc = ""
+            if expected_ui != "element":
+                state_desc = f"Expected a {expected_ui} to appear"
+                if actual_ui:
+                    state_desc += f", but instead: {', '.join(actual_ui)}"
+            if actual_texts:
+                samples = actual_texts[:3]
+                state_desc += f" (visible: {'; '.join(samples)})"
+
+            root_cause = (
+                f"【前序步骤导致错误状态】\n"
+                f"Step #{cs['step_num']} '{cs['step_name']}' PASSED but caused an unintended UI state.\n"
+                f"{state_desc}\n"
+                f"This made Step #{failed_step_num}'s target '{anomaly.get('next_step_target', '')}' unreachable.\n"
+                f"→ 修复建议：检查 Step #{cs['step_num']} 的定位器是否精确（可能点到了同名/相似元素）"
+            )
+            return root_cause, stale_risks
+
+    # ==========================================================================
+    # Priority 1: Schema Mutation (前端组件升级/属性变更)
+    # ==========================================================================
+    # Gate 1a: AI multimodal probe explicitly declared is_schema_mutation = True
+    # This is the highest-precision signal — AI has seen the actual page visually.
+    ai_schema_probe = next(
+        (p for p in probing_results if p.get("is_schema_mutation") is True),
+        None
+    )
+    if ai_schema_probe:
+        suggestion = ai_schema_probe.get("heuristic_suggestion", {})
+        new_role = suggestion.get("role", "unknown")
+        probe_label = ai_schema_probe.get("probe", "AI RAG")
+        is_visual = "Vision" in probe_label
+        confidence_label = "视觉+语义双重验证" if is_visual else "语义分析"
+        root_cause = (
+            f"【前端组件升级/属性变更】\n"
+            f"目标元素的定位 Schema 发生了改变："
+            f"role 从 '{original_role}' 变成了 '{new_role}'。"
+            f"Playwright 无法识别旧的属性组合导致元素未找到。"
+            f"（由 AI {confidence_label} 明确判定，置信度 {ai_schema_probe['score']:.0%}）"
+        )
+        return root_cause, stale_risks
+
+    # Gate 1b: Heuristic fallback — score >= 0.8 + role changed + name preserved
+    # Used when no visual sub-image was available (text-only mode).
+    schema_mutation_probe = None
+    for p in probing_results:
+        if "heuristic_suggestion" not in p:
+            continue
+        score = p.get("score", 0)
+        suggestion = p["heuristic_suggestion"]
+        suggested_role = suggestion.get("role")
+        suggested_name = suggestion.get("name") or suggestion.get("text")
+
+        # High confidence + role changed = schema mutation signal
+        if score >= 0.8 and original_role and suggested_role and suggested_role != original_role:
+            name_preserved = False
+            if not original_name:
+                name_preserved = True
+            elif suggested_name:
+                if suggested_name == original_name:
+                    name_preserved = True
+                else:
+                    sim = difflib.SequenceMatcher(None, str(original_name).lower(), str(suggested_name).lower()).ratio()
+                    if sim >= 0.6:
+                        name_preserved = True
+            else:
+                # Delta format: suggestion omits name → name unchanged
+                name_preserved = True
+
+            if name_preserved:
+                schema_mutation_probe = p
+                break
+
+    if schema_mutation_probe:
+        suggestion = schema_mutation_probe["heuristic_suggestion"]
+        new_role = suggestion.get("role", "unknown")
+        probe_name = "AI RAG" if "AI RAG" in schema_mutation_probe.get("probe", "") else "Heuristic"
+        root_cause = (
+            f"【前端组件升级/属性变更】\n"
+            f"目标元素的定位 Schema 发生了改变："
+            f"role 从 '{original_role}' 变成了 '{new_role}'。"
+            f"Playwright 无法识别旧的属性组合导致元素未找到。"
+            f"（由 {probe_name} 探测到，置信度 {schema_mutation_probe['score']:.0%}）"
+        )
+        return root_cause, stale_risks
+
+    # Also check Case-4 style "UI Change Detection" probes (score 0.95, aria-label found but role mismatch)
+    ui_change_probe = next((p for p in probing_results if "UI Change Detection" in p.get("probe", "")), None)
+    if ui_change_probe:
+        suggestion = ui_change_probe.get("heuristic_suggestion", {})
+        new_role = suggestion.get("role", suggestion.get("tag", "unknown"))
+        root_cause = (
+            f"【前端组件升级/属性变更】\n"
+            f"目标元素的定位 Schema 发生了改变："
+            f"role 从 '{original_role}' 变成了 '{new_role}'。"
+            f"Playwright 无法识别旧的属性组合导致元素未找到。"
+        )
+        return root_cause, stale_risks
+
+    # ==========================================================================
+    # Priority 2: Modal Blocking (页面元素被遮挡)
+    # ==========================================================================
+    if modal_probe:
+        modal_texts = "; ".join(
+            m.get("text", "")[:60] for m in modal_probe.get("matches", []) if m.get("text")
+        )
+        root_cause = (
+            f"【页面元素被遮挡】\n"
+            f"当前页面检测到有 {modal_probe['count']} 个活动的弹窗/遮挡物"
+            f"（{modal_texts or 'no text'}），"
+            f"导致目标元素无法交互。"
+        )
+        return root_cause, stale_risks
+
+    # ==========================================================================
+    # Priority 3: URL Mismatch (路由错误) — reserved for future implementation
+    # ==========================================================================
+    # TODO: Add step-level expected URL tracking to enable this check.
+    # if current_url != expected_url:
+    #     return f"【路由错误】...", stale_risks
+
+    # ==========================================================================
+    # Priority 4: Historical State Pollution (兜底 — 历史状态污染隐患)
+    # ==========================================================================
+    if stale_risks:
+        root_cause = (
+            f"【历史状态污染隐患】\n"
+            f"在历史步骤中发现了 {len(stale_risks)} 条风险信号"
+            f"（模糊定位或状态异常），可能导致后续页面状态发生隐式偏移，"
+            f"最终导致本步元素未找到。"
+        )
+        return root_cause, stale_risks
+
+    # Nothing matched at all
+    return None, stale_risks
+
+
+def _get_next_interactive_step(steps_order: list, step_values: dict, current_idx: int):
+    """Find the next meaningful interactive step after current_idx (skip passive steps).
+
+    Returns (step_name, step_value) or (None, None) if no more interactive steps.
+    Skips: sleep, wait, scroll, screenshot, save_html, handle_modal, session, smart_if,
+           press (key events don't need element matching), reload, go_back.
+    """
+    INTERACTIVE_PREFIXES = (
+        "click", "r_click", "l_click", "smart_click",
+        "fill", "check", "uncheck", "upload",
+        "verify", "assert",
+    )
+    for j in range(current_idx + 1, len(steps_order)):
+        name = steps_order[j]
+        val = step_values.get(name, {})
+        sn = name.lower()
+        if any(sn.startswith(p) for p in INTERACTIVE_PREFIXES):
+            return name, val
+    return None, None
+
+
+def _extract_step_target(step_value) -> dict:
+    """Extract the target element identifiers from a step definition.
+
+    Returns dict with keys: role, name, text, label, placeholder, locator, test_id, tag
+    """
+    if not isinstance(step_value, dict):
+        return {}
+    return {
+        "role": step_value.get("role", ""),
+        "name": step_value.get("name", ""),
+        "text": step_value.get("text", ""),
+        "label": step_value.get("label", ""),
+        "placeholder": step_value.get("placeholder", ""),
+        "locator": step_value.get("locator", ""),
+        "test_id": step_value.get("test_id", ""),
+        "tag": step_value.get("tag", ""),
+    }
+
+
+def _element_matches_target(dom_entry: dict, target: dict) -> bool:
+    """Check if a DOM element matches the step's target.
+
+    Matches if ANY of the target fields match the corresponding DOM fields.
+    This is intentionally lenient to catch various element representations.
+    """
+    target_name = target.get("name") or target.get("text") or target.get("label") or target.get("placeholder") or ""
+    target_role = target.get("role", "").lower()
+    target_testid = target.get("test_id", "")
+    target_locator = target.get("locator", "")
+
+    dom_role = (dom_entry.get("role") or "").lower()
+    dom_aria = (dom_entry.get("ariaLabel") or "").lower()
+    dom_text = (dom_entry.get("text") or "").lower()
+    dom_testid = dom_entry.get("testid", "")
+    dom_placeholder = (dom_entry.get("placeholder") or "").lower()
+    dom_tag = (dom_entry.get("tag") or "").lower()
+    dom_type = (dom_entry.get("type") or "").lower()
+
+    # ------------------------------------------------------------------
+    # 1. Locator-based matching (CSS selector parsing)
+    # ------------------------------------------------------------------
+    if target_locator:
+        # [data-testid="xxx"] or [data-testid='xxx']
+        testid_match = re.search(r'data-testid=["\']?([^"\'\]\s]+)["\']?', target_locator)
+        if testid_match:
+            extracted_testid = testid_match.group(1)
+            if dom_testid == extracted_testid:
+                return True
+
+        # [role="xxx"]
+        role_match = re.search(r'\[role=["\']?([^"\'\]\s]+)["\']?\]', target_locator)
+        if role_match:
+            extracted_role = role_match.group(1).lower()
+            if dom_role == extracted_role:
+                has_text_match = re.search(r':has-text\(["\']?([^"\')]+)["\']?\)', target_locator)
+                if has_text_match:
+                    extracted_text = has_text_match.group(1).lower()
+                    if extracted_text in dom_text:
+                        return True
+                else:
+                    return True
+
+        # :has-text("xxx") standalone
+        has_text_match = re.search(r':has-text\(["\']?([^"\')]+)["\']?\)', target_locator)
+        if has_text_match:
+            extracted_text = has_text_match.group(1).lower()
+            if extracted_text in dom_text:
+                return True
+
+        # Simple class match (e.g. .MuiButtonBase-root) — cls field has only first 5 classes
+        classes_in_locator = re.findall(r'\.([A-Za-z0-9_-]+)', target_locator)
+        if classes_in_locator:
+            dom_classes = (dom_entry.get("cls") or "").lower()
+            for cls in classes_in_locator:
+                if cls.lower() in dom_classes:
+                    has_text_match = re.search(r':has-text\(["\']?([^"\')]+)["\']?\)', target_locator)
+                    if has_text_match:
+                        extracted_text = has_text_match.group(1).lower()
+                        if extracted_text in dom_text:
+                            return True
+                        break  # class matched but text didn't
+                    else:
+                        return True
+
+    # ------------------------------------------------------------------
+    # 2. Exact test_id match
+    # ------------------------------------------------------------------
+    if target_testid and dom_testid == target_testid:
+        return True
+
+    # ------------------------------------------------------------------
+    # 3. Tag-to-role implicit mapping (Playwright ARIA semantics)
+    # ------------------------------------------------------------------
+    tag_to_role = {
+        "input": {
+            "text": "textbox",
+            "email": "textbox",
+            "password": "textbox",
+            "search": "searchbox",
+            "number": "spinbutton",
+            "tel": "textbox",
+            "url": "textbox",
+        },
+        "textarea": "textbox",
+        "button": "button",
+        "a": "link",
+        "select": "combobox",
+    }
+    implicit_role = None
+    if dom_tag in tag_to_role:
+        if dom_tag == "input" and dom_type in tag_to_role["input"]:
+            implicit_role = tag_to_role["input"][dom_type]
+        elif isinstance(tag_to_role[dom_tag], str):
+            implicit_role = tag_to_role[dom_tag]
+
+    if implicit_role and target_role:
+        if implicit_role == target_role:
+            if target_name:
+                target_name_lower = target_name.lower()
+                if target_name_lower == dom_aria:
+                    return True
+                if target_name_lower == dom_placeholder:
+                    return True
+                if target_name_lower in dom_text:
+                    return True
+            else:
+                return True
+
+    if not target_name:
+        return False
+
+    target_name_lower = target_name.lower()
+
+    # ------------------------------------------------------------------
+    # 4. Role + Name combined match (explicit role in DOM)
+    # ------------------------------------------------------------------
+    if target_role and dom_role == target_role:
+        if target_name_lower == dom_aria:
+            return True
+        if target_name_lower == dom_placeholder:
+            return True
+        if target_name_lower in dom_text:
+            return True
+
+    # ------------------------------------------------------------------
+    # 5. Name-only match (fallback, lenient)
+    # ------------------------------------------------------------------
+    if target_name_lower == dom_aria:
+        return True
+    if target_name_lower in dom_text and len(dom_text) < len(target_name_lower) + 30:
+        return True
+    if target_name_lower == dom_placeholder:
+        return True
+
+    return False
+
+
+def _classify_ui_element(dom_entry: dict) -> str:
+    """Classify a DOM element into a UI type: dialog, menu, popover, dropdown, combobox, input, button, link, other."""
+    role = (dom_entry.get("role") or "").lower()
+    tag = (dom_entry.get("tag") or "").lower()
+
+    if role == "dialog" or "dialog" in tag or "modal" in tag:
+        return "dialog"
+    if role == "menu" or role == "menubar":
+        return "menu"
+    if role == "menuitem":
+        return "menuitem"
+    if role == "listbox" or role == "option":
+        return "listbox"
+    if role == "combobox":
+        return "combobox"
+    if role == "popover":
+        return "popover"
+    if role == "tablist" or role == "tab":
+        return "tab"
+    if tag == "select" or role == "select":
+        return "select"
+    if tag == "input" or role == "textbox" or role == "search":
+        return "input"
+    if tag == "button" or role == "button":
+        return "button"
+    if tag == "a" or role == "link":
+        return "link"
+    return "other"
+
+
+def _validate_post_step_state(after_dom, next_step_name, next_step_value) -> Optional[Dict]:
+    """Post-step forward validation: check if next step's target is reachable in current DOM.
+
+    This catches the #1 silent failure mode: Step N PASSED but clicked the wrong element,
+    causing a different UI state (wrong dialog, wrong menu) that makes Step N+1 fail.
+
+    Pure DOM text analysis — zero AI token cost.
+
+    RELAXED: Only flags cascade when popup containers (dialog/menu/popover) are present
+    or when the next step expects a popup-layer element. Normal page elements (tab,
+    button, textbox) may legitimately not be visible yet (needs scroll, new page, etc.).
+    """
+    if not after_dom or not next_step_value:
+        return None
+
+    target = _extract_step_target(next_step_value)
+    if not target:
+        return None
+
+    # Search for the next step's target in current DOM
+    found = False
+    for entry in after_dom:
+        if _element_matches_target(entry, target):
+            found = True
+            break
+
+    if found:
+        return None  # Target is reachable — no anomaly
+
+    # ------------------------------------------------------------------
+    # RELAXED CASCADE DETECTION
+    # ------------------------------------------------------------------
+    # If the target is NOT found, only flag as cascade in specific scenarios.
+    # Normal page elements may require scroll, animation, or subsequent steps.
+
+    target_role = target.get("role", "").lower()
+    target_locator = target.get("locator", "")
+    target_name = target.get("name") or target.get("text") or target.get("label") or target.get("placeholder") or ""
+
+    # Derive a display name for the target (for detail messages)
+    display_target = target_name
+    if not display_target and target_locator:
+        has_text = re.search(r':has-text\(["\']?([^"\')]+)["\']?\)', target_locator)
+        if has_text:
+            display_target = has_text.group(1)
+        else:
+            testid_match = re.search(r'data-testid=["\']?([^"\'\]\s]+)["\']?', target_locator)
+            if testid_match:
+                display_target = f"[testid={testid_match.group(1)}]"
+            else:
+                display_target = target_locator[:50]
+
+    # Collect popup containers currently in DOM
+    popup_types = set()
+    popup_texts = []
+    for entry in after_dom:
+        ui_type = _classify_ui_element(entry)
+        if ui_type in ("dialog", "menu", "listbox", "popover", "combobox"):
+            popup_types.add(ui_type)
+            if entry.get("text"):
+                popup_texts.append(entry["text"].lower())
+
+    # Case A: Next step expects a popup-layer element (menuitem, option, etc.)
+    # These should appear immediately after the triggering click.
+    is_popup_target = target_role in ("menuitem", "option", "dialog", "alertdialog", "listbox", "combobox")
+
+    # Case B: Current DOM has popup containers but target is not a popup element.
+    # This could mean a wrong element was clicked, opening an unexpected popup.
+    has_popups = bool(popup_types)
+
+    # === RELAXATION RULE 1 ===
+    # No popups in DOM + target is not a popup element -> normal flow, don't flag.
+    if not has_popups and not is_popup_target:
+        return None
+
+    # === RELAXATION RULE 2 ===
+    # Popups exist but target is NOT a popup element.
+    # Check if popup content is related to the target (e.g. normal dialog flow).
+    if has_popups and not is_popup_target:
+        target_display_lower = display_target.lower()
+        is_related = False
+        for pt in popup_texts:
+            if target_display_lower and (target_display_lower in pt or pt in target_display_lower):
+                is_related = True
+                break
+            if target_locator:
+                has_text_match = re.search(r':has-text\(["\']?([^"\')]+)["\']?\)', target_locator)
+                if has_text_match:
+                    locator_text = has_text_match.group(1).lower()
+                    if locator_text in pt:
+                        is_related = True
+                        break
+
+        if is_related:
+            return None  # Popup content is related to target -> normal dialog flow
+
+    # If we reach here: either target is a popup element but missing,
+    # or popups exist but are unrelated to target -> CASCADE.
+
+    # Classify expected UI type
+    expected_ui_type = "element"
+    if target_role == "menuitem":
+        expected_ui_type = "menu"
+    elif target_role in ("dialog", "alertdialog"):
+        expected_ui_type = "dialog"
+    elif target_role == "option":
+        expected_ui_type = "listbox"
+    elif target_role == "tab":
+        expected_ui_type = "tab"
+    elif target_locator and "menu" in target_locator.lower():
+        expected_ui_type = "menu"
+    elif target_locator and "dialog" in target_locator.lower():
+        expected_ui_type = "dialog"
+
+    detail_parts = [f"下一步 '{next_step_name}' 期望的是 '{display_target}'"]
+    if expected_ui_type != "element":
+        detail_parts.append(f"(应该位于一个 {expected_ui_type} 内)")
+
+    if has_popups:
+        present_str = ", ".join(sorted(popup_types))
+        detail_parts.append(f"但 DOM 中包含: {present_str}")
+    else:
+        detail_parts.append("但 DOM 中未找到目标")
+
+    if popup_texts:
+        samples = list(dict.fromkeys(popup_texts))[:3]  # deduplicate
+        detail_parts.append(f"可见元素: {'; '.join(samples)}")
+
+    return {
+        "anomaly_type": "cascade_source",
+        "detail": "。".join(detail_parts),
+        "next_step_target": display_target,
+        "next_step_role": target_role,
+        "expected_ui_type": expected_ui_type,
+        "actual_ui_types": sorted(popup_types),
+        "actual_texts": list(dict.fromkeys(popup_texts))[:5],
+    }
 
 
 def _detect_state_anomalies(step_records: List[Dict], failed_step_num: int) -> List[Dict]:
@@ -1875,14 +2748,29 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_sn
                         "score": 0.3,
                     })
 
-    # Probe 9: AI RAG Suggestion (Gemini + DOM Knowledge Base)
-    # Uses vector search + LLM to find the best replacement locator.
+    # Probe 9: AI RAG Suggestion (Gemini + DOM Knowledge Base + Visual Sub-Image)
+    # Uses vector search + LLM (multimodal) to find the best replacement locator.
     # Kept separate from rule-based probes (7/8) which are preserved for comparison.
+
+    # 9a. Query DOM KB first (to get candidates for bbox extraction)
+    rag_candidates = _query_dom_kb(step_value, url_hint="", top_k=3)
+
+    # 9b. Attempt to capture a visual sub-image focused on the candidate area
+    sub_image_b64 = None
+    if rag_candidates and page is not None:
+        sub_image_b64 = capture_sub_image_b64(page, rag_candidates, step_value=step_value)
+        if sub_image_b64:
+            print(f"  [VISUAL] Sub-image captured ({len(sub_image_b64)//1024}KB)")
+        else:
+            print(f"  [VISUAL] Sub-image unavailable — using text-only mode")
+
     ai_probe = probe_ai_rag_suggestion(
         step_value=step_value,
-        url_hint="",  # TODO: pass URL from step context if available
+        url_hint="",
         dom_snapshot=dom_snapshot,
         error_msg=error_msg,
+        sub_image_b64=sub_image_b64,
+        preloaded_candidates=rag_candidates,
     )
     if ai_probe:
         probes.append(ai_probe)
@@ -2014,6 +2902,7 @@ def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: 
             <td>{_esc(r['yaml_path'].split('/')[-1] if r['yaml_path'] else 'N/A')}</td>
         </tr>"""
 
+    passed_on_replay = sum(1 for r in results if not r['failed_step'])
     return f"""
     <div class="summary-section">
         <h2>Summary Dashboard</h2>
@@ -2028,8 +2917,8 @@ def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: 
                 <div class="stat-label">Failure Reproduced</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{sum(1 for r in results if not r['failed_step'])}</div>
-                <div class="stat-label">Passed on Replay (Flaky?)</div>
+                <div class="stat-number" style="color:#2e7d32;">{passed_on_replay}</div>
+                <div class="stat-label">Passed on Replay (Fixed/Flaky)</div>
             </div>
         </div>
         <table class="data-table">
@@ -2100,25 +2989,32 @@ def _render_case(result: Dict) -> str:
     # --- Fix Suggestions (from heuristic probe) ---
     suggestions_html = ""
     fix_suggestions = []
+    failed_steps_names = set()
     if result.get("failed_step"):
-        for sr in result.get("step_records", []):
-            if sr.get("step_name") == result["failed_step"]:
-                # Collect ALL heuristic suggestions (rule-based + AI), show all
-                all_suggestions = []
-                for p in sr.get("probing", []):
-                    if "heuristic_suggestion" in p:
-                        all_suggestions.append({
-                            "step_name": sr["step_name"],
-                            "suggestion": p["heuristic_suggestion"],
-                            "probe": p.get("probe", ""),
-                            "score": p.get("score", 0),
-                            "reason": p.get("reason", ""),
-                            "ai_candidates": p.get("ai_candidates", []),
-                        })
-                # Sort by score descending, but keep ALL suggestions
-                if all_suggestions:
-                    all_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
-                    fix_suggestions.extend(all_suggestions)
+        failed_steps_names.add(result["failed_step"])
+    # In continue-on-failure mode, collect suggestions from ALL failed steps
+    for sr in result.get("step_records", []):
+        if sr.get("status") == "failed" and sr.get("probing"):
+            failed_steps_names.add(sr.get("step_name"))
+
+    for sr in result.get("step_records", []):
+        if sr.get("step_name") in failed_steps_names and sr.get("probing"):
+            # Collect ALL heuristic suggestions (rule-based + AI), show all
+            all_suggestions = []
+            for p in sr.get("probing", []):
+                if "heuristic_suggestion" in p:
+                    all_suggestions.append({
+                        "step_name": sr["step_name"],
+                        "suggestion": p["heuristic_suggestion"],
+                        "probe": p.get("probe", ""),
+                        "score": p.get("score", 0),
+                        "reason": p.get("reason", ""),
+                        "ai_candidates": p.get("ai_candidates", []),
+                    })
+            # Sort by score descending, but keep ALL suggestions
+            if all_suggestions:
+                all_suggestions.sort(key=lambda x: x.get("score", 0), reverse=True)
+                fix_suggestions.extend(all_suggestions)
     if fix_suggestions:
         sugg_cards = ""
         for fix in fix_suggestions:
@@ -2207,6 +3103,26 @@ def _render_case(result: Dict) -> str:
             {sugg_cards}
         </div>"""
 
+    # --- Potential Stale Risks (secondary section, not root cause) ---
+    stale_risks_html = ""
+    stale_risks = result.get("stale_risks", [])
+    if stale_risks:
+        risk_items = "".join(
+            f"<li style='margin:6px 0;font-size:12px;color:#37474f;'>{_esc(r)}</li>"
+            for r in stale_risks
+        )
+        stale_risks_html = f"""
+        <div style="background:#e8f4f8; border:2px solid #4a90d9; border-radius:8px; padding:12px 16px; margin:15px 0;">
+            <strong style="color:#1565c0; font-size:14px;">&#128712; Potential Stale Risks / 潜在历史隐患</strong>
+            <ul style="margin:8px 0; padding-left:20px;">
+                {risk_items}
+            </ul>
+            <div style="font-size:11px; color:#546e7a; margin-top:6px;">
+                These are correlation signals from prior steps, not conclusive root causes.
+                以上仅为历史步骤的关联性提示，不构成确定性根因。
+            </div>
+        </div>"""
+
     return f"""
     <div class="case-section" id="{case_id}">
         <h2>Case: {_esc(result['case_name'])}</h2>
@@ -2222,6 +3138,7 @@ def _render_case(result: Dict) -> str:
             <button onclick="const content = this.parentElement.nextElementSibling; if (content.style.display === 'none') {{ content.style.display = 'block'; this.innerHTML = 'Collapse &#x25B2;'; }} else {{ content.style.display = 'none'; this.innerHTML = 'Expand &#x25BC;'; }}" style="background: #e3f2fd; color: #1e88e5; border: 1px solid #90caf9; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: bold; transition: background 0.2s;">Collapse &#x25B2;</button>
         </div>
         <div class="steps-container" style="display:block;">{steps_html}</div>
+        {stale_risks_html}
     </div>"""
 
 
@@ -2232,11 +3149,14 @@ def _render_step_record(sr: Dict, anomaly_steps: set = None) -> str:
 
     has_warning = bool(sr.get("warning"))
     is_anomaly = sr["step_num"] in anomaly_steps and sr["status"] == "passed"
+    is_cascade = sr.get("post_step_anomaly") is not None and sr["status"] == "passed"
     status_class = {"passed": "step-passed", "skipped": "step-skipped"}.get(sr["status"], "step-failed")
     if has_warning and sr["status"] == "passed":
         status_class = "step-warning"  # amber highlight for ambiguous-click steps
     if is_anomaly:
         status_class = "step-anomaly"  # amber highlight for state anomaly steps
+    if is_cascade:
+        status_class = "step-cascade"  # red highlight for cascade source steps
 
     status_badge_map = {
         "passed": '<span class="badge badge-pass">PASSED</span>',
@@ -2247,6 +3167,8 @@ def _render_step_record(sr: Dict, anomaly_steps: set = None) -> str:
         status_badge = '<span class="badge badge-pass">PASSED</span> <span class="badge badge-warn">⚠️ AMBIGUOUS</span>'
     if is_anomaly:
         status_badge = '<span class="badge badge-pass">PASSED</span> <span class="badge badge-anomaly">⚠️ STATE ANOMALY</span>'
+    if is_cascade:
+        status_badge = '<span class="badge badge-pass">PASSED</span> <span class="badge badge-cascade">🔴 CASCADE SOURCE</span>'
 
     # Step header
     header = f"""
@@ -2272,6 +3194,18 @@ def _render_step_record(sr: Dict, anomaly_steps: set = None) -> str:
         <div style="background:#fff8e1; border:2px solid #ffc107; border-radius:8px; padding:10px 14px; margin:8px 15px;">
             <strong style="color:#e65100; font-size:13px;">⚠️ AMBIGUOUS LOCATOR WARNING</strong><br>
             <span style="color:#664d03; font-size:12px;">{_esc(sr['warning'])}</span>
+        </div>"""
+
+    # Cascade source info box (for PASSED steps that caused wrong UI state)
+    if is_cascade and sr.get("post_step_anomaly"):
+        ca = sr["post_step_anomaly"]
+        ca_detail = ca.get("detail", "")
+        ca_texts = ca.get("actual_texts", [])
+        content += f"""
+        <div style="background:#ffebee; border:2px solid #ef5350; border-radius:8px; padding:10px 14px; margin:8px 15px;">
+            <strong style="color:#c62828; font-size:13px;">🔴 CASCADE SOURCE — This step PASSED but caused wrong UI state</strong><br>
+            <span style="color:#b71c1c; font-size:12px;">{_esc(ca_detail)}</span>
+            {"<br><span style='color:#b71c1c; font-size:11px;'>Visible elements: " + _esc("; ".join(ca_texts[:5])) + "</span>" if ca_texts else ""}
         </div>"""
 
     # Before screenshot
@@ -2401,10 +3335,13 @@ def _render_probing(probes: List[Dict]) -> str:
                 <span class="probe-error">Error: {_esc(probe['error'])}</span>
             </div>"""
         elif probe.get("ai_reason"):
+            ai_analysis = probe.get("ai_analysis", "")
+            analysis_html = f'<div style="font-size:11px;color:#5c6bc0;margin-top:6px;padding:6px 8px;background:#f5f5f5;border-radius:4px;"><strong>Reasoning:</strong> {_esc(ai_analysis)}</div>' if ai_analysis else ""
             html += f"""
             <div class="probe-item" style="border:1px solid #e3f2fd;border-radius:8px;padding:10px 14px;">
                 <span class="probe-name">&#129302; {probe_name}</span>
                 <div style="font-size:12px;color:#1565c0;margin-top:6px;"><strong>AI Analysis:</strong> {_esc(probe['ai_reason'])}</div>
+                {analysis_html}
             </div>"""
         elif "heuristic_suggestion" in probe:
             sugg = probe["heuristic_suggestion"]
@@ -2429,11 +3366,35 @@ def _render_probing(probes: List[Dict]) -> str:
                     <ul style="background:#fff;border:1px solid #e3f2fd;border-radius:4px;padding:8px;margin-top:4px;">{cand_lines}</ul>
                 </details>"""
 
+            # Build AI CoT analysis display (with is_schema_mutation badge)
+            ai_cot_html = ""
+            if is_ai and probe.get("ai_analysis"):
+                is_visual_probe = "Vision" in probe.get("probe", "")
+                schema_flag = probe.get("is_schema_mutation")
+                # Mutation badge
+                if schema_flag is True:
+                    mutation_badge = '<span style="display:inline-block;margin-left:8px;padding:2px 8px;background:#e8f5e9;color:#2e7d32;border-radius:10px;font-size:10px;font-weight:bold;">✓ Schema Mutation Confirmed</span>'
+                elif schema_flag is False:
+                    mutation_badge = '<span style="display:inline-block;margin-left:8px;padding:2px 8px;background:#fff3e0;color:#e65100;border-radius:10px;font-size:10px;font-weight:bold;">Label/Text Changed</span>'
+                else:
+                    mutation_badge = ""
+                mode_label = "🖼️ Visual+Semantic" if is_visual_probe else "📝 Text-only"
+                ai_cot_html = f"""
+                <div style="margin-bottom:10px;padding:8px 12px;background:#f5f5f5;border-left:3px solid #5c6bc0;border-radius:4px;font-size:12px;color:#37474f;">
+                    <div style="display:flex;align-items:center;margin-bottom:4px;">
+                        <strong style="color:#5c6bc0;">AI Reasoning</strong>
+                        <span style="margin-left:8px;font-size:10px;color:#888;">{mode_label}</span>
+                        {mutation_badge}
+                    </div>
+                    <div>{_esc(probe['ai_analysis'])}</div>
+                </div>"""
+
             html += f"""
             <div class="probe-item suggestion-card" style="border:2px solid {card_border};border-radius:10px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px;">
                     <span class="probe-name">{card_icon} {probe_name} (Confidence: {score}%){badge}</span>
                 </div>
+                {ai_cot_html}
                 <div style="font-size: 12px; margin-bottom: 10px; color: #555;">
                     Found a highly similar element on the page:<br>
                     <strong>Tag:</strong> <code>{_esc(m.get('tag',''))}</code>,
@@ -2527,6 +3488,7 @@ h3 { color: #636e72; margin: 20px 0 10px; font-size: 18px; }
 .step-skipped .step-header { background: #f0f0f0; }
 .step-warning .step-header { background: #fff8e1; border-left: 4px solid #ffc107; }
 .step-anomaly .step-header { background: #fff8e1; border-left: 4px solid #ffc107; }
+.step-cascade .step-header { background: #ffebee; border-left: 4px solid #ef5350; }
 .step-num { font-weight: 700; color: #636e72; min-width: 30px; }
 .step-name { font-weight: 600; font-family: 'Consolas', monospace; }
 .step-type { font-size: 11px; background: #dfe6e9; padding: 2px 8px; border-radius: 10px; color: #636e72; }
@@ -2556,6 +3518,7 @@ details summary:hover { text-decoration: underline; }
 .network-title { font-weight: 700; color: #e65100; margin-bottom: 8px; }
 .badge-warn { background: #f39c12; color: #fff; }
 .badge-anomaly { background: #f39c12; color: #fff; }
+.badge-cascade { background: #ef5350; color: #fff; }
 .suggestion-card { background: #e3f2fd !important; border: 1px solid #90caf9 !important; border-radius: 8px; padding: 15px !important; margin-top: 10px; }
 </style>
 </head>
@@ -2590,6 +3553,8 @@ def main():
                         help="Skip replay; load saved suggestions from latest report and apply fixes interactively")
     parser.add_argument("--fix-json", type=str, default=None,
                         help="Path to a specific fix_suggestions.json file (used with --fix-only)")
+    parser.add_argument("--continue-on-failure", action="store_true",
+                        help="Continue replay past failures to diagnose ALL failing steps (not just first)")
     args = parser.parse_args()
 
     # --fix-only mode: load saved suggestions and run interactive fix (no replay)
@@ -2678,7 +3643,7 @@ def main():
             continue
 
         try:
-            result = replay_case(case_info, base_url, args.headed)
+            result = replay_case(case_info, base_url, args.headed, args.continue_on_failure)
             diagnosis_results.append(result)
             if result.get("failed_step") and not result.get("failed_step_error", "").startswith("Diagnosis engine error"):
                 failed_yamls.add(ypath)
@@ -2716,12 +3681,17 @@ def main():
     print(f"{'='*60}")
 
     # Interactive Fix
-    # Collect all heuristic suggestions (rule-based + AI)
+    # Collect all heuristic suggestions (rule-based + AI) from ALL failed steps
     fix_suggestions = []
     for r in diagnosis_results:
         if r.get("failed_step"):
+            failed_names = set()
+            failed_names.add(r["failed_step"])
             for sr in r.get("step_records", []):
-                if sr.get("step_name") == r["failed_step"]:
+                if sr.get("status") == "failed":
+                    failed_names.add(sr.get("step_name"))
+            for sr in r.get("step_records", []):
+                if sr.get("step_name") in failed_names and sr.get("probing"):
                     for p in sr.get("probing", []):
                         if "heuristic_suggestion" in p:
                             fix_suggestions.append({
@@ -2777,7 +3747,7 @@ def _run_interactive_fix(fix_suggestions: list):
 
 
 def _apply_yaml_fix(fix: dict) -> bool:
-    """Directly patch a single step in a YAML file."""
+    """Patch a single step in a YAML file using ruamel.yaml (preserves comments & formatting)."""
     yaml_path = PROJECT_ROOT / fix["yaml_path"]
     case_name = fix["case_name"]
     step_name = fix["step_name"]
@@ -2787,103 +3757,208 @@ def _apply_yaml_fix(fix: dict) -> bool:
         print(f"  [ERROR] File not found: {yaml_path}")
         return False
 
+    if not _ruamel_available:
+        print(f"  [WARN] ruamel.yaml not available, using PyYAML fallback (comments may be lost)")
+        return _apply_yaml_fix_text(fix)
+
     try:
-        with open(yaml_path, encoding="utf-8") as f:
-            text = f.read()
-        lines = text.splitlines(keepends=True)
+        ryaml = YAML()
+        ryaml.preserve_quotes = True
 
-        # Find the case block, then the step line
-        in_case = False
-        case_indent = None
-        for i, line in enumerate(lines):
-            stripped = line.lstrip()
-            indent = len(line) - len(stripped)
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            data = ryaml.load(f)
 
-            # Detect case start
-            if stripped.startswith(case_name + ":"):
-                in_case = True
-                case_indent = indent
-                continue
+        # Navigate to case_name → test_step → step_name
+        case_block = data.get(case_name)
+        if case_block is None:
+            print(f"  [ERROR] Case '{case_name}' not found in {yaml_path}")
+            return False
 
-            # Detect case end (next top-level key at same or lower indent)
-            if in_case and indent <= case_indent and stripped and not stripped.startswith("#"):
-                in_case = False
-                continue
+        # step_name could be under test_step or directly under case
+        step_container = case_block.get("test_step", case_block)
+        step_data = step_container.get(step_name)
+        if step_data is None:
+            # Also try direct access under case_block (for base yaml steps)
+            step_data = case_block.get(step_name)
+            if step_data is None:
+                print(f"  [ERROR] Step '{step_name}' not found in case '{case_name}' in {yaml_path}")
+                return False
+            step_container = case_block
 
-            if in_case and stripped.startswith(step_name + ":"):
-                # Found the step line — parse old step, apply suggestion
-                old_step_str = stripped[len(step_name)+1:].strip()
-                # Try to parse as inline dict
-                is_inline = bool(old_step_str)
-                try:
-                    old_step = yaml.safe_load(old_step_str) if old_step_str else {}
-                    if not isinstance(old_step, dict):
-                        old_step = {}
-                except Exception:
-                    old_step = {}
+        # step_data might be a string (like "click") — need to handle mapping
+        if not isinstance(step_data, dict):
+            print(f"  [ERROR] Step '{step_name}' is not a dict (got {type(step_data).__name__})")
+            return False
 
-                # Build new step
-                new_step = dict(old_step)
-                for k, v in suggestion.items():
-                    if v is None:
-                        new_step.pop(k, None)
-                    else:
-                        new_step[k] = v
+        # Apply suggestion: only update fields present in suggestion
+        changed = []
+        for k, v in suggestion.items():
+            if v is None:
+                if k in step_data:
+                    del step_data[k]
+                    changed.append(f"-{k}")
+            else:
+                old_val = step_data.get(k)
+                if old_val != v:
+                    step_data[k] = v
+                    changed.append(f"{k}: {old_val} -> {v}")
 
-                # Serialize back to inline YAML
-                parts = []
-                for k in ("role", "name", "locator", "test_id", "placeholder",
-                          "aria-label", "label", "index", "exact", "optional",
-                          "value", "checked", "timeout", "frame"):
-                    if k in new_step:
-                        v = new_step[k]
-                        if isinstance(v, str):
-                            parts.append(f"{k}: '{v}'")
-                        elif isinstance(v, bool):
-                            parts.append(f"{k}: {str(v).capitalize()}")
-                        else:
-                            parts.append(f"{k}: {v}")
-                for k, v in new_step.items():
-                    if k not in ("role", "name", "locator", "test_id", "placeholder",
-                                 "aria-label", "label", "index", "exact", "optional",
-                                 "value", "checked", "timeout", "frame"):
-                        if isinstance(v, str):
-                            parts.append(f"{k}: '{v}'")
-                        elif isinstance(v, bool):
-                            parts.append(f"{k}: {str(v).capitalize()}")
-                        else:
-                            parts.append(f"{k}: {v}")
+        if not changed:
+            print(f"  [INFO] No changes needed for '{step_name}' (values already match)")
+            return True
 
-                new_line = " " * indent + step_name + ": { " + ", ".join(parts) + " }\n"
-                lines[i] = new_line
+        # Write back preserving comments and formatting
+        with open(yaml_path, "w", encoding="utf-8") as f:
+            ryaml.dump(data, f)
 
-                # If original was multi-line (no inline dict), delete the child lines below
-                if not is_inline:
-                    j = i + 1
-                    while j < len(lines):
-                        child_stripped = lines[j].lstrip()
-                        child_indent = len(lines[j]) - len(child_stripped)
-                        # Stop when we hit a line at same or lower indent (next step, next case, or blank)
-                        if child_stripped and child_indent <= indent:
-                            break
-                        # Also stop at case boundary
-                        if child_stripped and not child_stripped.startswith("#") and child_indent <= case_indent:
-                            break
-                        j += 1
-                    # Remove lines (i+1) through (j-1)
-                    if j > i + 1:
-                        del lines[i + 1:j]
-
-                with open(yaml_path, "w", encoding="utf-8") as f:
-                    f.write("".join(lines))
-                return True
-
-        print(f"  [ERROR] Step '{step_name}' not found in case '{case_name}' in {yaml_path}")
-        return False
+        print(f"  [OK] Changed: {', '.join(changed)}")
+        return True
 
     except Exception as e:
-        print(f"  [ERROR] Failed to apply fix: {e}")
+        print(f"  [ERROR] ruamel.yaml fix failed: {e}")
+        # Fallback to text-based fix
+        print(f"  [INFO] Falling back to PyYAML fix...")
+        return _apply_yaml_fix_text(fix)
+
+
+def _apply_yaml_fix_text(fix: dict) -> bool:
+    """Fallback: precise line-level replacement. Only touches the exact lines
+    inside the target step that need changing. Preserves ALL formatting,
+    comments, blank lines, and indentation."""
+    yaml_path = PROJECT_ROOT / fix["yaml_path"]
+    case_name = fix["case_name"]
+    step_name = fix["step_name"]
+    suggestion = fix["suggestion"]
+
+    if not yaml_path.exists():
+        print(f"  [ERROR] File not found: {yaml_path}")
         return False
+
+    with open(yaml_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # ------------------------------------------------------------------
+    # 1. Locate case block (top-level key, indent == 0)
+    # ------------------------------------------------------------------
+    case_idx = None
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+        if indent == 0 and stripped.startswith(f"{case_name}:"):
+            case_idx = i
+            break
+    if case_idx is None:
+        print(f"  [ERROR] Case '{case_name}' not found in {yaml_path}")
+        return False
+
+    # ------------------------------------------------------------------
+    # 2. Locate step block inside case
+    # ------------------------------------------------------------------
+    step_idx = None
+    step_indent = None
+    for i in range(case_idx + 1, len(lines)):
+        line = lines[i]
+        stripped = line.lstrip()
+        if not stripped:
+            continue
+        indent = len(line) - len(stripped)
+        # New top-level key → left case block
+        if indent == 0 and not stripped.startswith("#"):
+            break
+        if stripped.startswith(f"{step_name}:"):
+            step_idx = i
+            step_indent = indent
+            break
+
+    if step_idx is None:
+        print(f"  [ERROR] Step '{step_name}' not found in case '{case_name}'")
+        return False
+
+    # ------------------------------------------------------------------
+    # 3. Determine step boundaries
+    # ------------------------------------------------------------------
+    step_end = len(lines)
+    for j in range(step_idx + 1, len(lines)):
+        line = lines[j]
+        stripped = line.lstrip()
+        if not stripped:
+            continue
+        indent = len(line) - len(stripped)
+        if stripped.startswith("#"):
+            continue  # Skip comments
+        if indent <= step_indent:
+            step_end = j
+            break
+
+    child_indent = step_indent + 2
+
+    # ------------------------------------------------------------------
+    # 4. Apply changes line by line
+    # ------------------------------------------------------------------
+    changed = []
+    for k, v in suggestion.items():
+        if v is None:
+            # Delete key
+            found = False
+            for j in range(step_idx + 1, step_end):
+                line = lines[j]
+                stripped = line.lstrip()
+                if stripped.startswith(f"{k}:"):
+                    lines[j] = ""
+                    changed.append(f"-{k}")
+                    found = True
+                    break
+            if not found:
+                print(f"  [WARN] Key '{k}' not found for deletion")
+        else:
+            # Update or insert key
+            found = False
+            for j in range(step_idx + 1, step_end):
+                line = lines[j]
+                stripped = line.lstrip()
+                if stripped.startswith(f"{k}:"):
+                    prefix = line[:len(line) - len(stripped)]
+                    new_val = _yaml_scalar_str(v)
+                    lines[j] = f"{prefix}{k}: {new_val}\n"
+                    changed.append(f"{k}")
+                    found = True
+                    break
+            if not found:
+                prefix = " " * child_indent
+                new_val = _yaml_scalar_str(v)
+                lines.insert(step_end, f"{prefix}{k}: {new_val}\n")
+                changed.append(f"+{k}")
+                step_end += 1
+
+    if not changed:
+        print(f"  [INFO] No changes needed for '{step_name}'")
+        return True
+
+    with open(yaml_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+
+    print(f"  [OK] Changed: {', '.join(changed)}")
+    return True
+
+
+def _yaml_scalar_str(value) -> str:
+    """Convert a Python scalar to a safe YAML scalar string."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    if not isinstance(value, str):
+        return str(value)
+    # YAML keywords that must be quoted
+    if value.lower() in ("true", "false", "null", "yes", "no", "on", "off", "~"):
+        return f"'{value}'"
+    # Leading special chars that YAML interprets structurally
+    if value.startswith(("{", "[", "%", "@", "`", "#", ":", "|", ">", "*", "&", "!")):
+        return f"'{value}'"
+    # Control chars
+    if "\n" in value or "\r" in value:
+        return repr(value)
+    return value
 
 
 if __name__ == "__main__":
