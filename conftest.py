@@ -129,6 +129,11 @@ def pytest_addoption(parser):
         parser.addoption("--yaml", action="store", default=None, help="Specific YAML file to load test cases from")
     except ValueError:
         pass
+    try:
+        parser.addoption("--step-capture", action="store", default="on-failure",
+                         help="Step-level capture mode: on|on-failure|off (default: on-failure)")
+    except ValueError:
+        pass
 
 @pytest.fixture()
 def browser_context_args(browser_context_args, playwright, request):
@@ -214,7 +219,7 @@ def pytest_generate_tests(metafunc):
             yaml_files = "Storefront_module.yaml"
         
         # Support comma-separated multiple yaml files
-        yaml_file_list = [f.strip() for f in yaml_files.split(",")]
+        yaml_file_list = [f.strip() for f in yaml_files.split(",") if f.strip()]
         
         all_argvalues = []
         all_ids = []

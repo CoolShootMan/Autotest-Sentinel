@@ -1176,8 +1176,8 @@ testT2515_VerifyDisabled_WithVariant:
         open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
-        # Step 2: Scroll down to load product cards
-        swipe_avoid_plus: { x: 0, y: 500 }
+        # Step 2: Scroll down to load product cards ("+" FAB removed in UI redesign, plain scroll now)
+        swipe: { x: 0, y: 500 }
         sleep_step: 1000
 
         # Step 3: Click General Admission product name to open detail drawer
@@ -1322,7 +1322,7 @@ testT2874_EnableDependentProducts:
         R_click_event: { locator: "text=Test event with two tickets", exact: true }
         sleep_step: 4000
 
-        # Step 2.1: Scroll down to reveal post card
+        # Step 2.1: Scroll down to reveal post card (legacy: swipe_avoid_plus, "+" FAB removed)
         # swipe_avoid_plus: { x: 0, y: 500 }
         # sleep_step: 1000
 
@@ -1803,7 +1803,7 @@ testT5033_5034_VerifyPartner:
         R_click_buy_now_0: { locator: 'div[role="combobox"]:has-text("Buy now")' }
         R_click_option_view_options: { role: "option", name: "View options" }
         sleep_step: 500
-        swipe_avoid_plus: { x: 0, y: 500 }
+        swipe: { x: 0, y: 500 }
         sleep_step: 500
         check_cta_type_2: { locator: 'input[name="products.1.isCtaCustomized"]', checked: true }
         # Product 1: Click Buy now -> select Add to cart
@@ -1935,8 +1935,8 @@ testT4955_Guest_VerifyAccessCode:
         open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
         sleep_after_open: 5000
 
-        # Step 2: Scroll down to load product cards
-        swipe_avoid_plus: { x: 0, y: 500 }
+        # Step 2: Scroll down to load product cards ("+" FAB removed in UI redesign, plain scroll now)
+        swipe: { x: 0, y: 500 }
         sleep_step: 1000
 
         # Step 3: Click General Admission product name to open detail drawer

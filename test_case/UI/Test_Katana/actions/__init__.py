@@ -57,7 +57,9 @@ from .module import (
     click_module_collapse, click_module_expand, verify_module_collapsed, verify_module_expanded,
     verify_element_style, verify_child_element_count,
     verify_element_contains_text, verify_carousel_scroll, verify_carousel_nav_hidden_at_last,
-    click_container_button
+    click_container_button,
+    click_shop_event_button,
+    click_shop_add_button, click_shop_hamburger, click_add_storefront_module, click_shop_add_module,
 )
 from .product import (
 
@@ -191,6 +193,11 @@ ACTIONS = {
     "verify_all_commission": verify_all_commission_values,
     "verify_cta_type_4": verify_no_sibling_text,
     "click_module_add_new": click_module_add_new,
+    "click_shop_event_button": click_shop_event_button,
+    "click_shop_add_button": click_shop_add_button,
+    "click_shop_hamburger": click_shop_hamburger,
+    "click_add_storefront_module": click_add_storefront_module,
+    "click_shop_add_module": click_shop_add_module,
     "verify_product_visible": verify_text_visible,
     "select_replacement_product": select_replacement_product,
     "click_by_coordinates": click_by_coordinates,
@@ -234,6 +241,16 @@ def get_action(name):
         return click_add_new_product
     elif name.startswith("click_module_add_new"):
         return click_module_add_new
+    elif name.startswith("click_shop_event_button"):
+        return click_shop_event_button
+    elif name.startswith("click_shop_add_button"):
+        return click_shop_add_button
+    elif name.startswith("click_shop_hamburger"):
+        return click_shop_hamburger
+    elif name.startswith("click_add_storefront_module"):
+        return click_add_storefront_module
+    elif name.startswith("click_shop_add_module"):
+        return click_shop_add_module
     elif name.startswith("click_module_post_view_event_cta"):
         return click_module_post_view_event_cta
     elif name.startswith("click_module_item_more_icon"):

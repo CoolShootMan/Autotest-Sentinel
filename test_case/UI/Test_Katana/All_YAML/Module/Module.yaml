@@ -3,9 +3,8 @@ testT3554:  # [LAST: PASSED 2026-05-06]
     description: "Verify adding a new module in shop page"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click4: { role: 'button', name: 'Add' }
@@ -80,11 +79,10 @@ testT4622:  # [LAST: PASSED 2026-05-06]
     description: "Verify module collapse and expand toggle functionality"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
 
         # Prerequisite: Create module (from testT3554)
-        R_click_create_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add module' }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click_add: { role: 'button', name: 'Add' }
@@ -177,7 +175,7 @@ testAddNewPost:   # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill1: { role: 'textbox', name: 'Enter title of the module', value: 'Verify Add post module' }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click4: { role: 'button', name: 'Add' }
@@ -235,7 +233,7 @@ testT3788:  # [LAST: BROKEN 2026-05-06]
             url: "{BASE_URL}/partnercoseller997"
             cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json"
         sleep_after_open: 5000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Module-products' }
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_before_select_type: 2000
@@ -299,9 +297,8 @@ testT3843:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of General Link on the shop page(modules) and module menu"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
-        R_click_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Link1' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -348,12 +345,11 @@ testT4600_4602:  # [LAST: BROKEN 2026-05-06]
     description: "Verify carousel module horizontal scroll navigation: links slide by one link width on next/prev, next button hidden at last element, nav buttons only visible on hover"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
 
         # Step 1: Create module with General Link + Carousel type
         # This creates the LAST module on the page, ensuring we operate on the correct one
-        R_click_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test nav buttons' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -425,9 +421,8 @@ testT3842:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a new product to an existing module"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test product link' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -460,9 +455,8 @@ testT4264:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user adds the link card of 'Image' on the shop page(navigation bar) and module menu"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 5000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'test image link' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -497,9 +491,8 @@ testT4660:  # [LAST: BROKEN 2026-05-06]
     description: "Verify adding a Music module and track, then deleting it"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 3000
-        R_click_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test-Module-Music' }
         R_click_continue: { role: 'button', name: 'Continue' }
         sleep_before_select_music: 2000
@@ -536,7 +529,7 @@ testT4816:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Music Module' }
         R_click_continue: { locator: "button[data-track-location='Dialog']", name: 'Continue' , exact: true}
@@ -576,7 +569,7 @@ testT3886_long:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test - module - video' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -609,7 +602,7 @@ testT3886_short:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test - module - video - short' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -645,7 +638,7 @@ testT3841:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Test Ticket Event module' }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click_ticket_event_type: { text: 'Ticket / Event' }
@@ -696,7 +689,7 @@ testT4852:  # [LAST: BROKEN 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'Mixed module type' }
         R_click_mixed_content: { role: 'button', name: 'Mixed content types Combine' }
@@ -752,7 +745,7 @@ testAddNewUpdateModule:  # [LAST: PASSED 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
-        R_click3: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill1: { role: 'textbox', name: 'Enter title of the module', value: 'new module use in archiving test cases' }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click4: { role: 'button', name: 'Add' }
@@ -977,7 +970,7 @@ testT4605:  # [LAST: BROKEN 2026-05-06]
         sleep_after_open: 5000
 
         # Step 1: Create a new carousel module (post type by default)
-        R_click_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'post duplicate module' }
         R_click_continue: { role: 'button', name: 'Continue' }
         check_carousel: { role: 'radio', name: 'Carousel Carousel' }
@@ -1025,7 +1018,7 @@ testT4603:  # [LAST: FAILED 2026-05-06]
     test_step:
         open: "{BASE_URL}/autotest-coseller"
         sleep_after_open: 5000
-        R_click_module_btn: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         sleep_after_module_click: 2000
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'products' }
         R_click_continue: { role: 'button', name: 'Continue' }
@@ -1050,10 +1043,9 @@ testT5210_5211_5212:  # [LAST: BROKEN 2026-05-06]
     description: "Verify that the user can set text alignment (center/right) on General Link cards within a module"
     test_step:
         open: "{BASE_URL}/autotestshop"
-        swipe_avoid_plus: { x: 0, y: 300 }
         sleep_after_open: 5000
         # Step 1: Create module with General Link type
-        R_click_module: { role: 'button', name: 'Module' }
+        click_shop_add_module:
         fill_module_title: { role: 'textbox', name: 'Enter title of the module', value: 'general link text align' }
         R_click_continue: { role: 'button', name: 'Continue' }
         click_general_link: { text: 'General Link', exact: true }

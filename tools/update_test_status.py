@@ -131,11 +131,15 @@ def parse_behaviors_json(report_dir: str) -> dict:
             status = item.get("status", "").lower()
             parameters = item.get("parameters", [])
             
-            # Allure uses "passed"/"failed", ONES uses "通过"/"失败"
+            # Allure → ONES status mapping
             if status == "passed":
                 status = "通过"
             elif status == "failed":
                 status = "失败"
+            elif status == "broken":
+                status = "阻塞"
+            elif status == "skipped":
+                status = "跳过"
             
             # First try to extract T-numbers from function name
             tc_list = _extract_test_case_ids(name)
@@ -191,7 +195,9 @@ def update_ones(test_results: dict, test_plan_name: str = None):
     """
     status_map = {
         "通过": "通过",
-        "失败": "失败"
+        "失败": "失败",
+        "阻塞": "阻塞",
+        "跳过": "跳过"
     }
     
     total = len(test_results)
@@ -228,9 +234,9 @@ def update_ones(test_results: dict, test_plan_name: str = None):
         print("\n[2/6] Entering Test Management...")
         
         # 3. Find the test plan
-        print(f"\n[3/6] Finding test plan: {test_plan_name or 'KAT-11128'}...")
+        print(f"\n[3/6] Finding test plan: {test_plan_name or 'KAT-11058'}...")
         
-        plan_regex = re.compile(test_plan_name or "KAT-11128", re.IGNORECASE)
+        plan_regex = re.compile(test_plan_name or "KAT-11058", re.IGNORECASE)
         
         try:
             page.get_by_text(plan_regex).first.wait_for(state="visible", timeout=10000)
@@ -299,7 +305,7 @@ def update_ones(test_results: dict, test_plan_name: str = None):
                 # Check the checkbox
                 checkbox = row.locator("input[type='checkbox']").first
                 if not checkbox.is_checked():
-                    checkbox.check()
+                    checkbox.check(force=True)
                 
                 # Change status
                 website_status = status_map.get(status, status)
@@ -313,13 +319,13 @@ def update_ones(test_results: dict, test_plan_name: str = None):
                 
                 # Uncheck the checkbox
                 if checkbox.is_checked():
-                    checkbox.uncheck()
+                    checkbox.uncheck(force=True)
                 
                 print("[OK]")
                 updated += 1
                 
             except Exception as e:
-                print(f"[FAIL - {str(e)[:40]}]")
+                print(f"[FAIL - {str(e)[:60]}]")
                 failed += 1
                 try:
                     page.keyboard.press("Escape")
@@ -339,7 +345,7 @@ def update_ones(test_results: dict, test_plan_name: str = None):
 
 if __name__ == "__main__":
     report_dir = sys.argv[1] if len(sys.argv) > 1 else None
-    test_plan_name = "KAT-11128"
+    test_plan_name = "KAT-11058"
     
     if report_dir:
         if not os.path.isabs(report_dir):
