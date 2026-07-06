@@ -55,8 +55,8 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
-    #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
-    yaml_files = "All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
+    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Events/Sync_event_post.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml"
+    #yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Module/Module.yaml,All_YAML/Post/Post_setting.yaml"
     pytest_args = [
         sys.executable,
         "-m",
@@ -65,7 +65,8 @@ def start_autotest():
         '--headed',
         f'--yaml={yaml_files}',
         f'--output={test_results}',
-        f'--alluredir={allure_data_dir}'
+        f'--alluredir={allure_data_dir}',
+        '--step-capture=on-failure'
     ]
     logger.info(f"Running with YAMLs: {yaml_files}")
 
@@ -117,14 +118,15 @@ def start_autotest():
     subprocess.run(generate_cmd, check=True)
 
     # ---------------------------------------------------------
-    # NEW: Trigger diagnostic tool for failed cases
+    # NEW: Analyze all failed cases from step captures
     # ---------------------------------------------------------
-    logger.info(f"Triggering diagnostic tool for failed cases...")
-    diagnose_script = os.path.join(BASE_DIR, 'tools', 'diagnose_failed.py')
-    allure_dir_name = os.path.basename(allure_data_dir)
-    diagnose_cmd = [sys.executable, diagnose_script, "--allure-dir", allure_dir_name]
-    logger.info(f"Running command: {' '.join(diagnose_cmd)}")
-    subprocess.run(diagnose_cmd)
+    logger.info(f"Analyzing failed cases from step captures...")
+    analyze_script = os.path.join(BASE_DIR, 'tools', 'step_analyzer.py')
+    analyze_cmd = [sys.executable, analyze_script, "analyze", "--all-failed"]
+    logger.info(f"Running command: {' '.join(analyze_cmd)}")
+    analyze_result = subprocess.run(analyze_cmd, text=True)
+    if analyze_result.returncode != 0:
+        logger.error(f"Analysis error: {analyze_result.stderr}")
     # ---------------------------------------------------------
 
     # Get LAN IP (192.168.x.x range, excluding virtual NICs/WSL)

@@ -89,6 +89,11 @@ def pytest_addoption(parser):
         parser.addoption("--yaml", action="store", default=None, help="Specific YAML file to load test cases from")
     except ValueError:
         pass
+    try:
+        parser.addoption("--step-capture", action="store", default="on-failure",
+                         help="Step-level capture mode: on|on-failure|off (default: on-failure)")
+    except ValueError:
+        pass
 
 @pytest.fixture()
 def browser_context_args(browser_context_args, playwright, request):
@@ -125,9 +130,30 @@ def browser_context_args(browser_context_args, playwright, request):
 
 
 @pytest.fixture()
-def page(context: BrowserContext) -> Generator[Page, None, None]:
+def page(context: BrowserContext, request) -> Generator[Page, None, None]:
     page = context.new_page()
     yield page
+    # --- Step Capture Finalization ---
+    # Finalize step capture after test completes (even on failure/exception)
+    step_capture = getattr(page, "_step_capture", None)
+    step_capture_mode = getattr(page, "_step_capture_mode", "off")
+    if step_capture and step_capture._steps:
+        # Determine if test failed from pytest report
+        test_failed = False
+        if hasattr(request.node, 'rep_call'):
+            test_failed = request.node.rep_call.failed if hasattr(request.node.rep_call, 'failed') else True
+        should_persist = (step_capture_mode == "on") or (step_capture_mode == "on-failure" and test_failed)
+        if should_persist:
+            # Get metadata from page attributes
+            metadata = {
+                "description": getattr(page, "_test_description", ""),
+                "yaml_path": getattr(page, "_yaml_path", ""),
+                "is_mobile": False,  # Not easily accessible here
+            }
+            try:
+                step_capture.finalize(test_passed=not test_failed, case_metadata=metadata)
+            except Exception as e:
+                logger.warning(f"Step capture finalization failed: {e}")
 
 def _build_artifact_test_folder(
     pytestconfig: Any, request: pytest.FixtureRequest, folder_or_file_name: str

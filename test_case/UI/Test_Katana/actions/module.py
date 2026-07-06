@@ -3,6 +3,100 @@ from playwright.sync_api import Page
 from loguru import logger
 from .base import smart_click, verify_no_sibling_text
 
+# ---------------------------------------------------------------------------
+# Shop page UI redesign 2026-06: Bottom tab bar replaced by top-right controls.
+#
+# NEW FLOW for creating modules:
+#   1. Click "+ Add" button → dropdown menu (creation items)
+#   2. Click "Add a storefront module" in dropdown → Module drawer opens
+#
+# OLD flow (removed):
+#   - Bottom tabs: My shop / Explore / [+] / Cart / Account
+#   - "[+]" FAB → swipe_avoid_plus workaround
+#   - "Module" tab click
+#
+# What moved where:
+#   - Explore, Account, Content, Orders etc → hamburger icon (☰) menu
+#   - "+" content + "Module" creation → "+ Add" button dropdown
+# ---------------------------------------------------------------------------
+
+# Selector for the "+ Add" button (top action bar of shop page).
+# Opens a dropdown containing "Add a storefront module" and other creation items.
+# IMPORTANT: Both "+ Event" and "+ Add" buttons share data-testid="enhance-button"
+# and AddLineIcon icon, so we MUST include :has-text("Add") to disambiguate.
+_ADD_BUTTON_SELECTOR = (
+    'button[data-testid="enhance-button"]:has([data-testid="AddLineIcon"]):has-text("Add")'
+)
+
+# Selector for the "+ Event" button (first button in top action bar of shop page).
+# UI update 2026-06-18: "Create Event" entry point moved out of the "+ Add" dropdown
+# and placed as a standalone primary button, now the first/leftmost action button.
+# Uses data-testid="enhance-button" (same testid family) + text content "Event".
+_EVENT_BUTTON_SELECTOR = (
+    'button[data-testid="enhance-button"]:has-text("Event")'
+)
+
+# Selector for the hamburger icon (top-right, next to "+ Add").
+# Contains navigation items: Explore, Account, Content, Orders, etc.
+_HAMBURGER_SELECTOR = (
+    "button.MuiButtonBase-root.MuiIconButton-root.MuiIconButton-sizeMedium"
+    ".katana-19u6hkh"
+)
+
+
+def click_shop_event_button(page: Page, v: dict = None):
+    """Click the '+ Event' button (first button in the shop page top action bar).
+    UI update 2026-06-18: Event creation entry was moved out of the '+ Add' dropdown
+    and is now a standalone button (leftmost in the action row).
+    Clicking this navigates directly to the event creation wizard (/events/create).
+    """
+    logger.info("Clicking shop '+ Event' button")
+    btn = page.locator(_EVENT_BUTTON_SELECTOR).first
+    btn.wait_for(state="visible", timeout=10000)
+    btn.click()
+    page.wait_for_timeout(1000)  # Wait for navigation to event creation page
+
+
+def click_shop_add_button(page: Page, v: dict = None):
+    """Click the '+ Add' button (top-right corner of the shop page).
+    This opens a dropdown menu with creation options including
+    'Add a storefront module', 'Add post', etc."""
+    logger.info("Clicking shop '+ Add' button")
+    btn = page.locator(_ADD_BUTTON_SELECTOR).first
+    btn.wait_for(state="visible", timeout=10000)
+    btn.click()
+    page.wait_for_timeout(800)  # Wait for dropdown animation
+
+
+def click_shop_hamburger(page: Page, v: dict = None):
+    """Click the hamburger menu icon (top-right corner, next to '+ Add').
+    This opens a dropdown with navigation items: Explore, Account,
+    Content, Orders, etc. (items that were previously in bottom tab bar)."""
+    logger.info("Clicking shop hamburger menu icon")
+    btn = page.locator(_HAMBURGER_SELECTOR).first
+    btn.wait_for(state="visible", timeout=10000)
+    btn.click()
+    page.wait_for_timeout(800)  # Wait for dropdown animation
+
+def click_add_storefront_module(page: Page, v: dict = None):
+    """Click 'Add a storefront module' in the '+ Add' dropdown menu.
+    This is the replacement for the old bottom-tab 'Module' button click."""
+    logger.info("Clicking 'Add a storefront module' in +Add dropdown")
+    # The menu item is a MuiListItemButton with text "Add a storefront module"
+    menu_item = page.locator("div.MuiListItemButton-root").filter(
+        has=page.get_by_text("Add a storefront module", exact=True)
+    ).first
+    menu_item.wait_for(state="visible", timeout=5000)
+    menu_item.click()
+    page.wait_for_timeout(1000)  # Wait for module creation drawer to open
+
+def click_shop_add_module(page: Page, v: dict = None):
+    """One-step action: click '+ Add' button → click 'Add a storefront module'.
+    This is the direct replacement for: R_click: { role: 'button', name: 'Module' }"""
+    logger.info("Opening shop '+ Add' → 'Add a storefront module'")
+    click_shop_add_button(page)
+    click_add_storefront_module(page)
+
 def click_module_edit_button(page: Page, v: dict):
     module_name = v.get("module_name")
     logger.info(f"Clicking edit button for module: {module_name}")

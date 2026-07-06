@@ -6,7 +6,7 @@ Filename         : test_ui.py
 Description      : Action Registry Refactored Version
 Time             : 2026/01/15
 Author           : AllenLuo / Agent
-Version          : 3.0
+Version          : 4.0 — Step Capture integrated
 '''
 
 import sys
@@ -25,6 +25,10 @@ from page.home import *
 # Import the new Action Registry
 from test_case.UI.Test_Katana.actions import get_action
 from .actions import get_action, create_session
+
+# Step Capture — in-test data collection (replaces replay engine)
+from tools.step_capture import StepCapture
+
 
 @allure.testcase('https://ones.cn/project/#/testcase/team/T7u1zXum/plan/QCuFwDdq/library/XcAFFViB/module/6mi4qiVp', 'ONS Test Case Link')
 @allure.title("Test Execution")
@@ -49,9 +53,26 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
     setattr(page, "_yaml_path", val.get("__yaml_path__")) # For self-patching
     setattr(page, "_execution_history", [])  # Initialize execution history
     
+    # --- Step Capture Setup ---
+    step_capture_mode = request.config.getoption("--step-capture", "on-failure")
+    capture_enabled = step_capture_mode != "off"
+    step_capture = None
+    if capture_enabled:
+        step_capture = StepCapture(
+            case_name=caseno,
+            capture_screenshot=True,
+            screenshot_mode="always" if step_capture_mode == "on" else "on-failure",
+        )
+        # Store on page for conftest teardown access
+        setattr(page, "_step_capture", step_capture)
+        setattr(page, "_step_capture_mode", step_capture_mode)
+    
     allure_title(caseno)
     allure_step_no(f'description:{description}')
     allure_step_no(f'test_step:{str(test_step)}')
+
+    # Track test outcome for step_capture finalization
+    test_failed = False
 
     # --- Pre-condition Phase ---
     pre_condition = val.get("pre_condition", {})
@@ -121,10 +142,21 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
         if active_page.get_by_text("Something went wrong!", exact=True).is_visible():
             logger.error("Application crash detected (Something went wrong!)")
             active_page.screenshot(path="crash_detected.png")
+            if step_capture:
+                step_capture.step_end(active_page, status="failed", error_msg="Application crashed")
+                test_failed = True
             pytest.fail("Application crashed during test execution.")
+
+        # --- Step Capture: before execution ---
+        should_capture = step_capture and StepCapture.should_capture(k)
+        if should_capture:
+            step_capture.step_start(k, v)
 
         # 1. Action Registry Lookup
         action = get_action(actual_action_name)
+
+        step_status = "passed"
+        step_error = None
 
         if action:
             try:
@@ -151,16 +183,25 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                         page._execution_history.append((k, v))
                     else:
                         logger.error(f"Session action '{action_name}' not found")
-                        pytest.fail(f"Session action '{action_name}' not found")
+                        step_status = "failed"
+                        step_error = f"Session action '{action_name}' not found"
                 else:
                     # Regular action
                     action(active_page, v)
                     page._execution_history.append((k, v))
             except Exception as e:
+                step_status = "failed"
+                step_error = str(e)
                 logger.error(f"Action '{k}' failed: {e}")
                 # Try generic screenshot on failure
                 try: active_page.screenshot(path=f"fail_{k}.png")
                 except: pass
+
+                # --- Step Capture: capture failed step ---
+                if should_capture:
+                    step_capture.step_end(active_page, status="failed", error_msg=step_error)
+                    test_failed = True
+
                 raise
         else:
             # 2. Legacy Fallback
@@ -178,13 +219,27 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                    pass
 
             if not fallback_success:
+                step_status = "failed"
+                step_error = f"Step '{k}' not found or failed in fallback"
                 logger.error(f"FATAL: Step '{k}' could not be resolved by Registry or Fallback.")
+
+                if should_capture:
+                    step_capture.step_end(active_page, status="failed", error_msg=step_error)
+                    test_failed = True
+
                 pytest.fail(f"Step '{k}' not found or failed in fallback. Check actions/__init__.py or YAML key.")
+
+        # --- Step Capture: after successful execution ---
+        if should_capture and step_status == "passed":
+            step_capture.step_end(active_page, status="passed")
 
         # Post-step Crash Check
         if active_page.get_by_text("Something went wrong!", exact=True).is_visible():
              logger.error("Application crash detected after step completion.")
              active_page.screenshot(path=f"crash_after_{k}.png")
+             if step_capture:
+                 step_capture.step_end(active_page, status="failed", error_msg="Application crashed after step")
+                 test_failed = True
              pytest.fail(f"Application crashed after step: {k}")
 
     # --- Assertion Phase ---
@@ -326,3 +381,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                         t_target_text = tv.get('text') or tv.get('name')
                         if t_target_text: page.click(f"text={t_target_text}", timeout=5000)
                     except: pass
+
+    # Note: Step Capture finalization is handled by conftest.py page fixture teardown,
+    # which calls step_capture.finalize() even if the test raised an exception.
+

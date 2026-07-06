@@ -118,3 +118,12 @@ dom_kb/
 # === Diagnosis Reports (generated at runtime) ===
 Error_Test_Case_Diagnosis_Report/
 Error_Test_Case_Diagnosis_Report_*.html
+
+# === Step Captures (in-test DOM/screenshot capture, generated at runtime) ===
+step_captures/
+
+# === WorkBuddy Overview Artifacts (auto-generated per session) ===
+overview.md
+
+# === Windows reserved device name artifacts (can be created by bad redirects) ===
+nul
