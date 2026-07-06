@@ -90,7 +90,6 @@ def browser_type_launch_args(browser_type_launch_args):
         "args": [
             "--use-fake-ui-for-media-stream",
             "--use-fake-device-for-media-stream",
-            f"--use-file-for-fake-video-capture={y4m_path}",
             "--window-size=600,1100",
             "--start-maximized",
             "--disable-translate",
