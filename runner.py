@@ -77,7 +77,7 @@ def run_single_pytest(test_name: str, yaml_path: str, additional_args: List[str]
         cmd.extend(["-k", test_name])
     
     if not additional_args:
-        cmd.extend(["--headed", "-v"])
+        cmd.extend([])  # pytest.ini addopts already provide --headed/-v
     else:
         cmd.extend(additional_args)
         
