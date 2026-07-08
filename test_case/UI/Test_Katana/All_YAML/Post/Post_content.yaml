@@ -1,0 +1,185 @@
+# ==============================================================================
+# T5442: Verify newly added ticket/merch default hidden status and top position
+#        in All tickets/merch banner
+#
+# Test Flow:
+#   1. Pre-condition  → Verify existing 3 tickets are Show status (no Hidden label)
+#   2. testT5442      → Add ticket/merch in Event, verify hidden + top in post
+#   3. VerifyGuest    → Guest sees only original 3 tickets, new items not visible
+#   4. Teardown       → Delete newly added ticket and merch
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Test Case 1: Add ticket/merch & verify
+# ------------------------------------------------------------------------------
+testT5442:
+    description: "Verify newly added ticket/merch in Event default hidden status and top position in All tickets/merch banner"
+
+    # Pre-condition =============================================================
+    pre_condition:
+        description: "Ensure existing tickets in All tickets/merch banner are Show status"
+        expect_result: "All existing tickets are in Show status (no Hidden label)"
+        test_step:
+            # Navigate to Event "Auto-Test-post-setting"
+            open:                           "{BASE_URL}/events"
+            sleep_step:                     5000
+            R_click_my_event:               { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+            sleep_step:                     4000
+
+            # Open post "auto-test-post-setting-t1742"
+            R_click_posts_tab:              { role: "tab", name: "Posts" }
+            sleep_step:                     2000
+            R_click_post:                   { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+            sleep_step:                     3000
+
+            # Edit content → verify no Hidden label on existing tickets
+            R_click_edit_content:           { role: "button", name: "Edit content" }
+            sleep_step:                     3000
+            verify_no_hide_button:
+                text: "Hide"
+                assert_not_visible: true
+
+    # Test Steps ================================================================
+    test_step:
+        # Re-navigate to event (avoid close-button issue)
+        open:                      "{BASE_URL}/events"
+        sleep_step:                5000
+        R_click_my_event:          { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step:                4000
+
+        # ----------------------------------------------------------------------
+        # Step 1: Add a new ticket via Tickets tab
+        # ----------------------------------------------------------------------
+        R_click_tickets_tab:       { role: "tab", name: "Tickets & Merch" }
+        sleep_step:                2000
+
+        R_click_add_ticket:     { role: "button", name: "Add ticket" }
+        sleep_step:             2000
+        fill_ticket_title:      { role: "textbox", name: "Product title", value: "new ticket related to T5442" }
+        sleep_step:             1000
+        fill_ticket_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
+        sleep_step:             1000
+        fill_ticket_quantity:   { placeholder: "Quantity", value: "20" }
+        sleep_step:             1000
+
+        R_click_add_media:      { role: "button", name: "Add Media" }
+        sleep_step:             2000
+        R_click_media_img:     { role: "img", index: 0 }
+        sleep_step:             2000
+        R_click_done_media:     { role: "button", name: "Done" }
+        sleep_step:             2000
+
+        R_click_create_ticket:  { role: "button", name: "Create" }
+        sleep_step:             3000
+        R_click_save_visibility_ticket: { role: "button", name: "Save" }
+        sleep_step:             3000
+
+        # ----------------------------------------------------------------------
+        # Step 2: Add a new merch (same Tickets & Merch tab)
+        # ----------------------------------------------------------------------
+        R_click_merch_subtab:   { locator: "text=Merch", exact: true }
+        sleep_step:             2000
+        R_click_add_merch:      { role: "button", name: "Add merch" }
+        sleep_step:             2000
+        fill_merch_title:       { role: "textbox", name: "Product title", value: "new merch related to T5442" }
+        sleep_step:             1000
+        fill_merch_price:       { locator: 'input[name="variants.0.price"]', value: "10" }
+        sleep_step:             1000
+        fill_merch_quantity:    { placeholder: "Quantity", value: "20" }
+        sleep_step:             1000
+
+        R_click_add_media_merch: { role: "button", name: "Add Media" }
+        sleep_step:             2000
+        R_click_media_img_merch: { role: "img", index: 0 }
+        sleep_step:             2000
+        R_click_done_media_merch: { role: "button", name: "Done" }
+        sleep_step:             2000
+
+        R_click_create_merch:   { role: "button", name: "Create" }
+        sleep_step:             2000
+        R_click_save_visibility_merch: { role: "button", name: "Save" }
+        sleep_step:             3000
+
+        # ----------------------------------------------------------------------
+        # Step 3: Go to post → edit content → verify in All tickets/merch banner
+        # ----------------------------------------------------------------------
+        R_click_posts_tab:      { role: "tab", name: "Posts" }
+        sleep_step:             2000
+        R_click_post:           { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+        sleep_step:             3000
+        R_click_edit_content:   { role: "button", name: "Edit content" }
+        sleep_step:             3000
+
+        verify_merch_hidden:
+            assertion_type: "element_visible_by_text"
+            text: "Hidden"
+            scope: "first merch in All tickets/merch banner"
+
+        verify_ticket_hidden:
+            assertion_type: "element_visible_by_text"
+            text: "Hidden"
+            scope: "first ticket in All tickets/merch banner"
+
+        sleep_end:              3000
+
+    # Expected Result ===========================================================
+    expect_result:
+        description: "Newly added ticket/merch in Event appears in post All tickets/merch banner, default status Hidden, placed at top"
+
+# ------------------------------------------------------------------------------
+# Test Case 2: Guest verification — new ticket/merch must NOT be visible
+# ------------------------------------------------------------------------------
+testT5442_VerifyGuest:
+    guest: true
+    description: "Verify guest only sees original 3 tickets; new ticket/merch not visible"
+    test_step:
+        open:                               "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        sleep_after_open:                   5000
+
+        verify_page_loaded:
+            text:                     "auto-test-post-setting"
+
+        verify_new_ticket_not_visible:
+            text:                     "new ticket related to T5442"
+            assert_not_visible:       true
+
+        verify_new_merch_not_visible:
+            text:                     "new merch related to T5442"
+            assert_not_visible:       true
+
+    expect_result:
+        description: "Guest sees only original 3 tickets; new ticket and merch are not visible"
+
+# ------------------------------------------------------------------------------
+# Test Case 3: Teardown — delete newly added ticket and merch
+# ------------------------------------------------------------------------------
+testT5442_Teardown:
+    description: "Delete newly added ticket and merch to restore original state"
+    test_step:
+        open: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
+        sleep_step: 4000
+        R_click_TM_tab: { role: 'tab', name: 'Tickets & Merch' }
+        sleep_step: 2000
+
+        # ---- Delete new merch (only if exists) ----
+        # verify_merch_exists: { text: "new merch related to T5442", optional: true }
+        R_click_merch_more:  { locator: '[data-testid="mui-stack"]:has(:text("new merch related to T5442")) >> [data-testid="MoreHorizIcon"]', optional: true }
+        sleep_step: 1000
+        R_click_delete_merch: { locator: "text=Delete merch", optional: true }
+        sleep_step: 1000
+        R_click_confirm_merch: { role: 'button', name: 'Delete', optional: true }
+        sleep_step: 3000
+
+        # verify_ticket_exists: { text: "new ticket related to T5442", optional: true }
+        R_click_ticket_more: { locator: '[data-testid="mui-stack"]:has(:text("new ticket related to T5442")) >> [data-testid="MoreHorizIcon"]', optional: true }
+        sleep_step: 1000
+        R_click_delete_ticket: { locator: "text=Delete ticket", optional: true }
+        sleep_step: 1000
+        R_click_confirm_ticket: { role: 'button', name: 'Delete', optional: true }
+        sleep_step: 3000
+
+    expect_result:
+        description: "Newly added ticket and merch deleted successfully"

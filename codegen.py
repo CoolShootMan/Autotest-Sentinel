@@ -54,8 +54,10 @@ def main():
     # Extract any extra arguments passed in
     args = sys.argv[1:]
     
-    # Build the codegen command
+    # Build the codegen command (use sys.executable to auto-resolve venv playwright)
     cmd = [
+        sys.executable,
+        "-m",
         "playwright",
         "codegen"
     ]
