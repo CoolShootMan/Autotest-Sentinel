@@ -129,7 +129,7 @@ testT5442:
 # ------------------------------------------------------------------------------
 # Test Case 2: Guest verification — new ticket/merch must NOT be visible
 # ------------------------------------------------------------------------------
-testT5442_VerifyGuest:
+VerifyGuest_testT5442:
     guest: true
     description: "Verify guest only sees original 3 tickets; new ticket/merch not visible"
     test_step:
@@ -153,7 +153,7 @@ testT5442_VerifyGuest:
 # ------------------------------------------------------------------------------
 # Test Case 3: Teardown — delete newly added ticket and merch
 # ------------------------------------------------------------------------------
-testT5442_Teardown:
+testTeardown_T5442:
     description: "Delete newly added ticket and merch to restore original state"
     test_step:
         open: "{BASE_URL}/events"
@@ -165,20 +165,20 @@ testT5442_Teardown:
         sleep_step: 2000
 
         # ---- Delete new merch (only if exists) ----
-        # verify_merch_exists: { text: "new merch related to T5442", optional: true }
-        R_click_merch_more:  { locator: '[data-testid="mui-stack"]:has(:text("new merch related to T5442")) >> [data-testid="MoreHorizIcon"]', optional: true }
+        # verify_merch_exists: { text: "new merch related to T5442" }
+        R_click_merch_more:  { locator: '[data-testid="mui-stack"]:has(:text("new merch related to T5442")) >> [data-testid="MoreHorizIcon"]' }
         sleep_step: 1000
-        R_click_delete_merch: { locator: "text=Delete merch", optional: true }
+        R_click_delete_merch: { locator: "text=Delete merch" }
         sleep_step: 1000
-        R_click_confirm_merch: { role: 'button', name: 'Delete', optional: true }
+        R_click_confirm_merch: { role: 'button', name: 'Delete' }
         sleep_step: 3000
 
-        # verify_ticket_exists: { text: "new ticket related to T5442", optional: true }
-        R_click_ticket_more: { locator: '[data-testid="mui-stack"]:has(:text("new ticket related to T5442")) >> [data-testid="MoreHorizIcon"]', optional: true }
+        # verify_ticket_exists: { text: "new ticket related to T5442"}
+        R_click_ticket_more: { locator: '[data-testid="mui-stack"]:has(:text("new ticket related to T5442")) >> [data-testid="MoreHorizIcon"]' }
         sleep_step: 1000
-        R_click_delete_ticket: { locator: "text=Delete ticket", optional: true }
+        R_click_delete_ticket: { locator: "text=Delete ticket"}
         sleep_step: 1000
-        R_click_confirm_ticket: { role: 'button', name: 'Delete', optional: true }
+        R_click_confirm_ticket: { role: 'button', name: 'Delete' }
         sleep_step: 3000
 
     expect_result:
