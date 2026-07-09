@@ -83,7 +83,7 @@ testT5442:
         sleep_step:             2000
         fill_merch_title:       { role: "textbox", name: "Product title", value: "new merch related to T5442" }
         sleep_step:             1000
-        fill_merch_price:       { locator: 'input[name="variants.0.price"]', value: "10" }
+        fill_merch_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
         sleep_step:             1000
         fill_merch_quantity:    { placeholder: "Quantity", value: "20" }
         sleep_step:             1000
@@ -183,3 +183,123 @@ testTeardown_T5442:
 
     expect_result:
         description: "Newly added ticket and merch deleted successfully"
+
+
+# ==============================================================================
+# Test Case: T5332 Verify allow partners to insert all merch in RTE
+# Flow: Insert -> hover Event -> Insert all merch -> click Update
+# ==============================================================================
+
+testT5332:
+    description: "Verify partners can insert all merch in RTE"
+    pre_condition:
+        description: "navigate to test post and enter RTE editor"
+        expect_result: "RTE editor is opened"
+        test_step:
+            # Step 1: Navigate to events list
+            open: "{BASE_URL}/events"
+            sleep_step: 5000
+
+            # Step 2: Find and click target event card
+            R_click_event: { locator: "text=Test event post variant settings", exact: true }
+            sleep_step: 4000
+
+            # Step 3: Click Posts tab
+            R_click_posts_tab: { role: "tab", name: "Posts" }
+            sleep_step: 2000
+
+            # Step 4: Click post card to enter post landing page
+            R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+            sleep_step: 3000
+
+            # Step 5: Click edit button to enter RTE
+            R_click_edit_button: { role: "button", name: "Edit content" }
+            sleep_step: 3000
+
+    test_step:
+
+        # Step 6: Click the Insert button in RTE toolbar
+        R_click_insert_button: { role: "button", name: "Insert" }
+        sleep_step: 2000
+
+        # Step 7: Hover over "Event" menu item to reveal submenu (Insert all merch)
+        # Event is hover-triggered — use JS dispatch mouseenter on role="menuitem"
+        execute_js:
+            script: |
+                () => {
+                    const items = document.querySelectorAll('[role="menuitem"]');
+                    for (const el of items) {
+                        if (el.textContent.trim() === 'Event' && el.offsetParent !== null) {
+                            el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
+                            el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
+                            return 'hovered_event_menuitem';
+                        }
+                    }
+                    const all = [...document.querySelectorAll('*')].filter(e =>
+                        e.textContent.trim() === 'Event' &&
+                        e.children.length === 0 &&
+                        e.offsetParent !== null &&
+                        !e.closest('[class*="cta"]') &&
+                        !e.closest('[class*="CTA"]')
+                    );
+                    if (all.length > 0) {
+                        all[0].dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
+                        all[0].dispatchEvent(new MouseEvent('mouseover', {bubbles:true}));
+                        return 'hovered_fallback';
+                    }
+                    return 'not_found';
+                }
+            assert_contains: "hovered"
+        sleep_step: 2000
+
+        # Step 8: Click "Insert all merch" from the revealed submenu
+        R_click_insert_all_merch: { name: "Insert all merch", fallback_scan: true }
+        sleep_step: 3000
+
+        # Step 9: Click "Update" button at bottom of Edit post content dialog to save inserted merch
+        R_click_update_post: { role: "button", name: "Update" }
+        sleep_step: 2000
+
+        # Step 10: Click "Update" button in the "Update This Post?" confirmation dialog
+        R_click_confirm_update: { role: "button", name: "Update" }
+        sleep_step: 2000
+
+        # Step 11: Verify "Post published!" toast appears after publishing
+        verify_toast_post_published: { text: "Post published!" }
+        sleep_step: 2000
+
+    expect_result:
+        description: "All merch from event can be inserted in RTE, saved via Update, and Post published! toast appears"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "merch 001"
+            - assertion_type: "element_visible_by_text"
+              text: "merch 002"
+
+
+# ==============================================================================
+# Test Case: T5332_VerifyGuest
+# Verify that merch 001 and merch 002 are displayed on post detail page (guest view)
+# Run AFTER testT5332 completes (merch must be inserted first)
+# ==============================================================================
+
+testT5332_VerifyGuest:
+    guest: true
+    description: "Verify that merch 001 and merch 002 are displayed on post detail page for guest users after partner inserts all merch in RTE"
+    test_step:
+        # Step 1: Open the post detail page as guest
+        open: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
+        sleep_after_open: 5000
+
+        # Step 2: Scroll down to reveal the merch section
+        # scroll_to_bottom uses page.mouse.wheel (real desktop scroll) - more reliable than swipe gesture
+        # Tries to scroll directly to "merch 001"; if lazy-loaded, falls back to iterative wheel scroll
+        scroll_to_bottom: { text: "merch 001", iterations: 15, delay: 500 }
+
+    expect_result:
+        description: "Both merch 001 and merch 002 should be visible on the post detail page in guest view"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "merch 001"
+            - assertion_type: "element_visible_by_text"
+              text: "merch 002"
