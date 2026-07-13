@@ -219,16 +219,47 @@ def click_by_coordinates(page: Page, v: dict):
         raise ValueError("Missing coordinates")
 
 def click_relative_to_selector(page: Page, v: dict):
-    selector = v.get("locator")
-    offset_x = v.get("x", 0)
-    offset_y = v.get("y", 0)
+    # Support both direct params and nested wrapper dict (e.g. {action_name: {locator, x, y}})
+    params = v.get("click_relative_to_selector", v) if isinstance(v, dict) else v
+    selector = params.get("locator")
+    offset_x = params.get("x", 0)
+    offset_y = params.get("y", 0)
+    if not selector:
+        logger.error("click_relative_to_selector: missing 'locator' in arguments")
+        raise ValueError("Missing locator for click_relative_to_selector")
     logger.info(f"Clicking relative to {selector} with offset ({offset_x}, {offset_y})")
     
     loc = page.locator(selector).first
     loc.wait_for(state="visible", timeout=10000)
     box = loc.bounding_box()
     if box:
-        page.mouse.click(box['x'] + offset_x, box['y'] + offset_y)
+        x = box['x'] + (box['width'] / 2 if offset_x == "center" else offset_x)
+        y = box['y'] + (box['height'] / 2 if offset_y == "center" else offset_y)
+        page.mouse.click(x, y)
+    else:
+        logger.error(f"Could not get bounding box for {selector}")
+        raise Exception(f"Element {selector} has no bounding box")
+
+
+def move_relative_to_selector(page: Page, v: dict):
+    """Move the real mouse cursor to a position relative to a selector, without clicking."""
+    # Support both direct params and nested wrapper dict (e.g. {action_name: {locator, x, y}})
+    params = v.get("move_relative_to_selector", v) if isinstance(v, dict) else v
+    selector = params.get("locator")
+    offset_x = params.get("x", 0)
+    offset_y = params.get("y", 0)
+    if not selector:
+        logger.error("move_relative_to_selector: missing 'locator' in arguments")
+        raise ValueError("Missing locator for move_relative_to_selector")
+    logger.info(f"Moving mouse relative to {selector} with offset ({offset_x}, {offset_y})")
+    
+    loc = page.locator(selector).first
+    loc.wait_for(state="visible", timeout=10000)
+    box = loc.bounding_box()
+    if box:
+        x = box['x'] + (box['width'] / 2 if offset_x == "center" else offset_x)
+        y = box['y'] + (box['height'] / 2 if offset_y == "center" else offset_y)
+        page.mouse.move(x, y)
     else:
         logger.error(f"Could not get bounding box for {selector}")
         raise Exception(f"Element {selector} has no bounding box")
