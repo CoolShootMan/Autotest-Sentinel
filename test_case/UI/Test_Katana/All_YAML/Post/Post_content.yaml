@@ -222,34 +222,36 @@ testT5332:
         R_click_insert_button: { role: "button", name: "Insert" }
         sleep_step: 2000
 
-        # Step 7: Hover over "Event" menu item to reveal submenu (Insert all merch)
-        # Event is hover-triggered — use JS dispatch mouseenter on role="menuitem"
+        # Step 7: Hover over "Event" menu item in Insert dropdown to reveal submenu
+        # Only targets the Event menuitem inside the Insert popup — never touches CTA Elements
         execute_js:
             script: |
                 () => {
-                    const items = document.querySelectorAll('[role="menuitem"]');
-                    for (const el of items) {
-                        if (el.textContent.trim() === 'Event' && el.offsetParent !== null) {
-                            el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
-                            el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
-                            return 'hovered_event_menuitem';
+                    // Strategy 1: Find [role="menuitem"] with exact text "Event" inside any popup/dropdown
+                    const popups = document.querySelectorAll('[role="menu"], [data-testid*="popup"], [data-testid*="dropdown"], [class*="dropdown"], [class*="menu"], [class*="popover"]');
+                    for (const popup of popups) {
+                        const items = popup.querySelectorAll('[role="menuitem"]');
+                        for (const el of items) {
+                            if (el.textContent.trim() === 'Event' && el.offsetParent !== null) {
+                                el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
+                                el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
+                                return 'hovered';
+                            }
                         }
                     }
-                    const all = [...document.querySelectorAll('*')].filter(e =>
-                        e.textContent.trim() === 'Event' &&
-                        e.children.length === 0 &&
-                        e.offsetParent !== null &&
-                        !e.closest('[class*="cta"]') &&
-                        !e.closest('[class*="CTA"]')
-                    );
-                    if (all.length > 0) {
-                        all[0].dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));
-                        all[0].dispatchEvent(new MouseEvent('mouseover', {bubbles:true}));
-                        return 'hovered_fallback';
+                    // Strategy 2: Any visible [role="menuitem"] exactly named "Event"
+                    const all = document.querySelectorAll('[role="menuitem"]');
+                    for (const el of all) {
+                        if (el.textContent.trim() === 'Event' && el.offsetParent !== null &&
+                            !el.closest('[class*="cta"]') && !el.closest('[class*="CTA"]')) {
+                            el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
+                            el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
+                            return 'hovered';
+                        }
                     }
                     return 'not_found';
                 }
-            assert_contains: "hovered"
+            assert_equals: "hovered"
         sleep_step: 2000
 
         # Step 8: Click "Insert all merch" from the revealed submenu
@@ -303,3 +305,278 @@ testT5332_VerifyGuest:
               text: "merch 001"
             - assertion_type: "element_visible_by_text"
               text: "merch 002"
+
+    teardown_step:
+        # Step 0: Re-inject partner cookies (guest test cleared them)
+        add_cookies: {}
+        sleep_step: 1000
+
+        # Step 1: Navigate to events list
+        open_td: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        # Step 2: Scroll to find the event
+        scroll_to_bottom: { text: "Test event post variant settings", iterations: 10, delay: 500 }
+        sleep_step: 2000
+
+        # Step 3: Click event card to enter event landing page
+        R_click_event_td: { text: "Test event post variant settings" }
+        sleep_step: 4000
+
+        # Step 4: Switch to Posts tab
+        R_click_posts_tab: { role: "tab", name: "Posts" }
+        sleep_step: 2000
+
+        # Step 5: Click post card
+        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        sleep_step: 3000
+
+        # Step 6: Click Edit content to enter RTE editor
+        R_click_edit_content: { role: "button", name: "Edit content" }
+        sleep_step: 3000
+
+        # Step 7: Click on merch 002 button to select the banner & reveal trash icon
+        R_click_merch_002: { role: "button", name: "avatar My item merch 002 $200" }
+        sleep_step: 1000
+
+        # Step 8: Click Delete button to delete the banner
+        R_click_delete: { role: "button", name: "Delete" }
+        sleep_step: 1000
+
+        # Step 9: Verify merch 001 is no longer visible in RTE
+        verify_merch_001_hidden:
+            text: "merch 001"
+            assert_not_visible: true
+
+        # Step 10: Verify merch 002 is no longer visible in RTE
+        verify_merch_002_hidden:
+            text: "merch 002"
+            assert_not_visible: true
+
+        # Step 11: Update post to save the deletion
+        R_click_update_post: { role: "button", name: "Update" }
+        sleep_step: 2000
+        R_click_confirm_update: { role: "button", name: "Update" }
+        sleep_step: 2000
+
+
+# ==============================================================================
+# Test Case: T5443 Verify add ticket after remove tickets section in post RTE
+# Flow: Remove empty tickets section from RTE → Add ticket via Event tab → Verify
+# ==============================================================================
+
+testT5443:
+    description: "Verify the newly added ticket will not show in RTE All tickets widget if there is no defaut All tickets widget"
+    pre_condition:
+        description: "navigate to 'event with no ticket' and enter RTE editor"
+        expect_result: "RTE editor is opened"
+        test_step:
+            # Step 1: Navigate to events list
+            open: "{BASE_URL}/events"
+            sleep_step: 5000
+
+            # Step 1.5: Scroll down to find "event with no ticket" in the list
+            scroll_to_bottom: { text: "event with no ticket", iterations: 10, delay: 500 }
+            sleep_step: 2000
+
+            # Step 2: Click "event with no ticket" to enter event landing page
+            R_click_event_title: { text: "event with no ticket" }
+            sleep_step: 3000
+
+            # Step 3: Click Posts tab
+            R_click_posts_tab: { role: "tab", name: "Posts" }
+            sleep_step: 2000
+
+            # Step 4: Click post card to enter post landing page
+            R_click_post_card: { role: "button", name: "event with no ticket",index: 0 }
+            sleep_step: 3000
+
+            # Step 5: Click edit content to enter RTE editor
+            R_click_edit_content: { role: "button", name: "Edit content" }
+            sleep_step: 3000
+
+    test_step:
+        # ----------------------------------------------------------------------
+        # Part A: Remove the empty "Tickets will appear here" section from RTE
+        # ----------------------------------------------------------------------
+        # Step 1: Click the empty tickets placeholder text to select the section
+        # Use fallback_scan for more flexible element lookup (exact text match may vary)
+        R_click_tickets_placeholder: { text: "Tickets will appear here automatically", fallback_scan: true }
+        sleep_step: 2000
+
+        # Step 2: Click Delete button on the section
+        R_click_delete_section: { role: "button", name: "Delete" }
+        sleep_step: 1000
+
+        # Step 3: Confirm Remove section
+        R_click_remove_section: { role: "button", name: "Remove section" }
+        sleep_step: 2000
+
+        # Step 4: Click Update (bottom of Edit post content dialog)
+        R_click_update_rte: { role: "button", name: "Update" }
+        sleep_step: 2000
+
+        # Step 5: Click Update confirmation ("Update This Post?" dialog)
+        R_click_update_confirm: { role: "button", name: "Update" }
+        sleep_step: 2000
+
+        # Step 6: Close the edit dialog
+        R_click_close_dialog: { role: "button", name: "Close" }
+        sleep_step: 2000
+
+        # ----------------------------------------------------------------------
+        # Part B: Add a new ticket via Event tab
+        # ----------------------------------------------------------------------
+        # Step 7: Switch to Event tab
+        R_click_event_tab: { role: "tab", name: "Event" }
+        sleep_step: 2000
+
+        # Step 8: Click Add ticket button
+        R_click_add_ticket: { role: "button", name: "Add ticket" }
+        sleep_step: 2000
+
+        # Step 9: Fill in ticket title
+        fill_ticket_title_t5443: { role: "textbox", name: "Product title", value: "ticket 001" }
+        sleep_step: 1000
+
+        # Step 10: Click Add Media
+        R_click_add_media_t5443: { role: "button", name: "Add Media" }
+        sleep_step: 2000
+
+        # Step 11: Select media image checkbox
+        R_click_media_checkbox: { test_id: "CheckBoxOutlineBlankOutlinedIcon" }
+        sleep_step: 1000
+
+        # Step 12: Click Done to confirm media selection
+        R_click_done_media_t5443: { role: "button", name: "Done" }
+        sleep_step: 2000
+
+        # Step 13: Fill price field
+        fill_price_t5443: { locator: 'input[name="variants.0.price"]', value: "100" }
+        sleep_step: 1000
+
+        # Step 14: Click "Create" button on the page (this triggers the Review ticket visibility popup)
+        R_click_create_ticket: { role: "button", name: "Create" }
+        sleep_step: 2000
+
+        # Step 15: Click "Save" on the "Review ticket visibility" popup dialog
+        R_click_save_visibility: { role: "button", name: "Save" }
+        sleep_step: 3000
+
+        # ----------------------------------------------------------------------
+        # Part C: Go back to Posts tab and verify ticket shows up in post
+        # ----------------------------------------------------------------------
+        # Step 16: Switch back to Posts tab
+        R_click_posts_tab_verify: { role: "tab", name: "Posts" }
+        sleep_step: 2000
+
+        # Step 17: Click post card to verify ticket appears
+        R_click_post_card_verify: { role: "button", name: "event with no ticket", index: 0 }
+        sleep_step: 3000
+
+        # Step 18: Scroll down then verify ticket 001 is hidden (default status for new tickets)
+        page_scroll_t5443_main: { y: 800, steps: 5, delay: 1000 }
+
+        # Step 19: Verify ticket 001 is NOT visible in the post (hidden by default)
+        # Must be test_step verify action — expect_result assertions throw error when text not found
+        verify_ticket_001_hidden_main:
+            text: "ticket 001"
+            assert_not_visible: true
+
+    expect_result:
+        description: "Empty tickets section removed from RTE; new ticket added via Event tab but hidden by default in post"
+
+
+# ==============================================================================
+# Test Case: testT5443_VerifyGuest
+# Verify that ticket 001 is NOT displayed on post detail page (guest view)
+# ==============================================================================
+
+testT5443_VerifyGuest:
+    guest: true
+    description: "Verify that ticket 001 is hidden on post detail page for guest users after partner adds ticket in Event"
+    test_step:
+        # Step 1: Open the post detail page as guest
+        open: "{BASE_URL}/autotestshop/post/event-with-no-ticket"
+        sleep_step: 5000
+
+        # Step 2: Scroll down to check if ticket 001 is visible (should NOT be there)
+        page_scroll: { y: 800, steps: 5, delay: 1000 }
+
+        # Step 3: Verify ticket 001 is NOT visible on the page (hidden by default)
+        verify_ticket_001_hidden_t5443:
+            text: "ticket 001"
+            assert_not_visible: true
+
+    expect_result:
+        description: "ticket 001 should NOT be visible on the post detail page in guest view (hidden by default)"
+
+    teardown_step:
+        # ----------------------------------------------------------------------
+        # Cleanup (runs after guest verification): restore partner, delete ticket 001, restore All tickets banner
+        # ----------------------------------------------------------------------
+        # Step 0: Re-inject partner cookies (guest test cleared them)
+        add_cookies: {}
+        sleep_step: 1000
+
+        # Step 1: Navigate to events list
+        open_td: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        # Step 2: Scroll down to find "event with no ticket" in the list
+        scroll_to_bottom: { text: "event with no ticket", iterations: 10, delay: 500 }
+        sleep_step: 2000
+
+        # Step 3: Click "event with no ticket" to enter event landing page (MUST do this before accessing Event/Tickets tabs)
+        R_click_event_td: { text: "event with no ticket" }
+        sleep_step: 4000
+
+        # Step 4: Switch to Event tab (ticket 001 was added here)
+        R_click_event_tab_td: { role: "tab", name: "Event" }
+        sleep_step: 2000
+
+        # Step 5: Open ticket 001 more menu and delete
+        R_click_ticket_more_td: { locator: '[data-testid="mui-stack"]:has(:text("ticket 001")) >> [data-testid="MoreHorizIcon"]' }
+        sleep_step: 1000
+        R_click_delete_ticket_td: { locator: "text=Delete ticket" }
+        sleep_step: 1000
+        R_click_confirm_ticket_td: { role: 'button', name: 'Delete' }
+        sleep_step: 3000
+
+        # Step 6: Go to post → edit content
+        R_click_posts_tab: { role: "tab", name: "Posts" }
+        sleep_step: 2000
+        R_click_post_card: { role: "button", name: "event with no ticket", index: 0 }
+        sleep_step: 3000
+        R_click_edit_content: { role: "button", name: "Edit content" }
+        sleep_step: 3000
+
+        # Step 7: Click "Insert" button in RTE toolbar to open the insert popup
+        R_click_insert_button: { role: "button", name: "Insert" }
+        sleep_step: 2000
+
+        # Use real mouse movement: MUI NestedMenu tracks cursor via elementFromPoint().
+        # First move the cursor onto Event (opens its submenu), then move directly
+        # onto Insert all tickets. This avoids guessing a fixed pixel offset.
+        move_to_event:
+            move_relative_to_selector:
+                locator: '[role="menuitem"]:has-text("Event")'
+                x: "center"
+                y: "center"
+        sleep_step: 3000
+
+        move_to_insert_all_tickets:
+            move_relative_to_selector:
+                locator: '[role="menuitem"]:has-text("Insert all tickets")'
+                x: "center"
+                y: "center"
+        sleep_step: 1000
+
+        R_click_insert_all_tickets: { name: "Insert all tickets", fallback_scan: true }
+        sleep_step: 3000
+
+        # Step 12: Save via Update (bottom) + confirm dialog (optional, may not appear)
+        R_click_update_post: { role: "button", name: "Update" }
+        sleep_step: 2000
+        smart_click_optional_confirm_update: { role: "button", name: "Update" }
+        sleep_step: 3000

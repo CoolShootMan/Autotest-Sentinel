@@ -67,7 +67,7 @@ from .product import (
     click_products_tab_t2129, click_bell_button, click_product_plus_button,
     click_product_image, verify_post_exists, R_click_follow, 
     click_close_toast, verify_toast_message, select_replacement_product,
-    click_by_coordinates, click_relative_to_selector
+    click_by_coordinates, click_relative_to_selector, move_relative_to_selector
 )
 from .form import (
     verify_submission_details, verify_message_content, click_form_more_menu,
@@ -202,6 +202,7 @@ ACTIONS = {
     "select_replacement_product": select_replacement_product,
     "click_by_coordinates": click_by_coordinates,
     "click_relative_to_selector": click_relative_to_selector,
+    "move_relative_to_selector": move_relative_to_selector,
     "reload": reload_page,
     "go_back": go_back,
     "page_scroll": page_scroll,
@@ -289,6 +290,8 @@ def get_action(name):
         return smart_click_retry
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
+    elif name.startswith("move_relative_to_selector") or name.startswith("move_mouse") or name.startswith("move_to"):
+        return move_relative_to_selector
     elif name.startswith("if_"):
         return smart_if
     elif name.startswith("fill_numeric"):
