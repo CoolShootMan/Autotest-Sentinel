@@ -54,7 +54,7 @@ testT5442:
         sleep_step:                2000
 
         R_click_add_ticket:     { role: "button", name: "Add ticket" }
-        sleep_step:             2000
+        wait_for:               { role: "heading", name: "Add a ticket", timeout: 10000 }
         fill_ticket_title:      { role: "textbox", name: "Product title", value: "new ticket related to T5442" }
         sleep_step:             1000
         fill_ticket_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
@@ -80,7 +80,7 @@ testT5442:
         R_click_merch_subtab:   { locator: "text=Merch", exact: true }
         sleep_step:             2000
         R_click_add_merch:      { role: "button", name: "Add merch" }
-        sleep_step:             2000
+        wait_for:               { role: "heading", name: "Add merch", timeout: 10000 }
         fill_merch_title:       { role: "textbox", name: "Product title", value: "new merch related to T5442" }
         sleep_step:             1000
         fill_merch_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
