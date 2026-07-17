@@ -580,3 +580,271 @@ testT5443_VerifyGuest:
         sleep_step: 2000
         smart_click_optional_confirm_update: { role: "button", name: "Update" }
         sleep_step: 3000
+
+
+
+# ==============================================================================
+# T5390: Verify Post-Event auto sync (event info -> post title, post card, RTE)
+# Pre-condition: Pre-created empty event "verify-post-shipping_fee" with published post
+# Test focus: When event info (title/date/venue/description) is updated,
+#             Post title, post card subtitle, and RTE components should auto-sync
+# Note: "User customization does not sync" logic will be added in a separate case
+# ==============================================================================
+testT5390:
+  description: "Verify event info updates auto-sync to post title, post card, and RTE components"
+  test_step:
+    # Step 1: Open events page and click event
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    # Click event "verify-post-shipping_fee"
+    R_click_event: { role: "cell", name: "verify-post-shipping_fee" }
+    sleep_after_event: 3000
+
+    # Step 2: Edit event basic info
+    R_click_edit_event: { role: "button", name: "Edit event" }
+    sleep_after_edit: 2000
+
+    # Fill event title
+    fill_event_title: { role: "textbox", name: "Event title", value: "T5390" }
+    sleep_after_title: 1000
+
+    # Clear existing date (click X icon in date field)
+    # NOTE: selector from recording — close-circle-fill is the clear (X) icon
+    R_click_clear_date: { locator: '[data-testid="close-circle-fill"] path', index: 1 }
+    sleep_after_clear: 500
+
+    # Open calendar picker (click calendar icon)
+    # NOTE: fragile selector from recording — path:nth-child(2) is the calendar SVG path
+    R_click_open_calendar: { locator: 'path:nth-child(2)', index: 0 }
+    sleep_after_calendar: 500
+
+    # Select day 20 in calendar
+    R_click_day_20: { role: "gridcell", name: "20" }
+    sleep_after_day: 1000
+
+    # Fill venue
+    fill_venue: { role: "textbox", name: "Venue", value: "buy venue" }
+    sleep_after_venue: 1000
+
+    # Fill description
+    fill_description: { role: "textbox", name: "Description (optional)", value: "T5390" }
+    sleep_after_description: 1000
+
+    # Save event
+    R_click_save: { role: "button", name: "Save" }
+    sleep_after_save: 3000
+
+    # Step 3: Go to Posts tab and open post
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_after_posts: 2000
+
+    # Click post card
+    R_click_post_card: { locator: '[data-testid="mui-card-action-area"]', index: 0 }
+    sleep_after_post: 3000
+
+    # === ASSERTION: Post title synced with event title "T5390" ===
+    verify_post_title_synced: { text: "T5390" }
+
+    # === ASSERTION: Post card subtitle synced with venue + date ===
+    verify_subtitle_synced: { text: "buy venue | Mon, Jul 20 (CDT)" }
+
+    # Step 4: Edit post content to verify RTE sync
+    R_click_edit_content: { role: "button", name: "Edit content" }
+    sleep_after_edit_content: 2000
+
+    # === ASSERTION: Edit content page loaded (Post title field visible) ===
+    verify_edit_loaded: { text: "Post title" }
+
+    # === ASSERTION: RTE has event info component (venue synced to RTE) ===
+    verify_rte_event_info: { text: "buy venue" }
+
+    # === ASSERTION: RTE has description component (description synced to RTE) ===
+    # "About" is the label, "T5390" is the content — rendered as "AboutT5390" in DOM
+    verify_rte_description: { text: "AboutT5390" }
+
+    # Step 5: Delete description component -> verify dialog -> Keep section (branch A)
+    R_click_delete_desc: { role: "button", name: "Delete" }
+    sleep_after_delete: 1000
+
+    # === ASSERTION: Remove dialog appears with correct text ===
+    verify_dialog_text: { text: "Remove Event description section?" }
+
+    # Click Keep section -> component remains
+    R_click_keep_section: { role: "button", name: "Keep section" }
+    sleep_after_keep: 1000
+
+    # Step 6: Delete again -> Remove section (branch B)
+    R_click_delete_again: { role: "button", name: "Delete" }
+    sleep_after_delete_again: 1000
+
+    R_click_remove_section: { role: "button", name: "Remove section" }
+    sleep_after_remove: 2000
+
+    sleep_end: 2000
+
+  expect_result:
+    description: "Event info (title, venue, date, description) should auto-sync to post title, post card subtitle, and RTE components"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "T5390"
+      - assertion_type: "element_visible_by_text"
+        text: "buy venue | Mon, Jul 20 (CDT)"
+      - assertion_type: "element_visible_by_text"
+        text: "AboutT5390"
+      - assertion_type: "element_visible_by_text"
+        text: "Remove Event description section?"
+
+# ==============================================================================
+# T5440: Verify deleted event widgets are NOT re-inserted into Post RTE
+# Pre-condition: Pre-created event "verify auto coupon apply" with published post
+#                Post RTE has auto-inserted event template widgets
+# Test focus: After user deletes event widgets from RTE and then updates event,
+#             the widgets should NOT be re-inserted into the Post RTE
+# Bug background: User deleted event widgets -> updated event info ->
+#                 widgets were incorrectly re-inserted into RTE
+# ==============================================================================
+testT5440:
+  description: "Verify deleted event widgets are NOT re-inserted into Post RTE after event update"
+  test_step:
+    # Step 1: Open events page and click event
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    # Click event "verify auto coupon apply"
+    R_click_event: { role: "cell", name: "verify auto coupon apply" }
+    sleep_after_event: 3000
+
+    # Step 2: Go to Posts tab and view post
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_after_posts: 2000
+
+    R_click_view_post: { role: "button", name: "View post" }
+    sleep_after_view: 3000
+
+    # Step 3: Edit content — delete all 5 event widgets from RTE
+    R_click_edit_content: { role: "button", name: "Edit content" }
+    sleep_after_edit: 2000
+
+    # 3a: Delete Event media component
+    R_click_event_media: { text: "Event media" }
+    sleep_after_media_click: 500
+    R_click_delete_media: { role: "button", name: "Delete" }
+    sleep_after_delete_media: 500
+    R_click_remove_media: { role: "button", name: "Remove section" }
+    sleep_after_remove_media: 1000
+
+    # 3b: Delete Event description component
+    R_click_event_desc: { text: "Event description" }
+    sleep_after_desc_click: 500
+    R_click_delete_desc: { role: "button", name: "Delete" }
+    sleep_after_delete_desc: 500
+    R_click_remove_desc: { role: "button", name: "Remove section" }
+    sleep_after_remove_desc: 1000
+
+    # 3c: Delete Event Lineup component
+    R_click_event_lineup: { text: "Event Lineup" }
+    sleep_after_lineup_click: 500
+    R_click_delete_lineup: { role: "button", name: "Delete" }
+    sleep_after_delete_lineup: 500
+    R_click_remove_lineup: { role: "button", name: "Remove section" }
+    sleep_after_remove_lineup: 1000
+
+    # 3d: Delete Event info component (date/time/location)
+    # NOTE: text from recording — "Thu Apr 17, 2053 8AMInstagram"
+    # Using date portion for stability; event has fixed date
+    R_click_event_info: { text: "Thu Apr 17, 2053" }
+    sleep_after_info_click: 500
+    R_click_delete_info: { role: "button", name: "Delete" }
+    sleep_after_delete_info: 500
+    R_click_remove_info: { role: "button", name: "Remove section" }
+    sleep_after_remove_info: 1000
+
+    # 3e: Delete Ticket component
+    R_click_ticket: { role: "button", name: "General Admission" }
+    sleep_after_ticket_click: 500
+    R_click_delete_ticket: { role: "button", name: "Delete" }
+    sleep_after_delete_ticket: 500
+    R_click_remove_ticket: { role: "button", name: "Remove section" }
+    sleep_after_remove_ticket: 1000
+
+    # Step 4: Save post (Update twice + Close)
+    R_click_update_1: { role: "button", name: "Update" }
+    sleep_after_update_1: 2000
+    R_click_update_2: { role: "button", name: "Update" }
+    sleep_after_update_2: 3000
+    R_click_close_editor: { role: "button", name: "Close" }
+    sleep_after_close: 2000
+
+    # Step 5: Edit event — add description, upload media, add lineup
+    R_click_event_tab: { role: "tab", name: "Event" }
+    sleep_after_event_tab: 1500
+
+    R_click_edit_event: { role: "button", name: "Edit event" }
+    sleep_after_edit_event: 2000
+
+    # Fill description
+    fill_event_desc: { role: "textbox", name: "Description (optional)", value: "5440" }
+    sleep_after_desc: 1000
+
+    # Save event
+    R_click_save_event: { role: "button", name: "Save" }
+    sleep_after_save: 3000
+
+    # Step 6: Upload event media (Info & Media tab)
+    R_click_info_media_tab: { role: "tab", name: "Info & Media" }
+    sleep_after_tab: 2000
+
+    upload_event_media: { text: "Upload", file_path: "data/test imag.jpeg" }
+    sleep_after_upload: 5000
+
+    # Step 7: Add lineup item with media
+    R_click_lineup_tab: { role: "tab", name: "Lineup" }
+    sleep_after_lineup_tab: 2000
+
+    R_click_add_lineup: { role: "button", name: "Add", exact: true }
+    sleep_after_add: 1500
+
+    fill_lineup_title: { locator: 'input[name="title"]', value: "5440" }
+    sleep_after_title: 1000
+
+    upload_lineup_media: { text: "Upload media", file_path: "data/test imag.jpeg" }
+    sleep_after_upload_lineup: 3000
+
+    R_click_done_lineup: { role: "button", name: "Done" }
+    sleep_after_done: 1500
+
+    R_click_add_lineup_item: { role: "button", name: "Add" }
+    sleep_after_add_item: 2000
+
+    # Step 8: Go back to post and verify widgets NOT re-inserted
+    R_click_posts_tab: { role: "tab", name: "Posts" }
+    sleep_after_posts: 2000
+
+    R_click_post_card: { role: "button", name: "View post" }
+    sleep_after_post: 3000
+
+    R_click_edit_content_again: { role: "button", name: "Edit content" }
+    sleep_after_edit_again: 2000
+
+    # === ASSERTION: Edit content page loaded (Description field visible) ===
+    verify_edit_loaded: { text: "Description" }
+
+    # === ASSERTION: Deleted event widgets should NOT be visible in RTE ===
+    verify_no_event_media: { text: "Event media", assert_not_visible: true }
+    verify_no_event_desc: { text: "Event description", assert_not_visible: true }
+    verify_no_event_lineup: { text: "Event Lineup", assert_not_visible: true }
+
+    sleep_end: 2000
+
+  expect_result:
+    description: "Deleted event widgets should NOT be re-inserted into Post RTE after event update"
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Description"
+      - assertion_type: "element_not_visible_by_text"
+        text: "Event media"
+      - assertion_type: "element_not_visible_by_text"
+        text: "Event description"
+      - assertion_type: "element_not_visible_by_text"
+        text: "Event Lineup"

@@ -125,5 +125,8 @@ step_captures/
 # === WorkBuddy Overview Artifacts (auto-generated per session) ===
 overview.md
 
+# === Playwright Codegen Recordings (raw step recordings, not for repo) ===
+recordings/
+
 # === Windows reserved device name artifacts (can be created by bad redirects) ===
 nul
