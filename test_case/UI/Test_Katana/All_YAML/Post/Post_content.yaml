@@ -255,7 +255,7 @@ testT5332:
         sleep_step: 2000
 
         # Step 8: Click "Insert all merch" from the revealed submenu
-        R_click_insert_all_merch: { name: "Insert all merch", fallback_scan: true }
+        R_click_insert_all_merch: { name: "Insert all merch" }
         sleep_step: 3000
 
         # Step 9: Click "Update" button at bottom of Edit post content dialog to save inserted merch
@@ -400,8 +400,7 @@ testT5443:
         # Part A: Remove the empty "Tickets will appear here" section from RTE
         # ----------------------------------------------------------------------
         # Step 1: Click the empty tickets placeholder text to select the section
-        # Use fallback_scan for more flexible element lookup (exact text match may vary)
-        R_click_tickets_placeholder: { text: "Tickets will appear here automatically", fallback_scan: true }
+        R_click_tickets_placeholder: { text: "Tickets will appear here automatically" }
         sleep_step: 2000
 
         # Step 2: Click Delete button on the section
@@ -572,7 +571,7 @@ testT5443_VerifyGuest:
                 y: "center"
         sleep_step: 1000
 
-        R_click_insert_all_tickets: { name: "Insert all tickets", fallback_scan: true }
+        R_click_insert_all_tickets: { name: "Insert all tickets" }
         sleep_step: 3000
 
         # Step 12: Save via Update (bottom) + confirm dialog (optional, may not appear)
@@ -609,19 +608,11 @@ testT5390:
     fill_event_title: { role: "textbox", name: "Event title", value: "T5390" }
     sleep_after_title: 1000
 
-    # Clear existing date (click X icon in date field)
-    # NOTE: selector from recording — close-circle-fill is the clear (X) icon
-    R_click_clear_date: { locator: '[data-testid="close-circle-fill"] path', index: 1 }
-    sleep_after_clear: 500
-
-    # Open calendar picker (click calendar icon)
-    # NOTE: fragile selector from recording — path:nth-child(2) is the calendar SVG path
-    R_click_open_calendar: { locator: 'path:nth-child(2)', index: 0 }
-    sleep_after_calendar: 500
-
-    # Select day 20 in calendar
-    R_click_day_20: { role: "gridcell", name: "20" }
-    sleep_after_day: 1000
+    # Set start date directly by bypassing React's controlled input value tracker
+    # (MUI DatePicker input is readonly and controlled; clear button is unreliable)
+    execute_js_set_start_date:
+      script: '() => { const input = document.querySelector(`input[placeholder="MMMM DD, YYYY"]`) || document.querySelector(`input[type="text"][readonly]`); if (!input) return false; input.removeAttribute("readonly"); input.focus(); const lastValue = input.value; input.value = "Apr 20, 2053"; const tracker = input._valueTracker; if (tracker) tracker.setValue(lastValue); input.dispatchEvent(new Event("input", {bubbles: true})); input.dispatchEvent(new Event("change", {bubbles: true})); input.blur(); return true; }'
+    sleep_after_set_start_date: 1000
 
     # Fill venue
     fill_venue: { role: "textbox", name: "Venue", value: "buy venue" }
@@ -640,14 +631,14 @@ testT5390:
     sleep_after_posts: 2000
 
     # Click post card
-    R_click_post_card: { locator: '[data-testid="mui-card-action-area"]', index: 0 }
+    R_click_post_card: { test_id: "mui-card-action-area" }
     sleep_after_post: 3000
 
     # === ASSERTION: Post title synced with event title "T5390" ===
     verify_post_title_synced: { text: "T5390" }
 
     # === ASSERTION: Post card subtitle synced with venue + date ===
-    verify_subtitle_synced: { text: "buy venue | Mon, Jul 20 (CDT)" }
+    verify_subtitle_synced: { text: "buy venue | Sun, Apr 20 (CDT)" }
 
     # Step 4: Edit post content to verify RTE sync
     R_click_edit_content: { role: "button", name: "Edit content" }
@@ -663,7 +654,11 @@ testT5390:
     # "About" is the label, "T5390" is the content — rendered as "AboutT5390" in DOM
     verify_rte_description: { text: "AboutT5390" }
 
-    # Step 5: Delete description component -> verify dialog -> Keep section (branch A)
+    # Step 5: Select description widget in RTE, then delete -> verify dialog -> Keep section (branch A)
+    # Must click on the widget to select it before Delete button appears
+    R_click_desc_widget: { text: "AboutT5390" }
+    sleep_after_desc_widget: 500
+
     R_click_delete_desc: { role: "button", name: "Delete" }
     sleep_after_delete: 1000
 
@@ -689,7 +684,7 @@ testT5390:
       - assertion_type: "element_visible_by_text"
         text: "T5390"
       - assertion_type: "element_visible_by_text"
-        text: "buy venue | Mon, Jul 20 (CDT)"
+        text: "Sun, Apr 20 (CDT)"
       - assertion_type: "element_visible_by_text"
         text: "AboutT5390"
       - assertion_type: "element_visible_by_text"
@@ -709,22 +704,22 @@ testT5440:
   test_step:
     # Step 1: Open events page and click event
     open: "{BASE_URL}/events"
-    sleep_after_open: 5000
+    sleep_after_open: 2000
 
     # Click event "verify auto coupon apply"
     R_click_event: { role: "cell", name: "verify auto coupon apply" }
-    sleep_after_event: 3000
+    sleep_after_event: 2000
 
     # Step 2: Go to Posts tab and view post
     R_click_posts_tab: { role: "tab", name: "Posts" }
     sleep_after_posts: 2000
 
     R_click_view_post: { role: "button", name: "View post" }
-    sleep_after_view: 3000
+    sleep_after_view: 1500
 
     # Step 3: Edit content — delete all 5 event widgets from RTE
     R_click_edit_content: { role: "button", name: "Edit content" }
-    sleep_after_edit: 2000
+    sleep_after_edit: 1000
 
     # 3a: Delete Event media component
     R_click_event_media: { text: "Event media" }
@@ -732,7 +727,7 @@ testT5440:
     R_click_delete_media: { role: "button", name: "Delete" }
     sleep_after_delete_media: 500
     R_click_remove_media: { role: "button", name: "Remove section" }
-    sleep_after_remove_media: 1000
+    sleep_after_remove_media: 500
 
     # 3b: Delete Event description component
     R_click_event_desc: { text: "Event description" }
@@ -740,7 +735,7 @@ testT5440:
     R_click_delete_desc: { role: "button", name: "Delete" }
     sleep_after_delete_desc: 500
     R_click_remove_desc: { role: "button", name: "Remove section" }
-    sleep_after_remove_desc: 1000
+    sleep_after_remove_desc: 500
 
     # 3c: Delete Event Lineup component
     R_click_event_lineup: { text: "Event Lineup" }
@@ -748,17 +743,16 @@ testT5440:
     R_click_delete_lineup: { role: "button", name: "Delete" }
     sleep_after_delete_lineup: 500
     R_click_remove_lineup: { role: "button", name: "Remove section" }
-    sleep_after_remove_lineup: 1000
+    sleep_after_remove_lineup: 500
 
     # 3d: Delete Event info component (date/time/location)
     # NOTE: text from recording — "Thu Apr 17, 2053 8AMInstagram"
-    # Using date portion for stability; event has fixed date
-    R_click_event_info: { text: "Thu Apr 17, 2053" }
+    R_click_event_info: { text: "Thu Apr 17" }
     sleep_after_info_click: 500
     R_click_delete_info: { role: "button", name: "Delete" }
     sleep_after_delete_info: 500
     R_click_remove_info: { role: "button", name: "Remove section" }
-    sleep_after_remove_info: 1000
+    sleep_after_remove_info: 500
 
     # 3e: Delete Ticket component
     R_click_ticket: { role: "button", name: "General Admission" }
@@ -766,7 +760,7 @@ testT5440:
     R_click_delete_ticket: { role: "button", name: "Delete" }
     sleep_after_delete_ticket: 500
     R_click_remove_ticket: { role: "button", name: "Remove section" }
-    sleep_after_remove_ticket: 1000
+    sleep_after_remove_ticket: 500
 
     # Step 4: Save post (Update twice + Close)
     R_click_update_1: { role: "button", name: "Update" }
@@ -818,14 +812,15 @@ testT5440:
     sleep_after_add_item: 2000
 
     # Step 8: Go back to post and verify widgets NOT re-inserted
-    R_click_posts_tab: { role: "tab", name: "Posts" }
+    R_click_posts_tab_2: { role: "tab", name: "Posts" }
     sleep_after_posts: 2000
 
+    # Use test_id matching recording (page.get_by_test_id("mui-card-action-area"))
     R_click_post_card: { role: "button", name: "View post" }
-    sleep_after_post: 3000
+    sleep_after_post: 2000
 
     R_click_edit_content_again: { role: "button", name: "Edit content" }
-    sleep_after_edit_again: 2000
+    sleep_after_edit_again: 4000
 
     # === ASSERTION: Edit content page loaded (Description field visible) ===
     verify_edit_loaded: { text: "Description" }

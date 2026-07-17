@@ -63,6 +63,7 @@ def start_autotest():
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
         '--headed',
+        '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
