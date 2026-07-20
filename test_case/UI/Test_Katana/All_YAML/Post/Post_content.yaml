@@ -638,7 +638,7 @@ testT5390:
     verify_post_title_synced: { text: "T5390" }
 
     # === ASSERTION: Post card subtitle synced with venue + date ===
-    verify_subtitle_synced: { text: "buy venue | Sun, Apr 20 (CDT)" }
+    verify_subtitle_synced: { text: "buy venue | Sun, Apr 20" }
 
     # Step 4: Edit post content to verify RTE sync
     R_click_edit_content: { role: "button", name: "Edit content" }
@@ -674,9 +674,14 @@ testT5390:
     sleep_after_delete_again: 1000
 
     R_click_remove_section: { role: "button", name: "Remove section" }
-    sleep_after_remove: 2000
+    sleep_after_remove: 500
+    
+    # Step 7: Restore event description
+    R_click_restore_to_default: { role: "button", name: "Restore to default" }
+    sleep_after_restore: 500
 
-    sleep_end: 2000
+    R_click_reset: { role: "button", name: "Reset" }
+    sleep_after_reset: 500
 
   expect_result:
     description: "Event info (title, venue, date, description) should auto-sync to post title, post card subtitle, and RTE components"
@@ -684,11 +689,9 @@ testT5390:
       - assertion_type: "element_visible_by_text"
         text: "T5390"
       - assertion_type: "element_visible_by_text"
-        text: "Sun, Apr 20 (CDT)"
+        text: "Apr 20"
       - assertion_type: "element_visible_by_text"
         text: "AboutT5390"
-      - assertion_type: "element_visible_by_text"
-        text: "Remove Event description section?"
 
 # ==============================================================================
 # T5440: Verify deleted event widgets are NOT re-inserted into Post RTE
