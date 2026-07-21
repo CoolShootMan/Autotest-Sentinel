@@ -38,7 +38,8 @@ tools/translate_yaml_comments.py
 !.env.example
 
 # === WorkBuddy (local AI context, not for repo) ===
-.workbuddy/
+.workbuddy/*
+!.workbuddy/skills/
 
 # === Logs ===
 log/
@@ -79,7 +80,8 @@ Thumbs.db
 .DS_Store
 
 # === WorkBuddy AI Tool (local only, do not commit) ===
-.workbuddy/
+.workbuddy/*
+!.workbuddy/skills/
 
 # === Binary Assets (Large files excluded from repo) ===
 *.y4m
@@ -130,3 +132,7 @@ recordings/
 
 # === Windows reserved device name artifacts (can be created by bad redirects) ===
 nul
+
+# === QA Workflow Tools (auth state + screenshots, not for repo) ===
+tools/figma_auth_state.json
+data/figma_screenshots/
