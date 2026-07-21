@@ -136,3 +136,11 @@ nul
 # === QA Workflow Tools (auth state + screenshots, not for repo) ===
 tools/figma_auth_state.json
 data/figma_screenshots/
+
+# === QA workflow runtime artifacts (generated during onboarding, do not commit) ===
+data/*_test_cases.json
+data/ones_*.png
+data/ones_*.json
+data/debug_*.png
+tools/_*.py
+/qa_workflow_requirements.md

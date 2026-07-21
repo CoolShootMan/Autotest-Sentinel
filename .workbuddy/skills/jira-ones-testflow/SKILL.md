@@ -112,7 +112,7 @@ mutation {
 ### Step 5 — Create the test plan (UI automation)
 
 ```
-"D:/Program Files/python.exe" tools/_ones_create_plan_v3.py
+"D:/Program Files/python.exe" tools/ones_create_plan_v3.py
 ```
 
 `_ones_create_plan_v3.py` already implements the corrected logic:
@@ -165,4 +165,4 @@ After the full pipeline, do a quick visual check in ONES and Jira:
 
 ## Cleanup
 
-Temporary probe scripts (`tools/_ones_*.py`) accumulate during exploration. The only one worth keeping is `_ones_create_plan_v3.py` (the stable plan-creation flow). Offer to delete the rest once a ticket's flow is complete.
+Temporary probe scripts (`tools/_*.py`) accumulate during exploration. After a ticket's flow is complete, delete them; only stable tools (without the `_` prefix) should remain.
