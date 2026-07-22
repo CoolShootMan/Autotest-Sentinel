@@ -25,7 +25,7 @@ Usage:
 Case JSON format:
     {
         "name": "Verify form redirect after submission",
-        "module_uuid": "2ojXUdsv",
+        "module_uuid": "<from ONES module list or env ONES_DEFAULT_MODULE_UUID>",
         "condition": "Form is created and published",
         "desc": "<p>KAT-11397: Test redirect URL</p>",
         "steps": [
@@ -38,7 +38,7 @@ Case JSON format:
 
     priority: "highest" | "high" | "normal" | "low" | "lowest" (default: "normal")
     type: "functional" | "performance" | "api" | "install" | "config" | "safety" | "other"
-    module_uuid: optional, defaults to root module
+    module_uuid: optional, defaults to env ONES_DEFAULT_MODULE_UUID or root module
 """
 import argparse
 import json
@@ -60,6 +60,10 @@ PROJECT_DIR = SCRIPT_DIR.parent
 ENV_PATH = PROJECT_DIR / "backend" / ".env"
 
 ONES_LOGIN_URL = "https://ones.cn/identity/login"
+
+# Fallback default module UUID. Prefer setting ONES_DEFAULT_MODULE_UUID in backend/.env
+# so that each ticket can target the correct module instead of hardcoding a historical one.
+DEFAULT_MODULE_UUID = "2ojXUdsv"
 
 
 def load_env():
@@ -290,6 +294,20 @@ def get_modules(env: dict, library_uuid: str = None):
     return []
 
 
+def resolve_module_uuid(case_data: dict, env: dict, override_module: str = None) -> str:
+    """Resolve module UUID with clear precedence:
+    1. Command-line override (--module <uuid>)
+    2. module_uuid field inside the case JSON
+    3. env ONES_DEFAULT_MODULE_UUID
+    4. historical fallback DEFAULT_MODULE_UUID
+    """
+    if override_module:
+        return override_module
+    if case_data and case_data.get("module_uuid"):
+        return case_data["module_uuid"]
+    return env.get("ONES_DEFAULT_MODULE_UUID") or DEFAULT_MODULE_UUID
+
+
 def get_plans(env: dict):
     """Get test plans."""
     team = env.get("ONES_TEAM_UUID", "T7u1zXum")
@@ -303,7 +321,7 @@ def _short_uuid():
     return uuid.uuid4().hex[:8]
 
 
-def update_case_steps(case_uuid: str, case_data: dict, env: dict):
+def update_case_steps(case_uuid: str, case_data: dict, env: dict, override_module: str = None):
     """Write steps to a test case using the real ONES REST endpoint.
 
     The generic /items/add endpoint silently drops steps.  The only reliable
@@ -316,7 +334,7 @@ def update_case_steps(case_uuid: str, case_data: dict, env: dict):
 
     type_key = case_data.get("type", "functional")
     type_uuid = TYPE_MAP.get(type_key, TYPE_MAP["functional"])
-    module_uuid = case_data.get("module_uuid") or "2ojXUdsv"
+    module_uuid = resolve_module_uuid(case_data, env, override_module)
     priority_uuid = PRIORITY_MAP.get(case_data.get("priority", "high"), PRIORITY_MAP["high"])
 
     raw_steps = case_data.get("steps", [])
@@ -367,7 +385,7 @@ def update_case_steps(case_uuid: str, case_data: dict, env: dict):
     return False, f"{status}: {str(resp)[:300]}"
 
 
-def create_case(case_data: dict, env: dict):
+def create_case(case_data: dict, env: dict, override_module: str = None):
     """Create a single test case.
 
     case_data keys:
@@ -385,7 +403,7 @@ def create_case(case_data: dict, env: dict):
     type_key = case_data.get("type", "functional")
     type_uuid = TYPE_MAP.get(type_key, TYPE_MAP["functional"])
 
-    module_uuid = case_data.get("module_uuid") or "2ojXUdsv"  # default module if not specified
+    module_uuid = resolve_module_uuid(case_data, env, override_module)
 
     # Convert steps to ONES format
     raw_steps = case_data.get("steps", [])
@@ -422,7 +440,7 @@ def create_case(case_data: dict, env: dict):
         case_uuid = item.get("uuid", "")
 
         # Persist steps via the real testcase update endpoint
-        step_ok, step_msg = update_case_steps(case_uuid, case_data, env)
+        step_ok, step_msg = update_case_steps(case_uuid, case_data, env, override_module)
 
         return {
             "success": True,
@@ -473,7 +491,10 @@ def cmd_modules(env, args):
         indent = "  " if m.get("parent", {}).get("uuid") else ""
         count = m.get("testcaseCaseCount", 0)
         default = " (default)" if m.get("isDefault") else ""
-        print(f"  {indent}{m.get('name', 'N/A'):40s}  uuid={m.get('uuid', 'N/A'):12s}  cases={count}{default}")
+        # API path is often a UUID chain; show it only when it looks human-readable.
+        path = m.get("path", "")
+        path_hint = f"  [{path}]" if path and (" " in path or "/" in path) else ""
+        print(f"  {indent}{m.get('name', 'N/A'):40s}  uuid={m.get('uuid', 'N/A'):12s}  cases={count}{default}{path_hint}")
     print(f"\nTotal: {len(modules)} modules")
 
 
@@ -502,7 +523,9 @@ def cmd_create(env, args):
         case_data = json.load(f)
 
     print(f"Creating test case: {case_data.get('name', 'N/A')[:60]}")
-    result = create_case(case_data, env)
+    if args.module:
+        print(f"  (using module override: {args.module})")
+    result = create_case(case_data, env, override_module=args.module)
 
     if result["success"]:
         print(f"  >>> SUCCESS!")
@@ -528,13 +551,15 @@ def cmd_batch(env, args):
         sys.exit(1)
 
     print(f"Batch creating {len(cases)} test cases...")
+    if args.module:
+        print(f"  (using module override for all cases: {args.module})")
     print("=" * 60)
 
     results = []
     for i, case_data in enumerate(cases, 1):
         name = case_data.get("name", "N/A")[:50]
         print(f"[{i}/{len(cases)}] {name}", end=" ... ")
-        result = create_case(case_data, env)
+        result = create_case(case_data, env, override_module=args.module)
 
         if result["success"]:
             print(f"OK (uuid={result['uuid']}, id={result.get('id', 'N/A')})")
@@ -605,10 +630,12 @@ def main():
     # create
     p_create = sub.add_parser("create", help="Create a single test case from JSON")
     p_create.add_argument("file", help="Path to case JSON file")
+    p_create.add_argument("--module", metavar="UUID", help="Override module_uuid for this case")
 
     # batch
     p_batch = sub.add_parser("batch", help="Batch create from JSON array file")
     p_batch.add_argument("file", help="Path to JSON array file")
+    p_batch.add_argument("--module", metavar="UUID", help="Override module_uuid for all cases in the batch")
 
     # modules
     sub.add_parser("modules", help="List modules in the Katana library")
