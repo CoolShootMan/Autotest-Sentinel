@@ -122,11 +122,10 @@ Only use **P0 and P1** priorities (user convention). Map to ONES priority UUIDs 
 
 When a ticket's feature is "copied" to a new flow (e.g. post preferences appear both in Collabs settings AND invite acceptance flow):
 
-1. **NEVER overwrite existing case steps.** Before any modification:
+1. **FETCH + backup before modifying.** Before any modification:
    - FETCH the current case detail (name, condition, assign, steps) via GraphQL
    - Save a backup to `data/<TICKET>_case_backup_<UUID>.json`
-   - Only modify the specific fields that need changing
-   - When adding steps, APPEND to the existing steps array — never replace it
+   - Only then modify — outdated steps CAN be overwritten when the flow has genuinely changed, but do it deliberately, never accidentally
 
 2. **NEVER change the assignee.** The `assign` field must be preserved from the original case. Do not set it to the current user unless explicitly told to.
 
@@ -162,6 +161,55 @@ To override the module for the whole batch (e.g. when `ONES_DEFAULT_MODULE_UUID`
 POST /project/api/project/team/{team}/testcase/library/{library_uuid}/cases/update
 ```
 with a `cases[]` body containing `steps[]` (each step: `desc`, `result`, `index`, `key`, `testcaseCase: {uuid}`, `uuid`). If steps are ever missing, run `tools/ones_update_steps.py` to batch-write them.
+
+### Step 3.5 — Verify steps persisted (MANDATORY, do NOT skip)
+
+**This step is non-negotiable.** The ONES REST `cases/update` endpoint can return `errcode: "OK"` even when steps silently failed to persist. This has happened twice (KAT-11397 and KAT-11654) — the `ones_create_results.json` reported `steps_written: true` for all cases, but ONES showed 0 steps.
+
+After Step 3 (and again after Step 4 if steps were re-written), run a GraphQL query to verify every case has steps:
+
+```python
+from ones_writer import load_env, graphql
+
+env = load_env()
+# Collect all case UUIDs from ones_create_results.json + any modified existing cases
+case_uuids = [...]  # all UUIDs to verify
+
+query = """
+query VerifySteps($filter: testcaseCaseStepsFilter) {
+  testcaseCaseSteps(filter: $filter) {
+    testcaseCase { uuid }
+    desc
+    result
+    index
+  }
+}
+"""
+variables = {"filter": {"testcaseCase_in": case_uuids}}
+status, res = graphql(query, variables, env)
+
+# Group steps by case UUID
+steps_by_case = {}
+for step in res["data"]["testcaseCaseSteps"]:
+    case_uuid = step["testcaseCase"]["uuid"]
+    steps_by_case.setdefault(case_uuid, []).append(step)
+
+# Verify every case has at least 1 step
+missing = [uuid for uuid in case_uuids if uuid not in steps_by_case]
+if missing:
+    print(f"❌ {len(missing)} cases have 0 steps: {missing}")
+    # RE-WRITE steps for these cases immediately, then re-verify
+else:
+    print(f"✅ All {len(case_uuids)} cases have steps")
+    for uuid, steps in steps_by_case.items():
+        print(f"  {uuid}: {len(steps)} steps")
+```
+
+**Key details**:
+- The GraphQL field is `testcaseCaseSteps` with filter `testcaseCase_in` — NOT a nested field inside `testcasePlanCases` (that doesn't work).
+- The REST `cases?uuid=X` endpoint returns ALL cases in the library (4600+) and is unreliable for step verification — always use GraphQL.
+- If any case has 0 steps, re-run `update_case_steps` for those cases and verify again. Do not proceed to plan creation until all cases pass.
+- Save the verification result to `data/<TICKET>_step_verification.json` as proof.
 
 ### Step 4 — Set case priorities (REST API)
 

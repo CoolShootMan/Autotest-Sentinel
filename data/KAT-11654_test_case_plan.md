@@ -7,7 +7,7 @@
 **Date**: 2026-07-22  
 **ONES Plan**: `JxAZP9Xw` — [Open in ONES](https://ones.cn/project/#/testcase/team/T7u1zXum/plan/JxAZP9Xw/library)  
 **Jira**: [KAT-11654](https://pearshop.atlassian.net/browse/KAT-11654) (Test Case Link for QA field backfilled)  
-**Status**: ✅ All 27 cases created/updated, linked to plan, Jira backfilled  
+**Status**: ✅ 26 cases (8 modify + 18 new), all updated in ONES with verified steps, linked to plan, Jira backfilled. B13 merged into B12.  
 
 ---
 
@@ -102,7 +102,7 @@ KAT-11654 revamps the post-invite-acceptance experience for Collabs. The core pr
 
 ## Part B: Cases to CREATE NEW
 
-> **Status**: ✅ All 19 cases created in ONES with steps and priorities set. New case UUIDs recorded in `data/ones_create_results.json`.
+> **Status**: ✅ All 18 cases created in ONES with steps and priorities set (B13 merged into B12). New case UUIDs recorded in `data/ones_create_results.json`. All steps verified via GraphQL `testcaseCaseSteps` query.
 
 ### Category 1: Invite Acceptance — New Scenarios
 
@@ -265,12 +265,12 @@ KAT-11654 revamps the post-invite-acceptance experience for Collabs. The core pr
 
 ### Category 4: Partners' Shoppable Posts — Browse & Add
 
-#### B12. Verify Partners' Shoppable posts list with filter and sort
+#### B12. Verify Partners' Shoppable posts list with filter, sort, and sort semantics
 - **Priority**: P1
 - **Module**: My Co-sellers (`K9GYKa95`)
-- **Scenario**: Browsing partner posts
-- **Precondition**: User has at least one connected partner with shoppable posts
-- **Steps**:
+- **Scenario**: Browsing partner posts + sort behavior verification
+- **Precondition**: Multiple partner shops with posts added at different times
+- **Steps** (merged B12 + B13, 10 steps):
   1. Navigate to Partners' Shoppable posts (via any entry point)
   2. Verify the page title "Partners' Shoppable posts" is displayed
   3. Verify a shop filter is available
@@ -278,19 +278,13 @@ KAT-11654 revamps the post-invite-acceptance experience for Collabs. The core pr
   5. Verify default sort is "Newest" in non-filtered state
   6. Switch sort to "Recently Added" and verify the list updates
   7. Use the shop filter to filter by a specific partner shop
-- **Expect**: Users can filter by shop and sort posts by multiple criteria
+  8. Sort by "Newest" — verify posts are ordered by latest posts from all partner shops
+  9. Sort by "Recently Added" — verify posts are ordered by new partners/shops added to the shop
+  10. Verify the two sorts produce different orderings when applicable
+- **Expect**: Users can filter by shop, sort by multiple criteria, and "Newest" vs "Recently Added" have distinct semantics
 
-#### B13. Verify "Newest" vs "Recently Added" sort semantics
-- **Priority**: P1
-- **Module**: My Co-sellers (`K9GYKa95`)
-- **Scenario**: Sort behavior verification
-- **Precondition**: Multiple partner shops with posts added at different times
-- **Steps**:
-  1. Open Partners' Shoppable posts
-  2. Sort by "Newest" — verify posts are ordered by latest posts from all partner shops
-  3. Sort by "Recently Added" — verify posts are ordered by new partners/shops added to the shop
-  4. Verify the two sorts produce different orderings when applicable
-- **Expect**: "Newest" = latest posts across all partners; "Recently Added" = newly joined partners/shops
+#### ~~B13. Verify "Newest" vs "Recently Added" sort semantics~~ (MERGED into B12)
+- **UUID**: `UNXyWFMC` — removed from plan `JxAZP9Xw` (case still exists in library but not linked to plan)
 
 #### B14. Verify adding individual posts to shop from Partners' Shoppable posts
 - **Priority**: P0
@@ -395,11 +389,11 @@ KAT-11654 revamps the post-invite-acceptance experience for Collabs. The core pr
 | Invite Acceptance (4 scenarios) | 6 | 4 | 10 |
 | Post Preferences & Section Selection | 1 | 4 | 5 |
 | Add Shoppable Posts (3 entry points) | 0 | 3 | 3 |
-| Partners' Shoppable Posts Browse & Add | 0 | 4 | 4 |
+| Partners' Shoppable Posts Browse & Add | 0 | 3 | 3 |
 | Post-Based Flow | 0 | 3 | 3 |
 | Invitation Types | 1 | 1 | 2 |
-| **Total** | **8** | **19** | **27** |
+| **Total** | **8** | **18** | **26** |
 
 ### Priority Breakdown
 - **P0**: 17 cases (main flows + critical new features)
-- **P1**: 10 cases (edge cases + secondary features)
+- **P1**: 9 cases (edge cases + secondary features, B13 merged into B12)
