@@ -149,3 +149,7 @@ data/ones_*.json
 data/debug_*.png
 tools/_*.py
 /qa_workflow_requirements.md
+
+# === QA performance test debug
+test_case/output
+test_case/performance testing
