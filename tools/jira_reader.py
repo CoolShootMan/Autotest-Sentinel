@@ -62,6 +62,10 @@ def parse_adf(node, indent=0) -> str:
                     text = f"{text}({href})"
         return text
 
+    if node_type == "inlineCard":
+        url = node.get("attrs", {}).get("url", "")
+        return f" {url} " if url else ""
+
     if node_type == "doc":
         return "\n".join(parse_adf(c, indent) for c in content)
 
