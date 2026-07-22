@@ -242,18 +242,19 @@ P0=`3g7bLpa1` (highest), P1=`VRXHXgbp` (high). Only use P0/P1 for this project.
 ### Step 5 — Create the test plan (UI automation)
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_create_plan_v3.py <TICKET> --owner <OWNER_QUERY>
+"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_create_plan_v3.py <TICKET> --owner <OWNER_QUERY> [--date YYYY-MM-DD]
 ```
 
 **Parameters**:
-- `<TICKET>` — the Jira ticket key (e.g. `KAT-11397`), used to fetch the summary (becomes plan name) and QA owner.
+- `<TICKET>` — the Jira ticket key (e.g. `KAT-11397`), used to fetch the summary (becomes plan name), QA owner, and execution date.
 - `--owner <OWNER_QUERY>` — the search term to type into the ONES owner dropdown. Derive this from the Jira QA field's `displayName`: take the **first name in lowercase** (e.g. `"Yuxiao Zhu"` → `"yuxiao"`). This must be unique enough to match exactly one person in the dropdown.
 - `--plan-name` (optional) — override the auto-generated `"TICKET: <jira summary>"` plan name.
+- `--date` (optional) — override execution date (default: automatically extracted prioritizing Jira Description `due: Month DD, YYYY`, fallback to Jira native `duedate` field, or today).
 
 `ones_create_plan_v3.py` implements:
-- Fetches the Jira summary and QA displayName automatically.
+- Fetches the Jira summary, QA displayName, and execution due date automatically.
 - Sets the **test phase to 功能测试** (not the default 冒烟测试).
-- Picks today as the execution date.
+- Sets execution date from Jira Description (lead-defined due date), falling back to native `duedate` or today.
 - Saves the plan, extracts the new plan UUID, and links cases via API.
 - Owner selection: types the query, then **only clicks the option that contains the query string** — never falls back to "first option". If no match, raises an error.
 
