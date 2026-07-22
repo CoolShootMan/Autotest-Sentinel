@@ -139,6 +139,7 @@ data/figma_screenshots/
 
 # === QA workflow runtime artifacts (generated during onboarding, do not commit) ===
 data/*_test_cases.json
+data/*_raw.json
 data/ones_*.png
 data/ones_*.json
 data/debug_*.png
