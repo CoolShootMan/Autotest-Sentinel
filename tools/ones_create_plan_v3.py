@@ -93,8 +93,8 @@ def add_cases_to_plan(plan_uuid, case_uuids, env):
     return True
 
 
-def find_plan_by_name(env, plan_name):
-    """List plans via API and find the one matching plan_name."""
+def find_plan_by_name(env, plan_name, ticket_key):
+    """List plans via API and find the one matching plan_name or ticket_key."""
     import urllib.request
     base = env.get('ONES_URL', 'https://ones.cn')
     team = env.get('ONES_TEAM_UUID', '')
@@ -114,22 +114,23 @@ def find_plan_by_name(env, plan_name):
         for p in plans:
             if p.get('name') == plan_name:
                 return p.get('uuid')
-        # Fuzzy fallback
+        # Fuzzy fallback: match by ticket key
         for p in plans:
-            if 'KAT-11397' in (p.get('name') or ''):
+            if ticket_key in (p.get('name') or ''):
                 return p.get('uuid')
     except Exception as e:
         print(f'   find_plan_by_name error: {e}')
     return None
 
 
-def fetch_jira_qa(env, issue_key):
-    """Fetch QA assignee displayName from Jira customfield_10083."""
+def fetch_jira_issue(env, issue_key):
+    """Fetch QA assignee displayName and issue summary from Jira.
+    Returns (qa_display_name, summary)."""
     email = env.get('JIRA_EMAIL', '')
     token = env.get('JIRA_API_TOKEN', '')
     base = env.get('JIRA_BASE_URL', '')
     if not all([email, token, base, issue_key]):
-        return ''
+        return '', ''
     auth = base64.b64encode(f'{email}:{token}'.encode()).decode()
     url = f'{base}/rest/api/3/issue/{issue_key}?fields=customfield_10083,summary'
     req = urllib.request.Request(url, headers={
@@ -139,26 +140,43 @@ def fetch_jira_qa(env, issue_key):
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode('utf-8'))
-        qa_raw = data.get('fields', {}).get('customfield_10083', [])
-        if qa_raw and isinstance(qa_raw, list):
-            return qa_raw[0].get('displayName', '')
+        fields = data.get('fields', {})
+        qa_raw = fields.get('customfield_10083', [])
+        qa_name = qa_raw[0].get('displayName', '') if qa_raw and isinstance(qa_raw, list) else ''
+        summary = fields.get('summary', '')
+        return qa_name, summary
     except Exception as e:
-        print(f'   Could not fetch Jira QA for {issue_key}: {e}')
-    return ''
+        print(f'   Could not fetch Jira issue {issue_key}: {e}')
+        return '', ''
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='Create ONES test plan via UI and link cases.')
+    parser.add_argument('ticket', help='Jira ticket key (e.g. KAT-11397)')
+    parser.add_argument('--owner', required=True,
+                        help='Owner search query for ONES dropdown (e.g. yuxiao)')
+    parser.add_argument('--plan-name', default=None,
+                        help='Override plan name (default: "TICKET: <jira summary>")')
+    args = parser.parse_args()
+
     env = load_env()
     TEAM = env['ONES_TEAM_UUID']
-    EMAIL = env.get('ONES_EMAIL', 'yuxiao.zhu.ext@1m.app')
+    EMAIL = env.get('ONES_EMAIL', '')
+    if not EMAIL:
+        raise RuntimeError('ONES_EMAIL not set in backend/.env')
 
-    PLAN_NAME = 'KAT-11397: Growth: enhance Pear Form to have a redirect CTA after submission'
+    JIRAKEY = args.ticket
 
-    # Derive Jira key from plan name and fetch QA as the test plan owner
-    JIRA_KEY = re.search(r'(KAT-\d+)', PLAN_NAME).group(1) if re.search(r'(KAT-\d+)', PLAN_NAME) else ''
-    qa_name = fetch_jira_qa(env, JIRA_KEY) if JIRA_KEY else ''
-    NAME = qa_name or 'Yuxiao Zhu'
-    print(f'Jira key: {JIRA_KEY}, QA owner: {NAME}')
+    # Fetch QA owner display name and issue summary from Jira
+    qa_name, jira_summary = fetch_jira_issue(env, JIRAKEY)
+    NAME = qa_name or 'Unknown'
+    PLAN_NAME = args.plan_name or (f'{JIRAKEY}: {jira_summary}' if jira_summary else JIRAKEY)
+    OWNER_QUERY = args.owner
+
+    print(f'Ticket: {JIRAKEY}')
+    print(f'Plan name: {PLAN_NAME}')
+    print(f'Owner query: "{OWNER_QUERY}" (Jira QA: {NAME})')
 
     # Ensure API token is fresh (used later for linking cases)
     ensure_token(env)
@@ -239,8 +257,8 @@ def main():
             print(f'   Name: {PLAN_NAME}')
         page.screenshot(path='data/ones_plan_name_filled.png', full_page=True)
 
-        # 4. Set owner (负责人 = 人名)
-        print('4. Setting owner...')
+        # 4. Set owner (负责人) — OWNER_QUERY passed from argparse
+        print(f'4. Setting owner to "{OWNER_QUERY}"...')
         owner_field = page.locator('.ones-modal-wrap .ones-user-select, .ant-modal-wrap .ones-user-select, .ant-modal .ones-user-select').first
         if owner_field.count() == 0:
             owner_field = page.locator('input[placeholder="请选择"]').first
@@ -248,29 +266,42 @@ def main():
             owner_field.click()
             page.wait_for_timeout(2000)
             page.screenshot(path='data/ones_plan_owner_dropdown.png', full_page=True)
-            # Try dropdown search input first
-            search = page.locator('.ones-select-dropdown input, .ant-select-dropdown input, .ant-select-dropdown input[placeholder*="搜索"]').first
+
+            # Wait for the dropdown's search input to appear and type the owner query there.
+            search = page.locator('.ones-select-dropdown input[type="text"], .ant-select-dropdown input[type="text"], .ones-select-dropdown input, .ant-select-dropdown input').first
+            if search.count() == 0:
+                # Some selects embed the search input inside the trigger; look inside the select.
+                search = owner_field.locator('input').first
             if search.count() > 0:
-                search.fill(NAME)
+                search.fill(OWNER_QUERY)
+                print(f'   Typed "{OWNER_QUERY}" into owner search')
                 page.wait_for_timeout(1500)
                 page.screenshot(path='data/ones_plan_owner_search.png', full_page=True)
-            # Select matching option
-            opts = page.locator('.ones-select-dropdown .ones-select-item-option, .ones-select-dropdown .ones-select-item, .ant-select-dropdown .ant-select-item-option, .ant-select-dropdown .ant-select-item').all()
-            selected = False
-            for opt in opts:
-                text = (opt.text_content() or '').strip()
-                if NAME.split()[0] in text or NAME.split()[-1] in text or NAME in text:
-                    print(f'   Selecting option: {text[:40]}')
-                    opt.click()
-                    selected = True
-                    break
-            if not selected and opts:
-                text = (opts[0].text_content() or '').strip()
-                print(f'   No option matched "{NAME}", selecting first: {text[:40]}')
-                opts[0].click()
-                selected = True
-            page.wait_for_timeout(1000)
-            page.keyboard.press('Escape')
+
+                # Filter the dropdown options: only click the one that actually contains
+                # the owner query. Never fall back to "first option" — that previously picked
+                # "aaric.zheng" by accident because Enter highlighted a different row.
+                opts = page.locator('.ones-select-dropdown .ones-select-item-option, .ones-select-dropdown .ones-select-item, .ant-select-dropdown .ant-select-item-option, .ant-select-dropdown .ant-select-item').all()
+                target_opt = None
+                for opt in opts:
+                    text = (opt.text_content() or '').strip()
+                    if OWNER_QUERY.lower() in text.lower():
+                        target_opt = opt
+                        print(f'   Matched owner option: {text[:60]}')
+                        break
+                if target_opt is None:
+                    raise RuntimeError(
+                        f'Owner "{OWNER_QUERY}" not found in dropdown. '
+                        f'Available options: {[ (o.text_content() or "").strip()[:40] for o in opts ]}'
+                    )
+                target_opt.click()
+                page.wait_for_timeout(500)
+            else:
+                raise RuntimeError('Could not locate owner search input after opening dropdown')
+
+            # Close dropdown by clicking back on the name input (inside modal, won't close modal)
+            if name_input.count() > 0:
+                name_input.click()
             page.wait_for_timeout(500)
         page.screenshot(path='data/ones_plan_after_owner.png', full_page=True)
 
@@ -295,7 +326,8 @@ def main():
                 print('   Selected 功能测试')
             else:
                 print('   WARNING: 功能测试 option not found, leaving default')
-            page.keyboard.press('Escape')
+            # Close dropdown by clicking back on the name input
+            name_input.click() if name_input.count() > 0 else None
             page.wait_for_timeout(500)
         else:
             print('   WARNING: Could not locate phase dropdown')
@@ -314,7 +346,8 @@ def main():
             if today.count() > 0:
                 today.click()
                 print('   Selected today')
-            page.keyboard.press('Escape')
+            # Close date picker by clicking back on the name input
+            name_input.click() if name_input.count() > 0 else None
             page.wait_for_timeout(500)
         page.screenshot(path='data/ones_plan_form_complete.png', full_page=True)
 
@@ -352,7 +385,7 @@ def main():
     if not plan_uuid:
         print('WARNING: Could not extract new plan UUID from network traffic.')
         print('   Falling back to API listing by plan name...')
-        plan_uuid = find_plan_by_name(env, PLAN_NAME)
+        plan_uuid = find_plan_by_name(env, PLAN_NAME, JIRAKEY)
     if not plan_uuid:
         print('ERROR: Could not find new plan. Please check the captured API responses or manually link cases.')
         return

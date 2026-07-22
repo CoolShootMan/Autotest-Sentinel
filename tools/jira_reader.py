@@ -52,7 +52,15 @@ def parse_adf(node, indent=0) -> str:
     prefix = "  " * indent
 
     if node_type == "text":
-        return node.get("text", "")
+        text = node.get("text", "")
+        # Extract link URLs from marks (ADF stores hyperlinks in marks, not in text)
+        marks = node.get("marks", [])
+        for mark in marks:
+            if mark.get("type") == "link":
+                href = mark.get("attrs", {}).get("href", "")
+                if href and href not in text:
+                    text = f"{text}({href})"
+        return text
 
     if node_type == "doc":
         return "\n".join(parse_adf(c, indent) for c in content)

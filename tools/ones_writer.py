@@ -59,8 +59,6 @@ SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
 ENV_PATH = PROJECT_DIR / "backend" / ".env"
 
-ONES_EMAIL = "yuxiao.zhu.ext@1m.app"
-ONES_PASSWORD = "zyx@1032970941"
 ONES_LOGIN_URL = "https://ones.cn/identity/login"
 
 
@@ -133,6 +131,13 @@ def refresh_token_via_playwright() -> str:
     print("  Token expired or invalid. Refreshing via Playwright login...")
     from playwright.sync_api import sync_playwright
 
+    env = load_env()
+    ones_email = env.get("ONES_EMAIL", "")
+    ones_password = env.get("ONES_PASSWORD", "")
+    if not ones_email or not ones_password:
+        print("  ERROR: ONES_EMAIL and ONES_PASSWORD must be set in backend/.env", file=sys.stderr)
+        sys.exit(1)
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         context = browser.new_context(viewport={"width": 1280, "height": 800})
@@ -140,8 +145,8 @@ def refresh_token_via_playwright() -> str:
         page.set_default_timeout(30000)
 
         page.goto(ONES_LOGIN_URL)
-        page.get_by_role("textbox", name="* 邮箱").fill(ONES_EMAIL)
-        page.get_by_role("textbox", name="* 密码").fill(ONES_PASSWORD)
+        page.get_by_role("textbox", name="* 邮箱").fill(ones_email)
+        page.get_by_role("textbox", name="* 密码").fill(ones_password)
         page.get_by_role("button", name="登录").click()
         page.wait_for_timeout(3000)
 
@@ -312,7 +317,7 @@ def update_case_steps(case_uuid: str, case_data: dict, env: dict):
     type_key = case_data.get("type", "functional")
     type_uuid = TYPE_MAP.get(type_key, TYPE_MAP["functional"])
     module_uuid = case_data.get("module_uuid") or "2ojXUdsv"
-    priority_uuid = PRIORITY_MAP.get(case_data.get("priority", "normal"), PRIORITY_MAP["normal"])
+    priority_uuid = PRIORITY_MAP.get(case_data.get("priority", "high"), PRIORITY_MAP["high"])
 
     raw_steps = case_data.get("steps", [])
     steps = []
@@ -374,8 +379,8 @@ def create_case(case_data: dict, env: dict):
     library_uuid = env.get("ONES_LIBRARY_UUID", "XcAFFViB")
     user_id = env.get("ONES_USER_ID", "HKJxJn4E")
 
-    priority_key = case_data.get("priority", "normal")
-    priority_uuid = PRIORITY_MAP.get(priority_key, PRIORITY_MAP["normal"])
+    priority_key = case_data.get("priority", "high")
+    priority_uuid = PRIORITY_MAP.get(priority_key, PRIORITY_MAP["high"])
 
     type_key = case_data.get("type", "functional")
     type_uuid = TYPE_MAP.get(type_key, TYPE_MAP["functional"])

@@ -24,6 +24,7 @@ Body format (captured from ONES UI):
   ]
 }
 """
+import argparse
 import json
 import urllib.request
 import urllib.error
@@ -66,17 +67,33 @@ PRIORITY_UUIDS = {
     'low': None,
 }
 
-UUIDS = ['RasykFr3', 'KYHLfaYw', 'VPJX3dus', '3Terx3zi', 'DKhUPRof', 'GUJzYYhE', 'XPWbZjfm']
-
-# Priority UUIDs as currently set in ONES (T1=P0, T2-T7=P1)
-CASE_PRIORITY = {
-    'RasykFr3': '3g7bLpa1',   # P0
-    'KYHLfaYw': 'VRXHXgbp',  # P1
-    'VPJX3dus': 'VRXHXgbp',
-    '3Terx3zi': 'VRXHXgbp',
-    'DKhUPRof': 'VRXHXgbp',
-    'GUJzYYhE': 'VRXHXgbp',
-    'XPWbZjfm': 'VRXHXgbp',
+TICKET_CASES = {
+    'KAT-11397': {
+        'file': 'data/kat-11397_test_cases.json',
+        'uuids': ['RasykFr3', 'KYHLfaYw', 'VPJX3dus', '3Terx3zi', 'DKhUPRof', 'GUJzYYhE', 'XPWbZjfm'],
+        'priority': {
+            'RasykFr3': '3g7bLpa1',   # P0
+            'KYHLfaYw': 'VRXHXgbp',  # P1
+            'VPJX3dus': 'VRXHXgbp',
+            '3Terx3zi': 'VRXHXgbp',
+            'DKhUPRof': 'VRXHXgbp',
+            'GUJzYYhE': 'VRXHXgbp',
+            'XPWbZjfm': 'VRXHXgbp',
+        },
+    },
+    'KAT-11396': {
+        'file': 'data/kat-11396_test_cases.json',
+        'uuids': ['LeLeimxB', 'AxXQfCFw', '5s2AnRAm', 'YNMtJVJK', '7FgTDzLQ', 'ArYyGv9v', 'JtDRv64G'],
+        'priority': {
+            'LeLeimxB': '3g7bLpa1',   # P0
+            'AxXQfCFw': '3g7bLpa1',   # P0
+            '5s2AnRAm': 'VRXHXgbp',   # P1
+            'YNMtJVJK': 'VRXHXgbp',
+            '7FgTDzLQ': 'VRXHXgbp',
+            'ArYyGv9v': 'VRXHXgbp',
+            'JtDRv64G': 'VRXHXgbp',
+        },
+    },
 }
 
 
@@ -114,12 +131,24 @@ def gql(query, variables=None):
         return e.code, e.read().decode('utf-8', errors='replace')[:1000]
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Update ONES test case steps via REST API.')
+    parser.add_argument('--ticket', default='KAT-11397', choices=list(TICKET_CASES.keys()),
+                        help='Ticket whose cases to update (default: KAT-11397)')
+    return parser.parse_args()
+
+
+args = parse_args()
+config = TICKET_CASES[args.ticket]
+UUIDS = config['uuids']
+CASE_PRIORITY = config['priority']
+
 # Load cases
-with open('data/kat-11397_test_cases.json', 'r', encoding='utf-8') as f:
+with open(config['file'], 'r', encoding='utf-8') as f:
     cases = json.load(f)
 
 # ── Test T1 first ────────────────────────────────────────────────────────
-print('=== Test: Update T1 via REST API ===\n')
+print(f'=== Test: Update T1 via REST API for {args.ticket} ===\n')
 case_data = cases[0]
 case_uuid = UUIDS[0]
 steps = []
@@ -175,7 +204,7 @@ else:
     sys.exit(1)
 
 # ── Batch update all 7 cases ─────────────────────────────────────────────
-print('=== Batch update all 7 cases ===\n')
+print(f'=== Batch update all {len(UUIDS)} cases for {args.ticket} ===\n')
 success_count = 0
 
 for i, (case_data, case_uuid) in enumerate(zip(cases, UUIDS)):
@@ -226,10 +255,10 @@ for i, (case_data, case_uuid) in enumerate(zip(cases, UUIDS)):
     else:
         print(f'  FAIL {tag}: {status} {str(resp)[:200]}')
 
-print(f'\n=== Result: {success_count}/7 cases updated ===')
+print(f'\n=== Result: {success_count}/{len(UUIDS)} cases updated ===')
 
 # Also verify via UI detail query
-print('\n=== Final verification via plancase-detail ===')
+print('\n=== Final verification via testcaseCaseSteps query ===')
 for i, case_uuid in enumerate(UUIDS):
     tag = f'T{i+1}'
     s, r = gql(q, {'f': {'testcaseCase_in': [case_uuid]}})
