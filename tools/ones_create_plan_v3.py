@@ -6,6 +6,7 @@ import sys
 import time
 import urllib.request
 import base64
+from datetime import datetime
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -60,7 +61,6 @@ def ensure_token(env):
 
 def extract_plan_uuid(captured):
     """Try to extract the newly created plan UUID from captured network traffic."""
-    # Look for JSON responses that contain a plan uuid
     for entry in captured:
         if 'resp' not in entry:
             continue
@@ -71,7 +71,6 @@ def extract_plan_uuid(captured):
             body = json.loads(resp.get('body', '{}'))
         except Exception:
             continue
-        # Common shapes: {"plan": {...}} or {"item": {...}}
         for key in ('plan', 'item', 'testcasePlan'):
             obj = body.get(key) if isinstance(body, dict) else None
             if obj and isinstance(obj, dict) and obj.get('uuid'):
@@ -114,7 +113,6 @@ def find_plan_by_name(env, plan_name, ticket_key):
         for p in plans:
             if p.get('name') == plan_name:
                 return p.get('uuid')
-        # Fuzzy fallback: match by ticket key
         for p in plans:
             if ticket_key in (p.get('name') or ''):
                 return p.get('uuid')
@@ -123,16 +121,62 @@ def find_plan_by_name(env, plan_name, ticket_key):
     return None
 
 
+def parse_adf_text(node) -> str:
+    """Recursively convert Atlassian Document Format JSON to plain text."""
+    if not node or not isinstance(node, dict):
+        return ""
+    node_type = node.get("type", "")
+    content = node.get("content", [])
+    if node_type == "text":
+        return node.get("text", "")
+    if content:
+        return " ".join(parse_adf_text(c) for c in content)
+    return ""
+
+
+def parse_jira_due_date(description: str, duedate_field: str = "") -> str:
+    """Parse due date prioritizing Jira Description (Lead manually set), then native duedate field."""
+    # 1. Priority 1: Check Description first
+    if description:
+        m = re.search(r'due:\s*([A-Za-z]{3,9}\s+\d{1,2},?\s*\d{4})', description, re.IGNORECASE)
+        if m:
+            date_str = m.group(1).replace(',', '').strip()
+            for fmt in ('%b %d %Y', '%B %d %Y'):
+                try:
+                    return datetime.strptime(date_str, fmt).strftime('%Y-%m-%d')
+                except ValueError:
+                    pass
+
+        m2 = re.search(r'due:\s*(\d{4}-\d{2}-\d{2})', description, re.IGNORECASE)
+        if m2:
+            return m2.group(1)
+
+        m3 = re.search(r'due:\s*(\d{1,2}\s+[A-Za-z]{3,9},?\s*\d{4})', description, re.IGNORECASE)
+        if m3:
+            date_str = m3.group(1).replace(',', '').strip()
+            for fmt in ('%d %b %Y', '%d %B %Y'):
+                try:
+                    return datetime.strptime(date_str, fmt).strftime('%Y-%m-%d')
+                except ValueError:
+                    pass
+
+    # 2. Priority 2: Fallback to Jira native duedate field
+    if duedate_field:
+        return duedate_field.strip()
+
+    return ""
+
+
 def fetch_jira_issue(env, issue_key):
-    """Fetch QA assignee displayName and issue summary from Jira.
-    Returns (qa_display_name, summary)."""
+    """Fetch QA assignee displayName, issue summary, description and due date from Jira.
+    Returns (qa_display_name, summary, due_date)."""
     email = env.get('JIRA_EMAIL', '')
     token = env.get('JIRA_API_TOKEN', '')
     base = env.get('JIRA_BASE_URL', '')
     if not all([email, token, base, issue_key]):
-        return '', ''
+        return '', '', ''
     auth = base64.b64encode(f'{email}:{token}'.encode()).decode()
-    url = f'{base}/rest/api/3/issue/{issue_key}?fields=customfield_10083,summary'
+    url = f'{base}/rest/api/3/issue/{issue_key}?fields=customfield_10083,summary,description,duedate'
     req = urllib.request.Request(url, headers={
         'Authorization': f'Basic {auth}',
         'Accept': 'application/json',
@@ -144,10 +188,16 @@ def fetch_jira_issue(env, issue_key):
         qa_raw = fields.get('customfield_10083', [])
         qa_name = qa_raw[0].get('displayName', '') if qa_raw and isinstance(qa_raw, list) else ''
         summary = fields.get('summary', '')
-        return qa_name, summary
+
+        desc_raw = fields.get('description')
+        desc_text = parse_adf_text(desc_raw) if desc_raw else ''
+        raw_duedate = fields.get('duedate') or ''
+        due_date = parse_jira_due_date(desc_text, raw_duedate)
+
+        return qa_name, summary, due_date
     except Exception as e:
         print(f'   Could not fetch Jira issue {issue_key}: {e}')
-        return '', ''
+        return '', '', ''
 
 
 def main():
@@ -158,6 +208,8 @@ def main():
                         help='Owner search query for ONES dropdown (e.g. yuxiao)')
     parser.add_argument('--plan-name', default=None,
                         help='Override plan name (default: "TICKET: <jira summary>")')
+    parser.add_argument('--date', default=None,
+                        help='Override execution date (default: Jira description/duedate or today)')
     args = parser.parse_args()
 
     env = load_env()
@@ -168,17 +220,18 @@ def main():
 
     JIRAKEY = args.ticket
 
-    # Fetch QA owner display name and issue summary from Jira
-    qa_name, jira_summary = fetch_jira_issue(env, JIRAKEY)
+    # Fetch QA owner display name, issue summary, and due date from Jira
+    qa_name, jira_summary, jira_due_date = fetch_jira_issue(env, JIRAKEY)
     NAME = qa_name or 'Unknown'
     PLAN_NAME = args.plan_name or (f'{JIRAKEY}: {jira_summary}' if jira_summary else JIRAKEY)
     OWNER_QUERY = args.owner
+    TARGET_DATE = args.date or jira_due_date or datetime.now().strftime('%Y-%m-%d')
 
     print(f'Ticket: {JIRAKEY}')
     print(f'Plan name: {PLAN_NAME}')
     print(f'Owner query: "{OWNER_QUERY}" (Jira QA: {NAME})')
+    print(f'Execution date: {TARGET_DATE} (source: {"--date arg" if args.date else ("Jira description/duedate" if jira_due_date else "today")})')
 
-    # Ensure API token is fresh (used later for linking cases)
     ensure_token(env)
 
     captured = []
@@ -205,7 +258,7 @@ def main():
 
         page.on('response', on_response)
 
-        # 0. Login via UI (cookie-based session required)
+        # 0. Login via UI
         login_url = 'https://ones.cn/auth/login'
         print(f'0. Logging in at: {login_url}')
         page.goto(login_url, wait_until='domcontentloaded', timeout=60000)
@@ -219,7 +272,7 @@ def main():
             print(f'   Login form error (will try to continue): {e}')
         print(f'   After login URL: {page.url}')
 
-        # 1. Navigate to the test plan page
+        # 1. Navigate to test plan page
         url = f'https://ones.cn/project/#/testcase/team/{TEAM}/index'
         print(f'1. Navigating to: {url}')
         page.goto(url, wait_until='domcontentloaded', timeout=60000)
@@ -257,7 +310,7 @@ def main():
             print(f'   Name: {PLAN_NAME}')
         page.screenshot(path='data/ones_plan_name_filled.png', full_page=True)
 
-        # 4. Set owner (负责人) — OWNER_QUERY passed from argparse
+        # 4. Set owner (负责人)
         print(f'4. Setting owner to "{OWNER_QUERY}"...')
         owner_field = page.locator('.ones-modal-wrap .ones-user-select, .ant-modal-wrap .ones-user-select, .ant-modal .ones-user-select').first
         if owner_field.count() == 0:
@@ -267,10 +320,8 @@ def main():
             page.wait_for_timeout(2000)
             page.screenshot(path='data/ones_plan_owner_dropdown.png', full_page=True)
 
-            # Wait for the dropdown's search input to appear and type the owner query there.
             search = page.locator('.ones-select-dropdown input[type="text"], .ant-select-dropdown input[type="text"], .ones-select-dropdown input, .ant-select-dropdown input').first
             if search.count() == 0:
-                # Some selects embed the search input inside the trigger; look inside the select.
                 search = owner_field.locator('input').first
             if search.count() > 0:
                 search.fill(OWNER_QUERY)
@@ -278,9 +329,6 @@ def main():
                 page.wait_for_timeout(1500)
                 page.screenshot(path='data/ones_plan_owner_search.png', full_page=True)
 
-                # Filter the dropdown options: only click the one that actually contains
-                # the owner query. Never fall back to "first option" — that previously picked
-                # "aaric.zheng" by accident because Enter highlighted a different row.
                 opts = page.locator('.ones-select-dropdown .ones-select-item-option, .ones-select-dropdown .ones-select-item, .ant-select-dropdown .ant-select-item-option, .ant-select-dropdown .ant-select-item').all()
                 target_opt = None
                 for opt in opts:
@@ -299,22 +347,19 @@ def main():
             else:
                 raise RuntimeError('Could not locate owner search input after opening dropdown')
 
-            # Close dropdown by clicking back on the name input (inside modal, won't close modal)
             if name_input.count() > 0:
                 name_input.click()
             page.wait_for_timeout(500)
         page.screenshot(path='data/ones_plan_after_owner.png', full_page=True)
 
-        # 5. Set phase to 功能测试 (default for ticket-based plans)
+        # 5. Set phase to 功能测试
         print('5. Setting phase to 功能测试...')
         phase_label = modal.locator('.ones-form-item-label:has-text("测试阶段"), label:has-text("测试阶段")').first
         if phase_label.count() > 0:
-            # Locate the select via the form item (label -> parent -> select)
             phase_select = phase_label.locator('xpath=../.././/div[contains(@class,"ones-select")][1]').first
             if phase_select.count() == 0:
                 phase_select = phase_label.locator('xpath=../.././/div[contains(@class,"ant-select")][1]').first
         else:
-            # Fallback: select currently showing 冒烟测试
             phase_select = modal.locator('.ones-select:has(.ones-select-selection-item:has-text("冒烟测试")), .ant-select:has(.ant-select-selection-item:has-text("冒烟测试"))').first
         if phase_select.count() > 0:
             phase_select.click()
@@ -326,27 +371,35 @@ def main():
                 print('   Selected 功能测试')
             else:
                 print('   WARNING: 功能测试 option not found, leaving default')
-            # Close dropdown by clicking back on the name input
             name_input.click() if name_input.count() > 0 else None
             page.wait_for_timeout(500)
         else:
             print('   WARNING: Could not locate phase dropdown')
         page.screenshot(path='data/ones_plan_after_phase.png', full_page=True)
 
-        # 6. Set date (执行日期 = 日期)
-        print('6. Setting date (today)...')
+        # 6. Set date (执行日期)
+        print(f'6. Setting date to "{TARGET_DATE}"...')
         picker = page.locator('.ones-modal-wrap .ones-picker, .ant-modal-wrap .ones-picker, .ant-modal .ones-picker').first
         if picker.count() == 0:
-            picker = page.locator('.ones-picker').first
+            picker = page.locator('.ones-picker, .ant-picker').first
         if picker.count() > 0:
-            picker.click()
-            page.wait_for_timeout(1500)
-            page.screenshot(path='data/ones_plan_date_open.png', full_page=True)
-            today = page.locator('a:has-text("今天"), button:has-text("今天"), .ones-picker-today, .ant-picker-today-btn').first
-            if today.count() > 0:
-                today.click()
-                print('   Selected today')
-            # Close date picker by clicking back on the name input
+            date_input = picker.locator('input').first
+            if date_input.count() > 0:
+                date_input.click()
+                page.wait_for_timeout(300)
+                date_input.press('Control+A')
+                date_input.fill(TARGET_DATE)
+                page.wait_for_timeout(300)
+                date_input.press('Enter')
+                page.wait_for_timeout(500)
+                print(f'   Entered date: {TARGET_DATE}')
+            else:
+                picker.click()
+                page.wait_for_timeout(1000)
+                today = page.locator('a:has-text("今天"), button:has-text("今天"), .ones-picker-today, .ant-picker-today-btn').first
+                if today.count() > 0:
+                    today.click()
+                print('   Fallback selected today')
             name_input.click() if name_input.count() > 0 else None
             page.wait_for_timeout(500)
         page.screenshot(path='data/ones_plan_form_complete.png', full_page=True)
@@ -373,14 +426,12 @@ def main():
         page.screenshot(path='data/ones_plan_final.png', full_page=True)
         browser.close()
 
-    # Save captured traffic for debugging
     captured_path = Path('data/ones_plan_create_api.json')
     captured_path.parent.mkdir(parents=True, exist_ok=True)
     with open(captured_path, 'w', encoding='utf-8') as f:
         json.dump(captured, f, indent=2, ensure_ascii=False)
     print(f'\nCaptured {len(captured)} plan API responses -> {captured_path}')
 
-    # 7. Extract plan UUID and link cases
     plan_uuid = extract_plan_uuid(captured)
     if not plan_uuid:
         print('WARNING: Could not extract new plan UUID from network traffic.')
@@ -396,12 +447,12 @@ def main():
         'plan_uuid': plan_uuid,
         'owner': NAME,
         'phase': '功能测试',
+        'execution_date': TARGET_DATE,
     }
     with open('data/ones_create_plan.json', 'w', encoding='utf-8') as f:
         json.dump(plan_meta, f, indent=2, ensure_ascii=False)
     print(f'Plan metadata saved to data/ones_create_plan.json')
 
-    # Load case UUIDs from previous creation results
     results_path = Path('data/ones_create_results.json')
     if results_path.exists():
         with open(results_path, 'r', encoding='utf-8') as f:
