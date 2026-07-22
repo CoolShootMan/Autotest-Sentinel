@@ -13,7 +13,27 @@ import re
 import sys
 import time
 import yaml
+from pathlib import Path
 from playwright.sync_api import sync_playwright
+
+
+def _load_ones_credentials():
+    """Load ONES_EMAIL and ONES_PASSWORD from backend/.env."""
+    env_path = Path(__file__).parent.parent / "backend" / ".env"
+    env = {}
+    if env_path.exists():
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if "=" in line and not line.startswith("#"):
+                    k, v = line.split("=", 1)
+                    env[k.strip()] = v.strip()
+    email = env.get("ONES_EMAIL", "")
+    password = env.get("ONES_PASSWORD", "")
+    if not email or not password:
+        print("[ERROR] ONES_EMAIL and ONES_PASSWORD must be set in backend/.env", file=sys.stderr)
+        sys.exit(1)
+    return email, password
 
 
 def _extract_test_case_ids(name: str) -> list:
@@ -221,8 +241,9 @@ def update_ones(test_results: dict, test_plan_name: str = None):
             print("    [ERROR] Login page load timed out")
             return
         
-        page.get_by_role("textbox", name="* 邮箱").fill("yuxiao.zhu.ext@1m.app")
-        page.get_by_role("textbox", name="* 密码").fill("zyx@1032970941")
+        ones_email, ones_password = _load_ones_credentials()
+        page.get_by_role("textbox", name="* 邮箱").fill(ones_email)
+        page.get_by_role("textbox", name="* 密码").fill(ones_password)
         page.get_by_role("button", name="登录").click()
         page.wait_for_timeout(500)
         page.get_by_role("link", name="测试管理").click()
