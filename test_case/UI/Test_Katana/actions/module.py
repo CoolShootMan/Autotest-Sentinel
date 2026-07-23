@@ -79,21 +79,29 @@ def click_shop_hamburger(page: Page, v: dict = None):
     page.wait_for_timeout(800)  # Wait for dropdown animation
 
 def click_add_storefront_module(page: Page, v: dict = None):
-    """Click 'Add a storefront module' in the '+ Add' dropdown menu.
-    This is the replacement for the old bottom-tab 'Module' button click."""
-    logger.info("Clicking 'Add a storefront module' in +Add dropdown")
-    # The menu item is a MuiListItemButton with text "Add a storefront module"
+    """Click 'Add storefront section' (formerly 'Add a storefront module') in the '+ Add' dropdown menu.
+    This is the replacement for the old bottom-tab 'Module' button click.
+    Supports both new ('Add storefront section') and old ('Add a storefront module') UI text."""
+    logger.info("Clicking 'Add storefront section' in +Add dropdown")
+    # Try new UI text first (post-redesign)
+    new_item = page.get_by_role("button", name="Add storefront section")
+    if new_item.count() > 0 and new_item.first.is_visible():
+        new_item.first.click()
+        page.wait_for_timeout(1000)
+        return
+    # Fallback to old UI text
     menu_item = page.locator("div.MuiListItemButton-root").filter(
         has=page.get_by_text("Add a storefront module", exact=True)
     ).first
     menu_item.wait_for(state="visible", timeout=5000)
     menu_item.click()
-    page.wait_for_timeout(1000)  # Wait for module creation drawer to open
+    page.wait_for_timeout(1000)
 
 def click_shop_add_module(page: Page, v: dict = None):
-    """One-step action: click '+ Add' button → click 'Add a storefront module'.
-    This is the direct replacement for: R_click: { role: 'button', name: 'Module' }"""
-    logger.info("Opening shop '+ Add' → 'Add a storefront module'")
+    """One-step action: click '+ Add' button → click 'Add storefront section'.
+    This is the direct replacement for: R_click: { role: 'button', name: 'Module' }
+    Kept as click_shop_add_module for backward compatibility; also registered as click_shop_add_section."""
+    logger.info("Opening shop '+ Add' → 'Add storefront section'")
     click_shop_add_button(page)
     click_add_storefront_module(page)
 
@@ -198,8 +206,12 @@ def click_module_collapse(page: Page, v: dict):
     """Collapse a module by clicking its arrow-up icon."""
     module_name = v.get("module_name")
     logger.info(f"Collapsing module: {module_name}")
-    # Locate the definitive module header container
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
+    # After storefront refactor (2026-07), the section header no longer has an "Add new" button
+    # accessible via get_by_role(name="Add new"). Anchor on the arrow-up-icon test_id + any button,
+    # so the matched div is the section header row (has icon + title + buttons), not the deeper
+    # SectionTitle component (icon + title only). This keeps the click correct AND makes the
+    # parent's parent (the section card) measurable in verify_* helpers.
+    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
     container.get_by_test_id("arrow-up-icon").first.click(timeout=10000)
 
 def click_module_expand(page: Page, v: dict):
@@ -208,17 +220,17 @@ def click_module_expand(page: Page, v: dict):
     """
     module_name = v.get("module_name")
     logger.info(f"Expanding module: {module_name}")
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
+    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
     container.get_by_test_id("arrow-up-icon").first.click(timeout=10000)
 
 def verify_module_collapsed(page: Page, v: dict):
     """Verifies that a module's body is collapsed by checking its overall container height shrinks."""
     module_name = v.get("module_name")
     logger.info(f"Verifying module '{module_name}' is collapsed by measuring height...")
-    # Find the top-level outer wrapper containing this module header.
-    # Usually it's the parent of the header container.
-    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
-    
+    # Anchor on the section header row (has icon + title + buttons).
+    # Its parent (..) is the section card, which includes the body when expanded.
+    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
+
     import time
     start_time = time.time()
     # Poll for height to shrink (e.g. < 150px means body is folded, just header left)
@@ -234,7 +246,9 @@ def verify_module_expanded(page: Page, v: dict):
     """Verifies that a module's body is expanded by checking its overall container height grows."""
     module_name = v.get("module_name")
     logger.info(f"Verifying module '{module_name}' is expanded by measuring height...")
-    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
+    # Anchor on the section header row (has icon + title + buttons).
+    # Its parent (..) is the section card, which includes the body when expanded.
+    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
 
     import time
     start_time = time.time()

@@ -1394,121 +1394,137 @@ def wait_toast(page: Page, v: dict):
 
 def drag_element(page: Page, v: dict):
     """
-    Drag and drop element using Playwright's drag and drop API
+    Drag and drop element using Playwright's mouse or drag_to API
 
     Supported parameters:
-    - source_locator: Source element locator to drag (required)
-    - target_locator: Target element locator to drop on (required)
-    - source_text: Text to identify source element (alternative to source_locator)
-    - target_text: Text to identify target element (alternative to target_locator)
+    - source_locator: Source element locator to drag
+    - target_locator: Target element locator to drop on
+    - source_text: Text to identify source element (automatically targets drag handle icon if found)
+    - target_text: Text to identify target element (automatically targets drag handle icon if found)
     - timeout: Timeout in milliseconds for element visibility (default: 10000)
-    - force: Force the drag operation even if elements are not visible (default: false)
-    - delay: Delay in milliseconds between drag start and drop (default: 0)
-
-    Usage examples:
-
-    1. Drag by locator:
-       drag_element:
-           source_locator: "#draggable-item"
-           target_locator: "#drop-zone"
-
-    2. Drag by text:
-       drag_element:
-           source_text: "Drag me"
-           target_text: "Drop here"
-
-    3. Drag with position offset:
-       drag_element:
-           source_locator: ".card"
-           target_locator: ".container"
-           source_position: { x: 10, y: 10 }  # Offset from source element center
-           target_position: { x: 50, y: 50 }  # Offset from target element center
-
-    4. Drag with delay:
-       drag_element:
-           source_locator: "#item1"
-           target_locator: "#item2"
-           delay: 500  # Wait 500ms before dropping
     """
     logger.info(">>> Current Step: drag_element")
 
-    # Get source element
     source_locator = v.get("source_locator")
     source_text = v.get("source_text")
+    target_locator = v.get("target_locator")
+    target_text = v.get("target_text")
+
+    dialog = page.locator("[role='dialog']").first
+    in_dialog = dialog.count() > 0 and dialog.is_visible()
+
+    def find_item_and_handle(text):
+        """Find the '=' drag handle SVG icon on the same row as the given text.
+        
+        Strategy: locate the text element to get its Y position, then find ALL
+        drag-handle SVGs (identified by their characteristic path d='M9.333…')
+        and pick the one whose vertical centre is closest to the text element.
+        """
+        scope = dialog if in_dialog else page
+
+        # Step 1 – locate the text element (used for Y-coordinate reference)
+        t_loc = scope.get_by_text(text, exact=True).first
+        if t_loc.count() == 0 or not t_loc.is_visible():
+            t_loc = scope.get_by_text(text).first
+
+        t_box = t_loc.bounding_box()
+        if not t_box:
+            logger.warning(f"Could not get bounding box for text '{text}', returning text element")
+            return t_loc
+
+        text_cy = t_box["y"] + t_box["height"] / 2
+        logger.info(f"Text '{text}' centre Y = {text_cy:.0f}")
+
+        # Step 2 – collect ALL visible '=' drag-handle SVGs in the scope
+        #   The handle SVG contains a <path> whose d attribute starts with 'M9.333'
+        handles = scope.locator("svg").filter(has=page.locator("path[d*='M9.333']"))
+        handle_count = handles.count()
+        logger.info(f"Found {handle_count} drag-handle SVG(s) in scope")
+
+        if handle_count == 0:
+            logger.warning("No '=' drag handles found, falling back to text element")
+            return t_loc
+
+        # Step 3 – pick the handle whose vertical centre is closest to the text
+        best_handle = None
+        best_distance = float('inf')
+
+        for i in range(handle_count):
+            h = handles.nth(i)
+            if not h.is_visible():
+                continue
+            h_box = h.bounding_box()
+            if h_box:
+                h_cy = h_box["y"] + h_box["height"] / 2
+                distance = abs(h_cy - text_cy)
+                logger.debug(f"  handle[{i}] centre Y={h_cy:.0f}, distance={distance:.0f}")
+                if distance < best_distance:
+                    best_distance = distance
+                    best_handle = h
+
+        if best_handle is not None and best_distance < 60:
+            h_box = best_handle.bounding_box()
+            logger.info(
+                f"Matched drag handle for '{text}' — "
+                f"handle centre=({h_box['x'] + h_box['width']/2:.0f}, {h_box['y'] + h_box['height']/2:.0f}), "
+                f"y-distance={best_distance:.0f}px"
+            )
+            return best_handle
+
+        logger.warning(f"No nearby drag handle for '{text}' (best distance={best_distance:.0f}px), falling back to text element")
+        return t_loc
 
     if source_locator:
         source_elem = page.locator(source_locator).first
     elif source_text:
-        source_elem = page.get_by_text(source_text).first
+        source_elem = find_item_and_handle(source_text)
     else:
         raise ValueError("drag_element: Either 'source_locator' or 'source_text' must be provided")
-
-    # Get target element
-    target_locator = v.get("target_locator")
-    target_text = v.get("target_text")
 
     if target_locator:
         target_elem = page.locator(target_locator).first
     elif target_text:
-        target_elem = page.get_by_text(target_text).first
+        target_elem = find_item_and_handle(target_text)
     else:
         raise ValueError("drag_element: Either 'target_locator' or 'target_text' must be provided")
 
     timeout = v.get("timeout", 10000)
     delay = v.get("delay", 0)
-    force = v.get("force", False)
 
     # Wait for elements to be ready
-    logger.info(f"Waiting for source element to be ready...")
+    logger.info("Waiting for source element to be ready...")
     source_elem.wait_for(state="attached", timeout=timeout)
-
-    logger.info(f"Waiting for target element to be ready...")
+    logger.info("Waiting for target element to be ready...")
     target_elem.wait_for(state="attached", timeout=timeout)
 
-    # Get optional position offsets
-    source_position = v.get("source_position", {})
-    target_position = v.get("target_position", {})
+    source_box = source_elem.bounding_box()
+    target_box = target_elem.bounding_box()
 
-    # Perform drag and drop
-    logger.info(f"Dragging element to target...")
+    if source_box and target_box:
+        source_x = source_box["x"] + source_box["width"] / 2
+        source_y = source_box["y"] + source_box["height"] / 2
+        target_x = target_box["x"] + target_box["width"] / 2
+        target_y = target_box["y"] + target_box["height"] / 2
 
-    try:
-        # Use bounding box for precise control if positions are specified
-        if source_position or target_position:
-            source_box = source_elem.bounding_box()
-            target_box = target_elem.bounding_box()
+        logger.info(f"Mouse drag handle from ({source_x:.0f}, {source_y:.0f}) to ({target_x:.0f}, {target_y:.0f})")
 
-            # Calculate source point (center + offset)
-            source_x = source_box["x"] + source_box["width"] / 2 + source_position.get("x", 0)
-            source_y = source_box["y"] + source_box["height"] / 2 + source_position.get("y", 0)
+        page.mouse.move(source_x, source_y)
+        page.mouse.down()
+        page.wait_for_timeout(400)  # Hold to activate drag handle sensor
 
-            # Calculate target point (center + offset)
-            target_x = target_box["x"] + target_box["width"] / 2 + target_position.get("x", 0)
-            target_y = target_box["y"] + target_box["height"] / 2 + target_position.get("y", 0)
+        steps = 25
+        for i in range(1, steps + 1):
+            cur_x = source_x + (target_x - source_x) * i / steps
+            cur_y = source_y + (target_y - source_y) * i / steps
+            page.mouse.move(cur_x, cur_y)
+            page.wait_for_timeout(20)
 
-            logger.info(f"Drag from ({source_x:.0f}, {source_y:.0f}) to ({target_x:.0f}, {target_y:.0f})")
-
-            # Perform drag using mouse
-            page.mouse.move(source_x, source_y)
-            page.mouse.down()
-            if delay > 0:
-                page.wait_for_timeout(delay)
-            page.mouse.move(target_x, target_y)
-            page.mouse.up()
-
-        else:
-            # Use Playwright's built-in drag and drop API
-            source_elem.drag_to(
-                target_elem,
-                force=force,
-                timeout=timeout
-            )
-
-        logger.info("✓ Drag and drop completed successfully")
-
-    except Exception as e:
-        logger.error(f"✗ Drag and drop failed: {e}")
-        raise
+        page.wait_for_timeout(400)  # Hold before release
+        page.mouse.up()
+        page.wait_for_timeout(1000)
+        logger.info("✓ Drag and drop completed successfully via mouse handle")
+    else:
+        raise RuntimeError("Could not obtain bounding boxes for drag elements")
 
 
 def drag_and_drop_by_coordinates(page: Page, v: dict):
