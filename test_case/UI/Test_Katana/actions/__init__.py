@@ -198,6 +198,10 @@ ACTIONS = {
     "click_shop_hamburger": click_shop_hamburger,
     "click_add_storefront_module": click_add_storefront_module,
     "click_shop_add_module": click_shop_add_module,
+    # Section aliases (post storefront redesign: module -> section)
+    "click_shop_add_section": click_shop_add_module,
+    "click_section_edit_button": click_module_edit_button,
+    "click_add_storefront_section": click_add_storefront_module,
     "verify_product_visible": verify_text_visible,
     "select_replacement_product": select_replacement_product,
     "click_by_coordinates": click_by_coordinates,
