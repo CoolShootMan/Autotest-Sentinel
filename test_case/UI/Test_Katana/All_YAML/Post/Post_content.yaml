@@ -638,8 +638,6 @@ testT5440:
     sleep_after_posts: 2000
 
     # Step 3: Edit content — delete all 5 event widgets from RTE
-    # [UI drift 2026-09-07] RTE entry is an icon button; aria-label='Content'
-    # locks it uniquely (Content section tab has role='tab', not 'button').
     R_click_edit_content:
         locator: "button[aria-label='Content']"
     sleep_after_edit: 3000
@@ -736,10 +734,6 @@ testT5440:
     R_click_posts_tab_2: { role: "tab", name: "Post" }
     sleep_after_posts: 2000
 
-    # [UI drift 2026-09-08] Re-enter the RTE from the Post page by clicking the
-    # Content icon (same locator as Step 3) and verify the deleted widgets are NOT
-    # re-inserted inside the editor (authoritative place) rather than the read-only
-    # Post tab overview page.
     R_click_edit_content_again:
         locator: "button[aria-label='Content']"
     sleep_after_edit: 3000
