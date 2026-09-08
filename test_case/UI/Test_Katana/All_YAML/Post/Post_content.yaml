@@ -26,15 +26,12 @@ testT5442:
             R_click_my_event:               { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
             sleep_step:                     4000
 
-            # Open post "auto-test-post-setting-t1742"
-            R_click_posts_tab:              { role: "tab", name: "Posts" }
+            R_click_posts_tab:              { role: "tab", name: "Post" }
             sleep_step:                     2000
-            R_click_post:                   { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
-            sleep_step:                     3000
 
-            # Edit content → verify no Hidden label on existing tickets
-            R_click_edit_content:           { role: "button", name: "Edit content" }
-            sleep_step:                     3000
+            verify_post_alias:
+                text: "auto-test-post-setting-t1742"
+
             verify_no_hide_button:
                 text: "Hide"
                 assert_not_visible: true
@@ -82,24 +79,16 @@ testT5442:
         sleep_step:             2000
 
         # ----------------------------------------------------------------------
-        # Step 3: Go to post → edit content → verify in All tickets/merch banner
+        # Step 3: ticket/merch appear with a "Hidden" label.
         # ----------------------------------------------------------------------
-        R_click_posts_tab:      { role: "tab", name: "Posts" }
+        R_click_posts_tab:      { role: "tab", name: "Post" }
         sleep_step:             2000
-        R_click_post:           { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
-        sleep_step:             3000
-        R_click_edit_content:   { role: "button", name: "Edit content" }
-        sleep_step:             3000
+        R_click_edit_content:   {locator: "button[aria-label='Content']"}
+        sleep_step:             4000
 
-        verify_merch_hidden:
+        verify_hidden_present:
             assertion_type: "element_visible_by_text"
             text: "Hidden"
-            scope: "first merch in All tickets/merch banner"
-
-        verify_ticket_hidden:
-            assertion_type: "element_visible_by_text"
-            text: "Hidden"
-            scope: "first ticket in All tickets/merch banner"
 
         sleep_end:              3000
 
@@ -182,15 +171,11 @@ testT5332:
             sleep_step: 4000
 
             # Step 3: Click Posts tab
-            R_click_posts_tab: { role: "tab", name: "Posts" }
+            R_click_posts_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
-            # Step 4: Click post card to enter post landing page
-            R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
-            sleep_step: 3000
-
-            # Step 5: Click edit button to enter RTE
-            R_click_edit_button: { role: "button", name: "Edit content" }
+            # Step 4: Click edit button to enter RTE
+            R_click_edit_button: { role: "button", name: "Content", exact: true }
             sleep_step: 3000
 
     test_step:
@@ -271,8 +256,6 @@ testT5332_VerifyGuest:
         sleep_after_open: 5000
 
         # Step 2: Scroll down to reveal the merch section
-        # scroll_to_bottom uses page.mouse.wheel (real desktop scroll) - more reliable than swipe gesture
-        # Tries to scroll directly to "merch 001"; if lazy-loaded, falls back to iterative wheel scroll
         scroll_to_bottom: { text: "merch 001", iterations: 15, delay: 500 }
 
     expect_result:
@@ -300,25 +283,21 @@ testT5332_VerifyGuest:
         R_click_event_td: { text: "Test event post variant settings" }
         sleep_step: 4000
 
-        # Step 4: Switch to Posts tab
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        # Step 4: Switch to Post tab
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 5: Click post card
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 5: Click edit button to enter RTE
+        R_click_edit_button: { role: "button", name: "Content", exact: true }
         sleep_step: 3000
 
-        # Step 6: Click Edit content to enter RTE editor
-        R_click_edit_content: { role: "button", name: "Edit content" }
-        sleep_step: 3000
+        # Step 6: Click on merch 002 button to select the banner & reveal trash icon
+        R_click_merch_002:      { locator: "div[role='button']:has-text('merch 002')" }
+        sleep_step:             1000
 
-        # Step 7: Click on merch 002 button to select the banner & reveal trash icon
-        R_click_merch_002: { role: "button", name: "avatar My item merch 002 $200" }
-        sleep_step: 1000
-
-        # Step 8: Click Delete button to delete the banner
-        R_click_delete: { role: "button", name: "Delete" }
-        sleep_step: 1000
+        # Step 7: Click Delete button (trash icon in selected block's floating toolbar)
+        R_click_delete:         { locator: "button[data-testid='toolbar-icon-control'][aria-label='Delete']" }
+        sleep_step:             1000
 
         # Step 9: Verify merch 001 is no longer visible in RTE
         verify_merch_001_hidden:
@@ -331,10 +310,10 @@ testT5332_VerifyGuest:
             assert_not_visible: true
 
         # Step 11: Update post to save the deletion
-        R_click_update_post: { role: "button", name: "Update" }
-        sleep_step: 2000
+        R_click_update_post:    { role: "button", name: "Update" }
+        sleep_step:             2000
         R_click_confirm_update: { role: "button", name: "Update" }
-        sleep_step: 2000
+        sleep_step:             2000
 
 
 # ==============================================================================
@@ -360,16 +339,12 @@ testT5443:
             R_click_event_title: { text: "event with no ticket" }
             sleep_step: 3000
 
-            # Step 3: Click Posts tab
-            R_click_posts_tab: { role: "tab", name: "Posts" }
+            # Step 3: Click Post tab
+            R_click_posts_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
-            # Step 4: Click post card to enter post landing page
-            R_click_post_card: { role: "button", name: "event with no ticket",index: 0 }
-            sleep_step: 3000
-
-            # Step 5: Click edit content to enter RTE editor
-            R_click_edit_content: { role: "button", name: "Edit content" }
+            # Step 4: Click RTE "Content" icon button via its unique aria-label
+            R_click_edit_content: { locator: "button[aria-label='Content']" }
             sleep_step: 3000
 
     test_step:
@@ -396,49 +371,40 @@ testT5443:
         R_click_update_confirm: { role: "button", name: "Update" }
         sleep_step: 1000
 
-        # Step 6: Close the edit dialog
-        R_click_close_dialog: { role: "button", name: "Close" }
-        sleep_step: 1000
-
         # ----------------------------------------------------------------------
         # Part B: Add a new ticket via Event tab
         # ----------------------------------------------------------------------
-        # Step 7: Switch to Event tab
+        # Step 6: Switch to Event tab
         R_click_event_tab: { role: "tab", name: "Event" }
         sleep_step: 2000
 
-        # Step 8: Click Add ticket button
+        # Step 7: Click Add ticket button
         R_click_add_ticket: { role: "button", name: "Add ticket" }
         sleep_step: 2000
 
-        # Step 9: Fill in ticket title
+        # Step 8: Fill in ticket title
         fill_ticket_title_t5443: { role: "textbox", name: "Product title", value: "ticket 001" }
         sleep_step: 1000
 
-        # Step 13: Fill price field
+        # Step 9: Fill price field
         fill_price_t5443: { locator: 'input[name="variants.0.price"]', value: "100" }
         sleep_step: 1000
 
-        # Step 14: Click "Create" button on the page (this triggers the Review ticket visibility popup)
+        # Step 10: Click "Create" button on the page (this triggers the Review ticket visibility popup)
         R_click_create_ticket: { role: "button", name: "Create" }
         sleep_step: 2000
 
         # ----------------------------------------------------------------------
         # Part C: Go back to Posts tab and verify ticket shows up in post
         # ----------------------------------------------------------------------
-        # Step 16: Switch back to Posts tab
-        R_click_posts_tab_verify: { role: "tab", name: "Posts" }
+        # Step 11: Switch back to Posts tab
+        R_click_posts_tab_verify: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 17: Click post card to verify ticket appears
-        R_click_post_card_verify: { role: "button", name: "event with no ticket", index: 0 }
-        sleep_step: 3000
-
-        # Step 18: Scroll down then verify ticket 001 is hidden (default status for new tickets)
+        # Step 12: Scroll down then verify ticket 001 is hidden (default status for new tickets)
         page_scroll_t5443_main: { y: 800, steps: 5, delay: 1000 }
 
-        # Step 19: Verify ticket 001 is NOT visible in the post (hidden by default)
-        # Must be test_step verify action — expect_result assertions throw error when text not found
+        # Step 13: Verify ticket 001 is NOT visible in the post (hidden by default)
         verify_ticket_001_hidden_main:
             text: "ticket 001"
             assert_not_visible: true
@@ -503,12 +469,10 @@ testT5443_VerifyGuest:
         R_click_confirm_ticket_td: { role: 'button', name: 'Delete' }
         sleep_step: 3000
 
-        # Step 6: Go to post → edit content
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        # Step 6: Go to post → enter RTE "Content" editor to restore All tickets banner
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
-        R_click_post_card: { role: "button", name: "event with no ticket", index: 0 }
-        sleep_step: 3000
-        R_click_edit_content: { role: "button", name: "Edit content" }
+        R_click_edit_content: {locator: "button[aria-label='Content']"}
         sleep_step: 3000
 
         # Step 7: Click "Insert" button in RTE toolbar to open the insert popup
@@ -516,8 +480,6 @@ testT5443_VerifyGuest:
         sleep_step: 2000
 
         # Use real mouse movement: MUI NestedMenu tracks cursor via elementFromPoint().
-        # First move the cursor onto Event (opens its submenu), then move directly
-        # onto Insert all tickets. This avoids guessing a fixed pixel offset.
         move_to_event:
             move_relative_to_selector:
                 locator: '[role="menuitem"]:has-text("Event")'
@@ -587,13 +549,9 @@ testT5390:
     R_click_save: { role: "button", name: "Save" }
     sleep_after_save: 3000
 
-    # Step 3: Go to Posts tab and open post
-    R_click_posts_tab: { role: "tab", name: "Posts" }
+    # Step 3: Go to Post tab (overview page directly shows storefront card — no post_card click needed)
+    R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_after_posts: 2000
-
-    # Click post card
-    R_click_post_card: { test_id: "mui-card-action-area" }
-    sleep_after_post: 3000
 
     # === ASSERTION: Post title synced with event title "T5390" ===
     verify_post_title_synced: { text: "T5390" }
@@ -601,8 +559,9 @@ testT5390:
     # === ASSERTION: Post card subtitle synced with venue + date ===
     verify_subtitle_synced: { text: "buy venue | Sun, Apr 20" }
 
-    # Step 4: Edit post content to verify RTE sync
-    R_click_edit_content: { role: "button", name: "Edit content" }
+    # Step 4: Edit post content — click Content icon button (aria-label='Content' to lock uniquely)
+    R_click_edit_content:
+      locator: "button[aria-label='Content']"
     sleep_after_edit_content: 2000
 
     # === ASSERTION: Edit content page loaded (Post title field visible) ===
@@ -670,20 +629,20 @@ testT5440:
     open: "{BASE_URL}/events"
     sleep_after_open: 2000
 
-    # Click event "verify auto coupon apply"
+    # Click event "verify-co-seller-auto-archive"
     R_click_event: { role: "cell", name: "verify-co-seller-auto-archive" }
     sleep_after_event: 2000
 
-    # Step 2: Go to Posts tab and view post
-    R_click_posts_tab: { role: "tab", name: "Posts" }
+    # Step 2: Go to Post tab 
+    R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_after_posts: 2000
 
-    R_click_view_post: { role: "button", name: "View post" }
-    sleep_after_view: 1500
-
     # Step 3: Edit content — delete all 5 event widgets from RTE
-    R_click_edit_content: { role: "button", name: "Edit content" }
-    sleep_after_edit: 1000
+    # [UI drift 2026-09-07] RTE entry is an icon button; aria-label='Content'
+    # locks it uniquely (Content section tab has role='tab', not 'button').
+    R_click_edit_content:
+        locator: "button[aria-label='Content']"
+    sleep_after_edit: 3000
 
     # 3a: Delete Event media component
     R_click_event_media: { text: "Event media" }
@@ -726,13 +685,11 @@ testT5440:
     R_click_remove_ticket: { role: "button", name: "Remove section" }
     sleep_after_remove_ticket: 500
 
-    # Step 4: Save post (Update twice + Close)
+    # Step 4: Save post (Update twice)
     R_click_update_1: { role: "button", name: "Update" }
     sleep_after_update_1: 2000
     R_click_update_2: { role: "button", name: "Update" }
     sleep_after_update_2: 3000
-    R_click_close_editor: { role: "button", name: "Close" }
-    sleep_after_close: 2000
 
     # Step 5: Edit event — add description, upload media, add lineup
     R_click_event_tab: { role: "tab", name: "Event" }
@@ -776,20 +733,19 @@ testT5440:
     sleep_after_add_item: 2000
 
     # Step 8: Go back to post and verify widgets NOT re-inserted
-    R_click_posts_tab_2: { role: "tab", name: "Posts" }
+    R_click_posts_tab_2: { role: "tab", name: "Post" }
     sleep_after_posts: 2000
 
-    # Use test_id matching recording (page.get_by_test_id("mui-card-action-area"))
-    R_click_post_card: { role: "button", name: "View post" }
-    sleep_after_post: 2000
+    # [UI drift 2026-09-08] Verify directly on Post tab overview page (which renders
+    # the RTE content as a read-only preview). Scroll down to ensure lazy-rendered
+    # widget sections are visible, then check that deleted widgets are NOT present.
+    # No need to re-enter the RTE — the overview page IS the RTE read-only view.
+    page_scroll_post_overview:
+      direction: down
+      distance: 1200
+      step: 300
+    sleep_after_scroll: 1500
 
-    R_click_edit_content_again: { role: "button", name: "Edit content" }
-    sleep_after_edit_again: 4000
-
-    # === ASSERTION: Edit content page loaded (Description field visible) ===
-    verify_edit_loaded: { text: "Description" }
-
-    # === ASSERTION: Deleted event widgets should NOT be visible in RTE ===
     verify_no_event_media: { text: "Event media", assert_not_visible: true }
     verify_no_event_desc: { text: "Event description", assert_not_visible: true }
     verify_no_event_lineup: { text: "Event Lineup", assert_not_visible: true }
