@@ -76,10 +76,15 @@ test_case/API auto script/results/runs/
 test_case/API auto script/results/_legacy/
 test_case/API auto script/results/latest
 test_case/API auto script/results/RUNS.md
+# 其余 results/* 是本机调试报告/日志/临时 XML，不入库
+test_case/API auto script/results/
 
 # API automation: 本机历史备份与打补丁回滚目录（不要入库）
 test_case/API auto script.__backup_*/
 test_case/API auto script/__patch_backup_*/
+
+# API automation: 一次性临时文件
+test_case/API auto script/temp/
 
 # API automation: 退役的迁移脚本（一次性使用，已被新工具取代）
 test_case/API auto script/_retired_20260910/
