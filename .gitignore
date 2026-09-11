@@ -105,13 +105,15 @@ test_case/API auto script/_apifox_export/data/environments.json
 test_case/API auto script/tokens.json
 
 # API automation: 环境配置含 LIVE JWT / DB 密码 / 测试账号口令，禁止入库
-# 本地保留 config/environments/*.example.yaml 作为模板
+# 本地保留 config/environments/*.yaml.template 作模板，用 .env.example 列出变量
 test_case/API auto script/config/environments/_runtime_tokens.yaml
 test_case/API auto script/config/environments/Release.yaml
 test_case/API auto script/config/environments/Staging.yaml
 test_case/API auto script/config/environments/Production.yaml
 test_case/API auto script/config/environments/Local.yaml
 test_case/API auto script/config/environments/Global.yaml
+test_case/API auto script/config/environments/.env
+test_case/API auto script/.env
 
 # === Temp scripts (AI generated, not for repo) ===
 check_report.py

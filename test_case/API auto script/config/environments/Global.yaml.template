@@ -1,0 +1,50 @@
+# env/Global.yaml
+# LIVE-migrated from Apifox global variables (project 5446866) on 2026-09-08.
+# These are Apifox '全局变量'. Layering: Global -> env/<ENV>.yaml -> <case>.vars.yaml
+
+'#_comment': Migrated LIVE from Apifox global variables (GET /global-variables?projectId=5446866) on 2026-09-08. These are Apifox '全局变量'. Per-case <slug>.vars.yaml overrides these; env/<ENV>.yaml (Release/Staging/...) also overrides on conflict (env > global).
+base_url: ''
+variables:
+  token: 'Bearer {{GLOBAL_TOKEN}}'
+  merchant_token: ''
+  admin_token: ''
+  contractNumber: ''
+  startTime: ''
+  endTime: ''
+  addressId: ''
+  clearCartParams: ''
+  oldAddressId: ''
+  newAddressId: ''
+  partner_user_id: ''
+  coseller_user_id: ''
+  release_sql_address: katana-release.ctv4lcp038zi.us-east-2.rds.amazonaws.com
+  release_sql_username: postgres
+  release_sql_password: '{{RELEASE_SQL_PASSWORD}}'
+  release_sql_name: katana
+  selected_count: ''
+  selected_count_sms: ''
+  selected_count_email: ''
+  UIauto_partner_email: yuxiao.zhu.ext+999@1m.app
+  UIauto_coseller_email: yuxiao.zhu.ext+998@1m.app
+  UIauto_partner997_email: yuxiao.zhu.ext+997@1m.app
+  UIauto_consumer_email: linda.zhou.ext+001@1m.app
+  partner_vanityUrl: autotestshop
+  partner_storeName: Auto_Test_shop
+  coseller_storeName: autotest-coseller
+  coseller_vanityUrl: autotest-coseller
+  partner997_vanityUrl: partnercoseller997
+  partner997_storeName: partnercoseller997
+  dynamic_phone: ''
+  dynamic_email: ''
+  dynamic_first_name: ''
+  dynamic_last_name: ''
+  dynamic_time: ''
+  content_instagram: ''
+  content_facebook: ''
+  content_tiktok: ''
+  content_x: ''
+  content_youtube: ''
+  content_linkedin: ''
+  content_threads: ''
+  dynamic_custom_text: ''
+  dynamic_suggestions: ''

@@ -8,9 +8,18 @@
     4. 用例私有变量 <case>.vars.yaml / data/cases/<slug>.yaml   （优先级最高）
 
 ``base_url`` 单独抽出（不在 variables 里），因为它是请求拼接的根。
+
+占位符渲染
+----------
+加载后的任意字符串中若包含 ``{{VAR}}``，会被 ``os.environ['VAR']`` 的值替换。
+缺失变量即抛 :class:`ConfigError`，避免上线时静默成空值走错环境。
+对 .env 文件的兼容由 ``python-dotenv`` 提供（如已安装），但 **不强制依赖**——只要把
+变量放进 shell 环境即可。所有占位符值集中记录在 ``config/environments/.env.example``。
 """
 from __future__ import annotations
 
+import os
+import re
 from pathlib import Path
 
 import yaml
@@ -18,16 +27,59 @@ import yaml
 from config import settings
 from core.errors import ConfigError
 
+_PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Z0-9_]+)\s*\}\}")
+
+
+def _try_load_dotenv() -> None:
+    """Best-effort: 如果 python-dotenv 已安装，把 .env 注入 os.environ。"""
+    try:
+        from dotenv import load_dotenv  # type: ignore
+    except ImportError:
+        return
+    # 项目根与 env 子目录都尝试，存在哪个就加载哪个
+    for cand in (settings.ROOT, settings.ENV_DIR):
+        env_file = cand / ".env"
+        if env_file.exists():
+            load_dotenv(env_file, override=False)
+
+
+def _expand_placeholders(obj, src_file: Path) -> object:
+    """递归把 dict/list/str 中的 ``{{VAR}}`` 替换为 ``os.environ['VAR']``。
+
+    找不到的变量抛 :class:`ConfigError`（带文件路径 + 变量名 + 出现位置的子串）。
+    """
+    if isinstance(obj, dict):
+        return {k: _expand_placeholders(v, src_file) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_expand_placeholders(v, src_file) for v in obj]
+    if isinstance(obj, str):
+        def replace(m: re.Match) -> str:
+            var = m.group(1)
+            val = os.environ.get(var)
+            if val is None:
+                raise ConfigError(
+                    f"{src_file} 引用了未设置的环境变量 {{{{ {var} }}}}; "
+                    f"请在 shell 或 .env 中 export {var}=..."
+                )
+            return val
+        return _PLACEHOLDER_RE.sub(replace, obj)
+    return obj
+
 
 def load_yaml(path: Path) -> dict:
-    """安全读取 YAML；文件不存在或为空返回 ``{}``。"""
+    """安全读取 YAML；文件不存在或为空返回 ``{}``。
+
+    加载后会扫描字符串值里的 ``{{VAR}}`` 占位符并替换为 ``os.environ['VAR']``。
+    """
     if not path.exists():
         return {}
     try:
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
     except Exception as exc:  # YAML 语法错误必须显式报错，不能静默成空配置
         raise ConfigError(f"YAML 解析失败: {path}: {exc}") from exc
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+    return _expand_placeholders(data, path)
 
 
 def save_yaml(path: Path, data: dict) -> None:
@@ -60,9 +112,12 @@ def clear_runtime_tokens() -> None:
 def load_env(env_name: str | None = None) -> dict:
     """装载分层环境变量，返回 ``{"base_url": str, "variables": dict, "env_name": str}``。
 
+    占位符规则同 :func:`load_yaml`；缺失变量会抛 ``ConfigError``。
+
     Raises:
         ConfigError: 环境文件缺失，或最终未能解析出 ``base_url``。
     """
+    _try_load_dotenv()
     env_name = env_name or settings.ENV_NAME
 
     global_file = settings.ENV_DIR / "Global.yaml"
