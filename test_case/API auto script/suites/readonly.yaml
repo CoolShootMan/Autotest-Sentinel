@@ -1,0 +1,19 @@
+name: readonly
+description: 只读安全集 — 登录/查询类，不产生脏数据，可放心在 Release 跑
+include:
+  folders:
+    - Login flow
+    - Analytics
+    - Module
+    - Event Report
+    - Subdomain
+    - Order group and filter
+    - Admin tools
+    - Revenue Share
+exclude:
+  folders:
+    - Consumer Purchase flow
+    - Guest Purchase flow
+    - Post validation
+pytest_args:
+  - "-v"

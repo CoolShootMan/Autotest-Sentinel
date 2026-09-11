@@ -1,0 +1,91 @@
+name: Linda
+description: Linda 日常可运行回归集 — 逐条列出用例名，便于查看/增删（不再用 suite:linda 标签整组拉取）
+# Verify event ticket post setting flow and so on
+include:
+  names:
+  - Precondition - obtain all accounts token
+  - Verify partner can search campaign on campaign list
+  - '&T4666 Verify partner can send test message on create/edit a campaign page'
+  - Verify partner can duplicate campaign from campaign list
+  - Verify partner can edit draft campaign from campaign list
+  - Verify partner can delete campaign on campaigns page
+  - Verify the taxes info is displayed on checkout/order placed/order details/sales details/email
+  - '& T3277 Verify after add a note when checkout, it display on the order details and sales details'
+  - Verify the partilly refunded order could be sync  -- Strip Card - From Admin
+  - Verify the fully refunded order could be sync  -- Strip Card - From Pear
+  - Verify merchant ship partial of same items, all items show correct
+  - Verify multiple subdomain point to the same shop, go visit success
+  - After verifying that promoter has two subdomains, you can switch between them at will
+  - Verify the Analytics page for the post on Pear
+  - Verify the Analytics page on admin tool
+  - Verify user can edit access code in original post
+  - Verify the resale posts need to inherit the parent post quantity limit
+  - Verify the price presentation of strikethrough on checkout page is update if using coupon with coupon code
+  - Verify the price presentation of strikethrough on checkout page is update if there is an auto-applied coupon
+  - Verify that the creator can edit the media of a published Post
+  - Verify user can set compared at price for my item on admin tool
+  - Verify the $4.99 or free shipping fee is consisntence on the checkout page
+  - Verify the total saving contains the shipping discount that provided by post owner
+  - Verify curator can set compared at price for my item when creating post
+  - '& T3129 Products'' prices are automatically sync’ed with catalog, when “Customize prices in this post“ is unchecked.'
+  - Verify checking "Customize post prices", it only effect this post, not the catalog price.
+  - Verify the logic of replace items is correct
+  - Verify that the Post commission rate can be Batch setting to a Fix value
+  - Verify that the Post commission rate can be Batch setting Current +
+  - Verify that the Post commission rate can be Batch setting Current X
+  - Verify the post coupon can be created after adding products to the post
+  - '&T2938&t2940 Verify the auto-applied coupon can work'
+  - Verify the "Exclude"  and “Include“ variant logic response correct
+  - Verify the checked "For recommendation" and "Recommended products" response logic correct
+  - Verify user can receive e-ticket email if ticket poster format is avif/png/jpg
+  - Verify all data are displayed correct in the Event report
+  - Verify adding music link types in the storefront modules
+  # T4283「Verify multiple submissions and data consistency」已移除：
+  #   POST /user-contact-form/submit 在 Release 返回 404 Cannot POST，
+  #   接口疑似已下线，非迁移缺陷。用例文件保留，需要时再放回。
+  - and &T2931 Verify the total saving includes the percent off of subscription plan
+  - Verify the quantity works well with change frequency on subscription item
+  - Verify the price range and discount contains subscription price on post card
+  - Verify the subscribe price is displayed on product card or banner if set subscription option as the default purchase option -- With shipping fee
+  - Verify the OTP option is selected by default if unchecked Default to subscription
+  - '&T2994 Verify consumer can change shipping address and Skip uncoming orders on subscribe & save details page'
+  - '&T2920 & T2914  Verify consumer can change frequency &Cancel & Puase & Reactive for subscription'
+  - Verify the subscription contract list is displayed on subscribe & save page
+  - Verify the shipping address can be added or deleted success
+  - Verify the consumer can follow a shop
+  - Verify after created affiliate link, can send Email or SMS
+  - Verify Promoter's operation rights on the resell-post
+  - Verify the Product card can create post success on my shop page
+  - Verify the catalog can be create and delete success
+  - Verify new product can be creates successfully
+  - Verify the function of generating invitation link-yx
+  - After verifying that the Promoter/Curator accepts the invitation, it will be displayed in the My promoters/My Curator list
+  - Verify the promoter signup flow
+  - Verifying the partner-signup link allows the user to register properly and be redirected to the my shop page
+  - '& T3098 & T3099 & T3111 & T3112 Verify the orders list is correct when filtering by date after set time zone'
+  - Verify the order is group by date on sales page
+  - Verify that admin gives one time payout to a user-yx
+  - T0000 Verify that the shipping status can sync to pear
+  - Verify the Co-host can be added and delete
+  - (TDC)Verify the Co-host can be added and delete
+  - (AXS)Verify the Co-host can be added and delete
+  - Verify the ticket can be redeemd success
+  - Add and Remove guest
+  - (Linda) (AXS)T4838 Add and Remove guest
+  - (Linda) (TDC)T4838 Add and Remove guest
+  - '& T4299 On the event advanced tab setting tax enable and disabled'
+  - Verify the search function of the QR scanner page
+  - Verify the event can be edited successfully
+  - Verify add a new tab Lineup when create an event
+  - '&T4625&T4626&T4628 Event creation whole process'
+  - Verify the event can be created successfully
+  - '&T4724 Verify the Event can create and duplicate and delete and switch status'
+  - Verify the settings Enable multi-day pass work
+  - Verify the QR redeemed product can be created
+  - (Linda)(Venue map)T5379Verify the Additional QR codes flow work
+  - (Linda)(Venue map)T4543 Verify the settings Enable multi-day pass work
+  - Verify the Additional QR codes can be added/edited/deleted
+  - (Linda)(Venue map) Verify the Customer-provided details flow work
+  - (Linda) Verify the Require customer-provided details can be apply success
+pytest_args:
+- -v
