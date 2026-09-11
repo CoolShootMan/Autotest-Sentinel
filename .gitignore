@@ -71,6 +71,43 @@ report/
 test-result/
 test-results/
 
+# API automation: 按运行归档（results/runs/<run_id>/ + 历史索引 + 软链）
+test_case/API auto script/results/runs/
+test_case/API auto script/results/_legacy/
+test_case/API auto script/results/latest
+test_case/API auto script/results/RUNS.md
+
+# API automation: 本机历史备份与打补丁回滚目录（不要入库）
+test_case/API auto script.__backup_*/
+test_case/API auto script/__patch_backup_*/
+
+# API automation: 退役的迁移脚本（一次性使用，已被新工具取代）
+test_case/API auto script/_retired_20260910/
+
+# API automation: 含敏感凭据与运行时缓存，禁止入库
+test_case/API auto script/_apifox_export/auth_state.json
+test_case/API auto script/_apifox_export/auth_by_path.json
+test_case/API auto script/_apifox_export/live_global_variables.json
+test_case/API auto script/_apifox_export/tokens.json
+test_case/API auto script/_apifox_export/cases_index.json
+test_case/API auto script/_apifox_export/scenario_tree.json
+test_case/API auto script/_apifox_export/runable_scenarios.json
+test_case/API auto script/_apifox_export/export_log.txt
+test_case/API auto script/_apifox_export/cases_raw/
+test_case/API auto script/_apifox_export/scenarios_raw/
+# 包含 LIVE JWT / 测试账号口令 / pear_client_secret
+test_case/API auto script/_apifox_export/data/environments.json
+test_case/API auto script/tokens.json
+
+# API automation: 环境配置含 LIVE JWT / DB 密码 / 测试账号口令，禁止入库
+# 本地保留 config/environments/*.example.yaml 作为模板
+test_case/API auto script/config/environments/_runtime_tokens.yaml
+test_case/API auto script/config/environments/Release.yaml
+test_case/API auto script/config/environments/Staging.yaml
+test_case/API auto script/config/environments/Production.yaml
+test_case/API auto script/config/environments/Local.yaml
+test_case/API auto script/config/environments/Global.yaml
+
 # === Temp scripts (AI generated, not for repo) ===
 check_report.py
 tmp_*.py
