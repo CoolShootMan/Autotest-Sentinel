@@ -1,0 +1,54 @@
+name: Lury
+description: Lury 日常可运行回归集 — 逐条列出用例名，便于查看/增删（不再用 suite:lury 标签整组拉取）
+# Verify purchase funnel flow and so on
+include:
+  names:
+  - _allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter
+  - _Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool
+  - _Consumer_1-2_Others_items_disabled_resell_no_retail
+  - '&T4140 Verify the event coupon can be used for all events'
+  - '&T4807&T4574 Test QR redemption product without asking pickup time'
+  - Verify consumer can purchase event product and check transaction fee
+  - _Consumer_2-3_Others_items_enabled_resell_promoter_retail
+  - _Consumer_3-2_mixed_items_disabled_my_items_resell_retail
+  - _Consumer_4-3_Mixed_items_enabled_my_items_resell_promoter_retail
+  - _Consumer_5-2_My_items_resell_retail
+  - _Consumer_5-3_My_items_resell_promoter_retail
+  - _Consumer_6-2_Mixed_items_enabled_disabled_my_items_resell_retail
+  - _Consumer_7-2_Other_items_enabled_disabled_resell_retail
+  - _From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode
+  - _Consumer_4-2_Mixed_items_enabled_my_items_resell_retail
+  - _Consumer_2-2_Others_items_enabled_resell_retail
+  - _Verify_the_commission_charge_and_earnings_for_wholesale_mode_after_partial_refund_the_order
+  - _Check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale_posts
+  - Verify total savings is equal to discount + coupon
+  - '&T2795 guest place order with 0 yuan and link order to existing account'
+  - _Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool
+  - (Lury)KAT-11581 Verify all data are correct in event report if the products in the order from different event
+  - (Lury)KAT-11581 Verify all data are correct in event report if sold by Venue App
+  - Exclude Pear.Us Venue app sales from sales report
+  - _and_T3687_wholesale_commission_and_affiliate_link
+  - '"Allow use in all co-sellers'' post" coupon code can use in direct affiliate post'
+  - '&T4590&T4593&T4708 Verify partner can share revenue to other account on store settings'
+  - '&T4697 Verify partner and co-seller release schedule - ticket'
+  - '&T4700 Verify partner release schedule - general product'
+  - (Lury)Verify reveal address to buyers check address on order confirmation page
+  - (Lury)Verify reveal address after at time check on order confirmation page
+  - (Lury)Verify reveal address to buyers before at check address on order confirmation page
+  - (Lury)Resell Verify reveal address to buyers check address on order confirmation page
+  - (Lury)Verify reveal address to buyer after at time check on order confirmation page
+  - (Lury)Resell Verify reveal address after at time check on order confirmation page
+  - (Lury)Resell Verify reveal address to buyers before at check address on order confirmation page
+  - (Lury)Verify reveal address before at time check on order confirmation page
+  - (Lury)Resell Verify reveal address to buyer after at time check on order confirmation page
+  - (Lury)Resell Verify reveal address before at time check on order confirmation page
+  - Verify In-person delivery method product should be marked as redeemed automatically
+  - '&T4134&T4123&T4127&T5098_Earnings_tax_Rebate_Ticket_refund_commission rate'
+  - '&T5026 Verify check-in expiration time on checkout page and order confirmation details'
+  - Verify ticket can be purchase before stop selling and ticket is unavailable after stop selling
+  - Verify fee is not displayed if ticekt set "Do not display fees"
+  - Verify custom fee is correct in sales details page if set custom fee
+  - Verify no fee for ticket from event if set "Show fee breakdown at checkout" in event
+  - Verify sales report in sales > completed page
+pytest_args:
+- -v

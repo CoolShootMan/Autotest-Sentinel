@@ -1,0 +1,41 @@
+# env/Local.yaml
+# LIVE-migrated from Apifox 'Local' environment on 2026-09-08.
+# Layering: env/Global.yaml -> env/<ENV>.yaml -> <case>.vars.yaml
+
+'#_comment': LIVE-migrated from Apifox 'Local' environment (project 5446866) on 2026-09-08. For Apifox global variables see env/Global.yaml. Per-case <slug>.vars.yaml overrides these.
+base_url: http://localhost:7778
+variables:
+  token: 'Bearer {{LOCAL_TOKEN}}'
+  access_token: ''
+  order_id: ''
+  account_email_merchant: ''
+  password_merchant: ''
+  merchant_access_token: ''
+  merchant_token: ''
+  admin_token: ''
+  Pear-AutoTesting: ''
+  post-autocoupon: ''
+  post_url: ''
+  Stripeid: ''
+  clientSecret: ''
+  new_invitation_link: ''
+  rewarddata_id: ''
+  rewarddata_rewardBalance: ''
+  Shipping type: ''
+  pear_client_id: 8778ce59-62d6-48d5-9e95-78c3d54fc0d0
+  pear_client_secret: '{{PEAR_CLIENT_SECRET}}'
+  searchVerifyResult: ''
+  searchVerifyErrors: ''
+  emailCompletedId: ''
+  smsCompletedId: ''
+  newEmailCampaignId: ''
+  newSMSCampaignId: ''
+  campaignId: ''
+  smsCampaignGenerateVerifyResult: ''
+  smsCampaignGenerateVerifyLogs: ''
+  campaignEmailId: ''
+  emailCampaignGenerateVerifyResult: ''
+  emailCampaignGenerateVerifyLogs: ''
+  m1_transaction_fee: ''
+  p1_transaction_fee: ''
+  merchant_transaction_fee: ''

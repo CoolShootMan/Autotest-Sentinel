@@ -1,0 +1,7 @@
+# Per-case variables restored from the Apifox pre-scripts of case 8660684.
+# WHY: the migration dropped `pm.environment.set(<literal>)` pre-scripts, leaving
+# these vars empty in env/Release.yaml -> both the request body AND the assertion
+# expectation rendered to '' (guaranteed failure / silently wrong data).
+# Case-first precedence: overrides env/Global.yaml + env/Release.yaml.
+variables:
+  event_title: "event-for-api-auto-venue-map"

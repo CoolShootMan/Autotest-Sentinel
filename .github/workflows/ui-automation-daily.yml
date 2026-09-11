@@ -1,0 +1,83 @@
+name: ui-automation-daily
+
+# 每天 18:00 北京时间 (= 10:00 UTC) 自动跑 UI automation，并把 Allure 报告链接发到 Slack。
+#
+# 重要前提：
+#   1) 本 workflow 必须在你的 Mac 上注册【self-hosted runner】才能跑——
+#      GitHub 只负责按 cron 调度，main.py 实际是在你本机执行的
+#      （它用本地 venv、本地 allure、以及 http://192.168.x.x:8080 的本地报告服务）。
+#   2) schedule 事件只在仓库【默认分支 main】上触发。本文件合入 main 后每日定时才会生效；
+#      在 linda 分支上可用 workflow_dispatch 手动触发先验证。
+#   3) 仓库 Secrets 需配置 SLACK_WEBHOOK_URL（Slack Incoming Webhook）。未配置时
+#      Slack 步骤自动跳过，不影响测试本身。
+
+on:
+  schedule:
+    - cron: '0 10 * * *'      # 10:00 UTC = 18:00 北京时间
+  workflow_dispatch:          # 允许手动触发，便于先在 linda 上验证
+
+jobs:
+  ui-automation:
+    name: UI Automation (self-hosted macOS)
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 120
+    steps:
+      - name: Run UI Automation (main.py)
+        id: run
+        env:
+          CI: "true"
+        run: |
+          cd "/Users/a123456/Desktop/UI Automation"
+          ./venv/bin/python3 main.py 2>&1 | tee run.log || true
+
+      - name: Show main.py tail (debug)
+        if: always()
+        run: |
+          echo "=== main.py tail ==="
+          tail -n 40 "/Users/a123456/Desktop/UI Automation/run.log" 2>/dev/null || true
+
+      - name: Send Slack notification
+        # 仅当配置了 SLACK_WEBHOOK_URL 时才发送；未配置自动跳过。
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          "/Users/a123456/Desktop/UI Automation/venv/bin/python3" - <<'PY'
+          import os, json, subprocess, urllib.request
+
+          report_path = "/Users/a123456/Desktop/UI Automation/report/last_report_url.txt"
+          report_url = "N/A"
+          try:
+              with open(report_path, encoding="utf-8") as f:
+                  report_url = (f.read().strip() or "N/A")
+          except Exception as e:
+              print("read report url failed:", e)
+
+          run_url = "{server}/{repo}/actions/runs/{run_id}".format(
+              server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
+              repo=os.environ.get("GITHUB_REPOSITORY", ""),
+              run_id=os.environ.get("GITHUB_RUN_ID", ""),
+          )
+          try:
+              ts = subprocess.check_output(["date", "+%Y-%m-%d %H:%M %Z"]).decode().strip()
+          except Exception:
+              ts = ""
+
+          text = (
+              ":rocket: *UI Automation 每日报告 ({ts})*\n"
+              "> 报告链接: {url}\n"
+              "> 运行详情: {run}".format(ts=ts, url=report_url, run=run_url)
+          )
+          payload = {"text": text}
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=json.dumps(payload).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              urllib.request.urlopen(req)
+              print("Slack notification sent.")
+          except Exception as e:
+              print("Slack send failed:", e)
+          PY

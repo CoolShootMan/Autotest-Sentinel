@@ -55,20 +55,23 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
-    #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml"
-    yaml_files = "All_YAML/Post/Post_setting_for_venue_map.yaml"
+    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml"
+    # yaml_files = "All_YAML/Post/Post_setting_for_venue_map.yaml"
     pytest_args = [
         sys.executable,
         "-m",
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
-        '--headed',
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
         '--step-capture=on-failure'
     ]
+    # CI mode (GitHub self-hosted runner): run headless (no GUI display available).
+    # Local runs keep the headed browser for visual debugging.
+    if not os.environ.get('CI'):
+        pytest_args.append('--headed')
     logger.info(f"Running with YAMLs: {yaml_files}")
 
     # ── 1. Fetch cookies for all 3 test accounts ──
@@ -180,15 +183,32 @@ def start_autotest():
     # Start HTTP server immediately (in separate window, not blocked by allure open)
     http_server_script = os.path.join(BASE_DIR, "http_server.py")
     http_cmd = [sys.executable, http_server_script, allure_report_dir, str(http_port)]
-    subprocess.Popen(http_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0)
+    # CI: start_new_session detaches the server so it keeps serving the report
+    # even after the GitHub Actions job step finishes.
+    subprocess.Popen(
+        http_cmd,
+        start_new_session=True,
+        creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0,
+    )
+    report_url = f"http://{lan_ip}:{http_port}"
+    # Persist the report URL so the GitHub Action step can read it and post to Slack.
+    try:
+        os.makedirs(os.path.join(BASE_DIR, "report"), exist_ok=True)
+        with open(os.path.join(BASE_DIR, "report", "last_report_url.txt"), "w", encoding="utf-8") as _f:
+            _f.write(report_url)
+    except Exception as _e:
+        logger.warning(f"Failed to write last_report_url.txt: {_e}")
     logger.info(f"====================================")
-    logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
+    logger.info(f"LAN report URL: {report_url}")
     logger.info(f"Local Allure: auto-opened")
     logger.info(f"====================================")
-    try:
-        subprocess.run(open_cmd)
-    except Exception:
-        pass
+    # CI (self-hosted runner, no interactive display): skip `allure open` so the
+    # job does not hang waiting for a browser window that nobody will close.
+    if not os.environ.get("CI"):
+        try:
+            subprocess.run(open_cmd)
+        except Exception:
+            pass
 
 
 

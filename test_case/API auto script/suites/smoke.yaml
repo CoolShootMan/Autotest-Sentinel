@@ -1,0 +1,11 @@
+name: smoke
+description: 冒烟 — 登录链路 + 核心只读查询，最快验证环境可用性
+include:
+  folders:
+    - Login flow
+    - Analytics
+    - Module
+exclude:
+  case_ids: []
+pytest_args:
+  - "-v"

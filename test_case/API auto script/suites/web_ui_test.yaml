@@ -1,0 +1,8 @@
+name: web-ui-test
+description: saved from web UI
+include:
+  case_ids:
+    - 5494036
+    - 7750519
+pytest_args:
+  - -v

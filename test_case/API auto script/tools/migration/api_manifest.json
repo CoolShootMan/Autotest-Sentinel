@@ -1,0 +1,2461 @@
+{
+  "address": {
+    "class": "AddressApi",
+    "methods": [
+      {
+        "name": "by_address_id",
+        "method": "DELETE",
+        "path": "/address/{{address_id}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "address_id",
+            "var": "address_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/address",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/address",
+        "calls": 10,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "admin": {
+    "class": "AdminApi",
+    "methods": [
+      {
+        "name": "auth_login",
+        "method": "POST",
+        "path": "{{adminurl}}/auth/login",
+        "calls": 5,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "events_by_dup_event_id",
+        "method": "PATCH",
+        "path": "{{adminurl}}/events/{{dup_event_id}}",
+        "calls": 5,
+        "path_params": [
+          {
+            "arg": "dup_event_id",
+            "var": "dup_event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "events_search",
+        "method": "POST",
+        "path": "{{adminurl}}/events/search",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant_product_by_product_id",
+        "method": "PATCH",
+        "path": "{{adminurl}}/merchant/product/{{productId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "productId",
+            "var": "productId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "orders_refunds",
+        "method": "POST",
+        "path": "{{adminurl}}/orders/{{admin_orderId}}/refunds",
+        "calls": 8,
+        "path_params": [
+          {
+            "arg": "admin_orderId",
+            "var": "admin_orderId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "orders_search",
+        "method": "POST",
+        "path": "{{adminurl}}/orders/search",
+        "calls": 5,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "post_v2_relate_products",
+        "method": "GET",
+        "path": "{{adminurl}}/post/v2/{{post0_id}}/relate-products",
+        "calls": 12,
+        "path_params": [
+          {
+            "arg": "post0_id",
+            "var": "post0_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoters_reward",
+        "method": "POST",
+        "path": "{{adminurl}}/promoters/reward",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoters_reward_by_promoter_id",
+        "method": "GET",
+        "path": "{{adminurl}}/promoters/reward/{{promoterId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "promoterId",
+            "var": "promoterId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageNumber=1&pageSize=10",
+        "params": {
+          "pageNumber": "1",
+          "pageSize": "10"
+        }
+      },
+      {
+        "name": "tracking_post_activities",
+        "method": "POST",
+        "path": "{{adminurl}}/tracking/post/activities",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "users_search",
+        "method": "POST",
+        "path": "{{adminurl}}/users/search",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "analytics": {
+    "class": "AnalyticsApi",
+    "methods": [
+      {
+        "name": "post_summary",
+        "method": "POST",
+        "path": "/analytics/post/summary",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "approvals": {
+    "class": "ApprovalsApi",
+    "methods": [
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/purchase-approvals",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "auth": {
+    "class": "AuthApi",
+    "methods": [
+      {
+        "name": "code",
+        "method": "POST",
+        "path": "/auth/code",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "guest_login",
+        "method": "POST",
+        "path": "/auth/guest-login",
+        "calls": 28,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant_login",
+        "method": "POST",
+        "path": "/auth/merchant-login",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter_login",
+        "method": "POST",
+        "path": "/auth/promoter-login",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter_signup",
+        "method": "POST",
+        "path": "/auth/promoter-signup",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "sign_in",
+        "method": "POST",
+        "path": "/auth/sign-in",
+        "calls": 188,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "campaigns": {
+    "class": "CampaignsApi",
+    "methods": [
+      {
+        "name": "by_campaign_id",
+        "method": "PUT",
+        "path": "/campaigns/{{campaignId}}",
+        "calls": 6,
+        "path_params": [
+          {
+            "arg": "campaignId",
+            "var": "campaignId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_campaign_id_2",
+        "method": "GET",
+        "path": "/campaigns/{{campaignId}}",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "campaignId",
+            "var": "campaignId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_random_linda_automation_id",
+        "method": "DELETE",
+        "path": "/campaigns/{{randomLindaAutomationId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "randomLindaAutomationId",
+            "var": "randomLindaAutomationId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/campaigns",
+        "calls": 7,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "duplicate",
+        "method": "POST",
+        "path": "/campaigns/duplicate",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/campaigns",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "search=&pageSize=30&pageNumber=1",
+        "params": {
+          "search": "",
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "save_recipients",
+        "method": "POST",
+        "path": "/campaigns/save-recipients",
+        "calls": 7,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "send_campaign",
+        "method": "POST",
+        "path": "/campaigns/send-campaign",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "test_email",
+        "method": "POST",
+        "path": "/campaigns/test/email",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "test_sms",
+        "method": "POST",
+        "path": "/campaigns/test/sms",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "cart": {
+    "class": "CartApi",
+    "methods": [
+      {
+        "name": "delete",
+        "method": "DELETE",
+        "path": "/cart",
+        "calls": 81,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/cart",
+        "calls": 6,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "update",
+        "method": "PUT",
+        "path": "/cart",
+        "calls": 15,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "earnings": {
+    "class": "EarningsApi",
+    "methods": [
+      {
+        "name": "metrics_promoters",
+        "method": "GET",
+        "path": "/sales/metrics/promoters",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageNumber=1&pageSize=30&merchantIds=8c2e9374-b82a-4cac-a74a-aaa6acbc89dd%2C6c27b126-f4bc-4565-aefa-127b3420882c%2C2d4e05ad-d14e-478a-a4f1-d7008675f28a%2C21e0b0a3-846b-4951-806b-ab5b08f215f3%2C02e0c1e6-89b1-4b36-9e57-daa112331d80%2C50ad5377-611c-4b10-834e-07c7bf4c97a2%2C9fa3857d-49a4-49bd-8e08-e9fa5752ac79%2Cdc931b11-f250-41ce-be85-bd11adc7929d%2Caebb02b7-45e0-4603-93e4-cf3e688ad8f9%2Ce6e8deaa-f676-4aeb-abfe-7c7afbcab66e%2C96dccc38-045f-4e24-94b3-14a006e8c04d%2C111e584a-41ee-44fc-8f61-a3f351f29953%2C79e64263-f9a1-43fd-be5a-925d1a8fbc54%2Cfa87e882-f65c-41d7-8441-3b2c35aa8803%2Cdb45a6ac-3100-47a2-a85c-612ab1883fdf%2C9812009a-442f-4596-aa44-5b77e22e844a%2C20e029de-083c-42b8-b615-b3a6a1e89400%2C7fc3f908-70fa-435a-b3c6-3242e4bbb892%2C8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2%2C3ba8513c-c689-4877-9a15-c6c4cf63d8ec%2C1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9%2Ccbf691fe-db78-45f5-b7c8-cead119441a9%2C5bfe7016-d43c-4180-b0df-7602a4d03699%2Caa2ab688-3eae-475f-aec9-5184ce7309a1&startTime=2026-01-01T16%3A00%3A00%2B08%3A00&endTime=2026-09-01T05%3A59%3A59%2B08%3A00&fulfillStatus=FULFILLED",
+        "params": {
+          "pageNumber": "1",
+          "pageSize": "30",
+          "merchantIds": "8c2e9374-b82a-4cac-a74a-aaa6acbc89dd,6c27b126-f4bc-4565-aefa-127b3420882c,2d4e05ad-d14e-478a-a4f1-d7008675f28a,21e0b0a3-846b-4951-806b-ab5b08f215f3,02e0c1e6-89b1-4b36-9e57-daa112331d80,50ad5377-611c-4b10-834e-07c7bf4c97a2,9fa3857d-49a4-49bd-8e08-e9fa5752ac79,dc931b11-f250-41ce-be85-bd11adc7929d,aebb02b7-45e0-4603-93e4-cf3e688ad8f9,e6e8deaa-f676-4aeb-abfe-7c7afbcab66e,96dccc38-045f-4e24-94b3-14a006e8c04d,111e584a-41ee-44fc-8f61-a3f351f29953,79e64263-f9a1-43fd-be5a-925d1a8fbc54,fa87e882-f65c-41d7-8441-3b2c35aa8803,db45a6ac-3100-47a2-a85c-612ab1883fdf,9812009a-442f-4596-aa44-5b77e22e844a,20e029de-083c-42b8-b615-b3a6a1e89400,7fc3f908-70fa-435a-b3c6-3242e4bbb892,8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2,3ba8513c-c689-4877-9a15-c6c4cf63d8ec,1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9,cbf691fe-db78-45f5-b7c8-cead119441a9,5bfe7016-d43c-4180-b0df-7602a4d03699,aa2ab688-3eae-475f-aec9-5184ce7309a1",
+          "startTime": "2026-01-01T16:00:00+08:00",
+          "endTime": "2026-09-01T05:59:59+08:00",
+          "fulfillStatus": "FULFILLED"
+        }
+      },
+      {
+        "name": "metrics_staff_summary",
+        "method": "GET",
+        "path": "/sales/metrics/staff-summary",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "merchantIds=8c2e9374-b82a-4cac-a74a-aaa6acbc89dd%2C6c27b126-f4bc-4565-aefa-127b3420882c%2C2d4e05ad-d14e-478a-a4f1-d7008675f28a%2C21e0b0a3-846b-4951-806b-ab5b08f215f3%2C02e0c1e6-89b1-4b36-9e57-daa112331d80%2C50ad5377-611c-4b10-834e-07c7bf4c97a2%2C9fa3857d-49a4-49bd-8e08-e9fa5752ac79%2Cdc931b11-f250-41ce-be85-bd11adc7929d%2Caebb02b7-45e0-4603-93e4-cf3e688ad8f9%2Ce6e8deaa-f676-4aeb-abfe-7c7afbcab66e%2C96dccc38-045f-4e24-94b3-14a006e8c04d%2C111e584a-41ee-44fc-8f61-a3f351f29953%2C79e64263-f9a1-43fd-be5a-925d1a8fbc54%2Cfa87e882-f65c-41d7-8441-3b2c35aa8803%2Cdb45a6ac-3100-47a2-a85c-612ab1883fdf%2C9812009a-442f-4596-aa44-5b77e22e844a%2C20e029de-083c-42b8-b615-b3a6a1e89400%2C7fc3f908-70fa-435a-b3c6-3242e4bbb892%2C8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2%2C3ba8513c-c689-4877-9a15-c6c4cf63d8ec%2C1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9%2Ccbf691fe-db78-45f5-b7c8-cead119441a9%2C5bfe7016-d43c-4180-b0df-7602a4d03699%2Caa2ab688-3eae-475f-aec9-5184ce7309a1&startTime=2026-08-01T15%3A00%3A00%2B08%3A00&endTime=2026-09-01T15%3A30%3A59%2B08%3A00&fulfillStatus=FULFILLED",
+        "params": {
+          "merchantIds": "8c2e9374-b82a-4cac-a74a-aaa6acbc89dd,6c27b126-f4bc-4565-aefa-127b3420882c,2d4e05ad-d14e-478a-a4f1-d7008675f28a,21e0b0a3-846b-4951-806b-ab5b08f215f3,02e0c1e6-89b1-4b36-9e57-daa112331d80,50ad5377-611c-4b10-834e-07c7bf4c97a2,9fa3857d-49a4-49bd-8e08-e9fa5752ac79,dc931b11-f250-41ce-be85-bd11adc7929d,aebb02b7-45e0-4603-93e4-cf3e688ad8f9,e6e8deaa-f676-4aeb-abfe-7c7afbcab66e,96dccc38-045f-4e24-94b3-14a006e8c04d,111e584a-41ee-44fc-8f61-a3f351f29953,79e64263-f9a1-43fd-be5a-925d1a8fbc54,fa87e882-f65c-41d7-8441-3b2c35aa8803,db45a6ac-3100-47a2-a85c-612ab1883fdf,9812009a-442f-4596-aa44-5b77e22e844a,20e029de-083c-42b8-b615-b3a6a1e89400,7fc3f908-70fa-435a-b3c6-3242e4bbb892,8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2,3ba8513c-c689-4877-9a15-c6c4cf63d8ec,1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9,cbf691fe-db78-45f5-b7c8-cead119441a9,5bfe7016-d43c-4180-b0df-7602a4d03699,aa2ab688-3eae-475f-aec9-5184ce7309a1",
+          "startTime": "2026-08-01T15:00:00+08:00",
+          "endTime": "2026-09-01T15:30:59+08:00",
+          "fulfillStatus": "FULFILLED"
+        }
+      },
+      {
+        "name": "metrics_summary",
+        "method": "GET",
+        "path": "/sales/metrics/summary",
+        "calls": 4,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "merchantIds=8c2e9374-b82a-4cac-a74a-aaa6acbc89dd%2C6c27b126-f4bc-4565-aefa-127b3420882c%2C2d4e05ad-d14e-478a-a4f1-d7008675f28a%2C21e0b0a3-846b-4951-806b-ab5b08f215f3%2C02e0c1e6-89b1-4b36-9e57-daa112331d80%2C50ad5377-611c-4b10-834e-07c7bf4c97a2%2C9fa3857d-49a4-49bd-8e08-e9fa5752ac79%2Cdc931b11-f250-41ce-be85-bd11adc7929d%2Caebb02b7-45e0-4603-93e4-cf3e688ad8f9%2Ce6e8deaa-f676-4aeb-abfe-7c7afbcab66e%2C96dccc38-045f-4e24-94b3-14a006e8c04d%2C111e584a-41ee-44fc-8f61-a3f351f29953%2C79e64263-f9a1-43fd-be5a-925d1a8fbc54%2Cfa87e882-f65c-41d7-8441-3b2c35aa8803%2Cdb45a6ac-3100-47a2-a85c-612ab1883fdf%2C9812009a-442f-4596-aa44-5b77e22e844a%2C20e029de-083c-42b8-b615-b3a6a1e89400%2C7fc3f908-70fa-435a-b3c6-3242e4bbb892%2C8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2%2C3ba8513c-c689-4877-9a15-c6c4cf63d8ec%2C1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9%2Ccbf691fe-db78-45f5-b7c8-cead119441a9%2C5bfe7016-d43c-4180-b0df-7602a4d03699%2Caa2ab688-3eae-475f-aec9-5184ce7309a1&startTime=2026-01-01T16%3A00%3A00%2B08%3A00&endTime=2026-09-01T15%3A30%3A59%2B08%3A00&fulfillStatus=FULFILLED",
+        "params": {
+          "merchantIds": "8c2e9374-b82a-4cac-a74a-aaa6acbc89dd,6c27b126-f4bc-4565-aefa-127b3420882c,2d4e05ad-d14e-478a-a4f1-d7008675f28a,21e0b0a3-846b-4951-806b-ab5b08f215f3,02e0c1e6-89b1-4b36-9e57-daa112331d80,50ad5377-611c-4b10-834e-07c7bf4c97a2,9fa3857d-49a4-49bd-8e08-e9fa5752ac79,dc931b11-f250-41ce-be85-bd11adc7929d,aebb02b7-45e0-4603-93e4-cf3e688ad8f9,e6e8deaa-f676-4aeb-abfe-7c7afbcab66e,96dccc38-045f-4e24-94b3-14a006e8c04d,111e584a-41ee-44fc-8f61-a3f351f29953,79e64263-f9a1-43fd-be5a-925d1a8fbc54,fa87e882-f65c-41d7-8441-3b2c35aa8803,db45a6ac-3100-47a2-a85c-612ab1883fdf,9812009a-442f-4596-aa44-5b77e22e844a,20e029de-083c-42b8-b615-b3a6a1e89400,7fc3f908-70fa-435a-b3c6-3242e4bbb892,8414b1af-e90c-4f2c-ac4e-6b7ffeb1c6f2,3ba8513c-c689-4877-9a15-c6c4cf63d8ec,1d7f9c4d-d1e6-476d-b5e4-b66cfdb6d0c9,cbf691fe-db78-45f5-b7c8-cead119441a9,5bfe7016-d43c-4180-b0df-7602a4d03699,aa2ab688-3eae-475f-aec9-5184ce7309a1",
+          "startTime": "2026-01-01T16:00:00+08:00",
+          "endTime": "2026-09-01T15:30:59+08:00",
+          "fulfillStatus": "FULFILLED"
+        }
+      },
+      {
+        "name": "metrics_tipped_orders",
+        "method": "GET",
+        "path": "/sales/metrics/tipped-orders",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "merchantIds=02e0c1e6-89b1-4b36-9e57-daa112331d80&startTime=2026-06-30T12%3A00%3A00%2B08%3A00&endTime=2026-06-30T12%3A06%3A59%2B08%3A00&fulfillStatus=FULFILLED&pageSize=30&pageNumber=1",
+        "params": {
+          "merchantIds": "02e0c1e6-89b1-4b36-9e57-daa112331d80",
+          "startTime": "2026-06-30T12:00:00+08:00",
+          "endTime": "2026-06-30T12:06:59+08:00",
+          "fulfillStatus": "FULFILLED",
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "summary",
+        "method": "GET",
+        "path": "/promoter-earning/summary",
+        "calls": 35,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "summary_2",
+        "method": "GET",
+        "path": "/payout/summary",
+        "calls": 27,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "events": {
+    "class": "EventsApi",
+    "methods": [
+      {
+        "name": "bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_orders_summary",
+        "method": "GET",
+        "path": "/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/orders/summary",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "dateText=Custom&productIds=84ca33f0-49f4-4565-82c3-d691cec864d8,a0b826d8-a96d-42e6-9da6-569fea72ee42,71e1a9de-cc72-42c7-a138-a68c306000b6,31dd45f0-5096-4b2f-9b7f-135dc5b8e581",
+        "params": {
+          "dateText": "Custom",
+          "productIds": "84ca33f0-49f4-4565-82c3-d691cec864d8,a0b826d8-a96d-42e6-9da6-569fea72ee42,71e1a9de-cc72-42c7-a138-a68c306000b6,31dd45f0-5096-4b2f-9b7f-135dc5b8e581"
+        }
+      },
+      {
+        "name": "bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff",
+        "method": "GET",
+        "path": "/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageNumber=1&pageSize=30",
+        "params": {
+          "pageNumber": "1",
+          "pageSize": "30"
+        }
+      },
+      {
+        "name": "bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff_summary",
+        "method": "GET",
+        "path": "/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff-summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_summary",
+        "method": "GET",
+        "path": "/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_tipped_orders",
+        "method": "GET",
+        "path": "/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/tipped-orders",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageSize=30&pageNumber=1",
+        "params": {
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_promoters",
+        "method": "GET",
+        "path": "/product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/promoters",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageSize=30&pageNumber=1",
+        "params": {
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_summary",
+        "method": "GET",
+        "path": "/product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_co_hostid",
+        "method": "DELETE",
+        "path": "/event-collaborators/{{co-hostid}}",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "co_hostid",
+            "var": "co-hostid"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_dup_event_id",
+        "method": "PUT",
+        "path": "/product-event/{{dup_event_id}}",
+        "calls": 9,
+        "path_params": [
+          {
+            "arg": "dup_event_id",
+            "var": "dup_event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "skipFeesCheck=true",
+        "params": {
+          "skipFeesCheck": "true"
+        }
+      },
+      {
+        "name": "by_event_id",
+        "method": "DELETE",
+        "path": "/product-event/{{event_id}}",
+        "calls": 6,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/event-collaborators",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_discount_orders",
+        "method": "GET",
+        "path": "/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/discount-orders",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageSize=30&pageNumber=1",
+        "params": {
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_orders_summary",
+        "method": "GET",
+        "path": "/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/orders/summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "dateText=Custom&productIds=af42a47a-1b65-4563-9f16-680f9d7eae22,64d232ec-370c-4b08-8ed1-02f8ab56baf9",
+        "params": {
+          "dateText": "Custom",
+          "productIds": "af42a47a-1b65-4563-9f16-680f9d7eae22,64d232ec-370c-4b08-8ed1-02f8ab56baf9"
+        }
+      },
+      {
+        "name": "dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_summary",
+        "method": "GET",
+        "path": "/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "default_catalog",
+        "method": "GET",
+        "path": "/product-event/default-catalog",
+        "calls": 10,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary",
+        "method": "GET",
+        "path": "/product-event/fb5df095-b68d-45f6-adc0-2211428d0a8c/metrics/summary",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "guests",
+        "method": "POST",
+        "path": "/event/guests",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "guests_batch",
+        "method": "DELETE",
+        "path": "/event/{{event_id}}/guests/batch",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "lineup",
+        "method": "POST",
+        "path": "/product-event/{{event_id}}/lineup",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "lineup_by_lineup_id",
+        "method": "PUT",
+        "path": "/product-event/{{event_id}}/lineup/{{lineup_id}}",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          },
+          {
+            "arg": "lineup_id",
+            "var": "lineup_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "lineup_l_lineup_id",
+        "method": "DELETE",
+        "path": "/product-event/{{event_id}}/lineup/{l{lineup_id}}",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "lineup_transactions",
+        "method": "POST",
+        "path": "/product-event/{{event_id}}/lineup-transactions",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/product-event/list",
+        "calls": 23,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "keyword=&pageSize=50&pageNumber=1",
+        "params": {
+          "keyword": "",
+          "pageSize": "50",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "metrics_summary",
+        "method": "GET",
+        "path": "/product-event/{{event_id}}/metrics/summary",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "tickets_venue_units",
+        "method": "GET",
+        "path": "/product-event/tickets/{{productId_General_Admission_02}}/venue-units",
+        "calls": 4,
+        "path_params": [
+          {
+            "arg": "productId_General_Admission_02",
+            "var": "productId_General_Admission_02"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageNumber=1&pageSize=30&variantId={merchantProductVariantId_General_Admission_02}",
+        "params": {
+          "pageNumber": "1",
+          "pageSize": "30",
+          "variantId": "{merchantProductVariantId_General_Admission_02}"
+        }
+      },
+      {
+        "name": "v2",
+        "method": "POST",
+        "path": "/product-event/v2",
+        "calls": 5,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_batch",
+        "method": "POST",
+        "path": "/product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/batch",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_media_batch_operate",
+        "method": "POST",
+        "path": "/product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/media/batch/operate",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_config",
+        "method": "GET",
+        "path": "/product-event/v2/{{created_event_id}}/config",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "created_event_id",
+            "var": "created_event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_duplicate",
+        "method": "POST",
+        "path": "/product-event/v2/duplicate",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_lineup_batch",
+        "method": "POST",
+        "path": "/product-event/v2/{{event_id}}/lineup/batch",
+        "calls": 4,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_media_batch_create",
+        "method": "POST",
+        "path": "/product-event/v2/{{created_event_id}}/media/batch/create",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "created_event_id",
+            "var": "created_event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_media_batch_operate",
+        "method": "POST",
+        "path": "/product-event/v2/{{newMediaId}}/media/batch/operate",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "newMediaId",
+            "var": "newMediaId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_show_in_post",
+        "method": "POST",
+        "path": "/product-event/v2/{{event_id}}/show-in-post",
+        "calls": 4,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v2_ticket_batch_v2",
+        "method": "POST",
+        "path": "/product-event/v2/{{event_id}}/ticket/batch/v2",
+        "calls": 5,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_by_lineup_id",
+        "method": "DELETE",
+        "path": "/product-event/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/{{lineup_id}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "lineup_id",
+            "var": "lineup_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_39014a10_14e7_4cfa_993b_485f5c5485ac_metrics_summary",
+        "method": "GET",
+        "path": "/product-event/39014a10-14e7-4cfa-993b-485f5c5485ac/metrics/summary",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "external": {
+    "class": "ExternalApi",
+    "methods": [
+      {
+        "name": "demi_release_post_538yja",
+        "method": "GET",
+        "path": "https://release.notip.com.cn/demi-release/post/538yja",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "lindazhou_curator",
+        "method": "GET",
+        "path": "https://release.notip.com.cn/lindazhouCurator",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "https://release.notip.com.cn/",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v1_setup_intents_confirm",
+        "method": "POST",
+        "path": "https://api.stripe.com/v1/setup_intents/{{Stripeid}}/confirm",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "Stripeid",
+            "var": "Stripeid"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_1129",
+        "method": "GET",
+        "path": "https://demi0214.notip.com.cn/1129",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_1129_2",
+        "method": "GET",
+        "path": "https://release.notip.com.cn/1129",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "links": {
+    "class": "LinksApi",
+    "methods": [
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/user-link",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "internal",
+        "method": "POST",
+        "path": "/short-link/internal",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "merchants": {
+    "class": "MerchantsApi",
+    "methods": [
+      {
+        "name": "by_merchant_id",
+        "method": "DELETE",
+        "path": "/merchant/{{merchantId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "merchantId",
+            "var": "merchantId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/merchant",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/merchant/list",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "shipping_options",
+        "method": "GET",
+        "path": "/merchants/{{catalog_id}}/shipping-options",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "catalog_id",
+            "var": "catalog_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_7c2db5d2_92f0_4090_a1ef_55a811b12a6f_subscription_plan_693b2288_c958_4312_92a9_910b948bb6c3",
+        "method": "PUT",
+        "path": "/merchants/7c2db5d2-92f0-4090-a1ef-55a811b12a6f/subscription-plan/693b2288-c958-4312-92a9-910b948bb6c3",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_822a3e59_fdf3_4d9b_be57_f8f0b3af1023_sync_shopify_shipping",
+        "method": "POST",
+        "path": "/merchant/822a3e59-fdf3-4d9b-be57-f8f0b3af1023/sync-shopify-shipping",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "misc": {
+    "class": "MiscApi",
+    "methods": [
+      {
+        "name": "earnings_merchant_orders",
+        "method": "GET",
+        "path": "/earnings-merchant-orders",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "earnings_promoter_orders",
+        "method": "GET",
+        "path": "/earnings-promoter-orders",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "invitation_profile",
+        "method": "POST",
+        "path": "https://release.pear.us/invitation/profile",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "isFirst=1&signup=promoter",
+        "params": {
+          "isFirst": "1",
+          "signup": "promoter"
+        }
+      },
+      {
+        "name": "linda_post_lindapromoter",
+        "method": "GET",
+        "path": "https://release.pear.us/linda/post/lindapromoter",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "https://mehost.cn/",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "submit",
+        "method": "POST",
+        "path": "/user-contact-form/submit",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "user_business_operation",
+        "method": "PUT",
+        "path": "/user/business-operation",
+        "calls": 4,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "orders": {
+    "class": "OrdersApi",
+    "methods": [
+      {
+        "name": "buy_now",
+        "method": "POST",
+        "path": "/order/buy-now",
+        "calls": 75,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "checkout",
+        "method": "POST",
+        "path": "/order/checkout",
+        "calls": 7,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "checkout_2",
+        "method": "GET",
+        "path": "/order/checkout",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "checkout_express",
+        "method": "POST",
+        "path": "/order/checkout/express",
+        "calls": 21,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "consumer",
+        "method": "GET",
+        "path": "/order/consumer",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "consumer_detail_by_order_number",
+        "method": "GET",
+        "path": "/order/consumer/detail/{{orderNumber}}",
+        "calls": 18,
+        "path_params": [
+          {
+            "arg": "orderNumber",
+            "var": "orderNumber"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/order",
+        "calls": 77,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": true,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "fulfillment_merchant_by_order_number",
+        "method": "POST",
+        "path": "/orders/fulfillment/merchant/{{merchantId}}/{{orderNumber}}",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "merchantId",
+            "var": "merchantId"
+          },
+          {
+            "arg": "orderNumber",
+            "var": "orderNumber"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant",
+        "method": "GET",
+        "path": "/order/merchant",
+        "calls": 19,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant_bed7b1d8_16d8_4d27_ab1a_dc4a8f19e0c6_detail_v2",
+        "method": "GET",
+        "path": "/order/merchant/bed7b1d8-16d8-4d27-ab1a-dc4a8f19e0c6/detail/{{orderNumber}}/v2",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "orderNumber",
+            "var": "orderNumber"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant_detail_by_order_number",
+        "method": "GET",
+        "path": "/order/merchant/{{merchantId}}/detail/{{orderNumber}}",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "merchantId",
+            "var": "merchantId"
+          },
+          {
+            "arg": "orderNumber",
+            "var": "orderNumber"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "merchant_detail_v2",
+        "method": "GET",
+        "path": "/order/merchant/{{merchantId}}/detail/{{orderNumber}}/v2",
+        "calls": 65,
+        "path_params": [
+          {
+            "arg": "merchantId",
+            "var": "merchantId"
+          },
+          {
+            "arg": "orderNumber",
+            "var": "orderNumber"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "points_and_promotions",
+        "method": "POST",
+        "path": "/order/points-and-promotions",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter",
+        "method": "GET",
+        "path": "/order/promoter",
+        "calls": 51,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter_detail_v2",
+        "method": "GET",
+        "path": "/order/promoter/detail/{{merchantOrderId}}/v2",
+        "calls": 57,
+        "path_params": [
+          {
+            "arg": "merchantOrderId",
+            "var": "merchantOrderId"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "refunds",
+        "method": "POST",
+        "path": "/merchant-orders/{{refund_id}}/refunds",
+        "calls": 5,
+        "path_params": [
+          {
+            "arg": "refund_id",
+            "var": "refund_id"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "ticket_status",
+        "method": "POST",
+        "path": "/order/ticket/status",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "update_promotions",
+        "method": "POST",
+        "path": "/order/update-promotions",
+        "calls": 13,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "verification",
+        "method": "POST",
+        "path": "/order/verification",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "verification_search",
+        "method": "GET",
+        "path": "/order/verification/search",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "search=linda&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk&pageSize=30&pageNumber=1",
+        "params": {
+          "search": "linda",
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk",
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "verification_ticket_statistics",
+        "method": "GET",
+        "path": "/order/verification/ticket/statistics",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk",
+        "params": {
+          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk"
+        }
+      }
+    ]
+  },
+  "payments": {
+    "class": "PaymentsApi",
+    "methods": [
+      {
+        "name": "method",
+        "method": "POST",
+        "path": "/payment/method",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "method_2",
+        "method": "DELETE",
+        "path": "/payment/method",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "methods",
+        "method": "GET",
+        "path": "/payment/methods",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "stripe_setup_intent",
+        "method": "POST",
+        "path": "/payment/stripe/setup-intent",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "posts": {
+    "class": "PostsApi",
+    "methods": [
+      {
+        "name": "consumer_detail",
+        "method": "GET",
+        "path": "/posts/consumer/detail",
+        "calls": 26,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "urlAlias=zr20it&vanityUrl=mcc",
+        "params": {
+          "urlAlias": "zr20it",
+          "vanityUrl": "mcc"
+        }
+      },
+      {
+        "name": "curator",
+        "method": "POST",
+        "path": "/posts/curator",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_1a6bf2bd_f228_40f2_ba24_e0128b88bccd",
+        "method": "PUT",
+        "path": "/posts/curator/1a6bf2bd-f228-40f2-ba24-e0128b88bccd",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_24232e2c_b3af_4517_be24_4dfddb1ca79f",
+        "method": "PUT",
+        "path": "/posts/curator/24232e2c-b3af-4517-be24-4dfddb1ca79f",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_397367e3_1140_4a14_9ba1_26f92bd7f24a",
+        "method": "PUT",
+        "path": "/posts/curator/397367e3-1140-4a14-9ba1-26f92bd7f24a",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_504d5e2a_d2e9_4782_9333_536a696b9669",
+        "method": "PUT",
+        "path": "/posts/curator/504d5e2a-d2e9-4782-9333-536a696b9669",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_7dd8e66d_7d42_4715_ab73_3cf8d7c03632",
+        "method": "PUT",
+        "path": "/posts/curator/7dd8e66d-7d42-4715-ab73-3cf8d7c03632",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_907f5bec_0233_4778_8f46_7820e8b2eb7c",
+        "method": "PUT",
+        "path": "/posts/curator/907f5bec-0233-4778-8f46-7820e8b2eb7c",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_9fd62b45_6f4a_4bca_ac59_778e44c2813b",
+        "method": "PUT",
+        "path": "/posts/curator/9fd62b45-6f4a-4bca-ac59-778e44c2813b",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_by_post_id",
+        "method": "PUT",
+        "path": "/posts/curator/{{postId}}",
+        "calls": 6,
+        "path_params": [
+          {
+            "arg": "postId",
+            "var": "postId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_by_post_id_2",
+        "method": "DELETE",
+        "path": "/posts/curator/{{post_id}}",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "post_id",
+            "var": "post_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_de6f0abd_c8f8_41e5_b2d1_1eb2ba05f839",
+        "method": "PUT",
+        "path": "/posts/curator/de6f0abd-c8f8-41e5-b2d1-1eb2ba05f839",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_ed73ae71_ad44_4391_8b69_02e5a21982e9",
+        "method": "PUT",
+        "path": "/posts/curator/ed73ae71-ad44-4391-8b69-02e5a21982e9",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_edit_ac273ab5_3f9a_4f89_8e07_72d19c463b18",
+        "method": "GET",
+        "path": "/posts/curator/edit/ac273ab5-3f9a-4f89-8e07-72d19c463b18",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_event_0fe6623e_a3ba_40fb_815d_3d6f444775c3_posts",
+        "method": "GET",
+        "path": "/posts/curator/event/0fe6623e-a3ba-40fb-815d-3d6f444775c3/posts",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_event_posts",
+        "method": "GET",
+        "path": "/posts/curator/event/{{event_id}}/posts",
+        "calls": 12,
+        "path_params": [
+          {
+            "arg": "event_id",
+            "var": "event_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_fe26aba1_17b9_4e04_872e_3759ce5fc842",
+        "method": "PUT",
+        "path": "/posts/curator/fe26aba1-17b9-4e04-872e-3759ce5fc842",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_ff9274b0_b4b1_442c_b9ea_afcaf67912ae",
+        "method": "PUT",
+        "path": "/posts/curator/ff9274b0-b4b1-442c-b9ea-afcaf67912ae",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_from_event",
+        "method": "POST",
+        "path": "/posts/curator/from-event",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_resell_by_resell_post_id",
+        "method": "PUT",
+        "path": "/posts/curator/resell/{{resell_post_id}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "resell_post_id",
+            "var": "resell_post_id"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_shop",
+        "method": "GET",
+        "path": "/posts/curator/shop",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageSize=30&pageNumber=1",
+        "params": {
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "promoter_detail",
+        "method": "GET",
+        "path": "/posts/promoter/detail",
+        "calls": 3,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "vanityUrl=resident&urlAlias=api-test-t1742",
+        "params": {
+          "vanityUrl": "resident",
+          "urlAlias": "api-test-t1742"
+        }
+      },
+      {
+        "name": "promoter_resale",
+        "method": "POST",
+        "path": "/posts/promoter/resale",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter_simplify_list",
+        "method": "GET",
+        "path": "/posts/promoter/simplify/list",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "sortBy=publishedAt&pageSize=30&pageNumber=1",
+        "params": {
+          "sortBy": "publishedAt",
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "simplify_shop_linda",
+        "method": "GET",
+        "path": "/post/simplify/shop/linda",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "pageSize=30&pageNumber=1",
+        "params": {
+          "pageSize": "30",
+          "pageNumber": "1"
+        }
+      },
+      {
+        "name": "tiubyg",
+        "method": "GET",
+        "path": "https://mehost.cn/post/tiubyg",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "products": {
+    "class": "ProductsApi",
+    "methods": [
+      {
+        "name": "batch",
+        "method": "POST",
+        "path": "/v2/products/batch",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_newticketid",
+        "method": "DELETE",
+        "path": "/v2/products/{{newticketid}}",
+        "calls": 3,
+        "path_params": [
+          {
+            "arg": "newticketid",
+            "var": "newticketid"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_product_id",
+        "method": "DELETE",
+        "path": "/merchant/product/{{productId}}",
+        "calls": 2,
+        "path_params": [
+          {
+            "arg": "productId",
+            "var": "productId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_product_id_2",
+        "method": "GET",
+        "path": "/merchant/product/{{productId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "productId",
+            "var": "productId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "by_product_id_general_admission_02",
+        "method": "PUT",
+        "path": "/v2/products/{{productId_General_Admission_02}}",
+        "calls": 5,
+        "path_params": [
+          {
+            "arg": "productId_General_Admission_02",
+            "var": "productId_General_Admission_02"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "calculate_ticket_batch",
+        "method": "POST",
+        "path": "/merchant/product/calculate/ticket/batch",
+        "calls": 4,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/v2/products",
+        "calls": 8,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "exist_product",
+        "method": "GET",
+        "path": "/merchant/product/exist-product",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "f0a91cf5_c585_45d9_8b08_f59a6941e6d8",
+        "method": "PUT",
+        "path": "/v2/products/f0a91cf5-c585-45d9-8b08-f59a6941e6d8",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "list",
+        "method": "GET",
+        "path": "/merchant/product/list",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_2efee169_7e73_4d20_8d56_d99d7f4ab699",
+        "method": "PUT",
+        "path": "/v2/products/2efee169-7e73-4d20-8d56-d99d7f4ab699",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_50cfb015_c43d_463e_8357_4556d592bf26",
+        "method": "PUT",
+        "path": "/v2/products/50cfb015-c43d-463e-8357-4556d592bf26",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "v_5589beae_d2ca_40fc_b361_03122952beb2",
+        "method": "PUT",
+        "path": "/v2/products/5589beae-d2ca-40fc-b361-03122952beb2",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "promoters": {
+    "class": "PromotersApi",
+    "methods": [
+      {
+        "name": "affiliate_link_notification_batch",
+        "method": "POST",
+        "path": "/promoter-association/affiliate-link/notification/batch",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "affiliate_promoters",
+        "method": "GET",
+        "path": "/promoter-association/affiliate-promoters",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "keyword=",
+        "params": {
+          "keyword": ""
+        }
+      },
+      {
+        "name": "create",
+        "method": "POST",
+        "path": "/promoter-subscription",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "curator_affiliate_link",
+        "method": "POST",
+        "path": "/promoter-association/curator/affiliate-link",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "invitation_link",
+        "method": "GET",
+        "path": "/promoter-invitation-link/invitation-link",
+        "calls": 2,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "invitation_link_2",
+        "method": "POST",
+        "path": "/promoter-invitation-link/invitation-link",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "invitation_link_by_new_invitation_link",
+        "method": "DELETE",
+        "path": "/promoter-invitation-link/invitation-link/{{new_invitation_link}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "new_invitation_link",
+            "var": "new_invitation_link"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "product_image_url",
+        "method": "POST",
+        "path": "/promoter/product/image-url",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "promoter",
+        "method": "PATCH",
+        "path": "/promote-invitation/promoter",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "storefront": {
+    "class": "StorefrontApi",
+    "methods": [
+      {
+        "name": "module",
+        "method": "POST",
+        "path": "/store-front/module",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "module_by_dynamic_music_link_id",
+        "method": "DELETE",
+        "path": "/store-front/module/{{dynamicMusicLinkId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "dynamicMusicLinkId",
+            "var": "dynamicMusicLinkId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "module_item_by_dynamic_music_link_id",
+        "method": "PUT",
+        "path": "/store-front/module-item/{{dynamicMusicLinkId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "dynamicMusicLinkId",
+            "var": "dynamicMusicLinkId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  },
+  "users": {
+    "class": "UsersApi",
+    "methods": [
+      {
+        "name": "me_earning_share_configs",
+        "method": "POST",
+        "path": "/users/me/earning-share-configs",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "me_earning_share_configs_by_config_id",
+        "method": "DELETE",
+        "path": "/users/me/earning-share-configs/{{config_id}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "config_id",
+            "var": "config_id"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "me_recipient_earning_shares",
+        "method": "GET",
+        "path": "/users/me/recipient-earning-shares",
+        "calls": 1,
+        "path_params": [],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "self_contracts",
+        "method": "GET",
+        "path": "/users/self/contracts/",
+        "calls": 5,
+        "path_params": [],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "self_contracts_by_contract_id",
+        "method": "PUT",
+        "path": "/users/self/contracts/{{contractId}}",
+        "calls": 6,
+        "path_params": [
+          {
+            "arg": "contractId",
+            "var": "contractId"
+          }
+        ],
+        "app_headers": false,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "self_contracts_by_contract_id_2",
+        "method": "GET",
+        "path": "/users/self/contracts/{{contractId}}",
+        "calls": 5,
+        "path_params": [
+          {
+            "arg": "contractId",
+            "var": "contractId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      },
+      {
+        "name": "self_contracts_contract_orders_by_contract_order_id",
+        "method": "PUT",
+        "path": "/users/self/contracts/{{contractId}}/contract-orders/{{contractOrderId}}",
+        "calls": 1,
+        "path_params": [
+          {
+            "arg": "contractId",
+            "var": "contractId"
+          },
+          {
+            "arg": "contractOrderId",
+            "var": "contractOrderId"
+          }
+        ],
+        "app_headers": true,
+        "skip_notifications": false,
+        "query": "",
+        "params": {}
+      }
+    ]
+  }
+}
