@@ -1,0 +1,15 @@
+# Per-case parameters for test_linda_t0000_precondition_obtain_all_accounts_token
+# Inherits env/Release.yaml (case-first merge).
+#   - partner password `password` is shared -> global env/Release.yaml
+#   - admin password `adminpassword` is shared -> global env/Release.yaml
+#   - merchantId overrides the empty global placeholder with this case's real value
+variables:
+  admin_email: linda.zhou.ext@1m.app
+  p00_email: linda.zhou.ext+00@1m.app
+  p01_email: linda.zhou.ext+01@1m.app
+  p05_email: linda.zhou.ext+05@1m.app
+  p06_email: linda.zhou.ext+06@1m.app
+  p10_email: linda.zhou.ext+10@1m.app
+  xuan_email: xuan.ext+22@1m.app
+  xuan_password: fB5A002Dc16AbF5Cd096dA6Aa66F3050
+  merchantId: 822a3e59-fdf3-4d9b-be57-f8f0b3af1023

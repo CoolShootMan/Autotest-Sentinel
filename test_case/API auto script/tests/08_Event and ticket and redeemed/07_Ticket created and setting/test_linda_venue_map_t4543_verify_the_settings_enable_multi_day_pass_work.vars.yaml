@@ -1,0 +1,5 @@
+# Per-case variables for T4543 (Venue map / multi-day pass).
+# Overrides env/Global.yaml + env/Release.yaml on conflict (case-first).
+variables:
+  event_title: "event-for-api-auto-venue-map"
+  target_ticket_title: "General Admission 01"
