@@ -517,6 +517,35 @@ import random
 import string
 from core.assertions import expect
 
+# Module-level constants: 长字符串 / HTML 内容从 JSON body 抽离，避免多层 \" 转义
+_EMAIL_HTML_CONTENT = (
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<b><strong class="katana__textBold" style="color: rgb(0, 0, 0); font-size: 16px; line-height: 28px; white-space: pre-wrap;">'
+    'Subject: Don\u2019t Miss Out! Live Concert 2026 \u2013 Early Bird Tickets Now On Sale'
+    '</strong></b></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Dear Music Lover,</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">We\u2019re thrilled to announce that global superstar [Artist Name] '
+    'is hitting the stage in your city this summer! The \u201cStellar Nights Tour\u201d will light up '
+    '[Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites\u2014'
+    'plus exclusive stage visuals you won\u2019t want to miss.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Secure your spot before prices rise: early bird tickets are 20% off '
+    'until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets '
+    'and backstage access\u2014perfect for die-hard fans.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Hurry, tickets sell out fast for [Artist Name]\u2019s tours! '
+    'For group bookings or questions, email </span>'
+    '<a href="mailto:support@concertpro.com" class="katana__link" dir="ltr">'
+    '<span style="white-space: pre-wrap;">support@concertpro.com</span></a>'
+    '<span style="white-space: pre-wrap;"> or call +1-800-567-8901.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Don\u2019t let this unforgettable night slip away\u2014see you at the show!</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
+)
+
 def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(ctx):
     """Apifox case #7631803: Linda_T4674_Verify_partner_can_edit_draft_campaign_from_campaign_list"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
@@ -525,7 +554,14 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     vars['randomContent'] = _gen_random_sms_content()
     # === Steps ===
     # step 1: 1d5d324e-c81f-419e-915a-3989ff0f93b3
-    _resp1 = ctx.api.campaigns.create(body='{\r\n    "channel": "SMS",\r\n    "name": "automation by linda SMS",\r\n    "content": "Subject: Your Order #7892 Has Shipped! "\r\n}', token='linda01_token')
+    _resp1 = ctx.api.campaigns.create(
+        body={
+            "channel": "SMS",
+            "name": "automation by linda SMS",
+            "content": "Subject: Your Order #7892 Has Shipped! ",
+        },
+        token='linda01_token',
+    )
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # assertion 1.assertion: responseJson equal success
@@ -533,11 +569,32 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp1, '$.data.id')
     # step 2: 35f6bb01-93b5-455e-9f2c-20f79dfec233
-    _resp2 = ctx.api.campaigns.by_campaign_id(body='{\r\n    "name": "{{randomName}}",\r\n    "status": "DRAFT",\r\n    "updatedAt": "2025-12-11T09:05:35.745Z",\r\n    "channel": "SMS",\r\n    "totalSelectedCount": 1,\r\n    "subject": null,\r\n    "content": "{{randomContent}}",\r\n    "selectAll": false,\r\n    "id": "{{campaignId}}"\r\n}', token='linda01_token')
+    _resp2 = ctx.api.campaigns.by_campaign_id(
+        body={
+            "name": "{{randomName}}",
+            "status": "DRAFT",
+            "updatedAt": "2025-12-11T09:05:35.745Z",
+            "channel": "SMS",
+            "totalSelectedCount": 1,
+            "subject": None,
+            "content": "{{randomContent}}",
+            "selectAll": False,
+            "id": "{{campaignId}}",
+        },
+        token='linda01_token',
+    )
     vars['smsCampaignGenerateVerifyResult'] = 'verifyPass ? "success" : "failed"'
     vars['smsCampaignGenerateVerifyLogs'] = 'JSON.stringify(verifyLogs'
     # step 3: 947cf34c-0ca4-469a-9321-fbd634fa45b6
-    _resp3 = ctx.api.campaigns.create(body='{\r\n    "channel": "EMAIL",\r\n    "content": "<p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><b><strong class=\\"katana__textBold\\" style=\\"color: rgb(0, 0, 0); font-size: 16px; line-height: 28px; white-space: pre-wrap;\\">Subject: Don’t Miss Out! Live Concert 2026 – Early Bird Tickets Now On Sale</strong></b></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Dear Music Lover,</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">We’re thrilled to announce that global superstar [Artist Name] is hitting the stage in your city this summer! The “Stellar Nights Tour” will light up [Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites—plus exclusive stage visuals you won’t want to miss.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Secure your spot before prices rise: early bird tickets are 20% off until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets and backstage access—perfect for die-hard fans.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Hurry, tickets sell out fast for [Artist Name]’s tours! For group bookings or questions, email </span><a href=\\"mailto:support@concertpro.com\\" class=\\"katana__link\\" dir=\\"ltr\\"><span style=\\"white-space: pre-wrap;\\">support@concertpro.com</span></a><span style=\\"white-space: pre-wrap;\\"> or call +1-800-567-8901.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Don’t let this unforgettable night slip away—see you at the show!</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>",\r\n    "name": "automation by linda Email",\r\n    "subject": "Don’t Miss Out! "\r\n}', token='linda01_token')
+    _resp3 = ctx.api.campaigns.create(
+            body={
+                "channel": "EMAIL",
+                "name": "automation by linda Email",
+                "subject": "Don’t Miss Out! ",
+                "content": _EMAIL_HTML_CONTENT,
+            },
+            token='linda01_token',
+        )
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
@@ -547,6 +604,20 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     # assertion 3.assertion: responseJson equal 0
     expect(_resp3).json('$.data.totalSelectedCount').equals('0')
     # step 4: 51805720-b267-4085-827f-4e8463e6cbf2
-    _resp4 = ctx.api.campaigns.by_campaign_id(body='{\r\n    "name": "{{randomName}}",\r\n    "status": "DRAFT",\r\n    "updatedAt": "2025-12-11T09:05:35.452Z",\r\n    "channel": "EMAIL",\r\n    "totalSelectedCount": 1,\r\n    "subject": "Don’t Miss Out! ",\r\n    "content": "{{randomContent}}",\r\n    "selectAll": false,\r\n    "id": "{{campaignEmailId}}"\r\n}\r\n', token='linda01_token', path_vars={'campaignId': '{{campaignEmailId}}'})
+    _resp4 = ctx.api.campaigns.by_campaign_id(
+            body={
+                "name": "{{randomName}}",
+                "status": "DRAFT",
+                "updatedAt": "2025-12-11T09:05:35.452Z",
+                "channel": "EMAIL",
+                "totalSelectedCount": 1,
+                "subject": "Don’t Miss Out! ",
+                "content": "{{randomContent}}",
+                "selectAll": False,
+                "id": "{{campaignEmailId}}",
+            },
+            token='linda01_token',
+            path_vars={'campaignId': '{{campaignEmailId}}'},
+        )
     vars['emailCampaignGenerateVerifyResult'] = 'verifyPass ? "success" : "failed"'
     vars['emailCampaignGenerateVerifyLogs'] = 'JSON.stringify(verifyLogs'

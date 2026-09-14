@@ -409,7 +409,10 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    }, app_headers=True)
     try:
         _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
@@ -420,15 +423,68 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # step 3: buy now - auto applied coupon
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "5221b77a-8291-4cdc-882e-738988d13d53",\n            "price": 80,\n            "postId": "ac77e9f0-c2b6-4f86-a56b-3fe23cbb574b",\n            "selected": true,\n            "affiliateCode": "70zd9u",\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "462e4cc6-23f9-4791-9f45-97baabd52744",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1753864240949.326618326180969222",\n        "externalId": "ca3a717f-fd4b-470b-a839-62bf62714bce",\n        "eventSourceUrl": "https://release.pear.us/auto-promoter/post/e02ic6?aff=70zd9u"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "5221b77a-8291-4cdc-882e-738988d13d53",\n            "postId": "ac77e9f0-c2b6-4f86-a56b-3fe23cbb574b",\n            "price": 80,\n            "affiliateCode": "70zd9u",\n            "customFields": []\n        }\n    ]\n}', app_headers=True, token='consumer_access_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "5221b77a-8291-4cdc-882e-738988d13d53",
+                "price": 80,
+                "postId": "ac77e9f0-c2b6-4f86-a56b-3fe23cbb574b",
+                "selected": True,
+                "affiliateCode": "70zd9u",
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "462e4cc6-23f9-4791-9f45-97baabd52744",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1753864240949.326618326180969222",
+            "externalId": "ca3a717f-fd4b-470b-a839-62bf62714bce",
+            "eventSourceUrl": "https://release.pear.us/auto-promoter/post/e02ic6?aff=70zd9u",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "5221b77a-8291-4cdc-882e-738988d13d53",
+                "postId": "ac77e9f0-c2b6-4f86-a56b-3fe23cbb574b",
+                "price": 80,
+                "affiliateCode": "70zd9u",
+                "customFields": [],
+            },
+        ],
+    }, app_headers=True, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}', app_headers=True, token='consumer_access_token')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    }, app_headers=True, token='consumer_access_token')
     # step 5: Login-M1
-    _resp5 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}', app_headers=True)
+    _resp5 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    }, app_headers=True)
     try:
         _j = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "token"])
@@ -437,7 +493,10 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     # step 6: get M1 order detail v2
     _resp6 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='M1_access_token', path_vars={'merchantId': '{{M1_merchantID6}}'})
     # step 7: Login - P1
-    _resp7 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}', app_headers=True)
+    _resp7 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    }, app_headers=True)
     try:
         _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
         vars['P1_access_token'] = _get_path(_j, ["data", "token"])
@@ -449,7 +508,10 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     # step 9: get P1 order detail v2
     _resp9 = ctx.api.orders.promoter_detail_v2(app_headers=True, token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 10: Login - merchant
-    _resp10 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}', app_headers=True)
+    _resp10 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    }, app_headers=True)
     try:
         _j = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
@@ -461,7 +523,10 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     # step 12: get merhcant order detail v2
     _resp12 = ctx.api.orders.promoter_detail_v2(app_headers=True, token='merchant_access_token')
     # step 13: Login - promoter
-    _resp13 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}', app_headers=True)
+    _resp13 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    }, app_headers=True)
     try:
         _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
         vars['promoter_access_token'] = _get_path(_j, ["data", "token"])
@@ -477,7 +542,10 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     # step 15: get promoter order detail v2
     _resp15 = ctx.api.orders.promoter_detail_v2(app_headers=True, token='promoter_access_token', path_vars={'merchantOrderId': '{{promoterOrderId}}'})
     # step 16: Login -affiliate
-    _resp16 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{affiliate_promoter}}"\n}', app_headers=True)
+    _resp16 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{affiliate_promoter}}",
+    }, app_headers=True)
     try:
         _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
         vars['affiliate_access_token'] = _get_path(_j, ["data", "token"])

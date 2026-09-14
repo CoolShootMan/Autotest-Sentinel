@@ -39,7 +39,15 @@ def test_linda_t1347_verify_the_catalog_can_be_create_and_delete_success(ctx):
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # step 2: d9305e7c-e723-439d-b435-99f084ee810b
-    _resp2 = ctx.api.merchants.create(body='{\r\n    "commissionRate": "{{commissionRate}}",\r\n    "storeName": "{{storeName}}",\r\n    "isVisible": "{{isVisible}}"\r\n}\r\n\r\n\r\n', token='merchant_token')
+    # === pre-script（由 Apifox customScript 翻译）：设置创建 merchant 所需的参数 ===
+    vars['commissionRate'] = "25"
+    vars['storeName'] = "API test by linda T1347"
+    vars['isVisible'] = "true"
+    _resp2 = ctx.api.merchants.create(body={
+        "commissionRate": "{{commissionRate}}",
+        "storeName": "{{storeName}}",
+        "isVisible": "{{isVisible}}",
+    }, token='merchant_token')
     # assertion 2.assertion: responseJson equal {{commissionRate}}
     expect(_resp2).json('$.data.commissionRate').equals(ctx.render_text('{{commissionRate}}'))
     # assertion 2.assertion: responseJson equal {{storeName}}

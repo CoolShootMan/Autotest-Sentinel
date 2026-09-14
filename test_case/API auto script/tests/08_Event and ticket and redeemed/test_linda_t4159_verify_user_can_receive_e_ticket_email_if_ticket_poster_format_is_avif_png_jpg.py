@@ -42,7 +42,9 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: guest login
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "{{__uuid_0}}"\n}', app_headers=False)
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_0}}",
+    }, app_headers=False)
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
     # step 2: post detail
@@ -54,13 +56,50 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
     # extractor: price = $.data.relatedProducts[3].priceDisplay
     ctx.extract('price', _resp2, '$.data.relatedProducts[3].priceDisplay')
     # step 3: buy now 
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n        "quantity": 6,\n        "promoterProductVariantId": "{{promoterProductVariantId}}",\n        "price": "{{price}}" ,\n        "postId": "{{postid}}",\n        "selected": true\n    }\n    ],\n    "currentUpdateCartItems": [\n        {\n        "quantity": 0,\n        "id": "{{promoterProductVariantId}}",\n        "postId": "{{postid}}",\n        "price": "{{price}}" \n    }\n    ]\n}', token='access_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 6,
+                "promoterProductVariantId": "{{promoterProductVariantId}}",
+                "price": "{{price}}",
+                "postId": "{{postid}}",
+                "selected": True,
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 0,
+                "id": "{{promoterProductVariantId}}",
+                "postId": "{{postid}}",
+                "price": "{{price}}",
+            },
+        ],
+    }, token='access_token')
     # assertion 3.assertion: responseJson equal 3147.78
     expect(_resp3).json('$.data.totalToPay').equals('3147.78')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp3, '$.data.orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n  "inviterCampaign": {},\n  "id": "{{order_id}}",\n  "paymentInfo": {\n    "paymentMethodId": "{{pay_method_id}}"\n  },\n  "contact": {\n    "phoneNumber": "+13022814650",\n    "email": "linda.zhou.ext+12@1m.app"\n  },\n  "fbAdParams": {\n    "eventID": "30561013-f59f-4f13-b124-1f5ed78efa43",\n    "pixelId": [\n      "268933192948110"\n    ],\n    "fbBrowserId": "fb.1.1764923328139.148987369846580641",\n    "externalId": "3778787a-2c96-4c9e-bea8-580aac281757",\n    "eventSourceUrl": "https://release.pear.us/checkout"\n  }\n}', token='access_token', params={'order_id': '{{order_id}}'})
+    _resp4 = ctx.api.orders.create(body={
+        "inviterCampaign": {},
+        "id": "{{order_id}}",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "contact": {
+            "phoneNumber": "+13022814650",
+            "email": "linda.zhou.ext+12@1m.app",
+        },
+        "fbAdParams": {
+            "eventID": "30561013-f59f-4f13-b124-1f5ed78efa43",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1764923328139.148987369846580641",
+            "externalId": "3778787a-2c96-4c9e-bea8-580aac281757",
+            "eventSourceUrl": "https://release.pear.us/checkout",
+        },
+    }, token='access_token', params={'order_id': '{{order_id}}'})
     # assertion 4.code: responseJson equal 200
     print("STEP4DBG", _resp4.status_code, _resp4.text[:400], "oid=", vars.get('order_id'))
     expect(_resp4).json('$.code').equals('200')

@@ -711,7 +711,10 @@ def test_lury_t5426_verify_sales_report_in_sales_completed_page(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Login-M1
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     # extractor: M1_access_token = $.data.refreshToken
     ctx.extract('M1_access_token', _resp1, '$.data.refreshToken')
     # step 2: ae986bec-d475-46ab-a8fd-82d12e9567fc

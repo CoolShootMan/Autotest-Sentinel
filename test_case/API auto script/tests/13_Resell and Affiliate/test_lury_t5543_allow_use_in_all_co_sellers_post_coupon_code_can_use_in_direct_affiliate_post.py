@@ -196,31 +196,100 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now 
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "3f6a6723-9223-418e-953c-e861a0c9969e",\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "35811870-0f2f-43e7-955a-887fb052f2dd",\n            "price": 10,\n            "postId": "3f6a6723-9223-418e-953c-e861a0c9969e",\n            "selected": true,\n            "affiliateCode": "70zd9u",\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "74ec16cb-ed91-45a4-86f0-782c3bfe0f07",\n        "pixelId": [\n            "453453"\n        ],\n        "externalId": "9080b930-2796-4b96-8a52-64c70ff1e65c",\n        "eventSourceUrl": "https://release.pear.us/mcc/post/lury-automation-affiliate-coupon-code-testing?aff=70zd9u"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "35811870-0f2f-43e7-955a-887fb052f2dd",\n            "postId": "3f6a6723-9223-418e-953c-e861a0c9969e",\n            "price": 10,\n            "affiliateCode": "70zd9u",\n            "customFields": []\n        }\n    ],\n    "subdomainVanityUrl": ""\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "3f6a6723-9223-418e-953c-e861a0c9969e",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "35811870-0f2f-43e7-955a-887fb052f2dd",
+                "price": 10,
+                "postId": "3f6a6723-9223-418e-953c-e861a0c9969e",
+                "selected": True,
+                "affiliateCode": "70zd9u",
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "74ec16cb-ed91-45a4-86f0-782c3bfe0f07",
+            "pixelId": [
+                "453453",
+            ],
+            "externalId": "9080b930-2796-4b96-8a52-64c70ff1e65c",
+            "eventSourceUrl": "https://release.pear.us/mcc/post/lury-automation-affiliate-coupon-code-testing?aff=70zd9u",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "35811870-0f2f-43e7-955a-887fb052f2dd",
+                "postId": "3f6a6723-9223-418e-953c-e861a0c9969e",
+                "price": 10,
+                "affiliateCode": "70zd9u",
+                "customFields": [],
+            },
+        ],
+        "subdomainVanityUrl": "",
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: apply promotion
-    _resp4 = ctx.api.orders.update_promotions(body='{\n  "orderId": "{{orderId}}",\n  "shippingAddress": {\n    "line1": "",\n    "city": "",\n    "zipcode": "",\n    "state": ""\n  },\n  "applicableCode": "affcode"\n}')
+    _resp4 = ctx.api.orders.update_promotions(body={
+        "orderId": "{{orderId}}",
+        "shippingAddress": {
+            "line1": "",
+            "city": "",
+            "zipcode": "",
+            "state": "",
+        },
+        "applicableCode": "affcode",
+    })
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp5 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 6: Login-M1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
     # step 8: Login -affiliate
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{affiliate_promoter}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{affiliate_promoter}}",
+    })
     ctx.extract('affiliate_access_token', _resp8, '$.data.token')
     # step 9: get affiliate promoter orders
     _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})

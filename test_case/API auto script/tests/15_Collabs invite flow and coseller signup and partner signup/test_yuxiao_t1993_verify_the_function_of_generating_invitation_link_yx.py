@@ -130,7 +130,13 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 972a59a0-a5ce-41ed-8831-40870e5a99b8
-    _resp1 = ctx.api.promoters.invitation_link_2(body='{\r\n  "description": "automation test by linda",\r\n  "oneTimeUse": false,\r\n  "expiredAt": null,\r\n  "isExpire": false,\r\n  "useShortURL": true\r\n}', token='linda05_token')
+    _resp1 = ctx.api.promoters.invitation_link_2(body={
+        "description": "automation test by linda",
+        "oneTimeUse": False,
+        "expiredAt": None,
+        "isExpire": False,
+        "useShortURL": True,
+    }, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp1.status_code in (200, 201), f"状态码期望200/201，实际={_resp1.status_code}"

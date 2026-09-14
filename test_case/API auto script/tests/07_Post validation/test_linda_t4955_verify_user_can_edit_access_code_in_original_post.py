@@ -74,7 +74,224 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     # === Steps ===
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
     # step 1: d916bc6e-0d14-4a34-b4bb-515119343dbd
-    _resp1 = ctx.api.posts.curator_by_post_id(body='{\r\n    "id": "e6aa0dd3-3d87-4d64-bb8c-78be838908f7",\r\n    "announcements": [],\r\n    "createFromEventId": null,\r\n    "title": "Auto test T4955 by linda",\r\n    "subTitle": "Auto test T4955 by linda subtitle",\r\n    "links": [],\r\n    "allowPromotersResell": false,\r\n    "financeModeForPromoters": "FINANCE_MODE_COMMISSION",\r\n    "financeMode": "FINANCE_MODE_COMMISSION",\r\n    "status": "ACTIVE",\r\n    "allowPromotersHideProducts": true,\r\n    "allowPromotersCustomizeMedia": true,\r\n    "allowPromotersCreateCoupon": true,\r\n    "promotions": [],\r\n    "isPurchaseQuantityLimited": false,\r\n    "purchaseQuantityLimit": 1,\r\n    "isAccessRestricted": false,\r\n    "allowPromotersAccess": false,\r\n    "hideInStore": false,\r\n    "recommendationSectionTitle": "",\r\n    "coverImages": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "width": 1500,\r\n            "height": 1443,\r\n            "mediaSrc": null,\r\n            "position": 1,\r\n            "mediaType": "IMAGE",\r\n            "mediaDuration": 0\r\n        }\r\n    ],\r\n    "checkoutInPost": true,\r\n    "allowAffiliateSharingOnly": false,\r\n    "abTestingSettings": [],\r\n    "enableAbTesting": false,\r\n    "isOrderConfirmationNoteEnabled": false,\r\n    "hideCouponBox": false,\r\n    "allowCustomizeDisplayPrices": true,\r\n    "customizeDisplayPrices": {\r\n        "price": "$23.33",\r\n        "priceColor": "#FFFFFF",\r\n        "titleColor": "#FFFFFF",\r\n        "discountPercent": "",\r\n        "discountPercentColor": "#D32A08"\r\n    },\r\n    "canSetPrice": false,\r\n    "downlineNoteBodyHtml": null,\r\n    "downlineNoteBodyJson": null,\r\n    "featuredSectionTitle": "Featured products",\r\n    "enableRedirectUrl": false,\r\n    "redirectUrl": "",\r\n    "redirectDestinationName": "",\r\n    "cardCustomizeCoverImages": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "width": 1500,\r\n            "height": 1443,\r\n            "mediaSrc": null,\r\n            "inherited": false,\r\n            "mediaType": "IMAGE",\r\n            "setThumbnail": true,\r\n            "mediaDuration": 0\r\n        }\r\n    ],\r\n    "additionalContentPosition": "aboveTickets",\r\n    "bodyHtml": "",\r\n    "currentDate": "2026-02-10T09:17:46.467Z",\r\n    "relatedProducts": [\r\n        {\r\n            "type": "PRODUCT",\r\n            "merchantProductId": "000c24b6-801d-40ab-9113-59fd6e23b75f",\r\n            "isVisible": true,\r\n            "isPurchaseQuantityLimited": false,\r\n            "isRecommendation": false,\r\n            "hasDependentProducts": false,\r\n            "dependentProductIds": [],\r\n            "isFreeShipping": false,\r\n            "isDefaultToSubscription": false,\r\n            "toReplaceMerchantProductIds": null,\r\n            "syncWithCatalogPrice": true,\r\n            "purchaseQuantityLimit": 1,\r\n            "variants": [\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "a7cd0054-e9fe-44ca-a630-bbcee6a5d8e0",\r\n                    "commissionRateForPromoters": 0\r\n                },\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "4510bba0-2f2f-4bdd-a660-08df7403cb45",\r\n                    "commissionRateForPromoters": 0\r\n                },\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "3d02e259-664e-4d43-a7b4-7b2725c8aac6",\r\n                    "commissionRateForPromoters": 0\r\n                }\r\n            ]\r\n        },\r\n        {\r\n            "type": "PRODUCT",\r\n            "merchantProductId": "4d0e57b7-0759-4b21-a4a6-5e27bd7e129b",\r\n            "isVisible": true,\r\n            "isPurchaseQuantityLimited": false,\r\n            "isRecommendation": false,\r\n            "hasDependentProducts": false,\r\n            "dependentProductIds": [],\r\n            "isFreeShipping": false,\r\n            "isDefaultToSubscription": false,\r\n            "toReplaceMerchantProductIds": null,\r\n            "syncWithCatalogPrice": true,\r\n            "purchaseQuantityLimit": 1,\r\n            "variants": [\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 0,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 0,\r\n                    "merchantProductVariantId": "2ac3b1d5-545c-4a7c-9bed-5b62a8b15cdf",\r\n                    "commissionRateForPromoters": 0\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    "accessSpecificUser": [],\r\n    "featuredSectionEnable": true,\r\n    "tab": {\r\n        "value": "Commerce",\r\n        "label": "Commerce",\r\n        "mappingControl": []\r\n    },\r\n    "timeKey": 1770715066467,\r\n    "originEnablePaymentRestriction": false,\r\n    "syncEnabled": false,\r\n    "postType": "STANDARD",\r\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"id\\":\\"05d0d278-7922-449d-b1e3-721435544ad0\\",\\"lineupItems\\":[{\\"id\\":\\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":0,\\"isHeadliner\\":true},{\\"id\\":\\"153b167b-2840-4dee-8246-7b9a8becc644\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":1,\\"isHeadliner\\":false}],\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"layout\\":\\"WITH_HEADLINER\\",\\"photoShape\\":\\"RECTANGLE\\",\\"textAlignment\\":\\"CENTER\\",\\"headliner\\":{\\"width\\":\\"100%\\"},\\"headlinerTitle\\":\\"Headliner\\",\\"otherSectionTitle\\":\\"Talent\\",\\"type\\":\\"lineup-info-banner\\",\\"version\\":2},{\\"id\\":\\"e9da9c24-ace5-4f16-b440-f7cd3154e532\\",\\"lineupItems\\":[{\\"id\\":\\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":0,\\"isHeadliner\\":true},{\\"id\\":\\"153b167b-2840-4dee-8246-7b9a8becc644\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":1,\\"isHeadliner\\":false}],\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"layout\\":\\"WITH_HEADLINER\\",\\"photoShape\\":\\"RECTANGLE\\",\\"textAlignment\\":\\"CENTER\\",\\"headliner\\":{\\"width\\":\\"100%\\"},\\"headlinerTitle\\":\\"Headliner\\",\\"otherSectionTitle\\":\\"Talent\\",\\"type\\":\\"lineup-info-banner\\",\\"version\\":2}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1},\\"containerClassName\\":\\"\\",\\"editorClassName\\":\\"\\"}",\r\n    "additionalContent": "{}",\r\n    "showAdditionalContent": false,\r\n    "media": [\r\n        {\r\n            "id": "e8e9070d-acad-4ab7-ad25-0324a9748dcb",\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "selected": true,\r\n            "type": "IMAGE",\r\n            "height": 1443,\r\n            "width": 1500,\r\n            "mediaDuration": 0,\r\n            "mediaSrc": null,\r\n            "mediaType": "IMAGE",\r\n            "inherited": true,\r\n            "position": 1,\r\n            "referenceId": null,\r\n            "source": "UPLOAD",\r\n            "setThumbnail": true\r\n        },\r\n        {\r\n            "id": "8031c5e7-1af3-465b-ae71-701593c12dd3",\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417666/uploaded_images/gapsiejdt4cxs1hkyun4.webp",\r\n            "selected": true,\r\n            "type": "IMAGE",\r\n            "height": 802,\r\n            "width": 600,\r\n            "mediaDuration": 0,\r\n            "mediaSrc": null,\r\n            "mediaType": "IMAGE",\r\n            "inherited": true,\r\n            "position": 2,\r\n            "referenceId": null,\r\n            "source": "UPLOAD",\r\n            "setThumbnail": false\r\n        }\r\n    ],\r\n    "othersCanCopy": false,\r\n    "enableDownlineNote": false,\r\n    "allowVisitorCreateAffiliateLink": false,\r\n    "expiredAt": null,\r\n    "urlAlias": "t4955bylinda",\r\n    "headline": "Auto test T4955 by linda",\r\n    "isPaymentRestrictionEnabled": true,\r\n    "paymentRestriction": {\r\n        "accessCodes": [\r\n            "123456",\r\n            "654321"\r\n        ],\r\n        "paymentVendors": [\r\n            "BANK_CARD"\r\n        ],\r\n        "reason": "reason by linda automation test",\r\n        "cardBrands": [\r\n            "cash_app_card",\r\n            "visa",\r\n            "mastercard"\r\n        ],\r\n        "howToGetAccessCode": "This product requires access code. Please make sure you have the access code from the seller."\r\n    }\r\n}', token='linda05_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    # post url:  https://release.pear.us/lindanewcurator/post/t4955bylinda
+    vars['postId'] = "e6aa0dd3-3d87-4d64-bb8c-78be838908f7"
+
+    _resp1 = ctx.api.posts.curator_by_post_id(body={
+        "id": "e6aa0dd3-3d87-4d64-bb8c-78be838908f7",
+        "announcements": [],
+        "createFromEventId": None,
+        "title": "Auto test T4955 by linda",
+        "subTitle": "Auto test T4955 by linda subtitle",
+        "links": [],
+        "allowPromotersResell": False,
+        "financeModeForPromoters": "FINANCE_MODE_COMMISSION",
+        "financeMode": "FINANCE_MODE_COMMISSION",
+        "status": "ACTIVE",
+        "allowPromotersHideProducts": True,
+        "allowPromotersCustomizeMedia": True,
+        "allowPromotersCreateCoupon": True,
+        "promotions": [],
+        "isPurchaseQuantityLimited": False,
+        "purchaseQuantityLimit": 1,
+        "isAccessRestricted": False,
+        "allowPromotersAccess": False,
+        "hideInStore": False,
+        "recommendationSectionTitle": "",
+        "coverImages": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "width": 1500,
+                "height": 1443,
+                "mediaSrc": None,
+                "position": 1,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0,
+            },
+        ],
+        "checkoutInPost": True,
+        "allowAffiliateSharingOnly": False,
+        "abTestingSettings": [],
+        "enableAbTesting": False,
+        "isOrderConfirmationNoteEnabled": False,
+        "hideCouponBox": False,
+        "allowCustomizeDisplayPrices": True,
+        "customizeDisplayPrices": {
+            "price": "$23.33",
+            "priceColor": "#FFFFFF",
+            "titleColor": "#FFFFFF",
+            "discountPercent": "",
+            "discountPercentColor": "#D32A08",
+        },
+        "canSetPrice": False,
+        "downlineNoteBodyHtml": None,
+        "downlineNoteBodyJson": None,
+        "featuredSectionTitle": "Featured products",
+        "enableRedirectUrl": False,
+        "redirectUrl": "",
+        "redirectDestinationName": "",
+        "cardCustomizeCoverImages": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "width": 1500,
+                "height": 1443,
+                "mediaSrc": None,
+                "inherited": False,
+                "mediaType": "IMAGE",
+                "setThumbnail": True,
+                "mediaDuration": 0,
+            },
+        ],
+        "additionalContentPosition": "aboveTickets",
+        "bodyHtml": "",
+        "currentDate": "2026-02-10T09:17:46.467Z",
+        "relatedProducts": [
+            {
+                "type": "PRODUCT",
+                "merchantProductId": "000c24b6-801d-40ab-9113-59fd6e23b75f",
+                "isVisible": True,
+                "isPurchaseQuantityLimited": False,
+                "isRecommendation": False,
+                "hasDependentProducts": False,
+                "dependentProductIds": [],
+                "isFreeShipping": False,
+                "isDefaultToSubscription": False,
+                "toReplaceMerchantProductIds": None,
+                "syncWithCatalogPrice": True,
+                "purchaseQuantityLimit": 1,
+                "variants": [
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "a7cd0054-e9fe-44ca-a630-bbcee6a5d8e0",
+                        "commissionRateForPromoters": 0,
+                    },
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "4510bba0-2f2f-4bdd-a660-08df7403cb45",
+                        "commissionRateForPromoters": 0,
+                    },
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "3d02e259-664e-4d43-a7b4-7b2725c8aac6",
+                        "commissionRateForPromoters": 0,
+                    },
+                ],
+            },
+            {
+                "type": "PRODUCT",
+                "merchantProductId": "4d0e57b7-0759-4b21-a4a6-5e27bd7e129b",
+                "isVisible": True,
+                "isPurchaseQuantityLimited": False,
+                "isRecommendation": False,
+                "hasDependentProducts": False,
+                "dependentProductIds": [],
+                "isFreeShipping": False,
+                "isDefaultToSubscription": False,
+                "toReplaceMerchantProductIds": None,
+                "syncWithCatalogPrice": True,
+                "purchaseQuantityLimit": 1,
+                "variants": [
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 0,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 0,
+                        "merchantProductVariantId": "2ac3b1d5-545c-4a7c-9bed-5b62a8b15cdf",
+                        "commissionRateForPromoters": 0,
+                    },
+                ],
+            },
+        ],
+        "accessSpecificUser": [],
+        "featuredSectionEnable": True,
+        "tab": {
+            "value": "Commerce",
+            "label": "Commerce",
+            "mappingControl": [],
+        },
+        "timeKey": 1770715066467,
+        "originEnablePaymentRestriction": False,
+        "syncEnabled": False,
+        "postType": "STANDARD",
+        "bodyJson": "{\"root\":{\"children\":[{\"id\":\"05d0d278-7922-449d-b1e3-721435544ad0\",\"lineupItems\":[{\"id\":\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":0,\"isHeadliner\":true},{\"id\":\"153b167b-2840-4dee-8246-7b9a8becc644\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":1,\"isHeadliner\":false}],\"width\":\"100%\",\"height\":\"\",\"layout\":\"WITH_HEADLINER\",\"photoShape\":\"RECTANGLE\",\"textAlignment\":\"CENTER\",\"headliner\":{\"width\":\"100%\"},\"headlinerTitle\":\"Headliner\",\"otherSectionTitle\":\"Talent\",\"type\":\"lineup-info-banner\",\"version\":2},{\"id\":\"e9da9c24-ace5-4f16-b440-f7cd3154e532\",\"lineupItems\":[{\"id\":\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":0,\"isHeadliner\":true},{\"id\":\"153b167b-2840-4dee-8246-7b9a8becc644\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":1,\"isHeadliner\":false}],\"width\":\"100%\",\"height\":\"\",\"layout\":\"WITH_HEADLINER\",\"photoShape\":\"RECTANGLE\",\"textAlignment\":\"CENTER\",\"headliner\":{\"width\":\"100%\"},\"headlinerTitle\":\"Headliner\",\"otherSectionTitle\":\"Talent\",\"type\":\"lineup-info-banner\",\"version\":2}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1},\"containerClassName\":\"\",\"editorClassName\":\"\"}",
+        "additionalContent": "{}",
+        "showAdditionalContent": False,
+        "media": [
+            {
+                "id": "e8e9070d-acad-4ab7-ad25-0324a9748dcb",
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "selected": True,
+                "type": "IMAGE",
+                "height": 1443,
+                "width": 1500,
+                "mediaDuration": 0,
+                "mediaSrc": None,
+                "mediaType": "IMAGE",
+                "inherited": True,
+                "position": 1,
+                "referenceId": None,
+                "source": "UPLOAD",
+                "setThumbnail": True,
+            },
+            {
+                "id": "8031c5e7-1af3-465b-ae71-701593c12dd3",
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417666/uploaded_images/gapsiejdt4cxs1hkyun4.webp",
+                "selected": True,
+                "type": "IMAGE",
+                "height": 802,
+                "width": 600,
+                "mediaDuration": 0,
+                "mediaSrc": None,
+                "mediaType": "IMAGE",
+                "inherited": True,
+                "position": 2,
+                "referenceId": None,
+                "source": "UPLOAD",
+                "setThumbnail": False,
+            },
+        ],
+        "othersCanCopy": False,
+        "enableDownlineNote": False,
+        "allowVisitorCreateAffiliateLink": False,
+        "expiredAt": None,
+        "urlAlias": "t4955bylinda",
+        "headline": "Auto test T4955 by linda",
+        "isPaymentRestrictionEnabled": True,
+        "paymentRestriction": {
+            "accessCodes": [
+                "123456",
+                "654321",
+            ],
+            "paymentVendors": [
+                "BANK_CARD",
+            ],
+            "reason": "reason by linda automation test",
+            "cardBrands": [
+                "cash_app_card",
+                "visa",
+                "mastercard",
+            ],
+            "howToGetAccessCode": "This product requires access code. Please make sure you have the access code from the seller.",
+        },
+    }, token='linda05_token')
     # assertion 1.assertion: responseJson equal ACTIVE
     expect(_resp1).json('$.data.status').equals('ACTIVE')
     # assertion 1.assertion: responseJson equal 200
@@ -84,11 +301,44 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     # Apifox: var standardUuid = pm.variables.replaceIn('{{$guid}}')
     vars['guest_session_id'] = str(_uuid.uuid4())
     # step 2: 36bb23eb-ac93-4856-abb6-33c32b362795
-    _resp2 = ctx.api.auth.guest_login(body='{\r\n    "consumerId": "{{guest_session_id}}"\r\n}')
+    _resp2 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{guest_session_id}}",
+    })
     # extractor: guest_token = $.data
     ctx.extract('guest_token', _resp2, '$.data')
     # step 3: 83a2f2e6-81a0-42a0-ad6a-1630ef59bb6b
-    _resp3 = ctx.api.orders.buy_now(body='{\r\n    "postIdForFilter": "{{postId}}",\r\n    "updateCartItems": [\r\n        {\r\n            "quantity": 1,\r\n            "promoterProductVariantId": "a242e8f4-46aa-43e1-92db-80b004ab1f84",\r\n            "price": 0,\r\n            "postId": "{{postId}}",\r\n            "selected": true,\r\n            "customFields": [],\r\n            "accessCode": "123456"\r\n        }\r\n    ],\r\n    "fbAdParams": {\r\n        "eventID": "f8227ec3-2c1a-4de7-aa6e-6a5db01c2c2e",\r\n        "pixelId": [\r\n            "268933192948110"\r\n        ],\r\n        "fbBrowserId": "fb.1.1770012485749.217500641978621954",\r\n        "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",\r\n        "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda"\r\n    },\r\n    "currentUpdateCartItems": [\r\n        {\r\n            "quantity": 1,\r\n            "id": "a242e8f4-46aa-43e1-92db-80b004ab1f84",\r\n            "postId": "{{postId}}",\r\n            "price": 0,\r\n            "customFields": []\r\n        }\r\n    ]\r\n}', app_headers=True, token='guest_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "{{postId}}",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "a242e8f4-46aa-43e1-92db-80b004ab1f84",
+                "price": 0,
+                "postId": "{{postId}}",
+                "selected": True,
+                "customFields": [],
+                "accessCode": "123456",
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "f8227ec3-2c1a-4de7-aa6e-6a5db01c2c2e",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1770012485749.217500641978621954",
+            "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",
+            "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "a242e8f4-46aa-43e1-92db-80b004ab1f84",
+                "postId": "{{postId}}",
+                "price": 0,
+                "customFields": [],
+            },
+        ],
+    }, app_headers=True, token='guest_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
@@ -100,7 +350,24 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     # extractor: orderId = $.data.orderId
     ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: 58b469eb-74d3-4a63-8cde-5f08e36dced4
-    _resp4 = ctx.api.orders.create(body='{\r\n    "id": "{{orderId}}",\r\n    "contact": {\r\n        "email": "linda.zhou.ext+10@1m.app",\r\n        "firstName": "linda",\r\n        "lastName": "zhou10",\r\n        "phoneNumber": "+16502396646"\r\n    },\r\n    "fbAdParams": {\r\n        "eventID": "8454717a-93fd-45d2-a2f6-ce424cd414e7",\r\n        "pixelId": [\r\n            "268933192948110"\r\n        ],\r\n        "fbBrowserId": "fb.1.1770012485749.217500641978621954",\r\n        "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",\r\n        "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda"\r\n    }\r\n}', app_headers=True, token='guest_token')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+            "firstName": "linda",
+            "lastName": "zhou10",
+            "phoneNumber": "+16502396646",
+        },
+        "fbAdParams": {
+            "eventID": "8454717a-93fd-45d2-a2f6-ce424cd414e7",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1770012485749.217500641978621954",
+            "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",
+            "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda",
+        },
+    }, app_headers=True, token='guest_token')
     # assertion 4.assertion: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')
     # assertion 4.assertion: responseJson equal success
@@ -108,7 +375,225 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
     # step 5: d59ea706-fb0b-41a8-bc18-97ba17c0e4fa
-    _resp5 = ctx.api.posts.curator_by_post_id(body='{\r\n    "id": "e6aa0dd3-3d87-4d64-bb8c-78be838908f7",\r\n    "announcements": [],\r\n    "createFromEventId": null,\r\n    "title": "Auto test T4955 by linda",\r\n    "subTitle": "Auto test T4955 by linda subtitle",\r\n    "links": [],\r\n    "allowPromotersResell": false,\r\n    "financeModeForPromoters": "FINANCE_MODE_COMMISSION",\r\n    "financeMode": "FINANCE_MODE_COMMISSION",\r\n    "status": "ACTIVE",\r\n    "allowPromotersHideProducts": true,\r\n    "allowPromotersCustomizeMedia": true,\r\n    "allowPromotersCreateCoupon": true,\r\n    "promotions": [],\r\n    "isPurchaseQuantityLimited": false,\r\n    "purchaseQuantityLimit": 1,\r\n    "isAccessRestricted": false,\r\n    "allowPromotersAccess": false,\r\n    "hideInStore": false,\r\n    "recommendationSectionTitle": "",\r\n    "coverImages": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "width": 1500,\r\n            "height": 1443,\r\n            "mediaSrc": null,\r\n            "position": 1,\r\n            "mediaType": "IMAGE",\r\n            "mediaDuration": 0\r\n        }\r\n    ],\r\n    "checkoutInPost": true,\r\n    "allowAffiliateSharingOnly": false,\r\n    "abTestingSettings": [],\r\n    "enableAbTesting": false,\r\n    "isOrderConfirmationNoteEnabled": false,\r\n    "hideCouponBox": false,\r\n    "allowCustomizeDisplayPrices": true,\r\n    "customizeDisplayPrices": {\r\n        "price": "$23.33",\r\n        "priceColor": "#FFFFFF",\r\n        "titleColor": "#FFFFFF",\r\n        "discountPercent": "",\r\n        "discountPercentColor": "#D32A08"\r\n    },\r\n    "canSetPrice": false,\r\n    "downlineNoteBodyHtml": null,\r\n    "downlineNoteBodyJson": null,\r\n    "featuredSectionTitle": "Featured products",\r\n    "enableRedirectUrl": false,\r\n    "redirectUrl": "",\r\n    "redirectDestinationName": "",\r\n    "cardCustomizeCoverImages": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "width": 1500,\r\n            "height": 1443,\r\n            "mediaSrc": null,\r\n            "inherited": false,\r\n            "mediaType": "IMAGE",\r\n            "setThumbnail": true,\r\n            "mediaDuration": 0\r\n        }\r\n    ],\r\n    "additionalContentPosition": "aboveTickets",\r\n    "bodyHtml": "",\r\n    "currentDate": "2026-02-10T09:17:46.467Z",\r\n    "relatedProducts": [\r\n        {\r\n            "type": "PRODUCT",\r\n            "merchantProductId": "000c24b6-801d-40ab-9113-59fd6e23b75f",\r\n            "isVisible": true,\r\n            "isPurchaseQuantityLimited": false,\r\n            "isRecommendation": false,\r\n            "hasDependentProducts": false,\r\n            "dependentProductIds": [],\r\n            "isFreeShipping": false,\r\n            "isDefaultToSubscription": false,\r\n            "toReplaceMerchantProductIds": null,\r\n            "syncWithCatalogPrice": true,\r\n            "purchaseQuantityLimit": 1,\r\n            "variants": [\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "a7cd0054-e9fe-44ca-a630-bbcee6a5d8e0",\r\n                    "commissionRateForPromoters": 0\r\n                },\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "4510bba0-2f2f-4bdd-a660-08df7403cb45",\r\n                    "commissionRateForPromoters": 0\r\n                },\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 50,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 200,\r\n                    "merchantProductVariantId": "3d02e259-664e-4d43-a7b4-7b2725c8aac6",\r\n                    "commissionRateForPromoters": 0\r\n                }\r\n            ]\r\n        },\r\n        {\r\n            "type": "PRODUCT",\r\n            "merchantProductId": "4d0e57b7-0759-4b21-a4a6-5e27bd7e129b",\r\n            "isVisible": true,\r\n            "isPurchaseQuantityLimited": false,\r\n            "isRecommendation": false,\r\n            "hasDependentProducts": false,\r\n            "dependentProductIds": [],\r\n            "isFreeShipping": false,\r\n            "isDefaultToSubscription": false,\r\n            "toReplaceMerchantProductIds": null,\r\n            "syncWithCatalogPrice": true,\r\n            "purchaseQuantityLimit": 1,\r\n            "variants": [\r\n                {\r\n                    "wholesalePriceForPromoters": 0,\r\n                    "price": 0,\r\n                    "costPrice": 0,\r\n                    "isExcluded": false,\r\n                    "isDefault": false,\r\n                    "priceAnchor": 0,\r\n                    "merchantProductVariantId": "2ac3b1d5-545c-4a7c-9bed-5b62a8b15cdf",\r\n                    "commissionRateForPromoters": 0\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    "accessSpecificUser": [],\r\n    "featuredSectionEnable": true,\r\n    "tab": {\r\n        "value": "Commerce",\r\n        "label": "Commerce",\r\n        "mappingControl": []\r\n    },\r\n    "timeKey": 1770715066467,\r\n    "originEnablePaymentRestriction": false,\r\n    "syncEnabled": false,\r\n    "postType": "STANDARD",\r\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"id\\":\\"05d0d278-7922-449d-b1e3-721435544ad0\\",\\"lineupItems\\":[{\\"id\\":\\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":0,\\"isHeadliner\\":true},{\\"id\\":\\"153b167b-2840-4dee-8246-7b9a8becc644\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":1,\\"isHeadliner\\":false}],\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"layout\\":\\"WITH_HEADLINER\\",\\"photoShape\\":\\"RECTANGLE\\",\\"textAlignment\\":\\"CENTER\\",\\"headliner\\":{\\"width\\":\\"100%\\"},\\"headlinerTitle\\":\\"Headliner\\",\\"otherSectionTitle\\":\\"Talent\\",\\"type\\":\\"lineup-info-banner\\",\\"version\\":2},{\\"id\\":\\"e9da9c24-ace5-4f16-b440-f7cd3154e532\\",\\"lineupItems\\":[{\\"id\\":\\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":0,\\"isHeadliner\\":true},{\\"id\\":\\"153b167b-2840-4dee-8246-7b9a8becc644\\",\\"eventId\\":\\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\\",\\"order\\":1,\\"isHeadliner\\":false}],\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"layout\\":\\"WITH_HEADLINER\\",\\"photoShape\\":\\"RECTANGLE\\",\\"textAlignment\\":\\"CENTER\\",\\"headliner\\":{\\"width\\":\\"100%\\"},\\"headlinerTitle\\":\\"Headliner\\",\\"otherSectionTitle\\":\\"Talent\\",\\"type\\":\\"lineup-info-banner\\",\\"version\\":2}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1},\\"containerClassName\\":\\"\\",\\"editorClassName\\":\\"\\"}",\r\n    "additionalContent": "{}",\r\n    "showAdditionalContent": false,\r\n    "media": [\r\n        {\r\n            "id": "e8e9070d-acad-4ab7-ad25-0324a9748dcb",\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",\r\n            "selected": true,\r\n            "type": "IMAGE",\r\n            "height": 1443,\r\n            "width": 1500,\r\n            "mediaDuration": 0,\r\n            "mediaSrc": null,\r\n            "mediaType": "IMAGE",\r\n            "inherited": true,\r\n            "position": 1,\r\n            "referenceId": null,\r\n            "source": "UPLOAD",\r\n            "setThumbnail": true\r\n        },\r\n        {\r\n            "id": "8031c5e7-1af3-465b-ae71-701593c12dd3",\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1769417666/uploaded_images/gapsiejdt4cxs1hkyun4.webp",\r\n            "selected": true,\r\n            "type": "IMAGE",\r\n            "height": 802,\r\n            "width": 600,\r\n            "mediaDuration": 0,\r\n            "mediaSrc": null,\r\n            "mediaType": "IMAGE",\r\n            "inherited": true,\r\n            "position": 2,\r\n            "referenceId": null,\r\n            "source": "UPLOAD",\r\n            "setThumbnail": false\r\n        }\r\n    ],\r\n    "othersCanCopy": false,\r\n    "enableDownlineNote": false,\r\n    "allowVisitorCreateAffiliateLink": false,\r\n    "expiredAt": null,\r\n    "urlAlias": "t4955bylinda",\r\n    "headline": "Auto test T4955 by linda",\r\n    "isPaymentRestrictionEnabled": false,\r\n    "paymentRestriction": {\r\n        "accessCodes": [\r\n            "123456",\r\n            "654321"\r\n        ],\r\n        "paymentVendors": [\r\n            "BANK_CARD"\r\n        ],\r\n        "reason": "reason by linda automation test",\r\n        "cardBrands": [\r\n            "cash_app_card",\r\n            "visa",\r\n            "mastercard"\r\n        ],\r\n        "howToGetAccessCode": "This product requires access code. Please make sure you have the access code from the seller."\r\n    }\r\n}', token='linda05_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    # post url:  https://release.pear.us/lindanewcurator/post/t4955bylinda
+    vars['postId'] = "e6aa0dd3-3d87-4d64-bb8c-78be838908f7"
+    vars['postId'] = "e6aa0dd3-3d87-4d64-bb8c-78be838908f7"
+
+    _resp5 = ctx.api.posts.curator_by_post_id(body={
+        "id": "e6aa0dd3-3d87-4d64-bb8c-78be838908f7",
+        "announcements": [],
+        "createFromEventId": None,
+        "title": "Auto test T4955 by linda",
+        "subTitle": "Auto test T4955 by linda subtitle",
+        "links": [],
+        "allowPromotersResell": False,
+        "financeModeForPromoters": "FINANCE_MODE_COMMISSION",
+        "financeMode": "FINANCE_MODE_COMMISSION",
+        "status": "ACTIVE",
+        "allowPromotersHideProducts": True,
+        "allowPromotersCustomizeMedia": True,
+        "allowPromotersCreateCoupon": True,
+        "promotions": [],
+        "isPurchaseQuantityLimited": False,
+        "purchaseQuantityLimit": 1,
+        "isAccessRestricted": False,
+        "allowPromotersAccess": False,
+        "hideInStore": False,
+        "recommendationSectionTitle": "",
+        "coverImages": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "width": 1500,
+                "height": 1443,
+                "mediaSrc": None,
+                "position": 1,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0,
+            },
+        ],
+        "checkoutInPost": True,
+        "allowAffiliateSharingOnly": False,
+        "abTestingSettings": [],
+        "enableAbTesting": False,
+        "isOrderConfirmationNoteEnabled": False,
+        "hideCouponBox": False,
+        "allowCustomizeDisplayPrices": True,
+        "customizeDisplayPrices": {
+            "price": "$23.33",
+            "priceColor": "#FFFFFF",
+            "titleColor": "#FFFFFF",
+            "discountPercent": "",
+            "discountPercentColor": "#D32A08",
+        },
+        "canSetPrice": False,
+        "downlineNoteBodyHtml": None,
+        "downlineNoteBodyJson": None,
+        "featuredSectionTitle": "Featured products",
+        "enableRedirectUrl": False,
+        "redirectUrl": "",
+        "redirectDestinationName": "",
+        "cardCustomizeCoverImages": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "width": 1500,
+                "height": 1443,
+                "mediaSrc": None,
+                "inherited": False,
+                "mediaType": "IMAGE",
+                "setThumbnail": True,
+                "mediaDuration": 0,
+            },
+        ],
+        "additionalContentPosition": "aboveTickets",
+        "bodyHtml": "",
+        "currentDate": "2026-02-10T09:17:46.467Z",
+        "relatedProducts": [
+            {
+                "type": "PRODUCT",
+                "merchantProductId": "000c24b6-801d-40ab-9113-59fd6e23b75f",
+                "isVisible": True,
+                "isPurchaseQuantityLimited": False,
+                "isRecommendation": False,
+                "hasDependentProducts": False,
+                "dependentProductIds": [],
+                "isFreeShipping": False,
+                "isDefaultToSubscription": False,
+                "toReplaceMerchantProductIds": None,
+                "syncWithCatalogPrice": True,
+                "purchaseQuantityLimit": 1,
+                "variants": [
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "a7cd0054-e9fe-44ca-a630-bbcee6a5d8e0",
+                        "commissionRateForPromoters": 0,
+                    },
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "4510bba0-2f2f-4bdd-a660-08df7403cb45",
+                        "commissionRateForPromoters": 0,
+                    },
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 50,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 200,
+                        "merchantProductVariantId": "3d02e259-664e-4d43-a7b4-7b2725c8aac6",
+                        "commissionRateForPromoters": 0,
+                    },
+                ],
+            },
+            {
+                "type": "PRODUCT",
+                "merchantProductId": "4d0e57b7-0759-4b21-a4a6-5e27bd7e129b",
+                "isVisible": True,
+                "isPurchaseQuantityLimited": False,
+                "isRecommendation": False,
+                "hasDependentProducts": False,
+                "dependentProductIds": [],
+                "isFreeShipping": False,
+                "isDefaultToSubscription": False,
+                "toReplaceMerchantProductIds": None,
+                "syncWithCatalogPrice": True,
+                "purchaseQuantityLimit": 1,
+                "variants": [
+                    {
+                        "wholesalePriceForPromoters": 0,
+                        "price": 0,
+                        "costPrice": 0,
+                        "isExcluded": False,
+                        "isDefault": False,
+                        "priceAnchor": 0,
+                        "merchantProductVariantId": "2ac3b1d5-545c-4a7c-9bed-5b62a8b15cdf",
+                        "commissionRateForPromoters": 0,
+                    },
+                ],
+            },
+        ],
+        "accessSpecificUser": [],
+        "featuredSectionEnable": True,
+        "tab": {
+            "value": "Commerce",
+            "label": "Commerce",
+            "mappingControl": [],
+        },
+        "timeKey": 1770715066467,
+        "originEnablePaymentRestriction": False,
+        "syncEnabled": False,
+        "postType": "STANDARD",
+        "bodyJson": "{\"root\":{\"children\":[{\"id\":\"05d0d278-7922-449d-b1e3-721435544ad0\",\"lineupItems\":[{\"id\":\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":0,\"isHeadliner\":true},{\"id\":\"153b167b-2840-4dee-8246-7b9a8becc644\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":1,\"isHeadliner\":false}],\"width\":\"100%\",\"height\":\"\",\"layout\":\"WITH_HEADLINER\",\"photoShape\":\"RECTANGLE\",\"textAlignment\":\"CENTER\",\"headliner\":{\"width\":\"100%\"},\"headlinerTitle\":\"Headliner\",\"otherSectionTitle\":\"Talent\",\"type\":\"lineup-info-banner\",\"version\":2},{\"id\":\"e9da9c24-ace5-4f16-b440-f7cd3154e532\",\"lineupItems\":[{\"id\":\"1c3e22c0-d1c6-4d10-8880-b27f1c12f68f\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":0,\"isHeadliner\":true},{\"id\":\"153b167b-2840-4dee-8246-7b9a8becc644\",\"eventId\":\"e3ca1e2a-8d00-437e-a89a-9e14f2ec69eb\",\"order\":1,\"isHeadliner\":false}],\"width\":\"100%\",\"height\":\"\",\"layout\":\"WITH_HEADLINER\",\"photoShape\":\"RECTANGLE\",\"textAlignment\":\"CENTER\",\"headliner\":{\"width\":\"100%\"},\"headlinerTitle\":\"Headliner\",\"otherSectionTitle\":\"Talent\",\"type\":\"lineup-info-banner\",\"version\":2}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1},\"containerClassName\":\"\",\"editorClassName\":\"\"}",
+        "additionalContent": "{}",
+        "showAdditionalContent": False,
+        "media": [
+            {
+                "id": "e8e9070d-acad-4ab7-ad25-0324a9748dcb",
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417658/uploaded_images/ndowianynlljjmj56ffo.webp",
+                "selected": True,
+                "type": "IMAGE",
+                "height": 1443,
+                "width": 1500,
+                "mediaDuration": 0,
+                "mediaSrc": None,
+                "mediaType": "IMAGE",
+                "inherited": True,
+                "position": 1,
+                "referenceId": None,
+                "source": "UPLOAD",
+                "setThumbnail": True,
+            },
+            {
+                "id": "8031c5e7-1af3-465b-ae71-701593c12dd3",
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1769417666/uploaded_images/gapsiejdt4cxs1hkyun4.webp",
+                "selected": True,
+                "type": "IMAGE",
+                "height": 802,
+                "width": 600,
+                "mediaDuration": 0,
+                "mediaSrc": None,
+                "mediaType": "IMAGE",
+                "inherited": True,
+                "position": 2,
+                "referenceId": None,
+                "source": "UPLOAD",
+                "setThumbnail": False,
+            },
+        ],
+        "othersCanCopy": False,
+        "enableDownlineNote": False,
+        "allowVisitorCreateAffiliateLink": False,
+        "expiredAt": None,
+        "urlAlias": "t4955bylinda",
+        "headline": "Auto test T4955 by linda",
+        "isPaymentRestrictionEnabled": False,
+        "paymentRestriction": {
+            "accessCodes": [
+                "123456",
+                "654321",
+            ],
+            "paymentVendors": [
+                "BANK_CARD",
+            ],
+            "reason": "reason by linda automation test",
+            "cardBrands": [
+                "cash_app_card",
+                "visa",
+                "mastercard",
+            ],
+            "howToGetAccessCode": "This product requires access code. Please make sure you have the access code from the seller.",
+        },
+    }, token='linda05_token')
     # assertion 5.assertion: responseJson equal ACTIVE
     expect(_resp5).json('$.data.status').equals('ACTIVE')
     # assertion 5.assertion: responseJson equal 200
@@ -116,7 +601,37 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     # assertion 5.assertion: responseJson equal success
     expect(_resp5).json('$.message').equals('success')
     # step 6: 4f75abe3-9434-447c-aa35-f27e1d70d0a4
-    _resp6 = ctx.api.orders.buy_now(body='{\r\n    "postIdForFilter": "{{postId}}",\r\n    "updateCartItems": [\r\n        {\r\n            "quantity": 1,\r\n            "promoterProductVariantId": "a242e8f4-46aa-43e1-92db-80b004ab1f84",\r\n            "price": 0,\r\n            "postId": "{{postId}}",\r\n            "selected": true,\r\n            "customFields": []\r\n        }\r\n    ],\r\n    "fbAdParams": {\r\n        "eventID": "f8227ec3-2c1a-4de7-aa6e-6a5db01c2c2e",\r\n        "pixelId": [\r\n            "268933192948110"\r\n        ],\r\n        "fbBrowserId": "fb.1.1770012485749.217500641978621954",\r\n        "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",\r\n        "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda"\r\n    },\r\n    "currentUpdateCartItems": [\r\n        {\r\n            "quantity": 1,\r\n            "id": "a242e8f4-46aa-43e1-92db-80b004ab1f84",\r\n            "postId": "{{postId}}",\r\n            "price": 0,\r\n            "customFields": []\r\n        }\r\n    ]\r\n}', app_headers=True, token='guest_token')
+    _resp6 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "{{postId}}",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "a242e8f4-46aa-43e1-92db-80b004ab1f84",
+                "price": 0,
+                "postId": "{{postId}}",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "f8227ec3-2c1a-4de7-aa6e-6a5db01c2c2e",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1770012485749.217500641978621954",
+            "externalId": "7bf1fe2f-66d3-41e6-aff2-bb9bc4b62d6b",
+            "eventSourceUrl": "https://release.pear.us/lindanewcurator/post/t4955bylinda",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "a242e8f4-46aa-43e1-92db-80b004ab1f84",
+                "postId": "{{postId}}",
+                "price": 0,
+                "customFields": [],
+            },
+        ],
+    }, app_headers=True, token='guest_token')
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success

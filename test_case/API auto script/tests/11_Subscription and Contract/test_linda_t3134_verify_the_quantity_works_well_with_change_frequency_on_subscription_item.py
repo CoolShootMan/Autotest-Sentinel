@@ -123,7 +123,7 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
     # step 2: e244c926-4f50-4f92-b236-25e7340c0057
-    _resp2 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
@@ -137,13 +137,45 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp3, '$.data.id')
     # step 4: buy now - 2 quanities
-    _resp4 = ctx.api.orders.buy_now(body='{\n  "updateCartItems": [\n    {\n    "quantity": 2,\n    "promoterProductVariantId": "{{promoterProductVariantId}}",\n    "price": "280" ,\n    "postId": "{{postid}}",\n    "selected": true,\n    "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}"\n  }\n  ],\n  "currentUpdateCartItems": [\n    {\n    "quantity": 2,\n    "id": "{{promoterProductVariantId}}",\n    "postId": "{{postid}}",\n    "price": "280" \n  }\n  ]\n}\n\n', app_headers=True, token='linda10_token')
+    _resp4 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "{{promoterProductVariantId}}",
+                "price": "280",
+                "postId": "{{postid}}",
+                "selected": True,
+                "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}",
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "{{promoterProductVariantId}}",
+                "postId": "{{postid}}",
+                "price": "280",
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # assertion 4.assertion: responseJson equal 284.99
     expect(_resp4).json('$.data.totalToPay').equals('284.99')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 140,\n      "promoterVariantId": "{{promoterProductVariantId}}"\n    }\n  ],\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "linda.zhou.ext+10@1m.app"\n  },\n  "shippingAddressId": "{{addressId}}"\n}', app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
+    _resp5 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 140,
+                "promoterVariantId": "{{promoterProductVariantId}}",
+            },
+        ],
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{addressId}}",
+    }, app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
     # assertion 5.code: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson exists 
@@ -173,6 +205,11 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     expect(_resp8).json('$.data.contractNumber').equals(ctx.render_text('{{contractNumber}}'))
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 9: Check price is subscription price - check merchant order detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp9 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 9.assertion: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
@@ -185,7 +222,10 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     # assertion 9.assertion: responseJson equal 260.77
     expect(_resp9).json('$.data.totalPayoutToPay').equals('260.77')
     # step 10: Consumer update contract
-    _resp10 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "subscriptionPlanOptionId": "{{subscriptionPlanOptionid_new}}"\r\n}', app_headers=True, token='linda10_token')
+    _resp10 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "subscriptionPlanOptionId": "{{subscriptionPlanOptionid_new}}",
+    }, app_headers=True, token='linda10_token')
     # step 11: check the new contract details
     _resp11 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
     _j = _resp7.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}

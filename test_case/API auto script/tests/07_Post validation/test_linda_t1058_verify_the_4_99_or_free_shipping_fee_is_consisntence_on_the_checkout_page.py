@@ -84,7 +84,9 @@ def test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisnte
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: guest get token
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "{{__uuid_0}}"\n}', app_headers=False)
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_0}}",
+    }, app_headers=False)
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # extractor: access_token = $.data
@@ -106,20 +108,66 @@ def test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisnte
         })
     vars['dynamicClearCartParams'] = json.dumps({'items': _clearItems, 'lite': False})
     # step 3: Clean Cart
-    _resp3 = ctx.api.cart.update(body='{{dynamicClearCartParams}}', token='access_token')
+    _resp3 = ctx.api.cart.update(body={
+    'dynamicClearCartParams': '{{dynamicClearCartParams}}',
+}, token='access_token')
     # assertion 3.assertion: responseJson isEmpty 
     expect(_resp3).json('$.data.items').is_empty()
     # step 4: Add item with shipping fee Fee to Cart
-    _resp4 = ctx.api.cart.update(body='{\n    "currentUpdateCartItem": [{\n        "quantity": 1,\n        "id": "be267fed-b034-49ae-a902-569ee2b2fcbf",\n        "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",\n        "price": 200\n    }\n    ],\n    "items": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "be267fed-b034-49ae-a902-569ee2b2fcbf",\n            "price": 200,\n            "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa"\n        }\n    ],\n    "lite": true\n}', token='access_token')
+    _resp4 = ctx.api.cart.update(body={
+        "currentUpdateCartItem": [
+            {
+                "quantity": 1,
+                "id": "be267fed-b034-49ae-a902-569ee2b2fcbf",
+                "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",
+                "price": 200,
+            },
+        ],
+        "items": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "be267fed-b034-49ae-a902-569ee2b2fcbf",
+                "price": 200,
+                "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",
+            },
+        ],
+        "lite": True,
+    }, token='access_token')
     # assertion 4.assertion: responseJson equal 200
     expect(_resp4).json('$.data.items[0].variant.price').equals('200')
     # step 5: Add item with shipping fee $4.99 to Cart
-    _resp5 = ctx.api.cart.update(body='{\n    "currentUpdateCartItem": [{\n        "quantity": 1,\n        "id": "4cd483cd-60ae-4e40-886b-35c6e7fd8477",\n        "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",\n        "price": 200\n    }\n    ],\n    "items": [\n        {\n            "promoterProductVariantId": "be267fed-b034-49ae-a902-569ee2b2fcbf",\n            "price": 200,\n            "quantity": 1,\n            "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",\n            "selected": true,\n            "subscriptionPlanOptionId": null\n        },\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "4cd483cd-60ae-4e40-886b-35c6e7fd8477",\n            "price": 200,\n            "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa"\n        }\n    ],\n    "lite": true\n}', token='access_token')
+    _resp5 = ctx.api.cart.update(body={
+        "currentUpdateCartItem": [
+            {
+                "quantity": 1,
+                "id": "4cd483cd-60ae-4e40-886b-35c6e7fd8477",
+                "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",
+                "price": 200,
+            },
+        ],
+        "items": [
+            {
+                "promoterProductVariantId": "be267fed-b034-49ae-a902-569ee2b2fcbf",
+                "price": 200,
+                "quantity": 1,
+                "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",
+                "selected": True,
+                "subscriptionPlanOptionId": None,
+            },
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "4cd483cd-60ae-4e40-886b-35c6e7fd8477",
+                "price": 200,
+                "postId": "d7bd9117-796d-4f4f-b251-1795447b66aa",
+            },
+        ],
+        "lite": True,
+    }, token='access_token')
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.data.items[1].variant.price').equals('200')
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.data.items[0].variant.price').equals('200')
     # step 6: Checkout
-    _resp6 = ctx.api.orders.checkout(body='{}', token='access_token')
+    _resp6 = ctx.api.orders.checkout(body={}, token='access_token')
     # assertion 6.assertion: responseJson equal 604.99
     expect(_resp6).json('$.data.totalToPay').equals('604.99')

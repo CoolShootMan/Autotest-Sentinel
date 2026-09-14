@@ -275,32 +275,280 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     _resp3 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     vars['catalog_id'] = 'catalogId'
     # step 4: 4cbbf838-a62d-440a-9d77-634dffb20024
-    _resp4 = ctx.api.products.create(body='{\n    "merchantId": "{{catalog_id}}",\n    "shippingType": "NO_SHIPPING_REQUIRED",\n    "isFeatured": false,\n    "commissionRate": 0,\n    "priceSyncImported": false,\n    "additionalShippingFee": 0,\n    "returnPolicyApplied": true,\n    "title": "auto-test Verify the Require customer-provided details can be apply success",\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "status": "ACTIVE",\n    "isUsed": "NWT",\n    "taxJarCategory": "",\n    "platform": "PEAR",\n    "autoFulfill": true,\n    "options": [\n        {\n            "name": "Title",\n            "values": [\n                "Default Title"\n            ],\n            "images": []\n        }\n    ],\n    "variants": [\n        {\n            "inventoryQuantity": 100,\n            "price": 0,\n            "priceAnchor": 0,\n            "option": {\n                "option1": "Default Title"\n            },\n            "fees": 0,\n            "ticketPrice": 0,\n            "transactionFee": {\n                "platformFee": 0,\n                "customFee": 0,\n                "customFeeBreakdown": {},\n                "transactionItemFee": 0\n            },\n            "minPriceForCheckFees": 0,\n            "weightUnit": "lb"\n        }\n    ],\n    "listingType": "TICKET",\n    "ticketType": "TICKET_TYPE_STANDARD",\n    "soldQuantity": 0,\n    "excludeFromPostSync": false,\n    "isTipEnabled": false,\n    "useEventPosterAsCover": true,\n    "catalogCommissionRate": 0,\n    "deliveryMethod": "QR_CODE",\n    "isReturnPolicyAllowed": false,\n    "thirdPartyDeliveryMessage": "",\n    "taxEnable": false,\n    "customTaxRate": null,\n    "earliestTime": "2026-08-10T09:44:29.878Z",\n    "styleSettings": {\n        "recentUsedColors": [\n            "#ffffff"\n        ]\n    },\n    "isProductFormEnabled": true,\n    "isInclusionsEnabled": false,\n    "inclusions": [],\n    "productForm": {\n        "title": "contact form for autotest",\n        "subtitle": "autotest",\n        "description": "",\n        "iconImage": "",\n        "showImage": false,\n        "formFields": [\n            {\n                "field": "SHORT_ANSWER",\n                "required": true,\n                "title": "Name",\n                "position": 1,\n                "label": "Short answer text field",\n                "isInitial": true\n            },\n            {\n                "field": "PHONE_NUMBER",\n                "required": true,\n                "title": "Phone",\n                "position": 2,\n                "label": "Phone number",\n                "isInitial": true\n            },\n            {\n                "field": "EMAIL_ADDRESS",\n                "required": true,\n                "title": "Email",\n                "position": 3,\n                "label": "Email address",\n                "isInitial": true\n            }\n        ]\n    },\n    "isVariantPriceDisplayEnabled": false,\n    "stopSellingAfterDisplay": "",\n    "extraInfo": {\n        "businessTimezone": "Asia/Shanghai"\n    },\n    "overrideEventTax": false,\n    "overrideEventCustomFee": false,\n    "hideFees": false,\n    "transactionCustomFeeConfig": null,\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "images": [\n        {\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n            "width": 3072,\n            "height": 2048,\n            "position": 0,\n            "mediaType": "IMAGE",\n            "mediaDuration": 0\n        }\n    ],\n    "eventId": "{{event_id}}",\n    "isExpirationEnabled": false\n}', token='yuxiao999_token')
+    _resp4 = ctx.api.products.create(body={
+    'merchantId': '{{catalog_id}}',
+    'shippingType': 'NO_SHIPPING_REQUIRED',
+    'isFeatured': False,
+    'commissionRate': 0,
+    'priceSyncImported': False,
+    'additionalShippingFee': 0,
+    'returnPolicyApplied': True,
+    'title': 'auto-test Verify the Require customer-provided details can be apply success',
+    'bodyHtml': '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+    'status': 'ACTIVE',
+    'isUsed': 'NWT',
+    'taxJarCategory': '',
+    'platform': 'PEAR',
+    'autoFulfill': True,
+    'options': [
+        {
+            'name': 'Title',
+            'values': [
+                'Default Title',
+            ],
+            'images': [],
+        },
+    ],
+    'variants': [
+        {
+            'inventoryQuantity': 100,
+            'price': 0,
+            'priceAnchor': 0,
+            'option': {
+                'option1': 'Default Title',
+            },
+            'fees': 0,
+            'ticketPrice': 0,
+            'transactionFee': {
+                'platformFee': 0,
+                'customFee': 0,
+                'customFeeBreakdown': {},
+                'transactionItemFee': 0,
+            },
+            'minPriceForCheckFees': 0,
+            'weightUnit': 'lb',
+        },
+    ],
+    'listingType': 'TICKET',
+    'ticketType': 'TICKET_TYPE_STANDARD',
+    'soldQuantity': 0,
+    'excludeFromPostSync': False,
+    'isTipEnabled': False,
+    'useEventPosterAsCover': True,
+    'catalogCommissionRate': 0,
+    'deliveryMethod': 'QR_CODE',
+    'isReturnPolicyAllowed': False,
+    'thirdPartyDeliveryMessage': '',
+    'taxEnable': False,
+    'customTaxRate': None,
+    'earliestTime': '2026-08-10T09:44:29.878Z',
+    'styleSettings': {
+        'recentUsedColors': [
+            '#ffffff',
+        ],
+    },
+    'isProductFormEnabled': True,
+    'isInclusionsEnabled': False,
+    'inclusions': [],
+    'productForm': {
+        'title': 'contact form for autotest',
+        'subtitle': 'autotest',
+        'description': '',
+        'iconImage': '',
+        'showImage': False,
+        'formFields': [
+            {
+                'field': 'SHORT_ANSWER',
+                'required': True,
+                'title': 'Name',
+                'position': 1,
+                'label': 'Short answer text field',
+                'isInitial': True,
+            },
+            {
+                'field': 'PHONE_NUMBER',
+                'required': True,
+                'title': 'Phone',
+                'position': 2,
+                'label': 'Phone number',
+                'isInitial': True,
+            },
+            {
+                'field': 'EMAIL_ADDRESS',
+                'required': True,
+                'title': 'Email',
+                'position': 3,
+                'label': 'Email address',
+                'isInitial': True,
+            },
+        ],
+    },
+    'isVariantPriceDisplayEnabled': False,
+    'stopSellingAfterDisplay': '',
+    'extraInfo': {
+        'businessTimezone': 'Asia/Shanghai',
+    },
+    'overrideEventTax': False,
+    'overrideEventCustomFee': False,
+    'hideFees': False,
+    'transactionCustomFeeConfig': None,
+    'bodyJson': '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":"","style":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+    'images': [
+        {
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'width': 3072,
+            'height': 2048,
+            'position': 0,
+            'mediaType': 'IMAGE',
+            'mediaDuration': 0,
+        },
+    ],
+    'eventId': '{{event_id}}',
+    'isExpirationEnabled': False,
+}, token='yuxiao999_token')
     ctx.extract('productId', _resp4, '$.data.id')
     # step 5: ebaf8d1c-cb03-4d5c-90da-bfdfc60a2397
-    _resp5 = ctx.api.events.v2_show_in_post(body='{\n    "productIds": [\n        "{{productId}}"\n    ],\n    "posts": [\n        {\n            "postId": "{{postId}}",\n            "isVisible": true\n        }\n    ]\n}', token='yuxiao999_token')
+    _resp5 = ctx.api.events.v2_show_in_post(body={
+        "productIds": [
+            "{{productId}}",
+        ],
+        "posts": [
+            {
+                "postId": "{{postId}}",
+                "isVisible": True,
+            },
+        ],
+    }, token='yuxiao999_token')
     # step 6: 707dd083-2b7c-45d3-aa91-58cbe0def93e
     _resp6 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
     vars['promoterProductId'] = 'targetVariantId'
     # step 7: get address list
     _resp7 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # step 8: b73cbc93-9e57-4b4c-ad89-4b8efc36c53f
-    _resp8 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp8 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 8.assertion: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
     # assertion 8.assertion: responseJson equal success
     expect(_resp8).json('$.message').equals('success')
     # step 9: buy now failed without input form content
-    _resp9 = ctx.api.orders.buy_now(body='{\n  "postIdForFilter": "{{postId}}",\n  "updateCartItems": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "{{promoterProductId}}",\n      "price": 2,\n      "postId": "{{postId}}",\n      "selected": true,\n      "customFields": []\n    }\n  ],\n  "fbAdParams": {\n    "eventID": "{{event_id}}",\n    "pixelId": [\n      "test"\n    ],\n    "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n    "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n    "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8"\n  },\n  "currentUpdateCartItems": [\n    {\n      "quantity": 1,\n      "id": "{{productId}}",\n      "postId": "{{postId}}",\n      "price": 0,\n      "customFields": []\n    }\n  ]\n}', app_headers=True, token='linda10_token')
+    _resp9 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "{{postId}}",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{promoterProductId}}",
+                "price": 2,
+                "postId": "{{postId}}",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "{{event_id}}",
+            "pixelId": [
+                "test",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "{{productId}}",
+                "postId": "{{postId}}",
+                "price": 0,
+                "customFields": [],
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     _areaCodes = ["202","312","415","650","212","310","408","213","707"]
     vars['usPhoneNumber'] = '+1' + random.choice(_areaCodes) + str(random.randint(200, 999)) + str(random.randint(1000, 9999))
     # step 10: buy now success with input form content
-    _resp10 = ctx.api.orders.buy_now(body='{\n  "postIdForFilter": "{{postId}}",\n  "updateCartItems": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "{{promoterProductId}}",\n      "price": 2,\n      "postId": "{{postId}}",\n      "selected": true,\n      "customFields": [\n        {\n          "content": "{{$internet.email(locale=\'en\')}}",\n          "field": "EMAIL_ADDRESS",\n          "position": 3,\n          "title": "Email"\n        },\n        {\n          "content": "{{$randomFullName}}",\n          "field": "SHORT_ANSWER",\n          "position": 1,\n          "title": "Name"\n        },\n        {\n          "content": "{{$randomLastName}}",\n          "field": "PHONE_NUMBER",\n          "position": 2,\n          "title": "Phone"\n        }\n      ]\n    }\n  ],\n  "fbAdParams": {\n    "eventID": "{{event_id}}",\n    "pixelId": [\n      "test"\n    ],\n    "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n    "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n    "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8"\n  },\n  "currentUpdateCartItems": [\n    {\n      "quantity": 1,\n      "id": "{{productId}}",\n      "postId": "{{postId}}",\n      "price": 0,\n      "customFields": [\n        {\n          "content": "{{$internet.email(locale=\'en\')}}",\n          "field": "EMAIL_ADDRESS",\n          "position": 3,\n          "title": "Email"\n        },\n        {\n          "content": "{{$randomFullName}}",\n          "field": "SHORT_ANSWER",\n          "position": 1,\n          "title": "Name"\n        },\n        {\n          "content": "{{usPhoneNumber}}",\n          "field": "PHONE_NUMBER",\n          "position": 2,\n          "title": "Phone"\n        }\n      ]\n    }\n  ]\n}', app_headers=True, token='linda10_token')
+    _resp10 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "{{postId}}",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{promoterProductId}}",
+                "price": 2,
+                "postId": "{{postId}}",
+                "selected": True,
+                "customFields": [
+                    {
+                        "content": "{{$internet.email(locale='en')}}",
+                        "field": "EMAIL_ADDRESS",
+                        "position": 3,
+                        "title": "Email",
+                    },
+                    {
+                        "content": "{{$randomFullName}}",
+                        "field": "SHORT_ANSWER",
+                        "position": 1,
+                        "title": "Name",
+                    },
+                    {
+                        "content": "{{$randomLastName}}",
+                        "field": "PHONE_NUMBER",
+                        "position": 2,
+                        "title": "Phone",
+                    },
+                ],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "{{event_id}}",
+            "pixelId": [
+                "test",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "{{productId}}",
+                "postId": "{{postId}}",
+                "price": 0,
+                "customFields": [
+                    {
+                        "content": "{{$internet.email(locale='en')}}",
+                        "field": "EMAIL_ADDRESS",
+                        "position": 3,
+                        "title": "Email",
+                    },
+                    {
+                        "content": "{{$randomFullName}}",
+                        "field": "SHORT_ANSWER",
+                        "position": 1,
+                        "title": "Name",
+                    },
+                    {
+                        "content": "{{usPhoneNumber}}",
+                        "field": "PHONE_NUMBER",
+                        "position": 2,
+                        "title": "Phone",
+                    },
+                ],
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # extractor: orderId = $.data.orderId
     ctx.extract('orderId', _resp10, '$.data.orderId')
     # step 11: place order
-    _resp11 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "linda.zhou.ext+10@1m.app"\n    },\n    "shippingAddressId": "{{shippingAddressId}}",\n    // "paymentInfo": {\n    //     "paymentMethodId": "{{pay_method_id}}"\n    // },\n    "fbAdParams": {\n        "eventID": "58e159af-0e82-4244-b86d-00f37277e6a0",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3"\n    }\n}', app_headers=True, token='linda10_token')
+    _resp11 = ctx.api.orders.create(body={
+    'id': '{{orderId}}',
+    'contact': {
+        'email': 'linda.zhou.ext+10@1m.app',
+    },
+    'shippingAddressId': '{{shippingAddressId}}',
+    'fbAdParams': {
+        'eventID': '58e159af-0e82-4244-b86d-00f37277e6a0',
+        'pixelId': [
+            '268933192948110',
+        ],
+        'fbBrowserId': 'fb.1.1745806891240.683423600239274570',
+        'externalId': '9e32874f-1af5-4a26-88ad-a0a5cf1ad10c',
+        'eventSourceUrl': 'https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3',
+    },
+}, app_headers=True, token='linda10_token')
     _ordernumber_val = _get_path(_resp8.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail exist customer filed contents
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
+
     _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

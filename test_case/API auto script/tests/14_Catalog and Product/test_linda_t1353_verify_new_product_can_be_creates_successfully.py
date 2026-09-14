@@ -60,7 +60,123 @@ def test__6080068__Linda_T1353_Verify_new_product_can_be_creates_successfully(ct
     vars['productId'] = str(_uuid.uuid4())
     vars['randomNumber'] = f'API Test T1353 product by linda {_random.randint(100, 999)}'
     # step 2: create product
-    _resp2 = ctx.api.products.create(body='{\n    "merchantId": "369c31a5-9272-4abb-a1a6-2c18f7b6f8e3",\n    "shippingType": "INHERIT_SHIPPING",\n    "isFeatured": false,\n    "commissionRate": null,\n    "priceSyncImported": false,\n    "additionalShippingFee": 0,\n    "returnPolicyApplied": true,\n    "title": "{{randomNumber}}",\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "status": "ACTIVE",\n    "isUsed": "NWT",\n    "taxJarCategory": "",\n    "platform": "PEAR",\n    "autoFulfill": false,\n    "options": [\n        {\n            "name": "Title",\n            "values": [\n                "Default Title"\n            ],\n            "images": []\n        }\n    ],\n    "variants": [\n        {\n            "inventoryQuantity": 1000,\n            "price": 10,\n            "priceAnchor": 0,\n            "option": {\n                "option1": "Default Title"\n            },\n            "weightUnit": "lb"\n        }\n    ],\n    "excludeFromPostSync": false,\n    "listingType": "REGULAR",\n    "catalogCommissionRate": 25,\n    "shippingOptions": [\n        {\n            "id": "fdbf561b-0a4e-4364-b13d-3faedfbb5569",\n            "catalogId": "369c31a5-9272-4abb-a1a6-2c18f7b6f8e3",\n            "title": "Flat Shipping",\n            "shippingFee": 4.99,\n            "deliveryTime": [\n                0,\n                5\n            ],\n            "enableFreeShippingThreshold": false,\n            "freeShippingThreshold": 0,\n            "note": null,\n            "isDefault": true,\n            "weightBasedShippingRates": null,\n            "enableWeightBasedShippingRates": false,\n            "priceBasedShippingRates": null,\n            "enablePriceBasedShippingRates": false,\n            "profileName": null,\n            "from": "PEAR",\n            "additionalShippingFee": 0,\n            "enableAdditionalShippingFee": false\n        }\n    ],\n    "deliveryMethod": "SHIPPING",\n    "isReturnPolicyAllowed": true,\n    "thirdPartyDeliveryMessage": "",\n    "taxEnable": false,\n    "customTaxRate": null,\n    "earliestTime": "2026-04-15T05:45:21.339Z",\n    "styleSettings": {\n        "recentUsedColors": [\n            "#ECA416FF",\n            "#B7E2E0FF",\n            "#757575FF",\n            "#FFFFFFFF",\n            "#110921FF",\n            "#FFCDD2FF",\n            "#CB135BFF",\n            "#FF9800",\n            "#1B5E20",\n            "#FFF59D",\n            "#F57C00",\n            "#7986CBFF",\n            "#FFEEBEFF",\n            "#7132F4FF",\n            "#616161FF",\n            "#0B99FFFF",\n            "#E0E0E0FF"\n        ]\n    },\n    "isVariantPriceDisplayEnabled": false,\n    "stopSellingAfterDisplay": "",\n    "extraInfo": {\n        "businessTimezone": "Asia/Shanghai"\n    },\n    "overrideEventTax": false,\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "images": [\n        {\n            "mediaType": "IMAGE",\n            "mediaSrc": null,\n            "mediaDuration": 0,\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1762141834/uploaded_images/vdcheuqxljhmyl4oqbnx.webp",\n            "height": 1061,\n            "width": 1500,\n            "source": "UPLOAD",\n            "position": 1,\n            "setThumbnail": true,\n            "origin": {\n                "width": 1500,\n                "height": 1061,\n                "position": 1\n            },\n            "productImageType": "PRODUCT"\n        }\n    ],\n    "isMultipleDaysPassEnabled": false\n}', app_headers=False, token='linda01_token')
+    _resp2 = ctx.api.products.create(body={
+    'merchantId': '369c31a5-9272-4abb-a1a6-2c18f7b6f8e3',
+    'shippingType': 'INHERIT_SHIPPING',
+    'isFeatured': False,
+    'commissionRate': None,
+    'priceSyncImported': False,
+    'additionalShippingFee': 0,
+    'returnPolicyApplied': True,
+    'title': '{{randomNumber}}',
+    'bodyHtml': '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+    'status': 'ACTIVE',
+    'isUsed': 'NWT',
+    'taxJarCategory': '',
+    'platform': 'PEAR',
+    'autoFulfill': False,
+    'options': [
+        {
+            'name': 'Title',
+            'values': [
+                'Default Title',
+            ],
+            'images': [],
+        },
+    ],
+    'variants': [
+        {
+            'inventoryQuantity': 1000,
+            'price': 10,
+            'priceAnchor': 0,
+            'option': {
+                'option1': 'Default Title',
+            },
+            'weightUnit': 'lb',
+        },
+    ],
+    'excludeFromPostSync': False,
+    'listingType': 'REGULAR',
+    'catalogCommissionRate': 25,
+    'shippingOptions': [
+        {
+            'id': 'fdbf561b-0a4e-4364-b13d-3faedfbb5569',
+            'catalogId': '369c31a5-9272-4abb-a1a6-2c18f7b6f8e3',
+            'title': 'Flat Shipping',
+            'shippingFee': 4.99,
+            'deliveryTime': [
+                0,
+                5,
+            ],
+            'enableFreeShippingThreshold': False,
+            'freeShippingThreshold': 0,
+            'note': None,
+            'isDefault': True,
+            'weightBasedShippingRates': None,
+            'enableWeightBasedShippingRates': False,
+            'priceBasedShippingRates': None,
+            'enablePriceBasedShippingRates': False,
+            'profileName': None,
+            'from': 'PEAR',
+            'additionalShippingFee': 0,
+            'enableAdditionalShippingFee': False,
+        },
+    ],
+    'deliveryMethod': 'SHIPPING',
+    'isReturnPolicyAllowed': True,
+    'thirdPartyDeliveryMessage': '',
+    'taxEnable': False,
+    'customTaxRate': None,
+    'earliestTime': '2026-04-15T05:45:21.339Z',
+    'styleSettings': {
+        'recentUsedColors': [
+            '#ECA416FF',
+            '#B7E2E0FF',
+            '#757575FF',
+            '#FFFFFFFF',
+            '#110921FF',
+            '#FFCDD2FF',
+            '#CB135BFF',
+            '#FF9800',
+            '#1B5E20',
+            '#FFF59D',
+            '#F57C00',
+            '#7986CBFF',
+            '#FFEEBEFF',
+            '#7132F4FF',
+            '#616161FF',
+            '#0B99FFFF',
+            '#E0E0E0FF',
+        ],
+    },
+    'isVariantPriceDisplayEnabled': False,
+    'stopSellingAfterDisplay': '',
+    'extraInfo': {
+        'businessTimezone': 'Asia/Shanghai',
+    },
+    'overrideEventTax': False,
+    'bodyJson': '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":"","style":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+    'images': [
+        {
+            'mediaType': 'IMAGE',
+            'mediaSrc': None,
+            'mediaDuration': 0,
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762141834/uploaded_images/vdcheuqxljhmyl4oqbnx.webp',
+            'height': 1061,
+            'width': 1500,
+            'source': 'UPLOAD',
+            'position': 1,
+            'setThumbnail': True,
+            'origin': {
+                'width': 1500,
+                'height': 1061,
+                'position': 1,
+            },
+            'productImageType': 'PRODUCT',
+        },
+    ],
+    'isMultipleDaysPassEnabled': False,
+}, app_headers=False, token='linda01_token')
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     # assertion 2.assertion: responseJson equal {{randomNumber}}

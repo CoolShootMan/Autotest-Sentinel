@@ -395,11 +395,20 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
     vars['scan_token'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU'
     # === Steps ===
     # step 1: Get Partner linda05 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "email": "linda.zhou.ext+05@1m.app",\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "email": "linda.zhou.ext+05@1m.app",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    })
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: 44837e99-63db-4850-898c-6b8c6cf5e12f
-    _resp2 = ctx.api.orders.ticket_status(body='{\r\n    "orderLineItemId": "4043096b-7df1-4c2b-880a-9c7b7baec411",\r\n    "orderLineItemUnitIds": [\r\n        "763118ce-9ac4-4778-9683-d8e799192083"\r\n    ],\r\n    "status": "IN_PROCESSING"\r\n}', token='linda05_token')
+    _resp2 = ctx.api.orders.ticket_status(body={
+        "orderLineItemId": "4043096b-7df1-4c2b-880a-9c7b7baec411",
+        "orderLineItemUnitIds": [
+            "763118ce-9ac4-4778-9683-d8e799192083",
+        ],
+        "status": "IN_PROCESSING",
+    }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
     _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
@@ -417,7 +426,14 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
     assert _totalRedeemed is not None, "step3 totalItemsRedeemed 缺失"
     vars['totalItemsRedeemed'] = _totalRedeemed
     # step 4: 9740ec98-e46c-4e1e-9f04-732b196c2f05
-    _resp4 = ctx.api.orders.verification(body='{\n    "token": "{{scan_token}}",\n    "id": "33804632",\n    "forceRedeem": false\n}', token='linda05_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['scan_token'] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU"
+
+    _resp4 = ctx.api.orders.verification(body={
+        "token": "{{scan_token}}",
+        "id": "33804632",
+        "forceRedeem": False,
+    }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
     _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     assert _j4.get('code') == 200, f"step4 code != 200, got {_j4.get('code')}"
@@ -453,7 +469,14 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
     assert _cur6 is not None, "step6 totalItemsRedeemed 缺失"
     assert _cur6 == _preNum6 + 1, f"step6 核销后数值错误: 预期{_preNum6 + 1}, 实际{_cur6}"
     # step 7: 02705f5d-2197-49bd-a5fd-b84785940596
-    _resp7 = ctx.api.orders.verification(body='{\n    "token": "{{scan_token}}",\n    "id": "33804632",\n    "forceRedeem": false\n}', token='linda05_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['scan_token'] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU"
+
+    _resp7 = ctx.api.orders.verification(body={
+        "token": "{{scan_token}}",
+        "id": "33804632",
+        "forceRedeem": False,
+    }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
     _j7 = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     assert _j7.get('code') == 400, f"step7 code != 400, got {_j7.get('code')}"

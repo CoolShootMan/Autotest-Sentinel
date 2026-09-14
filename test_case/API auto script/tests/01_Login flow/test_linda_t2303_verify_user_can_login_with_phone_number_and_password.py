@@ -28,7 +28,11 @@ def test_linda_t2303_verify_user_can_login_with_phone_number_and_password(ctx):
     # === Steps ===
     # phoneNumber comes from this case's .vars.yaml; password from env/Release.yaml
     # step 1: 7c4016b9-fcac-40a3-a8e9-15a21ce309ec
-    _resp1 = ctx.api.auth.sign_in(body='{\r\n    "phoneNumber": "{{phoneNumber}}",\r\n    "password": "{{password}}"\r\n\r\n}', app_headers=True)
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['phoneNumber'] = "+16502396646"
+    vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
+
+    _resp1 = ctx.api.auth.sign_in(body={"phoneNumber": "{{phoneNumber}}", "password": "{{password}}"}, app_headers=True)
     # assertion 1.code: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # extractor: token = $.data.token

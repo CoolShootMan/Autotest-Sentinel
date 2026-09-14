@@ -75,14 +75,24 @@ def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invit
     # === Steps ===
     vars['dynamic_email'] = 'dynamicEmail'
     # step 1: edd8f0c2-5016-4c4d-958c-6bd0a2e3cc64
-    _resp1 = ctx.api.auth.promoter_login(body='{\r\n    "inviterCampaign": {},\r\n    "code": "0000",\r\n    "email": "{{CosellerEmailT1994}}"\r\n}', headers={'X-Auto-Testing': 'true'})
+    _resp1 = ctx.api.auth.promoter_login(body={
+        "inviterCampaign": {},
+        "code": "0000",
+        "email": "{{CosellerEmailT1994}}",
+    }, headers={'X-Auto-Testing': 'true'})
     ctx.extract('auth_token', _resp1, '$.data.token')
     ctx.extract('auth_refresh_token', _resp1, '$.data.refreshToken')
     ctx.extract('user_id', _resp1, '$.data.id')
     # step 2: accept Invite By Promoter
-    _resp2 = ctx.api.promoters.promoter(body='{\n    "lead": "SELF_LISTING",\n    "promoterInvitationCode": "u1balj"\n}', token='auth_token')
+    _resp2 = ctx.api.promoters.promoter(body={
+        "lead": "SELF_LISTING",
+        "promoterInvitationCode": "u1balj",
+    }, token='auth_token')
     # step 3: 01a670e4-daf9-412b-aa97-a22db28795ef
-    _resp3 = ctx.api.auth.promoter_signup(body='{"firstName":"linda","lastName":"zhou32"}', token='auth_token')
+    _resp3 = ctx.api.auth.promoter_signup(body={
+        "firstName": "linda",
+        "lastName": "zhou32",
+    }, token='auth_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success

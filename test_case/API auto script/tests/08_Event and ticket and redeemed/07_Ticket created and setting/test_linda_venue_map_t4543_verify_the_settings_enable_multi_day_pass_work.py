@@ -424,7 +424,10 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars.setdefault('event_title', 'event-for-api-auto-venue-map')
     vars.setdefault('target_ticket_title', 'General Admission 01')
     # step 1: 91c574f3-fdab-47be-bf60-472750a263b8  (POST /auth/sign-in)
-    _resp1 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{UIauto_partner_email}}",\r\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\r\n\r\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "email": "{{UIauto_partner_email}}",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     vars['yuxiao999_token'] = _get_path(_json(_resp1), ['data', 'token'])
     # step 2: e9985ede-c59f-4723-bad2-ed9a86c642f2  (GET /product-event/list)
@@ -511,7 +514,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     _body7 = json.loads(_render('{\n    "id": "{{productId_General_Admission_01}}",\n    "remote_id": null,\n    "platform": "PEAR",\n    "createdAt": "2026-08-25T06:03:23.925Z",\n    "updatedAt": "2026-08-25T06:09:57.463Z",\n    "merchantId": "{{catalog_id}}",\n    "title": "General Admission 01",\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "originalBodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "isBodyHtmlOverridden": false,\n    "bodyText": "\\n",\n    "handle": null,\n    "productType": "",\n    "publishedAt": "2026-08-25T06:03:23.965Z",\n    "publishedScope": "",\n    "status": "ACTIVE",\n    "externalStatus": "ACTIVE",\n    "followExternalStatus": false,\n    "tags": [],\n    "templateSuffix": null,\n    "vendor": "Pear",\n    "syncAt": null,\n    "deletedAt": null,\n    "delisted": false,\n    "excludedByImportingTag": false,\n    "isFeatured": false,\n    "featuredScore": null,\n    "inventoryQuantity": 15,\n    "inventoryQuantityOriginal": 15,\n    "soldQuantity": 0,\n    "priceDisplay": 67.77,\n    "priceDisplayAnchor": 0,\n    "priceMin": 67.77,\n    "priceMinAnchor": 0,\n    "priceMax": 67.77,\n    "priceMaxAnchor": 0,\n    "priceImportedMin": 0,\n    "priceImportedMax": 0,\n    "imageCount": 1,\n    "isUsed": "NWT",\n    "shippingType": "NO_SHIPPING_REQUIRED",\n    "additionalShippingFee": 0,\n    "deliveryTime": [\n        0,\n        5\n    ],\n    "returnPolicyApplied": true,\n    "isAvailable": true,\n    "commissionRate": 7,\n    "textForShare": null,\n    "priceSyncImported": false,\n    "coverImage": {\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "width": 3072,\n        "height": 2048,\n        "position": 0,\n        "mediaType": "IMAGE",\n        "mediaDuration": 0\n    },\n    "useEventPosterAsCover": true,\n    "reviewCount": null,\n    "reviewOverallScore": null,\n    "reviewAggregate": null,\n    "displayReviews": true,\n    "links": null,\n    "taxEnable": false,\n    "taxJarCategory": "",\n    "customTaxRate": null,\n    "subscriptionPlanId": null,\n    "reviewRedirectProductId": null,\n    "reviewSummary": null,\n    "customFieldsInfo": null,\n    "listingType": "TICKET",\n    "ticketType": "TICKET_TYPE_STANDARD",\n    "ticketHubInfo": null,\n    "customizedFields": [],\n    "shippingOptions": [],\n    "shippingNote": null,\n    "autoFulfill": true,\n    "lifecycleStatus": "LIFECYCLE_STATUS_NORMAL",\n    "copyFromId": "{{copyFromId}}",\n    "stopSellingAfter": null,\n    "deliveryMethod": "QR_CODE",\n    "thirdPartyDeliveryMessage": "",\n    "isMultipleDaysPassEnabled": true,\n    "isVenueUnitEnabled": true,\n    "venueUnitCategoryId": "{{venueUnitCategoryId}}",\n    "multipleDaysPass": {\n        "days":{{multipleDaysPass_days}}\n    },\n    "isPickupEtaEnabled": null,\n    "eventMatchingRules": null,\n    "expirationTime": null,\n    "allowAtDoorSales": false,\n    "isTipEnabled": false,\n    "isPlatformFeeConfigCustomized": false,\n    "isVariantPlatformFeeConfigCustomized": false,\n    "transactionFeeConfig": {\n        "baseConfig": {\n            "unitFixedFee": 1,\n            "unitPercentageFee": 0.1\n        }\n    },\n    "transactionFeeRebateConfig": {\n        "baseConfig": {\n            "unitFixedFee": 0,\n            "unitPercentageFee": 0\n        }\n    },\n    "transactionCustomFeeConfig": null,\n    "options": [\n        {\n            "remote_id": null,\n            "productId": "{{productId_General_Admission_01}}",\n            "name": "Title",\n            "position": 1,\n            "values": [\n                "Default Title"\n            ],\n            "images": [\n                {\n                    "value": "Default Title",\n                    "imageId": null\n                }\n            ]\n        }\n    ],\n    "variants": [\n        {\n            "id": "{{merchantProductVariantId_General_Admission_01}}",\n            "remote_id": null,\n            "createdAt": "2026-08-25T06:03:24.017Z",\n            "updatedAt": "2026-08-25T06:09:57.779Z",\n            "compareAtPrice": null,\n            "fulfillmentService": "manual",\n            "grams": 0,\n            "imageIds": [],\n            "inventoryItemId": null,\n            "inventoryManagement": "Pear",\n            "inventoryPolicy": "DENY",\n            "isInventoryQuantityUnlimited": false,\n            "inventoryQuantity": 15,\n            "inventoryQuantityOriginal": 15,\n            "soldQuantity": 0,\n            "option": {\n                "option1": "Default Title"\n            },\n            "position": 1,\n            "price": 67.77,\n            "priceAnchor": 0,\n            "priceImported": "0.00",\n            "productId": "{{productId_General_Admission_01}}",\n            "sku": "",\n            "taxCode": null,\n            "taxable": true,\n            "title": "Default Title",\n            "weight": null,\n            "weightUnit": "lb",\n            "platform": null,\n            "fees": 7.77,\n            "transactionFee": {\n                "platformFee": 7.77,\n                "customFee": 0,\n                "customFeeBreakdown": {\n                    "TAX": {\n                        "title": "Taxes",\n                        "unitFixedFee": 0,\n                        "unitPercentageFee": 0,\n                        "index": 0,\n                        "itemFee": 0\n                    }\n                },\n                "transactionItemFee": 7.77\n            },\n            "ticketPrice": 60,\n            "isMinPurchaseQuantityEnabled": false,\n            "minPurchaseQuantity": null,\n            "isMaxPurchaseQuantityEnabled": false,\n            "maxPurchaseQuantity": null,\n            "isPackSizeEnabled": false,\n            "packSize": null,\n            "transactionFeeConfig": null,\n            "transactionFeeRebateConfig": null,\n            "minPriceForCheckFees": 0\n        }\n    ],\n    "readOnlyFields": [],\n    "isInventoryQuantityUnlimited": false,\n    "showInEventPost": true,\n    "visibleInPosts": [\n        {\n            "postId": "{{post0_id}}",\n            "isVisible": true\n        }\n    ],\n    "excludeFromPostSync": false,\n    "catalogCommissionRate": 0,\n    "hasLimitPurchaseQuantity": false,\n    "hasSpecialRedemption": false,\n    "earliestTime": "2026-08-25T04:00:00.000Z",\n    "styleSettings": {\n        "recentUsedColors": [\n            "#ffffff"\n        ]\n    },\n    "isProductFormEnabled": false,\n    "isInclusionsEnabled": false,\n    "inclusions": [],\n    "isVariantPriceDisplayEnabled": false,\n    "stopSellingAfterDisplay": "",\n    "overrideEventTax": false,\n    "overrideEventCustomFee": false,\n    "hideFees": false,\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "images": [\n        {\n            "id": "52d5b590-879c-4b67-b466-ff33a41915db",\n            "remote_id": null,\n            "createdAt": "2026-08-25T06:03:24.017Z",\n            "updatedAt": "2026-08-25T06:03:24.017Z",\n            "height": 1000,\n            "width": 1000,\n            "position": 1,\n            "productId": "{{productId_General_Admission_01}}",\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",\n            "variantIds": [],\n            "mediaType": "IMAGE",\n            "mediaSrc": null,\n            "mediaDuration": 0,\n            "contributedBy": 3,\n            "contributorId": null,\n            "productImageType": "PRODUCT",\n            "source": null,\n            "setThumbnail": true\n        }\n    ],\n    "eventId": "{{event_id}}",\n    "isExpirationEnabled": false\n}', vars))
     _body7['isMultipleDaysPassEnabled'] = True
     _body7['multipleDaysPass'] = {"days": json.loads(vars['multipleDaysPass_days'])}
-    _resp7 = ctx.api.products.by_product_id_general_admission_02(body=json.dumps(_body7), token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
+    _resp7 = ctx.api.products.by_product_id_general_admission_02(body=_body7, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     # === 断言（step7 PUT 启用 multi-day pass 的响应校验）===
     _j7 = _json(_resp7)
     assert _resp7.status_code == 200, f"step7 status != 200, got {_resp7.status_code}"
@@ -522,20 +525,63 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert isinstance(_p7.get('days'), list) and _p7.get('days'), "step7 multipleDaysPass.days 缺失或为空"
     assert any(_d.get('enabled') is True for _d in _p7['days']), "step7 multipleDaysPass.days 无 enabled=true 项"
     # step 9: Get consumer linda10 token  (POST /auth/sign-in)
-    _resp9 = ctx.api.auth.sign_in(body='{\n    "email": "linda.zhou.ext+10@1m.app",\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\n}')
+    _resp9 = ctx.api.auth.sign_in(body={
+        "email": "linda.zhou.ext+10@1m.app",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    })
     # extractor: linda10_token = $.data.token
     vars['linda10_token'] = _get_path(_json(_resp9), ['data', 'token'])
     # step 10: aaf8fee2-2d4c-4302-aaae-c1d41577fb10  (DELETE /cart)
-    _resp10 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertions: $.code == 200 ; $.message == success
     assert str(_get_path(_json(_resp10), ['code'])) == '200', f"step10 code != 200, got {_get_path(_json(_resp10), ['code'])}"
     assert str(_get_path(_json(_resp10), ['message'])) == 'success', "step10 message != success"
     # step 11: bf3716bc-8788-4f3f-a07e-d88ba2c334a8  (POST /order/checkout/express)
-    _resp11 = ctx.api.orders.checkout_express(body='{\n  "fbAdParams": {\n    "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",\n    "pixelId": [\n      "268933192948110"\n    ],\n    "fbBrowserId": "fb.1.1787626769799.674084567126480531",\n    "externalId": "7d70692d-84f0-4b50-bcda-abc39b7d165a",\n    "eventSourceUrl": "https://release.pear.us/autotestshop/post/event-for-api-auto-venue-map"\n  },\n  "items": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "{{displayVariantId_General_Admission_01}}",\n      "price": 112.22,\n      "postId": "{{post0_id}}",\n      "eventId": "{{event_id}}",\n      "sectionName": "General Admission 01",\n      "seatRow": "",\n      "seatNumber": "{{seatNumber}}",\n      "unitId": "{{unitid}}",\n      "selected": true\n    }\n  ],\n  "subdomainVanityUrl": ""\n}', app_headers=True, token='linda10_token')
+    _resp11 = ctx.api.orders.checkout_express(body={
+        "fbAdParams": {
+            "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1787626769799.674084567126480531",
+            "externalId": "7d70692d-84f0-4b50-bcda-abc39b7d165a",
+            "eventSourceUrl": "https://release.pear.us/autotestshop/post/event-for-api-auto-venue-map",
+        },
+        "items": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{displayVariantId_General_Admission_01}}",
+                "price": 112.22,
+                "postId": "{{post0_id}}",
+                "eventId": "{{event_id}}",
+                "sectionName": "General Admission 01",
+                "seatRow": "",
+                "seatNumber": "{{seatNumber}}",
+                "unitId": "{{unitid}}",
+                "selected": True,
+            },
+        ],
+        "subdomainVanityUrl": "",
+    }, app_headers=True, token='linda10_token')
     # extractor: orderId = $.data.orderId
     vars['orderId'] = _get_path(_json(_resp11), ['data', 'orderId'])
     # step 12: place order  (POST {{base_app_url}}/order)
-    _resp12 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "linda.zhou.ext+10@1m.app"\n    },\n    "shippingAddressId": "{{shippingAddressId}}",\n    "fbAdParams": {\n        "eventID": "58e159af-0e82-4244-b86d-00f37277e6a0",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3"\n    }\n}', app_headers=True, token='linda10_token')
+    _resp12 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{shippingAddressId}}",
+        "fbAdParams": {
+            "eventID": "58e159af-0e82-4244-b86d-00f37277e6a0",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
+        },
+    }, app_headers=True, token='linda10_token')
     # extractor: orderNumber = data.orderNumbers[0]
     _j12 = _json(_resp12)
     _order_numbers = (_j12.get('data') or {}).get('orderNumbers') or []

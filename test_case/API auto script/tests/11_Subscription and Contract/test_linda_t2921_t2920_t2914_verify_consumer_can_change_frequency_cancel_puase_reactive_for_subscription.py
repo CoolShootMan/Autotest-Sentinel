@@ -64,7 +64,10 @@ def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_
     vars['subscriptionPlanOptionId'] = '4965c739-adc4-4a2a-a803-74283126837d'
     vars['contractId'] = 'ce86abb3-3181-40e8-86e6-adaf06e91aa9'
     # step 1: update contract - change frequency
-    _resp1 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "subscriptionPlanOptionId": "{{subscriptionPlanOptionId}}"\r\n}', token='linda10_token')
+    _resp1 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "subscriptionPlanOptionId": "{{subscriptionPlanOptionId}}",
+    }, token='linda10_token')
     # assertion 1.assertion: responseJson equal {{subscriptionPlanOptionId}}
     expect(_resp1).json('$.data.subscriptionPlanOptionId').equals(ctx.render_text('{{subscriptionPlanOptionId}}'))
     vars['subscriptionPlanOptionId'] = '4965c739-adc4-4a2a-a803-74283126837d'
@@ -73,7 +76,10 @@ def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_
     # 取了另一个已不存在的合约 → 404。
     vars['contractId'] = 'ce86abb3-3181-40e8-86e6-adaf06e91aa9'
     # step 2: update contract - pause the subscription
-    _resp2 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "status": "PAUSED"\r\n}', token='linda10_token')
+    _resp2 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "status": "PAUSED",
+    }, token='linda10_token')
     # assertion 2.assertion: responseJson equal PAUSED
     expect(_resp2).json('$.data.status').equals('PAUSED')
     # assertion 2.assertion: responseJson equal {{contractId}}
@@ -84,7 +90,10 @@ def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_
     # 取了另一个已不存在的合约 → 404。
     vars['contractId'] = 'ce86abb3-3181-40e8-86e6-adaf06e91aa9'
     # step 3: update contract - reactive the subscription
-    _resp3 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "status": "NORMAL"\r\n}', token='linda10_token')
+    _resp3 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "status": "NORMAL",
+    }, token='linda10_token')
     # assertion 3.assertion: responseJson equal NORMAL
     expect(_resp3).json('$.data.status').equals('NORMAL')
     # assertion 3.assertion: responseJson equal {{contractId}}
@@ -95,7 +104,10 @@ def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_
     # 取了另一个已不存在的合约 → 404。
     vars['contractId'] = 'ce86abb3-3181-40e8-86e6-adaf06e91aa9'
     # step 4: update contract - Cancel the subscription
-    _resp4 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "status": "CANCELED"\r\n}', token='linda10_token')
+    _resp4 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "status": "CANCELED",
+    }, token='linda10_token')
     # assertion 4.assertion: responseJson equal CANCELED
     expect(_resp4).json('$.data.status').equals('CANCELED')
     # assertion 4.assertion: responseJson equal {{contractId}}

@@ -53,6 +53,96 @@
 
 ## 2. 环境准备
 
+> 本节默认面向 **macOS** 团队成员（项目已从 Windows/WSL 迁到 mac）。
+> Windows 同事需要用 WSL2 + Ubuntu 22.04，工具对应替换；mac 用户照抄即可。
+
+### 2.0 工具清单
+
+按"装不装跑得动"分三档。**硬性依赖**缺一个就跑不起来；**强烈建议**是日常体验
+/ 团队协作必备；**可选**是锦上添花。
+
+#### 2.0.1 硬性依赖（必装）
+
+| 工具 | 版本 | 用途 | 安装 / 验证 |
+|---|---|---|---|
+| **Git** | ≥ 2.30 | 拉代码、PR、归档 | `brew install git` · `git --version` |
+| **Python** | ≥ 3.10 | 跑 pytest / run_suite.py | 见 §2.1，推荐托管 3.13 |
+| **pip** | ≥ 22 | 装 requirements | mac 自带，跟随 Python 升级 |
+| **curl** | 系统自带 | OAuth、SSO 抓 token、临时探测 | `curl --version` |
+| **make**（可选但建议） | 系统自带 | 后期 CI / 本地脚本可能要 `make` | `make --version` |
+
+#### 2.0.2 强烈建议
+
+| 工具 | 推荐 | 用途 | 安装 |
+|---|---|---|---|
+| **iTerm2** | 最新版 | 终端（mac 自带 Terminal 也行，但 iTerm2 切分屏体验好很多） | https://iterm2.com |
+| **Homebrew** | 最新版 | macOS 包管理统一入口 | `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` |
+| **VS Code** 或 **PyCharm CE** | 任意稳定版 | IDE；VS Code 配 Python 扩展即可 | https://code.visualstudio.com |
+| **VS Code 扩展**（如用 VS Code） | — | Python、Pylance、YAML、GitLens、Error Lens | 装好后搜名字一键 install |
+| **DBeaver** 或 **TablePlus** | 最新版 | 查 PostgreSQL / MySQL 库（用例里 `run_db` 经常要核对） | https://dbeaver.io · https://tableplus.com |
+| **Slack** | 桌面端 | 团队通知、CI 告警 | 公司自带安装包 |
+| **Apifox**（账号需申请） | 桌面端 | **原测试用例出处**——用 `case_id` 溯源、查接口原始定义、看 Mock | 找 TL 申请账号（项目 ID 5446866） |
+| **Chrome** | 最新版 | 看 Allure 报告、UI 验证 | https://google.com/chrome |
+
+#### 2.0.3 可选（按需）
+
+| 工具 | 适用场景 | 安装 |
+|---|---|---|
+| **python-dotenv** | 让 `.env` 文件在 `python run_suite.py` 时**自动**生效；不装就只能 `export` 到 shell | `pip install python-dotenv`（见 §2.2） |
+| **Allure CommandLine** | 本地渲染 Allure 报告（默认走 HTTP 共享也够用） | `brew install allure` |
+| **Docker Desktop** | 跑本地 mock 后端、隔离测试数据库 | https://docker.com/products/docker-desktop |
+| **Postman / Insomnia** | 临时手敲一条请求调试；日常用 `ctx.api.*` 即可 | 官网下载 |
+| **WorkBuddy / agent-browser** | 跑 UI 自动化（`Autotest-monster.git` 那个项目要用） | 公司内部工具，找 TL |
+| **PixPin / ShareX** | 截图打 ticket | 公司内常用哪个装哪个 |
+| **Jenkins 浏览器访问** | 触发 CI 流水线（本项目 Jenkins 是**手动触发**模式） | 找 DevOps 要地址（默认本机 `http://localhost:8080`） |
+| **局域网 IP 工具**（mac 自带 `ifconfig` 够用） | 查看本机 IP 让别人访问你的 Allure 报告 | 系统自带 |
+
+#### 2.0.4 macOS 系统级准备
+
+```bash
+# 1) 命令行工具（Git 之外还需要一些编译工具链）
+xcode-select --install
+
+# 2) 同意 license（如已装 Xcode）
+sudo xcodebuild -license accept
+
+# 3) 关掉 macOS 全局 HTTP 代理（如果公司有 PAC/WPAD），避免 requests SSL 握手失败
+#    系统设置 → 网络 → 详情 → 代理 → 关掉"自动代理发现" / "HTTPS 代理"
+#    （已踩过坑：开着全局代理会让 release.pear.us 接口随机 SSL 报错）
+```
+
+#### 2.0.5 一键自检脚本
+
+第一次装完后跑这个，确认环境就绪：
+
+```bash
+echo "== git ==" && git --version
+echo "== python ==" && python3 --version     # 系统 python，只看版本
+echo "== managed python ==" && /Users/a123456/.workbuddy/binaries/python/envs/default/bin/python --version 2>/dev/null || echo "（未安装托管 Python，找 TL）"
+echo "== pip ==" && python3 -m pip --version
+echo "== curl ==" && curl --version | head -1
+echo "== brew ==" && brew --version | head -1
+echo "== docker (可选) ==" && docker --version 2>/dev/null || echo "（跳过）"
+echo "== allure (可选) ==" && allure --version 2>/dev/null || echo "（跳过）"
+
+# 期望输出（版本号可以不同）：
+# == git ==
+# git version 2.39.x
+# == python ==
+# Python 3.9.x                       ← 系统 python，不必是 3.10+
+# == managed python ==
+# Python 3.13.x                      ← 托管 python，必须 ≥ 3.10
+# == pip ==
+# pip 23.x
+# == curl ==
+# curl 8.x
+# == brew ==
+# Homebrew 4.x
+```
+
+如果 **managed python** 那行打印"未安装"，请联系 TL——**不能**只用系统 Python，
+否则一上来就会撞上 PEP 604 报错。
+
 ### 2.1 Python（强约束）
 
 - **必须 Python ≥ 3.10**：本仓大量使用 PEP 604 `X | None`、pytest 9。

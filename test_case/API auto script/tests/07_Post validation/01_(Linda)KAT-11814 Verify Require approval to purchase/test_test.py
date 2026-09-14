@@ -49,11 +49,34 @@ def test_test(ctx):
     vars['$string.uuid'] = str(uuid.uuid4())
     # === Steps ===
     # step 1: 22b39deb-e976-49a4-a94b-246d0015eae9
-    _resp1 = ctx.api.auth.guest_login(body='{\r\n    "consumerId": "{{__uuid_1}}"\r\n}')
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_1}}",
+    })
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
     # step 2: c2c7d898-eb0e-4f49-9f2f-e364b14259b3
-    _resp2 = ctx.api.cart.update(body='{\n    "fbAdParams": {\n        "eventID": "0bc21151-180e-47cc-877b-4e65e98f3818",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1788334482977.794598099244596576",\n        "externalId": "ce119dc8-4bd9-4759-89b5-c000d8b27e9a",\n        "eventSourceUrl": "https://release.pear.us/resident/post/mexico-vs-ecuador-0630-1"\n    },\n    "items": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "b6def878-7d7a-4336-b3a2-74be1f44b788",\n            "price": 25.2,\n            "postId": "250c6120-735e-4c13-8afb-736d56e9cb25",\n            "customFields": []\n        }\n    ],\n    "lite": true,\n    "subdomainVanityUrl": ""\n}', app_headers=True, token='access_token')
+    _resp2 = ctx.api.cart.update(body={
+        "fbAdParams": {
+            "eventID": "0bc21151-180e-47cc-877b-4e65e98f3818",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1788334482977.794598099244596576",
+            "externalId": "ce119dc8-4bd9-4759-89b5-c000d8b27e9a",
+            "eventSourceUrl": "https://release.pear.us/resident/post/mexico-vs-ecuador-0630-1",
+        },
+        "items": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "b6def878-7d7a-4336-b3a2-74be1f44b788",
+                "price": 25.2,
+                "postId": "250c6120-735e-4c13-8afb-736d56e9cb25",
+                "customFields": [],
+            },
+        ],
+        "lite": True,
+        "subdomainVanityUrl": "",
+    }, app_headers=True, token='access_token')
     _firstNames = ["linda","james","alex","emma","michael","sophia","david","olivia"]
     vars['randomFirstName'] = random.choice(_firstNames)
     _lastNames = ["zhou","smith","johnson","wang","brown","lee","chen","taylor"]
@@ -61,7 +84,12 @@ def test_test(ctx):
     vars['randomNumber'] = str(random.randint(1, 999))
     vars['randomEmail'] = f"linda.zhou.ext+{vars['randomNumber']}@1m.app"
     # step 3: 9a94d50a-3c6e-4b36-9795-d0c9a4094c7b
-    _resp3 = ctx.api.approvals.create(body='{\n    "postId": "250c6120-735e-4c13-8afb-736d56e9cb25",\n    "firstName": "{{randomFirstName}}",\n    "lastName": "{{randomLastName}}",\n    "email": "{{randomEmail}}"\n}\n\n', token='access_token')
+    _resp3 = ctx.api.approvals.create(body={
+        "postId": "250c6120-735e-4c13-8afb-736d56e9cb25",
+        "firstName": "{{randomFirstName}}",
+        "lastName": "{{randomLastName}}",
+        "email": "{{randomEmail}}",
+    }, token='access_token')
     # --- assertions: no fake-green (non-4xx/5xx) ---
     assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
     assert _resp2.status_code < 400, f"step2 got HTTP {_resp2.status_code}: {_resp2.text[:200]}"

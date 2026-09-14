@@ -55,13 +55,108 @@ def test_demi_t4166_verify_the_event_can_be_created_successfully(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Create event
-    _resp1 = ctx.api.events.v2(body='{\n    "ignoreStartTime": true,\n    "ignoreEndTime": true,\n    "isTimeUnspecified": false,\n    "allowAutoComplete": true,\n    "description": "",\n    "note": "21+ refunds by linda",\n    "location": "Canada Line - SkyTrain, Metro Vancouver, BC, Canada",\n    "status": "UPCOMING",\n    "descriptionBodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "isTaxEnabled": true,\n    "isAddressRevealEnabled": false,\n    "title": "API auto test T4166",\n    "venue": "Instagram Live, Zoom, In-person",\n    "timezone": {\n        "timeZoneId": "America/Vancouver",\n        "timeZoneName": "Pacific Daylight Time",\n        "dstOffset": 3600,\n        "rawOffset": -28800\n    },\n    "poster": {\n        "height": 2048,\n        "width": 3072,\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "mediaType": "IMAGE"\n    },\n    "startDateDisplay": "2056-04-01",\n    "locationDetails": {\n        "line1": "Canada Line - SkyTrain",\n        "city": "",\n        "state": "British Columbia",\n        "stateName": "British Columbia",\n        "zipcode": "",\n        "country": "Canada",\n        "placeId": "EjNDYW5hZGEgTGluZSAtIFNreVRyYWluLCBNZXRybyBWYW5jb3V2ZXIsIEJDLCBDYW5hZGEiLiosChQKEgl7kAKs3XSGVBHQ0p4DNxpJ8RIUChIJpd_5BZDOYlQRpvz0npdsnM4"\n    },\n    "taxConfig": {\n        "customTaxRate": 10,\n        "calculationType": "CUSTOM"\n    }\n}', token='xuan22_token')
+    _resp1 = ctx.api.events.v2(body={
+        "ignoreStartTime": True,
+        "ignoreEndTime": True,
+        "isTimeUnspecified": False,
+        "allowAutoComplete": True,
+        "description": "",
+        "note": "21+ refunds by linda",
+        "location": "Canada Line - SkyTrain, Metro Vancouver, BC, Canada",
+        "status": "UPCOMING",
+        "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
+        "isTaxEnabled": True,
+        "isAddressRevealEnabled": False,
+        "title": "API auto test T4166",
+        "venue": "Instagram Live, Zoom, In-person",
+        "timezone": {
+            "timeZoneId": "America/Vancouver",
+            "timeZoneName": "Pacific Daylight Time",
+            "dstOffset": 3600,
+            "rawOffset": -28800,
+        },
+        "poster": {
+            "height": 2048,
+            "width": 3072,
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+            "mediaType": "IMAGE",
+        },
+        "startDateDisplay": "2056-04-01",
+        "locationDetails": {
+            "line1": "Canada Line - SkyTrain",
+            "city": "",
+            "state": "British Columbia",
+            "stateName": "British Columbia",
+            "zipcode": "",
+            "country": "Canada",
+            "placeId": "EjNDYW5hZGEgTGluZSAtIFNreVRyYWluLCBNZXRybyBWYW5jb3V2ZXIsIEJDLCBDYW5hZGEiLiosChQKEgl7kAKs3XSGVBHQ0p4DNxpJ8RIUChIJpd_5BZDOYlQRpvz0npdsnM4",
+        },
+        "taxConfig": {
+            "customTaxRate": 10,
+            "calculationType": "CUSTOM",
+        },
+    }, token='xuan22_token')
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
     # extract created event id (orig: pm.environment.set("created_event_id", resJson.data.id))
     ctx.extract('created_event_id', _resp1, '$.data.id')
     # step 2: 9d87a6e4-0a90-42ed-a88b-7831049d3fdb
-    _resp2 = ctx.api.events.v2_ticket_batch_v2(body='{\r\n    "poster": {\r\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\r\n        "width": 3072,\r\n        "height": 2048,\r\n        "position": 0,\r\n        "mediaType": "IMAGE",\r\n        "mediaDuration": 0\r\n    },\r\n    "listingType": "TICKET",\r\n    "isTaxEnabled": true,\r\n    "taxConfig": {\r\n        "customTaxRate": 10,\r\n        "calculationType": "CUSTOM",\r\n        "configUpdatedAt": "2026-03-25T07:16:01.387Z"\r\n    },\r\n    "autoReplace": false,\r\n    "tickets": [\r\n        {\r\n            "listingType": "TICKET",\r\n            "images": [\r\n                {\r\n                    "id": "80f43627-4bef-49b0-934b-cd63d49f8787",\r\n                    "height": 1000,\r\n                    "width": 1000,\r\n                    "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",\r\n                    "mediaType": "IMAGE"\r\n                }\r\n            ],\r\n            "title": "General Admission",\r\n            "bodyJson": "",\r\n            "options": [\r\n                {\r\n                    "name": "Title",\r\n                    "values": [\r\n                        "Default Title"\r\n                    ],\r\n                    "images": []\r\n                }\r\n            ],\r\n            "variants": [\r\n                {\r\n                    "inventoryQuantity": 10,\r\n                    "ticketPrice": 0,\r\n                    "price": 0,\r\n                    "fees": 0,\r\n                    "priceAnchor": 0,\r\n                    "option": {\r\n                        "option1": "Default Title"\r\n                    }\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    "coSellingCommissionRate": 24\r\n}', token='xuan22_token', path_vars={'event_id': '{{created_event_id}}'})
+    _resp2 = ctx.api.events.v2_ticket_batch_v2(body={
+    'poster': {
+        'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+        'width': 3072,
+        'height': 2048,
+        'position': 0,
+        'mediaType': 'IMAGE',
+        'mediaDuration': 0,
+    },
+    'listingType': 'TICKET',
+    'isTaxEnabled': True,
+    'taxConfig': {
+        'customTaxRate': 10,
+        'calculationType': 'CUSTOM',
+        'configUpdatedAt': '2026-03-25T07:16:01.387Z',
+    },
+    'autoReplace': False,
+    'tickets': [
+        {
+            'listingType': 'TICKET',
+            'images': [
+                {
+                    'id': '80f43627-4bef-49b0-934b-cd63d49f8787',
+                    'height': 1000,
+                    'width': 1000,
+                    'src': 'https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png',
+                    'mediaType': 'IMAGE',
+                },
+            ],
+            'title': 'General Admission',
+            'bodyJson': '',
+            'options': [
+                {
+                    'name': 'Title',
+                    'values': [
+                        'Default Title',
+                    ],
+                    'images': [],
+                },
+            ],
+            'variants': [
+                {
+                    'inventoryQuantity': 10,
+                    'ticketPrice': 0,
+                    'price': 0,
+                    'fees': 0,
+                    'priceAnchor': 0,
+                    'option': {
+                        'option1': 'Default Title',
+                    },
+                },
+            ],
+        },
+    ],
+    'coSellingCommissionRate': 24,
+}, token='xuan22_token', path_vars={'event_id': '{{created_event_id}}'})
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success

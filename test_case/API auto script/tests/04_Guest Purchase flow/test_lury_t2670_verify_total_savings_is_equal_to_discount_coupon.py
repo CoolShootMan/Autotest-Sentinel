@@ -67,10 +67,42 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: guest get token
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda"\n}', app_headers=False)
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
+    }, app_headers=False)
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: buy now
-    _resp2 = ctx.api.orders.buy_now(body='{\n  "postIdForFilter": "934e7fb1-94d7-4507-84fd-0bddd03eba62",\n  "updateCartItems": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "bb380ac8-eaea-4278-963e-a1e70e28b862",\n      "price": 2,\n      "postId": "934e7fb1-94d7-4507-84fd-0bddd03eba62",\n      "selected": true,\n      "customFields": []\n    }\n  ],\n  "fbAdParams": {\n    "eventID": "fa2e3f3c-8fd9-49ea-bca6-22c1675990d6",\n    "pixelId": [\n      "test"\n    ],\n    "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n    "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n    "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8"\n  },\n  "currentUpdateCartItems": [\n    {\n      "quantity": 1,\n      "id": "bb380ac8-eaea-4278-963e-a1e70e28b862",\n      "postId": "934e7fb1-94d7-4507-84fd-0bddd03eba62",\n      "price": 2,\n      "customFields": []\n    }\n  ]\n}')
+    _resp2 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "934e7fb1-94d7-4507-84fd-0bddd03eba62",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "bb380ac8-eaea-4278-963e-a1e70e28b862",
+                "price": 2,
+                "postId": "934e7fb1-94d7-4507-84fd-0bddd03eba62",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "fa2e3f3c-8fd9-49ea-bca6-22c1675990d6",
+            "pixelId": [
+                "test",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/yu-xiao/post/zileb8",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "bb380ac8-eaea-4278-963e-a1e70e28b862",
+                "postId": "934e7fb1-94d7-4507-84fd-0bddd03eba62",
+                "price": 2,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp2, 'orderNumber')
     # extractor: orderId = orderId
@@ -83,4 +115,14 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx):
         if _item.get('productTitle') == "general + In-person":
             vars['lineItemId'] = _item.get('lineItemId')
     # step 4: apply promotion
-    _resp4 = ctx.api.orders.update_promotions(body='{\n    "postIdForFilter": "934e7fb1-94d7-4507-84fd-0bddd03eba62",\n    "orderId": "{{orderId}}",\n    "shippingAddress": {\n        "line1": "11111 Research Boulevard",\n        "state": "TX",\n        "city": "Austin",\n        "zipcode": "78759"\n    },\n    "applicableCode":"autocoupon10"\n}')
+    _resp4 = ctx.api.orders.update_promotions(body={
+        "postIdForFilter": "934e7fb1-94d7-4507-84fd-0bddd03eba62",
+        "orderId": "{{orderId}}",
+        "shippingAddress": {
+            "line1": "11111 Research Boulevard",
+            "state": "TX",
+            "city": "Austin",
+            "zipcode": "78759",
+        },
+        "applicableCode": "autocoupon10",
+    })

@@ -538,22 +538,77 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n    "updateCartItems": [\n        {\n            "quantity": 2,\n            "promoterProductVariantId": "709c0762-dace-4d22-ab34-18c226a8f003",\n            "price": 13.1,\n            "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "86aead4c-e551-42db-9ae1-09f0031708ed",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/auto-merchant/post/event-lury-ticket-tax-6-2"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 2,\n            "id": "709c0762-dace-4d22-ab34-18c226a8f003",\n            "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n            "price": 26.2,\n            "customFields": []\n        }\n    ]\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "709c0762-dace-4d22-ab34-18c226a8f003",
+                "price": 13.1,
+                "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "86aead4c-e551-42db-9ae1-09f0031708ed",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/auto-merchant/post/event-lury-ticket-tax-6-2",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "709c0762-dace-4d22-ab34-18c226a8f003",
+                "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+                "price": 26.2,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number()
     # step 6: Login-M1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
@@ -568,7 +623,10 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     vars['item_unit_id_list'] = [_u.get('id') for _p in _arr for _u in _p.get('orderLineItemUnits') or []]
     # step 8: Login - merchant
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp8, '$.data.token')
     # step 9: get merchant orders
     _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -576,26 +634,72 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     # step 10: get merhcant order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2()
     # step 11: Partner partial refund 1 ticket
-    _resp11 = ctx.api.orders.refunds(body='{\n    "lineItems": [\n        {\n            "id": "{{orderLineItemId}}",\n            "quantity": 1,\n            "lineItemUnitIds": [\n                "{{first_item_unit_id}}"\n            ]\n        }\n    ],\n    "shippingLines": [],\n    "tipLines": [],\n    "note": "Automation test"\n}')
+    _resp11 = ctx.api.orders.refunds(body={
+        "lineItems": [
+            {
+                "id": "{{orderLineItemId}}",
+                "quantity": 1,
+                "lineItemUnitIds": [
+                    "{{first_item_unit_id}}",
+                ],
+            },
+        ],
+        "shippingLines": [],
+        "tipLines": [],
+        "note": "Automation test",
+    })
     # step 12: Login-M1
-    _resp12 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp12 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp12, '$.data.token')
     # step 13: get M1 order detail v2
     _resp13 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
     # step 14: Login - merchant
-    _resp14 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp14 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp14, '$.data.token')
     # step 15: get merhcant order detail v2
     _resp15 = ctx.api.orders.promoter_detail_v2()
     # step 16: Partner full refund order on sale details page
-    _resp16 = ctx.api.orders.refunds(body='{\n    "lineItems": [\n        {\n            "id": "{{orderLineItemId}}",\n            "quantity": 1,\n            "lineItemUnitIds": [\n                "{{second_item_unit_id}}"\n            ]\n        }\n    ],\n    "shippingLines": [\n        {\n            "merchantOrderId": "{{refund_id}}"\n        }\n    ],\n    "tipLines": [\n        {\n            "merchantOrderId": "{{refund_id}}"\n        }\n    ],\n    "note": "Automation full refund"\n}')
+    _resp16 = ctx.api.orders.refunds(body={
+        "lineItems": [
+            {
+                "id": "{{orderLineItemId}}",
+                "quantity": 1,
+                "lineItemUnitIds": [
+                    "{{second_item_unit_id}}",
+                ],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{refund_id}}",
+            },
+        ],
+        "tipLines": [
+            {
+                "merchantOrderId": "{{refund_id}}",
+            },
+        ],
+        "note": "Automation full refund",
+    })
     # step 17: Login-M1
-    _resp17 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp17 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp17, '$.data.token')
     # step 18: get M1 order detail v2
     _resp18 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
     # step 19: Login - merchant
-    _resp19 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp19 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp19, '$.data.token')
     # step 20: get merhcant order detail v2
     _resp20 = ctx.api.orders.promoter_detail_v2()

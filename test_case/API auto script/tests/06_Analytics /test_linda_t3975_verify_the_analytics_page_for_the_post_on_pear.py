@@ -290,9 +290,37 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx):
     vars['threeDaysAgo'] = _fmt(_today - datetime.timedelta(days=3))
     # === Steps ===
     # step 1: da5cc6c6-6328-4a17-8cd8-1c73513bee2c
-    _resp1 = ctx.api.analytics.post_summary(body='{\r\n    "postId": [\r\n        "5972f262-ba27-44fc-91cd-cf1054d632a9"\r\n    ],\r\n    "timeRanges": [\r\n        {\r\n            "startTime": "{{startTime}}",\r\n            "endTime": "{{endTime}}"\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp1 = ctx.api.analytics.post_summary(body={
+        "postId": [
+            "5972f262-ba27-44fc-91cd-cf1054d632a9",
+        ],
+        "timeRanges": [
+            {
+                "startTime": "{{startTime}}",
+                "endTime": "{{endTime}}",
+            },
+        ],
+    }, token='linda01_token')
     # step 2: 1fc2ed76-622b-49a4-8e4f-60951912f284
-    _resp2 = ctx.api.analytics.post_summary(body='{\r\n    "postString": [\r\n        "https://release.pear.us/lindazhoucurator/post/automation-test-event-with-in-person-delivery-t4251"\r\n    ],\r\n    "timeRanges": [\r\n        {\r\n            "startTime": "{{Yesterday}}",\r\n            "endTime": "{{Yesterday}}"\r\n        },\r\n        {\r\n            "startTime": "{{dayBeforeYesterday}}",\r\n            "endTime": "{{dayBeforeYesterday}}"\r\n        },\r\n        {\r\n            "startTime": "{{threeDaysAgo}}",\r\n            "endTime": "{{threeDaysAgo}}"\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp2 = ctx.api.analytics.post_summary(body={
+        "postString": [
+            "https://release.pear.us/lindazhoucurator/post/automation-test-event-with-in-person-delivery-t4251",
+        ],
+        "timeRanges": [
+            {
+                "startTime": "{{Yesterday}}",
+                "endTime": "{{Yesterday}}",
+            },
+            {
+                "startTime": "{{dayBeforeYesterday}}",
+                "endTime": "{{dayBeforeYesterday}}",
+            },
+            {
+                "startTime": "{{threeDaysAgo}}",
+                "endTime": "{{threeDaysAgo}}",
+            },
+        ],
+    }, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step1: postId 查询 ----
     _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}

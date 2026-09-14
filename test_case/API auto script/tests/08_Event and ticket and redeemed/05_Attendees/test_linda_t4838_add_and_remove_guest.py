@@ -92,7 +92,14 @@ def test_linda_t4838_add_and_remove_guest(ctx):
     vars['usPhoneNumber'] = '+1' + random.choice(_areaCodes) + str(random.randint(200, 999)) + str(random.randint(1000, 9999))
     vars['randomEmail'] = 'qa_guests_' + str(random.randint(100000, 999999)) + '@test.com'
     # step 2: e2202c93-05de-4d9d-aa0f-dee2a7ec8941
-    _resp2 = ctx.api.events.guests(body='{\n    "phoneNumber": "{{usPhoneNumber}}",\n    "email": "{{randomEmail}}",\n    "firstName": "{{$randomFirstName}}",\n    "lastName": "{{$randomLastName}}",\n    "groupIds": [],\n    "eventId": "{{event_id}}"\n}', token='yuxiao999_token')
+    _resp2 = ctx.api.events.guests(body={
+        "phoneNumber": "{{usPhoneNumber}}",
+        "email": "{{randomEmail}}",
+        "firstName": "{{$randomFirstName}}",
+        "lastName": "{{$randomLastName}}",
+        "groupIds": [],
+        "eventId": "{{event_id}}",
+    }, token='yuxiao999_token')
     # --- post 脚本: 提取 guest_id ---
     _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert isinstance(_j2.get('data'), dict), f"data 不是对象: {_j2!r}"
@@ -100,6 +107,11 @@ def test_linda_t4838_add_and_remove_guest(ctx):
     assert isinstance(_gid2, str) and _gid2, f"guest_id 为空: {_j2.get('data')!r}"
     vars['guest_id'] = _gid2
     # step 3: 962c7735-9f52-41dc-9bf9-ad892ab6de30
-    _resp3 = ctx.api.events.guests_batch(body='{"guestIds":["{{guest_id}}"],"eventId":"{{event_id}}"}', token='yuxiao999_token')
+    _resp3 = ctx.api.events.guests_batch(body={
+        "guestIds": [
+            "{{guest_id}}",
+        ],
+        "eventId": "{{event_id}}",
+    }, token='yuxiao999_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

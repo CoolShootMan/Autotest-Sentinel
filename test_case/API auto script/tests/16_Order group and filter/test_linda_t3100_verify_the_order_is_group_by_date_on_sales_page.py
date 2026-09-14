@@ -81,11 +81,38 @@ def test__5942267__Linda_T3100_Verify_the_order_is_group_by_date_on_sales_page(c
     vars['merchant_id'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['consumer_id'] = '7bc6ed8d-51de-446b-8c64-fd321cf1a45d'
     # step 1: c0054035-df18-4100-a877-b2a95ec9952c
-    _resp1 = ctx.api.misc.user_business_operation(body='{\r\n    "notificationSettings": {\r\n        "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n        "verifyingSenderEmail": "lindazhou@2925.com",\r\n        "verifyingSenderEmailVerificationStatus": "SUCCESS",\r\n        "emailEnabled": true,\r\n        "createdAt": "2025-03-19T03:24:01.390Z",\r\n        "updatedAt": "2026-01-27T06:59:20.734Z"\r\n    },\r\n    "supportContact": {\r\n        "email": "linda.zhou.ext@1m.app",\r\n        "url": ""\r\n    },\r\n    "salesNotificationEmails": [\r\n        "linda.zhou.ext+00@1m.app"\r\n    ],\r\n    "timeZone": "{{timeZoneAsia}}",\r\n    "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",\r\n    "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE"\r\n}', token='linda00_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['timeZoneAsia'] = "Asia/Shanghai"
+    vars['merchant_id'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
+    vars['consumer_id'] = "7bc6ed8d-51de-446b-8c64-fd321cf1a45d"
+
+    _resp1 = ctx.api.misc.user_business_operation(body={
+        "notificationSettings": {
+            "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+            "verifyingSenderEmail": "lindazhou@2925.com",
+            "verifyingSenderEmailVerificationStatus": "SUCCESS",
+            "emailEnabled": True,
+            "createdAt": "2025-03-19T03:24:01.390Z",
+            "updatedAt": "2026-01-27T06:59:20.734Z",
+        },
+        "supportContact": {
+            "email": "linda.zhou.ext@1m.app",
+            "url": "",
+        },
+        "salesNotificationEmails": [
+            "linda.zhou.ext+00@1m.app",
+        ],
+        "timeZone": "{{timeZoneAsia}}",
+        "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",
+        "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE",
+    }, token='linda00_token')
     # assertion 1.assertion: responseJson equal {{timeZoneAsia}}
     expect(_resp1).json('$.data.timeZone').equals(ctx.render_text('{{timeZoneAsia}}'))
     vars['expected_paid'] = '100'
     # step 2: Check the commission earnings list group by date
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['expected_paid'] = 100
+
     # DB 步骤（Apifox database 处理器）: Select the order account group by created_da
     ctx.run_db(112809, """-- 外层查询用于按天分组统计前 30 条记录
 SELECT
@@ -123,11 +150,36 @@ ORDER BY
     expect(_resp2).json('$.data.totalCount').equals(ctx.render_text('{{sales}}'))
     vars['timeZoneAsiaAmerica'] = 'America/Los_Angeles'
     # step 3: 1a52d6ee-7ed2-4f81-8048-4acbb8211a10
-    _resp3 = ctx.api.misc.user_business_operation(body='{\r\n    "notificationSettings": {\r\n        "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n        "verifyingSenderEmail": "lindazhou@2925.com",\r\n        "verifyingSenderEmailVerificationStatus": "SUCCESS",\r\n        "emailEnabled": true,\r\n        "createdAt": "2025-03-19T03:24:01.390Z",\r\n        "updatedAt": "2026-01-27T06:59:20.734Z"\r\n    },\r\n    "supportContact": {\r\n        "email": "linda.zhou.ext@1m.app",\r\n        "url": ""\r\n    },\r\n    "salesNotificationEmails": [\r\n        "linda.zhou.ext+00@1m.app"\r\n    ],\r\n    "timeZone": "{{timeZoneAsiaAmerica}}",\r\n    "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",\r\n    "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE"\r\n}', token='linda00_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['timeZoneAsiaAmerica'] = "America/Los_Angeles"
+
+    _resp3 = ctx.api.misc.user_business_operation(body={
+        "notificationSettings": {
+            "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+            "verifyingSenderEmail": "lindazhou@2925.com",
+            "verifyingSenderEmailVerificationStatus": "SUCCESS",
+            "emailEnabled": True,
+            "createdAt": "2025-03-19T03:24:01.390Z",
+            "updatedAt": "2026-01-27T06:59:20.734Z",
+        },
+        "supportContact": {
+            "email": "linda.zhou.ext@1m.app",
+            "url": "",
+        },
+        "salesNotificationEmails": [
+            "linda.zhou.ext+00@1m.app",
+        ],
+        "timeZone": "{{timeZoneAsiaAmerica}}",
+        "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",
+        "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE",
+    }, token='linda00_token')
     # assertion 3.assertion: responseJson equal {{timeZoneAsiaAmerica}}
     expect(_resp3).json('$.data.timeZone').equals(ctx.render_text('{{timeZoneAsiaAmerica}}'))
     vars['expected_paid'] = '100'
     # step 4: Check the commission earnings list group by date
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['expected_paid'] = 100
+
     # DB 步骤（Apifox database 处理器）: Select the order account group by created_da
     ctx.run_db(112809, """-- 外层查询用于按天分组统计前 30 条记录
 SELECT

@@ -46,7 +46,10 @@ def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda00 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+00@1m.app"\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+00@1m.app",
+    }, app_headers=True)
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
@@ -56,7 +59,20 @@ def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_
     # 缺失时 {{CompareAtPrice}} 渲染为空 -> priceAnchor 为空，断言比对失败。
     vars['CompareAtPrice'] = _random.randint(100, 999)
     # step 2: 1df491e4-654f-4bca-9fed-758dbdaf74da
-    _resp2 = ctx.api.admin.merchant_product_by_product_id(body='{\r\n    "variants": [\r\n        {\r\n            "priceAnchor": "{{CompareAtPrice}}",\r\n            "title": "Default Title",\r\n            "id": "{{VariantsId}}",\r\n            "option": {\r\n                "option1": "Default Title",\r\n                "option2": null,\r\n                "option3": null\r\n            }\r\n        }\r\n    ]\r\n}', token='admin_token')
+    _resp2 = ctx.api.admin.merchant_product_by_product_id(body={
+        "variants": [
+            {
+                "priceAnchor": "{{CompareAtPrice}}",
+                "title": "Default Title",
+                "id": "{{VariantsId}}",
+                "option": {
+                    "option1": "Default Title",
+                    "option2": None,
+                    "option3": None,
+                },
+            },
+        ],
+    }, token='admin_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
@@ -68,6 +84,10 @@ def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_
     vars['merchantProductName'] = 'PlayTime SuperSocks'
     vars['merchantId'] = '7c2db5d2-92f0-4090-a1ef-55a811b12a6f'
     # step 3: Check the compate-at-price sync to the catalog
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['merchantProductName'] = "PlayTime SuperSocks"
+    vars['merchantId'] = "7c2db5d2-92f0-4090-a1ef-55a811b12a6f"
+
     _resp3 = ctx.api.products.list(token='linda00_token', params={'keyword': '{{merchantProductName}}', 'sortCreatedAt': 'desc', 'merchantId': '{{merchantId}}', 'status[]': ['ACTIVE', 'DRAFT'], 'pageSize': '50', 'pageNumber': '1'})
     # assertion 3.assertion: responseJson equal {{CompareAtPrice}}
     expect(_resp3).json('$.data.items[0].priceDisplayAnchor').equals(ctx.render_text('{{CompareAtPrice}}'))

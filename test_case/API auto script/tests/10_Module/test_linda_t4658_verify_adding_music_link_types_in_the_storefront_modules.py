@@ -391,7 +391,13 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     vars['dynamicTitle'] = 'Automation music ' + str(random.randint(10000, 99999))
     # === Steps ===
     # step 1: 7f06967e-944b-45ca-a527-386b2b8319fa
-    _resp1 = ctx.api.storefront.module(body='{\r\n    "type": "LINK",\r\n    "direction": "VERTICAL",\r\n    "linkType": "MUSIC",\r\n    "title": "{{dynamicTitle}}",\r\n    "visible": true\r\n}', token='linda01_token')
+    _resp1 = ctx.api.storefront.module(body={
+        "type": "LINK",
+        "direction": "VERTICAL",
+        "linkType": "MUSIC",
+        "title": "{{dynamicTitle}}",
+        "visible": True,
+    }, token='linda01_token')
     # === 断言/提取（由Apifox customScript翻译）===
     _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"step1 code != 200, got {_j1.get('code')}"
@@ -430,7 +436,7 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
         "mediaSrc": "https://res.cloudinary.com/dr9io1zjv/v1765509128/uploaded_images/vqesoltctfxgyufqun0t.jpg",
         "showBelowTitle": False,
     }
-    _resp2 = ctx.api.links.create(body=json.dumps(_music_body), token='linda01_token')
+    _resp2 = ctx.api.links.create(body=_music_body, token='linda01_token')
     # === 断言/提取（由Apifox customScript翻译）===
     _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
@@ -446,7 +452,15 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     assert _d2.get('id'), "step2 data.id 为空"
     vars['moduleContentId'] = _d2.get('id')
     # step 3: 02b3432c-17c6-4bce-8fc9-01d250e4c238
-    _resp3 = ctx.api.storefront.module_item_by_dynamic_music_link_id(body='{\r\n    "id": "{{dynamicMusicLinkId}}",\r\n    "items": [\r\n        {\r\n            "itemId": "a4ed8dd4-e38c-4fca-a5e1-7060cb018d8d",\r\n            "position": 1\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp3 = ctx.api.storefront.module_item_by_dynamic_music_link_id(body={
+        "id": "{{dynamicMusicLinkId}}",
+        "items": [
+            {
+                "itemId": "a4ed8dd4-e38c-4fca-a5e1-7060cb018d8d",
+                "position": 1,
+            },
+        ],
+    }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"step3 code != 200, got {_j3.get('code')}"

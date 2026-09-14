@@ -147,7 +147,11 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx):
         if _c.get('identifier') == ctx.get('UIauto_coseller_email'):
             ctx.api.events.by_co_hostid(path_vars={'co-hostid': _c['id']}, token='yuxiao999_token')
     # step 2: 13bbae7b-1f91-4497-942f-22e0ead5c8b6
-    _resp2 = ctx.api.events.create(body='{\n    "eventId": "{{event_id}}",\n    "identifier": "{{UIauto_coseller_email}}",\n    "role": "BASIC"\n}', token='yuxiao999_token')
+    _resp2 = ctx.api.events.create(body={
+        "eventId": "{{event_id}}",
+        "identifier": "{{UIauto_coseller_email}}",
+        "role": "BASIC",
+    }, token='yuxiao999_token')
     ctx.extract('co-hostid', _resp2, '$.data.id')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     assert _resp2.status_code == 201, f"HTTP状态码应为201，实际={_resp2.status_code}"

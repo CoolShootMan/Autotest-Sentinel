@@ -189,7 +189,14 @@ def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is
     vars['account_email_merchant'] = 'dian.yuhong.ext@1m.app'
     vars['password_merchant'] = '178Ad6e0aF0Ec22Ab948d8c0c69Ae072'
     # step 1: Get Partner linda00 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+00@1m.app"\n}')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['account_email_merchant'] = "dian.yuhong.ext@1m.app"
+    vars['password_merchant'] = "178Ad6e0aF0Ec22Ab948d8c0c69Ae072"
+
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+00@1m.app",
+    })
     ctx.extract('merchant_access_token', _resp1, '$.data.token')
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp1, '$.data.token')
@@ -198,7 +205,31 @@ def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is
     vars['merchant_id'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['consumer_id'] = '7bc6ed8d-51de-446b-8c64-fd321cf1a45d'
     # step 2: 214c5e81-1da1-4814-9f18-ee95bad4b279
-    _resp2 = ctx.api.misc.user_business_operation(body='{\r\n    "notificationSettings": {\r\n        "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n        "verifyingSenderEmail": "lindazhou@2925.com",\r\n        "verifyingSenderEmailVerificationStatus": "SUCCESS",\r\n        "emailEnabled": true,\r\n        "createdAt": "2025-03-19T03:24:01.390Z",\r\n        "updatedAt": "2026-01-27T06:59:20.734Z"\r\n    },\r\n    "supportContact": {\r\n        "email": "linda.zhou.ext@1m.app",\r\n        "url": ""\r\n    },\r\n    "salesNotificationEmails": [\r\n        "linda.zhou.ext+00@1m.app"\r\n    ],\r\n    "timeZone": "{{timeZoneAsia}}",\r\n    "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",\r\n    "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE"\r\n}', token='linda00_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['timeZoneAsia'] = "Asia/Shanghai"
+    vars['merchant_id'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
+    vars['consumer_id'] = "7bc6ed8d-51de-446b-8c64-fd321cf1a45d"
+
+    _resp2 = ctx.api.misc.user_business_operation(body={
+        "notificationSettings": {
+            "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+            "verifyingSenderEmail": "lindazhou@2925.com",
+            "verifyingSenderEmailVerificationStatus": "SUCCESS",
+            "emailEnabled": True,
+            "createdAt": "2025-03-19T03:24:01.390Z",
+            "updatedAt": "2026-01-27T06:59:20.734Z",
+        },
+        "supportContact": {
+            "email": "linda.zhou.ext@1m.app",
+            "url": "",
+        },
+        "salesNotificationEmails": [
+            "linda.zhou.ext+00@1m.app",
+        ],
+        "timeZone": "{{timeZoneAsia}}",
+        "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",
+        "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE",
+    }, token='linda00_token')
     # assertion 2.assertion: responseJson equal {{timeZoneAsia}}
     expect(_resp2).json('$.data.timeZone').equals(ctx.render_text('{{timeZoneAsia}}'))
     # --- 人工补丁：还原被丢弃的 startTime / endTime 时间窗口 ---
@@ -433,7 +464,29 @@ order by
     expect(_resp5).json('$.data.extra[1].createdDay').equals(ctx.render_text('{{order_date1}}'))
     vars['timeZoneAsiaAmerica'] = 'America/Los_Angeles'
     # step 6: 9faaec4b-543d-466d-9c8c-efcd846aa988
-    _resp6 = ctx.api.misc.user_business_operation(body='{\r\n    "notificationSettings": {\r\n        "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n        "verifyingSenderEmail": "lindazhou@2925.com",\r\n        "verifyingSenderEmailVerificationStatus": "SUCCESS",\r\n        "emailEnabled": true,\r\n        "createdAt": "2025-03-19T03:24:01.390Z",\r\n        "updatedAt": "2026-01-27T06:59:20.734Z"\r\n    },\r\n    "supportContact": {\r\n        "email": "linda.zhou.ext@1m.app",\r\n        "url": ""\r\n    },\r\n    "salesNotificationEmails": [\r\n        "linda.zhou.ext+00@1m.app"\r\n    ],\r\n    "timeZone": "{{timeZoneAsiaAmerica}}",\r\n    "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",\r\n    "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE"\r\n}', token='linda00_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['timeZoneAsiaAmerica'] = "America/Los_Angeles"
+
+    _resp6 = ctx.api.misc.user_business_operation(body={
+        "notificationSettings": {
+            "userId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+            "verifyingSenderEmail": "lindazhou@2925.com",
+            "verifyingSenderEmailVerificationStatus": "SUCCESS",
+            "emailEnabled": True,
+            "createdAt": "2025-03-19T03:24:01.390Z",
+            "updatedAt": "2026-01-27T06:59:20.734Z",
+        },
+        "supportContact": {
+            "email": "linda.zhou.ext@1m.app",
+            "url": "",
+        },
+        "salesNotificationEmails": [
+            "linda.zhou.ext+00@1m.app",
+        ],
+        "timeZone": "{{timeZoneAsiaAmerica}}",
+        "emailSalesNotificationFrequency": "SALES_NOTIFY_WEEKLY",
+        "smsSalesNotificationFrequency": "SALES_NOTIFY_NONE",
+    }, token='linda00_token')
     # assertion 6.assertion: responseJson equal {{timeZoneAsiaAmerica}}
     expect(_resp6).json('$.data.timeZone').equals(ctx.render_text('{{timeZoneAsiaAmerica}}'))
     # --- 人工补丁：切到 America/Los_Angeles 的窗口（step7）---

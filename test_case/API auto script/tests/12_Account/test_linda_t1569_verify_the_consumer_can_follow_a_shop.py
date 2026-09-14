@@ -27,7 +27,11 @@ def test_linda_t1569_verify_the_consumer_can_follow_a_shop(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: cf2d2348-42de-4581-a164-f1b242383c21
-    _resp1 = ctx.api.promoters.create(body='{\r\n    "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n    "smsSubscribe": true,\r\n    "emailSubscribe": true\r\n}', token='linda10_token')
+    _resp1 = ctx.api.promoters.create(body={
+        "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+        "smsSubscribe": True,
+        "emailSubscribe": True,
+    }, token='linda10_token')
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # assertion 1.assertion: responseJson equal subscribe done
@@ -35,7 +39,11 @@ def test_linda_t1569_verify_the_consumer_can_follow_a_shop(ctx):
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
     # step 2: d1b034f7-0547-4480-ad5f-ccdf00833e22
-    _resp2 = ctx.api.promoters.create(body='{\r\n    "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",\r\n    "smsSubscribe": false,\r\n    "emailSubscribe": false\r\n}', token='linda10_token')
+    _resp2 = ctx.api.promoters.create(body={
+        "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
+        "smsSubscribe": False,
+        "emailSubscribe": False,
+    }, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success

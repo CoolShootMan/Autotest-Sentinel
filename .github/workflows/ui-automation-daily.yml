@@ -1,20 +1,27 @@
 name: ui-automation-daily
 
-# 每天 18:00 北京时间 (= 10:00 UTC) 自动跑 UI automation，并把 Allure 报告链接发到 Slack。
+# 每天 12:00 北京时间（= 04:00 UTC）自动跑 UI 自动化，并把 Allure 报告链接发到 Slack。
 #
 # 重要前提：
-#   1) 本 workflow 必须在你的 Mac 上注册【self-hosted runner】才能跑——
-#      GitHub 只负责按 cron 调度，main.py 实际是在你本机执行的
-#      （它用本地 venv、本地 allure、以及 http://192.168.x.x:8080 的本地报告服务）。
-#   2) schedule 事件只在仓库【默认分支 main】上触发。本文件合入 main 后每日定时才会生效；
-#      在 linda 分支上可用 workflow_dispatch 手动触发先验证。
-#   3) 仓库 Secrets 需配置 SLACK_WEBHOOK_URL（Slack Incoming Webhook）。未配置时
-#      Slack 步骤自动跳过，不影响测试本身。
+#   1) 本 workflow 必须在本机注册【self-hosted runner】才能跑——
+#      GitHub 只按 cron 调度，main.py 实际是在这台 Mac 上执行的
+#      （它依赖本地 venv、本地 allure CLI、以及 http://192.168.x.x:8080 的本地报告服务）。
+#   2) schedule 事件只在仓库【默认分支 main】上触发；本文件必须在 main 上，定时才生效。
+#      需要临时验证时用 workflow_dispatch 手动触发。
+#   3) 仓库 Secrets 需配置 SLACK_WEBHOOK_URL（Slack Incoming Webhook）。
+#      未配置时 Slack 步骤自动跳过，不影响测试本身。
+#   4) 定时任务要求 Mac 处于唤醒且用户已登录（GUI 会话）状态，否则会跳过/失败。
+#      建议在「系统设置 > 锁定屏幕/节能」中关闭自动睡眠，或使用 caffeinate。
 
 on:
   schedule:
-    - cron: '0 10 * * *'      # 10:00 UTC = 18:00 北京时间
-  workflow_dispatch:          # 允许手动触发，便于先在 linda 上验证
+    - cron: '0 4 * * *'       # 04:00 UTC = 12:00 北京时间（每天中午）
+  workflow_dispatch:          # 允许手动触发，便于随时验证
+
+# 这台 Mac 同一时刻只允许一个 UI 自动化在跑（浏览器/端口 8080 会互相打架）
+concurrency:
+  group: ui-automation-local-mac
+  cancel-in-progress: false
 
 jobs:
   ui-automation:
@@ -22,13 +29,74 @@ jobs:
     runs-on: [self-hosted, macOS]
     timeout-minutes: 120
     steps:
+      - name: Ensure venv interpreter is usable (self-heal)
+        shell: bash
+        run: |
+          set -uo pipefail
+          PROJ="/Users/a123456/Desktop/UI Automation"
+          PY="$PROJ/venv/bin/python3"
+
+          if "$PY" -V >/dev/null 2>&1; then
+            echo "venv OK: $("$PY" -V)  ($PY)"
+            exit 0
+          fi
+
+          echo "::warning::venv 解释器不可用，尝试自动修复（通常是内置 Python 升级后旧路径失效）"
+
+          NEW_PY=""
+          # 1) 优先用当前 Marvis 内置 python311
+          for cand in "$HOME/Library/Application Support/com.tencent.mac.marvis/components/MarvisAgent/Versions"/*/runtime/python311/bin/python3; do
+            if [ -x "$cand" ]; then NEW_PY="$cand"; fi
+          done
+          # 2) 回退到常见的 python3.11 安装路径
+          if [ -z "$NEW_PY" ]; then
+            for cand in /opt/homebrew/bin/python3.11 /usr/local/bin/python3.11; do
+              if [ -x "$cand" ]; then NEW_PY="$cand"; break; fi
+            done
+          fi
+
+          if [ -z "$NEW_PY" ]; then
+            echo "::error::未找到可用的 python3.11，无法自动修复 venv"
+            exit 1
+          fi
+
+          echo "使用解释器: $NEW_PY"
+          rm -f "$PY"
+          ln -s "$NEW_PY" "$PY"
+
+          BASE_BIN="$(dirname "$NEW_PY")"
+          PY_VER="$("$NEW_PY" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])')"
+          printf 'home = %s\ninclude-system-site-packages = false\nversion = %s\nexecutable = %s/python3.11\ncommand = %s -m venv %s\n' \
+            "$BASE_BIN" "$PY_VER" "$BASE_BIN" "$NEW_PY" "$PROJ/venv" > "$PROJ/venv/pyvenv.cfg"
+
+          if "$PY" -V >/dev/null 2>&1; then
+            echo "venv 已自动修复: $("$PY" -V)"
+          else
+            echo "::error::venv 修复失败，请手动重建虚拟环境"
+            exit 1
+          fi
+
+      - name: Stop stale Allure report server (free port 8080)
+        shell: bash
+        run: |
+          # main.py 每天会以 detached 方式起一个 http_server.py 常驻服务。
+          # 不清理的话第二天会因 8080 被占用而启动失败，
+          # 导致 last_report_url.txt 仍指向旧报告（Slack 链接永远是第一天的报告）。
+          if pgrep -f "UI Automation/http_server.py" >/dev/null 2>&1; then
+            echo "发现残留的报告服务，正在停止…"
+            pkill -f "UI Automation/http_server.py" || true
+            sleep 2
+          fi
+          echo "端口 8080 已就绪"
+
       - name: Run UI Automation (main.py)
         id: run
         env:
           CI: "true"
         run: |
           cd "/Users/a123456/Desktop/UI Automation"
-          ./venv/bin/python3 main.py 2>&1 | tee run.log || true
+          set -o pipefail
+          ./venv/bin/python3 main.py 2>&1 | tee run.log
 
       - name: Show main.py tail (debug)
         if: always()
@@ -36,11 +104,33 @@ jobs:
           echo "=== main.py tail ==="
           tail -n 40 "/Users/a123456/Desktop/UI Automation/run.log" 2>/dev/null || true
 
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          PROJ="/Users/a123456/Desktop/UI Automation"
+          REPORT_URL="$(cat "$PROJ/report/last_report_url.txt" 2>/dev/null || echo '未生成')"
+          {
+            echo "# UI Automation 每日执行结果"
+            echo ""
+            echo "| 项目 | 值 |"
+            echo "| --- | --- |"
+            echo "| 触发方式 | \`${{ github.event_name }}\` |"
+            echo "| main.py 退出码 | \`${{ steps.run.outcome }}\` |"
+            echo "| Allure 报告 | ${REPORT_URL} |"
+            echo ""
+            echo "## main.py 日志尾部"
+            echo '```'
+            tail -n 60 "$PROJ/run.log" 2>/dev/null || echo '(无 run.log)'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Send Slack notification
         # 仅当配置了 SLACK_WEBHOOK_URL 时才发送；未配置自动跳过。
         if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RUN_OUTCOME: ${{ steps.run.outcome }}
         run: |
           "/Users/a123456/Desktop/UI Automation/venv/bin/python3" - <<'PY'
           import os, json, subprocess, urllib.request
@@ -63,10 +153,14 @@ jobs:
           except Exception:
               ts = ""
 
+          status = os.environ.get("RUN_OUTCOME", "unknown")
+          icon = ":white_check_mark:" if status == "success" else ":warning:"
+
           text = (
-              ":rocket: *UI Automation 每日报告 ({ts})*\n"
+              "{icon} *UI Automation 每日报告 ({ts})*\n"
+              "> main.py 结果: *{status}*\n"
               "> 报告链接: {url}\n"
-              "> 运行详情: {run}".format(ts=ts, url=report_url, run=run_url)
+              "> 运行详情: {run}".format(icon=icon, ts=ts, status=status, url=report_url, run=run_url)
           )
           payload = {"text": text}
           req = urllib.request.Request(

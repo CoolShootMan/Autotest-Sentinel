@@ -184,23 +184,80 @@ def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "39aae2f5-e536-4c1e-bf24-3ac5cd94fdc8",\n            "price": 10,\n            "postId": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "6a6ee3fd-1c26-4577-bfd5-e7a0eb091ad4",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1768467567031.92506180232323161",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/mcc/post/gd7pgj"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "39aae2f5-e536-4c1e-bf24-3ac5cd94fdc8",\n            "postId": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",\n            "price": 10,\n            "customFields": []\n        }\n    ]\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "39aae2f5-e536-4c1e-bf24-3ac5cd94fdc8",
+                "price": 10,
+                "postId": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "6a6ee3fd-1c26-4577-bfd5-e7a0eb091ad4",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1768467567031.92506180232323161",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/mcc/post/gd7pgj",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "39aae2f5-e536-4c1e-bf24-3ac5cd94fdc8",
+                "postId": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",
+                "price": 10,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034",\n        "firstName": "Automation",\n        "lastName": "Lury"\n    },\n    "shippingAddressId": "{{shippingAddressId}}",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+            "firstName": "Automation",
+            "lastName": "Lury",
+        },
+        "shippingAddressId": "{{shippingAddressId}}",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number()
     ctx.extract('numberCode', _resp5, '$.data.lineItems[0].orderLineItemUnits[0].numberCode')
     # step 6: Login-M1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID8c}}'})

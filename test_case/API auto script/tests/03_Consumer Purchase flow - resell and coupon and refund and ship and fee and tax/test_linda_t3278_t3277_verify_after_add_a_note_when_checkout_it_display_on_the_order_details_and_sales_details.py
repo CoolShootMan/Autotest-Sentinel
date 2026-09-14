@@ -89,7 +89,7 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
     # step 2: 32ece22e-a265-40fe-9dff-15be514034ec
-    _resp2 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
@@ -103,14 +103,47 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp3, '$.data.id')
     # step 4: buy now
-    _resp4 = ctx.api.orders.buy_now(body='{\n  "updateCartItems": [\n    {\n    "quantity": 1,\n    "promoterProductVariantId": "{{promoterProductVariantId}}",\n    "price": 200,\n    "postId": "{{postid}}",\n    "selected": true,\n    "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}"\n  }\n  ],\n  "currentUpdateCartItems": [\n    {\n    "quantity": 1,\n    "id": "{{promoterProductVariantId}}",\n    "postId": "{{postid}}",\n    "price": 200\n  }\n  ]\n}', app_headers=True, token='linda10_token')
+    _resp4 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{promoterProductVariantId}}",
+                "price": 200,
+                "postId": "{{postid}}",
+                "selected": True,
+                "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}",
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "{{promoterProductVariantId}}",
+                "postId": "{{postid}}",
+                "price": 200,
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # assertion 4.assertion: responseJson equal 144.99
     expect(_resp4).json('$.data.totalToPay').equals('144.99')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
     # step 5: create Order
     vars['instructions'] = 'API test by add a note'
-    _resp5 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 140,\n      "promoterVariantId": "{{promoterProductVariantId}}"\n    }\n  ],\n  "id": "{{order_id}}",\n  "instructions": "{{instructions}}",\n  "contact": {\n    "email": "fos.zyx@gmail.com"\n  },\n  "shippingAddressId": "{{addressId}}"\n}\n\n\n\n\n\n', app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
+    _resp5 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 140,
+                "promoterVariantId": "{{promoterProductVariantId}}",
+            },
+        ],
+        "id": "{{order_id}}",
+        "instructions": "{{instructions}}",
+        "contact": {
+            "email": "fos.zyx@gmail.com",
+        },
+        "shippingAddressId": "{{addressId}}",
+    }, app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
     # assertion 5.code: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson exists 
@@ -131,6 +164,11 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     expect(_resp6).json('$.data.instructions').equals(str(_render('{{instructions}}', vars)))
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 7: Check the "note" display on the merchant sales detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')

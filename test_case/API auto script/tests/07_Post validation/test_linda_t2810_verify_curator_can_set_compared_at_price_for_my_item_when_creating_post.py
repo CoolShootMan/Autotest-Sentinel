@@ -49,7 +49,10 @@ def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_i
     vars['account_email_merchant'] = 'dian.yuhong.ext@1m.app'
     vars['password_merchant'] = '178Ad6e0aF0Ec22Ab948d8c0c69Ae072'
     # step 1: Get Partner linda01 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+01@1m.app"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+01@1m.app",
+    })
     ctx.extract('merchant_access_token', _resp1, '$.data.token')
     # extractor: linda01_token = $.data.token
     ctx.extract('linda01_token', _resp1, '$.data.token')
@@ -58,7 +61,275 @@ def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_i
     import random as _random
     vars['CompareAtPrice'] = _random.randint(100, 999)
     # step 2: update post related product's "compare at price"
-    _resp2 = ctx.api.posts.curator_by_post_id(body='{\r\n  "id": "{{postid}}",\r\n  "announcements": [],\r\n  "createFromEventId": "79a0ae94-a4dc-4bf8-bc24-7951d78f4237",\r\n  "title": "automation-t2810",\r\n  "subTitle": "",\r\n  "links": [],\r\n  "allowPromotersResell": false,\r\n  "financeModeForPromoters": "FINANCE_MODE_COMMISSION",\r\n  "financeMode": "FINANCE_MODE_WHOLESALE",\r\n  "status": "ACTIVE",\r\n  "allowPromotersHideProducts": false,\r\n  "allowPromotersCustomizeMedia": false,\r\n  "allowPromotersCreateCoupon": false,\r\n  "allowVisitorCreateAffiliateLink": false,\r\n  "promotions": [],\r\n  "isPurchaseQuantityLimited": false,\r\n  "purchaseQuantityLimit": 0,\r\n  "isAccessRestricted": false,\r\n  "allowPromotersAccess": false,\r\n  "styleSettings": {\r\n    "recentUsedColors": [\r\n      "#110921FF",\r\n      "#ECA416FF",\r\n      "#B7E2E0FF",\r\n      "#BA68C8FF",\r\n      "#CB135BFF",\r\n      "#F1BBFFFF",\r\n      "#E91E63FF",\r\n      "#0B99FFFF",\r\n      "#FFFFFFFF",\r\n      "#000000FF",\r\n      "#FFE0B2FF",\r\n      "#FACA4EFF",\r\n      "#EEEEEE",\r\n      "#3F51B5",\r\n      "#7132F4",\r\n      "#8BC34A",\r\n      "#000000"\r\n    ],\r\n    "fontFamily": "Replica Mono LL",\r\n    "color": "#FFFFFF",\r\n    "backgroundColor": "#000000",\r\n    "borderColor": "#000000",\r\n    "secondaryTextColor": "#ABABAB",\r\n    "announcementCarousel": {\r\n      "color": "#000000",\r\n      "backgroundColor": "#F6CA7C"\r\n    },\r\n    "title": {\r\n      "color": "#F6CA7C",\r\n      "fontSize": 30,\r\n      "fontFamily": "Inter",\r\n      "fontWeight": 700\r\n    },\r\n    "columnTitle": {\r\n      "color": "#FFFFFF",\r\n      "fontSize": 20,\r\n      "fontFamily": "Inter",\r\n      "fontWeight": 700\r\n    },\r\n    "subtitle": {\r\n      "color": "#FFFFFF",\r\n      "fontSize": 20,\r\n      "fontFamily": "Replica Mono LL",\r\n      "fontWeight": 400\r\n    },\r\n    "button": {\r\n      "color": "#000000",\r\n      "fontSize": 16,\r\n      "boxShadow": "none",\r\n      "fontWeight": 400,\r\n      "borderColor": "#0000",\r\n      "borderRadius": 0,\r\n      "backgroundColor": "#F6CA7C"\r\n    },\r\n    "secondaryButton": {\r\n      "color": "#FFFFFF",\r\n      "fontSize": 16,\r\n      "boxShadow": "none",\r\n      "fontWeight": 400,\r\n      "borderColor": "#F6CA7C",\r\n      "borderRadius": 0\r\n    },\r\n    "textButton": {\r\n      "color": "#FFFFFF",\r\n      "fontSize": 16,\r\n      "fontWeight": 700\r\n    },\r\n    "selectButton": {\r\n      "borderColor": "#000000"\r\n    },\r\n    "relatedLink": {\r\n      "color": "#000000 ",\r\n      "borderColor": "#0000",\r\n      "borderRadius": 0,\r\n      "backgroundColor": "#FFFFFF80"\r\n    },\r\n    "featuredProducts": {\r\n      "color": "#FFFFFF",\r\n      "title": {\r\n        "color": "#FFFFFF",\r\n        "fontSize": 14,\r\n        "fontFamily": "Replica Mono LL",\r\n        "fontWeight": 400\r\n      },\r\n      "borderRadius": 0,\r\n      "backgroundColor": "#000000",\r\n      "secondaryTextColor": "#ABABAB"\r\n    },\r\n    "product": {\r\n      "color": "#FFFFFF",\r\n      "borderRadius": 0,\r\n      "backgroundColor": "#000000",\r\n      "secondaryTextColor": "#ABABAB"\r\n    },\r\n    "discount": {\r\n      "color": "#FFFFFF",\r\n      "priceColor": "#FFFFFF",\r\n      "backgroundColor": "#D32A09"\r\n    },\r\n    "freeShipping": {\r\n      "color": "#268E46",\r\n      "backgroundColor": "#EBF5EF"\r\n    },\r\n    "starRatingColor": "#FAAF03",\r\n    "layoutFeatureCard": {\r\n      "color": "#FFFFFF",\r\n      "title": {\r\n        "color": "#FFFFFF",\r\n        "fontSize": 16,\r\n        "fontFamily": "Inter",\r\n        "fontWeight": 700\r\n      },\r\n      "button": {\r\n        "color": "#000000",\r\n        "backgroundColor": "#F6CA7C"\r\n      },\r\n      "secondaryTextColor": "#ABABAB"\r\n    },\r\n    "lineupBanner": {\r\n      "titleText": "#FFFFFF",\r\n      "descriptionText": "#F6CA7C"\r\n    },\r\n    "eventInfoBanner": {\r\n      "text": "#FFFFFF"\r\n    },\r\n    "eventDescription": {\r\n      "text": "#9E9E9E",\r\n      "title": "#FFFFFF"\r\n    },\r\n    "layout": {\r\n      "pageHeader": {\r\n        "style": "DEDICATED_HEADER_BAR",\r\n        "height": "MEDIUM",\r\n        "displayText": "SHOP_NAME"\r\n      },\r\n      "productBanner": {\r\n        "display": "HIDE",\r\n        "ctaButton": "VIEW_PRODUCT"\r\n      }\r\n    },\r\n    "template": "ShadowFocus",\r\n    "featuredProduct": {\r\n      "cover": {\r\n        "borderRadius": 0\r\n      }\r\n    }\r\n  },\r\n  "hideInStore": false,\r\n  "recommendationSectionTitle": "",\r\n  "coverImages": [\r\n    {\r\n      "id": "5b31fd19-d72d-42e9-91e8-e4d3c6df62b9",\r\n      "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\r\n      "selected": true,\r\n      "type": "IMAGE",\r\n      "height": 2048,\r\n      "width": 3072,\r\n      "mediaDuration": 0,\r\n      "mediaSrc": null,\r\n      "mediaType": "IMAGE",\r\n      "inherited": false,\r\n      "position": 1,\r\n      "referenceId": null,\r\n      "source": null,\r\n      "setThumbnail": true\r\n    }\r\n  ],\r\n  "checkoutInPost": true,\r\n  "allowAffiliateSharingOnly": false,\r\n  "abTestingSettings": [],\r\n  "enableAbTesting": false,\r\n  "isOrderConfirmationNoteEnabled": false,\r\n  "hideCouponBox": false,\r\n  "allowCustomizeDisplayPrices": true,\r\n  "customizeDisplayPrices": {\r\n    "price": "Instagram Live, Zoom, In-person | Fri, Dec 05, 2025 12:00 AM - Sat, Dec 13, 2025 12:00 AM (CST)",\r\n    "priceColor": "#F6CA7C",\r\n    "discountPercent": "Get Tickets",\r\n    "discountPercentColor": "#D32A08"\r\n  },\r\n  "canSetPrice": true,\r\n  "downlineNoteBodyHtml": null,\r\n  "downlineNoteBodyJson": null,\r\n  "featuredSectionTitle": "Featured products",\r\n  "bodyHtml": "<p class=\\"katana__paragraph--align-left\\"><span data-id=\\"fc25524a-0380-4d63-885e-4b553fb0d602\\" data-type=\\"event-info-banner\\" data-event-id=\\"79a0ae94-a4dc-4bf8-bc24-7951d78f4237\\"></span></p><p class=\\"katana__paragraph--align-left\\"><span data-id=\\"143dd2b7-6c55-4664-958b-0b9988963d4a\\" data-width=\\"100%\\" data-height=\\"\\" data-product-id=\\"5eed9a05-008f-40ab-a984-403cb2217e07\\" data-available-purchase-types=\\"ONE_TIME\\" data-cta-label=\\"Buy Ticket\\" data-primary-action=\\"buy-now\\"></span></p>",\r\n  "currentDate": "2025-12-10T06:28:58.631Z",\r\n  "relatedProducts": [\r\n    {\r\n      "type": "PRODUCT",\r\n      "merchantProductId": "5eed9a05-008f-40ab-a984-403cb2217e07",\r\n      "isVisible": true,\r\n      "isPurchaseQuantityLimited": false,\r\n      "isRecommendation": false,\r\n      "hasDependentProducts": false,\r\n      "dependentProductIds": [],\r\n      "isFreeShipping": false,\r\n      "isDefaultToSubscription": false,\r\n      "toReplaceMerchantProductId": null,\r\n      "syncWithCatalogPrice": false,\r\n      "purchaseQuantityLimit": 1,\r\n      "variants": [\r\n        {\r\n          "wholesalePriceForPromoters": 10,\r\n          "price": 10,\r\n          "costPrice": 0,\r\n          "isExcluded": false,\r\n          "isDefault": false,\r\n          "priceAnchor": {{CompareAtPrice}},\r\n          "merchantProductVariantId": "c3f9aa79-fd7b-44cd-a450-5658e780b623",\r\n          "commissionRateForPromoters": 0\r\n        }\r\n      ]\r\n    }\r\n  ],\r\n  "accessSpecificUser": [],\r\n  "featuredSectionEnable": true,\r\n  "tab": {\r\n    "value": "Commerce",\r\n    "label": "Commerce",\r\n    "mappingControl": []\r\n  },\r\n  "timeKey": 1765348138631,\r\n  "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[{\\"id\\":\\"fc25524a-0380-4d63-885e-4b553fb0d602\\",\\"eventId\\":\\"79a0ae94-a4dc-4bf8-bc24-7951d78f4237\\",\\"type\\":\\"event-info-banner\\",\\"version\\":1}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\"},{\\"children\\":[{\\"id\\":\\"143dd2b7-6c55-4664-958b-0b9988963d4a\\",\\"productId\\":\\"5eed9a05-008f-40ab-a984-403cb2217e07\\",\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"ctaLabel\\":\\"Buy Ticket\\",\\"action\\":\\"buy-now\\",\\"layout\\":\\"event\\",\\"type\\":\\"show-product-banner\\",\\"version\\":1}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\"}],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\r\n  "media": [\r\n    {\r\n      "id": "5b31fd19-d72d-42e9-91e8-e4d3c6df62b9",\r\n      "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\r\n      "selected": true,\r\n      "type": "IMAGE",\r\n      "height": 2048,\r\n      "width": 3072,\r\n      "mediaDuration": 0,\r\n      "mediaSrc": null,\r\n      "mediaType": "IMAGE",\r\n      "inherited": false,\r\n      "position": 1,\r\n      "referenceId": null,\r\n      "source": null,\r\n      "setThumbnail": true\r\n    }\r\n  ],\r\n  "othersCanCopy": false,\r\n  "enableDownlineNote": false,\r\n  "expiredAt": "2029-12-27T09:00:00.000Z",\r\n  "urlAlias": "automation-t2810",\r\n  "headline": "automation-t2810"\r\n}', app_headers=False, token='linda01_token', path_vars={'postId': '{{postid}}'})
+    _resp2 = ctx.api.posts.curator_by_post_id(body={
+    'id': '{{postid}}',
+    'announcements': [],
+    'createFromEventId': '79a0ae94-a4dc-4bf8-bc24-7951d78f4237',
+    'title': 'automation-t2810',
+    'subTitle': '',
+    'links': [],
+    'allowPromotersResell': False,
+    'financeModeForPromoters': 'FINANCE_MODE_COMMISSION',
+    'financeMode': 'FINANCE_MODE_WHOLESALE',
+    'status': 'ACTIVE',
+    'allowPromotersHideProducts': False,
+    'allowPromotersCustomizeMedia': False,
+    'allowPromotersCreateCoupon': False,
+    'allowVisitorCreateAffiliateLink': False,
+    'promotions': [],
+    'isPurchaseQuantityLimited': False,
+    'purchaseQuantityLimit': 0,
+    'isAccessRestricted': False,
+    'allowPromotersAccess': False,
+    'styleSettings': {
+        'recentUsedColors': [
+            '#110921FF',
+            '#ECA416FF',
+            '#B7E2E0FF',
+            '#BA68C8FF',
+            '#CB135BFF',
+            '#F1BBFFFF',
+            '#E91E63FF',
+            '#0B99FFFF',
+            '#FFFFFFFF',
+            '#000000FF',
+            '#FFE0B2FF',
+            '#FACA4EFF',
+            '#EEEEEE',
+            '#3F51B5',
+            '#7132F4',
+            '#8BC34A',
+            '#000000',
+        ],
+        'fontFamily': 'Replica Mono LL',
+        'color': '#FFFFFF',
+        'backgroundColor': '#000000',
+        'borderColor': '#000000',
+        'secondaryTextColor': '#ABABAB',
+        'announcementCarousel': {
+            'color': '#000000',
+            'backgroundColor': '#F6CA7C',
+        },
+        'title': {
+            'color': '#F6CA7C',
+            'fontSize': 30,
+            'fontFamily': 'Inter',
+            'fontWeight': 700,
+        },
+        'columnTitle': {
+            'color': '#FFFFFF',
+            'fontSize': 20,
+            'fontFamily': 'Inter',
+            'fontWeight': 700,
+        },
+        'subtitle': {
+            'color': '#FFFFFF',
+            'fontSize': 20,
+            'fontFamily': 'Replica Mono LL',
+            'fontWeight': 400,
+        },
+        'button': {
+            'color': '#000000',
+            'fontSize': 16,
+            'boxShadow': 'none',
+            'fontWeight': 400,
+            'borderColor': '#0000',
+            'borderRadius': 0,
+            'backgroundColor': '#F6CA7C',
+        },
+        'secondaryButton': {
+            'color': '#FFFFFF',
+            'fontSize': 16,
+            'boxShadow': 'none',
+            'fontWeight': 400,
+            'borderColor': '#F6CA7C',
+            'borderRadius': 0,
+        },
+        'textButton': {
+            'color': '#FFFFFF',
+            'fontSize': 16,
+            'fontWeight': 700,
+        },
+        'selectButton': {
+            'borderColor': '#000000',
+        },
+        'relatedLink': {
+            'color': '#000000 ',
+            'borderColor': '#0000',
+            'borderRadius': 0,
+            'backgroundColor': '#FFFFFF80',
+        },
+        'featuredProducts': {
+            'color': '#FFFFFF',
+            'title': {
+                'color': '#FFFFFF',
+                'fontSize': 14,
+                'fontFamily': 'Replica Mono LL',
+                'fontWeight': 400,
+            },
+            'borderRadius': 0,
+            'backgroundColor': '#000000',
+            'secondaryTextColor': '#ABABAB',
+        },
+        'product': {
+            'color': '#FFFFFF',
+            'borderRadius': 0,
+            'backgroundColor': '#000000',
+            'secondaryTextColor': '#ABABAB',
+        },
+        'discount': {
+            'color': '#FFFFFF',
+            'priceColor': '#FFFFFF',
+            'backgroundColor': '#D32A09',
+        },
+        'freeShipping': {
+            'color': '#268E46',
+            'backgroundColor': '#EBF5EF',
+        },
+        'starRatingColor': '#FAAF03',
+        'layoutFeatureCard': {
+            'color': '#FFFFFF',
+            'title': {
+                'color': '#FFFFFF',
+                'fontSize': 16,
+                'fontFamily': 'Inter',
+                'fontWeight': 700,
+            },
+            'button': {
+                'color': '#000000',
+                'backgroundColor': '#F6CA7C',
+            },
+            'secondaryTextColor': '#ABABAB',
+        },
+        'lineupBanner': {
+            'titleText': '#FFFFFF',
+            'descriptionText': '#F6CA7C',
+        },
+        'eventInfoBanner': {
+            'text': '#FFFFFF',
+        },
+        'eventDescription': {
+            'text': '#9E9E9E',
+            'title': '#FFFFFF',
+        },
+        'layout': {
+            'pageHeader': {
+                'style': 'DEDICATED_HEADER_BAR',
+                'height': 'MEDIUM',
+                'displayText': 'SHOP_NAME',
+            },
+            'productBanner': {
+                'display': 'HIDE',
+                'ctaButton': 'VIEW_PRODUCT',
+            },
+        },
+        'template': 'ShadowFocus',
+        'featuredProduct': {
+            'cover': {
+                'borderRadius': 0,
+            },
+        },
+    },
+    'hideInStore': False,
+    'recommendationSectionTitle': '',
+    'coverImages': [
+        {
+            'id': '5b31fd19-d72d-42e9-91e8-e4d3c6df62b9',
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'selected': True,
+            'type': 'IMAGE',
+            'height': 2048,
+            'width': 3072,
+            'mediaDuration': 0,
+            'mediaSrc': None,
+            'mediaType': 'IMAGE',
+            'inherited': False,
+            'position': 1,
+            'referenceId': None,
+            'source': None,
+            'setThumbnail': True,
+        },
+    ],
+    'checkoutInPost': True,
+    'allowAffiliateSharingOnly': False,
+    'abTestingSettings': [],
+    'enableAbTesting': False,
+    'isOrderConfirmationNoteEnabled': False,
+    'hideCouponBox': False,
+    'allowCustomizeDisplayPrices': True,
+    'customizeDisplayPrices': {
+        'price': 'Instagram Live, Zoom, In-person | Fri, Dec 05, 2025 12:00 AM - Sat, Dec 13, 2025 12:00 AM (CST)',
+        'priceColor': '#F6CA7C',
+        'discountPercent': 'Get Tickets',
+        'discountPercentColor': '#D32A08',
+    },
+    'canSetPrice': True,
+    'downlineNoteBodyHtml': None,
+    'downlineNoteBodyJson': None,
+    'featuredSectionTitle': 'Featured products',
+    'bodyHtml': '<p class="katana__paragraph--align-left"><span data-id="fc25524a-0380-4d63-885e-4b553fb0d602" data-type="event-info-banner" data-event-id="79a0ae94-a4dc-4bf8-bc24-7951d78f4237"></span></p><p class="katana__paragraph--align-left"><span data-id="143dd2b7-6c55-4664-958b-0b9988963d4a" data-width="100%" data-height="" data-product-id="5eed9a05-008f-40ab-a984-403cb2217e07" data-available-purchase-types="ONE_TIME" data-cta-label="Buy Ticket" data-primary-action="buy-now"></span></p>',
+    'currentDate': '2025-12-10T06:28:58.631Z',
+    'relatedProducts': [
+        {
+            'type': 'PRODUCT',
+            'merchantProductId': '5eed9a05-008f-40ab-a984-403cb2217e07',
+            'isVisible': True,
+            'isPurchaseQuantityLimited': False,
+            'isRecommendation': False,
+            'hasDependentProducts': False,
+            'dependentProductIds': [],
+            'isFreeShipping': False,
+            'isDefaultToSubscription': False,
+            'toReplaceMerchantProductId': None,
+            'syncWithCatalogPrice': False,
+            'purchaseQuantityLimit': 1,
+            'variants': [
+                {
+                    'wholesalePriceForPromoters': 10,
+                    'price': 10,
+                    'costPrice': 0,
+                    'isExcluded': False,
+                    'isDefault': False,
+                    'priceAnchor': '{{CompareAtPrice}}',
+                    'merchantProductVariantId': 'c3f9aa79-fd7b-44cd-a450-5658e780b623',
+                    'commissionRateForPromoters': 0,
+                },
+            ],
+        },
+    ],
+    'accessSpecificUser': [],
+    'featuredSectionEnable': True,
+    'tab': {
+        'value': 'Commerce',
+        'label': 'Commerce',
+        'mappingControl': [],
+    },
+    'timeKey': 1765348138631,
+    'bodyJson': '{"root":{"children":[{"children":[{"id":"fc25524a-0380-4d63-885e-4b553fb0d602","eventId":"79a0ae94-a4dc-4bf8-bc24-7951d78f4237","type":"event-info-banner","version":1}],"direction":null,"format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"id":"143dd2b7-6c55-4664-958b-0b9988963d4a","productId":"5eed9a05-008f-40ab-a984-403cb2217e07","width":"100%","height":"","ctaLabel":"Buy Ticket","action":"buy-now","layout":"event","type":"show-product-banner","version":1}],"direction":null,"format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":"ltr","format":"","indent":0,"type":"root","version":1}}',
+    'media': [
+        {
+            'id': '5b31fd19-d72d-42e9-91e8-e4d3c6df62b9',
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'selected': True,
+            'type': 'IMAGE',
+            'height': 2048,
+            'width': 3072,
+            'mediaDuration': 0,
+            'mediaSrc': None,
+            'mediaType': 'IMAGE',
+            'inherited': False,
+            'position': 1,
+            'referenceId': None,
+            'source': None,
+            'setThumbnail': True,
+        },
+    ],
+    'othersCanCopy': False,
+    'enableDownlineNote': False,
+    'expiredAt': '2029-12-27T09:00:00.000Z',
+    'urlAlias': 'automation-t2810',
+    'headline': 'automation-t2810',
+}, app_headers=False, token='linda01_token', path_vars={'postId': '{{postid}}'})
     # assertion 2.assertion: responseJson equal ACTIVE
     expect(_resp2).json('$.data.status').equals('ACTIVE')
     # step 3: Check the compare at price display correct

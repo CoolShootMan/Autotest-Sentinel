@@ -362,10 +362,16 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 3563fc4b-af4c-4484-b728-537830cc03f4
-    _resp1 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{UIauto_partner_email}}",\r\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\r\n\r\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "email": "{{UIauto_partner_email}}",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
     # step 2: e3040033-bc3c-4867-bb12-e3bc01f366a2
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['event_title'] = "event-for-api-auto-venue-map"
+
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     vars['event_id'] = 'eventId'
     _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
@@ -389,24 +395,320 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx):
     _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])
     # step 7: bcb7043d-ecc7-4063-bb97-17c3e3409863
-    _resp7 = ctx.api.products.by_product_id_general_admission_02(body='{\n    "id": "{{productId_General_Admission_02}}",\n    "remote_id": null,\n    "platform": "PEAR",\n    "createdAt": "2026-08-24T07:50:43.279Z",\n    "updatedAt": "2026-08-24T07:50:43.353Z",\n    "merchantId": "{{catalog_id}}",\n    "title": "General Admission 02",\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "originalBodyHtml": "",\n    "isBodyHtmlOverridden": false,\n    "bodyText": "",\n    "handle": null,\n    "productType": "",\n    "publishedAt": "2026-08-24T07:50:43.309Z",\n    "publishedScope": "",\n    "status": "ACTIVE",\n    "externalStatus": "ACTIVE",\n    "followExternalStatus": false,\n    "tags": [],\n    "templateSuffix": null,\n    "vendor": "Pear",\n    "syncAt": null,\n    "deletedAt": null,\n    "delisted": false,\n    "excludedByImportingTag": false,\n    "isFeatured": false,\n    "featuredScore": null,\n    "inventoryQuantity": 10000,\n    "inventoryQuantityOriginal": 10000,\n    "soldQuantity": 0,\n    "priceDisplay": 112.22,\n    "priceDisplayAnchor": 0,\n    "priceMin": 112.22,\n    "priceMinAnchor": 0,\n    "priceMax": 112.22,\n    "priceMaxAnchor": 0,\n    "priceImportedMin": 0,\n    "priceImportedMax": 0,\n    "imageCount": 1,\n    "isUsed": "NWT",\n    "shippingType": "NO_SHIPPING_REQUIRED",\n    "additionalShippingFee": 0,\n    "deliveryTime": [\n        0,\n        5\n    ],\n    "returnPolicyApplied": true,\n    "isAvailable": true,\n    "commissionRate": 7,\n    "textForShare": null,\n    "priceSyncImported": false,\n    "coverImage": {\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "width": 3072,\n        "height": 2048,\n        "position": 0,\n        "mediaType": "IMAGE",\n        "mediaDuration": 0\n    },\n    "useEventPosterAsCover": true,\n    "reviewCount": null,\n    "reviewOverallScore": null,\n    "reviewAggregate": null,\n    "displayReviews": true,\n    "links": null,\n    "taxEnable": false,\n    "taxJarCategory": "",\n    "customTaxRate": null,\n    "subscriptionPlanId": null,\n    "reviewRedirectProductId": null,\n    "reviewSummary": null,\n    "customFieldsInfo": null,\n    "listingType": "TICKET",\n    "ticketType": "TICKET_TYPE_STANDARD",\n    "ticketHubInfo": null,\n    "customizedFields": [],\n    "shippingOptions": [],\n    "shippingNote": null,\n    "autoFulfill": true,\n    "lifecycleStatus": "LIFECYCLE_STATUS_NORMAL",\n    "copyFromId": "{{copyFromId}}",\n    "stopSellingAfter": null,\n    "deliveryMethod": "QR_CODE",\n    "thirdPartyDeliveryMessage": "",\n    "isMultipleDaysPassEnabled": false,\n    "isVenueUnitEnabled": true,\n    "venueUnitCategoryId": "{{venueUnitCategoryId}}",\n    "multipleDaysPass": null,\n    "isPickupEtaEnabled": null,\n    "eventMatchingRules": null,\n    "expirationTime": null,\n    "allowAtDoorSales": false,\n    "isTipEnabled": false,\n    "isPlatformFeeConfigCustomized": false,\n    "isVariantPlatformFeeConfigCustomized": false,\n    "transactionFeeConfig": {\n        "baseConfig": {\n            "unitFixedFee": 1,\n            "unitPercentageFee": 0.1\n        }\n    },\n    "transactionFeeRebateConfig": {\n        "baseConfig": {\n            "unitFixedFee": 0,\n            "unitPercentageFee": 0\n        }\n    },\n    "transactionCustomFeeConfig": null,\n    "options": [\n        {\n            "remote_id": null,\n            "productId": "{{productId_General_Admission_02}}",\n            "name": "Title",\n            "position": 1,\n            "values": [\n                "Default Title"\n            ],\n            "images": [\n                {\n                    "value": "Default Title",\n                    "imageId": null\n                }\n            ]\n        }\n    ],\n    "variants": [\n        {\n            "id": "{{merchantProductVariantId_General_Admission_02}}",\n            "remote_id": null,\n            "createdAt": "2026-08-24T07:50:43.353Z",\n            "updatedAt": "2026-08-24T07:50:43.353Z",\n            "compareAtPrice": null,\n            "fulfillmentService": "manual",\n            "grams": 0,\n            "imageIds": [],\n            "inventoryItemId": null,\n            "inventoryManagement": "Pear",\n            "inventoryPolicy": "DENY",\n            "isInventoryQuantityUnlimited": false,\n            "inventoryQuantity": 10000,\n            "inventoryQuantityOriginal": 10000,\n            "soldQuantity": 0,\n            "option": {\n                "option1": "Default Title"\n            },\n            "position": 1,\n            "price": 112.22,\n            "priceAnchor": 0,\n            "priceImported": "0.00",\n            "productId": "{{productId_General_Admission_02}}",\n            "sku": "",\n            "taxCode": null,\n            "taxable": true,\n            "title": "Default Title",\n            "weight": null,\n            "weightUnit": "lb",\n            "platform": null,\n            "fees": 12.22,\n            "transactionFee": {\n                "platformFee": 12.22,\n                "customFee": 0,\n                "customFeeBreakdown": {\n                    "TAX": {\n                        "title": "Taxes",\n                        "unitFixedFee": 0,\n                        "unitPercentageFee": 0,\n                        "index": 0,\n                        "itemFee": 0\n                    }\n                },\n                "transactionItemFee": 12.22\n            },\n            "ticketPrice": 100,\n            "isMinPurchaseQuantityEnabled": false,\n            "minPurchaseQuantity": null,\n            "isMaxPurchaseQuantityEnabled": false,\n            "maxPurchaseQuantity": null,\n            "isPackSizeEnabled": false,\n            "packSize": null,\n            "transactionFeeConfig": null,\n            "transactionFeeRebateConfig": null,\n            "minPriceForCheckFees": 0\n        }\n    ],\n    "readOnlyFields": [],\n    "isInventoryQuantityUnlimited": false,\n    "showInEventPost": false,\n    "visibleInPosts": [],\n    "excludeFromPostSync": false,\n    "catalogCommissionRate": 0,\n    "hasLimitPurchaseQuantity": false,\n    "hasSpecialRedemption": false,\n    "earliestTime": "2026-08-24T04:00:00.000Z",\n    "styleSettings": {\n        "recentUsedColors": [\n            "#ffffff"\n        ]\n    },\n    "isProductFormEnabled": false,\n    "isInclusionsEnabled": true,\n    "inclusions": [\n        {\n            "name": "additional QR codes 001",\n            "position": 0\n        },\n        {\n            "name": "additional QR codes 002",\n            "position": 1\n        },\n        {\n            "name": "additional QR codes 003",\n            "position": 2\n        },\n        {\n            "name": "additional QR codes 004",\n            "position": 3\n        },\n        {\n            "name": "additional QR codes 005",\n            "position": 4\n        }\n    ],\n    "isVariantPriceDisplayEnabled": false,\n    "stopSellingAfterDisplay": "",\n    "overrideEventTax": false,\n    "overrideEventCustomFee": false,\n    "hideFees": false,\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "images": [\n        {\n            "id": "40568f61-4d5c-4419-b167-316268bb7f68",\n            "remote_id": null,\n            "createdAt": "2026-08-24T07:50:43.353Z",\n            "updatedAt": "2026-08-24T07:50:43.353Z",\n            "height": 1000,\n            "width": 1000,\n            "position": 1,\n            "productId": "{{productId_General_Admission_02}}",\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",\n            "variantIds": [],\n            "mediaType": "IMAGE",\n            "mediaSrc": null,\n            "mediaDuration": 0,\n            "contributedBy": 3,\n            "contributorId": null,\n            "productImageType": "PRODUCT",\n            "source": null,\n            "setThumbnail": true\n        }\n    ],\n    "eventId": "{{event_id}}",\n    "isExpirationEnabled": false\n}', token='yuxiao999_token')
+    _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
+    'id': '{{productId_General_Admission_02}}',
+    'remote_id': None,
+    'platform': 'PEAR',
+    'createdAt': '2026-08-24T07:50:43.279Z',
+    'updatedAt': '2026-08-24T07:50:43.353Z',
+    'merchantId': '{{catalog_id}}',
+    'title': 'General Admission 02',
+    'bodyHtml': '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+    'originalBodyHtml': '',
+    'isBodyHtmlOverridden': False,
+    'bodyText': '',
+    'handle': None,
+    'productType': '',
+    'publishedAt': '2026-08-24T07:50:43.309Z',
+    'publishedScope': '',
+    'status': 'ACTIVE',
+    'externalStatus': 'ACTIVE',
+    'followExternalStatus': False,
+    'tags': [],
+    'templateSuffix': None,
+    'vendor': 'Pear',
+    'syncAt': None,
+    'deletedAt': None,
+    'delisted': False,
+    'excludedByImportingTag': False,
+    'isFeatured': False,
+    'featuredScore': None,
+    'inventoryQuantity': 10000,
+    'inventoryQuantityOriginal': 10000,
+    'soldQuantity': 0,
+    'priceDisplay': 112.22,
+    'priceDisplayAnchor': 0,
+    'priceMin': 112.22,
+    'priceMinAnchor': 0,
+    'priceMax': 112.22,
+    'priceMaxAnchor': 0,
+    'priceImportedMin': 0,
+    'priceImportedMax': 0,
+    'imageCount': 1,
+    'isUsed': 'NWT',
+    'shippingType': 'NO_SHIPPING_REQUIRED',
+    'additionalShippingFee': 0,
+    'deliveryTime': [
+        0,
+        5,
+    ],
+    'returnPolicyApplied': True,
+    'isAvailable': True,
+    'commissionRate': 7,
+    'textForShare': None,
+    'priceSyncImported': False,
+    'coverImage': {
+        'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+        'width': 3072,
+        'height': 2048,
+        'position': 0,
+        'mediaType': 'IMAGE',
+        'mediaDuration': 0,
+    },
+    'useEventPosterAsCover': True,
+    'reviewCount': None,
+    'reviewOverallScore': None,
+    'reviewAggregate': None,
+    'displayReviews': True,
+    'links': None,
+    'taxEnable': False,
+    'taxJarCategory': '',
+    'customTaxRate': None,
+    'subscriptionPlanId': None,
+    'reviewRedirectProductId': None,
+    'reviewSummary': None,
+    'customFieldsInfo': None,
+    'listingType': 'TICKET',
+    'ticketType': 'TICKET_TYPE_STANDARD',
+    'ticketHubInfo': None,
+    'customizedFields': [],
+    'shippingOptions': [],
+    'shippingNote': None,
+    'autoFulfill': True,
+    'lifecycleStatus': 'LIFECYCLE_STATUS_NORMAL',
+    'copyFromId': '{{copyFromId}}',
+    'stopSellingAfter': None,
+    'deliveryMethod': 'QR_CODE',
+    'thirdPartyDeliveryMessage': '',
+    'isMultipleDaysPassEnabled': False,
+    'isVenueUnitEnabled': True,
+    'venueUnitCategoryId': '{{venueUnitCategoryId}}',
+    'multipleDaysPass': None,
+    'isPickupEtaEnabled': None,
+    'eventMatchingRules': None,
+    'expirationTime': None,
+    'allowAtDoorSales': False,
+    'isTipEnabled': False,
+    'isPlatformFeeConfigCustomized': False,
+    'isVariantPlatformFeeConfigCustomized': False,
+    'transactionFeeConfig': {
+        'baseConfig': {
+            'unitFixedFee': 1,
+            'unitPercentageFee': 0.1,
+        },
+    },
+    'transactionFeeRebateConfig': {
+        'baseConfig': {
+            'unitFixedFee': 0,
+            'unitPercentageFee': 0,
+        },
+    },
+    'transactionCustomFeeConfig': None,
+    'options': [
+        {
+            'remote_id': None,
+            'productId': '{{productId_General_Admission_02}}',
+            'name': 'Title',
+            'position': 1,
+            'values': [
+                'Default Title',
+            ],
+            'images': [
+                {
+                    'value': 'Default Title',
+                    'imageId': None,
+                },
+            ],
+        },
+    ],
+    'variants': [
+        {
+            'id': '{{merchantProductVariantId_General_Admission_02}}',
+            'remote_id': None,
+            'createdAt': '2026-08-24T07:50:43.353Z',
+            'updatedAt': '2026-08-24T07:50:43.353Z',
+            'compareAtPrice': None,
+            'fulfillmentService': 'manual',
+            'grams': 0,
+            'imageIds': [],
+            'inventoryItemId': None,
+            'inventoryManagement': 'Pear',
+            'inventoryPolicy': 'DENY',
+            'isInventoryQuantityUnlimited': False,
+            'inventoryQuantity': 10000,
+            'inventoryQuantityOriginal': 10000,
+            'soldQuantity': 0,
+            'option': {
+                'option1': 'Default Title',
+            },
+            'position': 1,
+            'price': 112.22,
+            'priceAnchor': 0,
+            'priceImported': '0.00',
+            'productId': '{{productId_General_Admission_02}}',
+            'sku': '',
+            'taxCode': None,
+            'taxable': True,
+            'title': 'Default Title',
+            'weight': None,
+            'weightUnit': 'lb',
+            'platform': None,
+            'fees': 12.22,
+            'transactionFee': {
+                'platformFee': 12.22,
+                'customFee': 0,
+                'customFeeBreakdown': {
+                    'TAX': {
+                        'title': 'Taxes',
+                        'unitFixedFee': 0,
+                        'unitPercentageFee': 0,
+                        'index': 0,
+                        'itemFee': 0,
+                    },
+                },
+                'transactionItemFee': 12.22,
+            },
+            'ticketPrice': 100,
+            'isMinPurchaseQuantityEnabled': False,
+            'minPurchaseQuantity': None,
+            'isMaxPurchaseQuantityEnabled': False,
+            'maxPurchaseQuantity': None,
+            'isPackSizeEnabled': False,
+            'packSize': None,
+            'transactionFeeConfig': None,
+            'transactionFeeRebateConfig': None,
+            'minPriceForCheckFees': 0,
+        },
+    ],
+    'readOnlyFields': [],
+    'isInventoryQuantityUnlimited': False,
+    'showInEventPost': False,
+    'visibleInPosts': [],
+    'excludeFromPostSync': False,
+    'catalogCommissionRate': 0,
+    'hasLimitPurchaseQuantity': False,
+    'hasSpecialRedemption': False,
+    'earliestTime': '2026-08-24T04:00:00.000Z',
+    'styleSettings': {
+        'recentUsedColors': [
+            '#ffffff',
+        ],
+    },
+    'isProductFormEnabled': False,
+    'isInclusionsEnabled': True,
+    'inclusions': [
+        {
+            'name': 'additional QR codes 001',
+            'position': 0,
+        },
+        {
+            'name': 'additional QR codes 002',
+            'position': 1,
+        },
+        {
+            'name': 'additional QR codes 003',
+            'position': 2,
+        },
+        {
+            'name': 'additional QR codes 004',
+            'position': 3,
+        },
+        {
+            'name': 'additional QR codes 005',
+            'position': 4,
+        },
+    ],
+    'isVariantPriceDisplayEnabled': False,
+    'stopSellingAfterDisplay': '',
+    'overrideEventTax': False,
+    'overrideEventCustomFee': False,
+    'hideFees': False,
+    'bodyJson': '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":"","style":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+    'images': [
+        {
+            'id': '40568f61-4d5c-4419-b167-316268bb7f68',
+            'remote_id': None,
+            'createdAt': '2026-08-24T07:50:43.353Z',
+            'updatedAt': '2026-08-24T07:50:43.353Z',
+            'height': 1000,
+            'width': 1000,
+            'position': 1,
+            'productId': '{{productId_General_Admission_02}}',
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png',
+            'variantIds': [],
+            'mediaType': 'IMAGE',
+            'mediaSrc': None,
+            'mediaDuration': 0,
+            'contributedBy': 3,
+            'contributorId': None,
+            'productImageType': 'PRODUCT',
+            'source': None,
+            'setThumbnail': True,
+        },
+    ],
+    'eventId': '{{event_id}}',
+    'isExpirationEnabled': False,
+}, token='yuxiao999_token')
     vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
     # step 9: Get consumer linda10 token
-    _resp9 = ctx.api.auth.sign_in(body='{\n    "email": "linda.zhou.ext+10@1m.app",\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\n}', app_headers=True)
+    _resp9 = ctx.api.auth.sign_in(body={
+        "email": "linda.zhou.ext+10@1m.app",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp9, '$.data.token')
     # step 10: e02cff0d-13ba-4ab2-9e43-e83fa7a2283f
-    _resp10 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: responseJson equal success
     expect(_resp10).json('$.message').equals('success')
     # step 11: 8a7b4674-ee9f-4181-ac43-b693037b1721
-    _resp11 = ctx.api.orders.checkout_express(body='{\n  "fbAdParams": {\n    "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",\n    "pixelId": [\n      "268933192948110"\n    ],\n    "fbBrowserId": "fb.1.1787626769799.674084567126480531",\n    "externalId": "7d70692d-84f0-4b50-bcda-abc39b7d165a",\n    "eventSourceUrl": "https://release.pear.us/autotestshop/post/event-for-api-auto-venue-map"\n  },\n  "items": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "{{displayVariantId_General_Admission_02}}",\n      "price": 112.22,\n      "postId": "{{post0_id}}",\n      "eventId": "{{event_id}}",\n      "sectionName": "General Admission 02",\n      "seatRow": "",\n      "seatNumber": "{{seatNumber}}",\n      "unitId": "{{unitid}}",\n      "selected": true\n    }\n  ],\n  "subdomainVanityUrl": ""\n}', app_headers=True, token='linda10_token')
+    _resp11 = ctx.api.orders.checkout_express(body={
+        "fbAdParams": {
+            "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1787626769799.674084567126480531",
+            "externalId": "7d70692d-84f0-4b50-bcda-abc39b7d165a",
+            "eventSourceUrl": "https://release.pear.us/autotestshop/post/event-for-api-auto-venue-map",
+        },
+        "items": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{displayVariantId_General_Admission_02}}",
+                "price": 112.22,
+                "postId": "{{post0_id}}",
+                "eventId": "{{event_id}}",
+                "sectionName": "General Admission 02",
+                "seatRow": "",
+                "seatNumber": "{{seatNumber}}",
+                "unitId": "{{unitid}}",
+                "selected": True,
+            },
+        ],
+        "subdomainVanityUrl": "",
+    }, app_headers=True, token='linda10_token')
     # extractor: orderId = $.data.orderId
     ctx.extract('orderId', _resp11, '$.data.orderId')
     # step 12: place order
-    _resp12 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "linda.zhou.ext+10@1m.app"\n    },\n    "shippingAddressId": "{{shippingAddressId}}",\n    "fbAdParams": {\n        "eventID": "58e159af-0e82-4244-b86d-00f37277e6a0",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3"\n    }\n}', app_headers=True, token='linda10_token')
+    _resp12 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{shippingAddressId}}",
+        "fbAdParams": {
+            "eventID": "58e159af-0e82-4244-b86d-00f37277e6a0",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
+        },
+    }, app_headers=True, token='linda10_token')
     _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 13: Check the merchant order detail exist ticket Redemptions contents

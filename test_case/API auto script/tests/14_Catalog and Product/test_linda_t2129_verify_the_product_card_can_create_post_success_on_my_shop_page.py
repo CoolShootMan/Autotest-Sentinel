@@ -114,10 +114,6 @@ ENV_NAME = "Release"
 
 
 
-import json
-
-from core.assertions import expect
-
 from core.compat import LegacyClient, legacy_render, legacy_url
 
 def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page(ctx):
@@ -129,7 +125,269 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
     _url = legacy_url(ctx)
     # === Steps ===
     # step 1: 20e3754a-3578-4b57-90b9-60d5e67b8853
-    _resp1 = ctx.api.posts.curator(body='{\r\n    "title": "{{posttitle}}",\r\n    "links": [],\r\n    "allowPromotersResell": true,\r\n    "financeModeForPromoters": "FINANCE_MODE_COMMISSION",\r\n    "status": "ACTIVE",\r\n    "allowPromotersHideProducts": true,\r\n    "allowPromotersCustomizeMedia": true,\r\n    "isPurchaseQuantityLimited": false,\r\n    "purchaseQuantityLimit": 1,\r\n    "styleSettings": {\r\n        "template": "ShadowFocus",\r\n        "layout": {\r\n            "pageHeader": {\r\n                "style": "DEDICATED_HEADER_BAR",\r\n                "displayText": "SHOP_NAME",\r\n                "height": "MEDIUM"\r\n            },\r\n            "productBanner": {\r\n                "ctaButton": "VIEW_PRODUCT",\r\n                "display": "HIDE"\r\n            }\r\n        },\r\n        "fontFamily": "Replica Mono LL",\r\n        "color": "#FFFFFF",\r\n        "backgroundColor": "#000000",\r\n        "borderColor": "#000000",\r\n        "secondaryTextColor": "#ABABAB",\r\n        "announcementCarousel": {\r\n            "color": "#000000",\r\n            "backgroundColor": "#F6CA7C"\r\n        },\r\n        "title": {\r\n            "color": "#F6CA7C",\r\n            "fontFamily": "Inter",\r\n            "fontSize": 30,\r\n            "fontWeight": 700\r\n        },\r\n        "columnTitle": {\r\n            "fontFamily": "Inter",\r\n            "fontSize": 20,\r\n            "fontWeight": 700,\r\n            "color": "#FFFFFF"\r\n        },\r\n        "subtitle": {\r\n            "fontFamily": "Replica Mono LL",\r\n            "fontSize": 20,\r\n            "fontWeight": 400,\r\n            "color": "#FFFFFF"\r\n        },\r\n        "button": {\r\n            "backgroundColor": "#F6CA7C",\r\n            "color": "#000000",\r\n            "borderColor": "#0000",\r\n            "borderRadius": 0,\r\n            "boxShadow": "none",\r\n            "fontSize": 16,\r\n            "fontWeight": 400\r\n        },\r\n        "secondaryButton": {\r\n            "fontSize": 16,\r\n            "fontWeight": 400,\r\n            "color": "#FFFFFF",\r\n            "borderColor": "#F6CA7C",\r\n            "borderRadius": 0,\r\n            "boxShadow": "none"\r\n        },\r\n        "textButton": {\r\n            "fontSize": 16,\r\n            "fontWeight": 700,\r\n            "color": "#FFFFFF"\r\n        },\r\n        "selectButton": {\r\n            "borderColor": "#000000"\r\n        },\r\n        "relatedLink": {\r\n            "borderRadius": 0,\r\n            "color": "#000000 ",\r\n            "borderColor": "#0000",\r\n            "backgroundColor": "#FFFFFF80"\r\n        },\r\n        "featuredProducts": {\r\n            "borderRadius": 0,\r\n            "backgroundColor": "#000000",\r\n            "color": "#FFFFFF",\r\n            "secondaryTextColor": "#ABABAB",\r\n            "title": {\r\n                "fontFamily": "Replica Mono LL",\r\n                "fontSize": 14,\r\n                "fontWeight": 400,\r\n                "color": "#FFFFFF"\r\n            }\r\n        },\r\n        "product": {\r\n            "backgroundColor": "#000000",\r\n            "borderRadius": 0,\r\n            "color": "#FFFFFF",\r\n            "secondaryTextColor": "#ABABAB"\r\n        },\r\n        "discount": {\r\n            "backgroundColor": "#D32A09",\r\n            "color": "#FFFFFF",\r\n            "priceColor": "#FFFFFF"\r\n        },\r\n        "freeShipping": {\r\n            "backgroundColor": "#EBF5EF",\r\n            "color": "#268E46"\r\n        },\r\n        "starRatingColor": "#FAAF03",\r\n        "layoutFeatureCard": {\r\n            "title": {\r\n                "fontFamily": "Inter",\r\n                "fontSize": 16,\r\n                "fontWeight": 700,\r\n                "color": "#FFFFFF"\r\n            },\r\n            "color": "#FFFFFF",\r\n            "secondaryTextColor": "#ABABAB",\r\n            "button": {\r\n                "backgroundColor": "#F6CA7C",\r\n                "color": "#000000"\r\n            }\r\n        },\r\n        "lineupBanner": {\r\n            "titleText": "#FFFFFF",\r\n            "descriptionText": "#F6CA7C"\r\n        },\r\n        "eventInfoBanner": {\r\n            "text": "#FFFFFF"\r\n        },\r\n        "eventDescription": {\r\n            "text": "#9E9E9E",\r\n            "title": "#FFFFFF"\r\n        },\r\n        "featuredProduct": {\r\n            "cover": {\r\n                "borderRadius": 0\r\n            }\r\n        },\r\n        "recentUsedColors": [\r\n            "#7132F4FF",\r\n            "#616161FF",\r\n            "#B7E2E0FF",\r\n            "#0B99FFFF",\r\n            "#E0E0E0FF",\r\n            "#F1BBFFFF",\r\n            "#F44336FF",\r\n            "#4A148CFF",\r\n            "#C5CAE9FF",\r\n            "#3F51B5FF",\r\n            "#ECA416FF",\r\n            "#110921FF",\r\n            "#303F9FFF",\r\n            "#8BC34AFF",\r\n            "#7986CBFF",\r\n            "#BA68C8FF",\r\n            "#CB135BFF",\r\n            "#E91E63FF"\r\n        ]\r\n    },\r\n    "variantSelectorType": "FULL_PAGE",\r\n    "abTestingSettings": [],\r\n    "enableAbTesting": false,\r\n    "featuredSectionTitle": "Featured products",\r\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\"><span data-id=\\"6155979f-16e8-4461-adf7-11741f58f66d\\" data-type=\\"event-info-banner\\" data-event-id=\\"f07e07c5-8146-43fb-9516-01f56a8593ba\\"></span></p><span data-id=\\"9259371b-7fa2-4d73-933d-41515df64875\\" data-type=\\"additional-content\\"></span><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span data-id=\\"5c2bf0a7-353b-435b-8fe8-c40dbb098327\\" data-width=\\"100%\\" data-height=\\"\\" data-product-id=\\"21fc1b6e-2be1-4d66-9f70-b3c23fd5826d\\" data-available-purchase-types=\\"ONE_TIME\\" data-cta-label=\\"Buy Ticket\\" data-primary-action=\\"buy-now\\"></span></p><hr><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span data-id=\\"7a27be5c-579a-41f4-afe9-2416e7d14ecc\\" data-type=\\"post-event-description\\" data-event-id=\\"f07e07c5-8146-43fb-9516-01f56a8593ba\\"></span></p>",\r\n    "currentDate": "2025-12-19T07:25:11.463Z",\r\n    "relatedProducts": [\r\n        {\r\n            "merchantProductId": "21fc1b6e-2be1-4d66-9f70-b3c23fd5826d",\r\n            "isVisible": true,\r\n            "isPurchaseQuantityLimited": false,\r\n            "isRecommendation": false,\r\n            "isDefaultToSubscription": false,\r\n            "syncWithCatalogPrice": true,\r\n            "purchaseQuantityLimit": 1,\r\n            "variants": [\r\n                {\r\n                    "wholesalePriceForPromoters": 51,\r\n                    "price": 56.67,\r\n                    "costPrice": 0,\r\n                    "priceAnchor": 0,\r\n                    "merchantProductVariantId": "6a8a3ae1-afca-4aa9-968a-5353affa3ae9",\r\n                    "commissionRateForPromoters": 10\r\n                }\r\n            ]\r\n        }\r\n    ],\r\n    "promotions": [],\r\n    "accessSpecificUser": [],\r\n    "allowPromotersCreateCoupon": true,\r\n    "featuredSectionEnable": true,\r\n    "allowAffiliateSharingOnly": false,\r\n    "hideCouponBox": false,\r\n    "checkoutInPost": true,\r\n    "tab": {\r\n        "value": "Commerce",\r\n        "label": "Commerce",\r\n        "mappingControl": []\r\n    },\r\n    "timeKey": 1766129113643,\r\n    "coverImages": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\r\n            "width": 3072,\r\n            "height": 2048,\r\n            "position": 1,\r\n            "mediaType": "IMAGE",\r\n            "mediaDuration": 0,\r\n            "eventFill": true,\r\n            "setThumbnail": true\r\n        }\r\n    ],\r\n    "customizeDisplayPrices": {\r\n        "price": "Liberty Island, New York, NY 10004 | Fri, Dec 19 (CST)",\r\n        "discountPercent": "Get Tickets",\r\n        "priceColor": "#F6CA7C",\r\n        "discountPercentColor": "#D32A08"\r\n    },\r\n    "redirectUrl": "",\r\n    "redirectDestinationName": "",\r\n    "syncEnabled": false,\r\n    "postType": "EVENT",\r\n    "canSetPrice": false,\r\n    "allowCustomizeDisplayPrices": true,\r\n    "createFromEventId": "f07e07c5-8146-43fb-9516-01f56a8593ba",\r\n    "recommendationSectionTitle": "",\r\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[{\\"id\\":\\"6155979f-16e8-4461-adf7-11741f58f66d\\",\\"eventId\\":\\"f07e07c5-8146-43fb-9516-01f56a8593ba\\",\\"type\\":\\"event-info-banner\\",\\"version\\":1}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\"},{\\"id\\":\\"9259371b-7fa2-4d73-933d-41515df64875\\",\\"type\\":\\"additional-content\\",\\"version\\":1},{\\"children\\":[{\\"id\\":\\"5c2bf0a7-353b-435b-8fe8-c40dbb098327\\",\\"productId\\":\\"21fc1b6e-2be1-4d66-9f70-b3c23fd5826d\\",\\"width\\":\\"100%\\",\\"height\\":\\"\\",\\"availablePurchaseTypes\\":[\\"ONE_TIME\\"],\\"ctaLabel\\":\\"Buy Ticket\\",\\"action\\":\\"buy-now\\",\\"layout\\":\\"event\\",\\"type\\":\\"show-product-banner\\",\\"version\\":1}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\"},{\\"type\\":\\"horizontalrule\\",\\"version\\":1},{\\"children\\":[{\\"id\\":\\"7a27be5c-579a-41f4-afe9-2416e7d14ecc\\",\\"eventId\\":\\"f07e07c5-8146-43fb-9516-01f56a8593ba\\",\\"type\\":\\"post-event-description\\",\\"version\\":1}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\r\n    "media": [\r\n        {\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\r\n            "width": 3072,\r\n            "height": 2048,\r\n            "position": 1,\r\n            "mediaType": "IMAGE",\r\n            "mediaDuration": 0,\r\n            "eventFill": true,\r\n            "setThumbnail": true\r\n        }\r\n    ],\r\n    "othersCanCopy": false,\r\n    "enableDownlineNote": false,\r\n    "expiredAt": null,\r\n    "urlAlias": "{{urlAlias}}",\r\n    "headline": "{{posttitle}}"\r\n}', token='linda01_token')
+    # === pre-script（由 Apifox customScript 翻译）：生成 posttitle 和 urlAlias ===
+    import time as _time
+    import random as _random
+    import string as _string
+
+    _timestamp = str(int(_time.time() * 1000))[-7:]
+    _postTitleValue = f"Automation test T2129 {_timestamp}"
+    vars['posttitle'] = _postTitleValue
+
+    def _get_random_chars(length, type='letters'):
+        if type == 'letters':
+            chars = _string.ascii_lowercase
+        else:
+            chars = _string.digits
+        return ''.join(_random.choice(chars) for _ in range(length))
+
+    _urlAlias = f"{_get_random_chars(6)}{_get_random_chars(6, 'nums')}"
+    vars['urlAlias'] = _urlAlias
+    _resp1 = ctx.api.posts.curator(body={
+    'title': '{{posttitle}}',
+    'links': [],
+    'allowPromotersResell': True,
+    'financeModeForPromoters': 'FINANCE_MODE_COMMISSION',
+    'status': 'ACTIVE',
+    'allowPromotersHideProducts': True,
+    'allowPromotersCustomizeMedia': True,
+    'isPurchaseQuantityLimited': False,
+    'purchaseQuantityLimit': 1,
+    'styleSettings': {
+        'template': 'ShadowFocus',
+        'layout': {
+            'pageHeader': {
+                'style': 'DEDICATED_HEADER_BAR',
+                'displayText': 'SHOP_NAME',
+                'height': 'MEDIUM',
+            },
+            'productBanner': {
+                'ctaButton': 'VIEW_PRODUCT',
+                'display': 'HIDE',
+            },
+        },
+        'fontFamily': 'Replica Mono LL',
+        'color': '#FFFFFF',
+        'backgroundColor': '#000000',
+        'borderColor': '#000000',
+        'secondaryTextColor': '#ABABAB',
+        'announcementCarousel': {
+            'color': '#000000',
+            'backgroundColor': '#F6CA7C',
+        },
+        'title': {
+            'color': '#F6CA7C',
+            'fontFamily': 'Inter',
+            'fontSize': 30,
+            'fontWeight': 700,
+        },
+        'columnTitle': {
+            'fontFamily': 'Inter',
+            'fontSize': 20,
+            'fontWeight': 700,
+            'color': '#FFFFFF',
+        },
+        'subtitle': {
+            'fontFamily': 'Replica Mono LL',
+            'fontSize': 20,
+            'fontWeight': 400,
+            'color': '#FFFFFF',
+        },
+        'button': {
+            'backgroundColor': '#F6CA7C',
+            'color': '#000000',
+            'borderColor': '#0000',
+            'borderRadius': 0,
+            'boxShadow': 'none',
+            'fontSize': 16,
+            'fontWeight': 400,
+        },
+        'secondaryButton': {
+            'fontSize': 16,
+            'fontWeight': 400,
+            'color': '#FFFFFF',
+            'borderColor': '#F6CA7C',
+            'borderRadius': 0,
+            'boxShadow': 'none',
+        },
+        'textButton': {
+            'fontSize': 16,
+            'fontWeight': 700,
+            'color': '#FFFFFF',
+        },
+        'selectButton': {
+            'borderColor': '#000000',
+        },
+        'relatedLink': {
+            'borderRadius': 0,
+            'color': '#000000 ',
+            'borderColor': '#0000',
+            'backgroundColor': '#FFFFFF80',
+        },
+        'featuredProducts': {
+            'borderRadius': 0,
+            'backgroundColor': '#000000',
+            'color': '#FFFFFF',
+            'secondaryTextColor': '#ABABAB',
+            'title': {
+                'fontFamily': 'Replica Mono LL',
+                'fontSize': 14,
+                'fontWeight': 400,
+                'color': '#FFFFFF',
+            },
+        },
+        'product': {
+            'backgroundColor': '#000000',
+            'borderRadius': 0,
+            'color': '#FFFFFF',
+            'secondaryTextColor': '#ABABAB',
+        },
+        'discount': {
+            'backgroundColor': '#D32A09',
+            'color': '#FFFFFF',
+            'priceColor': '#FFFFFF',
+        },
+        'freeShipping': {
+            'backgroundColor': '#EBF5EF',
+            'color': '#268E46',
+        },
+        'starRatingColor': '#FAAF03',
+        'layoutFeatureCard': {
+            'title': {
+                'fontFamily': 'Inter',
+                'fontSize': 16,
+                'fontWeight': 700,
+                'color': '#FFFFFF',
+            },
+            'color': '#FFFFFF',
+            'secondaryTextColor': '#ABABAB',
+            'button': {
+                'backgroundColor': '#F6CA7C',
+                'color': '#000000',
+            },
+        },
+        'lineupBanner': {
+            'titleText': '#FFFFFF',
+            'descriptionText': '#F6CA7C',
+        },
+        'eventInfoBanner': {
+            'text': '#FFFFFF',
+        },
+        'eventDescription': {
+            'text': '#9E9E9E',
+            'title': '#FFFFFF',
+        },
+        'featuredProduct': {
+            'cover': {
+                'borderRadius': 0,
+            },
+        },
+        'recentUsedColors': [
+            '#7132F4FF',
+            '#616161FF',
+            '#B7E2E0FF',
+            '#0B99FFFF',
+            '#E0E0E0FF',
+            '#F1BBFFFF',
+            '#F44336FF',
+            '#4A148CFF',
+            '#C5CAE9FF',
+            '#3F51B5FF',
+            '#ECA416FF',
+            '#110921FF',
+            '#303F9FFF',
+            '#8BC34AFF',
+            '#7986CBFF',
+            '#BA68C8FF',
+            '#CB135BFF',
+            '#E91E63FF',
+        ],
+    },
+    'variantSelectorType': 'FULL_PAGE',
+    'abTestingSettings': [],
+    'enableAbTesting': False,
+    'featuredSectionTitle': 'Featured products',
+    'bodyHtml': '<p class="katana__paragraph katana__paragraph--align-left"><span data-id="6155979f-16e8-4461-adf7-11741f58f66d" data-type="event-info-banner" data-event-id="f07e07c5-8146-43fb-9516-01f56a8593ba"></span></p><span data-id="9259371b-7fa2-4d73-933d-41515df64875" data-type="additional-content"></span><p class="katana__paragraph katana__paragraph--align-left"><span data-id="5c2bf0a7-353b-435b-8fe8-c40dbb098327" data-width="100%" data-height="" data-product-id="21fc1b6e-2be1-4d66-9f70-b3c23fd5826d" data-available-purchase-types="ONE_TIME" data-cta-label="Buy Ticket" data-primary-action="buy-now"></span></p><hr><p class="katana__paragraph katana__paragraph--align-left"><span data-id="7a27be5c-579a-41f4-afe9-2416e7d14ecc" data-type="post-event-description" data-event-id="f07e07c5-8146-43fb-9516-01f56a8593ba"></span></p>',
+    'currentDate': '2025-12-19T07:25:11.463Z',
+    'relatedProducts': [
+        {
+            'merchantProductId': '21fc1b6e-2be1-4d66-9f70-b3c23fd5826d',
+            'isVisible': True,
+            'isPurchaseQuantityLimited': False,
+            'isRecommendation': False,
+            'isDefaultToSubscription': False,
+            'syncWithCatalogPrice': True,
+            'purchaseQuantityLimit': 1,
+            'variants': [
+                {
+                    'wholesalePriceForPromoters': 51,
+                    'price': 56.67,
+                    'costPrice': 0,
+                    'priceAnchor': 0,
+                    'merchantProductVariantId': '6a8a3ae1-afca-4aa9-968a-5353affa3ae9',
+                    'commissionRateForPromoters': 10,
+                },
+            ],
+        },
+    ],
+    'promotions': [],
+    'accessSpecificUser': [],
+    'allowPromotersCreateCoupon': True,
+    'featuredSectionEnable': True,
+    'allowAffiliateSharingOnly': False,
+    'hideCouponBox': False,
+    'checkoutInPost': True,
+    'tab': {
+        'value': 'Commerce',
+        'label': 'Commerce',
+        'mappingControl': [],
+    },
+    'timeKey': 1766129113643,
+    'coverImages': [
+        {
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'width': 3072,
+            'height': 2048,
+            'position': 1,
+            'mediaType': 'IMAGE',
+            'mediaDuration': 0,
+            'eventFill': True,
+            'setThumbnail': True,
+        },
+    ],
+    'customizeDisplayPrices': {
+        'price': 'Liberty Island, New York, NY 10004 | Fri, Dec 19 (CST)',
+        'discountPercent': 'Get Tickets',
+        'priceColor': '#F6CA7C',
+        'discountPercentColor': '#D32A08',
+    },
+    'redirectUrl': '',
+    'redirectDestinationName': '',
+    'syncEnabled': False,
+    'postType': 'EVENT',
+    'canSetPrice': False,
+    'allowCustomizeDisplayPrices': True,
+    'createFromEventId': 'f07e07c5-8146-43fb-9516-01f56a8593ba',
+    'recommendationSectionTitle': '',
+    'bodyJson': '{"root":{"children":[{"children":[{"id":"6155979f-16e8-4461-adf7-11741f58f66d","eventId":"f07e07c5-8146-43fb-9516-01f56a8593ba","type":"event-info-banner","version":1}],"direction":null,"format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":""},{"id":"9259371b-7fa2-4d73-933d-41515df64875","type":"additional-content","version":1},{"children":[{"id":"5c2bf0a7-353b-435b-8fe8-c40dbb098327","productId":"21fc1b6e-2be1-4d66-9f70-b3c23fd5826d","width":"100%","height":"","availablePurchaseTypes":["ONE_TIME"],"ctaLabel":"Buy Ticket","action":"buy-now","layout":"event","type":"show-product-banner","version":1}],"direction":null,"format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":""},{"type":"horizontalrule","version":1},{"children":[{"id":"7a27be5c-579a-41f4-afe9-2416e7d14ecc","eventId":"f07e07c5-8146-43fb-9516-01f56a8593ba","type":"post-event-description","version":1}],"direction":null,"format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+    'media': [
+        {
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'width': 3072,
+            'height': 2048,
+            'position': 1,
+            'mediaType': 'IMAGE',
+            'mediaDuration': 0,
+            'eventFill': True,
+            'setThumbnail': True,
+        },
+    ],
+    'othersCanCopy': False,
+    'enableDownlineNote': False,
+    'expiredAt': None,
+    'urlAlias': '{{urlAlias}}',
+    'headline': '{{posttitle}}',
+}, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"接口返回code错误，预期200，实际={_j1.get('code')!r}"
