@@ -210,6 +210,12 @@ def start_autotest():
         except Exception:
             pass
 
+    # Propagate the pytest exit code so CI reflects real test results
+    # (without this, the GitHub Actions job stays green even if all cases fail).
+    if result.returncode != 0:
+        logger.error(f"pytest exited with code {result.returncode}")
+        sys.exit(result.returncode)
+
 
 
 if __name__ == '__main__':

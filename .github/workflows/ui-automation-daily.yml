@@ -1,127 +1,139 @@
 name: ui-automation-daily
 
-# 每天 12:00 北京时间（= 04:00 UTC）自动跑 UI 自动化，并把 Allure 报告链接发到 Slack。
+# 每天 12:00 北京时间（= 04:00 UTC）自动跑 UI 自动化。
 #
-# 重要前提：
-#   1) 本 workflow 必须在本机注册【self-hosted runner】才能跑——
-#      GitHub 只按 cron 调度，main.py 实际是在这台 Mac 上执行的
-#      （它依赖本地 venv、本地 allure CLI、以及 http://192.168.x.x:8080 的本地报告服务）。
-#   2) schedule 事件只在仓库【默认分支 main】上触发；本文件必须在 main 上，定时才生效。
-#      需要临时验证时用 workflow_dispatch 手动触发。
-#   3) 仓库 Secrets 需配置 SLACK_WEBHOOK_URL（Slack Incoming Webhook）。
-#      未配置时 Slack 步骤自动跳过，不影响测试本身。
-#   4) 定时任务要求 Mac 处于唤醒且用户已登录（GUI 会话）状态，否则会跳过/失败。
-#      建议在「系统设置 > 锁定屏幕/节能」中关闭自动睡眠，或使用 caffeinate。
+# 运行环境：GitHub 托管 runner（ubuntu-latest），**不需要注册 self-hosted runner**，
+# 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
+#
+# 为什么是无头（headless）运行：
+#   托管 runner 没有显示器，pytest.ini 里已移除写死的 --headed；
+#   本地直接跑 main.py 时由 main.py 在非 CI 下自动补上 --headed。
+#
+# 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
+#
+# Slack 通知：配置仓库 Secrets（SLACK_WEBHOOK_URL）后自动启用，未配置则跳过。
+#
+# 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 
 on:
   schedule:
     - cron: '0 4 * * *'       # 04:00 UTC = 12:00 北京时间（每天中午）
   workflow_dispatch:          # 允许手动触发，便于随时验证
 
-# 这台 Mac 同一时刻只允许一个 UI 自动化在跑（浏览器/端口 8080 会互相打架）
+# 同一 workflow 只允许一个实例在跑，避免并发争抢
 concurrency:
-  group: ui-automation-local-mac
+  group: ui-automation-daily
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   ui-automation:
-    name: UI Automation (self-hosted macOS)
-    runs-on: [self-hosted, macOS]
+    name: UI Automation (ubuntu, headless)
+    runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
-      - name: Ensure venv interpreter is usable (self-heal)
-        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: venv_requirements.txt
+
+      - name: Setup Java (bundled Allure CLI needs it)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Python dependencies
         run: |
-          set -uo pipefail
-          PROJ="/Users/a123456/Desktop/UI Automation"
-          PY="$PROJ/venv/bin/python3"
+          python -m pip install --upgrade pip
+          pip install -r venv_requirements.txt
 
-          if "$PY" -V >/dev/null 2>&1; then
-            echo "venv OK: $("$PY" -V)  ($PY)"
-            exit 0
-          fi
+      - name: Install Playwright Chromium
+        run: python -m playwright install --with-deps chromium
 
-          echo "::warning::venv 解释器不可用，尝试自动修复（通常是内置 Python 升级后旧路径失效）"
-
-          NEW_PY=""
-          # 1) 优先用当前 Marvis 内置 python311
-          for cand in "$HOME/Library/Application Support/com.tencent.mac.marvis/components/MarvisAgent/Versions"/*/runtime/python311/bin/python3; do
-            if [ -x "$cand" ]; then NEW_PY="$cand"; fi
-          done
-          # 2) 回退到常见的 python3.11 安装路径
-          if [ -z "$NEW_PY" ]; then
-            for cand in /opt/homebrew/bin/python3.11 /usr/local/bin/python3.11; do
-              if [ -x "$cand" ]; then NEW_PY="$cand"; break; fi
-            done
-          fi
-
-          if [ -z "$NEW_PY" ]; then
-            echo "::error::未找到可用的 python3.11，无法自动修复 venv"
-            exit 1
-          fi
-
-          echo "使用解释器: $NEW_PY"
-          rm -f "$PY"
-          ln -s "$NEW_PY" "$PY"
-
-          BASE_BIN="$(dirname "$NEW_PY")"
-          PY_VER="$("$NEW_PY" -c 'import sys; print("%d.%d.%d" % sys.version_info[:3])')"
-          printf 'home = %s\ninclude-system-site-packages = false\nversion = %s\nexecutable = %s/python3.11\ncommand = %s -m venv %s\n' \
-            "$BASE_BIN" "$PY_VER" "$BASE_BIN" "$NEW_PY" "$PROJ/venv" > "$PROJ/venv/pyvenv.cfg"
-
-          if "$PY" -V >/dev/null 2>&1; then
-            echo "venv 已自动修复: $("$PY" -V)"
-          else
-            echo "::error::venv 修复失败，请手动重建虚拟环境"
-            exit 1
-          fi
-
-      - name: Stop stale Allure report server (free port 8080)
-        shell: bash
+      - name: Print environment info (debug)
         run: |
-          # main.py 每天会以 detached 方式起一个 http_server.py 常驻服务。
-          # 不清理的话第二天会因 8080 被占用而启动失败，
-          # 导致 last_report_url.txt 仍指向旧报告（Slack 链接永远是第一天的报告）。
-          if pgrep -f "UI Automation/http_server.py" >/dev/null 2>&1; then
-            echo "发现残留的报告服务，正在停止…"
-            pkill -f "UI Automation/http_server.py" || true
-            sleep 2
-          fi
-          echo "端口 8080 已就绪"
+          python -V
+          java -version 2>&1 | head -1
+          python -m pytest --version
+          python -m playwright --version
+          ./allure/bin/allure --version
 
       - name: Run UI Automation (main.py)
         id: run
         env:
           CI: "true"
+          BASE_URL: https://release.pear.us
         run: |
-          cd "/Users/a123456/Desktop/UI Automation"
           set -o pipefail
-          ./venv/bin/python3 main.py 2>&1 | tee run.log
+          python main.py 2>&1 | tee run.log
 
-      - name: Show main.py tail (debug)
+      - name: Locate result directories
         if: always()
+        id: locate
+        shell: bash
         run: |
-          echo "=== main.py tail ==="
-          tail -n 40 "/Users/a123456/Desktop/UI Automation/run.log" 2>/dev/null || true
+          REPORT_DIR="$(ls -1dt report/html/*/ 2>/dev/null | head -1 || true)"
+          VIDEO_DIR="$(ls -1dt report/video/*/ 2>/dev/null | head -1 || true)"
+          echo "report_dir=${REPORT_DIR}" >> "$GITHUB_OUTPUT"
+          echo "video_dir=${VIDEO_DIR}" >> "$GITHUB_OUTPUT"
+          echo "report=$REPORT_DIR"
+          echo "video=$VIDEO_DIR"
+
+      - name: Upload Allure report (artifact)
+        if: always() && steps.locate.outputs.report_dir != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ github.run_number }}
+          path: ${{ steps.locate.outputs.report_dir }}
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload logs (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-logs-${{ github.run_number }}
+          path: |
+            run.log
+            log/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload failure videos (artifact)
+        if: failure() && steps.locate.outputs.video_dir != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos-${{ github.run_number }}
+          path: ${{ steps.locate.outputs.video_dir }}
+          retention-days: 14
+          if-no-files-found: ignore
 
       - name: Write job summary
         if: always()
         shell: bash
         run: |
-          PROJ="/Users/a123456/Desktop/UI Automation"
-          REPORT_URL="$(cat "$PROJ/report/last_report_url.txt" 2>/dev/null || echo '未生成')"
           {
             echo "# UI Automation 每日执行结果"
             echo ""
             echo "| 项目 | 值 |"
             echo "| --- | --- |"
             echo "| 触发方式 | \`${{ github.event_name }}\` |"
-            echo "| main.py 退出码 | \`${{ steps.run.outcome }}\` |"
-            echo "| Allure 报告 | ${REPORT_URL} |"
+            echo "| 运行环境 | ubuntu-latest（headless） |"
+            echo "| main.py 结果 | \`${{ steps.run.outcome }}\` |"
+            echo ""
+            echo "Allure 报告见本次 run 页面底部的 Artifacts：\`allure-report-${{ github.run_number }}\`。"
             echo ""
             echo "## main.py 日志尾部"
             echo '```'
-            tail -n 60 "$PROJ/run.log" 2>/dev/null || echo '(无 run.log)'
+            tail -n 60 run.log 2>/dev/null || echo '(无 run.log)'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -132,46 +144,32 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           RUN_OUTCOME: ${{ steps.run.outcome }}
         run: |
-          "/Users/a123456/Desktop/UI Automation/venv/bin/python3" - <<'PY'
-          import os, json, subprocess, urllib.request
-
-          report_path = "/Users/a123456/Desktop/UI Automation/report/last_report_url.txt"
-          report_url = "N/A"
-          try:
-              with open(report_path, encoding="utf-8") as f:
-                  report_url = (f.read().strip() or "N/A")
-          except Exception as e:
-              print("read report url failed:", e)
+          python3 - <<'PY'
+          import json, os, urllib.request
 
           run_url = "{server}/{repo}/actions/runs/{run_id}".format(
               server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
               repo=os.environ.get("GITHUB_REPOSITORY", ""),
               run_id=os.environ.get("GITHUB_RUN_ID", ""),
           )
-          try:
-              ts = subprocess.check_output(["date", "+%Y-%m-%d %H:%M %Z"]).decode().strip()
-          except Exception:
-              ts = ""
-
           status = os.environ.get("RUN_OUTCOME", "unknown")
           icon = ":white_check_mark:" if status == "success" else ":warning:"
-
           text = (
-              "{icon} *UI Automation 每日报告 ({ts})*\n"
+              "{icon} *UI Automation 每日报告*\n"
               "> main.py 结果: *{status}*\n"
-              "> 报告链接: {url}\n"
-              "> 运行详情: {run}".format(icon=icon, ts=ts, status=status, url=report_url, run=run_url)
-          )
-          payload = {"text": text}
+              "> 运行详情: {run}\n"
+              "> Allure 报告: 见该 run 的 Artifacts"
+          ).format(icon=icon, status=status, run=run_url)
+
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
-              data=json.dumps(payload).encode("utf-8"),
+              data=json.dumps({"text": text}).encode("utf-8"),
               headers={"Content-Type": "application/json"},
               method="POST",
           )
           try:
               urllib.request.urlopen(req)
-              print("Slack notification sent.")
+              print("Slack 已发送")
           except Exception as e:
-              print("Slack send failed:", e)
+              print("Slack 发送失败:", e)
           PY
