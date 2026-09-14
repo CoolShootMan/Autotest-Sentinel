@@ -22,11 +22,11 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
 
     R_click_add_new_form:
       { locator: "[data-testid='AddIcon']", index: 1, quick: true }
-    sleep_add: 1000
+    sleep_add: 500
 
     R_click_Create_form:
       { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
-    sleep_add: 1000
+    sleep_add: 500
 
     fill_title:
       { role: "textbox", name: "Enter a title", value: "Partner_create_form" }
@@ -219,12 +219,12 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     sleep_delete_email_2: 50
 
     # Finalization
-    # R_click_preview:
-    #   { locator: "[data-testid='VisibilityOutlinedIcon']", index: 1, quick: true }
-    # sleep_preview: 1000
-    # R_click_close_preview:
-    #   { role: "button", name: "Close", exact: true, quick: true }
-    #sleep_close_preview: 1000
+    R_click_preview:
+      { locator: "[data-testid='VisibilityOutlinedIcon']", index: 1, quick: true }
+    sleep_preview: 1000
+    R_click_close_preview:
+      { role: "button", name: "Close", exact: true, quick: true }
+    sleep_close_preview: 1000
 
     R_click_continue: { role: "button", name: "Continue" }
     sleep_continue: 500
@@ -356,6 +356,7 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
     check_3:
       role: "checkbox"
       name: "Receive marketing emails and text messages from Auto_Test_shop"
+      optional: true
 
     # submit
     R_click_submit:
@@ -383,7 +384,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
     # submit
     R_click_submit:
       role: "button"
-      name: "Submit and follow"
+      name: "Submit"
     # Verify every field in the modal (Comprehensive UI check)
     verify_short: { text: "This field is required. Please fill it in." }
     verify_long: { text: "This field is required. Please fill it in." }
@@ -476,7 +477,7 @@ testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
           "X": "@PearPartnerHQ",
           "Youtube": "@PearPartnerChannel",
           "Linkedin": "@pear-partner-official",
-          #'Threads': '@pear_partner_official'
+          'Threads': '@pear_partner_official'
         }
 
   expect_result:

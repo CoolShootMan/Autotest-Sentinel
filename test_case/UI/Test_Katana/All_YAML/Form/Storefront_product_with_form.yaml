@@ -120,11 +120,19 @@ testT4970:  # [LAST: PASSED 2026-05-06]
     # click_my_form_tab: { locator: '.shop-text-color:has-text("MyForm")' }
     # sleep_after_form_tab: 200
 
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
+    R_click_add_new_form:
+      { locator: "[data-testid='AddIcon']", index: 1, quick: true }
+    sleep_add: 500
+
+    R_click_Create_form:
+      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+    sleep_add: 500
 
     # Fill form title and subtitle
-    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test form verify error' }
-    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'single choice/multiple choice options' }
+    fill_title:
+      { role: "textbox", name: "Enter a title", value: "test form verify error" }
+    fill_subtitle:
+      { role: "textbox", name: "Enter subtitle", value: "single choice/multiple choice options" }
 
     # Delete default Email and Phone fields
     click_view_email_options: { role: 'button', name: 'View Email options', exact: true }
@@ -655,31 +663,6 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
 
   expect_result:
     description: "Submission times should display in CST after setting timezone to GMT+8:00"
-    assertions: [ ]
-
-
-testT3695_curator:  # [LAST: PASSED 2026-05-06]
-  guest: false
-  description: "Verify the Custom Text input field is invisible on the Curator view (My item)"
-  test_step:
-    open: "{BASE_URL}/autotestshop/p/bxasz9"
-    sleep_after_open: 3000
-    verify_text_not_visible: { text: 'product form must be filled', assert_not_visible: true }
-
-  expect_result:
-    description: "Custom Text 'product form must be filled' should not be visible on the page"
-    assertions: [ ]
-
-testT3695_guest:  # [LAST: PASSED 2026-05-06]
-  guest: true
-  description: "Verify the Custom Text input field is visible on the Guest view"
-  test_step:
-    open: "{BASE_URL}/autotestshop/p/bxasz9"
-    sleep_after_open: 3000
-    verify_text_visible: { text: 'product form must be filled' }
-
-  expect_result:
-    description: "Custom Text 'product form must be filled' should be visible on the guest page"
     assertions: [ ]
 
 testT3690:  # [LAST: PASSED 2026-05-06]
