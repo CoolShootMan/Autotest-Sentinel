@@ -51,7 +51,18 @@ def test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # step 2: c3467ada-0ce8-4680-a3a1-83d3a356557f
-    _resp2 = ctx.api.address.create(body='{\r\n  "isDefault": false,\r\n  "phoneNumber": "17484538034",\r\n  "firstName": "API TEST",\r\n  "lastName": "linda",\r\n  "line1": "test",\r\n  "line2": "test",\r\n  "city": "london",\r\n  "state": "CA",\r\n  "zipcode": "90021", \r\n  "ignoreVerifyPhoneNumber": false\r\n}', token='linda10_token')
+    _resp2 = ctx.api.address.create(body={
+        "isDefault": False,
+        "phoneNumber": "17484538034",
+        "firstName": "API TEST",
+        "lastName": "linda",
+        "line1": "test",
+        "line2": "test",
+        "city": "london",
+        "state": "CA",
+        "zipcode": "90021",
+        "ignoreVerifyPhoneNumber": False,
+    }, token='linda10_token')
     # extractor: addess_id = $.data.id
     ctx.extract('address_id', _resp2, '$.data.id')
     # assertion 2.assertion: responseJson equal 200

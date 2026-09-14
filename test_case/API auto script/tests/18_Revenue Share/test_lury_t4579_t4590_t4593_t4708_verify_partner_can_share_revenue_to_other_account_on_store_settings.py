@@ -255,7 +255,10 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     vars['promoter_transaction_fee'] = 'promoter_transaction_fee'
     vars['p5_transaction_fee'] = 'p5_transaction_fee'
     # step 1: P-21-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     try:
         _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['P-21_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -270,7 +273,10 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # extractor: balance_amount = $.data.balance.amount
     ctx.extract('balance_amount', _resp3, '$.data.balance.amount')
     # step 4: Login - merchant
-    _resp4 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp4 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     try:
         _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
@@ -285,7 +291,11 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # extractor: balance_amount_p = $.data.balance.amount
     ctx.extract('balance_amount_p', _resp6, '$.data.balance.amount')
     # step 7: Add share revenue for merchant
-    _resp7 = ctx.api.users.me_earning_share_configs(body='{\n    "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",\n    "shareRate": 0.12,\n    "note": "Automation test"\n}', token='Bearer {{P-21_access_token}}')
+    _resp7 = ctx.api.users.me_earning_share_configs(body={
+        "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",
+        "shareRate": 0.12,
+        "note": "Automation test",
+    }, token='Bearer {{P-21_access_token}}')
     # extractor: config_id = $.data.id (创建失败则复用已有配置)
     ctx.extract('config_id', _resp7, '$.data.id (创建失败则复用已有配置)')
     if not vars.get('config_id'):
@@ -307,7 +317,10 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     vars['p1_transaction_fee'] = 'p1_transaction_fee'
     vars['merchant_transaction_fee'] = 'merchant_transaction_fee'
     # step 8: Consumer-login
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     try:
         _j = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
@@ -316,7 +329,37 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 9: delete cart
     _resp9 = ctx.api.cart.delete(token='consumer_access_token')
     # step 10: buy now
-    _resp10 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "baab0db1-857e-49e0-9510-3e176d02d996",\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "150011ef-8e56-4460-81ab-0fa88297f4d2",\n            "price": 13.1,\n            "postId": "baab0db1-857e-49e0-9510-3e176d02d996",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "69989f83-4e22-4d21-b18a-922e9e424506",\n        "pixelId": [\n            "453453"\n        ],\n        "fbBrowserId": "fb.1.1768467567031.92506180232323161",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/mcc/post/lury-test-share-revenue-automation"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "150011ef-8e56-4460-81ab-0fa88297f4d2",\n            "postId": "baab0db1-857e-49e0-9510-3e176d02d996",\n            "price": 13.1,\n            "customFields": []\n        }\n    ]\n}', token='consumer_access_token')
+    _resp10 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "baab0db1-857e-49e0-9510-3e176d02d996",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "150011ef-8e56-4460-81ab-0fa88297f4d2",
+                "price": 13.1,
+                "postId": "baab0db1-857e-49e0-9510-3e176d02d996",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "69989f83-4e22-4d21-b18a-922e9e424506",
+            "pixelId": [
+                "453453",
+            ],
+            "fbBrowserId": "fb.1.1768467567031.92506180232323161",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/mcc/post/lury-test-share-revenue-automation",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "150011ef-8e56-4460-81ab-0fa88297f4d2",
+                "postId": "baab0db1-857e-49e0-9510-3e176d02d996",
+                "price": 13.1,
+                "customFields": [],
+            },
+        ],
+    }, token='consumer_access_token')
     # extractor: orderNumber/orderId from step10 buy-now
     try:
         _j10 = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
@@ -325,7 +368,26 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     except Exception:
         pass
     # step 11: create Order
-    _resp11 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}', token='consumer_access_token')
+    _resp11 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    }, token='consumer_access_token')
     # 期望值 = 下单前 P-21 lifetimeEarning + 10.78 (round 2位)
     try:
         _le = float(vars.get('lifetimeEarning', 0) or 0)
@@ -367,7 +429,10 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     vars['p1_transaction_fee'] = 'p1_transaction_fee'
     vars['merchant_transaction_fee'] = 'merchant_transaction_fee'
     # step 19: Consumer-login
-    _resp19 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp19 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     try:
         _j = _resp19.json() if _resp19.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
@@ -376,11 +441,60 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 20: delete cart
     _resp20 = ctx.api.cart.delete(token='consumer_access_token')
     # step 21: buy now
-    _resp21 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "baab0db1-857e-49e0-9510-3e176d02d996",\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "150011ef-8e56-4460-81ab-0fa88297f4d2",\n            "price": 13.1,\n            "postId": "baab0db1-857e-49e0-9510-3e176d02d996",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "69989f83-4e22-4d21-b18a-922e9e424506",\n        "pixelId": [\n            "453453"\n        ],\n        "fbBrowserId": "fb.1.1768467567031.92506180232323161",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/mcc/post/lury-test-share-revenue-automation"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "150011ef-8e56-4460-81ab-0fa88297f4d2",\n            "postId": "baab0db1-857e-49e0-9510-3e176d02d996",\n            "price": 13.1,\n            "customFields": []\n        }\n    ]\n}', token='consumer_access_token')
+    _resp21 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "baab0db1-857e-49e0-9510-3e176d02d996",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "150011ef-8e56-4460-81ab-0fa88297f4d2",
+                "price": 13.1,
+                "postId": "baab0db1-857e-49e0-9510-3e176d02d996",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "69989f83-4e22-4d21-b18a-922e9e424506",
+            "pixelId": [
+                "453453",
+            ],
+            "fbBrowserId": "fb.1.1768467567031.92506180232323161",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/mcc/post/lury-test-share-revenue-automation",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "150011ef-8e56-4460-81ab-0fa88297f4d2",
+                "postId": "baab0db1-857e-49e0-9510-3e176d02d996",
+                "price": 13.1,
+                "customFields": [],
+            },
+        ],
+    }, token='consumer_access_token')
     vars['orderNumber'] = 'orderNumber'
     vars['orderId'] = 'orderId'
     # step 22: create Order
-    _resp22 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}', token='consumer_access_token')
+    _resp22 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    }, token='consumer_access_token')
     # step 23: Verify promoter earning summary is not changed
     _resp23 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 23.Verify the lineup earnings is not changed: responseJson equal {{lifetimeEarning_share}}

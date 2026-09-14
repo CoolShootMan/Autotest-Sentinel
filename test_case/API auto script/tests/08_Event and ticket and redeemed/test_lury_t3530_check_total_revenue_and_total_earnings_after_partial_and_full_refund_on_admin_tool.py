@@ -451,7 +451,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     vars['promoter_transaction_fee'] = 'promoter_transaction_fee'
     vars['p5_transaction_fee'] = 'p5_transaction_fee'
     # step 1: M1-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     try:
         _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -481,7 +484,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     except Exception:
         pass
     # step 5: Login - merchant
-    _resp5 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp5 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     try:
         _j = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
@@ -534,7 +540,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     vars['payout_m1'] = round(_m1e - _m1t + _tt - _m1tf + _rb, 2)
     vars['payout_merchant'] = round(_me - _mt - _mctf, 2)
     # step 9: Consumer-login
-    _resp9 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp9 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     try:
         _j = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -544,7 +553,37 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     _resp10 = ctx.api.cart.list(token='consumer_access_token')
     vars['clearCartParams'] = 'JSON.stringify(clearCartParams'
     # step 11: buy now
-    _resp11 = ctx.api.orders.buy_now(body='{\n    "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n    "updateCartItems": [\n        {\n            "quantity": 2,\n            "promoterProductVariantId": "709c0762-dace-4d22-ab34-18c226a8f003",\n            "price": 13.1,\n            "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "86aead4c-e551-42db-9ae1-09f0031708ed",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/auto-merchant/post/event-lury-ticket-tax-6-2"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 2,\n            "id": "709c0762-dace-4d22-ab34-18c226a8f003",\n            "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",\n            "price": 26.2,\n            "customFields": []\n        }\n    ]\n}', token='consumer_access_token')
+    _resp11 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "709c0762-dace-4d22-ab34-18c226a8f003",
+                "price": 13.1,
+                "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "86aead4c-e551-42db-9ae1-09f0031708ed",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/auto-merchant/post/event-lury-ticket-tax-6-2",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "709c0762-dace-4d22-ab34-18c226a8f003",
+                "postId": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
+                "price": 26.2,
+                "customFields": [],
+            },
+        ],
+    }, token='consumer_access_token')
     try:
         _j11 = _resp11.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
         vars['orderNumber'] = _get_path(_j11, ['data', 'orderNumber'])
@@ -553,10 +592,32 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     except Exception:
         pass
     # step 12: create Order
-    _resp12 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}', token='consumer_access_token')
+    _resp12 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    }, token='consumer_access_token')
     print('DBG step12 status=', getattr(_resp12,'status_code',None), 'body=', (getattr(_resp12,'text','') or '')[:120], flush=True)
     # step 13: M1-login
-    _resp13 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp13 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     try:
         _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -600,7 +661,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     vars['orderLineItemId'] = 'orderLineItemId'
     vars['item_unit_id_list'] = 'item_unit_id_list'
     # step 18: Login - merchant
-    _resp18 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp18 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     try:
         _j = _resp18.json() if _resp18.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
@@ -622,10 +686,26 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     expect(_resp21).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
     vars['first_item_unit_id'] = 'first_item_unit_id'
     # step 22: Partner partial refund 1 ticket after placing
-    _resp22 = ctx.api.orders.refunds(body='{\n    "lineItems": [\n        {\n            "id": "{{orderLineItemId}}",\n            "quantity": 1,\n            "lineItemUnitIds": [\n                "{{first_item_unit_id}}"\n            ]\n        }\n    ],\n    "shippingLines": [],\n    "tipLines": [],\n    "note": "Automation test"\n}', token='M1_access_token')
+    _resp22 = ctx.api.orders.refunds(body={
+        "lineItems": [
+            {
+                "id": "{{orderLineItemId}}",
+                "quantity": 1,
+                "lineItemUnitIds": [
+                    "{{first_item_unit_id}}",
+                ],
+            },
+        ],
+        "shippingLines": [],
+        "tipLines": [],
+        "note": "Automation test",
+    }, token='M1_access_token')
     # payout_m1/payout_merchant 已在 step13 计算，此处无需覆盖
     # step 23: M1-login
-    _resp23 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp23 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     try:
         _j = _resp23.json() if _resp23.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -656,7 +736,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # assertion 26.Verify the total orders on fulfilled tab after partial refund: responseJson equal {{totalOrders_fulfilled_partial_refund}}
     expect(_resp26).json('$.data.extra.totalOrders').equals(str(vars.get('totalOrders_fulfilled_afterplace') or vars.get('totalOrders_fulfilled') or ''))
     # step 27: Login - merchant
-    _resp27 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp27 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     try:
         _j = _resp27.json() if _resp27.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
@@ -688,9 +771,33 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     expect(_resp30).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
     vars['second_item_unit_id'] = 'second_item_unit_id'
     # step 31: Partner full refund order on sale details page after placing
-    _resp31 = ctx.api.orders.refunds(body='{\n    "lineItems": [\n        {\n            "id": "{{orderLineItemId}}",\n            "quantity": 1,\n            "lineItemUnitIds": [\n                "{{second_item_unit_id}}"\n            ]\n        }\n    ],\n    "shippingLines": [\n        {\n            "merchantOrderId": "{{refund_id}}"\n        }\n    ],\n    "tipLines": [\n        {\n            "merchantOrderId": "{{refund_id}}"\n        }\n    ],\n    "note": "Automation full refund"\n}', token='M1_access_token')
+    _resp31 = ctx.api.orders.refunds(body={
+        "lineItems": [
+            {
+                "id": "{{orderLineItemId}}",
+                "quantity": 1,
+                "lineItemUnitIds": [
+                    "{{second_item_unit_id}}",
+                ],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{refund_id}}",
+            },
+        ],
+        "tipLines": [
+            {
+                "merchantOrderId": "{{refund_id}}",
+            },
+        ],
+        "note": "Automation full refund",
+    }, token='M1_access_token')
     # step 32: M1-login
-    _resp32 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp32 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     try:
         _j = _resp32.json() if _resp32.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
@@ -718,7 +825,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # assertion 35.Verify the total orders on fulfilled tab after partial refund: responseJson equal {{totalOrders_fulfilled_full_refund}}
     expect(_resp35).json('$.data.extra.totalOrders').equals(str(vars.get('totalOrders_fulfilled_full_refund') or 0))
     # step 36: Login - merchant
-    _resp36 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp36 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     try:
         _j = _resp36.json() if _resp36.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])

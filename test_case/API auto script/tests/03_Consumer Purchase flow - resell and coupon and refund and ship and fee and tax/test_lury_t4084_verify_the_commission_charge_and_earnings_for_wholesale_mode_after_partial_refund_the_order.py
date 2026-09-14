@@ -591,16 +591,67 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     vars['promoter_transaction_fee'] = 'promoter_transaction_fee'
     vars['merchant_transaction_fee'] = 'merchant_transaction_fee'
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "7cd6c140-0203-4e63-badb-f2a581795b06",\n            "price": 100,\n            "postId": "dd568e7b-0d2f-41fa-a703-50f73f514c02",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "cf3c1ecd-999f-4bd3-9bbd-b2af300fd8d3",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "3151d61c-1a69-48a2-9b44-e9f55542fe12",\n        "eventSourceUrl": "https://release.pear.us/luryp4/post/k6amjl?source=pear"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "7cd6c140-0203-4e63-badb-f2a581795b06",\n            "postId": "dd568e7b-0d2f-41fa-a703-50f73f514c02",\n            "price": 100,\n            "customFields": []\n        }\n    ]\n}', token='consumer_access_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "7cd6c140-0203-4e63-badb-f2a581795b06",
+                "price": 100,
+                "postId": "dd568e7b-0d2f-41fa-a703-50f73f514c02",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "cf3c1ecd-999f-4bd3-9bbd-b2af300fd8d3",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "3151d61c-1a69-48a2-9b44-e9f55542fe12",
+            "eventSourceUrl": "https://release.pear.us/luryp4/post/k6amjl?source=pear",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "7cd6c140-0203-4e63-badb-f2a581795b06",
+                "postId": "dd568e7b-0d2f-41fa-a703-50f73f514c02",
+                "price": 100,
+                "customFields": [],
+            },
+        ],
+    }, token='consumer_access_token')
     vars['orderNumber'] = 'orderNumber'
     vars['orderId'] = 'orderId'
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}', token='consumer_access_token')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    }, token='consumer_access_token')
     # extractor: orderNumber = $.data.orderNumbers[0]
     ctx.extract('orderNumber', _resp4, '$.data.orderNumbers[0]')
     # step 5: get consumer order detail
@@ -608,12 +659,18 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     # extractor: lineItemId = $.data.lineItems[0].id
     ctx.extract('lineItemId', _resp5, '$.data.lineItems[0].id')
     # step 6: Login - P1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp6, '$.data.token')
     # step 7: get P1 order detail v2
     _resp7 = ctx.api.orders.merchant_bed7b1d8_16d8_4d27_ab1a_dc4a8f19e0c6_detail_v2(token='P1_access_token')
     # step 8: Login - merchant
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp8, '$.data.token')
     # step 9: get merchant orders
     _resp9 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
@@ -621,7 +678,10 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     # step 10: get merhcant order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 11: Login - promoter
-    _resp11 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}')
+    _resp11 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    })
     ctx.extract('promoter_access_token', _resp11, '$.data.token')
     # step 12: get promoter orders
     _resp12 = ctx.api.orders.promoter(token='promoter_access_token', params={'pageSize': '30', 'pageNumber': '1'})
@@ -629,21 +689,89 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     # step 13: get promoter order detail v2
     _resp13 = ctx.api.orders.promoter_detail_v2(token='promoter_access_token', path_vars={'merchantOrderId': '{{promoterOrderId}}'})
     # step 14: 63114d51-2d8f-4039-87a8-a05239d83ee4
-    _resp14 = ctx.api.admin.auth_login(body='{"email":"dian.yuhong.ext@1m.app","password":"Lastd!y8"}')
+    _resp14 = ctx.api.admin.auth_login(body={
+        "email": "dian.yuhong.ext@1m.app",
+        "password": "Lastd!y8",
+    })
     ctx.extract('admin_access_token', _resp14, '$.data.token')
     # step 15: 759bc570-8fd4-4c49-8cdf-ffd29549e658
-    _resp15 = ctx.api.admin.orders_search(body='{"query":"{{orderNumber}}","startTime":null,"endTime":null,"includePartnerTesting":true,"free":false,"pageSize":50,"pageNumber":1}', token='admin_access_token')
+    _resp15 = ctx.api.admin.orders_search(body={
+        "query": "{{orderNumber}}",
+        "startTime": None,
+        "endTime": None,
+        "includePartnerTesting": True,
+        "free": False,
+        "pageSize": 50,
+        "pageNumber": 1,
+    }, token='admin_access_token')
     vars['admin_orderId'] = 'admin_orderId'
     vars['merchantOrderId'] = 'merchantOrderId'
     # step 16: 69d6faf8-acf5-473f-a9da-810a5db37d4e
-    _resp16 = ctx.api.admin.orders_refunds(body='{\n    "lineItems": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "id": "{{lineItemId}}",\n            "itemAmount": 45,\n            "taxAmount": 0,\n            "totalAmount": 45,\n            "quantity": 0,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "lineItemId": "{{lineItemId}}",\n                "refundableItem": 100,\n                "refundableTax": 0,\n                "totalRefundable": 100,\n                "refundableQuantity": 1\n            },\n            "changedFields": []\n        }\n    ],\n    "shippingLines": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "shippingAmount": 0,\n            "taxAmount": 0,\n            "totalAmount": 0,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "refundableShipping": 5,\n                "refundableShippingTax": 0,\n                "totalRefundable": 5\n            }\n        }\n    ],\n    "refundTotals": {\n        "totalItemsRefund": 45,\n        "totalItemsQuantityRefund": 0,\n        "totalShippingRefund": 0,\n        "totalItemsTaxRefund": 0,\n        "totalShippingTaxRefund": 0,\n        "totalTaxRefund": 0,\n        "totalRefund": 45\n    },\n    "transactions": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "totalRefund": 45,\n            "totalRefundable": 105,\n            "changedFields": []\n        }\n    ]\n}', token='admin_access_token')
+    _resp16 = ctx.api.admin.orders_refunds(body={
+        "lineItems": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "id": "{{lineItemId}}",
+                "itemAmount": 45,
+                "taxAmount": 0,
+                "totalAmount": 45,
+                "quantity": 0,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "lineItemId": "{{lineItemId}}",
+                    "refundableItem": 100,
+                    "refundableTax": 0,
+                    "totalRefundable": 100,
+                    "refundableQuantity": 1,
+                },
+                "changedFields": [],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "shippingAmount": 0,
+                "taxAmount": 0,
+                "totalAmount": 0,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "refundableShipping": 5,
+                    "refundableShippingTax": 0,
+                    "totalRefundable": 5,
+                },
+            },
+        ],
+        "refundTotals": {
+            "totalItemsRefund": 45,
+            "totalItemsQuantityRefund": 0,
+            "totalShippingRefund": 0,
+            "totalItemsTaxRefund": 0,
+            "totalShippingTaxRefund": 0,
+            "totalTaxRefund": 0,
+            "totalRefund": 45,
+        },
+        "transactions": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "totalRefund": 45,
+                "totalRefundable": 105,
+                "changedFields": [],
+            },
+        ],
+    }, token='admin_access_token')
     # step 17: Login - P1
-    _resp17 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp17 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp17, '$.data.token')
     # step 18: get P1 order detail v2
     _resp18 = ctx.api.orders.merchant_bed7b1d8_16d8_4d27_ab1a_dc4a8f19e0c6_detail_v2(token='P1_access_token')
     # step 19: Login - merchant
-    _resp19 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp19 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp19, '$.data.token')
     # step 20: get merchant orders
     _resp20 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
@@ -651,25 +779,144 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     # step 21: get merhcant order detail v2
     _resp21 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 22: Login - promoter
-    _resp22 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}')
+    _resp22 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    })
     ctx.extract('promoter_access_token', _resp22, '$.data.token')
     # step 23: get promoter order detail v2
     _resp23 = ctx.api.orders.promoter_detail_v2(token='promoter_access_token', path_vars={'merchantOrderId': '{{promoterOrderId}}'})
     # step 24: e8a42d09-c5c1-412c-b47c-b914537514a2
-    _resp24 = ctx.api.admin.orders_search(body='{"query":"{{orderNumber}}","startTime":null,"endTime":null,"includePartnerTesting":true,"free":false,"pageSize":50,"pageNumber":1}', token='admin_access_token')
+    _resp24 = ctx.api.admin.orders_search(body={
+        "query": "{{orderNumber}}",
+        "startTime": None,
+        "endTime": None,
+        "includePartnerTesting": True,
+        "free": False,
+        "pageSize": 50,
+        "pageNumber": 1,
+    }, token='admin_access_token')
     vars['admin_orderId'] = 'admin_orderId'
     vars['merchantOrderId'] = 'merchantOrderId'
     # step 25: e37eecae-6f58-41f5-a8aa-703d5f547015
-    _resp25 = ctx.api.admin.orders_refunds(body='{\n    "lineItems": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "id": "{{lineItemId}}",\n            "itemAmount": 55,\n            "taxAmount": 0,\n            "totalAmount": 55,\n            "quantity": 0,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "lineItemId": "{{lineItemId}}",\n                "refundableItem": 55,\n                "refundableTax": 0,\n                "totalRefundable": 55,\n                "refundableQuantity": 1\n            },\n            "changedFields": []\n        }\n    ],\n    "shippingLines": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "shippingAmount": 0,\n            "taxAmount": 0,\n            "totalAmount": 0,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "refundableShipping": 5,\n                "refundableShippingTax": 0,\n                "totalRefundable": 5\n            }\n        }\n    ],\n    "refundTotals": {\n        "totalItemsRefund": 55,\n        "totalItemsQuantityRefund": 0,\n        "totalShippingRefund": 0,\n        "totalItemsTaxRefund": 0,\n        "totalShippingTaxRefund": 0,\n        "totalTaxRefund": 0,\n        "totalRefund": 55\n    },\n    "transactions": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "totalRefund": 55,\n            "totalRefundable": 60,\n            "changedFields": []\n        }\n    ]\n}', token='admin_access_token')
+    _resp25 = ctx.api.admin.orders_refunds(body={
+        "lineItems": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "id": "{{lineItemId}}",
+                "itemAmount": 55,
+                "taxAmount": 0,
+                "totalAmount": 55,
+                "quantity": 0,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "lineItemId": "{{lineItemId}}",
+                    "refundableItem": 55,
+                    "refundableTax": 0,
+                    "totalRefundable": 55,
+                    "refundableQuantity": 1,
+                },
+                "changedFields": [],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "shippingAmount": 0,
+                "taxAmount": 0,
+                "totalAmount": 0,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "refundableShipping": 5,
+                    "refundableShippingTax": 0,
+                    "totalRefundable": 5,
+                },
+            },
+        ],
+        "refundTotals": {
+            "totalItemsRefund": 55,
+            "totalItemsQuantityRefund": 0,
+            "totalShippingRefund": 0,
+            "totalItemsTaxRefund": 0,
+            "totalShippingTaxRefund": 0,
+            "totalTaxRefund": 0,
+            "totalRefund": 55,
+        },
+        "transactions": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "totalRefund": 55,
+                "totalRefundable": 60,
+                "changedFields": [],
+            },
+        ],
+    }, token='admin_access_token')
     # step 26: 47705d28-4732-4fb1-b2c4-726148604787
-    _resp26 = ctx.api.admin.orders_refunds(body='{\n    "lineItems": [\n        {\n            "merchantOrderId": "1896c907-851c-4623-af81-7cdfd864dfa8",\n            "id": "{{lineItemId}}",\n            "itemAmount": 0,\n            "taxAmount": 0,\n            "totalAmount": 0,\n            "quantity": 0,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "lineItemId": "{{lineItemId}}",\n                "refundableItem": 0,\n                "refundableTax": 0,\n                "totalRefundable": 0,\n                "refundableQuantity": 1\n            },\n            "changedFields": []\n        }\n    ],\n    "shippingLines": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "shippingAmount": 5,\n            "taxAmount": 0,\n            "totalAmount": 5,\n            "refundable": {\n                "merchantOrderId": "{{merchantOrderId}}",\n                "refundableShipping": 5,\n                "refundableShippingTax": 0,\n                "totalRefundable": 5\n            }\n        }\n    ],\n    "refundTotals": {\n        "totalItemsRefund": 0,\n        "totalItemsQuantityRefund": 0,\n        "totalShippingRefund": 5,\n        "totalItemsTaxRefund": 0,\n        "totalShippingTaxRefund": 0,\n        "totalTaxRefund": 0,\n        "totalRefund": 5\n    },\n    "transactions": [\n        {\n            "merchantOrderId": "{{merchantOrderId}}",\n            "totalRefund": 5,\n            "totalRefundable": 5,\n            "changedFields": []\n        }\n    ]\n}', token='admin_access_token')
+    _resp26 = ctx.api.admin.orders_refunds(body={
+        "lineItems": [
+            {
+                "merchantOrderId": "1896c907-851c-4623-af81-7cdfd864dfa8",
+                "id": "{{lineItemId}}",
+                "itemAmount": 0,
+                "taxAmount": 0,
+                "totalAmount": 0,
+                "quantity": 0,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "lineItemId": "{{lineItemId}}",
+                    "refundableItem": 0,
+                    "refundableTax": 0,
+                    "totalRefundable": 0,
+                    "refundableQuantity": 1,
+                },
+                "changedFields": [],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "shippingAmount": 5,
+                "taxAmount": 0,
+                "totalAmount": 5,
+                "refundable": {
+                    "merchantOrderId": "{{merchantOrderId}}",
+                    "refundableShipping": 5,
+                    "refundableShippingTax": 0,
+                    "totalRefundable": 5,
+                },
+            },
+        ],
+        "refundTotals": {
+            "totalItemsRefund": 0,
+            "totalItemsQuantityRefund": 0,
+            "totalShippingRefund": 5,
+            "totalItemsTaxRefund": 0,
+            "totalShippingTaxRefund": 0,
+            "totalTaxRefund": 0,
+            "totalRefund": 5,
+        },
+        "transactions": [
+            {
+                "merchantOrderId": "{{merchantOrderId}}",
+                "totalRefund": 5,
+                "totalRefundable": 5,
+                "changedFields": [],
+            },
+        ],
+    }, token='admin_access_token')
     # step 27: Login - P1
-    _resp27 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp27 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp27, '$.data.token')
     # step 28: get P1 order detail v2
     _resp28 = ctx.api.orders.merchant_bed7b1d8_16d8_4d27_ab1a_dc4a8f19e0c6_detail_v2(token='P1_access_token')
     # step 29: Login - merchant
-    _resp29 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp29 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp29, '$.data.token')
     # step 30: get merchant orders
     _resp30 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
@@ -677,7 +924,10 @@ def test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_whol
     # step 31: get merhcant order detail v2
     _resp31 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 32: Login - promoter
-    _resp32 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}')
+    _resp32 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    })
     ctx.extract('promoter_access_token', _resp32, '$.data.token')
     # step 33: get promoter order detail v2
     _resp33 = ctx.api.orders.promoter_detail_v2(token='promoter_access_token', path_vars={'merchantOrderId': '{{promoterOrderId}}'})

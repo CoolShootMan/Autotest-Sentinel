@@ -645,31 +645,99 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 2,\n            "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "price": 1,\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 2,\n            "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "price": 2,\n            "customFields": []\n        }\n    ]\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "price": 1,
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "price": 2,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: apply promotion
-    _resp4 = ctx.api.orders.update_promotions(body='{\n  "orderId": "{{orderId}}",\n  "shippingAddress": {\n    "line1": "",\n    "city": "",\n    "zipcode": "",\n    "state": ""\n  },\n  "applicableCode": "333ppp"\n}')
+    _resp4 = ctx.api.orders.update_promotions(body={
+        "orderId": "{{orderId}}",
+        "shippingAddress": {
+            "line1": "",
+            "city": "",
+            "zipcode": "",
+            "state": "",
+        },
+        "applicableCode": "333ppp",
+    })
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034",\n        "firstName": "Real",\n        "lastName": "Lury"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp5 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+            "firstName": "Real",
+            "lastName": "Lury",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 6: Login-M1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID2}}'})
     # step 8: Login - P1
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp8, '$.data.token')
     # step 9: get P1 orders
     _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -677,7 +745,10 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
     # step 10: get P1 order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 11: Login - merchant
-    _resp11 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp11 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp11, '$.data.token')
     # step 12: get merchant orders
     _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -687,19 +758,91 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
     # step 14: delete cart
     _resp14 = ctx.api.cart.delete()
     # step 15: buy now
-    _resp15 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 2,\n            "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "price": 1,\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 2,\n            "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "price": 2,\n            "customFields": []\n        }\n    ]\n}')
+    _resp15 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "price": 1,
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "price": 2,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp15, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp15, 'orderId')
     # step 16: apply promotion
-    _resp16 = ctx.api.orders.update_promotions(body='{\n    "orderId": "{{orderId}}",\n    "shippingAddress": {\n        "id": "41ef3748-0466-4e91-95c2-a7983d14e151",\n        "firstName": "dian",\n        "lastName": "Automation",\n        "fullName": "dian dian",\n        "line1": "11111 Research Boulevard",\n        "line2": "",\n        "city": "Austin",\n        "state": "TX",\n        "stateName": "Texas",\n        "zipcode": "78759",\n        "userId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "isDefault": true,\n        "phoneNumber": "+17404630034",\n        "createdAt": "2025-10-27T08:02:35.026Z",\n        "deletedAt": null,\n        "updatedAt": "2025-11-25T09:39:09.769Z",\n        "email": null\n    },\n    "applicableCode": "111ppp"\n}')
+    _resp16 = ctx.api.orders.update_promotions(body={
+        "orderId": "{{orderId}}",
+        "shippingAddress": {
+            "id": "41ef3748-0466-4e91-95c2-a7983d14e151",
+            "firstName": "dian",
+            "lastName": "Automation",
+            "fullName": "dian dian",
+            "line1": "11111 Research Boulevard",
+            "line2": "",
+            "city": "Austin",
+            "state": "TX",
+            "stateName": "Texas",
+            "zipcode": "78759",
+            "userId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "isDefault": True,
+            "phoneNumber": "+17404630034",
+            "createdAt": "2025-10-27T08:02:35.026Z",
+            "deletedAt": None,
+            "updatedAt": "2025-11-25T09:39:09.769Z",
+            "email": None,
+        },
+        "applicableCode": "111ppp",
+    })
     _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
     # step 17: create Order
-    _resp17 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034",\n        "firstName": "Real",\n        "lastName": "Lury"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp17 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+            "firstName": "Real",
+            "lastName": "Lury",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 18: get M1 order detail v2
     _resp18 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID2}}'})
     # step 19: get P1 orders
@@ -715,19 +858,91 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
     # step 23: delete cart
     _resp23 = ctx.api.cart.delete()
     # step 24: buy now
-    _resp24 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 2,\n            "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "price": 1,\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 2,\n            "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",\n            "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",\n            "price": 2,\n            "customFields": []\n        }\n    ]\n}')
+    _resp24 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 2,
+                "promoterProductVariantId": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "price": 1,
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "df17c1c0-b3c3-47b2-9c73-181d34c64c5d",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/auto-promoter/post/y32vuj",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 2,
+                "id": "d43ac483-ff5d-4c4b-84a4-366501e708eb",
+                "postId": "446662ad-cac4-4837-9b1f-3358eddf169a",
+                "price": 2,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp24, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp24, 'orderId')
     # step 25: apply promotion
-    _resp25 = ctx.api.orders.update_promotions(body='{\n    "orderId": "{{orderId}}",\n    "shippingAddress": {\n        "id": "41ef3748-0466-4e91-95c2-a7983d14e151",\n        "firstName": "dian",\n        "lastName": "Automation",\n        "fullName": "dian dian",\n        "line1": "11111 Research Boulevard",\n        "line2": "",\n        "city": "Austin",\n        "state": "TX",\n        "stateName": "Texas",\n        "zipcode": "78759",\n        "userId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "isDefault": true,\n        "phoneNumber": "+17404630034",\n        "createdAt": "2025-10-27T08:02:35.026Z",\n        "deletedAt": null,\n        "updatedAt": "2025-11-25T09:39:09.769Z",\n        "email": null\n    },\n    "applicableCode": "10ppp"\n}')
+    _resp25 = ctx.api.orders.update_promotions(body={
+        "orderId": "{{orderId}}",
+        "shippingAddress": {
+            "id": "41ef3748-0466-4e91-95c2-a7983d14e151",
+            "firstName": "dian",
+            "lastName": "Automation",
+            "fullName": "dian dian",
+            "line1": "11111 Research Boulevard",
+            "line2": "",
+            "city": "Austin",
+            "state": "TX",
+            "stateName": "Texas",
+            "zipcode": "78759",
+            "userId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "isDefault": True,
+            "phoneNumber": "+17404630034",
+            "createdAt": "2025-10-27T08:02:35.026Z",
+            "deletedAt": None,
+            "updatedAt": "2025-11-25T09:39:09.769Z",
+            "email": None,
+        },
+        "applicableCode": "10ppp",
+    })
     _j = _resp25.json() if _resp25.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
     # step 26: create Order
-    _resp26 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034",\n        "firstName": "Real",\n        "lastName": "Lury"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp26 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+            "firstName": "Real",
+            "lastName": "Lury",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 27: get M1 order detail v2
     _resp27 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID2}}'})
     # step 28: get P1 orders

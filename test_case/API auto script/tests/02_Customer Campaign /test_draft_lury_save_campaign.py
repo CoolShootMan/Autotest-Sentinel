@@ -42,7 +42,11 @@ def test_draft_lury_save_campaign(ctx):
     vars['account_email_curator'] = 'linda.zhou.ext+01@1m.app'
     vars['password'] = '7EbE8F4BdE4A38768AcF9C2833aF2Db5'
     # step 1: 9a75640c-d265-4ab9-9720-b744223feca8
-    _resp1 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{merchant_email}}",\r\n    "password": "{{merchant_password}}"\r\n\r\n}', app_headers=True)
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['account_email_curator'] = "linda.zhou.ext+01@1m.app"
+    vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
+
+    _resp1 = ctx.api.auth.sign_in(body={"email": "{{merchant_email}}", "password": "{{merchant_password}}"}, app_headers=True)
     # assertion 1.code: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # extractor: token = $.data.token
@@ -50,7 +54,11 @@ def test_draft_lury_save_campaign(ctx):
     # assertion 1.message: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
     # step 2: 34598a15-1010-4b0a-b0c4-39a213a310d6
-    _resp2 = ctx.api.campaigns.create(body='{\r\n    "channel": "SMS",\r\n    "name": "Automation by Lury SMS",\r\n    "content": "This is test SMS message from Lury, It will don\'t send to any one"\r\n}', token='token')
+    _resp2 = ctx.api.campaigns.create(body={
+        "channel": "SMS",
+        "name": "Automation by Lury SMS",
+        "content": "This is test SMS message from Lury, It will don't send to any one",
+    }, token='token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
@@ -58,7 +66,17 @@ def test_draft_lury_save_campaign(ctx):
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp2, '$.data.id')
     # step 3: 21e3b97e-07cf-4c8e-a0ed-7b8419fd4c24
-    _resp3 = ctx.api.campaigns.save_recipients(body='{\r\n    "campaignId": "{{campaignId}}",\r\n    "channel": "SMS",\r\n    "isSelectAll": false,\r\n    "followerIds": [\r\n        "d3435d0a-d6df-4f80-a9b2-f5da77b368fe"\r\n    ],\r\n    "excludeFollowers": [],\r\n    "searchKey": "6502469802"\r\n}', token='token')
+    _resp3 = ctx.api.campaigns.save_recipients(
+    body={
+        "campaignId": "{{campaignId}}",
+        "channel": "SMS",
+        "isSelectAll": False,
+        "followerIds": ["d3435d0a-d6df-4f80-a9b2-f5da77b368fe"],
+        "excludeFollowers": [],
+        "searchKey": "6502469802",
+    },
+    token='token',
+)
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success

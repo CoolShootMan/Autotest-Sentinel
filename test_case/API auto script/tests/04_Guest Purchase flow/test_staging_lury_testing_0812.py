@@ -39,15 +39,64 @@ def test_staging_lury_testing_0812(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: guest get token
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda"\n}')
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
+    })
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: buy now
-    _resp2 = ctx.api.orders.buy_now(body='{\n  "postIdForFilter": "09adb4ea-aa28-4a23-a500-2cfcd8886536",\n  "updateCartItems": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "3c169bf2-ac51-4fdd-9bb7-6ee2d3a1af56",\n      "price": 0,\n      "postId": "09adb4ea-aa28-4a23-a500-2cfcd8886536",\n      "selected": true,\n      "customFields": []\n    }\n  ],\n  "fbAdParams": {\n    "eventID": "b3016df7-3f0c-420d-9b96-e6b06ece9653",\n    "pixelId": [\n      "268933192948110"\n    ],\n    "fbBrowserId": "fb.1.1768467567031.92506180232323161",\n    "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n    "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-automation-testing-0323"\n  },\n  "currentUpdateCartItems": [\n    {\n      "quantity": 1,\n      "id": "3c169bf2-ac51-4fdd-9bb7-6ee2d3a1af56",\n      "postId": "09adb4ea-aa28-4a23-a500-2cfcd8886536",\n      "price": 0,\n      "customFields": []\n    }\n  ]\n}', app_headers=True, token='access_token')
+    _resp2 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "09adb4ea-aa28-4a23-a500-2cfcd8886536",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "3c169bf2-ac51-4fdd-9bb7-6ee2d3a1af56",
+                "price": 0,
+                "postId": "09adb4ea-aa28-4a23-a500-2cfcd8886536",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "b3016df7-3f0c-420d-9b96-e6b06ece9653",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1768467567031.92506180232323161",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-automation-testing-0323",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "3c169bf2-ac51-4fdd-9bb7-6ee2d3a1af56",
+                "postId": "09adb4ea-aa28-4a23-a500-2cfcd8886536",
+                "price": 0,
+                "customFields": [],
+            },
+        ],
+    }, app_headers=True, token='access_token')
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp2, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp2, 'orderId')
     # step 3: create Order
-    _resp3 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "zhiyong.song.ext+customer@1m.app",\n        "firstName": "DC",\n        "lastName": "state",\n        "phoneNumber": "+16502469802"\n    },\n    "fbAdParams": {\n        "eventID": "0a0e358d-41d8-4e10-985f-9a060bd02b1d",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1770024421386.76306656737520437",\n        "externalId": "bb3a0ce0-2fd8-44c2-9017-745a62aaf7d8",\n        "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-campaign-test-0126"\n    }\n}', app_headers=True, skip_notifications=False, token='access_token')
+    _resp3 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "zhiyong.song.ext+customer@1m.app",
+            "firstName": "DC",
+            "lastName": "state",
+            "phoneNumber": "+16502469802",
+        },
+        "fbAdParams": {
+            "eventID": "0a0e358d-41d8-4e10-985f-9a060bd02b1d",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1770024421386.76306656737520437",
+            "externalId": "bb3a0ce0-2fd8-44c2-9017-745a62aaf7d8",
+            "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-campaign-test-0126",
+        },
+    }, app_headers=True, skip_notifications=False, token='access_token')
     # assertion 3.verify status is 200: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

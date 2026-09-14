@@ -96,19 +96,50 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     _default_addr = next((a for a in _addr_items if a.get('isDefault') is True), None)
     vars['addressId'] = (_default_addr or _addr_items[0]).get('id') if _addr_items else ''
     # step 2: 2165a45d-d601-417c-8b81-d0ee0919d8b2
-    _resp2 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n  "updateCartItems": [\n    {\n    "quantity": 1,\n    "promoterProductVariantId": "380e9b2b-47f9-49e4-8a6f-504b655fb6cf",\n    "price": 20,\n    "postId": "cb9ffbf6-7d76-49f5-a009-891af45aeee5",\n    "selected": true\n  }\n  ],\n  "currentUpdateCartItems": [\n    {\n    "quantity": 1,\n    "id": "380e9b2b-47f9-49e4-8a6f-504b655fb6cf",\n    "postId": "cb9ffbf6-7d76-49f5-a009-891af45aeee5",\n    "price": 20\n  }\n  ]\n}', app_headers=True, token='linda10_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "380e9b2b-47f9-49e4-8a6f-504b655fb6cf",
+                "price": 20,
+                "postId": "cb9ffbf6-7d76-49f5-a009-891af45aeee5",
+                "selected": True,
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "380e9b2b-47f9-49e4-8a6f-504b655fb6cf",
+                "postId": "cb9ffbf6-7d76-49f5-a009-891af45aeee5",
+                "price": 20,
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # assertion 3.assertion: responseJson equal 20
     expect(_resp3).json('$.data.totalToPay').equals('20')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp3, '$.data.orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 18,\n      "promoterVariantId": "19c3d76d-999d-4369-ae68-9d873a44111f"\n    }\n  ],\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "linda.zhou.ext+10@1m.app"\n  },\n  "shippingAddressId": "{{addressId}}"\n}', app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
+    _resp4 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 18,
+                "promoterVariantId": "19c3d76d-999d-4369-ae68-9d873a44111f",
+            },
+        ],
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{addressId}}",
+    }, app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
     # assertion 4.code: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')
     # assertion 4.assertion: responseJson exists 
@@ -123,6 +154,11 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     expect(_resp5).json('$.data.totalToPay').equals('20')
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 6: Unfulfill - check merchant order detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp6 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
@@ -134,12 +170,28 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     expect(_resp6).json('$.data.lineItems[0].fulfillmentStatus').equals('UNFULFILLED')
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 7: make shipping
-    _resp7 = ctx.api.orders.fulfillment_merchant_by_order_number(body='{\n    "trackingNumber": "{{$number.bigInt}}",\n    "makeShippingLineItems": [\n        {\n            "orderLineItemId": "{{lineItems_id}}",\n            "quantity": 1\n        }\n    ]\n}\n\n\n\n\n', token='linda00_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
+    _resp7 = ctx.api.orders.fulfillment_merchant_by_order_number(body={
+        "trackingNumber": "{{$number.bigInt}}",
+        "makeShippingLineItems": [
+            {
+                "orderLineItemId": "{{lineItems_id}}",
+                "quantity": 1,
+            },
+        ],
+    }, token='linda00_token')
     # assertion 7.assertion: responseJson equal 1
     expect(_resp7).json('$.data.items[0].lineItems[0].fulfilledQuantity').equals('1')
     # extractor:  = 
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 8: Fulfillment - check merchant order detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp8 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 8.assertion: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')

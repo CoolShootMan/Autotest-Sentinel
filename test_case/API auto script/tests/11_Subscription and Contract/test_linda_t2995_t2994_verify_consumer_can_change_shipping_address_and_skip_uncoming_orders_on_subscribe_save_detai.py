@@ -138,7 +138,7 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     if _arr:
         vars['newAddressId'] = random.choice(_arr).get('id')
     # step 2: 08c30916-bf6e-4f92-b77f-dd836d485c78
-    _resp2 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
@@ -152,13 +152,45 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp3, '$.data.id')
     # step 4: buy now
-    _resp4 = ctx.api.orders.buy_now(body='{\n  "updateCartItems": [\n    {\n    "quantity": 1,\n    "promoterProductVariantId": "{{promoterProductVariantId}}",\n    "price": 200,\n    "postId": "{{postid}}",\n    "selected": true,\n    "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}"\n  }\n  ],\n  "currentUpdateCartItems":[\n     {\n    "quantity": 1,\n    "id": "{{promoterProductVariantId}}",\n    "postId": "{{postid}}",\n    "price": 200\n  }\n  ]\n}\n\n\n\n\n', app_headers=True, token='linda10_token')
+    _resp4 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{promoterProductVariantId}}",
+                "price": 200,
+                "postId": "{{postid}}",
+                "selected": True,
+                "subscriptionPlanOptionId": "{{subscriptionPlanOptionid}}",
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "{{promoterProductVariantId}}",
+                "postId": "{{postid}}",
+                "price": 200,
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # assertion 4.assertion: responseJson equal 144.99
     expect(_resp4).json('$.data.totalToPay').equals('144.99')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 140,\n      "promoterVariantId": "{{promoterProductVariantId}}"\n    }\n  ],\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "linda.zhou.ext+10@1m.app"\n  },\n  "shippingAddressId": "{{oldAddressId}}"\n}', app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
+    _resp5 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 140,
+                "promoterVariantId": "{{promoterProductVariantId}}",
+            },
+        ],
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{oldAddressId}}",
+    }, app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
     # assertion 5.code: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson exists 
@@ -189,6 +221,11 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     ctx.extract('upcomingOrderId', _resp8, '$.data.upcomingOrderDates[0].id')
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 9: Check the shipping address is old - check merchant order detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp9 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 9.assertion: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
@@ -203,10 +240,18 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     # assertion 9.assertion: responseJson equal {{oldAddressId}}
     expect(_resp9).json('$.data.shippingAddress.id').equals(ctx.render_text('{{oldAddressId}}'))
     # step 10: Consumer update contract shipping address
-    _resp10 = ctx.api.users.self_contracts_by_contract_id(body='{\r\n    "contractId": "{{contractId}}",\r\n    "addressId": "{{newAddressId}}"\r\n}', app_headers=True, token='linda10_token')
+    # === pre-script（由 Apifox customScript 翻译）===
+    # pm.environment.set("new_shippingAddressId", "64e69349-d46d-4886-b70d-700a95d20200");
+
+    _resp10 = ctx.api.users.self_contracts_by_contract_id(body={
+        "contractId": "{{contractId}}",
+        "addressId": "{{newAddressId}}",
+    }, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal {{newAddressId}}
     expect(_resp10).json('$.data.shippingAddress.id').equals(ctx.render_text('{{newAddressId}}'))
     # step 11: Skipped -  update contract order
-    _resp11 = ctx.api.users.self_contracts_contract_orders_by_contract_order_id(body='{"status":"SKIPPED"}', token='linda10_token', contractOrderId=vars.get('upcomingOrderId'))
+    _resp11 = ctx.api.users.self_contracts_contract_orders_by_contract_order_id(body={
+        "status": "SKIPPED",
+    }, token='linda10_token', contractOrderId=vars.get('upcomingOrderId'))
     # assertion 11.assertion: responseJson equal SKIPPED
     expect(_resp11).json('$.data.status').equals('SKIPPED')

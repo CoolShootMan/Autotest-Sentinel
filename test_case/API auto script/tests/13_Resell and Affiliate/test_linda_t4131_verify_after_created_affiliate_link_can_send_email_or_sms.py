@@ -432,23 +432,54 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
     # step 1: 3ce00ab3-55cd-42dd-9f62-784b7e74f4d9
     _resp1 = ctx.api.promoters.affiliate_promoters(body=None, params={'keyword': ''}, token='linda05_token')
     # step 2: a4fe9fa0-de87-4851-a141-ca5bff2edf6f
-    _resp2 = ctx.api.promoters.curator_affiliate_link(body='{\r\n    "phoneNumberOrEmail": "linda.zhou.ext+27@1m.app",\r\n    "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",\r\n    "postAlias": "t4131automation"\r\n}', token='linda05_token')
+    _resp2 = ctx.api.promoters.curator_affiliate_link(body={
+        "phoneNumberOrEmail": "linda.zhou.ext+27@1m.app",
+        "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",
+        "postAlias": "t4131automation",
+    }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
     ctx.extract('affiliateCode', _resp2, 'affiliateCode')
     # step 3: 434c9c06-a6be-4b3f-9321-abf48c83afb5
-    _resp3 = ctx.api.links.internal(body='{\r\n    "originalUrl": "https://release.pear.us/lindanewcurator/post/t4131automation?aff={{affiliateCode}}"\r\n}', token='linda05_token')
+    _resp3 = ctx.api.links.internal(body={
+        "originalUrl": "https://release.pear.us/lindanewcurator/post/t4131automation?aff={{affiliateCode}}",
+    }, token='linda05_token')
     # extractor: shortCode = $.data.code
     ctx.extract('shortCode', _resp3, '$.data.code')
     # step 4: 02bb2e88-ffe7-4442-aeff-8d361d57d7b2
-    _resp4 = ctx.api.promoters.affiliate_link_notification_batch(body='{\n    "postAlias": "t4131automation",\n    "notifications": [\n        {\n            "affiliateCode": "{{affiliateCode}}",\n            "affiliateLink": "https://s.pear.us/{{shortCode}}",\n            "customMessage": "<p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">Hi there,</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><b><strong class=\\"katana__textBold\\" style=\\"white-space: pre-wrap;\\">lindazhou05</strong></b><span style=\\"white-space: pre-wrap;\\"> has set you up with a unique affiliate link for their post: \\"</span><b><strong class=\\"katana__textBold\\" style=\\"white-space: pre-wrap;\\">Jazz Age Lawn Party</strong></b><span style=\\"white-space: pre-wrap;\\">\\". Just share this link — your personal promo code is already built in:</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">👉 </span><a data-id=\\"69e40bf4-d16a-4903-9dd8-062eb16ae7ef\\" href=\\"https://s.pear.us/Ro2FDI\\" rel=\\"noopener noreferrer\\" target=\\"_blank\\"><span style=\\"white-space: pre-wrap;\\">https://s.pear.us/Ro2FDI</span></a></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">When someone buys through your link, you\'ll automatically earn commission based on the post\'s settings. No extra setup is needed.</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">If you don’t have a Pear account yet, sign up here:</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><a data-id=\\"ea112436-ba02-4a30-bdf1-c2f7e2cb6df5\\" href=\\"https://pear.us/signup?t=ltMMiE0-\\" rel=\\"noopener noreferrer\\" target=\\"_blank\\"><span style=\\"white-space: pre-wrap;\\">https://pear.us/signup?t=ltMMiE0-</span></a></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">You can start sharing right away through social, DMs, or your Pear Shop.</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">Thanks,</span></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><br></p><p class=\\"katana__paragraph katana__paragraph--align-left\\"><span style=\\"white-space: pre-wrap;\\">lindazhou05</span></p>",\n            "email": "linda.zhou.ext+27@1m.app",\n            "customSubject": "lindazhou05 sent you a promo link to share and earn"\n        }\n    ]\n}', token='linda05_token')
+    _resp4 = ctx.api.promoters.affiliate_link_notification_batch(body={
+    'postAlias': 't4131automation',
+    'notifications': [
+        {
+            'affiliateCode': '{{affiliateCode}}',
+            'affiliateLink': 'https://s.pear.us/{{shortCode}}',
+            'customMessage': '<p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">Hi there,</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><b><strong class="katana__textBold" style="white-space: pre-wrap;">lindazhou05</strong></b><span style="white-space: pre-wrap;"> has set you up with a unique affiliate link for their post: "</span><b><strong class="katana__textBold" style="white-space: pre-wrap;">Jazz Age Lawn Party</strong></b><span style="white-space: pre-wrap;">". Just share this link — your personal promo code is already built in:</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">👉 </span><a data-id="69e40bf4-d16a-4903-9dd8-062eb16ae7ef" href="https://s.pear.us/Ro2FDI" rel="noopener noreferrer" target="_blank"><span style="white-space: pre-wrap;">https://s.pear.us/Ro2FDI</span></a></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">When someone buys through your link, you\'ll automatically earn commission based on the post\'s settings. No extra setup is needed.</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">If you don’t have a Pear account yet, sign up here:</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><a data-id="ea112436-ba02-4a30-bdf1-c2f7e2cb6df5" href="https://pear.us/signup?t=ltMMiE0-" rel="noopener noreferrer" target="_blank"><span style="white-space: pre-wrap;">https://pear.us/signup?t=ltMMiE0-</span></a></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">You can start sharing right away through social, DMs, or your Pear Shop.</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">Thanks,</span></p><p class="katana__paragraph katana__paragraph--align-left"><br></p><p class="katana__paragraph katana__paragraph--align-left"><span style="white-space: pre-wrap;">lindazhou05</span></p>',
+            'email': 'linda.zhou.ext+27@1m.app',
+            'customSubject': 'lindazhou05 sent you a promo link to share and earn',
+        },
+    ],
+}, token='linda05_token')
     # step 5: f6472fdb-498d-44c4-a185-42700851291c
-    _resp5 = ctx.api.promoters.curator_affiliate_link(body='{\r\n    "phoneNumberOrEmail": "+16502396646",\r\n    "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",\r\n    "postAlias": "t4131automation"\r\n}', token='linda05_token')
+    _resp5 = ctx.api.promoters.curator_affiliate_link(body={
+        "phoneNumberOrEmail": "+16502396646",
+        "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",
+        "postAlias": "t4131automation",
+    }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
     ctx.extract('affiliateCode', _resp5, 'affiliateCode')
     # extractor: smsshortcode = $.data.code
     ctx.extract('smsshortcode', _resp5, '$.data.code')
     # step 6: 07187509-b359-4981-82a1-c9c135a9062e
-    _resp6 = ctx.api.promoters.affiliate_link_notification_batch(body='{\n    "postAlias": "t4131automation",\n    "notifications": [\n        {\n            "affiliateCode": "{{affiliateCode}}",\n            "affiliateLink": "https://s.pear.us/{{smsshortcode}}",\n            "customMessage": "Hey! RESIDENT made you a promo link for \\"NTXCCREHH Charity Event\\". Share it to start earning:\\nhttps://s.pear.us/aNbVUq \\n\\nCreate your Pear account at: https://release.pear.us/signup?t=d1_pREvl",\n            "phoneNumber": "+16502396646"\n        }\n    ]\n}', token='linda05_token')
+    _resp6 = ctx.api.promoters.affiliate_link_notification_batch(body={
+        "postAlias": "t4131automation",
+        "notifications": [
+            {
+                "affiliateCode": "{{affiliateCode}}",
+                "affiliateLink": "https://s.pear.us/{{smsshortcode}}",
+                "customMessage": "Hey! RESIDENT made you a promo link for \"NTXCCREHH Charity Event\". Share it to start earning:\nhttps://s.pear.us/aNbVUq \n\nCreate your Pear account at: https://release.pear.us/signup?t=d1_pREvl",
+                "phoneNumber": "+16502396646",
+            },
+        ],
+    }, token='linda05_token')
     # --- assertions: no fake-green (non-4xx/5xx) ---
     assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
     assert _resp2.status_code < 400, f"step2 got HTTP {_resp2.status_code}: {_resp2.text[:200]}"

@@ -181,7 +181,10 @@ def test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_the_produ
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Login-M1
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     # extractor: M1_access_token = $.data.token
     ctx.extract('M1_access_token', _resp1, '$.data.token')
     # step 2: 173b63b5-165b-4824-b797-9834d8b6c5f8

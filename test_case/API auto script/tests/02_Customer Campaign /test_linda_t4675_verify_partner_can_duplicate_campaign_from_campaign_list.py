@@ -383,14 +383,23 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     vars['emailCompletedId'] = _emailAll[0].get('id', '') if _emailAll else ''
     vars['smsCompletedId'] = _smsAll[0].get('id', '') if _smsAll else ''
     # step 2: 1f2f2d03-7a5d-4928-ae48-d2e46c39c3a0
-    _resp2 = ctx.api.campaigns.duplicate(body='{"fromId":"{{emailCompletedId}}"}', token='linda01_token')
+    _resp2 = ctx.api.campaigns.duplicate(body={"fromId": "{{emailCompletedId}}"}, token='linda01_token')
     vars['newEmailCampaignId'] = (_resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}).get('data', {}).get('id', '')
     # assertion 2.assertion: responseJson equal DRAFT
     expect(_resp2).json('$.data.status').equals('DRAFT')
     # assertion 2.assertion: responseJson equal NOT_STARTED
     expect(_resp2).json('$.data.sentStatus').equals('NOT_STARTED')
     # step 3: 517f54f9-ea14-4a2e-b1b7-00e61a200064
-    _resp3 = ctx.api.campaigns.save_recipients(body='{\r\n    "campaignId": "{{newEmailCampaignId}}",\r\n    "channel": "EMAIL",\r\n    "isSelectAll": false,\r\n    "followerIds": [\r\n        "5617efb6-1b25-4b22-af65-5a76ca51dcea"\r\n    ],\r\n    "searchKey": ""\r\n}', token='linda01_token')
+    _resp3 = ctx.api.campaigns.save_recipients(
+            body={
+                "campaignId": "{{newEmailCampaignId}}",
+                "channel": "EMAIL",
+                "isSelectAll": False,
+                "followerIds": ["5617efb6-1b25-4b22-af65-5a76ca51dcea"],
+                "searchKey": "",
+            },
+            token='linda01_token',
+        )
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
@@ -400,16 +409,46 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     # assertion 3.assertion: responseJson equal UNPAID
     expect(_resp3).json('$.data.paymentStatus').equals('UNPAID')
     # step 4: 489b71c1-7235-454f-89ac-257c3e20bf91
-    _resp4 = ctx.api.campaigns.by_campaign_id(body='{\n    "name": "automation by linda Email",\n    "status": "DRAFT",\n    "paymentStatus": "UNPAID",\n    "updatedAt": "2026-06-10T02:59:30.733Z",\n    "channel": "Email",\n    "totalSelectedCount": 1,\n    "subject": null,\n    "content": "Subject: Your Order #7892 Has Shipped!",\n    "selectAll": false,\n    "totalSegments": 1,\n    "fixedFee": 2,\n    "unitPrice": 0.01,\n    "totalToPay": 2.01,\n    "usageFee": 0.01,\n    "paymentBreakdown": {\n        "PAYOUT": 2.01,\n        "DEPOSIT": 0,\n        "CAMPAIGN": 0\n    },\n    "paymentMethod": null,\n    "id": "{{newEmailCampaignId}}"\n}', token='linda01_token', path_vars={'campaignId': '{{newEmailCampaignId}}'})
+    _resp4 = ctx.api.campaigns.by_campaign_id(
+            body={
+                "name": "automation by linda Email",
+                "status": "DRAFT",
+                "paymentStatus": "UNPAID",
+                "channel": "Email",
+                "totalSelectedCount": 1,
+                "subject": None,
+                "content": "Subject: Your Order #7892 Has Shipped!",
+                "selectAll": False,
+                "totalSegments": 1,
+                "fixedFee": 2,
+                "unitPrice": 0.01,
+                "totalToPay": 2.01,
+                "usageFee": 0.01,
+                "paymentBreakdown": {"PAYOUT": 2.01, "DEPOSIT": 0, "CAMPAIGN": 0},
+                "paymentMethod": None,
+                "id": "{{newEmailCampaignId}}",
+            },
+            token='linda01_token',
+            path_vars={'campaignId': '{{newEmailCampaignId}}'},
+        )
     # step 5: 199018d2-d106-427d-844b-1e955ec5da56
-    _resp5 = ctx.api.campaigns.duplicate(body='{"fromId":"{{smsCompletedId}}"}', token='linda01_token')
+    _resp5 = ctx.api.campaigns.duplicate(body={"fromId": "{{smsCompletedId}}"}, token='linda01_token')
     vars['newSMSCampaignId'] = (_resp5.json() if _resp5.headers.get('content-type', '').startswith('application/json') else {}).get('data', {}).get('id', '')
     # assertion 5.assertion: responseJson equal DRAFT
     expect(_resp5).json('$.data.status').equals('DRAFT')
     # assertion 5.assertion: responseJson equal NOT_STARTED
     expect(_resp5).json('$.data.sentStatus').equals('NOT_STARTED')
     # step 6: 0a76cd94-607d-4f1f-92af-238924d2f660
-    _resp6 = ctx.api.campaigns.save_recipients(body='{\r\n    "campaignId": "{{newSMSCampaignId}}",\r\n    "channel": "SMS",\r\n    "isSelectAll": false,\r\n    "followerIds": [\r\n        "bbf4a1ee-d93d-4e92-9e73-53ba168d7a66"\r\n    ],\r\n    "searchKey": ""\r\n}', token='linda01_token')
+    _resp6 = ctx.api.campaigns.save_recipients(
+            body={
+                "campaignId": "{{newSMSCampaignId}}",
+                "channel": "SMS",
+                "isSelectAll": False,
+                "followerIds": ["bbf4a1ee-d93d-4e92-9e73-53ba168d7a66"],
+                "searchKey": "",
+            },
+            token='linda01_token',
+        )
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success
@@ -419,4 +458,25 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     # assertion 6.assertion: responseJson equal UNPAID
     expect(_resp6).json('$.data.paymentStatus').equals('UNPAID')
     # step 7: bfe008d5-9baa-48c3-ab74-bb1be46524e7
-    _resp7 = ctx.api.campaigns.by_campaign_id(body='{\n    "name": "automation by linda SMS",\n    "status": "DRAFT",\n    "paymentStatus": "UNPAID",\n    "updatedAt": "2026-06-10T02:59:30.733Z",\n    "channel": "SMS",\n    "totalSelectedCount": 1,\n    "subject": null,\n    "content": "Subject: Your Order #7892 Has Shipped!",\n    "selectAll": false,\n    "totalSegments": 1,\n    "fixedFee": 2,\n    "unitPrice": 0.01,\n    "totalToPay": 2.01,\n    "usageFee": 0.01,\n    "paymentBreakdown": {\n        "PAYOUT": 2.01,\n        "DEPOSIT": 0,\n        "CAMPAIGN": 0\n    },\n    "paymentMethod": null,\n    "id": "{{newSMSCampaignId}}"\n}', token='linda01_token', path_vars={'campaignId': '{{newSMSCampaignId}}'})
+    _resp7 = ctx.api.campaigns.by_campaign_id(
+            body={
+                "name": "automation by linda SMS",
+                "status": "DRAFT",
+                "paymentStatus": "UNPAID",
+                "channel": "SMS",
+                "totalSelectedCount": 1,
+                "subject": None,
+                "content": "Subject: Your Order #7892 Has Shipped!",
+                "selectAll": False,
+                "totalSegments": 1,
+                "fixedFee": 2,
+                "unitPrice": 0.01,
+                "totalToPay": 2.01,
+                "usageFee": 0.01,
+                "paymentBreakdown": {"PAYOUT": 2.01, "DEPOSIT": 0, "CAMPAIGN": 0},
+                "paymentMethod": None,
+                "id": "{{newSMSCampaignId}}",
+            },
+            token='linda01_token',
+            path_vars={'campaignId': '{{newSMSCampaignId}}'},
+        )

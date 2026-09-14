@@ -56,7 +56,9 @@ def test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_p
     vars['$string.uuid'] = str(uuid.uuid4())
     # === Steps ===
     # step 1: guest get token
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "{{__uuid_1}}"\n}', app_headers=False)
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_1}}",
+    }, app_headers=False)
     # extractor: access_data = $.data
     ctx.extract('access_data', _resp1, '$.data')
     # step 2: ad56dea1-f890-4a1b-9dc1-b30ef9925f4c

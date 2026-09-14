@@ -162,12 +162,76 @@ import re
 
 from core.assertions import expect
 
+# Module-level constants: 长字符串 / HTML 内容从 JSON body 抽离，避免多层 \" 转义
+_EMAIL_HTML_CONTENT = (
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<b><strong class="katana__textBold" style="color: rgb(0, 0, 0); font-size: 16px; line-height: 28px; white-space: pre-wrap;">'
+    'Subject: Don\u2019t Miss Out! Live Concert 2026 \u2013 Early Bird Tickets Now On Sale'
+    '</strong></b></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Dear Music Lover,</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">We\u2019re thrilled to announce that global superstar [Artist Name] '
+    'is hitting the stage in your city this summer! The \u201cStellar Nights Tour\u201d will light up '
+    '[Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites\u2014'
+    'plus exclusive stage visuals you won\u2019t want to miss.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Secure your spot before prices rise: early bird tickets are 20% off '
+    'until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets '
+    'and backstage access\u2014perfect for die-hard fans.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Hurry, tickets sell out fast for [Artist Name]\u2019s tours! '
+    'For group bookings or questions, email </span>'
+    '<a href="mailto:support@concertpro.com" class="katana__link" dir="ltr">'
+    '<span style="white-space: pre-wrap;">support@concertpro.com</span></a>'
+    '<span style="white-space: pre-wrap;"> or call +1-800-567-8901.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Don\u2019t let this unforgettable night slip away\u2014see you at the show!</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" dir="ltr" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
+)
+
+_EMAIL_HTML_CONTENT_TEST = (
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<b><strong class="katana__textBold" style="white-space: pre-wrap;">'
+    'Subject: Don\u2019t Miss Out! Live Concert 2026 \u2013 Early Bird Tickets Now On Sale'
+    '</strong></b></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Dear Music Lover,</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">We\u2019re thrilled to announce that global superstar [Artist Name] '
+    'is hitting the stage in your city this summer! The \u201cStellar Nights Tour\u201d will light up '
+    '[Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites\u2014'
+    'plus exclusive stage visuals you won\u2019t want to miss.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Secure your spot before prices rise: early bird tickets are 20% off '
+    'until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets '
+    'and backstage access\u2014perfect for die-hard fans.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Hurry, tickets sell out fast for [Artist Name]\u2019s tours! '
+    'For group bookings or questions, email </span>'
+    '<a data-id="cdea418f-8db7-4f4d-9bb1-6844186cffa9" href="mailto:support@concertpro.com">'
+    '<span style="white-space: pre-wrap;">support@concertpro.com</span></a>'
+    '<span style="white-space: pre-wrap;"> or call +1-800-567-8901.</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Don\u2019t let this unforgettable night slip away\u2014see you at the show!</span></p>'
+    '<p class="katana__paragraph katana__paragraph--align-start" style="text-align: start;">'
+    '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
+)
+
 def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page(ctx):
     """Apifox case #7627466: Linda_T4665_T4666_Verify_partner_can_send_test_message_on_create_edit_a_campaign"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 7ca979c8-3cf3-43ba-8d7c-e05e7376ca3e
-    _resp1 = ctx.api.campaigns.create(body='{\r\n    "channel": "SMS",\r\n    "name": "automation by linda SMS",\r\n    "content": "Subject: Your Order #7892 Has Shipped!"\r\n}', token='linda01_token')
+    _resp1 = ctx.api.campaigns.create(
+        body={
+            "channel": "SMS",
+            "name": "automation by linda SMS",
+            "content": "Subject: Your Order #7892 Has Shipped!",
+        },
+        token='linda01_token',
+    )
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # assertion 1.assertion: responseJson equal success
@@ -175,13 +239,28 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp1, '$.data.id')
     # step 2: 44eb5382-8097-4e06-8560-ebd2977dfa90
-    _resp2 = ctx.api.campaigns.test_sms(body='{\n    "phones": [\n        "+16502396646"\n    ],\n    "message": "Subject: Your Order #7892 Has Shipped!"\n}', token='linda01_token')
+    _resp2 = ctx.api.campaigns.test_sms(
+        body={
+            "phones": ["+16502396646"],
+            "message": "Subject: Your Order #7892 Has Shipped!",
+        },
+        token='linda01_token',
+    )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j2.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j2.get('data') or {}).get('success')!r}"
     assert (_j2.get('data') or {}).get('message') == "Test SMS sent to 1 recipients", f"data.message不匹配：{(_j2.get('data') or {}).get('message')!r}"
     # step 3: b92f242b-bdde-4990-a60b-dd28927d565f
-    _resp3 = ctx.api.campaigns.save_recipients(body='{\r\n    "campaignId": "{{campaignId}}",\r\n    "channel": "SMS",\r\n    "isSelectAll": false,\r\n    "followerIds": [\r\n        "bbf4a1ee-d93d-4e92-9e73-53ba168d7a66"\r\n    ],\r\n    "searchKey": ""\r\n}', token='linda01_token')
+    _resp3 = ctx.api.campaigns.save_recipients(
+        body={
+            "campaignId": "{{campaignId}}",
+            "channel": "SMS",
+            "isSelectAll": False,
+            "followerIds": ["bbf4a1ee-d93d-4e92-9e73-53ba168d7a66"],
+            "searchKey": "",
+        },
+        token='linda01_token',
+    )
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
@@ -191,7 +270,27 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     # assertion 3.assertion: responseJson equal UNPAID
     expect(_resp3).json('$.data.paymentStatus').equals('UNPAID')
     # step 4: 23b926f2-e38a-4bd3-8e50-a62f6056dd5a
-    _resp4 = ctx.api.campaigns.by_campaign_id(body='{\n    "name": "automation by linda SMS",\n    "status": "DRAFT",\n    "paymentStatus": "UNPAID",\n    "updatedAt": "2026-06-10T02:59:30.733Z",\n    "channel": "SMS",\n    "totalSelectedCount": 1,\n    "subject": null,\n    "content": "Subject: Your Order #7892 Has Shipped!",\n    "selectAll": false,\n    "totalSegments": 1,\n    "fixedFee": 2,\n    "unitPrice": 0.01,\n    "totalToPay": 2.01,\n    "usageFee": 0.01,\n    "paymentBreakdown": {\n        "PAYOUT": 2.01,\n        "DEPOSIT": 0,\n        "CAMPAIGN": 0\n    },\n    "paymentMethod": null,\n    "id": "{{campaignId}}"\n}', token='linda01_token')
+    _resp4 = ctx.api.campaigns.by_campaign_id(
+            body={
+                "name": "automation by linda SMS",
+                "status": "DRAFT",
+                "paymentStatus": "UNPAID",
+                "channel": "SMS",
+                "totalSelectedCount": 1,
+                "subject": None,
+                "content": "Subject: Your Order #7892 Has Shipped!",
+                "selectAll": False,
+                "totalSegments": 1,
+                "fixedFee": 2,
+                "unitPrice": 0.01,
+                "totalToPay": 2.01,
+                "usageFee": 0.01,
+                "paymentBreakdown": {"PAYOUT": 2.01, "DEPOSIT": 0, "CAMPAIGN": 0},
+                "paymentMethod": None,
+                "id": "{{campaignId}}",
+            },
+            token='linda01_token',
+        )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j4 = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp4.status_code == 200, f"HTTP状态码应为200，实际={_resp4.status_code}"
@@ -223,7 +322,15 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     assert _iso_re.match(str(_d4.get('createdAt') or '')), f"createdAt格式不正确：{_d4.get('createdAt')!r}"
     assert _iso_re.match(str(_d4.get('updatedAt') or '')), f"updatedAt格式不正确：{_d4.get('updatedAt')!r}"
     # step 5: 22cb6be9-87bc-4d2e-9b12-9f7ea3893fde
-    _resp5 = ctx.api.campaigns.create(body='{\r\n    "channel": "EMAIL",\r\n    "content": "<p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><b><strong class=\\"katana__textBold\\" style=\\"color: rgb(0, 0, 0); font-size: 16px; line-height: 28px; white-space: pre-wrap;\\">Subject: Don’t Miss Out! Live Concert 2026 – Early Bird Tickets Now On Sale</strong></b></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Dear Music Lover,</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">We’re thrilled to announce that global superstar [Artist Name] is hitting the stage in your city this summer! The “Stellar Nights Tour” will light up [Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites—plus exclusive stage visuals you won’t want to miss.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Secure your spot before prices rise: early bird tickets are 20% off until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets and backstage access—perfect for die-hard fans.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Hurry, tickets sell out fast for [Artist Name]’s tours! For group bookings or questions, email </span><a href=\\"mailto:support@concertpro.com\\" class=\\"katana__link\\" dir=\\"ltr\\"><span style=\\"white-space: pre-wrap;\\">support@concertpro.com</span></a><span style=\\"white-space: pre-wrap;\\"> or call +1-800-567-8901.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Don’t let this unforgettable night slip away—see you at the show!</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" dir=\\"ltr\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>",\r\n    "name": "automation by linda Email",\r\n    "subject": "Don’t Miss Out! "\r\n}', token='linda01_token')
+    _resp5 = ctx.api.campaigns.create(
+            body={
+                "channel": "EMAIL",
+                "name": "automation by linda Email",
+                "subject": "Don’t Miss Out! ",
+                "content": _EMAIL_HTML_CONTENT,
+            },
+            token='linda01_token',
+        )
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson equal success
@@ -233,13 +340,29 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     # assertion 5.assertion: responseJson equal 0
     expect(_resp5).json('$.data.totalSelectedCount').equals('0')
     # step 6: 61601488-2af7-4ca6-a02b-41ae83c1ea84
-    _resp6 = ctx.api.campaigns.test_email(body='{\n    "emails": [\n        "linda.zhou.ext@1m.app"\n    ],\n    "subject": "Don’t Miss Out! ",\n    "content": "<p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><b><strong class=\\"katana__textBold\\" style=\\"white-space: pre-wrap;\\">Subject: Don’t Miss Out! Live Concert 2026 – Early Bird Tickets Now On Sale</strong></b></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Dear Music Lover,</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">We’re thrilled to announce that global superstar [Artist Name] is hitting the stage in your city this summer! The “Stellar Nights Tour” will light up [Venue Name] on [Date, Time], featuring hit songs from their latest album and classic fan favorites—plus exclusive stage visuals you won’t want to miss.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Secure your spot before prices rise: early bird tickets are 20% off until [Deadline]! Grab yours here: bit.ly/StellarNights2025. Limited VIP packages include meet-and-greets and backstage access—perfect for die-hard fans.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Hurry, tickets sell out fast for [Artist Name]’s tours! For group bookings or questions, email </span><a data-id=\\"cdea418f-8db7-4f4d-9bb1-6844186cffa9\\" href=\\"mailto:support@concertpro.com\\"><span style=\\"white-space: pre-wrap;\\">support@concertpro.com</span></a><span style=\\"white-space: pre-wrap;\\"> or call +1-800-567-8901.</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Don’t let this unforgettable night slip away—see you at the show!</span></p><p class=\\"katana__paragraph katana__paragraph--align-start\\" style=\\"text-align: start;\\"><span style=\\"white-space: pre-wrap;\\">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>"\n}', token='linda01_token')
+    _resp6 = ctx.api.campaigns.test_email(
+            body={
+                "emails": ["linda.zhou.ext@1m.app"],
+                "subject": "Don’t Miss Out! ",
+                "content": _EMAIL_HTML_CONTENT_TEST,
+            },
+            token='linda01_token',
+        )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j6 = _resp6.json() if _resp6.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j6.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j6.get('data') or {}).get('success')!r}"
     assert (_j6.get('data') or {}).get('message') == "Test email sent to 1 recipients", f"data.message不匹配：{(_j6.get('data') or {}).get('message')!r}"
     # step 7: 54e129b3-db56-40e8-ba4b-d571e363b0af
-    _resp7 = ctx.api.campaigns.save_recipients(body='{\r\n    "campaignId": "{{campaignEmailId}}",\r\n    "channel": "EMAIL",\r\n    "isSelectAll": false,\r\n    "followerIds": [\r\n        "5617efb6-1b25-4b22-af65-5a76ca51dcea"\r\n    ],\r\n    "searchKey": ""\r\n}', token='linda01_token')
+    _resp7 = ctx.api.campaigns.save_recipients(
+        body={
+            "campaignId": "{{campaignEmailId}}",
+            "channel": "EMAIL",
+            "isSelectAll": False,
+            "followerIds": ["5617efb6-1b25-4b22-af65-5a76ca51dcea"],
+            "searchKey": "",
+        },
+        token='linda01_token',
+    )
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
     # assertion 7.assertion: responseJson equal success
@@ -249,7 +372,28 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     # assertion 7.assertion: responseJson equal UNPAID
     expect(_resp7).json('$.data.paymentStatus').equals('UNPAID')
     # step 8: 01fafcc9-e6df-40c3-be23-b67ff3d052e3
-    _resp8 = ctx.api.campaigns.by_campaign_id(body='{\n    "name": "automation by linda Email",\n    "status": "DRAFT",\n    "paymentStatus": "UNPAID",\n    "updatedAt": "2026-06-10T02:59:30.733Z",\n    "channel": "Email",\n    "totalSelectedCount": 1,\n    "subject": null,\n    "content": "Subject: Your Order #7892 Has Shipped!",\n    "selectAll": false,\n    "totalSegments": 1,\n    "fixedFee": 2,\n    "unitPrice": 0.01,\n    "totalToPay": 2.01,\n    "usageFee": 0.01,\n    "paymentBreakdown": {\n        "PAYOUT": 2.01,\n        "DEPOSIT": 0,\n        "CAMPAIGN": 0\n    },\n    "paymentMethod": null,\n    "id": "{{campaignEmailId}}"\n}', token='linda01_token', path_vars={'campaignId': '{{campaignEmailId}}'})
+    _resp8 = ctx.api.campaigns.by_campaign_id(
+            body={
+                "name": "automation by linda Email",
+                "status": "DRAFT",
+                "paymentStatus": "UNPAID",
+                "channel": "Email",
+                "totalSelectedCount": 1,
+                "subject": None,
+                "content": "Subject: Your Order #7892 Has Shipped!",
+                "selectAll": False,
+                "totalSegments": 1,
+                "fixedFee": 2,
+                "unitPrice": 0.01,
+                "totalToPay": 2.01,
+                "usageFee": 0.01,
+                "paymentBreakdown": {"PAYOUT": 2.01, "DEPOSIT": 0, "CAMPAIGN": 0},
+                "paymentMethod": None,
+                "id": "{{campaignEmailId}}",
+            },
+            token='linda01_token',
+            path_vars={'campaignId': '{{campaignEmailId}}'},
+        )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j8 = _resp8.json() if _resp8.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp8.status_code == 200, f"响应状态码为200，实际={_resp8.status_code}"

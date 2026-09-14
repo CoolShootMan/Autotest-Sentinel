@@ -72,11 +72,14 @@ def test_linda_t917_verify_in_payment_methods_it_can_add_or_delete_new_cards(ctx
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: b6e5133c-e65c-449d-a911-058f97c5b6f0
-    _resp1 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{UIauto_partner_email}}",\r\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\r\n\r\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "email": "{{UIauto_partner_email}}",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
     # step 2: d839d154-8a3c-4fa3-acab-5036fdb85260
-    _resp2 = ctx.api.payments.stripe_setup_intent(body='{}', token='yuxiao999_token')
+    _resp2 = ctx.api.payments.stripe_setup_intent(body={}, token='yuxiao999_token')
     # extractor: Stripeid = $.data.id
     ctx.extract('Stripeid', _resp2, '$.data.id')
     # extractor: clientSecret = $.data.clientSecret
@@ -86,7 +89,10 @@ def test_linda_t917_verify_in_payment_methods_it_can_add_or_delete_new_cards(ctx
     # extractor: paymentMethod = $.payment_method
     ctx.extract('paymentMethod', _resp3, '$.payment_method')
     # step 4: create payment
-    _resp4 = ctx.api.payments.method(body='{\n    "billingAddressRequirementLevel": "FULL",\n    "externalId": "{{paymentMethod}}"\n}', token='yuxiao999_token')
+    _resp4 = ctx.api.payments.method(body={
+        "billingAddressRequirementLevel": "FULL",
+        "externalId": "{{paymentMethod}}",
+    }, token='yuxiao999_token')
     # extractor: paymentMethodId = $.data.id
     ctx.extract('paymentMethodId', _resp4, '$.data.id')
     # assertion 4.assertion: responseJson equal 200
@@ -96,7 +102,10 @@ def test_linda_t917_verify_in_payment_methods_it_can_add_or_delete_new_cards(ctx
     # extractor: methods = $.data.items
     ctx.extract('methods', _resp5, '$.data.items')
     # step 6: 5e22113c-b770-4025-9a39-e696840aa896
-    _resp6 = ctx.api.payments.method_2(body='{"externalId":"{{paymentMethod}}","paymentMethodId":"{{paymentMethodId}}"}', token='yuxiao999_token')
+    _resp6 = ctx.api.payments.method_2(body={
+        "externalId": "{{paymentMethod}}",
+        "paymentMethodId": "{{paymentMethodId}}",
+    }, token='yuxiao999_token')
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success

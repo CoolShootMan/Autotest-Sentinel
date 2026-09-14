@@ -176,7 +176,10 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: P-21-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    }, app_headers=True)
     ctx.extract('P-21_access_token', _resp1, '$.data.refreshToken')
     # step 2: P-21 earning summary
     _resp2 = ctx.api.earnings.summary()
@@ -187,7 +190,10 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     # extractor: balance_amount = $.data.balance.amount
     ctx.extract('balance_amount', _resp3, '$.data.balance.amount')
     # step 4: Login - merchant
-    _resp4 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}', app_headers=True)
+    _resp4 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    }, app_headers=True)
     ctx.extract('merchant_access_token', _resp4, '$.data.token')
     # step 5: promoter earning summary
     _resp5 = ctx.api.earnings.summary(token='merchant_access_token')
@@ -198,17 +204,132 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     # extractor: balance_amount_p = $.data.balance.amount
     ctx.extract('balance_amount_p', _resp6, '$.data.balance.amount')
     # step 7: Create event
-    _resp7 = ctx.api.events.v2(body='{\n    "status": "UPCOMING",\n    "allowAutoComplete": false,\n    "isTaxEnabled": false,\n    "isAddressRevealEnabled": false,\n    "title": "{{post_title}}",\n    "note": "{{post_title}}",\n    "description": "",\n    "location": "{{event_location}}",\n    "venue": "{{event_venue}}",\n    "timezone": {\n        "timeZoneId": "America/New_York",\n        "timeZoneName": "Eastern Standard Time",\n        "dstOffset": 0,\n        "rawOffset": -18000\n    },\n    "poster": {\n        "height": 2048,\n        "width": 3072,\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "mediaType": "IMAGE"\n    },\n    "startDateDisplay": "{{start_time}}"\n}')
+    _resp7 = ctx.api.events.v2(body={
+        "status": "UPCOMING",
+        "allowAutoComplete": False,
+        "isTaxEnabled": False,
+        "isAddressRevealEnabled": False,
+        "title": "{{post_title}}",
+        "note": "{{post_title}}",
+        "description": "",
+        "location": "{{event_location}}",
+        "venue": "{{event_venue}}",
+        "timezone": {
+            "timeZoneId": "America/New_York",
+            "timeZoneName": "Eastern Standard Time",
+            "dstOffset": 0,
+            "rawOffset": -18000,
+        },
+        "poster": {
+            "height": 2048,
+            "width": 3072,
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+            "mediaType": "IMAGE",
+        },
+        "startDateDisplay": "{{start_time}}",
+    })
     # extractor: event_post_id = event_post_id
     ctx.extract('event_post_id', _resp7, 'event_post_id')
     # extractor: event_id = event_id
     ctx.extract('event_id', _resp7, 'event_id')
     # step 8: Create event ticket
-    _resp8 = ctx.api.events.v2_ticket_batch_v2(body='{\n    "poster": {\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "width": 3072,\n        "height": 2048,\n        "position": 0,\n        "mediaType": "IMAGE",\n        "mediaDuration": 0\n    },\n    "listingType": "TICKET",\n    "isTaxEnabled": true,\n    "taxConfig": {\n        "calculationType": "CUSTOM",\n        "customTaxRate": 6\n    },\n    "tickets": [\n        {\n            "listingType": "TICKET",\n            "images": [\n                {\n                    "id": "80f43627-4bef-49b0-934b-cd63d49f8787",\n                    "height": 1000,\n                    "width": 1000,\n                    "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",\n                    "mediaType": "IMAGE"\n                }\n            ],\n            "title": "t001",\n            "bodyJson": "",\n            "options": [\n                {\n                    "name": "Title",\n                    "values": [\n                        "Default Title"\n                    ],\n                    "images": []\n                }\n            ],\n            "variants": [\n                {\n                    "inventoryQuantity": 100,\n                    "ticketPrice": 1,\n                    "price": 2.38,\n                    "fees": 1.38,\n                    "priceAnchor": 0,\n                    "option": {\n                        "option1": "Default Title"\n                    },\n                    "transactionFee": {\n                        "platformFee": 1.24,\n                        "customFee": 0.14,\n                        "customFeeBreakdown": {\n                            "TAX": {\n                                "unitFixedFee": 0,\n                                "unitPercentageFee": 0.06,\n                                "itemFee":0.14\n                            }\n                        },\n                        "transactionItemFee": 1.38\n                    }\n                }\n            ]\n        }\n    ],\n    "coSellingCommissionRate": 25\n}')
+    _resp8 = ctx.api.events.v2_ticket_batch_v2(body={
+    'poster': {
+        'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+        'width': 3072,
+        'height': 2048,
+        'position': 0,
+        'mediaType': 'IMAGE',
+        'mediaDuration': 0,
+    },
+    'listingType': 'TICKET',
+    'isTaxEnabled': True,
+    'taxConfig': {
+        'calculationType': 'CUSTOM',
+        'customTaxRate': 6,
+    },
+    'tickets': [
+        {
+            'listingType': 'TICKET',
+            'images': [
+                {
+                    'id': '80f43627-4bef-49b0-934b-cd63d49f8787',
+                    'height': 1000,
+                    'width': 1000,
+                    'src': 'https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png',
+                    'mediaType': 'IMAGE',
+                },
+            ],
+            'title': 't001',
+            'bodyJson': '',
+            'options': [
+                {
+                    'name': 'Title',
+                    'values': [
+                        'Default Title',
+                    ],
+                    'images': [],
+                },
+            ],
+            'variants': [
+                {
+                    'inventoryQuantity': 100,
+                    'ticketPrice': 1,
+                    'price': 2.38,
+                    'fees': 1.38,
+                    'priceAnchor': 0,
+                    'option': {
+                        'option1': 'Default Title',
+                    },
+                    'transactionFee': {
+                        'platformFee': 1.24,
+                        'customFee': 0.14,
+                        'customFeeBreakdown': {
+                            'TAX': {
+                                'unitFixedFee': 0,
+                                'unitPercentageFee': 0.06,
+                                'itemFee': 0.14,
+                            },
+                        },
+                        'transactionItemFee': 1.38,
+                    },
+                },
+            ],
+        },
+    ],
+    'coSellingCommissionRate': 25,
+})
     # assertion 8.get_200_status: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
     # step 9: Add lineup and payment in event
-    _resp9 = ctx.api.events.v2_lineup_batch(body='{\n    "lineup": [\n        {\n            "title": "P-22",\n            "poster": {\n                "src": "https://res.cloudinary.com/dr9io1zjv/v1762935019/uploaded_images/wc8wuj2boch4k7bccjgf",\n                "width": 160,\n                "height": 160,\n                "mediaType": "IMAGE"\n            },\n            "introduction": "DJ - automation",\n            "isHeadliner": true,\n            "posterBackend": [\n                {\n                    "src": "https://res.cloudinary.com/dr9io1zjv/v1762935019/uploaded_images/wc8wuj2boch4k7bccjgf",\n                    "width": 160,\n                    "height": 160,\n                    "mediaType": "IMAGE"\n                }\n            ],\n            "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",\n            "recipientVanityUrl": "https://release.pear.us/auto-merchant",\n            "fee": 10,\n            "isPaymentAfterEventEnabled": true,\n            "order": 0\n        }\n    ]\n}')
+    _resp9 = ctx.api.events.v2_lineup_batch(body={
+        "lineup": [
+            {
+                "title": "P-22",
+                "poster": {
+                    "src": "https://res.cloudinary.com/dr9io1zjv/v1762935019/uploaded_images/wc8wuj2boch4k7bccjgf",
+                    "width": 160,
+                    "height": 160,
+                    "mediaType": "IMAGE",
+                },
+                "introduction": "DJ - automation",
+                "isHeadliner": True,
+                "posterBackend": [
+                    {
+                        "src": "https://res.cloudinary.com/dr9io1zjv/v1762935019/uploaded_images/wc8wuj2boch4k7bccjgf",
+                        "width": 160,
+                        "height": 160,
+                        "mediaType": "IMAGE",
+                    },
+                ],
+                "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",
+                "recipientVanityUrl": "https://release.pear.us/auto-merchant",
+                "fee": 10,
+                "isPaymentAfterEventEnabled": True,
+                "order": 0,
+            },
+        ],
+    })
     # assertion 9.get_status_code: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
     # extractor: lineup_id = $.data.lineup[0].id
@@ -236,7 +357,37 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     # assertion 14.Verify the total net earnings is 0: responseJson equal 0
     expect(_resp14).json('$.data.netEarnings').equals('0')
     # step 15: Update lineup payment amount
-    _resp15 = ctx.api.events.lineup_by_lineup_id(body='{\n  "eventId": "{{event_id}}",\n  "id": "{{lineup_id}}",\n  "title": "P-22",\n  "introduction": "DJ - automation",\n  "poster": {\n    "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",\n    "width": 799,\n    "height": 799,\n    "position": 0,\n    "mediaType": "IMAGE",\n    "mediaDuration": 0\n  },\n  "isHeadliner": true,\n  "order": 0,\n  "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",\n  "recipientVanityUrl": "https://release.pear.us/auto-merchant",\n  "fee": 1,\n  "isPaymentAfterEventEnabled": true,\n  "userId": "85990297-fba4-40ea-a49c-50a310ed6c89",\n  "posterBackend": [\n    {\n      "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",\n      "width": 799,\n      "height": 799,\n      "position": 0,\n      "mediaType": "IMAGE",\n      "mediaDuration": 0\n    }\n  ]\n}')
+    _resp15 = ctx.api.events.lineup_by_lineup_id(body={
+        "eventId": "{{event_id}}",
+        "id": "{{lineup_id}}",
+        "title": "P-22",
+        "introduction": "DJ - automation",
+        "poster": {
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",
+            "width": 799,
+            "height": 799,
+            "position": 0,
+            "mediaType": "IMAGE",
+            "mediaDuration": 0,
+        },
+        "isHeadliner": True,
+        "order": 0,
+        "customRecipientIdentifier": "dian.yuhong.ext+34@1m.app",
+        "recipientVanityUrl": "https://release.pear.us/auto-merchant",
+        "fee": 1,
+        "isPaymentAfterEventEnabled": True,
+        "userId": "85990297-fba4-40ea-a49c-50a310ed6c89",
+        "posterBackend": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",
+                "width": 799,
+                "height": 799,
+                "position": 0,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0,
+            },
+        ],
+    })
     # step 16: Verify P-21 earning summary is not changed
     _resp16 = ctx.api.earnings.summary()
     # assertion 16.earning is not changed: responseJson equal {{lifetimeEarning}}
@@ -254,7 +405,10 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     # assertion 19.Verify the lineup balance is not changed: responseJson equal {{balance_amount_p}}
     expect(_resp19).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount_p}}'))
     # step 20: Login - promoter
-    _resp20 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}', app_headers=True)
+    _resp20 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    }, app_headers=True)
     ctx.extract('promoter_access_token', _resp20, '$.data.token')
     # step 21: Lineup2 earning summary
     _resp21 = ctx.api.earnings.summary(token='promoter_access_token')
@@ -265,7 +419,37 @@ def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
     # extractor: balance_amount_promoter = $.data.balance.amount
     ctx.extract('balance_amount_promoter', _resp22, '$.data.balance.amount')
     # step 23: Update lineup email
-    _resp23 = ctx.api.events.lineup_by_lineup_id(body='{\n  "eventId": "{{event_id}}",\n  "id": "{{lineup_id}}",\n  "title": "P-35",\n  "introduction": "DJ - automation",\n  "poster": {\n    "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",\n    "width": 799,\n    "height": 799,\n    "position": 0,\n    "mediaType": "IMAGE",\n    "mediaDuration": 0\n  },\n  "isHeadliner": true,\n  "order": 0,\n  "customRecipientIdentifier": "dian.yuhong.ext+35@1m.app",\n  "recipientVanityUrl": "https://release.pear.us/auto-promoter",\n  "fee": 1,\n  "isPaymentAfterEventEnabled": true,\n  "userId": "85990297-fba4-40ea-a49c-50a310ed6c89",\n  "posterBackend": [\n    {\n      "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",\n      "width": 799,\n      "height": 799,\n      "position": 0,\n      "mediaType": "IMAGE",\n      "mediaDuration": 0\n    }\n  ]\n}')
+    _resp23 = ctx.api.events.lineup_by_lineup_id(body={
+        "eventId": "{{event_id}}",
+        "id": "{{lineup_id}}",
+        "title": "P-35",
+        "introduction": "DJ - automation",
+        "poster": {
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",
+            "width": 799,
+            "height": 799,
+            "position": 0,
+            "mediaType": "IMAGE",
+            "mediaDuration": 0,
+        },
+        "isHeadliner": True,
+        "order": 0,
+        "customRecipientIdentifier": "dian.yuhong.ext+35@1m.app",
+        "recipientVanityUrl": "https://release.pear.us/auto-promoter",
+        "fee": 1,
+        "isPaymentAfterEventEnabled": True,
+        "userId": "85990297-fba4-40ea-a49c-50a310ed6c89",
+        "posterBackend": [
+            {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1773824130/uploaded_images/jiwuqqbej1dgynpdz84m.webp",
+                "width": 799,
+                "height": 799,
+                "position": 0,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0,
+            },
+        ],
+    })
     # step 24: Verify P-21 earning summary is not changed
     _resp24 = ctx.api.earnings.summary()
     # assertion 24.earning is not changed: responseJson equal {{lifetimeEarning}}

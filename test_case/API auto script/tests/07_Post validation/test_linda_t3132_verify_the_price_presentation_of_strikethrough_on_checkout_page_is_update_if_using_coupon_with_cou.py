@@ -43,7 +43,9 @@ def test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: guest login
-    _resp1 = ctx.api.auth.guest_login(body='{\n    "consumerId": "{{__uuid_0}}"\n}')
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_0}}",
+    })
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
     # step 2: post detail
@@ -55,21 +57,72 @@ def test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp2, '$.data.id')
     # step 3: 0b0509d4-e797-4f2f-8144-98066a2cb5bf
-    _resp3 = ctx.api.cart.delete(body='{}', app_headers=True, token='access_token')
+    _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
     expect(_resp3).json('$.message').equals('success')
     # step 4: buy now 
-    _resp4 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n        "quantity": 1,\n        "promoterProductVariantId": "{{promoterProductVariantId}}",\n        "price": "80" ,\n        "postId": "{{postid}}",\n        "selected": true\n    }\n    ],\n    "currentUpdateCartItems": [\n        {\n        "quantity": 1,\n        "id": "{{promoterProductVariantId}}",\n        "postId": "{{postid}}",\n        "price": "80" \n    }\n    ]\n}', app_headers=True, token='access_token')
+    _resp4 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "{{promoterProductVariantId}}",
+                "price": "80",
+                "postId": "{{postid}}",
+                "selected": True,
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "{{promoterProductVariantId}}",
+                "postId": "{{postid}}",
+                "price": "80",
+            },
+        ],
+    }, app_headers=True, token='access_token')
     # assertion 4.assertion: responseJson equal 80
     expect(_resp4).json('$.data.totalToPay').equals('80')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
     # step 5: apply 10% coupon on the checkout page
-    _resp5 = ctx.api.orders.points_and_promotions(body='{\n    "shippingAddress": {\n        "line1": "",\n        "city": "",\n        "zipcode": "",\n        "state": ""\n    },\n    "applicableCode": "API Auto Test with 10% discount",\n    "orderId": "{{order_id}}"\n}', token='access_token')
+    _resp5 = ctx.api.orders.points_and_promotions(body={
+        "shippingAddress": {
+            "line1": "",
+            "city": "",
+            "zipcode": "",
+            "state": "",
+        },
+        "applicableCode": "API Auto Test with 10% discount",
+        "orderId": "{{order_id}}",
+    }, token='access_token')
     # step 6: create Order
-    _resp6 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 72,\n      "promoterVariantId": "{{promoterProductVariantId}}"\n    }\n  ],\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "linda.zhou.ext+10@qibua.com"\n  },\n  "addressRequest": {\n    "isDefault": true,\n    "firstName": "linda43",\n    "lastName": "zhou",\n    "line1": "1800 Zollinger Road",\n    "state": "OH",\n    "city": "Columbus",\n    "zipcode": "43221",\n    "line2": "test",\n    "phoneNumber": "+16502396646",\n     "ignoreVerifyPhoneNumber": "True"\n  }\n}', app_headers=True, token='access_token', params={'order_id': '{{order_id}}'})
+    _resp6 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 72,
+                "promoterVariantId": "{{promoterProductVariantId}}",
+            },
+        ],
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@qibua.com",
+        },
+        "addressRequest": {
+            "isDefault": True,
+            "firstName": "linda43",
+            "lastName": "zhou",
+            "line1": "1800 Zollinger Road",
+            "state": "OH",
+            "city": "Columbus",
+            "zipcode": "43221",
+            "line2": "test",
+            "phoneNumber": "+16502396646",
+            "ignoreVerifyPhoneNumber": "True",
+        },
+    }, app_headers=True, token='access_token', params={'order_id': '{{order_id}}'})
     # assertion 6.code: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson exists 

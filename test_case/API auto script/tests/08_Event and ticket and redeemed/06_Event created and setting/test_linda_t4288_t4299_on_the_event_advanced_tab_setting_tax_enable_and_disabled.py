@@ -202,12 +202,27 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda01 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+01@1m.app"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+01@1m.app",
+    })
     # extractor: linda01_token = $.data.token
     ctx.extract('linda01_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: 587d6edf-679c-4242-93ce-a71785a615cb
-    _resp2 = ctx.api.products.calculate_ticket_batch(body='{\r\n    "listingType": "TICKET",\r\n    "customTaxRate": 10,\r\n    "items": [\r\n        {\r\n            "variants": [\r\n                {\r\n                    "price": 34.44\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp2 = ctx.api.products.calculate_ticket_batch(body={
+        "listingType": "TICKET",
+        "customTaxRate": 10,
+        "items": [
+            {
+                "variants": [
+                    {
+                        "price": 34.44,
+                    },
+                ],
+            },
+        ],
+    }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp2.status_code == 201, f"step2 status != 201, got {_resp2.status_code}"
     _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
@@ -227,7 +242,19 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert abs(_p2 - (_t2 + _tf2)) <= 0.01, f"step2 最终价格错误: price={_p2}, ticketPrice+transactionItemFee={_t2+_tf2}"
     assert abs(_tf2 - (_pf2 + _cf2)) <= 0.01, f"step2 总手续费错误: transactionItemFee={_tf2}, platformFee+customFee={_pf2+_cf2}"
     # step 3: 5c5ebff3-c289-4600-b24b-a6f953ced00f
-    _resp3 = ctx.api.products.calculate_ticket_batch(body='{\r\n    "listingType": "TICKET",\r\n    "customTaxRate": 20,\r\n    "items": [\r\n        {\r\n            "variants": [\r\n                {\r\n                    "price": 34.44\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp3 = ctx.api.products.calculate_ticket_batch(body={
+        "listingType": "TICKET",
+        "customTaxRate": 20,
+        "items": [
+            {
+                "variants": [
+                    {
+                        "price": 34.44,
+                    },
+                ],
+            },
+        ],
+    }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp3.status_code == 201, f"step3 status != 201, got {_resp3.status_code}"
     _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
@@ -250,7 +277,19 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert abs(_p3 - (_t3 + _tf3)) <= 0.01, f"step3 最终价格错误: price={_p3}, ticketPrice+transactionItemFee={_t3+_tf3}"
     assert abs(_tf3 - (_pf3 + _cf3)) <= 0.01, f"step3 总手续费错误: transactionItemFee={_tf3}, platformFee+customFee={_pf3+_cf3}"
     # step 4: 56005cad-c875-4053-beb9-e541c2b029ca
-    _resp4 = ctx.api.products.calculate_ticket_batch(body='{\r\n    "listingType": "TICKET",\r\n    "customTaxRate": 0,\r\n    "items": [\r\n        {\r\n            "variants": [\r\n                {\r\n                    "price": 34.44\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}', token='linda01_token')
+    _resp4 = ctx.api.products.calculate_ticket_batch(body={
+        "listingType": "TICKET",
+        "customTaxRate": 0,
+        "items": [
+            {
+                "variants": [
+                    {
+                        "price": 34.44,
+                    },
+                ],
+            },
+        ],
+    }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp4.status_code == 201, f"step4 status != 201, got {_resp4.status_code}"
     _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}

@@ -63,10 +63,16 @@ def test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_regist
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: bc8e6063-e7c4-403d-8868-c778a8b58574
-    _resp1 = ctx.api.auth.code(body='{"email":"{{PartnerEmail}}"}')
+    _resp1 = ctx.api.auth.code(body={
+        "email": "{{PartnerEmail}}",
+    })
     vars['otp_request_ts'] = 'Date.now('
     # step 2: c82e7033-66f9-4465-b1e6-a2650afc0fc5
-    _resp2 = ctx.api.auth.merchant_login(body='{\r\n    "inviterCampaign": {},\r\n    "code": "{{gmail_code}}",\r\n    "email": "{{PartnerEmail}}"\r\n}', headers={'X-Auto-Testing': 'true'})
+    _resp2 = ctx.api.auth.merchant_login(body={
+        "inviterCampaign": {},
+        "code": "{{gmail_code}}",
+        "email": "{{PartnerEmail}}",
+    }, headers={'X-Auto-Testing': 'true'})
     ctx.extract('auth_token', _resp2, '$.data.token')
     ctx.extract('auth_refresh_token', _resp2, '$.data.refreshToken')
     ctx.extract('user_id', _resp2, '$.data.id')

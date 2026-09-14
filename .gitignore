@@ -218,3 +218,6 @@ test_case/UI/Test_Katana/crash_*.png
 
 # === Browser CLI runtime state (local only) ===
 .playwright-cli/
+
+# === UI automation run log (written by ui-automation-daily workflow / main.py) ===
+run.log

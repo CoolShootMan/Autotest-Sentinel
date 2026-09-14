@@ -77,7 +77,10 @@ def test_lury_t5282_exclude_pear_us_venue_app_sales_from_sales_report(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Login-M1
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     # extractor: M1_access_token = $.data.token
     ctx.extract('M1_access_token', _resp1, '$.data.token')
     # step 2: 481ed3af-9c3a-454a-81fd-617b35b1102d

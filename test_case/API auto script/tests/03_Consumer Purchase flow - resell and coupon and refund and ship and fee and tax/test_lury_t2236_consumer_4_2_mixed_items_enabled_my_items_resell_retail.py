@@ -301,25 +301,97 @@ def test_lury_t2236_consumer_4_2_mixed_items_enabled_my_items_resell_retail(ctx)
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "fa60f26f-a4c3-4895-bc22-e2638dcd10cf",\n            "price": 150,\n            "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",\n            "selected": true,\n            "customFields": []\n        },\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "e3a58292-0a2e-41ac-9d65-27cc6ea3ad27",\n            "price": 150,\n            "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "e60509b1-ed54-4380-b21b-cbf6cf0159da",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",\n        "eventSourceUrl": "https://release.pear.us/auto-promoter/post/grlb54"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "fa60f26f-a4c3-4895-bc22-e2638dcd10cf",\n            "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",\n            "price": 150,\n            "customFields": []\n        },\n        {\n            "quantity": 1,\n            "id": "e3a58292-0a2e-41ac-9d65-27cc6ea3ad27",\n            "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",\n            "price": 150,\n            "customFields": []\n        }\n    ]\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "fa60f26f-a4c3-4895-bc22-e2638dcd10cf",
+                "price": 150,
+                "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",
+                "selected": True,
+                "customFields": [],
+            },
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "e3a58292-0a2e-41ac-9d65-27cc6ea3ad27",
+                "price": 150,
+                "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "e60509b1-ed54-4380-b21b-cbf6cf0159da",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "9e32874f-1af5-4a26-88ad-a0a5cf1ad10c",
+            "eventSourceUrl": "https://release.pear.us/auto-promoter/post/grlb54",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "fa60f26f-a4c3-4895-bc22-e2638dcd10cf",
+                "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",
+                "price": 150,
+                "customFields": [],
+            },
+            {
+                "quantity": 1,
+                "id": "e3a58292-0a2e-41ac-9d65-27cc6ea3ad27",
+                "postId": "9eaea215-f731-4d86-9254-5cd0f5590b34",
+                "price": 150,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "{{shippingAddress_id}}",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "{{shippingAddress_id}}",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 5: Login - P1
-    _resp5 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp5 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp5, '$.data.token')
     # step 6: get P1 order detail v2
     _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDb}}'})
     # step 7: Login - merchant
-    _resp7 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp7 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp7, '$.data.token')
     # step 8: get merchant orders
     _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -329,7 +401,10 @@ def test_lury_t2236_consumer_4_2_mixed_items_enabled_my_items_resell_retail(ctx)
     # step 10: get merchant commission charge
     _resp10 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantID7}}'})
     # step 11: Login - promoter
-    _resp11 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}')
+    _resp11 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    })
     ctx.extract('promoter_access_token', _resp11, '$.data.token')
     # step 12: get promoter orders
     _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})

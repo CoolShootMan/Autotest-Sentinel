@@ -33,7 +33,15 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx):
         vars['promoterId'] = '2e7c410d-3aeb-429c-bdcf-b0c769a1e11e'
     # === Steps ===
     # step 1: 48d86b1b-5482-4a04-98c5-650b9e4af40f
-    _resp1 = ctx.api.admin.promoters_reward(body='{\r\n    "amount": 10,\r\n    "holdTime": 0,\r\n    "reason": "One-off payout - loan",\r\n    "note": "21+",\r\n    "memo": "Auto test",\r\n    "type": "ONE_TIME_PAYOUT_LOAN",\r\n    "promoterId": "{{promoterId}}"\r\n}', token='admin_token')
+    _resp1 = ctx.api.admin.promoters_reward(body={
+        "amount": 10,
+        "holdTime": 0,
+        "reason": "One-off payout - loan",
+        "note": "21+",
+        "memo": "Auto test",
+        "type": "ONE_TIME_PAYOUT_LOAN",
+        "promoterId": "{{promoterId}}",
+    }, token='admin_token')
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
     # assertion 1.assertion: responseJson equal success

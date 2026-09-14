@@ -68,22 +68,77 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: 2194cf7a-ddac-4fcb-aa6a-73ad81100e8b
-    _resp1 = ctx.api.auth.guest_login(body='{\r\n    "consumerId": "{{__uuid_0}}"\r\n}')
+    _resp1 = ctx.api.auth.guest_login(body={
+        "consumerId": "{{__uuid_0}}",
+    })
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: 6ffbf71c-7422-4b1b-8ae9-26dd2e030b50
-    _resp2 = ctx.api.cart.delete(body='{}', app_headers=True, token='access_token')
+    _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n  "postIdForFilter": "02c93ce5-6e72-4252-a7b6-9b3525259985",\n  "updateCartItems": [\n    {\n      "quantity": 1,\n      "promoterProductVariantId": "e1d7b321-bba5-4114-b252-ab08dbe32321",\n      "price": 778.89,\n      "postId": "02c93ce5-6e72-4252-a7b6-9b3525259985",\n      "selected": true\n    }\n  ],\n  "fbAdParams": {\n    "eventID": "5eec4c14-7088-455a-a959-d95f348663cd",\n    "pixelId": [\n      "268933192948110"\n    ],\n    "fbBrowserId": "fb.1.1764140798676.563642823270509365",\n    "externalId": "4ab411c8-7faa-4c10-a01b-8399ca5015de",\n    "eventSourceUrl": "https://release.pear.us/lindazhoupromoter2/post/t4159"\n  },\n  "currentUpdateCartItems": [\n    {\n      "quantity": 1,\n      "id": "e1d7b321-bba5-4114-b252-ab08dbe32321",\n      "postId": "02c93ce5-6e72-4252-a7b6-9b3525259985",\n      "price": 778.89\n    }\n  ]\n}', app_headers=True, token='access_token')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "postIdForFilter": "02c93ce5-6e72-4252-a7b6-9b3525259985",
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "e1d7b321-bba5-4114-b252-ab08dbe32321",
+                "price": 778.89,
+                "postId": "02c93ce5-6e72-4252-a7b6-9b3525259985",
+                "selected": True,
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "5eec4c14-7088-455a-a959-d95f348663cd",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1764140798676.563642823270509365",
+            "externalId": "4ab411c8-7faa-4c10-a01b-8399ca5015de",
+            "eventSourceUrl": "https://release.pear.us/lindazhoupromoter2/post/t4159",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "e1d7b321-bba5-4114-b252-ab08dbe32321",
+                "postId": "02c93ce5-6e72-4252-a7b6-9b3525259985",
+                "price": 778.89,
+            },
+        ],
+    }, app_headers=True, token='access_token')
     # assertion 3.assertion: responseJson equal 734.51
     expect(_resp3).json('$.data.totalToPay').equals('734.51')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp3, '$.data.orderId')
     # step 4: create Order
-    _resp4 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 20,\n      "promoterVariantId": "c4c30344-535d-48a1-a500-dcf5a2f59eb4"\n    }\n  ],\n  "inviterCampaign": {},\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "43@qibua.com"\n  },\n  "addressRequest": {\n    "isDefault": true,\n    "firstName": "linda43",\n    "lastName": "zhou",\n    "line1": "1800 Zollinger Road",\n    "state": "OH",\n    "city": "Columbus",\n    "zipcode": "43221",\n    "line2": "test",\n    "phoneNumber": "+13022804650",\n    "ignoreVerifyPhoneNumber": "True"\n  }\n}\n\n\n\n', app_headers=True, token='access_token', params={'order_id': '{{order_id}}'})
+    _resp4 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 20,
+                "promoterVariantId": "c4c30344-535d-48a1-a500-dcf5a2f59eb4",
+            },
+        ],
+        "inviterCampaign": {},
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "43@qibua.com",
+        },
+        "addressRequest": {
+            "isDefault": True,
+            "firstName": "linda43",
+            "lastName": "zhou",
+            "line1": "1800 Zollinger Road",
+            "state": "OH",
+            "city": "Columbus",
+            "zipcode": "43221",
+            "line2": "test",
+            "phoneNumber": "+13022804650",
+            "ignoreVerifyPhoneNumber": "True",
+        },
+    }, app_headers=True, token='access_token', params={'order_id': '{{order_id}}'})
     # assertion 4.code: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')
     # assertion 4.assertion: responseJson exists 
@@ -91,6 +146,11 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     # extractor: orderNumber = $.data.orderNumbers[0]
     ctx.extract('orderNumber', _resp4, '$.data.orderNumbers[0]')
     # step 5: get merchant order detail
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
+
     vars['merchantId'] = 'd1fdc475-8b15-49f0-8718-67c9efa988bf'
     _resp5 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda01_token', params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{orderNumber}}'})
     # assertion 5.assertion: responseJson equal 200
@@ -108,7 +168,29 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     # extractor: orderLineItemUnits = $.data.lineItems[0].orderLineItemUnits[0].id
     ctx.extract('orderLineItemUnits', _resp5, '$.data.lineItems[0].orderLineItemUnits[0].id')
     # step 6: Create Merchant Refund
-    _resp6 = ctx.api.orders.refunds(body='{\n  "lineItems": [\n    {\n      "id": "{{orderLineItemId}}",\n      "quantity": 1,\n      "lineItemUnitIds": [\n        "{{orderLineItemUnits}}"\n      ]\n    }\n  ],\n  "shippingLines": [\n    {\n      "merchantOrderId": "{{dataId}}"\n    }\n  ],\n  "tipLines": [\n    {\n      "merchantOrderId": "{{dataId}}",\n      "tipAmount": 0\n    }\n  ],\n  "note": "refund test"\n}\n\n', app_headers=True, token='linda01_token', path_vars={'refund_id': '{{dataId}}'})
+    _resp6 = ctx.api.orders.refunds(body={
+        "lineItems": [
+            {
+                "id": "{{orderLineItemId}}",
+                "quantity": 1,
+                "lineItemUnitIds": [
+                    "{{orderLineItemUnits}}",
+                ],
+            },
+        ],
+        "shippingLines": [
+            {
+                "merchantOrderId": "{{dataId}}",
+            },
+        ],
+        "tipLines": [
+            {
+                "merchantOrderId": "{{dataId}}",
+                "tipAmount": 0,
+            },
+        ],
+        "note": "refund test",
+    }, app_headers=True, token='linda01_token', path_vars={'refund_id': '{{dataId}}'})
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success

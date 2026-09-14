@@ -45,9 +45,35 @@ def test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event(ctx):
     vars['event_id'] = '79ec6803-9f10-4937-9fde-823468e0e543'
     # === Steps ===
     # step 1: 0b81a3c3-02fc-48b3-822d-d9eaf49b2a3a
-    _resp1 = ctx.api.promoters.product_image_url(body='{"contentType":"image/jpeg"}', token='linda01_token')
+    _resp1 = ctx.api.promoters.product_image_url(body={
+        "contentType": "image/jpeg",
+    }, token='linda01_token')
     # step 2: a288f139-84e6-463e-a20d-7aa171f9b7cb
-    _resp2 = ctx.api.events.lineup(body='{\r\n    "eventId": "79ec6803-9f10-4937-9fde-823468e0e543",\r\n    "poster": {\r\n        "width": 160,\r\n        "height": 160,\r\n        "file": {},\r\n        "base64": "blob:https://release.pear.us/5ec24efe-5468-45a0-8003-2f1f22f1cf79",\r\n        "source": "UPLOAD",\r\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762926629/uploaded_images/bnd8lqb9habur8lbsvux.jpg",\r\n        "mediaType": "IMAGE"\r\n    },\r\n    "posterBackend": [\r\n        {\r\n            "width": 160,\r\n            "height": 160,\r\n            "file": {},\r\n            "base64": "blob:https://release.pear.us/5ec24efe-5468-45a0-8003-2f1f22f1cf79",\r\n            "source": "UPLOAD",\r\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1762926629/uploaded_images/bnd8lqb9habur8lbsvux.jpg",\r\n            "mediaType": "IMAGE"\r\n        }\r\n    ],\r\n    "title": "{{lineup_random}}",\r\n    "introduction": "linda zhou automation test introduction"\r\n}', token='linda01_token')
+    _resp2 = ctx.api.events.lineup(body={
+        "eventId": "79ec6803-9f10-4937-9fde-823468e0e543",
+        "poster": {
+            "width": 160,
+            "height": 160,
+            "file": {},
+            "base64": "blob:https://release.pear.us/5ec24efe-5468-45a0-8003-2f1f22f1cf79",
+            "source": "UPLOAD",
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762926629/uploaded_images/bnd8lqb9habur8lbsvux.jpg",
+            "mediaType": "IMAGE",
+        },
+        "posterBackend": [
+            {
+                "width": 160,
+                "height": 160,
+                "file": {},
+                "base64": "blob:https://release.pear.us/5ec24efe-5468-45a0-8003-2f1f22f1cf79",
+                "source": "UPLOAD",
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1762926629/uploaded_images/bnd8lqb9habur8lbsvux.jpg",
+                "mediaType": "IMAGE",
+            },
+        ],
+        "title": "{{lineup_random}}",
+        "introduction": "linda zhou automation test introduction",
+    }, token='linda01_token')
     # assertion 2.meassage: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     # assertion 2.assertion: responseJson equal linda zhou automation test introduction

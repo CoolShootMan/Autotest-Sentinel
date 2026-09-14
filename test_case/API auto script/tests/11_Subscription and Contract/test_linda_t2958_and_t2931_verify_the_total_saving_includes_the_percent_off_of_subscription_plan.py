@@ -113,7 +113,10 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     vars['promoterProductVariantId'] = vars.get('promoterProductVariantId') or '5ca78b54-d87f-4c14-aa74-88668900394c'
     # === Steps ===
     # step 1: Get consumer linda10 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "email": "linda.zhou.ext+10@1m.app",\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5"\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "email": "linda.zhou.ext+10@1m.app",
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+    }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp1, '$.data.token')
     # step 2: get address list
@@ -125,19 +128,51 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
         vars['addressId'] = next((x['id'] for x in _addr_items if x.get('isDefault')), (_addr_items[0]['id'] if _addr_items else ''))
     except Exception: pass
     # step 3: b774ddef-e7b8-4cac-9acd-54bebe6f7b4a
-    _resp3 = ctx.api.cart.delete(body='{}', app_headers=True, token='linda10_token')
+    _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
     expect(_resp3).json('$.message').equals('success')
     # step 4: buy now
-    _resp4 = ctx.api.orders.buy_now(body='{\n  "updateCartItems": [\n    {\n    "quantity": 1,\n    "promoterProductVariantId": "5ca78b54-d87f-4c14-aa74-88668900394c",\n    "price": 100,\n    "postId": "954aafe6-5be9-4371-b539-88de05506048",\n    "selected": true,\n    "subscriptionPlanOptionId": "1006d7b6-7340-4ce1-9aaf-d51c1df22592"\n  }\n  ],\n  "currentUpdateCartItems": [\n    {\n    "quantity": 1,\n    "id": "5ca78b54-d87f-4c14-aa74-88668900394c",\n    "postId": "954aafe6-5be9-4371-b539-88de05506048",\n    "price": 100\n  }\n  ]\n}', app_headers=True, token='linda10_token')
+    _resp4 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "5ca78b54-d87f-4c14-aa74-88668900394c",
+                "price": 100,
+                "postId": "954aafe6-5be9-4371-b539-88de05506048",
+                "selected": True,
+                "subscriptionPlanOptionId": "1006d7b6-7340-4ce1-9aaf-d51c1df22592",
+            },
+        ],
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "5ca78b54-d87f-4c14-aa74-88668900394c",
+                "postId": "954aafe6-5be9-4371-b539-88de05506048",
+                "price": 100,
+            },
+        ],
+    }, app_headers=True, token='linda10_token')
     # assertion 4.assertion: responseJson equal 90
     expect(_resp4).json('$.data.totalToPay').equals('90')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n  "lineItemsDTO": [\n    {\n      "quantity": 1,\n      "price": 140,\n      "promoterVariantId": "{{promoterProductVariantId}}"\n    }\n  ],\n  "id": "{{order_id}}",\n  "contact": {\n    "email": "linda.zhou.ext+10@1m.app"\n  },\n  "shippingAddressId": "{{addressId}}"\n}', app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
+    _resp5 = ctx.api.orders.create(body={
+        "lineItemsDTO": [
+            {
+                "quantity": 1,
+                "price": 140,
+                "promoterVariantId": "{{promoterProductVariantId}}",
+            },
+        ],
+        "id": "{{order_id}}",
+        "contact": {
+            "email": "linda.zhou.ext+10@1m.app",
+        },
+        "shippingAddressId": "{{addressId}}",
+    }, app_headers=True, token='linda10_token', params={'order_id': '{{order_id}}'})
     # assertion 5.code: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson exists (Apifox "exists" 翻译为「字段存在且非空」)
@@ -168,12 +203,20 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     print("DEBUG contractId=", vars.get('contractId'), "step8 url path ok", file=sys.stderr)
     expect(_resp8).json('$.data.contractNumber').equals(ctx.render_text('{{contractNumber}}'))
     # step 9: Get Partner linda00 token
-    _resp9 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+00@1m.app"\n}', app_headers=True)
+    _resp9 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+00@1m.app",
+    }, app_headers=True)
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp9, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 10: Check The free shipping discount should be deducted from merchant payout
+    # === pre-script（由 Apifox customScript 翻译）===
+    merchant_token = vars.get('merchant_token')
+    orderNumber = vars.get('orderNumber')
+    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
+
     _resp10 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')

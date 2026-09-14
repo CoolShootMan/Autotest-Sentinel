@@ -37,7 +37,10 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 4498daf7-3269-4208-817a-6463c7cff775
-    _resp1 = ctx.api.posts.promoter_resale(body='{"postId":"84b3d58a-964a-49ef-961e-62e885463410","status":"DRAFT"}', token='linda05_token')
+    _resp1 = ctx.api.posts.promoter_resale(body={
+        "postId": "84b3d58a-964a-49ef-961e-62e885463410",
+        "status": "DRAFT",
+    }, token='linda05_token')
     # === 断言（由Apifox assertion翻译）===
     _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"step1 code != 200, got {_j1.get('code')}"

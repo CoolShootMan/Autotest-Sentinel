@@ -456,31 +456,97 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.buy_now(body='{\n    "updateCartItems": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "e42ccfbd-0b24-44cc-808c-725469132854",\n            "price": 100,\n            "postId": "e775b9ee-91d6-4315-b7f1-b08f80966bb0",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "cf3c1ecd-999f-4bd3-9bbd-b2af300fd8d3",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1745806891240.683423600239274570",\n        "externalId": "3151d61c-1a69-48a2-9b44-e9f55542fe12",\n        "eventSourceUrl": "https://release.pear.us/luryp4/post/k6amjl?source=pear"\n    },\n    "currentUpdateCartItems": [\n        {\n            "quantity": 1,\n            "id": "e42ccfbd-0b24-44cc-808c-725469132854",\n            "postId": "e775b9ee-91d6-4315-b7f1-b08f80966bb0",\n            "price": 100,\n            "customFields": []\n        }\n    ]\n}')
+    _resp3 = ctx.api.orders.buy_now(body={
+        "updateCartItems": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "e42ccfbd-0b24-44cc-808c-725469132854",
+                "price": 100,
+                "postId": "e775b9ee-91d6-4315-b7f1-b08f80966bb0",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "cf3c1ecd-999f-4bd3-9bbd-b2af300fd8d3",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1745806891240.683423600239274570",
+            "externalId": "3151d61c-1a69-48a2-9b44-e9f55542fe12",
+            "eventSourceUrl": "https://release.pear.us/luryp4/post/k6amjl?source=pear",
+        },
+        "currentUpdateCartItems": [
+            {
+                "quantity": 1,
+                "id": "e42ccfbd-0b24-44cc-808c-725469132854",
+                "postId": "e775b9ee-91d6-4315-b7f1-b08f80966bb0",
+                "price": 100,
+                "customFields": [],
+            },
+        ],
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: apply promotion
-    _resp4 = ctx.api.orders.update_promotions(body='{\n    "shippingAddress": {\n        "line1": "Fort Collins Municipal Railway",\n        "city": "Fort Collins",\n        "zipcode": "80521",\n        "state": "CO"\n    },\n    "applicableCode": "manual5",\n    "orderId": "{{orderId}}"\n}')
+    _resp4 = ctx.api.orders.update_promotions(body={
+        "shippingAddress": {
+            "line1": "Fort Collins Municipal Railway",
+            "city": "Fort Collins",
+            "zipcode": "80521",
+            "state": "CO",
+        },
+        "applicableCode": "manual5",
+        "orderId": "{{orderId}}",
+    })
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
     # step 5: create Order
-    _resp5 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "phoneNumber":"+17404630034"\n    },\n    "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",\n    "paymentInfo": {\n        "paymentMethodId": "{{pay_method_id}}"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp5 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "phoneNumber": "+17404630034",
+        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
+        "paymentInfo": {
+            "paymentMethodId": "{{pay_method_id}}",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })
     # step 6: Login-M1
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{M1}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{M1}}",
+    })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantId8}}'})
     # step 8: Login - P1
-    _resp8 = ctx.api.auth.sign_in(body='{\n    "password": "{{P1_password}}",\n    "email": "{{P1}}"\n}')
+    _resp8 = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
+    })
     ctx.extract('P1_access_token', _resp8, '$.data.token')
     # step 9: get P1 orders
     _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -488,7 +554,10 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     # step 10: get P1 order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 11: Login - merchant
-    _resp11 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{merchant_email}}"\n}')
+    _resp11 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
     ctx.extract('merchant_access_token', _resp11, '$.data.token')
     # step 12: get merchant orders
     _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -496,7 +565,10 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     # step 13: get merhcant order detail v2
     _resp13 = ctx.api.orders.promoter_detail_v2()
     # step 14: Login - curator
-    _resp14 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{curator_email}}"\n}')
+    _resp14 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{curator_email}}",
+    })
     ctx.extract('curator_access_token', _resp14, '$.data.token')
     # step 15: get curator orders
     _resp15 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -508,7 +580,10 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     # step 16: get curator order detail v2
     _resp16 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{curatorOrderId}}'})
     # step 17: Login - promoter
-    _resp17 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{promoter_email}}"\n}')
+    _resp17 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{promoter_email}}",
+    })
     ctx.extract('promoter_access_token', _resp17, '$.data.token')
     # step 18: get promoter orders
     _resp18 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
@@ -520,7 +595,10 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     # step 19: get promoter order detail v2
     _resp19 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'})
     # step 20: Login -P5
-    _resp20 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{P5}}"\n}')
+    _resp20 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{P5}}",
+    })
     ctx.extract('P5_access_token', _resp20, '$.data.token')
     # step 21: get P5 orders
     _resp21 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})

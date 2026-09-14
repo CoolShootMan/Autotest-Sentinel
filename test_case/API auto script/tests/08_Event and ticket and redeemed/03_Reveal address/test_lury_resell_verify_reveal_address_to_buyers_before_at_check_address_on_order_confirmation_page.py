@@ -109,15 +109,56 @@ def test_lury_resell_verify_reveal_address_to_buyers_before_at_check_address_on_
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Consumer-login
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "{{merchant_password}}",\n    "email": "{{consumer_email}}"\n}')
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete()
     # step 3: buy now
-    _resp3 = ctx.api.orders.checkout_express(body='{\n    "items": [\n        {\n            "quantity": 1,\n            "promoterProductVariantId": "b33de999-4be9-46df-abf4-7e97e281ffb6",\n            "price": 0,\n            "postId": "3aa86982-0f13-4c39-8c1a-c132301daef4",\n            "selected": true,\n            "customFields": []\n        }\n    ],\n    "fbAdParams": {\n        "eventID": "cc55923d-6062-44b5-8a62-c8f69d848d81",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1768467567031.92506180232323161",\n        "externalId": "154873ad-8fbe-4f69-bdf0-e11205c4eab8",\n        "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-event-reveal-address-to-buyer-before-at-automation-testing-0806"\n    },\n    "subdomainVanityUrl": ""\n}')
+    _resp3 = ctx.api.orders.checkout_express(body={
+        "items": [
+            {
+                "quantity": 1,
+                "promoterProductVariantId": "b33de999-4be9-46df-abf4-7e97e281ffb6",
+                "price": 0,
+                "postId": "3aa86982-0f13-4c39-8c1a-c132301daef4",
+                "selected": True,
+                "customFields": [],
+            },
+        ],
+        "fbAdParams": {
+            "eventID": "cc55923d-6062-44b5-8a62-c8f69d848d81",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1768467567031.92506180232323161",
+            "externalId": "154873ad-8fbe-4f69-bdf0-e11205c4eab8",
+            "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-event-reveal-address-to-buyer-before-at-automation-testing-0806",
+        },
+        "subdomainVanityUrl": "",
+    })
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp3, 'orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, 'orderId')
     # step 4: create Order and check address
-    _resp4 = ctx.api.orders.create(body='{\n    "id": "{{orderId}}",\n    "contact": {\n        "email": "dian.yuhong.ext+19@1m.app",\n        "firstName":"Lury",\n        "lastName":"don\'t reveal address",\n        "phoneNumber":"+17404630034"\n    },\n    "fbAdParams": {\n        "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",\n        "pixelId": [\n            "268933192948110"\n        ],\n        "fbBrowserId": "fb.1.1756981422832.790136385853196461",\n        "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",\n        "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a"\n    }\n}')
+    _resp4 = ctx.api.orders.create(body={
+        "id": "{{orderId}}",
+        "contact": {
+            "email": "dian.yuhong.ext+19@1m.app",
+            "firstName": "Lury",
+            "lastName": "don't reveal address",
+            "phoneNumber": "+17404630034",
+        },
+        "fbAdParams": {
+            "eventID": "af93500c-e7f0-43b3-b88a-5cc461f20494",
+            "pixelId": [
+                "268933192948110",
+            ],
+            "fbBrowserId": "fb.1.1756981422832.790136385853196461",
+            "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
+            "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
+        },
+    })

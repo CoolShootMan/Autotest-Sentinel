@@ -28,11 +28,17 @@ def test_t0000_verify_that_the_shipping_status_can_sync_to_pear(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda00 token
-    _resp1 = ctx.api.auth.sign_in(body='{\n    "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",\n    "email": "linda.zhou.ext+00@1m.app"\n}', app_headers=True)
+    _resp1 = ctx.api.auth.sign_in(body={
+        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
+        "email": "linda.zhou.ext+00@1m.app",
+    }, app_headers=True)
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: 785e35bb-0db7-41e4-adce-b39b0f3a08ba
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
+
     _resp2 = ctx.api.merchants.v_822a3e59_fdf3_4d9b_be57_f8f0b3af1023_sync_shopify_shipping(body=None, token='linda00_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

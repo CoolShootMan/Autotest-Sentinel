@@ -193,6 +193,9 @@ def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 77e37c25-4f20-4147-a480-5e6e7598d629
+    # === pre-script（由 Apifox customScript 翻译）===
+    vars['merchantId'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
+
     _resp1 = ctx.api.orders.verification_ticket_statistics(body=None, params={'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk'}, token='linda01_token')
     # step 2: 083ece80-9b25-4f4b-8cba-34f87cd3cbdd
     _resp2 = ctx.api.orders.verification_search(body=None, params={'search': 'linda', 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')

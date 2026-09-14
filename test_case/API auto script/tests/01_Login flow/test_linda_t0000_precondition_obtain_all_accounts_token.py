@@ -58,38 +58,50 @@ def test_linda_t0000_precondition_obtain_all_accounts_token(ctx):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: c7f494a6-dffa-477a-bbe1-c97568f3181f
-    _resp1 = ctx.api.admin.auth_login(body='{"email":"{{admin_email}}","password":"{{adminpassword}}"}')
+    _resp1 = ctx.api.admin.auth_login(body={
+        "email": "{{admin_email}}",
+        "password": "{{adminpassword}}",
+    })
     ctx.extract('admin_token', _resp1, '$.data.token')
     # step 2: Get Partner linda00 token
-    _resp2 = ctx.api.auth.sign_in(body='{\n    "password": "{{password}}",\n    "email": "{{p00_email}}"\n}')
+    _resp2 = ctx.api.auth.sign_in(body={"email": "{{p00_email}}", "password": "{{password}}"})
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp2, '$.data.token')
     # step 3: Get Partner linda01 token
-    _resp3 = ctx.api.auth.sign_in(body='{\n    "password": "{{password}}",\n    "email": "{{p01_email}}"\n}')
+    _resp3 = ctx.api.auth.sign_in(body={
+        "password": "{{password}}",
+        "email": "{{p01_email}}",
+    })
     # extractor: linda01_token = $.data.token
     ctx.extract('linda01_token', _resp3, '$.data.token')
     # step 4: Get Partner linda05 token
-    _resp4 = ctx.api.auth.sign_in(body='{\n    "email": "{{p05_email}}",\n    "password": "{{password}}"\n}')
+    _resp4 = ctx.api.auth.sign_in(body={"email": "{{p05_email}}", "password": "{{password}}"})
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp4, '$.data.token')
     # step 5: Get Partner xuan22 token
-    _resp5 = ctx.api.auth.sign_in(body='{\n    "email": "{{xuan_email}}",\n    "password": "{{xuan_password}}"\n}')
+    _resp5 = ctx.api.auth.sign_in(body={"email": "{{xuan_email}}", "password": "{{xuan_password}}"})
     # extractor: xuan22_token = $.data.token
     ctx.extract('xuan22_token', _resp5, '$.data.token')
     # step 6: Get Co-seller linda06 token
-    _resp6 = ctx.api.auth.sign_in(body='{\n    "email": "{{p06_email}}",\n    "password": "{{password}}"\n}')
+    _resp6 = ctx.api.auth.sign_in(body={
+        "email": "{{p06_email}}",
+        "password": "{{password}}",
+    })
     # extractor: linda06_token = $.data.token
     ctx.extract('linda06_token', _resp6, '$.data.token')
     # step 7: Get consumer linda10 token
-    _resp7 = ctx.api.auth.sign_in(body='{\n    "email": "{{p10_email}}",\n    "password": "{{password}}"\n}')
+    _resp7 = ctx.api.auth.sign_in(body={"email": "{{p10_email}}", "password": "{{password}}"})
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp7, '$.data.token')
     # step 8: 8fe52a2b-549e-4b7c-b05f-e23267a11b20
-    _resp8 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{UIauto_partner_email}}",\r\n    "password": "{{password}}"\r\n\r\n}', app_headers=True)
+    _resp8 = ctx.api.auth.sign_in(body={
+        "email": "{{UIauto_partner_email}}",
+        "password": "{{password}}",
+    }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp8, '$.data.token')
     # step 9: 84f647aa-5119-4add-bd41-89431821320f
-    _resp9 = ctx.api.auth.sign_in(body='{\r\n    "email": "{{UIauto_coseller_email}}",\r\n    "password": "{{password}}"\r\n\r\n}', app_headers=True)
+    _resp9 = ctx.api.auth.sign_in(body={"email": "{{UIauto_coseller_email}}", "password": "{{password}}"}, app_headers=True)
     # extractor: yuxiao998_token = $.data.token
     ctx.extract('yuxiao998_token', _resp9, '$.data.token')
     # Persist tokens so later cases (which depend on t0000's output) can read them.
