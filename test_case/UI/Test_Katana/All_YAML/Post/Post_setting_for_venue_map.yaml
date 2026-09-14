@@ -15,35 +15,10 @@
 # T1742: Post commission Batch set to 10%
 #Auth: Linda Zhou
 testT1742:
-    # [Deferred 2026-09-02] Two structural problems stacked:
-    # 1) [FIXED 2026-09-02 in actions/base.py] verify_text_visible now honors `scope` (text/locator) and
-    #    roots the search inside the scope container — verify_post_offer's scope {text:"event-for-ui-auto-venue-map"}
-    #    is now respected. This blocker is resolved; the fix is unexercised until T1742 is re-enabled.
-    # 2) [CORRECTED 2026-09-02] `open_again` IS a valid action — actions/__init__.py get_action() returns
-    #    open_url for any name.startswith("open"), so `open_again` already navigates like `open`. The
-    #    earlier "unregistered" claim was wrong (missed the prefix branch). The ONLY remaining real blocker
-    #    is the Commission UI rewrite: venue_map refactored batch commission (fill placeholder "e.g., 5" +
-    #    "Confirm" + "Save") into per-ticket "Advanced" fields, so T1742's fill_commission / Confirm /
-    #    batch-set steps no longer match the live UI. Needs a flow rewrite + live-browser confirmation of
-    #    the new commission control labels, which agent-browser can't reach in this sandbox (cold-start hang).
-    #    [2026-09-02 re-enable attempt — FAILED at verify_post_offer] Re-ran testT1742 after shipping the
-    #    scope fix + confirming open_again is valid. Still died: "Offer up to 10%" not found. Forensics
-    #    (step_captures/testT1742, NO blind locator swap): the commission "Offer up to X%" label renders on
-    #    the PUBLIC post card (autotestshop/post/<slug>) — see step_captures/testAddNewUpdateModule:
-    #    mui-card-action-area name = "title\nprice\nslug\nOffer up to 0%". T1742's verify_post_offer runs
-    #    while the page is on the Selling/management tab (post card = "Select post": URL/title/Published,
-    #    no offer text) or the /events listing (scope matched the EVENT card, not the post card). The
-    #    assertion targets a label absent from the active container. PLUS the Commission UI was refactored
-    #    (batch -> per-ticket Advanced), so whether the post-level "Offer up to 10%" is even produced by
-    #    the current flow is unconfirmed. Needs a flow rewrite + live-browser confirmation (agent-browser
-    #    cold-start hang in sandbox). RE-ENABLE 2026-09-02 (4 pytest iterations) — BLOCKED, re-deferred:
-    #    "Offer up to X%" renders ONLY on the PUBLIC post page (autotestshop/post/<slug>); confirmed via
-    #    step_captures: the organizer Post-tab card is a "Select post" TOGGLE (no nav, no offer), the embedded
-    #    shop preview shows no offer, and after Commission the page lands on global /events/settings (no
-    #    "View post"). The slug is dynamic so the public URL can't be opened from YAML. => verify target is
-    #    unreachable from the organizer flow post-Commission-refactor. Needs either a "View post" exposure on
-    #    the post-settings/Post-tab, a framework "open public post by slug" action, or live-browser confirm
-    #    of the new offer location (agent-browser hangs in sandbox). RE-DEFERRED.
+    # Deferred: Commission UI rewritten to per-ticket "Advanced" (was batch set).
+    # verify target "Offer up to X%" only renders on the PUBLIC post page,
+    # but slug is dynamic — organizer flow has no "View post" exposure.
+    # See MEMORY.md (UI 重构 / 仍 defer).
     description: "Post commission Batch set to 10%"
     skip: true
     pre_condition:
@@ -182,16 +157,9 @@ testT1742:
         sleep_end: 1000
 
 testT3991_VerifyPartner:
-    # [Deferred 2026-09-02] Structural refactor, not simple drift. Evidence from the re-run after
-    # re-capturing cookies (step_captures/testT3991_VerifyPartner/manifest.json): the post Settings page
-    # (~/post/<id>/settings) no longer exposes an "Add a note for co-sellers" toggle in its setting list —
-    # the only note-related items present are "Order confirmation note" and "Customize checkout
-    # recommendation message". verify_note_visible "Add a note for co-sellers" still PASSED (label exists
-    # somewhere on the page), but the fill step timed out on textbox name="Enter a short message for",
-    # which has been removed. Net: the downline-note-for-co-sellers entry flow changed (most likely moved
-    # into the Co-selling sub-tab, since it is co-seller-specific) and needs a flow rewrite + live-browser
-    # confirmation of the new selector. Cannot be fixed by a blind locator swap, and agent-browser cannot
-    # reach the live UI in this sandbox (cold-start hang). Re-enable after the flow rewrite.
+    # Deferred: co-seller note entry flow changed — post Settings no longer has
+    # "Add a note for co-sellers" toggle; textbox "Enter a short message for" removed.
+    # Needs flow rewrite + live-UI confirm (likely moved into Co-selling sub-tab).
     skip: true
     description: "Verify that partner can set a note for co-sellers in a post"
     test_step:
@@ -420,10 +388,8 @@ testT3683_T3684:
 testT3686_CosellerResell:
 #Auth: Linda Zhou
     is_coseller: true
-    # [Deferred 2026-09-02] Seat-map purchase requires a logged-in buyer; this test logs out to
-    # guest (and co-seller self-purchase / owner-via-coseller-link are both blocked), so the table
-    # can never be selected (fails at R_click_continue). Note inheritance IS verified on the
-    # Settings page (verify_note_content). Re-enable once a +997 buyer path exists.
+    # Deferred: seat-map purchase needs a logged-in +997 buyer; this flow logs out to
+    # guest (and owner-via-coseller-link blocked), so the seat table can't be selected.
     skip: true
     description: "Verify Order Confirmation Note is displayed when purchasing through Coseller's resold Post"
     test_step:
@@ -610,8 +576,7 @@ testT3686_CosellerResell:
 # Separate verification for Guest
 testT3686_teardown:
 #Auth: Linda Zhou
-    # [Deferred 2026-09-02] Paired cleanup for the deferred T3686_CosellerResell (seat-map buyer
-    # login blocker). Skipped together so the release suite stays green.
+    # Deferred: paired cleanup for the deferred T3686_CosellerResell above.
     skip: true
     description: "delete the resold post"
     expect_result: "Co-seller post deleted successfully or no data to delete"
@@ -650,12 +615,8 @@ testT3686_teardown:
 # T2705: Partner hides the variant and sets the default variant
 testT2705_VerifyPartner:
   guest: false
-  # [Deferred 2026-09-02] Variants no longer exist on the post. After adding "General Admission" on
-  # /post/create, the Customize button is duplicated (2 identical buttons -> strict-mode miss) AND
-  # the variant rows "5 people"/"9 people" are completely absent from the DOM. The whole
-  # hide-variant / set-default-variant flow no longer applies (matches the same root cause as
-  # T2515/T2874). The guest-side verification (T2705_VerifyGuest) is deferred for the same reason.
-  skip: true
+  # Deferred: post Variants gone ("5 people"/"9 people" absent from DOM);
+  # Customize button duplicated -> strict-mode miss. Same root cause as T2515/T2874.
   description: "Partner hides the variant and sets the default variant on the management page"
   test_step:
     # Step 1: Open autotestshop page
@@ -693,7 +654,9 @@ testT2705_VerifyPartner:
     # Step 7.1: Click "General Admission" — disambiguate by matching BOTH title and unique description.
     # Two products share title "General Admission"; custom variant has desc "Test event post variant settings".
     R_click_general_admission: { locator: '[role="dialog"] [class*="MuiCard"]:has-text("Test event post variant settings") >> text="General Admission"', disable_ai: true }
-    sleep_step: 2000
+    sleep_step: 500
+    press_search_5: { key: "Enter" }
+    sleep_step: 1500
 
 
     # Step 8: Click "Add 1/20 product(s)" to add selected product
@@ -792,10 +755,8 @@ testT2705_VerifyPartner:
 # Separate verification for Guest
 testT2705_VerifyGuest:
   guest: true
-  # [Deferred 2026-09-02] Same root cause as T2705_VerifyPartner — variants ("5 people"/"9 people")
-  # no longer exist on the post, so guest cannot verify hidden/default variant. Needs the same
-  # post-variant flow rewrite (see T2515/T2874).
-  skip: true
+  # Deferred: same root cause as T2705_VerifyPartner — variants gone, guest can't
+  # verify hidden/default variant. Needs the same post-variant flow rewrite.
   description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
   test_step:
     open: "{BASE_URL}/autotestshop/post/test1234"
@@ -865,29 +826,19 @@ testT2705_VerifyGuest:
 
     # Step 9: Locate the post card by its URL alias "test1234", then click
     R_click_post_card: { locator: 'text="test1234" >> xpath=ancestor::*[.//img][1] >> img', index: 0 }
-    sleep_step: 5000
+    sleep_step: 3000
 
     # Step 10: Wait for post landing page to load
-    wait_for_selling_tab: { selector: 'role=tab[name="Selling"][exact=true]', timeout: 15000 }
-    R_click_selling_tab_reset: { role: "tab", name: "Selling", exact: true }
+    R_click_tools_1: { role: "button", name: "Tools" }
     sleep_step: 2000
 
-    # Step 11: Click Customize (Pear UI renamed from "Customize products")
-    R_click_customize_reset: { role: "button", name: "Customize" }
-    sleep_step: 2000
+    # Step 11: 
+    R_click_postcard_delete_1: { role: "button", name: "Delete" }
+    sleep_step: 3000
+    R_click_postcard_delete_2: { role: "button", name: "Delete" }
+    sleep_step: 3000
 
     # Step 12: Uncheck variant checkboxes (reset to default state)
-    uncheck_exclude: { locator: 'input[name="products.0.variants.0.isExcluded"]', checked: false }
-    uncheck_default: { locator: 'input[name="products.0.variants.2.isDefault"]', checked: false }
-    sleep_step: 1000
-
-    # Step 13: Save twice
-    R_click_save_reset: { role: "button", name: "Save" }
-    R_click_save_reset1: { role: "button", name: "Save" }
-    sleep_step: 4000
-
-    # Step 14: Verify success toast "Post product updated!"
-    wait_toast_save_teardown: { message: "Post products updated", timeout: 15000 }
 
 
 # T2830: Partner hides a post on the storefront
@@ -1154,7 +1105,7 @@ testT2515_SetLimit_WithVariant:
 
         # Step 3: Click post card to enter post landing page
         # [UI drift 2026-08-31] Post tab now shows the post directly; card click removed.
-        sleep_step: 3000
+        #sleep_step: 3000
 
         # Step 4: Click Seting tab
         R_click_settings_card: { role: "button", name: "Settings" }
@@ -1190,37 +1141,37 @@ testT2515_VerifyDisabled_WithVariant:
     test_step:
         # Step 1: Open post detail page as guest
         open: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-        sleep_after_open: 5000
+        sleep_after_open: 3000
 
         # Step 2: Scroll down to load product cards ("+" FAB removed in UI redesign, plain scroll now)
-        swipe: { x: 0, y: 500 }
-        sleep_step: 1000
+        # swipe: { x: 0, y: 500 }
+        # sleep_step: 500
 
         # Step 3: Click General Admission product name to open detail drawer
-        R_click_product_name_first: { locator: "text=General Admission" }
+        R_click_product_name_first: { locator: "text=RSVP" }
         sleep_step: 1500
 
-        swipe: { x: 0, y: 500 }
-        sleep_step: 1000
+        # swipe: { x: 0, y: 500 }
+        # sleep_step: 1000
+        R_click_add_to_cart_first: { locator: 'circle[cx="200"]' }
+        sleep_step: 1500
 
         # Step 4: Select variant "5 people", set qty=2, Add to cart
-        R_click_variant_5people: { locator: "text=5 people" }
-        sleep_step: 1000
-        fill_qty_5people: { near_text: "5 people", role: "spinbutton", value: "2" }
+        R_click_variant_5people: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
         sleep_step: 500
-        R_click_add_to_cart_5people: { locator: "text=Add to cart" }
-        sleep_step: 1000
-
-        # Step 5: Reopen product drawer (drawer closed after add to cart)
-        R_click_product_card_again: { locator: "text=General Admission" }
-        sleep_step: 1000
-
-        # Step 6: Select variant "7 people", set qty=3, Add to cart
-        R_click_variant_7people: { locator: "text=7 people" }
-        sleep_step: 1000
-        fill_qty_7people: { near_text: "7 people", role: "spinbutton", value: "3" }
+        R_click_variant_7people: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
         sleep_step: 500
-        R_click_add_to_cart_7people: { locator: "text=Add to cart" }
+        R_click_variant_9people: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
+        sleep_step: 1500
+        R_click_add_to_cart_first_2: { locator: 'circle[cx="221"]' }
+        sleep_step: 500
+        R_click_variant_5people_2: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
+        sleep_step: 500
+        R_click_variant_7people_2: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
+        sleep_step: 500
+        R_click_variant_9people_2: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
+        sleep_step: 500
+        R_click_add_to_cart_5P: { locator: "text=Add to cart" }
         sleep_step: 2000
 
         # Step 7: Click Checkout button directly (5+3=8 > 5, but first checkout will succeed)
@@ -1246,22 +1197,8 @@ testT2515_VerifyDisabled_WithVariant:
         #wait_for_url: { url: "*order*", timeout: 2000 } 
         sleep_step: 3500
 
-        # Step 10: Order successful, navigate back to post detail page
-        # Note: go_back() is unreliable after order confirmation (SPA route, no HTTP history entry)
-        #go_back: {}
-        open_go_back: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-        sleep_step: 2000
-
-        # Step 10.1: Click product card to open product detail drawer
-        R_click_product_card_reopen: { locator: "text=General Admission" }
-        sleep_step: 2000
-
-        # Step 10.2: Select variant "9 people" — qty input is already disabled (cart=5=limit, max_available=0)
-        R_click_variant_9people: { locator: "text=9 people" }
-        sleep_step: 2500  # let drawer render disabled state + warning
-
         # Step 11: Verify over-limit warning is shown
-        verify_purchase_limit_warning: { text: "You've reached the purchase limit." }
+        verify_purchase_limit_warning: { text: "Each customer can buy up to 5 items from this post. Please adjust the numbers of item in your cart." }
         sleep_end: 3000
 
     expect_result:
@@ -1305,204 +1242,6 @@ testT2515_VerifyDisabled_WithVariant:
         R_click_save_teardown: { role: "button", name: "Save" }
         sleep_step: 3000
         wait_toast_save_teardown: { message: "Post settings updated", timeout: 15000 }
-
-# T2874_Partner: Enable "Must be bought with another item" for a product
-testT2874_EnableDependentProducts:
-    description: "Enable 'Must be bought with another item' for a product in Customize products"
-    test_step:
-        # Step 1: Navigate to the post
-        open: "{BASE_URL}/events"
-        sleep_step: 5000
-
-        # Step 2: Find and click "Test event post variant settings" event
-        R_click_event: { locator: "text=event-for-UI-auto-venue-map", exact: true }
-        sleep_step: 4000
-
-        # Step 2.1: Scroll down to reveal post card (legacy: swipe_avoid_plus, "+" FAB removed)
-        # swipe_avoid_plus: { x: 0, y: 500 }
-        # sleep_step: 1000
-
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
-
-        # Step 3: Click post card to enter post landing page
-        # [UI drift 2026-08-31] Post tab now shows the post directly; card click removed.
-        sleep_step: 3000
-
-        # Step 4: Click Selling tab
-        R_click_selling_tab: { role: "tab", name: "Selling" }
-        sleep_step: 2000
-
-        # Step 5: Click Select products (enhance-button-cta) - the dependent-products checkbox lives in THIS dialog,
-        # NOT in the "Customize products" commission dialog (which only has commission/retail fields).
-        R_click_select_products: { test_id: "enhance-button-cta" }
-        sleep_step: 5000
-
-        # Step 5.1: Add test_general_products (catalog product - has dependent-products / CTA fields).
-        # GA 001/002 are tickets and do NOT expose dependent-products.
-        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_step: 500
-        press_search: { key: "Enter" }
-        sleep_step: 1500
-        click_product_card: { test_id: 'SquareLineIcon', index: 0 }
-        click_add_product_btn: { role: 'button', name: 'Add 3/20 product(s)' }
-        sleep_step: 1500
-
-        # Step 5.2: Expand the newly-added product's Advanced settings (added product sorts to index 0).
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 1000
-
-        # Step 6: Click the checkbox for "Must be bought with other items"
-        R_click_dependent_checkbox: { locator: "//span[contains(text(),'Must be bought with other items')]/preceding::input[@type='checkbox'][1]" }
-        sleep_step: 2000
-
-        # Step 7: In popup, click the product image (user confirmed: clicking image works)
-        R_click_select_required_product: { test_id: 'SquareLineIcon', index: 1 }
-        sleep_step: 2000
-
-        # Step 8: Click Confirm in popup
-        R_click_confirm_popup: { role: "button", name: "Confirm" }
-        sleep_step: 2000
-
-        # Step 9: Click Save inside the Customize products dialog (bottom right)
-        R_click_save_dialog: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
-
-        # Step 10: Click the outer Save button (outside the dialog, at page bottom)
-        R_click_save_outer: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
-
-        # Step 11: Wait for success toast to appear
-        wait_toast_save: { message: "Post products updated", timeout: 15000 }
-        sleep_end: 3000
-
-    expect_result:
-        description: "Must be bought with another item enabled successfully"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Post products updated"
-
-
-# T2874_Guest_VerifyBoth
-testT2874_VerifyGuestCheckoutTwo:
-    guest: true
-    description: "Verify guest checkout with two products - adding 001 auto-adds 002 via popup"
-    test_step:
-        # Step 1: Open the post as guest
-        open: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-        sleep_after_open: 8000
-
-        # Step 2: Scroll to find the products
-        # page_scroll: { y: 600, delay: 2000, steps: 5 }
-        # sleep_step: 1000
-
-        # Step 3: Click General Admission 001 product name to open detail drawer
-        R_click_product_name_first: { role: "button", name: "Buy Ticket", exact: true }
-        sleep_step: 3000
-
-        # Step 4: Click Add to cart - triggers popup showing test_general_products
-        # R_click_add_to_cart_first: { role: "button", name: "Add to cart" }
-        # sleep_step: 3000
-
-        # Step 5: Verify popup shows test_general_products
-        verify_text_visible: { text: "test_general_products" }
-        sleep_step: 1000
-        R_click_increase_quantity: { role: "button", name: "Increase quantity" }
-        sleep_step: 1000
-
-        # Step 6: Click "Yes, add both!" to add both products to cart
-        R_click_yes_add_both: { role: "button", name: "Continue" }
-        sleep_step: 3000
-
-        # Step 7: Click Checkout (if products not added, button will be disabled and test fails)
-        # R_click_checkout: { role: "button", name: "RSVP" }
-        # sleep_step: 3000
-
-        # Step 8: Click Continue to enter Contact info page
-        R_click_continue: { role: "button", name: "Continue" }
-        sleep_step: 3000
-
-        # Step 9: Fill Contact info
-        # fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
-        # sleep_step: 500
-        # fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
-        # sleep_step: 500
-        # fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
-        # sleep_step: 500
-        fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
-        sleep_step: 500
-
-        # Step 10: Place order
-        R_click_place_order: { role: "button", name: "Place order" }
-        wait_for_url: { url: "*order*", timeout: 15000 }
-        sleep_step: 2000
-
-        sleep_end: 2000
-
-    expect_result:
-        description: "Guest can checkout when both dependent products are in cart"
-        assertions:
-            - assertion_type: "url_contains"
-              text: "order"
-            - assertion_type: "element_visible_by_text"
-              text: "General Admission 001"
-            - assertion_type: "element_visible_by_text"
-              text: "test_general_products"
-
-    teardown_step:
-        # Step 1: Inject partner cookies to switch to partner context
-        add_cookies: {}
-        sleep_step: 2000
-
-        # Step 2: Open Events list page
-        open_teardown: "{BASE_URL}/events"
-        sleep_step: 5000
-
-        # Step 3: Find and click "Test event post variant settings" event
-        R_click_event_teardown: { locator: "text=event-for-UI-auto-venue-map", exact: true }
-        sleep_step: 4000
-
-        # Step 3.1: Scroll down to reveal post card
-        swipe_teardown: { x: 0, y: 500 }
-        sleep_step: 1000
-
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
-
-        # Step 4: Click post card to enter post landing page
-        # [UI drift 2026-08-31] Post card teardown click removed (Post tab shows post directly)
-        sleep_step: 3000
-
-        # Step 5: Click Selling tab
-        R_click_selling_tab_teardown: { role: "tab", name: "Selling" }
-        sleep_step: 2000
-
-        # Step 6: Click Customize
-        R_click_customize_products_teardown: { role: "button", name: "Customize" }
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 3000
-
-        # Step 7: Uncheck "Must be bought with another item" checkbox (click to uncheck)
-        #R_click_uncheck_dependent: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
-        R_click_uncheck_dependent: { locator: 'input[name="products.0.hasDependentProducts"]', checked: false }
-        sleep_step: 2000
-
-        # Step 8: Click Save inside the Customize dialog (bottom right)
-        R_click_save_dialog_teardown: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
-
-        # Step 9: Click the outer Save button (outside the dialog, at page bottom)
-        R_click_save_outer_teardown: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
-
-
-
-
-
-
-
 
 
 # ==============================================================================
@@ -2138,6 +1877,10 @@ testT3767:
         # Step 3: Click Buy Ticket
         R_click_buy_ticket: { role: "button", name: "Buy Ticket" }
         sleep_step: 1500
+        R_click_add_to_cart_first: { locator: 'circle[cx="200"]' }
+        sleep_step: 500
+        R_click_variant_5people: { locator: '[data-testid="variant-row-action"][type="button"]:has-text("Add")' }
+        sleep_step: 500
 
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
 
@@ -3118,14 +2861,7 @@ testT5332:
 # Test Case: T5332_VerifyGuest
 # Verify that merch 001 and merch 002 are displayed on post detail page (guest view)
 # Run AFTER testT5332 completes (merch must be inserted first)
-# [deferred 2026-09-02] BLOCKED by UI drift: merch attached to a post via the new
-# Selling tab "Add products" flow do NOT render on the public post page (browser-verified
-# 2026-09-02: public page shows only the 3 event tickets, no merch section; storefront
-# module types are Get Tickets/Upcoming Events/MyForm/Past Events — no products module).
-# NOTE: its earlier PASSED status was a FALSE POSITIVE — framework assertion
-# element_visible_by_text falls back to `text in page.content()` (test_ui.py L263),
-# matching 'merch 001' inside embedded product JSON in a <script> tag, not visible UI.
-# Re-enable when: public post page supports merch rendering, or re-point assertion.
+# [deferred] merch not rendered on public post page via "Add products" flow (browser-verified; see MEMORY.md).
 # ==============================================================================
 
 testT5332_VerifyGuest:

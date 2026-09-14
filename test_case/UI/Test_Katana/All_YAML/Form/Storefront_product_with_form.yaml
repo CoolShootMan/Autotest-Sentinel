@@ -34,6 +34,8 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
     # Add short text field
     R_click_add_field: { locator: '[data-testid="mui-button"]' }
     sleep_after_add_field: 500
+    R_click_type_short: { role: "button", name: "Short answer" }
+    sleep_after_select_type: 500
     fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'short' }
     R_click_add: { role: 'button', name: 'Add' }
     sleep_after_add: 500
@@ -139,8 +141,8 @@ testT4970:  # [LAST: PASSED 2026-05-06]
     # Add Single choice field
     click_add_new_field: { role: 'button', name: 'Add new field', exact: true }
     sleep_after_add_field: 500
-    R_click_short_1: { role: "combobox" }
-    R_click_select_item_0: { role: "option", name: "Single choice" }
+    R_click_short_1: { role: "button", name: "Single choice" }
+    sleep_after_select_type: 500
     fill_field_title: { role: 'textbox', name: 'Enter title of the field', value: 'single' }
     fill_field_description: { role: 'textbox', name: 'Enter a description', value: 'xx' }
 

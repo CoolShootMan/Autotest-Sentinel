@@ -32,16 +32,12 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
       { role: "textbox", name: "Enter a title", value: "Partner_create_form" }
     fill_subtitle:
       { role: "textbox", name: "Enter subtitle", value: "test subtitle" }
-    fill_description:
-      { role: "textbox", name: "Enter a description", value: "Description" }
 
     # 1. Short text
     R_click_add_field_1:
       { role: "button", name: "Add new field", quick: true, exact: true }
     sleep_1: 50
-    R_click_short_1: { role: "combobox" }
-    sleep_click_0: 50
-    R_click_select_item_0: { role: "option", name: "Short answer" }
+    R_click_short_1: { role: "button", name: "Short answer" }
     sleep_click_1: 50
     fill_field_title_1:
       { role: "textbox", name: "Enter title of the field", value: "short" }
@@ -50,9 +46,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     # 2. Long text (Paragraph)
     R_click_add_field_2: { role: "button", name: "Add new field", quick: true }
     sleep_2: 50
-    R_click_short_2: { role: "combobox" }
-    sleep_click_1: 50
-    R_click_select_item_1: { role: "option", name: "Paragraph" }
+    R_click_short_2: { role: "button", name: "Long answer" }
     sleep_click_2: 50
     fill_field_title_2:
       {
@@ -66,9 +60,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     # 3. Email
     R_click_add_field_3: { role: "button", name: "Add new field", quick: true }
     sleep_3: 50
-    R_click_email3: { role: "combobox" }
-    sleep_click_2: 50
-    R_click_select_item_2: { role: "option", name: "Email" }
+    R_click_email3: { role: "button", name: "Email" }
     sleep_click_email: 50
     R_click_add_3: { role: "button", name: "Add", quick: true }
 
@@ -76,9 +68,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_4:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_4: 50
-    R_click_phone: { role: "combobox" }
-    sleep_click_3: 50
-    R_click_select_item_3: { role: "option", name: "Phone" }
+    R_click_phone: { role: "button", name: "Phone number" }
     sleep_click_phone: 50
     R_click_add_4: { role: "button", name: "Add", quick: true }
 
@@ -86,9 +76,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_5:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_5: 50
-    R_click_media: { role: "combobox" }
-    sleep_click_4: 50
-    R_click_select_item_4: { role: "option", name: "Media" }
+    R_click_media: { role: "button", name: "Media" }
     sleep_click_media: 50
     fill_media_title:
       {
@@ -104,9 +92,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_6:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_6: 50
-    R_click_datetime: { role: "combobox" }
-    sleep_click_5: 50
-    R_click_select_item_5: { role: "option", name: "Date and time" }
+    R_click_datetime: { role: "button", name: "Date / Time" }
     sleep_click_datetime: 50
     R_click_add_6: { role: "button", name: "Add", quick: true }
 
@@ -114,9 +100,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_7:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_7: 50
-    R_click_single_choice: { role: "combobox" }
-    sleep_click_6: 50
-    R_click_select_item_6: { role: "option", name: "Single choice" }
+    R_click_single_choice: { role: "button", name: "Single choice" }
     fill_single_title:
       {
         role: "textbox",
@@ -134,9 +118,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_8:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_8: 50
-    R_click_multiple_choice: { role: "combobox" }
-    sleep_click_7: 50
-    R_click_select_item_7: { role: "option", name: "Multiple choice" }
+    R_click_multiple_choice: { role: "button", name: "Multiple choice" }
     fill_multi_title:
       { role: "textbox", name: "Enter title of the field", value: "Multiple" }
     R_click_add_multi_opt: { role: "button", name: "Add option" }
@@ -152,9 +134,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_9:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_9: 50
-    R_click_social_1: { role: "combobox" }
-    sleep_click_8: 50
-    R_click_select_item_8: { role: "option", name: "Social" }
+    R_click_social_1: { role: "button", name: "Social" }
     R_click_insta: { role: "button", name: "Instagram", quick: true }
     fill_field_title_instagram: { role: "textbox", name: "Enter title of the field", value: "instagram" }
     R_click_add_9: { role: "button", name: "Add", quick: true }
@@ -163,9 +143,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_10:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_10: 50
-    R_click_social_2: { role: "combobox" }
-    sleep_click_9: 50
-    R_click_select_item_9: { role: "option", name: "Social" }
+    R_click_social_2: { role: "button", name: "Social" }
     R_click_fb: { role: "button", name: "Facebook", quick: true }
     fill_field_title_facebook: { role: "textbox", name: "Enter title of the field", value: "facebook" }
     R_click_add_10: { role: "button", name: "Add", quick: true }
@@ -174,10 +152,8 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_11:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_11: 50
-    R_click_social_3: { role: "combobox" }
-    sleep_click_10: 50
-    R_click_select_item_10: { role: "option", name: "Social" }
-    R_click_tiktok: { role: "button", name: "TikTok", quick: true }
+    R_click_social_3: { role: "button", name: "Social" }
+    R_click_tiktok: { role: "button", name: "Tiktok", quick: true }
     fill_field_title_tiktok: { role: "textbox", name: "Enter title of the field", value: "tiktok" }
     R_click_add_11: { role: "button", name: "Add", quick: true }
 
@@ -185,9 +161,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_12:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_12: 50
-    R_click_social_4: { role: "combobox" }
-    sleep_click_11: 50
-    R_click_select_item_11: { role: "option", name: "Social" }
+    R_click_social_4: { role: "button", name: "Social" }
     R_click_x: { role: "button", name: "X", exact: true, quick: true }
     fill_field_title_x: { role: "textbox", name: "Enter title of the field", value: "x" }
     R_click_add_12: { role: "button", name: "Add", quick: true }
@@ -196,10 +170,8 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_13:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_13: 50
-    R_click_social_5: { role: "combobox" }
-    sleep_click_12: 50
-    R_click_select_item_12: { role: "option", name: "Social" }
-    R_click_yt: { role: "button", name: "YouTube", quick: true }
+    R_click_social_5: { role: "button", name: "Social" }
+    R_click_yt: { role: "button", name: "Youtube", quick: true }
     fill_field_title_youtube: { role: "textbox", name: "Enter title of the field", value: "youtube" }
     R_click_add_13: { role: "button", name: "Add", quick: true }
 
@@ -207,9 +179,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_14:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_14: 50
-    R_click_social_6: { role: "combobox" }
-    sleep_click_13: 50
-    R_click_select_item_13: { role: "option", name: "Social" }
+    R_click_social_6: { role: "button", name: "Social" }
     R_click_linkedin: { role: "button", name: "Linkedin", quick: true }
     fill_field_title_linkedin: { role: "textbox", name: "Enter title of the field", value: "linkedin" }
     R_click_add_14: { role: "button", name: "Add", quick: true }
@@ -218,9 +188,7 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     R_click_add_field_15:
       { role: "button", name: "Add new field", exact: true, quick: true }
     sleep_15: 50
-    R_click_social_7: { role: "combobox" }
-    sleep_click_14: 50
-    R_click_select_item_14: { role: "option", name: "Social" }
+    R_click_social_7: { role: "button", name: "Social" }
     R_click_threads: { role: "button", name: "Threads", quick: true }
     fill_field_title_threads: { role: "textbox", name: "Enter title of the field", value: "threads" }
     check_required: { role: "checkbox", name: "Required", checked: false }
@@ -251,11 +219,11 @@ testPartner_create_form: # [LAST: BROKEN 2026-05-06]
     sleep_delete_email_2: 50
 
     # Finalization
-    R_click_preview:
-      { locator: "[data-testid='VisibilityOutlinedIcon']", index: 1, quick: true }
-    sleep_preview: 1000
-    R_click_close_preview:
-      { role: "button", name: "Close", exact: true, quick: true }
+    # R_click_preview:
+    #   { locator: "[data-testid='VisibilityOutlinedIcon']", index: 1, quick: true }
+    # sleep_preview: 1000
+    # R_click_close_preview:
+    #   { role: "button", name: "Close", exact: true, quick: true }
     #sleep_close_preview: 1000
 
     R_click_continue: { role: "button", name: "Continue" }
@@ -346,40 +314,48 @@ test_guest_submission_1: # [LAST: BROKEN 2026-05-06]
 
     # Instagram - realistic username
     fill_instagram:
-      locator: 'xpath=//div[text()="Instagram"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="instagram"]/following::input[@placeholder="username"][1]'
       value: "pear_partner_official"
 
     # Facebook - realistic username
     fill_facebook:
-      locator: 'xpath=//div[text()="Facebook"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="facebook"]/following::input[@placeholder="username"][1]'
       wait_for: 2000
       scroll_into_view: true # 强制滚动到元素
       value: "PearPartnerOfficial"
 
     # Tiktok - realistic username
     fill_tiktok:
-      locator: 'xpath=//div[text()="Tiktok"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="tiktok"]/following::input[@placeholder="username"][1]'
       value: "pear_partner"
 
     # X (Twitter) - realistic username
     fill_x:
-      locator: 'xpath=//div[text()="X"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="x"]/following::input[@placeholder="username"][1]'
+      scroll_into_view: true
       value: "PearPartnerHQ"
 
     # Youtube - realistic username
     fill_youtube:
-      locator: 'xpath=//div[text()="Youtube"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="youtube"]/following::input[@placeholder="username"][1]'
+      scroll_into_view: true
       value: "PearPartnerChannel"
 
     # Linkedin - realistic username
     fill_linkedin:
-      locator: 'xpath=//div[text()="Linkedin"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="linkedin"]/following::input[@placeholder="username"][1]'
+      scroll_into_view: true
       value: "pear-partner-official"
 
     # Threads - realistic username
     fill_threads:
-      locator: 'xpath=//div[text()="Threads"]/following-sibling::div//input'
+      locator: 'xpath=//*[normalize-space(text())="threads"]/following::input[@placeholder="username"][1]'
+      scroll_into_view: true
       value: "pear_partner_official"
+
+    check_3:
+      role: "checkbox"
+      name: "Receive marketing emails and text messages from Auto_Test_shop"
 
     # submit
     R_click_submit:
@@ -407,7 +383,7 @@ test_guest_submission_2: # [LAST: BROKEN 2026-05-06]
     # submit
     R_click_submit:
       role: "button"
-      name: "Submit"
+      name: "Submit and follow"
     # Verify every field in the modal (Comprehensive UI check)
     verify_short: { text: "This field is required. Please fill it in." }
     verify_long: { text: "This field is required. Please fill it in." }
