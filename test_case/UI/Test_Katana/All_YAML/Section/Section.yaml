@@ -170,7 +170,7 @@ testAddNewPost:   # [LAST: FIXED 2026-07-27]
         # Step 2: Add the first post to the (existing) section
         click_shop_add_button_2:
         R_click_add_from_my_content: { role: 'button', name: 'Add from my content' }
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         select_content_card: { index: 0 }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click_target_section: { role: 'button', name: 'Verify Add post section' }
@@ -179,7 +179,7 @@ testAddNewPost:   # [LAST: FIXED 2026-07-27]
         # Step 3: Add the second post to the same section
         click_shop_add_button_3:
         R_click_add_from_my_content_2: { role: 'button', name: 'Add from my content' }
-        R_click_posts_tab_2: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab_2: { role: 'tab', name: 'Post' }
         select_content_card_2: { index: 1 }
         R_click_continue_2: { role: 'button', name: 'Continue' }
         R_click_target_section_2: { role: 'button', name: 'Verify Add post section' }
@@ -207,7 +207,7 @@ testT3788:  # [LAST: FIXED 2026-07-23 v3] — New storefront flow on partnercose
         # 1. Select 1 post + 2 products from my posts, then create the section.
         R_click_add: { role: 'button', name: 'Add' }
         R_click_add_products_existing: { role: 'button', name: 'Add products Existing' }
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         # R_click_select_my_posts: { role: 'combobox', name: 'Select from my posts' }
         #R_click_post_t3788: { text: 'auto test T3788' }
         R_click_product_img_1: { role: 'img', name: 'Image of Product', index: 0 }
@@ -661,7 +661,7 @@ testT4852:  # [LAST: FIXED 2026-07-24] — New storefront flow CONFIRMED PASS. P
         R_click_add_posts: { role: 'button', name: 'Add' }
         R_click_add_from_my_content_posts: { role: 'button', name: 'Add from my content' }
         sleep_after_my_content_posts: 2000
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         sleep_after_posts_tab: 1500
         R_click_post_item: { locator: "[role='dialog'] button[data-testid='mui-card-action-area']", index: 0 }
         sleep_after_post_select: 1000
@@ -967,7 +967,7 @@ testT4605:  # [LAST: FIXED 2026-07-27]
         # Step 2: Add the first post to the (existing) section
         click_shop_add_button_2:
         R_click_add_from_my_content: { role: 'button', name: 'Add from my content' }
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         select_content_card: { index: 0 }
         R_click_continue: { role: 'button', name: 'Continue' }
         R_click_target_section: { role: 'button', name: 'post carousel section' }
@@ -977,7 +977,7 @@ testT4605:  # [LAST: FIXED 2026-07-27]
         # Step 3: Add the second post to the same section
         click_shop_add_button_3:
         R_click_add_from_my_content_2: { role: 'button', name: 'Add from my content' }
-        R_click_posts_tab_2: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab_2: { role: 'tab', name: 'Post' }
         select_content_card_2: { index: 1 }
         R_click_continue_2: { role: 'button', name: 'Continue' }
         R_click_target_section_2: { role: 'button', name: 'post carousel section' }

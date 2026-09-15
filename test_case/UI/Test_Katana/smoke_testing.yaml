@@ -31,7 +31,7 @@ testT2705_VerifyPartner:
     sleep_step: 1000
 
     # Step 2.2: Click Posts tab to ensure post cards are visible
-    R_click_posts_tab: { role: "tab", name: "Posts" }
+    R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_step: 2000
 
     # Step 3: Click post card to enter post landing page
@@ -128,7 +128,7 @@ testT2705_VerifyGuest:
     sleep_step: 1000
 
     # Step 2.2: Click Posts tab to ensure post cards are visible
-    R_click_posts_tab: { role: "tab", name: "Posts" }
+    R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_step: 2000
 
     # Step 3: Click post card to enter post landing page
