@@ -28,18 +28,17 @@ testT1742:
             R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
             sleep_step: 4000
 
-            # Step 1.1: Click Posts tab to ensure post cards are visible
-            R_click_posts_tab: { role: "tab", name: "Posts" }
+            # Step 1.1: Click Post tab to show post cards
+            R_click_posts_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
-            # Step 2: Event detail page -> click Post card (link text)
-            R_click_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+            # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
+            verify_post_alias: { text: "auto-test-post-setting-t1742" }
 
-            # Step 3: Navigate to Co-selling -> Co-sellers tab
-            R_click_Co-selling: { role: "tab", name: "Co-selling" }
+            # Step 3: Navigate to Co-selling tab
+            R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
 
             sleep_step: 2000
-            R_click_Co-sellers: { role: "tab", name: "Co-sellers" }
             sleep_step: 2000
 
             # Step 4: Delete co-seller if exists (encapsulated action)
@@ -88,9 +87,16 @@ testT1742:
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
         sleep_step: 2000
 
-        # Step 5: Verify Post Card displays "Offer up to 10%"
+        # Step 5: Storefront > My content, verify "Offer up to 10%"
+        open_storefront: "{BASE_URL}/autotestshop"
+        sleep_after_storefront: 4000
+        R_click_my_content: { role: "button", name: "My content" }
+        sleep_after_my_content: 4000
+        page_scroll_my_content: { y: 1200, steps: 6, delay: 800 }
+        sleep_step: 1500
         verify_post_offer:
-            scope: { text: "auto-test-post-setting-t1742" }
+            scope:
+                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 10%"
             timeout: 5000
 
@@ -98,7 +104,7 @@ testT1742:
         open_again: "{BASE_URL}/events"
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
-        R_click_posts_tab:      { role: "tab", name: "Posts" }
+        R_click_posts_tab:      { role: "tab", name: "Post" }
         sleep_end: 3000
 
     expect_result:
@@ -107,8 +113,7 @@ testT1742:
             text: "10"
 
     teardown_step:
-        R_click_post_teardown: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
-        sleep_step: 3000
+        # Click Selling directly: the alias text sits inside the "Select post" dropdown trigger and opens a popover over this tab
         R_click_selling_teardown: { role: 'tab', name: 'Selling' }
         sleep_step: 2000
         R_click_customize_teardown: { role: 'button', name: 'Customize' }
@@ -131,14 +136,18 @@ testT1742:
 
         R_click_close_drawer_teardown: { locator: '[data-testid="CloseIcon"]', optional: true }
         sleep_end: 1000
-        # Step 5: Verify Post Card auto-test-post-setting-t1742 displays "Offer up to 8%"
-        # Use scope to limit search within the specific post card containing auto-test-post-setting-t1742
+        # Step 5: Storefront > My content, verify "Offer up to 8%" (commission restored)
+        open_storefront_teardown: "{BASE_URL}/autotestshop"
+        sleep_after_storefront_teardown: 4000
+        R_click_my_content_teardown: { role: "button", name: "My content" }
+        sleep_after_my_content_teardown: 4000
+        page_scroll_my_content_teardown: { y: 1200, steps: 6, delay: 800 }
+        sleep_step: 1500
         verify_post_offer:
-            scope: { text: "auto-test-post-setting-t1742" }
+            scope:
+                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 8%"
             timeout: 5000
-
-
 
 
 
@@ -181,9 +190,14 @@ testT3991:
         # Click the newly created Post to enter details
         click_post_card: { role: 'button', name: 'Image of Product', index: 0 }
         sleep_after_click_post: 1500
-        click_coselling_tab: { role: 'tab', name: 'Co-selling' }
-        click_cosellers_tab: { role: 'tab', name: 'Co-sellers' }
-        click_mui_btn: { role: 'button', name: 'Manually add co-sellers' }
+        click_coselling_tab: { role: 'tab', name: 'Co‑selling' }
+        sleep_step: 1500
+        # Panel may open in OFF state: turn Co-selling on and save the default commission first
+        R_click_turn_on_coselling: { role: 'button', name: 'Turn on Co-selling', optional: true, disable_ai: true }
+        sleep_step: 1000
+        R_click_save_customize: { role: 'button', name: 'Save', optional: true, disable_ai: true }
+        sleep_step: 1500
+        click_mui_btn: { role: 'button', name: 'Add to co-seller Pear Shops' }
         check_coseller_checkbox: { role: 'checkbox', index: 1 }
         click_add_btn: { role: 'button', name: 'Add' }
         
@@ -191,7 +205,10 @@ testT3991:
         verify_toast_post_added: { text: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress." }
         sleep_after_toast_1: 1500
         
-        click_setting_tab_2: { role: 'tab', name: 'Settings' }
+        # Co-selling sub-tab hides the content action cards; switch back to Content first
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        sleep_step: 1500
+        click_setting_tab_2: { role: 'button', name: 'Settings' }
         
         # Must assertion 3: Verify setting item is visible
         verify_note_visible: { text: "Add a note for co-sellers" }
@@ -244,12 +261,12 @@ testT3683_T3684:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 1.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        # Step 1.1: Click Post tab to show post cards
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Event detail page -> click Post card (link text)
-        R_click_post: { locator: 'text=auto-test-post-setting-t1742', exact: true, index: 0 }
+        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-t1742" }
         sleep_step: 3000
 
         # Step 3: Post edit page -> switch to Settings tab
@@ -396,10 +413,8 @@ testT3686_CosellerResell:
         R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 8000 }
         sleep_step: 3000
 
-        # Handle onboarding modal: check "Do not show me this again" and click "Customize Now"
-        check_do_not_show: { locator: "input[name='display']", optional: true }
-        sleep_step: 500
-        R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
+        # "This post has been added to your shop." dialog -> confirm with Save
+        click_save_btn: { locator: "div[role='dialog']:has-text('This post has been added to your shop') button:has-text('Save')" }
         sleep_step: 3000
 
         # Click Publish button to publish the resold post (first click may open confirmation dialog)
@@ -435,8 +450,6 @@ testT3686_CosellerResell:
         # # sleep_step: 500
         # R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
         # sleep_step: 2000
-
-        click_save_btn: { role: 'button', name: 'Save' }
 
 
         # Wait for toast message "Post published and added to your shop."
@@ -546,18 +559,17 @@ testT3686_teardown:
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 1.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        # Step 1.1: Click Post tab to show post cards
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Event detail page -> click Post card (link text)
-        R_click_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-t1742" }
 
-        # Step 3: Navigate to Co-selling -> Co-sellers tab
-        R_click_Co-selling: { role: "tab", name: "Co-selling" }
+        # Step 3: Navigate to Co-selling tab
+        R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
 
         sleep_step: 2000
-        R_click_Co-sellers: { role: "tab", name: "Co-sellers" }
         sleep_step: 2000
 
         # Step 4: Delete co-seller if exists (encapsulated action)
@@ -606,9 +618,12 @@ testT2705_VerifyPartner:
     fill_search_product: { placeholder: "Search product", value: "General Admission" }
     sleep_step: 8000
 
-    # Step 7.1: Click "General Admission" — disambiguate by matching BOTH title and unique description.
-    # Two products share title "General Admission"; custom variant has desc "Test event post variant settings".
-    R_click_general_admission: { locator: '[role="dialog"] [class*="MuiCard"]:has-text("Test event post variant settings") >> text="General Admission"', disable_ai: true }
+    # Step 7: Scroll the dialog product list — the target card sits below the fold
+    page_scroll_select_products: { y: 600, steps: 4, delay: 800 }
+    sleep_step: 1500
+
+    # Step 7.1: Click "General Admission" (the card whose desc is "Test event post variant settings")
+    R_click_general_admission: { locator: '[role="dialog"] [data-testid="content"]:has-text("Test event post variant settings") >> text="General Admission"', disable_ai: true }
     sleep_step: 2000
 
 
@@ -710,8 +725,13 @@ testT2705_VerifyGuest:
   guest: true
   description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
   test_step:
-    open: "{BASE_URL}/autotestshop/post/test1234"
-    sleep_after_open: 5000
+    # Step 1: Open the post page; retry until it renders (storefront needs time to pick up the just-published post)
+    open_until_ready:
+      url: "{BASE_URL}/autotestshop/post/test1234"
+      ready: 'text="General Admission"'
+      retries: 6
+      retry_delay: 5000
+      timeout: 8000
 
     page_scroll: { y: 400, delay: 500 }
     sleep_step: 500
@@ -804,34 +824,24 @@ testT2705_VerifyGuest:
 
 # T2830: Partner hides a post on the storefront
 testT2830_VerifyPartner:
-    description: "Verify hiding a post from the store via Settings settings"
+    description: "Verify hiding a post from My content so it is no longer visible in the store"
     test_step:
-        # Step 1: Open Events list page
-        open: "{BASE_URL}/events"
-        sleep_after_open: 5000
+        # Step 1: Open My content (storefront archive) where post actions live
+        open: "{BASE_URL}/autotestshop/archive"
+        sleep_after_open: 6000
 
-        # Step 2: Find and click "Test event post variant settings" event
-        R_click_event: { locator: "text=Test event post variant settings", exact: true }
-        sleep_step: 4000
+        # Step 2: Open the "..." overflow menu on the target post card
+        R_click_post_more: { locator: '[data-testid="base-post-card"]:has-text("test-event-post-variant-settings") [data-testid="base-more-horiz-icon-cta"]' }
+        sleep_after_menu_open: 1500
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
-        sleep_step: 2000
+        # Step 3: Click "Hide post"
+        R_click_hide_post: { locator: '[role="menuitem"]:has-text("Hide post")' }
+        sleep_after_hide_post: 2000
 
-        # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
-        sleep_step: 3000
+        # Step 4: Click "Hide" in the "Hide this?" confirmation (Dialog on desktop, Drawer on mobile)
+        R_click_confirm_hide: { locator: ':is(div[role="dialog"], div.MuiDrawer-root):has-text("Hide this?") button:has-text("Hide")' }
+        sleep_after_confirm_hide: 4000
 
-        # Step 4: Click Seting tab
-        R_click_setting_tab: { role: "tab", name: "Settings" }
-        sleep_step: 2000
-
-
-        # Step 5: Check hide in store
-        check_hide_in_store: { locator: "input[name='hideInStore']" }
-        save_html_partner_before: { name: "debug_partner_before_update" }
-        R_click_Save: { role: "button", name: "Save" }
-        sleep_after_save: 5000
         screenshot_after_curator_persistence: { name: "debug_partner_final" }
     expect_result:
         description: "Post settings updated"
@@ -846,10 +856,19 @@ testT2830_VerifyGuest:
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
 
-        # Scroll down 
-        scroll_to_bottom: { iterations: 10, delay: 500 }
+        # Step 2: Scroll down so the "More" button of the Upcoming Events section is rendered
+        scroll_to_bottom: { iterations: 12, delay: 500 }
 
-        # The post should be hidden from guest view
+        # Step 3: Click "More" to open the full Upcoming Events list
+        R_click_section_more: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
+        sleep_after_more: 5000
+
+        # Step 4: Scroll down the full list
+        execute_js_scroll_full_list:
+            script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+        sleep_after_full_list: 2000
+
+        # Step 5: The post should be hidden from guest view
         verify_text_hidden: { text: "test-event-post-variant-settings", timeout: 5000 }
 
         sleep_end: 2000
@@ -864,43 +883,38 @@ testT2830_VerifyGuest:
         add_cookies: {}
         sleep_step: 1000
 
-        # Step 2: Open Events list page
-        open_teardown: "{BASE_URL}/events"
-        sleep_step: 5000
+        # Step 2: Open My content (storefront archive)
+        open_teardown: "{BASE_URL}/autotestshop/archive"
+        sleep_after_archive_teardown: 6000
 
-        # Step 3: Find and click "Test event post variant settings" event
-        R_click_event_reset: { locator: "text=Test event post variant settings", exact: true }
-        sleep_step: 4000
+        # Step 3: Open the "..." overflow menu on the target post card
+        R_click_post_more_teardown: { locator: '[data-testid="base-post-card"]:has-text("test-event-post-variant-settings") [data-testid="base-more-horiz-icon-cta"]' }
+        sleep_after_menu_teardown: 1500
 
-        # Step 3.1: Click Posts tab
-        R_click_posts_tab: { role: "tab", name: "Posts" }
-        sleep_step: 2000
+        # Step 4: Click "Show post" to restore visibility (no confirmation sheet)
+        R_click_show_post: { locator: '[role="menuitem"]:has-text("Show post")' }
+        sleep_after_show_post: 4000
 
-        # Step 3.2: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
-        sleep_step: 3000
-
-        # Step 4: Click Setting tab
-        R_click_setting_tab_reset: { role: "tab", name: "Settings" }
-        sleep_step: 2000
-
-
-        # Step 5: Uncheck hideInStore
-        uncheck_hide_in_store: { locator: "input[name='hideInStore']", checked: false }
-        R_click_Save: { role: "button", name: "Save" }
-        sleep_step: 3000
-
-        # Step 6: Clear partner cookies and inject guest cookies for tenant routing
+        # Step 5: Clear partner cookies and inject guest cookies for tenant routing
         clear_cookies: { inject_guest: true }
-        sleep_step: 1000
+        sleep_after_clear_cookies: 1000
 
-        # Step 7: Verify in guest context that the post is now visible
+        # Step 6: Verify in guest context that the post is now visible
         open_guest_shop: "{BASE_URL}/autotestshop"
-        sleep_step: 5000
-        
-        # Scroll down 
-        scroll_to_bottom: { iterations: 10, delay: 500 }
-        
+        sleep_after_guest_shop: 5000
+
+        # Step 7: Scroll down so the "More" button of the Upcoming Events section is rendered
+        scroll_to_bottom: { iterations: 12, delay: 500 }
+
+        # Step 8: Click "More" to open the full Upcoming Events list
+        R_click_section_more_teardown: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
+        sleep_after_more_teardown: 5000
+
+        # Step 9: Scroll down the full list
+        execute_js_scroll_full_list_teardown:
+            script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+        sleep_after_full_list_teardown: 2000
+
         screenshot_guest_view_restored: { name: "debug_guest_view_restored" }
         save_html_guest_restored: { name: "debug_guest_source_restored" }
         verify_text_visible: { text: "test-event-post-variant-settings" }
@@ -915,10 +929,10 @@ testT2834_VerifyPartner:
         # sleep_step: 500
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
-        # Use exact post name to avoid clicking the wrong card when multiple posts exist
-        R_click_post: { role: "button", name: "verify-post-shipping-fee", index: 0 }
+        # Step 1.1: Verify the post alias verify-post-shipping-fee is visible
+        verify_post_alias: { text: "verify-post-shipping-fee" }
         sleep_step: 2000
 
         # Step 2: Switch to Selling tab and customize products
@@ -941,7 +955,6 @@ testT2834_VerifyPartner:
         click_product_card_1: { test_id: 'SquareLineIcon', index: 0 }
 
         # Step 4: Check Free Shipping checkbox
-        
         sleep_step: 500
         click_add_product_btn_1: { role: 'button', name: 'product(s)' }
         sleep_step: 1000
@@ -959,11 +972,11 @@ testT2834_VerifyPartner:
         R_click_save_again: { role: "button", name: "Save" }
         sleep_step: 3000
 
-        # Step 6: Click "Edit content" button (navigates to /post/{id}/view Edit post content page)
+        # Step 6: Switch to the Content tab first, then click the "Content" icon to open the editor
         R_click_content_tab: { role: "tab", name: "Content", exact: true }
-        sleep_step: 500
-        click_edit_content: { role: "button", name: "Edit content" }
-        sleep_step: 2500
+        sleep_after_content_tab: 2500
+        R_click_content_icon: { locator: 'button[data-testid="enhance-button"][aria-label="Content"]' }
+        sleep_after_content_icon: 5000
         R_click_insert_button: { role: "button", name: "Insert" }
         sleep_step: 500
 
@@ -1074,40 +1087,37 @@ testT2834_VerifyGuest:
     teardown_step:
         # Step 1: Inject partner cookies into guest context to switch identity
         add_cookies: {}
-        sleep_step: 3000
+        sleep_after_add_cookies: 3000
         
         # Step 2: Open post URL as partner
         open_teardown: "{BASE_URL}/events"
-        sleep_step: 3000
+        sleep_after_open_teardown: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
-        sleep_step: 2000
-        R_click_posts_tab: { role: "tab", name: "Posts" }
-        sleep_step: 2000
-
-        R_click_post: { test_id: "mui-card-action-area" }
-        sleep_step: 2000
+        sleep_after_event_teardown: 3000
+        R_click_posts_tab: { role: "tab", name: "Post" }
+        sleep_after_posts_tab_teardown: 2000
         
         # Step 3: Revert Selling tab Free Shipping
-        click_container_button_2: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1 }
-        sleep_step: 2000
+        R_click_selling_tab_teardown: { role: "tab", name: "Selling", exact: true }
+        sleep_after_selling_tab_teardown: 2500
         R_click_customize_products_teardown: { test_id: "enhance-button-cta" }
-        sleep_step: 1500
+        sleep_after_customize_teardown: 2000
         # First search for "test_general_products" to make target card only visible
         fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_step: 500
+        sleep_after_search_fill: 500
         # Select-products dialog Search button has NO accessible name -> trigger search via Enter
         # (mirrors T2874/T2834_VerifyPartner/T5033 verified pattern; clicking role=button name=Search fails)
         press_search_2: { key: "Enter" }
-        sleep_step: 2000
+        sleep_after_search_press: 2000
         # At this time only one card, directly click using role+name, no index needed
         click_product_card_2: { test_id: 'CheckboxFillIcon', index: 0 }
-        sleep_step: 1000
+        sleep_after_card_click: 1000
         click_add_product_btn_2: { role: 'button', name: 'product(s)' }
-        sleep_step: 1500
+        sleep_after_add_product: 1500
         R_click_save_teardown: { role: "button", name: "Save" }
-        sleep_step: 1000
+        sleep_after_save_teardown: 1000
         R_click_save_again_teardown: { role: "button", name: "Save" }
-        sleep_step: 3000
+        sleep_after_save_again_teardown: 3000
 
 
 # T4735: Partner enables redirect URL for post
@@ -1123,21 +1133,23 @@ testT4735_VerifyPartner:
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 3: Verify the post alias test-event-post-variant-settings is visible
+        verify_post_alias: { text: "test-event-post-variant-settings" }
         sleep_step: 3000
 
-        # Step 4: Click Seting tab
-        R_click_setting_tab: { role: "tab", name: "Settings" }
-        sleep_step: 2000
+        # Step 4: Click the "Settings" icon card to open post settings
+        R_click_settings_icon: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]' }
+        sleep_after_settings_icon: 3000
 
 
-        # Check enableRedirectUrl checkbox
+        # Check enableRedirectUrl checkbox (turn it off first so the redirect fields always render)
+        uncheck_enable_redirect_first: { locator: "input[name='enableRedirectUrl']", checked: false }
+        sleep_after_uncheck_redirect: 1500
         check_enable_redirect: { locator: "input[name='enableRedirectUrl']" }
-        sleep_step: 2000
+        sleep_after_check_redirect: 2000
 
         # Click Redirect destination name textbox
         R_click_redirect_name: { role: "textbox", name: "Redirect destination name" }
@@ -1221,36 +1233,35 @@ testT4735_VerifyGuest_YesPlease:
     teardown_step:
         # Inject partner cookies to switch to partner context
         add_cookies: {}
-        sleep_step: 2000
+        sleep_after_add_cookies_td: 2000
 
         # Open events list page
         open_teardown: "{BASE_URL}/events"
-        sleep_step: 5000
+        sleep_after_open_td: 5000
 
         # Click "Test event post variant settings" event
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
-        sleep_step: 4000
+        sleep_after_event_td: 4000
 
         # Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
-        sleep_step: 2000
+        R_click_posts_tab: { role: "tab", name: "Post" }
+        sleep_after_posts_tab_td: 2500
 
-        # Click post card to enter post landing page
-        R_click_post_card_teardown: { role: "button", name: "test-event-post-variant-settings", index: 0 }
-        sleep_step: 3000
+        # Verify the post alias is visible on the Post tab
+        verify_post_alias_teardown: { text: "test-event-post-variant-settings" }
+        sleep_after_alias_td: 2000
 
-        # Click Seting tab
-        R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
-        sleep_step: 2000
-
+        # Click the "Settings" icon card to open post settings (the "Settings" tab no longer exists)
+        R_click_settings_icon_teardown: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]' }
+        sleep_after_settings_icon_td: 4000
 
         # Uncheck enableRedirectUrl checkbox to disable redirect
         uncheck_enable_redirect: { locator: "input[name='enableRedirectUrl']", checked: false }
-        sleep_step: 1000
+        sleep_after_uncheck_redirect_td: 1500
 
         # Save
         R_click_save_teardown: { role: "button", name: "Save" }
-        sleep_step: 3000
+        sleep_after_save_td: 4000
 
 
 # T2515 Partner sets Purchase quantity limit=5 for a several-variants item
@@ -1266,7 +1277,7 @@ testT2515_SetLimit_WithVariant:
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -1398,7 +1409,7 @@ testT2515_VerifyDisabled_WithVariant:
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab (now inside event detail)
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Scroll down to reveal post card
@@ -1440,7 +1451,7 @@ testT2874_EnableDependentProducts:
         # sleep_step: 1000
 
         # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -1585,7 +1596,7 @@ testT2874_VerifyGuestCheckoutTwo:
         sleep_step: 1000
 
         # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 4: Click post card to enter post landing page
@@ -1656,7 +1667,7 @@ testT4038:
         sleep_step: 4000
 
         # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
@@ -1779,7 +1790,7 @@ testT2069:
         sleep_step: 4000
 
         # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
@@ -1901,7 +1912,7 @@ testT5033_5034_VerifyPartner:
 
         # Step 2: Create a post
         #R_click_event_tab_2: { role: 'tab', name: 'Event', exact: true }
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
         R_click_Create_post: { role: "button", name: "Add another post" }
         sleep_after_create_post: 2500
@@ -2028,7 +2039,7 @@ testT4955_Partner_SetPaymentRestriction:
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -2158,7 +2169,7 @@ testT4955_Guest_VerifyAccessCode:
         sleep_step: 1000
 
         # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 4: Click post card to enter post landing page
@@ -2216,7 +2227,7 @@ testT3779:
         sleep_step: 2000
 
         # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
@@ -2356,7 +2367,7 @@ testT3767:
         sleep_step: 2000
 
         # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Posts" }
+        R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)

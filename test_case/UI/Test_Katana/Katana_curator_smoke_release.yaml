@@ -229,7 +229,7 @@ testT4777:
         sleep_after_more_menu: 2000
         R_click_view_event: { role: 'menuitem', name: 'View event' }
         sleep_after_enter: 4000
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         sleep_after_posts_tab: 3000
         R_click_post_card: { role: 'button', name: 'Lury automation event with event coupon', exact: false }
         sleep_after_post_card: 4000
@@ -318,7 +318,7 @@ testT4259_partner:
         sleep_after_save_b: 2000
         R_click_events_tab: { role: 'tab', name: 'Event' }
         sleep_after_events_tab: 2000
-        R_click_posts_tab: { role: 'tab', name: 'Posts' }
+        R_click_posts_tab: { role: 'tab', name: 'Post' }
         sleep_after_posts_tab: 2000
         R_click_post_product: { role: 'button', name: 'Image of Product', exact: false }
         sleep_after_click_product: 5000

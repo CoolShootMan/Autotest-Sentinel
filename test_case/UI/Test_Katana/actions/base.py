@@ -101,6 +101,78 @@ def open_url(page: Page, v):
         else:
             logger.info(">>> Auto-handling modals is disabled")
 
+def open_until_ready(page: Page, v: dict):
+    """
+    Open a URL and wait until the expected content is really rendered, re-opening
+    the URL until it is.
+
+    Storefront pages can briefly serve a client-side 404 ("This page could not be
+    found") right after a post is published or its URL alias is re-bound, so a
+    plain `open` a few seconds after publishing lands on the 404 shell. Retrying
+    here removes that race instead of relying on a fixed sleep.
+
+    YAML usage (the step key MUST be exactly `open_until_ready`: any other name
+    starting with "open" is dispatched to open_url by prefix and the retry is
+    silently lost):
+        open_until_ready:
+            url: "{BASE_URL}/autotestshop/post/test1234"
+            ready: 'text="General Admission"'   # selector that only exists on the real page
+            retries: 6                          # optional, default 5
+            timeout: 8000                       # optional, per-attempt wait for `ready`
+            retry_delay: 3000                   # optional, wait between attempts
+            settle: 1000                        # optional, wait after `ready` is found
+    """
+    url = v.get("url") or v.get("open")
+    ready = v.get("ready") or v.get("ready_selector")
+    retries = int(v.get("retries", 5))
+    timeout = int(v.get("timeout", 8000))
+    retry_delay = int(v.get("retry_delay", 3000))
+    settle = int(v.get("settle", 1000))
+    not_found_marker = str(v.get("not_found_text", "could not be found")).lower()
+
+    if not url:
+        raise AssertionError("open_until_ready: 'url' is required")
+    if not ready:
+        raise AssertionError("open_until_ready: 'ready' is required")
+
+    last_body = ""
+    for attempt in range(1, retries + 1):
+        try:
+            # Modal handling is deferred to the successful attempt: it costs up to
+            # ~9s and is pointless while the page is still the 404 shell.
+            open_url(page, {"open": url, "auto_handle_modals": False})
+            page.wait_for_selector(ready, timeout=timeout)
+
+            if v.get("auto_handle_modals", True):
+                try:
+                    auto_handle_modals(page, {"timeout": 3000, "ignore_if_not_found": True})
+                except Exception as e:
+                    logger.debug(f"open_until_ready: modal handling skipped: {e}")
+
+            page.wait_for_timeout(settle)
+            logger.info(f"open_until_ready: '{ready}' rendered on attempt {attempt}/{retries} - {url}")
+            return
+        except Exception as e:
+            try:
+                last_body = (page.inner_text("body") or "").strip()[:200].replace("\n", " | ")
+            except Exception:
+                last_body = "<body unreadable>"
+            state = "404 shell" if not_found_marker in last_body.lower() else "content not ready"
+            logger.warning(
+                f"open_until_ready: attempt {attempt}/{retries} -> {state} - {url} - {str(e)[:120]}"
+            )
+            if attempt < retries:
+                page.wait_for_timeout(retry_delay)
+
+    try:
+        page.screenshot(path="fail_open_until_ready.png")
+    except Exception:
+        pass
+    raise AssertionError(
+        f"open_until_ready: '{ready}' never rendered after {retries} attempts - {url}. "
+        f"Last page body: {last_body}"
+    )
+
 def swipe_avoid_plus(page: Page, v: dict):
     x = v.get("x", 0)
     y = v.get("y", 300)
