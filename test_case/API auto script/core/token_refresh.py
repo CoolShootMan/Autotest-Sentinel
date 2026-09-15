@@ -56,6 +56,31 @@ from config import env_loader, settings
 
 _log = logging.getLogger("api.framework")
 
+#: HTTP 响应中标识 JWT 过期/无效的关键字（大小写不敏感匹配）。
+_EXPIRED_MARKERS = (
+    "please log in again",
+    "jwt expired",
+    "invalid token",
+    "token expired",
+    "unauthorized",
+)
+
+
+def is_token_expired_response(status_code: int, body: str) -> bool:
+    """判断一个 HTTP 响应是否因 JWT 过期/缺失被拒。
+
+    后端在以下情况返回 401 或 403：
+
+    - JWT 过期 → 403 ``"For your security, please log in again to continue."``
+    - JWT 缺失/无效/格式错误 → 401 ``"Unauthorized"``（JwtAuthGuard 直接拒绝）
+
+    两种情况都应触发自动续期 + 重试。
+    """
+    if status_code not in (401, 403):
+        return False
+    lower = (body or "").lower()
+    return any(m in lower for m in _EXPIRED_MARKERS)
+
 #: 角色 token -> 登录配方。``email`` / ``password`` 是**变量名**，
 #: 取值来自 T0000 的私有变量层（``*.vars.yaml``）与环境层。
 RECIPES: dict[str, dict[str, Any]] = {
@@ -165,8 +190,59 @@ def referenced_tokens(source_file) -> set[str]:
 
 
 # --- 续期 ---------------------------------------------------------------
+#: 进程级 token 缓存：``{token名: (token值, 签发时间戳)}``
+#: 避免同一账号在短时间内反复登录，触发 Auth0 的 "multiple consecutive login
+#: attempts" 账号锁定。
+_token_cache: dict[str, tuple[str, float]] = {}
+
+#: 续期冷却时间（秒）：同一账号在此窗口内不重复登录，即使 token 已过期。
+#: 取 100s：JWT 寿命 120s，留 20s 余量给网络往返。
+_LOGIN_COOLDOWN = 100.0
+
+#: 账号锁定状态：``{token名: 锁定到期时间戳}``，被锁定后不再尝试登录直到到期。
+_account_locked: dict[str, float] = {}
+_LOCK_DURATION = 300.0  # 账号锁定后 5 分钟内不再尝试登录
+
+
+def _is_account_locked(name: str) -> bool:
+    """检查账号是否处于锁定冷却期。"""
+    until = _account_locked.get(name)
+    if until and until > time.time():
+        return True
+    if until:
+        del _account_locked[name]
+    return False
+
+
+def _mark_account_locked(name: str, response_body: str = "") -> None:
+    """标记账号被 Auth0 锁定。"""
+    _account_locked[name] = time.time() + _LOCK_DURATION
+    _log.error("[token] 账号 %s 被 Auth0 锁定（5分钟内不再尝试登录）。", name)
+
+
 def _login(ctx, name: str, recipe: dict) -> str | None:
-    """按配方登录并返回新 token；失败返回 ``None``（不抛，避免带崩用例）。"""
+    """按配方登录并返回新 token；失败返回 ``None``（不抛，避免带崩用例）。
+
+    内置冷却机制：同一账号在 ``_LOGIN_COOLDOWN`` 秒内只登录一次，
+    之后的调用复用上次签发的 token（即使已过期，也比空 token 好——
+    至少能让请求到达 JwtAuthGuard 而不是被空 Authorization 直接拒）。
+    """
+    # 账号锁定检查
+    if _is_account_locked(name):
+        # 返回缓存的 token（可能已过期，但比空的好）
+        cached = _token_cache.get(name)
+        if cached:
+            _log.debug("[token] %s 账号锁定中，复用缓存 token", name)
+            return cached[0]
+        return None
+
+    # 冷却检查：如果最近刚登录过，复用缓存的 token
+    cached = _token_cache.get(name)
+    if cached and (time.time() - cached[1]) < _LOGIN_COOLDOWN:
+        _log.debug("[token] %s 冷却中（%.0fs 前刚登录），复用缓存 token",
+                    name, time.time() - cached[1])
+        return cached[0]
+
     creds = credentials()
     email = creds.get(recipe["email"]) or ""
     password = creds.get(recipe["password"]) or ""
@@ -185,10 +261,18 @@ def _login(ctx, name: str, recipe: dict) -> str | None:
         _log.warning("续期 %s 请求异常：%s", name, exc)
         return None
 
+    # 检查账号锁定
+    resp_body = resp.body_preview(500) or ""
+    if resp.status_code == 500 and "blocked" in resp_body.lower():
+        _mark_account_locked(name, resp_body)
+        return cached[0] if cached else None
+
     token = resp.path("$.data.token")
     if not token:
         _log.warning("续期 %s 失败：响应未返回 data.token（HTTP %s）。", name, resp.status_code)
-        return None
+        return cached[0] if cached else None
+    # 缓存新 token
+    _token_cache[name] = (token, time.time())
     return token
 
 
@@ -270,3 +354,60 @@ def ensure_fresh(ctx, *, source_file=None, threshold: float = DEFAULT_THRESHOLD,
     if failed:
         _log.warning("[token] 续期失败：%s", ", ".join(failed))
     return outcome
+
+
+def refresh_by_name(ctx, name: str) -> str | None:
+    """按名称即时续期单个角色 token，供 HTTP 层 403 自动重试使用。
+
+    与 :func:`ensure_fresh` 不同，此函数不做阈值判断 —— 调用方
+    已经知道 token 过期（收到 403），需要立即刷新。
+
+    Args:
+        ctx:  用例上下文。
+        name: token 变量名，如 ``"linda10_token"``。
+
+    Returns:
+        新 token 字符串；失败返回 ``None``。
+    """
+    if ctx is None or getattr(ctx, "api", None) is None:
+        return None
+
+    # 别名 → 主令牌
+    source = ALIASES.get(name, name)
+    recipe = RECIPES.get(source)
+    if not recipe:
+        _log.warning("[token] 按名续期失败：未知 token 名 %s", name)
+        return None
+
+    token = _login(ctx, source, recipe)
+    if not token:
+        _log.warning("[token] 按名续期 %s 失败（登录未返回 token）", name)
+        return None
+
+    ctx.set(source, token)
+    env_loader.save_runtime_tokens({source: token})
+
+    # 如果请求的是别名，同步设置别名
+    if name != source:
+        ctx.set(name, token)
+        env_loader.save_runtime_tokens({name: token})
+
+    _log.info("[token] 按名续期成功：%s", name)
+    return token
+
+
+def resolve_token_name(header_value: str) -> str | None:
+    """从 ``Authorization: Bearer {{xxx_token}}`` 头中提取 token 变量名。
+
+    用于 403 自动重试时确定是哪个角色 token 过期了。
+
+    Returns:
+        变量名（如 ``"linda10_token"``）；不匹配返回 ``None``。
+    """
+    if not header_value:
+        return None
+    # 匹配 Bearer {{xxx_token}} 模式
+    m = re.match(r"\s*Bearer\s+\{\{\s*([A-Za-z_]\w*_token)\s*\}\}", header_value)
+    if m:
+        return m.group(1)
+    return None

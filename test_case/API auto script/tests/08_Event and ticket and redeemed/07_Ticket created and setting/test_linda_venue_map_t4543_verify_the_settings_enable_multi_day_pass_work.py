@@ -458,7 +458,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert isinstance(_data4, dict) and isinstance(_data4.get('id'), str) and _data4.get('id'), "data.id 为空或不存在"
     vars['catalog_id'] = _data4['id']
     # step 5: 2a013c4d-46d5-4977-a422-b98dad043210  (GET {{adminurl}}/post/v2/{{post0_id}}/relate-products)
-    _resp5 = ctx.api.admin.post_v2_relate_products(token='admin_token')
+    _resp5 = ctx.api.admin.post_v2_relate_products(post0_id='{{post0_id}}', token='admin_token')
     _j5 = _json(_resp5)
     _products = (_j5.get('data') or {}).get('relatedProducts') or []
     for _p in _products:
@@ -611,7 +611,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     if vars.get('endDateDisplay'):
         assert _pass.get('endDateDisplay') == vars['endDateDisplay'], "endDateDisplay 与环境变量不匹配"
     # step 13: Check merchant order detail ticket Redemptions  (GET /order/merchant/{{catalog_id}}/detail/{{orderNumber}}/v2)
-    _resp13 = ctx.api.orders.merchant_detail_v2(token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}'})
+    _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', token='yuxiao999_token')
     _j13 = _json(_resp13)
     assert _resp13.status_code == 200, f"step13 status != 200, got {_resp13.status_code}"
     assert str(_j13.get('code')) == '200', f"step13 code != 200, got {_j13.get('code')}"

@@ -106,6 +106,31 @@ class Context(MutableMapping):
             self._vars[name] = _db.extract(rows, expr)
         return rows
 
+    def db_query_one(self, sql: str, column: str, var_name: str,
+                     connection_id: int = 112809) -> str | None:
+        """执行 SQL，取第一行指定列的值，绑定到上下文变量。
+
+        封装 ``run_db`` 的常见模式：查单行单列 → 提取到变量。
+        典型场景：从 DB 随机取一个 PROMOTER id。
+
+        Args:
+            sql:           原生 SQL（应包含 ``LIMIT 1``）。
+            column:        结果列名（如 ``"id"``）。
+            var_name:      写入上下文的变量名。
+            connection_id: Apifox 连接 id，默认 112809（Release）。
+
+        Returns:
+            提取到的值；查询无结果或出错时返回 ``None``。
+        """
+        try:
+            rows = self.run_db(connection_id, sql, [(var_name, f"$[0].{column}")])
+            return self._vars.get(var_name)
+        except Exception as exc:
+            import logging
+            logging.getLogger("api.framework").warning(
+                "[db_query_one] SQL 执行失败 (var=%s): %s", var_name, exc)
+            return None
+
     def set(self, name: str, value: Any) -> None:
         self._vars[name] = value
 

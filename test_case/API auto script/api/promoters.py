@@ -149,3 +149,52 @@ class PromotersApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def authorize_product(
+        self, *,
+        target_user_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """PUT /promote-invitation/{{target_user_id}}"""
+        return self._call(
+            "PUT", '/promote-invitation/{{target_user_id}}',
+            path_vars=_pv(("target_user_id", target_user_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def product_public_detail(
+        self, *,
+        alias=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """GET /promoter/product/public/{{alias}}/product-detail"""
+        return self._call(
+            "GET", '/promoter/product/public/{{alias}}/product-detail',
+            path_vars=_pv(("alias", alias), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def product_public_list(
+        self, *,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """GET /promoter/product/list"""
+        return self._call(
+            "GET", '/promoter/product/list',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )

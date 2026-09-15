@@ -3,6 +3,7 @@ description: Linda 日常可运行回归集 — 逐条列出用例名，便于�
 # Verify event ticket post setting flow and so on
 include:
   names:
+  - UI Automation Data Pre-configuration (staging & release, no SQL)
   - Precondition - obtain all accounts token
   - Verify partner can search campaign on campaign list
   - '&T4666 Verify partner can send test message on create/edit a campaign page'

@@ -95,7 +95,7 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     # step 3: post detail
-    _resp3 = ctx.api.posts.consumer_detail(params={'urlAlias': 'zr20it', 'vanityUrl': 'mcc'}, token='linda10_token')
+    _resp3 = ctx.api.posts.consumer_detail(params={'urlAlias': 't3041', 'vanityUrl': 'linda'}, token='linda10_token')
     # extractor: promoterProductVariantId = $.data.relatedProducts[0].variants[0].id
     ctx.extract('promoterProductVariantId', _resp3, '$.data.relatedProducts[0].variants[0].id')
     # extractor: subscriptionPlanOptionid = $.data.relatedProducts[0].variants[0].subscriptionPlanOptionPrices[0].optionId
@@ -151,7 +151,7 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     # extractor: orderNumber = $.data.orderNumbers[0]
     ctx.extract('orderNumber', _resp5, '$.data.orderNumbers[0]')
     # step 6: Check the "note" display on the consumer order detail
-    _resp6 = ctx.api.orders.consumer_detail_by_order_number(app_headers=True, token='linda10_token')
+    _resp6 = ctx.api.orders.consumer_detail_by_order_number(orderNumber='{{orderNumber}}', app_headers=True, token='linda10_token')
     # assertion 6.assertion: responseJson equal UNFULFILLED
     expect(_resp6).json('$.data.lineItems[0].fulfillmentStatus').equals('UNFULFILLED')
     # assertion 6.assertion: responseJson equal 144.99
@@ -167,9 +167,8 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     # === pre-script（由 Apifox customScript 翻译）===
     merchant_token = vars.get('merchant_token')
     orderNumber = vars.get('orderNumber')
-    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
 
-    _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
+    _resp7 = ctx.api.orders.merchant_detail_v2(merchantId='{{merchantId}}', orderNumber='{{orderNumber}}', app_headers=True, token='linda00_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
     # assertion 7.assertion: responseJson equal {{instructions}}

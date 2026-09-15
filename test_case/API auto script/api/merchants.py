@@ -105,3 +105,21 @@ class MerchantsApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def shipping_options_by_merchant_id(
+        self, *,
+        merchant_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """GET /merchants/{{merchant_id}}/shipping-options"""
+        return self._call(
+            "GET", '/merchants/{{merchant_id}}/shipping-options',
+            path_vars=_pv(("merchant_id", merchant_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
