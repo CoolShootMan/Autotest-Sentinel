@@ -180,7 +180,27 @@ def start_autotest():
     # Start HTTP server immediately (in separate window, not blocked by allure open)
     http_server_script = os.path.join(BASE_DIR, "http_server.py")
     http_cmd = [sys.executable, http_server_script, allure_report_dir, str(http_port)]
-    subprocess.Popen(http_cmd, creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0)
+    if os.environ.get("CI"):
+        # CI (GitHub Actions ubuntu, headless): skip the LAN HTTP server.
+        # Nobody can reach the runner's LAN IP, and the detached serve_forever()
+        # process would keep the `| tee run.log` pipe open, hanging the job until
+        # the 2h timeout (see run 34828468162). The report is uploaded as artifact.
+        logger.info("CI mode: skipping LAN HTTP server (report available as artifact)")
+    else:
+        # Local: start_new_session detaches the server so it keeps serving the report
+        subprocess.Popen(
+            http_cmd,
+            start_new_session=True,
+            creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0,
+        )
+    report_url = f"http://{lan_ip}:{http_port}"
+    # Persist the report URL so the GitHub Action step can read it and post to Slack.
+    try:
+        os.makedirs(os.path.join(BASE_DIR, "report"), exist_ok=True)
+        with open(os.path.join(BASE_DIR, "report", "last_report_url.txt"), "w", encoding="utf-8") as _f:
+            _f.write(report_url)
+    except Exception as _e:
+        logger.warning(f"Failed to write last_report_url.txt: {_e}")
     logger.info(f"====================================")
     logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
     logger.info(f"Local Allure: auto-opened")
