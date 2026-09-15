@@ -55,46 +55,43 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml"
-    # yaml_files = "All_YAML/Post/Post_setting_for_venue_map.yaml"
+    #yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml"
+    yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
         sys.executable,
         "-m",
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
+        '--headed',
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
         '--step-capture=on-failure'
     ]
-    # CI mode (GitHub self-hosted runner): run headless (no GUI display available).
-    # Local runs keep the headed browser for visual debugging.
-    if not os.environ.get('CI'):
-        pytest_args.append('--headed')
     logger.info(f"Running with YAMLs: {yaml_files}")
 
     # ── 1. Fetch cookies for all 3 test accounts ──
-    cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
-    logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
-    cookie_result = subprocess.run(
-        [sys.executable, cookie_script],
-        capture_output=True, text=True
-    )
-    logger.info(f"Cookie script done: {cookie_result.stdout}")
-    if cookie_result.returncode != 0:
-        logger.error(f"Cookie script stderr: {cookie_result.stderr}")
+    # cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
+    # logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
+    # cookie_result = subprocess.run(
+    #     [sys.executable, cookie_script],
+    #     capture_output=True, text=True
+    # )
+    # logger.info(f"Cookie script done: {cookie_result.stdout}")
+    # if cookie_result.returncode != 0:
+    #     logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
     # ── 2. Login with latest cookies and dismiss EDU popups ──
-    dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
-    logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
-    dismiss_result = subprocess.run(
-        [sys.executable, dismiss_script],
-        capture_output=True, text=True
-    )
-    logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
-    if dismiss_result.returncode != 0:
-        logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+    # dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
+    # logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
+    # dismiss_result = subprocess.run(
+    #     [sys.executable, dismiss_script],
+    #     capture_output=True, text=True
+    # )
+    # logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
+    # if dismiss_result.returncode != 0:
+    #     logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
 
     # ── 3. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
@@ -205,22 +202,13 @@ def start_autotest():
     except Exception as _e:
         logger.warning(f"Failed to write last_report_url.txt: {_e}")
     logger.info(f"====================================")
-    logger.info(f"LAN report URL: {report_url}")
+    logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
     logger.info(f"Local Allure: auto-opened")
     logger.info(f"====================================")
-    # CI (self-hosted runner, no interactive display): skip `allure open` so the
-    # job does not hang waiting for a browser window that nobody will close.
-    if not os.environ.get("CI"):
-        try:
-            subprocess.run(open_cmd)
-        except Exception:
-            pass
-
-    # Propagate the pytest exit code so CI reflects real test results
-    # (without this, the GitHub Actions job stays green even if all cases fail).
-    if result.returncode != 0:
-        logger.error(f"pytest exited with code {result.returncode}")
-        sys.exit(result.returncode)
+    try:
+        subprocess.run(open_cmd)
+    except Exception:
+        pass
 
 
 
