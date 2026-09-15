@@ -60,3 +60,51 @@ class StorefrontApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def update(
+        self, *,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """PUT /store-front"""
+        return self._call(
+            "PUT", '/store-front',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def shop(
+        self, *,
+        partner_vanityUrl=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """GET /store-front/shop/{{partner_vanityUrl}}"""
+        return self._call(
+            "GET", '/store-front/shop/{{partner_vanityUrl}}',
+            path_vars=_pv(("partner_vanityUrl", partner_vanityUrl), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def layout(
+        self, *,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """PUT /store-front/layout"""
+        return self._call(
+            "PUT", '/store-front/layout',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )

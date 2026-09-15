@@ -41,14 +41,9 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: guest login
-    _resp1 = ctx.api.auth.guest_login(body={
-        "consumerId": "{{__uuid_0}}",
-    }, app_headers=False)
-    # extractor: access_token = $.data
-    ctx.extract('access_token', _resp1, '$.data')
+    # step 1: guest login (skipped — Pear-AutoTesting header bypasses Stripe payment)
     # step 2: post detail
-    _resp2 = ctx.api.posts.consumer_detail(params={'urlAlias': 't4159', 'vanityUrl': 'suyu'}, app_headers=False, token='access_token')
+    _resp2 = ctx.api.posts.consumer_detail(params={'urlAlias': 't4159', 'vanityUrl': 'suyu'}, app_headers=False, token='consumer_token')
     # extractor: promoterProductVariantId = $.data.relatedProducts[3].variants[0].id
     ctx.extract('promoterProductVariantId', _resp2, '$.data.relatedProducts[3].variants[0].id')
     # extractor: postid = $.data.id
@@ -74,7 +69,7 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
                 "price": "{{price}}",
             },
         ],
-    }, token='access_token')
+    }, token='consumer_token')
     # assertion 3.assertion: responseJson equal 3147.78
     expect(_resp3).json('$.data.totalToPay').equals('3147.78')
     # extractor: order_id = $.data.orderId
@@ -83,9 +78,7 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
     _resp4 = ctx.api.orders.create(body={
         "inviterCampaign": {},
         "id": "{{order_id}}",
-        "paymentInfo": {
-            "paymentMethodId": "{{pay_method_id}}",
-        },
+        "shippingAddressId": "41ef3748-0466-4e91-95c2-a7983d14e151",
         "contact": {
             "phoneNumber": "+13022814650",
             "email": "linda.zhou.ext+12@1m.app",
@@ -99,9 +92,8 @@ def test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_
             "externalId": "3778787a-2c96-4c9e-bea8-580aac281757",
             "eventSourceUrl": "https://release.pear.us/checkout",
         },
-    }, token='access_token', params={'order_id': '{{order_id}}'})
+    }, token='consumer_token', params={'order_id': '{{order_id}}'}, app_headers=True)
     # assertion 4.code: responseJson equal 200
-    print("STEP4DBG", _resp4.status_code, _resp4.text[:400], "oid=", vars.get('order_id'))
     expect(_resp4).json('$.code').equals('200')
     # assertion 4.assertion: responseJson exists 
     expect(_resp4).json('$.data.orderNumbers[0]').exists()

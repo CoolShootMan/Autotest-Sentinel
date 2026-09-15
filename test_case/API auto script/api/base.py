@@ -35,6 +35,7 @@
 """
 from __future__ import annotations
 
+import logging
 import re
 
 #: 被测系统的应用级凭据头（值经上下文渲染，不硬编码密钥）
@@ -48,6 +49,8 @@ APP_HEADERS = {
 SKIP_NOTIFICATIONS_HEADERS = {"X-Skip-Notifications": "email,sms"}
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+_log = logging.getLogger("api.framework")
 
 
 def _pv(*pairs, extra: dict | None = None) -> dict | None:
@@ -160,29 +163,14 @@ class BaseApi:
         if headers:
             hdrs.update(headers)
 
-        # --- 未配置角色 token 时的安全 fallback ---
-        # 迁移后大量用例引用 linda01_token / admin_token / merchant_token 等角色 token，
-        # 但环境文件里只有通用 token 有值；发送 ``Bearer {{linda01_token}}`` 会被 WAF 直接 403。
-        # 此处对未解析/为空的 Authorization 做一次性 fallback 到 ``token``，并打 warn 日志，
-        # 保证框架能先跑起来；后续应把各角色真实 token 补进环境文件。
-        auth = hdrs.get("Authorization")
-        if auth and self.ctx is not None:
-            rendered = self.ctx.render(auth)
-            if "{{" in rendered or rendered.strip() == "Bearer" or rendered.strip() == "":
-                fallback = self.ctx.render(self.bearer("token"))
-                if fallback and "{{" not in fallback and fallback.strip() not in ("Bearer", ""):
-                    import logging
-                    logging.getLogger("api.framework").warning(
-                        "角色 token '%s' 未定义或为空，已 fallback 到通用 token；"
-                        "建议将真实 token 补进 config/environments/<ENV>.yaml。",
-                        token,
-                    )
-                    hdrs["Authorization"] = fallback
-        # --------------------------------------------
+        # --- 角色 token 即时续期 ---
+        # 在发请求前，先检查 token 是否即将过期（< 30s）或已过期/为空。
+        # 如果是，立即刷新对应角色的 token，避免 403 后再重试的往返开销。
+        self._try_refresh_token_if_needed(token)
 
         path_vars = self._resolve_path_vars(path_vars)
 
-        return self.client.request(
+        resp = self.client.request(
             method, path,
             headers=hdrs,
             params=params,
@@ -192,6 +180,85 @@ class BaseApi:
             allow_redirects=allow_redirects,
         )
 
+        # --- 401/403 token 过期自动续期 + 重试 ---
+        # 后端 JWT 过期 → 403 "please log in again"；
+        # JWT 缺失/无效 → 401 "Unauthorized"（JwtAuthGuard 直接拒绝）。
+        # 两种情况都自动刷新对应角色 token 并重试一次。
+        if token and self._is_token_expired_response(resp):
+            try:
+                from core import token_refresh
+                known = set(token_refresh.RECIPES) | set(token_refresh.ALIASES)
+            except ImportError:
+                known = set()
+            if token in known:
+                _log.info("[token] 请求 %s %s 收到 %d，尝试续期 %s 后重试",
+                          method, path, resp.status_code, token)
+                new_token = self._refresh_token_by_name(token)
+                if new_token:
+                    # 重新构建 headers（token 已更新到 ctx，重新渲染即可）
+                    hdrs2 = dict(hdrs)
+                    if token:
+                        hdrs2["Authorization"] = self.bearer(token)
+                    resp = self.client.request(
+                        method, path,
+                        headers=hdrs2,
+                        params=params,
+                        body=body,
+                        path_vars=path_vars,
+                        timeout=timeout,
+                        allow_redirects=allow_redirects,
+                    )
+        return resp
+
     # --- 调试 -----------------------------------------------------------
     def __repr__(self) -> str:
         return f"<{type(self).__name__} domain={self.domain!r}>"
+
+    # --- token 即时续期辅助 ---------------------------------------------
+    def _try_refresh_token_if_needed(self, token: str | None) -> None:
+        """在发请求前检查 token 是否即将过期，如果是则立即刷新。
+
+        阈值 30 秒：剩余寿命 < 30s 或已过期/为空时触发刷新。
+        这是对 ``conftest._ensure_runtime_tokens``（用例级续期）的补充，
+        覆盖「同一条用例内多步请求耗时 > token 寿命」的场景。
+        """
+        if not token or not _IDENT_RE.match(token) or self.ctx is None:
+            return
+        try:
+            from core import token_refresh
+        except ImportError:
+            return
+        # 只处理框架已知的角色 token（RECIPES / ALIASES 里的）
+        known = set(token_refresh.RECIPES) | set(token_refresh.ALIASES)
+        if token not in known:
+            return
+        current = self.ctx.get(token)
+        if not current or not isinstance(current, str):
+            # token 为空，尝试刷新
+            self._refresh_token_by_name(token)
+            return
+        left = token_refresh.seconds_left(current)
+        if left is not None and left < 30:
+            _log.debug("[token] %s 剩余 %ds < 30s，发请求前即时续期", token, int(left))
+            self._refresh_token_by_name(token)
+
+    def _refresh_token_by_name(self, token: str) -> str | None:
+        """按名称刷新角色 token，写入 ctx 和 runtime 文件。"""
+        if not token or self.ctx is None:
+            return None
+        try:
+            from core import token_refresh
+        except ImportError:
+            return None
+        return token_refresh.refresh_by_name(self.ctx, token)
+
+    @staticmethod
+    def _is_token_expired_response(resp) -> bool:
+        """判断响应是否为 JWT 过期/无效的 401 或 403。"""
+        try:
+            from core import token_refresh
+            return token_refresh.is_token_expired_response(
+                resp.status_code, resp.body_preview(500)
+            )
+        except Exception:
+            return False

@@ -290,7 +290,7 @@ def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_i
                     'costPrice': 0,
                     'isExcluded': False,
                     'isDefault': False,
-                    'priceAnchor': '{{CompareAtPrice}}',
+                    'priceAnchor': vars['CompareAtPrice'],
                     'merchantProductVariantId': 'c3f9aa79-fd7b-44cd-a450-5658e780b623',
                     'commissionRateForPromoters': 0,
                 },

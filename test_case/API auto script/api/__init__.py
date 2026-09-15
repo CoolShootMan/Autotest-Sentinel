@@ -20,6 +20,7 @@ from api.cart import CartApi
 from api.earnings import EarningsApi
 from api.events import EventsApi
 from api.external import ExternalApi
+from api.forms import FormsApi
 from api.links import LinksApi
 from api.merchants import MerchantsApi
 from api.misc import MiscApi
@@ -44,6 +45,7 @@ __all__ = [
     "EarningsApi",
     "EventsApi",
     "ExternalApi",
+    "FormsApi",
     "LinksApi",
     "MerchantsApi",
     "MiscApi",
@@ -119,6 +121,11 @@ class Api:
     def external(self) -> ExternalApi:
         """外部依赖（Stripe 等，仅联调）（6 个接口）。"""
         return self._svc("external", ExternalApi)
+
+    @property
+    def forms(self) -> FormsApi:
+        """表单（媒体表单创建）（1 个接口）。"""
+        return self._svc("forms", FormsApi)
 
     @property
     def links(self) -> LinksApi:

@@ -424,7 +424,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     },
     'isMultipleDaysPassEnabled': True,
     'multipleDaysPass': {
-        'days': '{{multipleDaysPass_days}}',
+        'days': json.loads(vars['multipleDaysPass_days']),
     },
     'isInclusionsEnabled': False,
     'inclusions': [],
@@ -453,7 +453,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
 }, token='yuxiao999_token')
     ctx.extract('productId', _resp5, '$.data.id')
     # step 7: 978083e9-c8fa-43a6-98fb-69cdf3d1b8f5
-    _resp7 = ctx.api.events.v2_show_in_post(body={
+    _resp7 = ctx.api.events.v2_show_in_post(event_id='{{event_id}}', body={
         "productIds": [
             "{{productId}}",
         ],
@@ -544,4 +544,4 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp12, 'orderNumber')
     # step 13: Check the merchant order detail exist ticket Redemptions contents
-    _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}'})
+    _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')

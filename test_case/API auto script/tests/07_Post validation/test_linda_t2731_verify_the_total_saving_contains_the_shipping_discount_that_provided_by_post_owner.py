@@ -68,8 +68,10 @@ def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_dis
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: buy now
     # === pre-script（由 Apifox customScript 翻译）===
-    # Pre-request Script
-    pm.environment.unset("order_id")
+    # Pre-request Script: pm.environment.unset("order_id")
+    # → Python 等价：清除上下文中的 order_id 变量
+    if 'order_id' in vars:
+        del vars['order_id']
 
     _resp2 = ctx.api.orders.buy_now(body={
         "updateCartItems": [

@@ -116,10 +116,11 @@ Agent 元数据说明（保留字段，禁止删除）：
 
 ### 2. API 自动化（pytest + requests + 业务门面）
 - 位置：`test_case/API auto script/`
-- 用例：`tests/<NN_Folder>/test_*.py`（155+ 条已迁移用例，22 个业务文件夹）
-- 门面：`api/`（auth / events / posts / orders / products / cart …）
+- 用例：`tests/<NN_Folder>/test_*.py`（155+ 条已迁移用例，22 个业务文件夹）+ `tests/00_UI Prefill/`（UI 自动化数据预配置）
+- 门面：`api/`（auth / events / posts / orders / products / cart / forms / …）
 - 框架：`core/`（http_client / context / assertions / jsonpath / templating / db / **case_audit**）
 - harness：`tools/case_completeness.py`、`tools/agent_loop.py`、`core/case_audit.py`
+- UI 预配置工具：`tools/prefill/`（prefill_runner.py + Apifox CLI JSON + ui_workflow/）
 - 配置：`config/environments/*.yaml` + `{{VAR}}` 占位符渲染，`.env` 管理凭据
 - 套件：`suites/*.yaml`（如 `linda.yaml`）
 - 入口：`python run_suite.py suites/linda.yaml` 或 `python -m pytest`
@@ -154,6 +155,7 @@ def test_slug(ctx):
 - 断言：`expect(resp).json('$.code').equals('200')`，支持 `.equals / .contains / .is_gt / .exists` 等
 - 请求体：`body` 传 `str`（模板，内部渲染 `{{变量}}` 后原样发送）或 `dict`/`list`（自动 JSON 序列化 + 递归渲染占位符，推荐）
 - 鉴权：`token='<变量名>'` 自动拼 `Authorization`；`app_headers=True` 携带应用级凭据头
+- 数据库查询：`ctx.run_db(connection_id, sql, [("var", "$[0].column")])` 执行 SQL 并提取结果到上下文变量；`ctx.db_query_one(sql, column="id", var_name="promoterId")` 封装了"查单行单列→写入变量"的常见模式（默认连接 112809=Release DB）
 
 ### 硬性规范
 - 占位符永远双花括号 `{{var}}`，单花括号 `{var}` 会原样发出导致 400
@@ -162,6 +164,16 @@ def test_slug(ctx):
 - 敏感信息（token / 密码 / SQL 密码）禁止提交，只存在 `.yaml` 实体与 `.env`，模板文件 `*.yaml.template` 必须脱敏
 - 接口下线/字段弃用用 `@pytest.mark.xfail`；跑不动/缺依赖用 `@pytest.mark.skip`
 - **H.1 audit 的 rule_id 是这套规范的机器化版本，命中即违规**
+
+### UI 自动化数据预配置（Prefill）
+- 位置：`tools/prefill/`（原 `test_case/UI/Test_Katana/api/` 迁移而来）
+- `prefill_runner.py`：脱离 Apifox CLI 直接跑 JSON 集合的 Node.js runner（`prefill_shim.js`）
+- `prefill_env_override.json`：环境变量覆盖（staging/release 的 email/password/vanityUrl 等）
+- `ui_workflow/duplicate_post.py`：批量复制 post 的工作流脚本
+- `manual_event.py`：手动创建 event 的独立脚本
+- Apifox CLI 集合 JSON：`UI Automation Data Pre-configuration staging & release env - no sql.apifox-cli.json`
+- pytest 迁移版：`tests/00_UI Prefill/test_ui_prefill_data_configuration.py`（100 步，从 Apifox 集合 1:1 迁移为 `ctx.api.*` 门面调用）
+- 新增的 API 门面方法（为 prefill 引入）：`users.delete_by_user_id` / `users.set_password` / `users.external_user_import_partner` / `users.external_user_import_promoter` / `users.promoter_associations_connect` / `storefront.update` / `storefront.shop` / `storefront.layout` / `forms.create` / `promoters.authorize_product` / `promoters.product_public_detail` / `posts.curator_by_post_id` / `posts.curator_sync_promoters` / `merchants.shipping_options_by_merchant_id`
 
 ### 异常处理（API）
 <!-- 本小节为 pytest 断言提供依据：API 异常分支、错误码、降级行为。 -->

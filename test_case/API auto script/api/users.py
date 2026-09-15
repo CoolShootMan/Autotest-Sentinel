@@ -122,3 +122,83 @@ class UsersApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def delete_by_user_id(
+        self, *,
+        user_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """DELETE /users/{{user_id}}"""
+        return self._call(
+            "DELETE", '/users/{{user_id}}',
+            path_vars=_pv(("user_id", user_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def set_password(
+        self, *,
+        user_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """PUT /users/{{user_id}}/password"""
+        return self._call(
+            "PUT", '/users/{{user_id}}/password',
+            path_vars=_pv(("user_id", user_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def external_user_import_partner(
+        self, *,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """POST /users/tool/external-user-import/partner"""
+        return self._call(
+            "POST", '/users/tool/external-user-import/partner',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def external_user_import_promoter(
+        self, *,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """POST /users/tool/external-user-import/promoter"""
+        return self._call(
+            "POST", '/users/tool/external-user-import/promoter',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def promoter_associations_connect(
+        self, *,
+        user_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """POST /users/promoter-associations/connect/{{user_id}}"""
+        return self._call(
+            "POST", '/users/promoter-associations/connect/{{user_id}}',
+            path_vars=_pv(("user_id", user_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )

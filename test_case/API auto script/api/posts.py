@@ -287,6 +287,40 @@ class PostsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def curator_by_post_id(
+        self, *,
+        post_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """PATCH /posts/curator/{{post_id}}"""
+        return self._call(
+            "PATCH", '/posts/curator/{{post_id}}',
+            path_vars=_pv(("post_id", post_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def curator_sync_promoters(
+        self, *,
+        post0_id=None,
+        body=None, token=None, params=None, headers=None,
+        app_headers=True, skip_notifications=False,
+        path_vars=None,
+    ):
+        """POST /posts/curator/{{post0_id}}/promoters/sync"""
+        return self._call(
+            "POST", '/posts/curator/{{post0_id}}/promoters/sync',
+            path_vars=_pv(("post0_id", post0_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
     def curator_from_event(
         self, *,
         body=None, token=None, params=None, headers=None,

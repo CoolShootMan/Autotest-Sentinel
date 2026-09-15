@@ -362,7 +362,7 @@ def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx):
     # extractor: productId = productId
     ctx.extract('productId', _resp2, '$.data.id')
     # step 3: ae33ea1d-f9bd-443c-8fac-57745d9862fe
-    _resp3 = ctx.api.products.by_product_id(body=None, token='merchant_token')
+    _resp3 = ctx.api.products.by_product_id(productId='{{productId}}', body=None, token='linda01_token')
     vars['deletedProductId'] = vars.get('productId')
     # --- assertions: no fake-green (non-4xx/5xx) ---
     assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
