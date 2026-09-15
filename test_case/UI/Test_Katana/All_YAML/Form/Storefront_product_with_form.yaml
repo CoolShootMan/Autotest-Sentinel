@@ -28,8 +28,8 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
     sleep_after_checked: 500
 
     # Fill form title and subtitle
-    fill_form_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'product form must be filled' }
-    fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'sub title' }
+    fill_form_title: { role: 'textbox', name: 'Enter a title', value: 'product form must be filled' }
+    fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle"', value: 'sub title' }
 
     # Add short text field
     R_click_add_field: { locator: '[data-testid="mui-button"]' }
@@ -177,7 +177,7 @@ testT4970:  # [LAST: PASSED 2026-05-06]
 
     # Fix: delete the 3rd empty option, update second option to unique value
     click_add_attempt_5: { role: 'button', name: 'Add', exact: true }
-    click_delete_option_3: { locator: '[data-testid="mui-icon-button"]', index: 2 }
+    click_delete_option_3: { role: 'button', name: 'Remove option', index: 2 }
     sleep_delete_option: 500
     fill_option_2_unique: { role: 'textbox', name: 'Enter option', index: 1, value: 'xx1' }
     click_add_final: { role: 'button', name: 'Add', exact: true }
@@ -208,11 +208,9 @@ testT4860:  # [LAST: PASSED 2026-05-06]
 
     # Step 2: Event detail page -> click Post card (link text)
     R_click_post_1: { role: "tab", name: "Post", exact: true }
-    R_click_post: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
-    sleep_step3: 3000
 
     # Step 3: Event detail page -> click Post card (link text)
-    R_click_edit: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
+    R_click_edit: { role: 'button', name: 'Content', exact: true, index: 0 }
     sleep_step4: 1500
 
     # Click Description to focus editor, then insert CTA Button
@@ -270,10 +268,9 @@ testT4867:  # [LAST: PASSED 2026-05-06]
 
     # Step 2: Event detail page -> click Posts tab, then click Post card
     R_click_post_tab: { role: "tab", name: "Post", exact: true }
-    R_click_post: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
 
     # Step 3: Event detail page -> click Post card (link text)
-    R_click_edit: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
+    R_click_edit: { role: 'button', name: 'Content', exact: true, index: 0 }
     sleep_step4: 1500
 
     # Click on CTA button in editor to select it
@@ -309,8 +306,13 @@ testT4281:  # [LAST: PASSED 2026-05-06]
     sleep_after_open: 3000
 
     # Open "Add new" form configuration
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
-    sleep_after_click: 1000
+    R_click_add_new_form:
+      { locator: "[data-testid='AddIcon']", index: 1, quick: true }
+    sleep_add: 500
+
+    R_click_Create_form:
+      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+    sleep_add: 500
 
     # Step 5: Clear recipient email and try to save
     fill_empty_email: { role: 'textbox', name: 'Recipient Email', value: '' }
@@ -326,7 +328,7 @@ testT4281:  # [LAST: PASSED 2026-05-06]
 
     # Step 7: Fill valid email
     fill_valid_email: { role: 'textbox', name: 'Recipient Email', value: 'aric.zheng.ext@1m.app' }
-    fill_form_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'xx' }
+    fill_form_title: { role: 'textbox', name: 'Enter a title', value: 'xx' }
     R_click_continue_3: { role: 'button', name: 'Continue' }
     sleep_after_continue_3: 2000
     verify_confirmation: { text: 'Form confirmation message' }
@@ -344,8 +346,13 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     sleep_after_open: 3000
 
     # Open form creation
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
-    sleep_after_click: 1000
+    R_click_add_new_form:
+      { locator: "[data-testid='AddIcon']", index: 1, quick: true }
+    sleep_add: 500
+
+    R_click_Create_form:
+      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+    sleep_add: 500
 
     # --- Step 1: Empty title -> verify error ---
     R_click_continue_1: { role: 'button', name: 'Continue' }
@@ -353,34 +360,34 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     verify_title_error: { text: 'Please enter a Title' }
 
     # --- Step 2: Fill title only, no subtitle, email icon OFF, save ---
-    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'test title' }
+    fill_title: { role: 'textbox', name: 'Enter a title', value: 'test title' }
     R_click_continue_2: { role: 'button', name: 'Continue' }
     sleep_after_continue_2: 2000
-    verify_confirmation_1: { text: 'Form confirmation message' }
-    R_click_close_preview_1: { locator: '[data-testid="close-icon"]' }
-    sleep_after_close_1: 500
+    verify_confirmation_1: { text: 'After form submission' }
+    R_click_back_icon_1: { locator: '[data-testid="LeftLineIcon"]' }
+    sleep_after_back_icon: 500
 
     # --- Step 3: Add subtitle, email icon OFF, save ---
-    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'xxxx subtitle' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'xxxx subtitle' }
     R_click_continue_3: { role: 'button', name: 'Continue' }
     sleep_after_continue_3: 2000
-    verify_confirmation_2: { text: 'Form confirmation message' }
-    R_click_close_preview_2: { locator: '[data-testid="close-icon"]' }
-    sleep_after_close_2: 500
+    verify_confirmation_2: { text: 'After form submission' }
+    R_click_back_icon_2: { locator: '[data-testid="LeftLineIcon"]' }
+    sleep_after_back_icon: 500
 
     # --- Step 4: Toggle email icon ON, save ---
     R_click_email_icon_on: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r > path' }
     R_click_continue_4: { role: 'button', name: 'Continue' }
     sleep_after_continue_4: 2000
-    verify_confirmation_3: { text: 'Form confirmation message' }
-    R_click_close_preview_3: { locator: '[data-testid="close-icon"]' }
-    sleep_after_close_3: 500
+    verify_confirmation_3: { text: 'After form submission' }
+    R_click_back_icon_3: { locator: '[data-testid="LeftLineIcon"]' }
+    sleep_after_back_icon: 500
 
     # --- Step 5: Toggle email icon OFF, save ---
     R_click_email_icon_off: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
     R_click_continue_5: { role: 'button', name: 'Continue' }
     sleep_after_continue_5: 2000
-    verify_confirmation_4: { text: 'Form confirmation message' }
+    verify_confirmation_4: { text: 'After form submission' }
 
   expect_result:
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
@@ -399,11 +406,11 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     # Step 2: Event detail page -> click Posts tab, then click Post card
     R_click_post_tab: { role: "tab", name: "Post", exact: true }
-    R_click_post: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
+    sleep_step3: 1000
 
     # Step 3: Event detail page -> click Post card (link text)
-    R_click_edit: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
-    sleep_step4: 3000
+    R_click_edit: { role: 'button', name: 'Content', exact: true, index: 0 }
+    sleep_step4: 1500
 
     R_click_description: { role: 'textbox', name: 'Description' }
     R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
@@ -438,11 +445,10 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_p2_step2: 3000
 
     R_click_post_tab_p2: { role: "tab", name: "Post", exact: true }
-    R_click_post_p2: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
-    sleep_p2_step3: 3000
+    sleep_p2_step3: 1000
 
-    R_click_edit_p2: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
-    sleep_p2_step4: 3000
+    R_click_edit_p2: { role: 'button', name: 'Content', exact: true, index: 0 }
+    sleep_p2_step4: 1500
 
     R_click_cta_btn_in_editor: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
     sleep_after_select_btn: 500
@@ -473,11 +479,10 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_p4_step2: 3000
 
     R_click_post_tab_p4: { role: "tab", name: "Post", exact: true }
-    R_click_post_p4: { locator: '[data-testid="base-more-horiz-icon-cta"]', exact: true, index: 0 }
-    sleep_p4_step3: 3000
+    sleep_p4_step3: 1000
 
-    R_click_edit_p4: { role: 'menuitem', name: 'Edit post', exact: true, index: 0 }
-    sleep_p4_step4: 3000
+    R_click_edit_p4: { role: 'button', name: 'Content', exact: true, index: 0 }
+    sleep_p4_step4: 1500
     R_click_cta_btn_delete: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
     sleep_after_select_delete: 500
     R_click_delete_btn: { role: 'button', name: 'Delete' }
@@ -498,12 +503,17 @@ testT4847:  # [LAST: PASSED 2026-05-06]
     sleep_after_open: 3000
 
     # Open form creation
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
-    sleep_after_click: 1000
+    R_click_add_new_form:
+      { locator: "[data-testid='AddIcon']", index: 1, quick: true }
+    sleep_add: 500
+
+    R_click_Create_form:
+      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+    sleep_add: 500
 
     # Fill form title and subtitle
-    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'auto_test help-text' }
-    fill_subtitle: { role: 'textbox', name: 'Enter subtitle, e.g. "Updates"', value: 'test help text' }
+    fill_title: { role: 'textbox', name: 'Enter a title', value: 'auto_test help-text' }
+    fill_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'test help text' }
 
     # --- Step 1: Edit Name field with help text ---
     click_view_name_options: { role: 'button', name: 'View Name options', exact: true }
@@ -591,7 +601,7 @@ testT4539:  # [LAST: BROKEN 2026-05-06]
     sleep_after_form_tab: 200
     click_right_more_cta: { locator: '.form-card:has-text("Partner_create_form") [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
     sleep_after_more_cta: 200
-    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]' }
+    click_submission_link: { role: 'menuitem', text: 'Copy link for sharing' }
 
     # Step 1: Click "Batch select" button -> checkboxes appear
     R_click_batch_select: { locator: '[data-testid="mui-button"]' }
@@ -639,7 +649,7 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     sleep_after_form_tab: 200
     click_right_more_cta: { locator: '.form-card:has-text("Partner_create_form") [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
     sleep_after_more_cta: 200
-    click_submission_link: { locator: 'a[href^="/curator/submission?formId="]' }
+    click_submission_link: { role: 'menuitem', text: 'Copy link for sharing' }
 
     sleep_after_open_submission: 3000
     verify_table_cst: { text: '(CST)' }
@@ -763,9 +773,15 @@ testT3794:  # [LAST: FAILED 2026-05-06]
     sleep_after_open: 3000
 
     # Create a new form
-    click_add_new_form: { role: 'button', locator: 'div:has(p:has-text("MyForm")) + div button:has-text("Add new")' }
+    R_click_add_new_form:
+      { locator: "[data-testid='AddIcon']", index: 1, quick: true }
+    sleep_add: 500
+
+    R_click_Create_form:
+      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+    sleep_add: 500
     sleep_after_click: 1000
-    fill_title: { role: 'textbox', name: 'Enter a title, e.g. "contact', value: 'form will be delete xxyyzz' }
+    fill_title: { role: 'textbox', name: 'Enter a title', value: 'form will be delete xxyyzz' }
     R_click_continue: { role: 'button', name: 'Continue' }
     sleep_after_continue: 500
     R_click_save: { role: 'button', name: 'Save' }

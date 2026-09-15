@@ -132,15 +132,17 @@ def start_autotest():
         logger.info(f"v4 layout patched: {patch_result.stdout.strip()}")
 
     # ---------------------------------------------------------
-    # NEW: Analyze all failed cases from step captures
+    # AI step-capture analysis disabled: user no longer needs this flow.
+    # Leaving the block commented rather than deleted so it can be restored
+    # if the RAG+AI repair-plan pipeline is needed again.
     # ---------------------------------------------------------
-    logger.info(f"Analyzing failed cases from step captures...")
-    analyze_script = os.path.join(BASE_DIR, 'tools', 'step_analyzer.py')
-    analyze_cmd = [sys.executable, analyze_script, "analyze", "--all-failed"]
-    logger.info(f"Running command: {' '.join(analyze_cmd)}")
-    analyze_result = subprocess.run(analyze_cmd, text=True)
-    if analyze_result.returncode != 0:
-        logger.error(f"Analysis error: {analyze_result.stderr}")
+    # logger.info(f"Analyzing failed cases from step captures...")
+    # analyze_script = os.path.join(BASE_DIR, 'tools', 'step_analyzer.py')
+    # analyze_cmd = [sys.executable, analyze_script, "analyze", "--all-failed"]
+    # logger.info(f"Running command: {' '.join(analyze_cmd)}")
+    # analyze_result = subprocess.run(analyze_cmd, text=True)
+    # if analyze_result.returncode != 0:
+    #     logger.error(f"Analysis error: {analyze_result.stderr}")
     # ---------------------------------------------------------
 
     # Get LAN IP (192.168.x.x range, excluding virtual NICs/WSL)

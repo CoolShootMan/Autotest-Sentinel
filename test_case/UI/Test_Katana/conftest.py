@@ -96,6 +96,23 @@ def pytest_addoption(parser):
     except ValueError:
         pass
 
+import os
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_configure(config):
+    """
+    Local debugging should launch a real (headed) browser so the engineer can
+    watch the UI. CI (GitHub Actions) sets CI=true and MUST stay headless
+    (the hosted runner has no display). We force headed ONLY when CI is unset,
+    so a bare `pytest` locally shows the browser with no extra flag, while the
+    headless config in pytest.ini is left untouched for the daily CI run.
+    """
+    if not os.environ.get("CI"):
+        try:
+            config.option.headed = True
+        except Exception:
+            pass
+
 @pytest.fixture()
 def browser_context_args(browser_context_args, playwright, request):
     """
