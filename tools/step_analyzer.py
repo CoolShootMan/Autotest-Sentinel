@@ -544,7 +544,6 @@ RESPOND WITH JSON ONLY (no markdown):
                 # Exponential backoff: wait longer each time before retry
                 _time_mod.sleep(_429_backoff)
                 _429_backoff = min(_429_backoff * 2, 16)  # max 16s
-                global _last_gemini_call_time
                 _last_gemini_call_time = 0  # reset so next call doesn't double-wait
                 if _rotate_gemini_key():
                     continue
