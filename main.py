@@ -62,36 +62,44 @@ def start_autotest():
         "-m",
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
-        '--headed',
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
         '--step-capture=on-failure'
     ]
+    # --headed 不能写死：GitHub 托管 runner 没有显示器，headed 会让所有用例在
+    # setup 阶段直接 ERROR（Missing X server or $DISPLAY，见 run #8 的日志）。
+    # CI 一律 headless；本地（非 CI）自动补上 --headed 便于肉眼调试。
+    if not os.environ.get('CI'):
+        pytest_args.append('--headed')
     logger.info(f"Running with YAMLs: {yaml_files}")
 
     # ── 1. Fetch cookies for all 3 test accounts ──
-    # cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
-    # logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
-    # cookie_result = subprocess.run(
-    #     [sys.executable, cookie_script],
-    #     capture_output=True, text=True
-    # )
-    # logger.info(f"Cookie script done: {cookie_result.stdout}")
-    # if cookie_result.returncode != 0:
-    #     logger.error(f"Cookie script stderr: {cookie_result.stderr}")
+    # 仅 CI 需要：托管 runner 是全新容器，仓库里没有 release 环境的 cookie 文件，
+    # 不先登录拿 cookie，后面所有需要登录态的用例都会挂（run #7 已验证 CI 上可正常登录）。
+    # 本地保持注释状态（本地已有现成 cookie 文件，按需手动执行 tools/get_all_cookies.py）。
+    if os.environ.get("CI"):
+        cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
+        logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
+        cookie_result = subprocess.run(
+            [sys.executable, cookie_script],
+            capture_output=True, text=True
+        )
+        logger.info(f"Cookie script done: {cookie_result.stdout}")
+        if cookie_result.returncode != 0:
+            logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
-    # ── 2. Login with latest cookies and dismiss EDU popups ──
-    # dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
-    # logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
-    # dismiss_result = subprocess.run(
-    #     [sys.executable, dismiss_script],
-    #     capture_output=True, text=True
-    # )
-    # logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
-    # if dismiss_result.returncode != 0:
-    #     logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+        # ── 2. Login with latest cookies and dismiss EDU popups ──
+        dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
+        logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
+        dismiss_result = subprocess.run(
+            [sys.executable, dismiss_script],
+            capture_output=True, text=True
+        )
+        logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
+        if dismiss_result.returncode != 0:
+            logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
 
     # ── 3. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
@@ -207,10 +215,19 @@ def start_autotest():
     logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
     logger.info(f"Local Allure: auto-opened")
     logger.info(f"====================================")
-    try:
-        subprocess.run(open_cmd)
-    except Exception:
-        pass
+    # allure open 只能在本地跑：它会启动一个内嵌 jetty 服务器并永久阻塞，
+    # 在 CI 上会把 job 挂死直到 timeout（run #8 被 cancelled 的直接原因）。
+    # CI 的报告通过 workflow 的 upload-artifact 步骤上传。
+    if not os.environ.get("CI"):
+        try:
+            subprocess.run(open_cmd)
+        except Exception:
+            pass
+
+    # 透传 pytest 退出码：有失败用例时 CI job 显示失败，避免假绿。
+    if result.returncode != 0:
+        logger.error(f"pytest exited with code {result.returncode}")
+        sys.exit(result.returncode)
 
 
 
