@@ -76,30 +76,29 @@ def start_autotest():
     logger.info(f"Running with YAMLs: {yaml_files}")
 
     # ── 1. Fetch cookies for all 3 test accounts ──
-    # 仅 CI 需要：托管 runner 是全新容器，仓库里没有 release 环境的 cookie 文件，
-    # 不先登录拿 cookie，后面所有需要登录态的用例都会挂（run #7 已验证 CI 上可正常登录）。
-    # 本地保持注释状态（本地已有现成 cookie 文件，按需手动执行 tools/get_all_cookies.py）。
-    if os.environ.get("CI"):
-        cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
-        logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
-        cookie_result = subprocess.run(
-            [sys.executable, cookie_script],
-            capture_output=True, text=True
-        )
-        logger.info(f"Cookie script done: {cookie_result.stdout}")
-        if cookie_result.returncode != 0:
-            logger.error(f"Cookie script stderr: {cookie_result.stderr}")
+    # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），
+    # 过期后所有需要登录态的用例会以 "locator not found" 假失败，极难察觉。
+    # 所以不要用 `if CI` 把本地排除掉——每次运行前统一重新登录 3 个账号拿最新 cookie。
+    cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
+    logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
+    cookie_result = subprocess.run(
+        [sys.executable, cookie_script],
+        capture_output=True, text=True
+    )
+    logger.info(f"Cookie script done: {cookie_result.stdout}")
+    if cookie_result.returncode != 0:
+        logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
-        # ── 2. Login with latest cookies and dismiss EDU popups ──
-        dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
-        logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
-        dismiss_result = subprocess.run(
-            [sys.executable, dismiss_script],
-            capture_output=True, text=True
-        )
-        logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
-        if dismiss_result.returncode != 0:
-            logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+    # ── 2. Login with latest cookies and dismiss EDU popups ──
+    dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
+    logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
+    dismiss_result = subprocess.run(
+        [sys.executable, dismiss_script],
+        capture_output=True, text=True
+    )
+    logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
+    if dismiss_result.returncode != 0:
+        logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
 
     # ── 3. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
