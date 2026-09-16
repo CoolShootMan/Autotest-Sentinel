@@ -381,11 +381,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_retail(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_retail(ctx: "Context"):
     """Apifox case #7542989: Lury_T2243_Consumer_6_2_Mixed_items_enabled_disabled_my_items_resell_retail"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -516,7 +522,7 @@ def test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_re
     ctx.extract('promoter_access_token', _resp12, '$.data.token')
     # step 13: get promoter orders
     _resp13 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):

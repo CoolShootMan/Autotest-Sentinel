@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class EventsApi(BaseApi):
 
     def bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_orders_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/orders/summary  （用例中出现 2 次）"""
         return self._call(
             "GET", '/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/orders/summary',
@@ -31,10 +37,11 @@ class EventsApi(BaseApi):
 
     def bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff"""
         return self._call(
             "GET", '/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff',
@@ -46,10 +53,11 @@ class EventsApi(BaseApi):
 
     def bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff-summary"""
         return self._call(
             "GET", '/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/staff-summary',
@@ -61,10 +69,11 @@ class EventsApi(BaseApi):
 
     def bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/summary"""
         return self._call(
             "GET", '/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/summary',
@@ -76,10 +85,11 @@ class EventsApi(BaseApi):
 
     def bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_tipped_orders(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/tipped-orders"""
         return self._call(
             "GET", '/product-event/bdc4f6e7-8f5d-4dae-8c2b-d7ae1b43b320/metrics/tipped-orders',
@@ -91,10 +101,11 @@ class EventsApi(BaseApi):
 
     def bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_promoters(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/promoters"""
         return self._call(
             "GET", '/product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/promoters',
@@ -106,10 +117,11 @@ class EventsApi(BaseApi):
 
     def bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/summary"""
         return self._call(
             "GET", '/product-event/bea4cfb9-a9a6-4a1f-a1a8-96f7e9418d03/metrics/summary',
@@ -121,11 +133,12 @@ class EventsApi(BaseApi):
 
     def by_co_hostid(
         self, *,
-        co_hostid=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        co_hostid: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /event-collaborators/{{co-hostid}}  （用例中出现 3 次）"""
         return self._call(
             "DELETE", '/event-collaborators/{{co-hostid}}',
@@ -137,11 +150,12 @@ class EventsApi(BaseApi):
 
     def collaborators(
         self, *,
-        eventId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        eventId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /event-collaborators?eventId={{eventId}}  （人工补充）
 
         未出现在 Apifox 用例里 —— 原始用例不需要（当时环境干净）。补它的目的：
@@ -161,11 +175,12 @@ class EventsApi(BaseApi):
 
     def by_dup_event_id(
         self, *,
-        dup_event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        dup_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /product-event/{{dup_event_id}}  （用例中出现 9 次）"""
         return self._call(
             "PUT", '/product-event/{{dup_event_id}}',
@@ -177,11 +192,12 @@ class EventsApi(BaseApi):
 
     def by_event_id(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /product-event/{{event_id}}  （用例中出现 6 次）"""
         return self._call(
             "DELETE", '/product-event/{{event_id}}',
@@ -193,10 +209,11 @@ class EventsApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /event-collaborators  （用例中出现 3 次）"""
         return self._call(
             "POST", '/event-collaborators',
@@ -208,10 +225,11 @@ class EventsApi(BaseApi):
 
     def dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_discount_orders(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/discount-orders"""
         return self._call(
             "GET", '/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/discount-orders',
@@ -223,10 +241,11 @@ class EventsApi(BaseApi):
 
     def dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_orders_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/orders/summary"""
         return self._call(
             "GET", '/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/orders/summary',
@@ -238,10 +257,11 @@ class EventsApi(BaseApi):
 
     def dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/summary"""
         return self._call(
             "GET", '/product-event/dad4b563-4eaf-47cd-a825-e63d61e48de1/metrics/summary',
@@ -253,10 +273,11 @@ class EventsApi(BaseApi):
 
     def default_catalog(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/default-catalog  （用例中出现 10 次）"""
         return self._call(
             "GET", '/product-event/default-catalog',
@@ -268,10 +289,11 @@ class EventsApi(BaseApi):
 
     def fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/fb5df095-b68d-45f6-adc0-2211428d0a8c/metrics/summary  （用例中出现 2 次）"""
         return self._call(
             "GET", '/product-event/fb5df095-b68d-45f6-adc0-2211428d0a8c/metrics/summary',
@@ -283,10 +305,11 @@ class EventsApi(BaseApi):
 
     def guests(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /event/guests  （用例中出现 3 次）"""
         return self._call(
             "POST", '/event/guests',
@@ -298,11 +321,12 @@ class EventsApi(BaseApi):
 
     def guests_batch(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /event/{{event_id}}/guests/batch  （用例中出现 3 次）"""
         return self._call(
             "DELETE", '/event/{{event_id}}/guests/batch',
@@ -314,11 +338,12 @@ class EventsApi(BaseApi):
 
     def lineup(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/{{event_id}}/lineup"""
         return self._call(
             "POST", '/product-event/{{event_id}}/lineup',
@@ -330,11 +355,12 @@ class EventsApi(BaseApi):
 
     def lineup_by_lineup_id(
         self, *,
-        event_id=None, lineup_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None, lineup_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /product-event/{{event_id}}/lineup/{{lineup_id}}  （用例中出现 2 次）"""
         return self._call(
             "PUT", '/product-event/{{event_id}}/lineup/{{lineup_id}}',
@@ -346,10 +372,11 @@ class EventsApi(BaseApi):
 
     def lineup_l_lineup_id(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /product-event/{{event_id}}/lineup/{l{lineup_id}}
 
         .. warning:: 路径含畸形占位符（迁移遗留），已原样保留。"""
@@ -363,11 +390,12 @@ class EventsApi(BaseApi):
 
     def lineup_transactions(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/{{event_id}}/lineup-transactions"""
         return self._call(
             "POST", '/product-event/{{event_id}}/lineup-transactions',
@@ -379,10 +407,11 @@ class EventsApi(BaseApi):
 
     def list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/list  （用例中出现 23 次）"""
         return self._call(
             "GET", '/product-event/list',
@@ -394,11 +423,12 @@ class EventsApi(BaseApi):
 
     def metrics_summary(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/{{event_id}}/metrics/summary  （用例中出现 2 次）"""
         return self._call(
             "GET", '/product-event/{{event_id}}/metrics/summary',
@@ -410,11 +440,12 @@ class EventsApi(BaseApi):
 
     def tickets_venue_units(
         self, *,
-        productId_General_Admission_02=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        productId_General_Admission_02: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/tickets/{{productId_General_Admission_02}}/venue-units  （用例中出现 4 次）"""
         return self._call(
             "GET", '/product-event/tickets/{{productId_General_Admission_02}}/venue-units',
@@ -426,10 +457,11 @@ class EventsApi(BaseApi):
 
     def v2(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2  （用例中出现 5 次）"""
         return self._call(
             "POST", '/product-event/v2',
@@ -441,10 +473,11 @@ class EventsApi(BaseApi):
 
     def v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_batch(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/batch"""
         return self._call(
             "POST", '/product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/batch',
@@ -456,10 +489,11 @@ class EventsApi(BaseApi):
 
     def v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_media_batch_operate(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/media/batch/operate"""
         return self._call(
             "POST", '/product-event/v2/1a2e22e6-076a-4176-949b-7ab63a149b3f/media/batch/operate',
@@ -471,11 +505,12 @@ class EventsApi(BaseApi):
 
     def v2_config(
         self, *,
-        created_event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        created_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/v2/{{created_event_id}}/config"""
         return self._call(
             "GET", '/product-event/v2/{{created_event_id}}/config',
@@ -487,10 +522,11 @@ class EventsApi(BaseApi):
 
     def v2_duplicate(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/duplicate  （用例中出现 2 次）"""
         return self._call(
             "POST", '/product-event/v2/duplicate',
@@ -502,11 +538,12 @@ class EventsApi(BaseApi):
 
     def v2_lineup_batch(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/{{event_id}}/lineup/batch  （用例中出现 4 次）"""
         return self._call(
             "POST", '/product-event/v2/{{event_id}}/lineup/batch',
@@ -518,11 +555,12 @@ class EventsApi(BaseApi):
 
     def v2_media_batch_create(
         self, *,
-        created_event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        created_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/{{created_event_id}}/media/batch/create"""
         return self._call(
             "POST", '/product-event/v2/{{created_event_id}}/media/batch/create',
@@ -534,11 +572,12 @@ class EventsApi(BaseApi):
 
     def v2_media_batch_operate(
         self, *,
-        newMediaId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        newMediaId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/{{newMediaId}}/media/batch/operate"""
         return self._call(
             "POST", '/product-event/v2/{{newMediaId}}/media/batch/operate',
@@ -550,11 +589,12 @@ class EventsApi(BaseApi):
 
     def v2_show_in_post(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/{{event_id}}/show-in-post  （用例中出现 4 次）"""
         return self._call(
             "POST", '/product-event/v2/{{event_id}}/show-in-post',
@@ -566,11 +606,12 @@ class EventsApi(BaseApi):
 
     def v2_ticket_batch_v2(
         self, *,
-        event_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /product-event/v2/{{event_id}}/ticket/batch/v2  （用例中出现 5 次）"""
         return self._call(
             "POST", '/product-event/v2/{{event_id}}/ticket/batch/v2',
@@ -582,11 +623,12 @@ class EventsApi(BaseApi):
 
     def v_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_by_lineup_id(
         self, *,
-        lineup_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        lineup_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /product-event/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/{{lineup_id}}"""
         return self._call(
             "DELETE", '/product-event/1a2e22e6-076a-4176-949b-7ab63a149b3f/lineup/{{lineup_id}}',
@@ -598,14 +640,199 @@ class EventsApi(BaseApi):
 
     def v_39014a10_14e7_4cfa_993b_485f5c5485ac_metrics_summary(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /product-event/39014a10-14e7-4cfa-993b-485f5c5485ac/metrics/summary"""
         return self._call(
             "GET", '/product-event/39014a10-14e7-4cfa-993b-485f5c5485ac/metrics/summary',
             path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def ticket_hub_discovery(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """GET /events/ticket-hub/discovery"""
+        return self._call(
+            "GET", '/events/ticket-hub/discovery',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def event_co_selling_defaults(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """PATCH /catalog/event/co-selling-defaults"""
+        return self._call(
+            "PATCH", '/catalog/event/co-selling-defaults',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def ticket_hub_check_imported(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /events/ticket-hub/check-imported"""
+        return self._call(
+            "POST", '/events/ticket-hub/check-imported',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def ticket_hub_import(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /events/ticket-hub/import"""
+        return self._call(
+            "POST", '/events/ticket-hub/import',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def venue_map_create(
+        self, *,
+        venue_map_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /events/{{venue_map_event_id}}/venue-map"""
+        return self._call(
+            "POST", '/events/{{venue_map_event_id}}/venue-map',
+            path_vars=_pv(("venue_map_event_id", venue_map_event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def venue_map_associations(
+        self, *,
+        venue_map_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /events/{{venue_map_event_id}}/venue-map/associations"""
+        return self._call(
+            "POST", '/events/{{venue_map_event_id}}/venue-map/associations',
+            path_vars=_pv(("venue_map_event_id", venue_map_event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def venue_map_publish(
+        self, *,
+        venue_map_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /events/{{venue_map_event_id}}/venue-map/publish"""
+        return self._call(
+            "POST", '/events/{{venue_map_event_id}}/venue-map/publish',
+            path_vars=_pv(("venue_map_event_id", venue_map_event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def create_v2(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /product-event/v2"""
+        return self._call(
+            "POST", '/product-event/v2',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def lineup_batch(
+        self, *,
+        created_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /product-event/v2/{{created_event_id}}/lineup/batch"""
+        return self._call(
+            "POST", '/product-event/v2/{{created_event_id}}/lineup/batch',
+            path_vars=_pv(("created_event_id", created_event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def media_batch_create(
+        self, *,
+        created_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /product-event/v2/{{created_event_id}}/media/batch/create"""
+        return self._call(
+            "POST", '/product-event/v2/{{created_event_id}}/media/batch/create',
+            path_vars=_pv(("created_event_id", created_event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def ticket_batch_v2(
+        self, *,
+        created_event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /product-event/v2/{{created_event_id}}/ticket/batch/v2"""
+        return self._call(
+            "POST", '/product-event/v2/{{created_event_id}}/ticket/batch/v2',
+            path_vars=_pv(("created_event_id", created_event_id), extra=path_vars),
             params=params,
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,

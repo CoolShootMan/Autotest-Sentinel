@@ -37,6 +37,12 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.context import Context
+    from core.http_client import ApiClient
+    from core.response import ApiResponse
 
 #: 被测系统的应用级凭据头（值经上下文渲染，不硬编码密钥）
 APP_HEADERS = {
@@ -53,7 +59,7 @@ _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _log = logging.getLogger("api.framework")
 
 
-def _pv(*pairs, extra: dict | None = None) -> dict | None:
+def _pv(*pairs, extra: dict[str, Any] | None = None) -> dict[str, Any] | None:
     """组装路径参数覆盖表。
 
     接口方法把路径参数声明成可选关键字参数（默认 ``None``）：
@@ -81,7 +87,7 @@ class BaseApi:
     #: 该业务域的名称（子类覆盖），用于日志与错误信息
     domain = "base"
 
-    def __init__(self, client, ctx):
+    def __init__(self, client: "ApiClient", ctx: "Context | None" = None) -> None:
         self.client = client
         self.ctx = ctx
 
@@ -110,7 +116,7 @@ class BaseApi:
         return "Bearer " + token
 
     # --- 请求出口 -------------------------------------------------------
-    def _resolve_path_vars(self, path_vars: dict | None) -> dict | None:
+    def _resolve_path_vars(self, path_vars: dict[str, Any] | None) -> dict[str, Any] | None:
         """把 ``path_vars`` 里的模板值先按上下文解析一次。
 
         路径参数的**变量名在不同用例里并不统一**（同一个接口既可能写
@@ -132,11 +138,12 @@ class BaseApi:
             for k, v in path_vars.items()
         }
 
-    def _call(self, method: str, path: str, *, body=None, params=None,
-              token: str | None = None, headers: dict | None = None,
+    def _call(self, method: str, path: str, *, body: Any = None,
+              params: dict[str, Any] | None = None,
+              token: str | None = None, headers: dict[str, Any] | None = None,
               app_headers: bool = False, skip_notifications: bool = False,
-              path_vars: dict | None = None, timeout: int | None = None,
-              allow_redirects: bool = True):
+              path_vars: dict[str, Any] | None = None, timeout: int | None = None,
+              allow_redirects: bool = True) -> "ApiResponse":
         """本层唯一的请求出口：把「接口事实 + 调用参数」组装成一次 HTTP 请求。
 
         Args:
@@ -153,7 +160,7 @@ class BaseApi:
             timeout:           覆盖默认超时
             allow_redirects:   是否跟随重定向
         """
-        hdrs: dict = {}
+        hdrs: dict[str, str] = {}
         if app_headers:
             hdrs.update(APP_HEADERS)
         if skip_notifications:

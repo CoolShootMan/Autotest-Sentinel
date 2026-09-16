@@ -77,7 +77,13 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
+
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
 
 # Module-level constants: 长字符串 / HTML 内容从 JSON body 抽离，避免多层 \" 转义
 _EMAIL_HTML_CONTENT = (
@@ -108,7 +114,7 @@ _EMAIL_HTML_CONTENT = (
     '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
 )
 
-def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sending_email_or_sms_to_300_followers(ctx):
+def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sending_email_or_sms_to_300_followers(ctx: "Context"):
     """Apifox case #7887702: Draft_Lury_T4677_Verify_the_total_selected_followers_count_after_sending_email_o"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

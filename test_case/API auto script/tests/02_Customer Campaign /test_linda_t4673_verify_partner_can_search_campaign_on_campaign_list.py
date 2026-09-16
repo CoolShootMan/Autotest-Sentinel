@@ -125,16 +125,22 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list(ctx: "Context"):
     """Apifox case #7631212: Linda_T4673_Verify_partner_can_search_campaign_on_campaign_list"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 625a24c5-4f07-433d-87de-a920142dd9ff
     _resp1 = ctx.api.campaigns.list(body=None, params={'search': 'automation', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     # 校验1: code 与 message
     assert _j1.get('code') == 200, f"响应code错误：期望200，实际={_j1.get('code')!r}"
     assert _j1.get('message') == 'success', f"响应message错误：期望success，实际={_j1.get('message')!r}"
@@ -146,7 +152,7 @@ def test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list(ctx):
     assert isinstance(_d1.get('pageSize'), (int, float)), f"data.pageSize不是数字，实际={_d1.get('pageSize')!r}"
     assert isinstance(_d1.get('pageNumber'), (int, float)), f"data.pageNumber不是数字，实际={_d1.get('pageNumber')!r}"
     # 校验3: 核心——所有 items.name 包含搜索关键词 automation
-    _items = _d1.get('items') or []
+    _items: list[Any] = _d1.get('items') or []
     assert len(_items) > 0, "data.items为空数组，无数据可校验"
     for _i, _task in enumerate(_items):
         _name = _task.get('name') or ''

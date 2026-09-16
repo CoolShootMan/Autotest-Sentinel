@@ -28,11 +28,17 @@ ENV_NAME = "Release"
 import json
 import uuid as _uuid
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx: "Context"):
     """Apifox case #7898307: Linda_T2101_Verify_Promoter_s_operation_rights_on_the_resell_post"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -42,7 +48,7 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx):
         "status": "DRAFT",
     }, token='linda05_token')
     # === 断言（由Apifox assertion翻译）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"step1 code != 200, got {_j1.get('code')}"
     assert _j1.get('message') == 'success', f"step1 message != success, got {_j1.get('message')}"
     assert (_j1.get('data') or {}).get('status') == 'DRAFT', f"step1 data.status != DRAFT, got {(_j1.get('data') or {}).get('status')}"
@@ -66,14 +72,14 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx):
     )
     _resp2 = ctx.api.posts.curator_resell_by_resell_post_id(body=_body2, token='linda05_token')
     # === 断言（由Apifox assertion翻译）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
     assert _j2.get('message') == 'success', f"step2 message != success, got {_j2.get('message')}"
     assert (_j2.get('data') or {}).get('status') == 'ACTIVE', f"step2 data.status != ACTIVE, got {(_j2.get('data') or {}).get('status')}"
     # step 3: 4da12903-d431-4211-895b-4d2c3f383bff
     _resp3 = ctx.api.posts.curator_by_post_id_2(body=None, token='linda05_token', path_vars={'post_id': '{{resell_post_id}}'})
     # === 断言（由Apifox assertion翻译）===
-    _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"step3 code != 200, got {_j3.get('code')}"
     assert _j3.get('message') == 'success', f"step3 message != success, got {_j3.get('message')}"
     _expectId3 = vars.get('resell_post_id')

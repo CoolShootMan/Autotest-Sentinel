@@ -123,9 +123,15 @@ ENV_NAME = "Release"
 import json
 import re
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx: "Context"):
     """Apifox case #5526402: Yuxiao_T1993_Verify_the_function_of_generating_invitation_link_yx"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -138,7 +144,7 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx):
         "useShortURL": True,
     }, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp1.status_code in (200, 201), f"状态码期望200/201，实际={_resp1.status_code}"
     _d1 = _j1.get('data')
     assert _d1 is not None, f"响应缺少data字段，实际={_j1}"
@@ -154,9 +160,9 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx):
     # step 2: invitation link list
     _resp2 = ctx.api.promoters.invitation_link(app_headers=False, token='linda05_token', params={'new invitation-link': '{{new_invitation_link}}'})
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp2.status_code == 200, f"状态码期望200，实际={_resp2.status_code}"
-    _d2 = _j2.get('data') or {}
+    _d2: dict[str, Any] = _j2.get('data') or {}
     # Apifox 原文是「取第一条 description 匹配的项，再断言其 id 等于新建 id」——
     # 仅在环境中该 description 只有一条时成立。每条用例都会新建一条同描述的邀请链接，
     # 历史运行遗留后 `next(...)` 取到的是旧记录，断言必然失败（实测取到 c94aa16d… 而新建 c4a50d10…）。
@@ -172,7 +178,7 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx):
     # step 3: edeb40ed-c93a-4b1e-91c9-7caada7631ec
     _resp3 = ctx.api.promoters.invitation_link_by_new_invitation_link(body=None, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j3 = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp3.status_code in (200, 201), f"状态码期望200/201，实际={_resp3.status_code}"
     assert _j3.get('code') == 200, f"响应code期望200，实际={_j3.get('code')!r}"
     _d3 = _j3.get('data')

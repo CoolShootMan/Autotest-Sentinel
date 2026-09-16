@@ -350,11 +350,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import LegacyClient, legacy_render, legacy_url
 
-def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campaign_list(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campaign_list(ctx: "Context"):
     """Apifox case #7631342: Linda_T4675_Verify_partner_can_duplicate_campaign_from_campaign_list"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     base_url = ctx.base_url
@@ -373,7 +379,7 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
             headers={k:_render(v, vars) for k, v in [('Pear-AutoTesting', '{{Pear-AutoTesting}}'), ('Pear-Client-Id', '{{pear_client_id}}'), ('Pear-Client-Secret', '{{pear_client_secret}}'), ('Authorization', 'Bearer {{linda01_token}}')]},
             data=None,
         )
-        _items = (_resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}).get('data', {}).get('items', []) or []
+        _items: list[Any] = (_resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}).get('data', {}).get('items', []) or []
         _emailAll += [t for t in _items if t.get('name') == 'automation by linda Email' and t.get('channel') == 'EMAIL' and '- copy' not in (t.get('name') or '')]
         _smsAll += [t for t in _items if t.get('name') == 'automation by linda SMS' and t.get('channel') == 'SMS' and '- copy' not in (t.get('name') or '')]
         if len(_items) < 100:

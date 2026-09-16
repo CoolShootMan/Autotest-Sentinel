@@ -324,11 +324,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx: "Context"):
     """Apifox case #8000177: Lury_T5064_T4140_Verify_the_event_coupon_can_be_used_for_all_events"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -387,7 +393,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
         },
         "applicableCode": "eventcc",
     })
-    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -546,7 +552,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
         },
         "applicableCode": "eventcc",
     })
-    _j = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')

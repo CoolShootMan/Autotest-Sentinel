@@ -143,6 +143,39 @@ class _JsonAssertion:
             self._fail("(非空)", "非空")
         return self
 
+    def is_string(self) -> "_JsonAssertion":
+        """类型断言：字符串（对齐 Apifox ``.to.be.a('string')``）。"""
+        if not isinstance(self.actual, str):
+            self._fail("(字符串)", "类型为字符串")
+        return self
+
+    def is_object(self) -> "_JsonAssertion":
+        """类型断言：对象（对齐 Apifox ``.to.be.an('object')``）。"""
+        if not isinstance(self.actual, dict):
+            self._fail("(对象)", "类型为对象")
+        return self
+
+    def is_array(self) -> "_JsonAssertion":
+        """类型断言：数组（对齐 Apifox ``.to.be.an('array')``）。"""
+        if not isinstance(self.actual, list):
+            self._fail("(数组)", "类型为数组")
+        return self
+
+    def at_least(self, expected: Any) -> "_JsonAssertion":
+        """大于等于（对齐 Apifox ``.to.be.at.least(n)``）。"""
+        try:
+            if not float(self.actual) >= float(expected):
+                self._fail(expected, "大于等于")
+        except (TypeError, ValueError):
+            self._fail(expected, "大于等于(不可比较)")
+        return self
+
+    def one_of(self, expected: list[Any]) -> "_JsonAssertion":
+        """取值在给定集合内（对齐 Apifox ``.to.be.oneOf([...])``）。"""
+        if not any(_to_str(self.actual) == _to_str(x) for x in expected):
+            self._fail(expected, "属于集合")
+        return self
+
     def greater_than(self, expected: Any) -> "_JsonAssertion":
         try:
             if not float(self.actual) > float(expected):
@@ -196,6 +229,12 @@ class _StatusAssertion:
 
     def is_(self, expected: int) -> "_StatusAssertion":
         if self.response.status_code != int(expected):
+            self._fail(expected)
+        return self
+
+    def is_one_of(self, expected: list[int]) -> "_StatusAssertion":
+        """状态码属于给定集合（对齐 Apifox ``.to.have.status(200 or 201)``）。"""
+        if self.response.status_code not in [int(x) for x in expected]:
             self._fail(expected)
         return self
 

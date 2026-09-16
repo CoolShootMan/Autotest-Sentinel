@@ -353,11 +353,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context"):
     """Apifox case #8628565: Linda_Venue_map_T5379Verify_the_Additional_QR_codes_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -374,7 +380,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx):
 
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     vars['event_id'] = 'eventId'
-    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items", 0, "tickets"]) or []
     _x = next((_z for _z in _arr if _z.get('title') == "General Admission 02"), None)
     if _x: vars['copyFromId'] = _x.get('id')
@@ -390,9 +396,9 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx):
     # step 6: eb71fcde-3b2f-4f65-b404-38e3b58b2433
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
     vars['unitid'] = 'unitId'
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])
     # step 7: bcb7043d-ecc7-4063-bb97-17c3e3409863
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={

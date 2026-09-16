@@ -515,7 +515,13 @@ def _gen_random_sms_content():
 import datetime
 import random
 import string
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
+
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
 
 # Module-level constants: 长字符串 / HTML 内容从 JSON body 抽离，避免多层 \" 转义
 _EMAIL_HTML_CONTENT = (
@@ -546,7 +552,7 @@ _EMAIL_HTML_CONTENT = (
     '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
 )
 
-def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(ctx):
+def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(ctx: "Context"):
     """Apifox case #7631803: Linda_T4674_Verify_partner_can_edit_draft_campaign_from_campaign_list"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # 动态生成 SMS name/content（对应原 Apifox pre-script 的 generateRandomSMSName / generateRandomSMSContent）

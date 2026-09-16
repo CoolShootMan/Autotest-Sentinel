@@ -160,7 +160,13 @@ ENV_NAME = "Release"
 import json
 import re
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
+
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
 
 # Module-level constants: 长字符串 / HTML 内容从 JSON body 抽离，避免多层 \" 转义
 _EMAIL_HTML_CONTENT = (
@@ -219,7 +225,7 @@ _EMAIL_HTML_CONTENT_TEST = (
     '<span style="white-space: pre-wrap;">Best regards,The ConcertPro TeamYour Go-To for Unforgettable Live Music Experiences</span></p>'
 )
 
-def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page(ctx):
+def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page(ctx: "Context"):
     """Apifox case #7627466: Linda_T4665_T4666_Verify_partner_can_send_test_message_on_create_edit_a_campaign"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -247,7 +253,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
         token='linda01_token',
     )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j2.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j2.get('data') or {}).get('success')!r}"
     assert (_j2.get('data') or {}).get('message') == "Test SMS sent to 1 recipients", f"data.message不匹配：{(_j2.get('data') or {}).get('message')!r}"
     # step 3: b92f242b-bdde-4990-a60b-dd28927d565f
@@ -292,12 +298,12 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
             token='linda01_token',
         )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j4 = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp4.status_code == 200, f"HTTP状态码应为200，实际={_resp4.status_code}"
     assert _j4.get('code') == 200, f"业务code应为200，实际={_j4.get('code')!r}"
     assert _j4.get('message') == 'success', f"message应为success，实际={_j4.get('message')!r}"
     assert isinstance(_j4.get('request_id'), str) and _j4.get('request_id'), f"request_id应为非空字符串，实际={_j4.get('request_id')!r}"
-    _d4 = _j4.get('data') or {}
+    _d4: dict[str, Any] = _j4.get('data') or {}
     # 核心业务字段断言（固定配置和状态）
     assert _d4.get('name') == "automation by linda SMS", f"data.name不匹配：{_d4.get('name')!r}"
     assert _d4.get('channel') == "SMS", f"data.channel应为SMS，实际={_d4.get('channel')!r}"
@@ -349,7 +355,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
             token='linda01_token',
         )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j6 = _resp6.json() if _resp6.headers.get('content-type', '').startswith('application/json') else {}
+    _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j6.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j6.get('data') or {}).get('success')!r}"
     assert (_j6.get('data') or {}).get('message') == "Test email sent to 1 recipients", f"data.message不匹配：{(_j6.get('data') or {}).get('message')!r}"
     # step 7: 54e129b3-db56-40e8-ba4b-d571e363b0af
@@ -395,11 +401,11 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
             path_vars={'campaignId': '{{campaignEmailId}}'},
         )
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j8 = _resp8.json() if _resp8.headers.get('content-type', '').startswith('application/json') else {}
+    _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp8.status_code == 200, f"响应状态码为200，实际={_resp8.status_code}"
     assert _j8.get('code') == 200, f"业务code应为200，实际={_j8.get('code')!r}"
     assert _j8.get('message') == 'success', f"message应为success，实际={_j8.get('message')!r}"
-    _d8 = _j8.get('data') or {}
+    _d8: dict[str, Any] = _j8.get('data') or {}
     # 核心业务数据断言
     assert _d8.get('status') == "DRAFT", f"data.status应为DRAFT，实际={_d8.get('status')!r}"
     assert _d8.get('paymentStatus') == "UNPAID", f"data.paymentStatus应为UNPAID，实际={_d8.get('paymentStatus')!r}"

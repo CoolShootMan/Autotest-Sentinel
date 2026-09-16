@@ -400,11 +400,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Context"):
     """Apifox case #7557017: Lury_T3781_and_T3687_wholesale_commission_and_affiliate_link"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -414,7 +420,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{consumer_email}}",
     }, app_headers=True)
     try:
-        _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -486,7 +492,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{M1}}",
     }, app_headers=True)
     try:
-        _j = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -498,7 +504,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{P1}}",
     }, app_headers=True)
     try:
-        _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
         vars['P1_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -513,7 +519,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{merchant_email}}",
     }, app_headers=True)
     try:
-        _j = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -528,13 +534,13 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{promoter_email}}",
     }, app_headers=True)
     try:
-        _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
         vars['promoter_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
     # step 14: get promoter orders
     _resp14 = ctx.api.orders.promoter(app_headers=True, token='promoter_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    _j = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
@@ -547,7 +553,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{affiliate_promoter}}",
     }, app_headers=True)
     try:
-        _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
         vars['affiliate_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass

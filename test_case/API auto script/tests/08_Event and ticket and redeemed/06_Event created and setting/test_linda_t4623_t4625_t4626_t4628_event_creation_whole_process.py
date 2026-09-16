@@ -331,11 +331,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Context"):
     """Apifox case #7583841: Linda_T4623_T4625_T4626_T4628_Event_creation_whole_process"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -348,7 +354,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx):
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: Get the target event id
     _resp2 = ctx.api.events.list(token='linda05_token', params={'pageNumber': '1', 'pageSize': '50', 'statuses': ['undefined']})
-    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     vars['created_event_id'] = _get_path(_j, ['data', 'items', 0, 'id'])
     # step 3: d0ae0406-88bc-4919-80d6-4ff5d19ead0e
     _resp3 = ctx.api.events.v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_media_batch_operate(body={
@@ -597,8 +603,8 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx):
     }, token='linda05_token')
     # extract lineup_id from step 5 response (orig: lineupIds[0] = response.data.lineup[0].id)
     try:
-        _j5 = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
-        _lineup = (_j5.get('data') or {}).get('lineup') or []
+        _j5: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
+        _lineup: list[Any] = (_j5.get('data') or {}).get('lineup') or []
         vars['lineup_id'] = _lineup[0]['id'] if _lineup else None
     except Exception:
         pass
@@ -728,8 +734,8 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx):
 }, token='linda05_token')
     # extract item_id from step 6 response (orig: item_id = items[0].id)
     try:
-        _j6 = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
-        _items6 = (_j6.get('data') or {}).get('items') or []
+        _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+        _items6: list[Any] = (_j6.get('data') or {}).get('items') or []
         vars['item_id'] = _items6[0]['id'] if _items6 else None
     except Exception:
         pass
@@ -843,7 +849,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx):
 }, token='linda05_token')
     # extract merch_id from step 7 response (orig: merch_id = response.data.id)
     try:
-        _j7 = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+        _j7: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
         vars['merch_id'] = (_j7.get('data') or {}).get('id')
     except Exception:
         pass

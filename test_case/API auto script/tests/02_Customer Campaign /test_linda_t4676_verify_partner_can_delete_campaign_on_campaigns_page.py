@@ -100,17 +100,23 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page(ctx: "Context"):
     """Apifox case #7627714: Linda_T4676_Verify_partner_can_delete_campaign_on_campaigns_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: baf038c4-2513-47dc-a2b3-d3483e839bf4
     _resp1 = ctx.api.campaigns.list(body=None, params={'search': '', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     # customScript: 从 campaigns 列表筛选 name 含 "automation by linda" 且 status 为 DRAFT/COMPLETED 的任务，随机取一个 id
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
-    _items = ((_j1 or {}).get('data') or {}).get('items') or []
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _items: list[Any] = ((_j1 or {}).get('data') or {}).get('items') or []
     _targets = [t.get('id') for t in _items
                 if t.get('name') and t.get('status')
                 and 'automation by linda' in t.get('name')

@@ -55,9 +55,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_Cancel_Puase_Reactive_for_subscription(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_Cancel_Puase_Reactive_for_subscription(ctx: "Context"):
     """Apifox case #6129906: Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_Cancel_Puase_Reacti"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

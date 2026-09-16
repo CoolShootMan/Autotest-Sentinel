@@ -268,9 +268,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx: "Context"):
     from core.compat import get_path as _get_path
     """Apifox case #8706050: Linda_AXS_Verify_the_Customer_provided_details_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用

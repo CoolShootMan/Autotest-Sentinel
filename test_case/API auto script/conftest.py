@@ -86,7 +86,7 @@ def _entry_of_nodeid(nodeid: str) -> dict:
 
 # --- 组合根 -------------------------------------------------------------
 @pytest.fixture(scope="module")
-def ctx(request):
+def ctx(request) -> Context:
     """单用例模块的变量上下文 + HTTP 客户端 + 业务服务门面。
 
     变量四层合并（高者覆盖低者）::
@@ -94,6 +94,14 @@ def ctx(request):
         Global.yaml → <ENV_NAME>.yaml → _runtime_tokens.yaml → <case>.vars.yaml
 
     ``ENV_NAME`` 取用例模块声明，缺省 ``Release``。
+
+    Notes:
+        返回类型标注 ``-> Context`` **不是装饰性的**：编辑器（Pylance 等）按
+        pytest 约定从 conftest 的 fixture 返回标注推断用例入参类型。有了它，
+        用例里的 ``ctx`` 才是有类型的对象，``ctx.api.<域>.<方法>()`` 才能
+        Ctrl/Cmd+点击 跳转到 ``api/<域>.py`` 的定义；否则 ``ctx`` 退化为
+        未知类型，跳转与补全**静默失效**（不报错、但点不动）。详见
+        ``docs/ide_navigation.md``。
     """
     env_name = getattr(request.module, "ENV_NAME", None) or ENV_NAME
     case_file = Path(str(getattr(request, "path", None)

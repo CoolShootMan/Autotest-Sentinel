@@ -35,9 +35,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2747_verify_that_the_creator_can_edit_the_media_of_a_published_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2747_verify_that_the_creator_can_edit_the_media_of_a_published_post(ctx: "Context"):
     """Apifox case #6044228: Linda_T2747_Verify_that_the_creator_can_edit_the_media_of_a_published_Post"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

@@ -52,9 +52,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unavailable_after_stop_selling(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unavailable_after_stop_selling(ctx: "Context"):
     """Apifox case #8662407: Lury_T4861_Verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unava"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

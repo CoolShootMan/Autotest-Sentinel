@@ -177,9 +177,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time(ctx: "Context"):
     """Apifox case #7969438: Lury_T5003_T4807_T4574_Test_QR_redemption_product_without_asking_pickup_time"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

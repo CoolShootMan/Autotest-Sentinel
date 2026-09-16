@@ -102,11 +102,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan(ctx: "Context"):
     """Apifox case #5827160: Linda_T2958_and_T2931_Verify_the_total_saving_includes_the_percent_off_of_subscr"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # 订阅商品 variant（与 step4 buy-now 一致，确保 create order 有有效 promoterVariantId）
@@ -123,8 +129,8 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     _resp2 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # extract addressId (原始 Apifox step2 post-script: 取默认地址 id，无则取第一个)
     try:
-        _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
-        _addr_items = (_j2.get('data') or {}).get('items') or []
+        _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+        _addr_items: list[Any] = (_j2.get('data') or {}).get('items') or []
         vars['addressId'] = next((x['id'] for x in _addr_items if x.get('isDefault')), (_addr_items[0]['id'] if _addr_items else ''))
     except Exception: pass
     # step 3: b774ddef-e7b8-4cac-9acd-54bebe6f7b4a
@@ -194,7 +200,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     # extractor:  = 
     # step 8: check the new contract details
     _resp8 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
-    _j = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     _x = next((_z for _z in _arr if _z.get('id') == vars.get('contractId')), None)
     if _x: vars['contractNumber'] = _x.get('contractNumber')

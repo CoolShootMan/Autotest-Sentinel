@@ -67,9 +67,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invitation_it_will_be_displayed_in_the_my_pr(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invitation_it_will_be_displayed_in_the_my_pr(ctx: "Context"):
     """Apifox case #7708861: Linda_T1994_After_verifying_that_the_Promoter_Curator_accepts_the_invitation_it_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

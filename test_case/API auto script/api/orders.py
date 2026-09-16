@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class OrdersApi(BaseApi):
 
     def buy_now(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/buy-now  （用例中出现 75 次）"""
         return self._call(
             "POST", '/order/buy-now',
@@ -31,10 +37,11 @@ class OrdersApi(BaseApi):
 
     def checkout(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/checkout  （用例中出现 7 次）"""
         return self._call(
             "POST", '/order/checkout',
@@ -46,10 +53,11 @@ class OrdersApi(BaseApi):
 
     def checkout_2(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/checkout"""
         return self._call(
             "GET", '/order/checkout',
@@ -61,10 +69,11 @@ class OrdersApi(BaseApi):
 
     def checkout_express(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/checkout/express  （用例中出现 21 次）"""
         return self._call(
             "POST", '/order/checkout/express',
@@ -76,10 +85,11 @@ class OrdersApi(BaseApi):
 
     def consumer(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/consumer  （用例中出现 2 次）"""
         return self._call(
             "GET", '/order/consumer',
@@ -91,11 +101,12 @@ class OrdersApi(BaseApi):
 
     def consumer_detail_by_order_number(
         self, *,
-        orderNumber=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        orderNumber: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/consumer/detail/{{orderNumber}}  （用例中出现 18 次）"""
         return self._call(
             "GET", '/order/consumer/detail/{{orderNumber}}',
@@ -107,10 +118,11 @@ class OrdersApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=True,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = True,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order  （用例中出现 77 次）"""
         return self._call(
             "POST", '/order',
@@ -122,11 +134,12 @@ class OrdersApi(BaseApi):
 
     def fulfillment_merchant_by_order_number(
         self, *,
-        merchantId=None, orderNumber=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchantId: str | None = None, orderNumber: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /orders/fulfillment/merchant/{{merchantId}}/{{orderNumber}}  （用例中出现 3 次）"""
         return self._call(
             "POST", '/orders/fulfillment/merchant/{{merchantId}}/{{orderNumber}}',
@@ -138,10 +151,11 @@ class OrdersApi(BaseApi):
 
     def merchant(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/merchant  （用例中出现 19 次）"""
         return self._call(
             "GET", '/order/merchant',
@@ -153,11 +167,12 @@ class OrdersApi(BaseApi):
 
     def merchant_bed7b1d8_16d8_4d27_ab1a_dc4a8f19e0c6_detail_v2(
         self, *,
-        orderNumber=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        orderNumber: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/merchant/bed7b1d8-16d8-4d27-ab1a-dc4a8f19e0c6/detail/{{orderNumber}}/v2  （用例中出现 3 次）"""
         return self._call(
             "GET", '/order/merchant/bed7b1d8-16d8-4d27-ab1a-dc4a8f19e0c6/detail/{{orderNumber}}/v2',
@@ -169,11 +184,12 @@ class OrdersApi(BaseApi):
 
     def merchant_detail_by_order_number(
         self, *,
-        merchantId=None, orderNumber=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchantId: str | None = None, orderNumber: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/merchant/{{merchantId}}/detail/{{orderNumber}}  （用例中出现 2 次）"""
         return self._call(
             "GET", '/order/merchant/{{merchantId}}/detail/{{orderNumber}}',
@@ -185,11 +201,12 @@ class OrdersApi(BaseApi):
 
     def merchant_detail_v2(
         self, *,
-        merchantId=None, orderNumber=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchantId: str | None = None, orderNumber: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/merchant/{{merchantId}}/detail/{{orderNumber}}/v2  （用例中出现 65 次）"""
         return self._call(
             "GET", '/order/merchant/{{merchantId}}/detail/{{orderNumber}}/v2',
@@ -201,10 +218,11 @@ class OrdersApi(BaseApi):
 
     def points_and_promotions(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/points-and-promotions"""
         return self._call(
             "POST", '/order/points-and-promotions',
@@ -216,10 +234,11 @@ class OrdersApi(BaseApi):
 
     def promoter(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/promoter  （用例中出现 51 次）"""
         return self._call(
             "GET", '/order/promoter',
@@ -231,11 +250,12 @@ class OrdersApi(BaseApi):
 
     def promoter_detail_v2(
         self, *,
-        merchantOrderId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchantOrderId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/promoter/detail/{{merchantOrderId}}/v2  （用例中出现 57 次）"""
         return self._call(
             "GET", '/order/promoter/detail/{{merchantOrderId}}/v2',
@@ -247,11 +267,12 @@ class OrdersApi(BaseApi):
 
     def refunds(
         self, *,
-        refund_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        refund_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /merchant-orders/{{refund_id}}/refunds  （用例中出现 5 次）"""
         return self._call(
             "POST", '/merchant-orders/{{refund_id}}/refunds',
@@ -263,10 +284,11 @@ class OrdersApi(BaseApi):
 
     def ticket_status(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/ticket/status"""
         return self._call(
             "POST", '/order/ticket/status',
@@ -278,10 +300,11 @@ class OrdersApi(BaseApi):
 
     def update_promotions(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/update-promotions  （用例中出现 13 次）"""
         return self._call(
             "POST", '/order/update-promotions',
@@ -293,10 +316,11 @@ class OrdersApi(BaseApi):
 
     def verification(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /order/verification  （用例中出现 2 次）"""
         return self._call(
             "POST", '/order/verification',
@@ -308,10 +332,11 @@ class OrdersApi(BaseApi):
 
     def verification_search(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/verification/search  （用例中出现 2 次）"""
         return self._call(
             "GET", '/order/verification/search',
@@ -323,10 +348,11 @@ class OrdersApi(BaseApi):
 
     def verification_ticket_statistics(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /order/verification/ticket/statistics"""
         return self._call(
             "GET", '/order/verification/ticket/statistics',

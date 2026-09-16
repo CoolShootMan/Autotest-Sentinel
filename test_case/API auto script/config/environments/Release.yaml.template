@@ -476,6 +476,11 @@ variables:
   venue_map_ticket_id_General_Admission: ''
   venue_map_productId_General_Admission: ''
   venue_map_variant_id_General_Admission: ''
+  # venue-map body 引用的 promoterProductId（原 Apifox 只 set 了 promoterProductId_*，
+  # 属于源集合的命名不一致；本脚本以 body 实际引用的名字为准）
+  venue_map_promoterProductId_General_Admission_02: ''
+  venue_map_promoterProductId_General_Admission_01: ''
+  venue_map_promoterProductId_General_Admission: ''
   promoterProductId_General_Admission_02: ''
   merchantProductVariantId_General_Admission_02: ''
   promoterProductId_General_Admission_01: ''
@@ -523,3 +528,14 @@ variables:
   axs_event_id: ''
   axs_post_id: ''
   order_id: ''
+
+  # --- 第三方票务平台凭证 -----------------------------------------------
+  # 用于 UI Prefill: PUT users/{{user_id}}/api-platform-credentials
+  # （原 Apifox 集合 "setting TDC API" / "setting AXS API"）
+  # 真值请写入 Release.yaml（已 gitignore）或 config/environments/.env 中的
+  # TDC_CLIENT_ID / TDC_CLIENT_SECRET / TDC_USER_AGENT / AXS_ACCESS_TOKEN / AXS_API_KEY
+  tdc_clientId: "{{TDC_CLIENT_ID}}"
+  tdc_clientSecret: "{{TDC_CLIENT_SECRET}}"
+  tdc_userAgent: "{{TDC_USER_AGENT}}"
+  axs_accessToken: "{{AXS_ACCESS_TOKEN}}"
+  axs_apiKey: "{{AXS_API_KEY}}"

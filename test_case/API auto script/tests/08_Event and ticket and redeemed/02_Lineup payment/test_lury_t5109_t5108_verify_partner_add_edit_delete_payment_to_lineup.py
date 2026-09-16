@@ -169,9 +169,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5109_t5108_verify_partner_add_edit_delete_payment_to_lineup(ctx: "Context"):
     """Apifox case #8041780: Lury_T5109_T5108_Verify_partner_add_edit_delete_payment_to_lineup"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

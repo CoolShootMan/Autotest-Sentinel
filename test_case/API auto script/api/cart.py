@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class CartApi(BaseApi):
 
     def delete(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /cart  （用例中出现 81 次）"""
         return self._call(
             "DELETE", '/cart',
@@ -31,10 +37,11 @@ class CartApi(BaseApi):
 
     def list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /cart  （用例中出现 6 次）"""
         return self._call(
             "GET", '/cart',
@@ -46,10 +53,11 @@ class CartApi(BaseApi):
 
     def update(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /cart  （用例中出现 15 次）"""
         return self._call(
             "PUT", '/cart',

@@ -22,9 +22,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: "Context"):
     """Apifox case #5767709: Yuxiao_T2868_Verify_that_admin_gives_one_time_payout_to_a_user_yx"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # 从 Release DB 随机取一个 PROMOTER 用户 id，避免硬编码 id 因 7 天 5 次限制而失败

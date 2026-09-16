@@ -304,9 +304,15 @@ import datetime
 import json
 import pytest
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Context"):
     """Apifox case #7802190: Linda_T4543_Verify_the_settings_Enable_multi_day_pass_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -321,8 +327,8 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # extract event by title "event-for-API-testing" (mirrors Apifox customScript)
     try:
-        _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
-        _items2 = (_j2.get('data') or {}).get('items') or []
+        _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+        _items2: list[Any] = (_j2.get('data') or {}).get('items') or []
         _ev = next((it for it in _items2 if it.get('title') == 'event-for-API-testing'), None)
         assert _ev, "event 'event-for-API-testing' not found in /product-event/list"
         vars['event_id'] = _ev['id']
@@ -345,8 +351,8 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     # step 3: a162f41c-de75-439f-ba5f-5022f8dbb567
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     try:
-        _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
-        _items3 = (_j3.get('data') or {}).get('items') or []
+        _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+        _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
         _post = next((it for it in _items3 if it.get('title') == 'event-for-API-testing'), None)
         assert _post, "post 'event-for-API-testing' not found"
         vars['postId'] = _post['id']
@@ -355,7 +361,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     # step 4: 806f3d0e-23bc-4980-933f-70d2cb989003
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     try:
-        _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+        _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['catalog_id'] = (_j4.get('data') or {}).get('id')
     except Exception:
         pass
@@ -470,8 +476,8 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
     _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
     # extract promoterProductId (displayVariantId) by product title (mirrors Apifox customScript)
     try:
-        _j8 = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
-        _prods = (_j8.get('data') or {}).get('relatedProducts') or []
+        _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+        _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
         _prod = next((it for it in _prods if it.get('title') == 'auto testing with turn on multiple day pass'), None)
         assert _prod, "related product 'auto testing with turn on multiple day pass' not found"
         vars['promoterProductId'] = _prod.get('displayVariantId')

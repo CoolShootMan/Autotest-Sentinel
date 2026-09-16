@@ -178,11 +178,17 @@ ENV_NAME = "Release"
 
 
 import datetime
+from typing import TYPE_CHECKING
+
 from zoneinfo import ZoneInfo
 
 from core.assertions import expect
 
-def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is_correct_when_filtering_by_date_after_set_time_zo(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is_correct_when_filtering_by_date_after_set_time_zo(ctx: "Context"):
     """Apifox case #5875086: Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is_correct_when_filte"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
