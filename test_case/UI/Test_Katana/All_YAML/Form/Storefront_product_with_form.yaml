@@ -17,9 +17,6 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
     R_click_save1: { locator: '[data-testid="confirm-button"]' }
     sleep_after_save1: 3000
 
-    open_again: "{BASE_URL}/catalog"
-    sleep_after_open2: 3000
-    # Open product
     R_click_product2: { locator: '.MuiTypography-body1:has-text("autotest product title - do not delete")' }
     sleep_after_open_product2: 1000
     R_click_advanced2: { locator: ".MuiTab-root:has-text('Advanced')" }
@@ -32,7 +29,8 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
     fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle"', value: 'sub title' }
 
     # Add short text field
-    R_click_add_field: { locator: '[data-testid="mui-button"]' }
+    R_click_add_field_1:
+      { role: "button", name: "Add new field", quick: true, exact: true }
     sleep_after_add_field: 500
     R_click_type_short: { role: "button", name: "Short answer" }
     sleep_after_select_type: 500
@@ -198,7 +196,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify inserting a CTA button with form into a post and publishing"
   test_step:
-#    open: "{BASE_URL}/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
+    # open: "{BASE_URL}/post/283bf638-e996-4dfd-85a4-1d33ad1a7bbe/edit?c=POST_PAGE"
     # Step 1: Events list page -> click Event card
     open: "{BASE_URL}/events"
     sleep_step1: 3000
@@ -215,7 +213,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
 
     # Click Description to focus editor, then insert CTA Button
     R_click_description: { role: 'textbox', name: 'Description' }
-    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 0 }
     R_click_cta_elements: { locator: '[data-testid="menu-item"] .MuiTypography-body2:has-text("CTA Elements")'}
     sleep_after_hover_cta: 1500
     R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
@@ -225,23 +223,21 @@ testT4860:  # [LAST: PASSED 2026-05-06]
     fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label',  value: 'test form' }
 
     # Select "Form" action from dropdown
-    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
-    R_click_form_option: { locator: '[data-value="form"]' }
+    R_click_action_select: { role: 'button', name: 'Select an action' }
+    R_click_form_option: { role: 'menuitem', name: 'Form', exact: true }
     sleep_after_select_type: 500
 
     # Select the form created in testT4970
     R_click_form_dropdown: { text: 'Link to a formPlease select a' }
     R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
     sleep_after_select_form: 500
+    R_click_rte_insert: { role: 'button', name: 'Insert', exact: true }
 
     # Confirm and save
-    R_click_save: { locator: '[data-testid="mui-button"]' }
-    sleep_after_save: 1000
-    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm: 2000
+    R_click_update_1: { role: 'button', name: 'Update' }
 
     # Publish post
-    R_click_update: { role: 'button', name: 'Update' }
+    R_click_update_2: { role: 'button', name: 'Update' }
     sleep_after_update: 3000
     #verify_published: { text: 'Post published!' }
 
@@ -271,20 +267,28 @@ testT4867:  # [LAST: PASSED 2026-05-06]
 
     # Step 3: Event detail page -> click Post card (link text)
     R_click_edit: { role: 'button', name: 'Content', exact: true, index: 0 }
-    sleep_step4: 1500
 
-    # Click on CTA button in editor to select it
-    R_click_cta_btn: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
+    # The CTA form button is a Lexical client-hydrated decorator node: it attaches
+    # to the DOM only AFTER the RTE finishes hydrating. A fixed sleep raced that
+    # hydration (the button was absent at click time -> "locator not found"), even
+    # though its testid/text never changed. Wait for it to be visible instead.
+    wait_cta_button: { locator: 'button[data-testid="button"]:has-text("test form")', timeout: 15000 }
+
+    # Click on CTA button in editor to select it.
+    # force:true is REQUIRED — the CTA is wrapped in a Lexical
+    # data-lexical-decorator node whose wrapper (MuiBox katana-44v1pa)
+    # intercepts pointer events, so a normal click cannot land on the button.
+    R_click_cta_btn: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0, force: true }
     sleep_after_select: 500
 
     # Delete the CTA button
     R_click_delete: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
-    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm: 1000
+
+    R_click_update_1: { role: 'button', name: 'Update' }
 
     # Publish post
-    R_click_update: { role: 'button', name: 'Update' }
+    R_click_update_2: { role: 'button', name: 'Update' }
     sleep_after_update: 3000
     verify_published: { text: 'Post published!' }
 
@@ -376,7 +380,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     sleep_after_back_icon: 500
 
     # --- Step 4: Toggle email icon ON, save ---
-    R_click_email_icon_on: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r > path' }
+    R_click_email_icon_on: { locator: '.MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
     R_click_continue_4: { role: 'button', name: 'Continue' }
     sleep_after_continue_4: 2000
     verify_confirmation_3: { text: 'After form submission' }
@@ -384,7 +388,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     sleep_after_back_icon: 500
 
     # --- Step 5: Toggle email icon OFF, save ---
-    R_click_email_icon_off: { locator: '.MuiStack-root.katana-nfvayc > .MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
+    R_click_email_icon_off: { locator: '.MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.katana-yuxe6r' }
     R_click_continue_5: { role: 'button', name: 'Continue' }
     sleep_after_continue_5: 2000
     verify_confirmation_4: { text: 'After form submission' }
@@ -413,16 +417,17 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_step4: 1500
 
     R_click_description: { role: 'textbox', name: 'Description' }
-    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 1 }
+    R_click_insert: { role: 'button', name: 'Insert', exact: true, index: 0 }
+    sleep_step5: 1500
     R_click_cta_elements: { locator: '[data-testid="menu-item"] .MuiTypography-body2:has-text("CTA Elements")'}
-    sleep_after_hover_cta: 1500
+    sleep_after_hover_cta: 2000
     R_click_cta_button: { role: "menuitem", text: 'CTA Button' }
     sleep_after_cta: 1000
 
     fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form' }
 
-    R_click_action_select: { locator: '.MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.MuiInputBase-sizeSmall', index: 1 }
-    R_click_form_option: { locator: '[data-value="form"]' }
+    R_click_action_select: { role: 'button', name: 'Select an action' }
+    R_click_form_option: { role: 'menuitem', name: 'Form', exact: true }
     sleep_after_select_type: 500
 
     R_click_form_dropdown: { text: 'Link to a formPlease select a' }
@@ -431,9 +436,10 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     R_click_save: { locator: '[data-testid="mui-button"]' }
     sleep_after_save: 1000
-    R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm: 2000
     R_click_update_1: { role: 'button', name: 'Update' }
+
+    # Publish post
+    R_click_update_2: { role: 'button', name: 'Update' }
     sleep_after_update_1: 3000
 
     # --- Part 2: Edit button text ---
@@ -450,25 +456,26 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     R_click_edit_p2: { role: 'button', name: 'Content', exact: true, index: 0 }
     sleep_p2_step4: 1500
 
-    R_click_cta_btn_in_editor: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
+    wait_cta_button: { locator: 'button[data-testid="button"]:has-text("test form")', timeout: 15000 }
+    R_click_cta_btn_in_editor: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0, force: true }
     sleep_after_select_btn: 500
     R_click_edit_button: { role: 'button', name: 'Edit' }
     sleep_after_edit_click: 1000
-
-    fill_updated_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form update1' }
-    R_click_save_edit: { locator: '[data-testid="mui-button"]' }
-    sleep_after_save_edit: 1000
-    R_click_confirm_edit: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm_edit: 2000
+    fill_updated_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form test1' }
+    sleep_after_update_text: 500
+    R_click_save_edit_2: { locator: '[data-testid="mui-button"]' }
+    sleep_after_save_edit: 2000
+    R_click_update_1: { role: 'button', name: 'Update' }
+    sleep_step3: 500
     R_click_update_2: { role: 'button', name: 'Update' }
-    sleep_after_update_2: 3000
+    sleep_step4: 3000
 
     # --- Part 3: Verify updated text on storefront ---
     open_storefront:
       url: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
       auto_handle_modals: false
     sleep_after_open_storefront: 3000
-    verify_updated_btn: { text: 'test form update1' }
+    verify_updated_btn: { text: 'test form test1' }
 
     # --- Part 4: Delete the CTA button ---
     open_delete:
@@ -483,14 +490,14 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     R_click_edit_p4: { role: 'button', name: 'Content', exact: true, index: 0 }
     sleep_p4_step4: 1500
-    R_click_cta_btn_delete: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0 }
+    R_click_cta_btn_delete: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0, force: true }
     sleep_after_select_delete: 500
     R_click_delete_btn: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
-    R_click_confirm_delete: { locator: '[data-testid="confirm-button"]' }
-    sleep_after_confirm_delete: 1000
     R_click_update_3: { role: 'button', name: 'Update' }
     sleep_after_update_3: 3000
+    R_click_update_4: { role: 'button', name: 'Update' }
+    sleep_step5: 3000
 
   expect_result:
     description: "CTA form button text should be updated and visible on storefront, then deleted"
@@ -601,10 +608,10 @@ testT4539:  # [LAST: BROKEN 2026-05-06]
     sleep_after_form_tab: 200
     click_right_more_cta: { locator: '.form-card:has-text("Partner_create_form") [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
     sleep_after_more_cta: 200
-    click_submission_link: { role: 'menuitem', text: 'Copy link for sharing' }
+    click_submission_link: { role: 'menuitem', text: 'View submissions' }
 
     # Step 1: Click "Batch select" button -> checkboxes appear
-    R_click_batch_select: { locator: '[data-testid="mui-button"]' }
+    R_click_batch_select: { role: 'button', name: 'Batch select' }
 
     # Step 2: Select a submission row checkbox
     check_submission: { locator: 'input[type="checkbox"]', index: 1 }
@@ -632,13 +639,14 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     # --- Part 1: Set timezone to GMT+8:00 Shanghai ---
     open: "{BASE_URL}/edit-profile#BusinessOperation"
     sleep_after_open: 3000
-    R_click_timezone: { locator: '#timeZone_select + .MuiInputBase-root' }
+    # MUI Select: role=combobox has NO accessible name (empty, unlinked label), so
+    # get_by_role('combobox', name=...) never matches. Anchor to the timezone field
+    # by its label id instead (value-agnostic, works for Part 1 and Part 4).
+    R_click_timezone: { locator: "div.MuiFormControl-root:has(#timeZone_select) [role='combobox']" }
     sleep_after_click_timezone: 300
     R_click_shanghai: { role: 'option', text: '(GMT+8:00) Asia/Shanghai' }
     R_click_save_1: { role: 'button', name: 'Save' }
     sleep_after_save_1: 1000
-    R_click_save_2: { role: 'button', name: 'Save' }
-    sleep_after_save_2: 3000
     verify_update_success: { text: 'Update Success!' }
 
     # --- Part 2: Verify submission times show CST ---
@@ -649,7 +657,7 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     sleep_after_form_tab: 200
     click_right_more_cta: { locator: '.form-card:has-text("Partner_create_form") [data-testid="base-more-horiz-icon-cta"] >> nth=0' }
     sleep_after_more_cta: 200
-    click_submission_link: { role: 'menuitem', text: 'Copy link for sharing' }
+    click_submission_link: { role: 'menuitem', text: 'View submissions' }
 
     sleep_after_open_submission: 3000
     verify_table_cst: { text: '(CST)' }
@@ -662,13 +670,11 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     # --- Part 4: Reset timezone back to GMT-8:00 Los_Angeles ---
     open_reset: "{BASE_URL}/edit-profile#BusinessOperation"
     sleep_after_open_reset: 3000
-    R_click_timezone_reset: { locator: '#timeZone_select + .MuiInputBase-root' }
+    R_click_timezone_reset: { locator: "div.MuiFormControl-root:has(#timeZone_select) [role='combobox']" }
     sleep_after_click_timezone_reset: 300
     R_click_shanghai_reset: { role: 'option', text: '(GMT-8:00) America/Los_Angeles' }
     R_click_save_reset_1: { role: 'button', name: 'Save' }
-    sleep_after_save_reset_1: 1000
-    R_click_save_reset_2: { role: 'button', name: 'Save' }
-    sleep_after_save_reset_2: 3000
+    sleep_after_save_reset_1: 3000
     verify_reset_success: { text: 'Update Success!' }
 
   expect_result:
@@ -769,7 +775,7 @@ testT3794:  # [LAST: FAILED 2026-05-06]
   guest: false
   description: "Verify creating a form and then deleting it, confirming it disappears from both list and storefront"
   test_step:
-    open: "{BASE_URL}/autotestshop#Form"
+    open: "{BASE_URL}/autotestshop"
     sleep_after_open: 3000
 
     # Create a new form
@@ -791,20 +797,20 @@ testT3794:  # [LAST: FAILED 2026-05-06]
     verify_form_visible: { text: 'form will be delete' }
 
     # Switch to Forms tab
-    R_click_forms_tab: { role: 'tab', name: 'Forms' }
+    open_forms_tab: "{BASE_URL}/autotestshop/archive#Forms"
     sleep_after_tab: 1000
 
     # Delete the form
     R_click_form_more: { locator: '#infinite-query-FORM [data-testid="base-more-horiz-icon-cta"]', index: 0 }
     sleep_after_more: 500
-    R_click_delete_1: { role: 'button', name: 'Delete',exact: true }
+    R_click_delete_1: { role: 'menuitem', name: 'Delete',exact: true }
     sleep_after_delete_1: 500
     R_click_delete_2: { role: 'button', name: 'Delete',exact: true }
     sleep_after_delete_2: 1000
     verify_deleted: { text: 'Delete successful' }
     sleep_after_delete_3: 1000
     # Verify form is gone from list
-    verify_form_removed: { locator: '.MuiTypography-body1:has-text("form will be delete xxyyzz")', assert_not_visible: true }
+    verify_form_removed: { text: "form will be delete xxyyzz", assert_not_visible: true }
 
   expect_result:
     description: "Form should be created and then deleted successfully"
