@@ -268,7 +268,10 @@ def dismiss_for_account(playwright, account: dict):
 
     print(f"\n[{name}] Loading cookie, starting EDU dismissal...")
 
-    browser = playwright.chromium.launch(headless=False)
+    # CI（GitHub Actions 托管 runner）没有显示器，必须 headless；本地保持有头
+    # （launchd 定时脚本与本 workflow 均以 CI=true 标记无界面运行）
+    headless_ci = os.environ.get("CI", "").lower() == "true"
+    browser = playwright.chromium.launch(headless=headless_ci)
     # Load authenticated state via storage_state (not add_init_script)
     context = browser.new_context(storage_state=str(cookie_path))
     page = context.new_page()
