@@ -26,7 +26,7 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
 
     # Fill form title and subtitle
     fill_form_title: { role: 'textbox', name: 'Enter a title', value: 'product form must be filled' }
-    fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle"', value: 'sub title' }
+    fill_form_subtitle: { role: 'textbox', name: 'Enter subtitle', value: 'sub title' }
 
     # Add short text field
     R_click_add_field_1:
@@ -64,6 +64,23 @@ testT5007:  # [LAST: PASSED 2026-05-06]
     R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_form: 1000
     fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
+    
+    # email - realistic business email
+    fill_email:
+      placeholder: "Enter your email address"
+      value: "cooperation.business@gmail.com"
+
+    # phone - realistic US phone number format
+    fill_phone:
+      placeholder: "Phone number"
+      value: "13105558976"
+
+    # short answer - realistic business description
+    fill_short_text:
+      placeholder: "Please fill this out"
+      index: 1
+      value: "Pear Partner Cooperation Inquiry"
+
     R_click_save: { role: 'button', name: 'Save' }
     sleep_after_save: 2000
     verify_added: { text: 'Added to cart' }
@@ -335,7 +352,7 @@ testT4281:  # [LAST: PASSED 2026-05-06]
     fill_form_title: { role: 'textbox', name: 'Enter a title', value: 'xx' }
     R_click_continue_3: { role: 'button', name: 'Continue' }
     sleep_after_continue_3: 2000
-    verify_confirmation: { text: 'Form confirmation message' }
+    verify_confirmation: { text: 'After form submission' }
 
   expect_result:
     description: "Recipient email validation should block save with empty or invalid email"
@@ -465,9 +482,9 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_after_update_text: 500
     R_click_save_edit_2: { locator: '[data-testid="mui-button"]' }
     sleep_after_save_edit: 2000
-    R_click_update_1: { role: 'button', name: 'Update' }
+    R_click_update_3: { role: 'button', name: 'Update' }
     sleep_step3: 500
-    R_click_update_2: { role: 'button', name: 'Update' }
+    R_click_update_4: { role: 'button', name: 'Update' }
     sleep_step4: 3000
 
     # --- Part 3: Verify updated text on storefront ---
@@ -494,9 +511,9 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_after_select_delete: 500
     R_click_delete_btn: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
-    R_click_update_3: { role: 'button', name: 'Update' }
+    R_click_update_5: { role: 'button', name: 'Update' }
     sleep_after_update_3: 3000
-    R_click_update_4: { role: 'button', name: 'Update' }
+    R_click_update_6: { role: 'button', name: 'Update' }
     sleep_step5: 3000
 
   expect_result:
@@ -694,6 +711,25 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_click: 1000
     fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
+    # email - realistic business email
+    # NOTE: key MUST differ from the checkout `fill_email` below (line ~756) —
+    # yaml.safe_load collapses duplicate keys to the LAST value while keeping the
+    # FIRST key position, which hoisted `input[name="contact.email"]` up here and
+    # made it time out on the product page. [fixed 2026-09-16]
+    fill_form_email:
+      placeholder: "Enter your email address"
+      value: "cooperation.business@gmail.com"
+
+    # phone - realistic US phone number format
+    fill_form_phone:
+      placeholder: "Phone number"
+      value: "13105558976"
+
+    # short answer - realistic business description
+    fill_short_text:
+      placeholder: "Please fill this out"
+      index: 1
+      value: "Pear Partner Cooperation Inquiry"
     R_click_save: { role: 'button', name: 'Save' }
     sleep_after_save: 2000
 
@@ -710,7 +746,11 @@ testT3690:  # [LAST: PASSED 2026-05-06]
 
     # Confirm cart
     R_click_confirm: { locator: '[data-testid="confirm-button"]' }
-    wait_for_place_order_button2: { role: 'button', name: 'Place order', timeout: 5000 }
+    # Timeout raised 5000 -> 15000: the /cart -> /checkout transition can exceed 5s.
+    # When it does, smart_wait only warns and the next step (R_click_enhance_2) fires
+    # while still on /cart, so the "required info" disclosure is opened on the wrong
+    # page and verify_form_data_confirm flakes. [2026-09-16]
+    wait_for_place_order_button2: { role: 'button', name: 'Place order', timeout: 15000 }
 
     # Verify form data after confirm
     R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
