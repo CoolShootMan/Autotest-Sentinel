@@ -29,7 +29,7 @@ testT1742:
             sleep_step: 4000
 
             # Step 1.1: Click Post tab to show post cards
-            R_click_posts_tab: { role: "tab", name: "Post" }
+            R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
             # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -104,7 +104,7 @@ testT1742:
         open_again: "{BASE_URL}/events"
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
-        R_click_posts_tab:      { role: "tab", name: "Post" }
+        R_click_post_tab:      { role: "tab", name: "Post" }
         sleep_end: 3000
 
     expect_result:
@@ -262,7 +262,7 @@ testT3683_T3684:
         sleep_step: 4000
 
         # Step 1.1: Click Post tab to show post cards
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -560,7 +560,7 @@ testT3686_teardown:
         sleep_step: 4000
 
         # Step 1.1: Click Post tab to show post cards
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -929,7 +929,7 @@ testT2834_VerifyPartner:
         # sleep_step: 500
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
         # Step 1.1: Verify the post alias verify-post-shipping-fee is visible
         verify_post_alias: { text: "verify-post-shipping-fee" }
@@ -1094,7 +1094,7 @@ testT2834_VerifyGuest:
         sleep_after_open_teardown: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_after_event_teardown: 3000
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_after_posts_tab_teardown: 2000
         
         # Step 3: Revert Selling tab Free Shipping
@@ -1132,8 +1132,8 @@ testT4735_VerifyPartner:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Verify the post alias test-event-post-variant-settings is visible
@@ -1243,8 +1243,8 @@ testT4735_VerifyGuest_YesPlease:
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
         sleep_after_event_td: 4000
 
-        # Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_after_posts_tab_td: 2500
 
         # Verify the post alias is visible on the Post tab
@@ -1276,8 +1276,8 @@ testT2515_SetLimit_WithVariant:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -1408,8 +1408,8 @@ testT2515_VerifyDisabled_WithVariant:
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab (now inside event detail)
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab (now inside event detail)
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Scroll down to reveal post card
@@ -1450,8 +1450,8 @@ testT2874_EnableDependentProducts:
         # swipe_avoid_plus: { x: 0, y: 500 }
         # sleep_step: 1000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -1595,8 +1595,8 @@ testT2874_VerifyGuestCheckoutTwo:
         swipe_teardown: { x: 0, y: 500 }
         sleep_step: 1000
 
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 3.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 4: Click post card to enter post landing page
@@ -1666,8 +1666,8 @@ testT4038:
         R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
@@ -1789,8 +1789,8 @@ testT2069:
         R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
@@ -1912,7 +1912,7 @@ testT5033_5034_VerifyPartner:
 
         # Step 2: Create a post
         #R_click_event_tab_2: { role: 'tab', name: 'Event', exact: true }
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
         R_click_Create_post: { role: "button", name: "Add another post" }
         sleep_after_create_post: 2500
@@ -2038,8 +2038,8 @@ testT4955_Partner_SetPaymentRestriction:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click post card to enter post landing page
@@ -2168,8 +2168,8 @@ testT4955_Guest_VerifyAccessCode:
         swipe_teardown: { x: 0, y: 500 }
         sleep_step: 1000
 
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 3.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 4: Click post card to enter post landing page
@@ -2226,8 +2226,8 @@ testT3779:
         scroll_to_bottom: { iterations: 5, delay: 500 }
         sleep_step: 2000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
@@ -2366,8 +2366,8 @@ testT3767:
         scroll_to_bottom: { iterations: 5, delay: 500 }
         sleep_step: 2000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
