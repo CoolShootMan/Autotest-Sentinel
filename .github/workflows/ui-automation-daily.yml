@@ -11,7 +11,9 @@ name: ui-automation-daily
 #
 # 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
 #
-# Slack 通知：配置仓库 Secrets（SLACK_WEBHOOK_URL）后自动启用，未配置则跳过。
+# Slack 通知：默认关闭（见下方 SLACK_NOTIFY_ENABLED）。
+#   旧群 cache-regression-detection-report 已停用，需要时再按新需求指向新群：
+#   在仓库 Secrets 新建 SLACK_WEBHOOK_URL_UI_AUTOMATION，然后把开关改成 'true'。
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 
@@ -28,11 +30,20 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  # ── Slack 通知总开关 ──
+  # 'false' = 不向任何 Slack 群发送结果（当前设定：调试期间 + 旧群已停用）。
+  # 后续要发到新的 Slack 群时：
+  #   1) 在仓库 Secrets 新建 SLACK_WEBHOOK_URL_UI_AUTOMATION（新群的 Incoming Webhook URL）
+  #   2) 把下面的值改成 'true'
+  # 旧的 SLACK_WEBHOOK_URL（指向 cache-regression-detection-report 群）已不再被引用。
+  SLACK_NOTIFY_ENABLED: 'false'
+
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180   # run #7 实测 6 个 YAML 约 110 分钟，120 太贴边容易被误杀
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -138,10 +149,10 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Send Slack notification
-        # 仅当配置了 SLACK_WEBHOOK_URL 时才发送；未配置自动跳过。
-        if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
+        # 三重条件：总开关打开 + 已配置新群 webhook + 非空。当前开关为 'false'，不会发送。
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
           RUN_OUTCOME: ${{ steps.run.outcome }}
         run: |
           python3 - <<'PY'

@@ -6,6 +6,15 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+env:
+  # ── Slack 通知总开关 ──
+  # 'false' = 不向任何 Slack 群发送结果（当前设定：旧群 cache-regression-detection-report 已停用）。
+  # 后续要发到新的 Slack 群时：
+  #   1) 在仓库 Secrets 新建 SLACK_WEBHOOK_URL_CACHE_REGRESSION（新群的 Incoming Webhook URL）
+  #   2) 把下面的值改成 'true'
+  # 旧的 SLACK_WEBHOOK_URL（指向 cache-regression-detection-report 群）已不再被引用。
+  SLACK_NOTIFY_ENABLED: 'false'
+
 jobs:
   cache-regression:
     name: cache-regression-daily-run
@@ -82,10 +91,11 @@ jobs:
           path: test_case/performance testing/cache-regression/output
 
       # ===== Slack 通知（Incoming Webhook）=====
-      # 仅每天 10:00 的 scheduled run 发送 Slack 通知；
-      # workflow_dispatch 手动调试触发的 run 只在 Actions 页面看结果，不推送 Slack。
-      # 需在仓库 Secrets 配置 SLACK_WEBHOOK_URL（Slack App -> Incoming Webhooks 生成）。
-      # 未配置时以下步骤自动跳过，不影响测试本身。
+      # ⚠️ 当前 SLACK_NOTIFY_ENABLED = 'false'，以下两个发送步骤不会执行（不向任何群发消息）。
+      # 旧群 cache-regression-detection-report 已停用，改为需要时指向新群：
+      #   在仓库 Secrets 新建 SLACK_WEBHOOK_URL_CACHE_REGRESSION，再把顶部开关改成 'true'。
+      # 仅每天 10:00 的 scheduled run 发送；workflow_dispatch 手动调试只在 Actions 页面看结果。
+      # 未配置 webhook 时发送步骤自动跳过，不影响测试本身。
       # 结果：成功只发摘要（含违规接口/BE 缺口数 + run 链接）；
       #       失败发失败用例列表 + run 链接，开发可直接点进详情定位。
       - name: Summarize results for Slack
@@ -270,9 +280,9 @@ jobs:
           PY
 
       - name: Send Slack notification (success)
-        if: ${{ always() && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome == 'success' }}
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome == 'success' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
         uses: slackapi/slack-github-action@v2
         with:
           webhook: ${{ env.SLACK_WEBHOOK_URL }}
@@ -280,9 +290,9 @@ jobs:
           payload-file-path: test_case/performance testing/cache-regression/slack_payload_success.json
 
       - name: Send Slack notification (failure)
-        if: ${{ always() && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome != 'success' }}
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome != 'success' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
         uses: slackapi/slack-github-action@v2
         with:
           webhook: ${{ env.SLACK_WEBHOOK_URL }}
