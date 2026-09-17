@@ -1,0 +1,32 @@
+{
+  "typeCheckingMode": "basic",
+  "autoSearchPaths": true,
+  "diagnosticMode": "workspace",
+  "extraPaths": [
+    ".",
+    "test_case/API auto script",
+    "test_case/performance testing/cache-regression"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "test_case/performance testing/cache-regression",
+      "extraPaths": ["."]
+    }
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/allure",
+    "**/allure-results",
+    "**/allure-report",
+    "**/report",
+    "**/data",
+    "**/step_captures",
+    "**/test-results",
+    "**/ui_snapshots",
+    "**/recordings",
+    "**/log",
+    "**/*.__backup_*",
+    "**/venv"
+  ]
+}
