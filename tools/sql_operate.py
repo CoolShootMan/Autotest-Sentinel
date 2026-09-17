@@ -44,6 +44,8 @@ class Sqloperate:
             result = cursor.fetchone()  
             self.connection.commit()
             self.connection.close()
+            if result is None:
+                return None
             return self.verify(result)
 
     def verify(self, result: dict) -> Union[dict, None]:

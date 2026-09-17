@@ -118,7 +118,7 @@ def _extract_covered_cases_from_yaml(yaml_path: str) -> dict:
         return {}
 
 
-def _get_yaml_path_from_params(parameters: list) -> str:
+def _get_yaml_path_from_params(parameters: list) -> str | None:
     """Extract __yaml_path__ from Allure parameters."""
     for param in parameters:
         if isinstance(param, str) and '__yaml_path__' in param:
@@ -188,7 +188,7 @@ def parse_behaviors_json(report_dir: str) -> dict:
     return test_results
 
 
-def get_latest_report_dir(base_dir: str = None) -> str:
+def get_latest_report_dir(base_dir: str | None = None) -> str | None:
     """Get the latest Allure HTML report directory."""
     if base_dir is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -209,7 +209,7 @@ def get_latest_report_dir(base_dir: str = None) -> str:
     return os.path.join(html_dir, subdirs[0])
 
 
-def update_ones(test_results: dict, test_plan_name: str = None):
+def update_ones(test_results: dict, test_plan_name: str | None = None):
     """
     Log in to ONES and update test case statuses.
     """

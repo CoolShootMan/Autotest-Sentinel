@@ -11,7 +11,7 @@ Version          :1.0
 
 import re
 from string import Template
-from typing import Any
+from typing import Any, cast
 import json
 import allure
 
@@ -42,10 +42,10 @@ def extractor(obj: dict, expr: str = '.') -> Any:
             split_expr = expr.rsplit('.', maxsplit=1)
             expr_sec = split_expr[-2]
             expr_first = split_expr[-1]
-            result_sec = jsonpath(obj, expr_sec)[0]
+            result_sec = cast(list, jsonpath(obj, expr_sec))[0]
             result = json.loads(result_sec)[expr_first]
         else:
-            result = jsonpath(obj, expr)[0]
+            result = cast(list, jsonpath(obj, expr))[0]
     except Exception as e:
         logger.error(f'{expr} - cannot extract the dict for {e}')
         result = expr
@@ -69,7 +69,7 @@ def rep_expr(content: str, data: dict) -> str:
     return content
 
 
-def convert_json(dict_str: str) -> dict:
+def convert_json(dict_str: str) -> Any:
     """
     :param dict_str: dict-like character string 
     return json type
@@ -100,7 +100,7 @@ def allure_title(title: str) -> None:
     allure.dynamic.title(title)
     logger.info(f'title:{title}')
 
-def allure_step(step: str, var: str) -> None:
+def allure_step(step: str, var: Any) -> None:
     """
     :param step: test steps
     :param var: test attachment

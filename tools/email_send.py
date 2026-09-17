@@ -10,6 +10,7 @@ Version          : 1.0
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+from typing import cast
 from tools.read_file import ReadFile
 import time
 from tools import logger
@@ -30,13 +31,13 @@ def email_send(subject, email_content):
     receivers = emai_config['receivers']  # Recipient email addresses (QQ mail or others)
     # Three parameters: text content, 'plain' format, 'utf-8' encoding
     message = MIMEText(email_content, 'plain', 'utf-8')
-    message['From'] = Header(sender, 'utf-8')   # Sender
-    message['Subject'] = Header(subject, 'utf-8')
+    message['From'] = cast(str, Header(sender, 'utf-8'))   # Sender
+    message['Subject'] = cast(str, Header(subject, 'utf-8'))
         # Recipient
     try:
         smtpObj = smtplib.SMTP(emai_config['mail_host'])
         for receiver in receivers:
-            message['To'] =  Header(receiver, 'utf-8')
+            message['To'] = cast(str, Header(receiver, 'utf-8'))
         smtpObj.sendmail(sender, receivers, message.as_string())
         return logger.info(f'Email sent successfully, recipients: {receivers}')
     except smtplib.SMTPException as e:

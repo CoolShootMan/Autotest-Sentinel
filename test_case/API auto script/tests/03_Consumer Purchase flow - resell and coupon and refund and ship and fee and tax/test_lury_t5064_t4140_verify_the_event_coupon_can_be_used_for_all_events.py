@@ -393,7 +393,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
         },
         "applicableCode": "eventcc",
     })
-    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')

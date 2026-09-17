@@ -620,7 +620,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
     # extractor: refund_id = refund_id
     ctx.extract('refund_id', _resp7, 'refund_id')
-    _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     for _line_item in _arr:
         if _line_item.get('variantInfo', {}).get('id') == "709c0762-dace-4d22-ab34-18c226a8f003":

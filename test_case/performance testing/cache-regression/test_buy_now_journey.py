@@ -38,6 +38,7 @@ GET /cart 与 GET /promoter-subscription/setting（curator 变体）已在
 test_checkout_journey.py 覆盖，此处不重复断言。
 """
 import asyncio
+from typing import Any
 
 import pytest
 
@@ -70,7 +71,7 @@ class TestBuyNowJourneyCache:
         """
         failures = []
         post_id = curator_post_id()
-        endpoints = [
+        endpoints: list[dict[str, Any]] = [
             {"path": f"/posts/{post_id}/style-settings", "label": "style-settings"},
             {
                 "path": f"/product-event/{_event_id()}/public-details",

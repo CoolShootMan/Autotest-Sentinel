@@ -135,11 +135,11 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     # === Steps ===
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
-    _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     if _arr:
         vars['oldAddressId'] = random.choice(_arr).get('id')
-    _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     if _arr:
         vars['newAddressId'] = random.choice(_arr).get('id')

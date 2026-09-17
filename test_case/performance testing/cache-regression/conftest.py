@@ -445,7 +445,7 @@ def assert_zero_db_queries(
     resource: str,
     attempt: str = "verify",
     url: str = "",
-    warmup_db_queries: int = None,
+    warmup_db_queries: int | None = None,
 ):
     """
     断言本次请求未产生任何 DB 查询（缓存完全命中）。
@@ -502,7 +502,7 @@ async def assert_zero_db_queries_async(
     *,
     resource: str,
     attempt: str = "verify",
-    warmup_db_queries: int = None,
+    warmup_db_queries: int | None = None,
     max_retries: int = 1,
 ):
     """预热后二次读断言（async 版，支持 BE 瞬态穿透即时重试）。

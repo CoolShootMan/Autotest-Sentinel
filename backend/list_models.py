@@ -4,9 +4,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY") 
-genai.configure(api_key=api_key)
+genai.configure(api_key=api_key)  # pyright: ignore[reportPrivateImportUsage]
 
 print("Listing available models...")
-for m in genai.list_models():
+for m in genai.list_models():  # pyright: ignore[reportPrivateImportUsage]
     if 'generateContent' in m.supported_generation_methods:
         print(m.name)

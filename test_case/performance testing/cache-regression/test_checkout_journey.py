@@ -26,6 +26,7 @@ BE（release.katana-api.1m.app）调用的所有 GET API，验证"预热后连�
   （观测点为结算页 GET /cart 的 item.totalCouponDiscount）。
 """
 import asyncio
+from typing import cast
 
 import pytest
 
@@ -84,7 +85,7 @@ def get_checkout_endpoints() -> list[dict]:
 # KAT-11756 需求 3c（checkout 分支）的 auto coupon 会话缓存（独立于
 # TestPromotionCache 的类级缓存：避免 import 测试类导致 pytest 在本模块下
 # 重复收集 test_promotion 的用例，与 test_pdp 的 _PDP_AUTO 同一模式）。
-_CHECKOUT_AUTO = {"id": None, "tag": None}
+_CHECKOUT_AUTO: dict[str, str | None] = {"id": None, "tag": None}
 
 
 class TestCheckoutJourneyCache:
@@ -317,17 +318,18 @@ class TestCheckoutJourneyCache:
 
         # 0. 兜底 apply coupon（会话级缓存，复用 test_promotion 工具链）
         if _CHECKOUT_AUTO["id"] is None:
-            _CHECKOUT_AUTO["tag"] = _now_tag()
+            auto_tag = _now_tag()
+            _CHECKOUT_AUTO["tag"] = auto_tag
             resp = await http_client.patch(
                 promo_path(),
                 headers=promo_auth_headers,
-                json=_build_promo_body(discount=10, auto_tag=_CHECKOUT_AUTO["tag"]),
+                json=_build_promo_body(discount=10, auto_tag=auto_tag),
             )
             assert resp.status_code == 200, (
                 f"Create auto coupon failed: {resp.status_code} {resp.text}"
             )
             _CHECKOUT_AUTO["id"] = await _read_auto_coupon_id(
-                http_client, _CHECKOUT_AUTO["tag"]
+                http_client, auto_tag
             )
 
         # 1. 加购：coupon 生效（购物车 item 带 totalCouponDiscount）
@@ -433,7 +435,7 @@ class TestCheckoutJourneyCache:
                 headers=promo_auth_headers,
                 json=_build_promo_body(
                     discount=20,
-                    auto_tag=_CHECKOUT_AUTO["tag"],
+                    auto_tag=cast(str, _CHECKOUT_AUTO["tag"]),
                     auto_id=_CHECKOUT_AUTO["id"],
                 ),
             )
@@ -450,7 +452,7 @@ class TestCheckoutJourneyCache:
                     headers=promo_auth_headers,
                     json=_build_promo_body(
                         discount=10,
-                        auto_tag=_CHECKOUT_AUTO["tag"],
+                        auto_tag=cast(str, _CHECKOUT_AUTO["tag"]),
                         auto_id=_CHECKOUT_AUTO["id"],
                     ),
                 )

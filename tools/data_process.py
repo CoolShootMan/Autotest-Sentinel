@@ -9,6 +9,7 @@ Version          :1.0
 '''
 from tools import logger, extractor, convert_json, rep_expr, allure_step, allure_step_no
 from tools.read_file import ReadFile
+from typing import Any
 
 class DataProcess:
     # a pool to save paramters 
@@ -59,7 +60,7 @@ class DataProcess:
             return files
 
     @classmethod
-    def handle_data(cls, variable: str) -> dict:
+    def handle_data(cls, variable: str) -> Any:
         """
         :param variable: 
         return json-like , dict-like data
@@ -67,9 +68,9 @@ class DataProcess:
         if variable != '':
             logger.info(f'extra_pool-{cls.extra_pool}')
             data = rep_expr(variable, cls.extra_pool)
-            variable = convert_json(data)
-            logger.info(f'variable-{variable}')
-            return variable
+            result = convert_json(data)
+            logger.info(f'variable-{result}')
+            return result
 
     @classmethod
     def handle_extra(cls, extra_str: str, response: dict):

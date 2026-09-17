@@ -234,12 +234,13 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _v2 = ((_j2.get('data') or {}).get('items') or [{}])[0].get('variants') or [{}]
     _v2 = _v2[0]
-    _t2 = _v2.get('ticketPrice')
-    _p2 = _v2.get('price')
+    # 数值字段统一 `or 0` 取值：dict.get 返回 Any|None，直接参与算术会触发 reportOptionalOperand
+    _t2 = _v2.get('ticketPrice') or 0
+    _p2 = _v2.get('price') or 0
     _f2: dict[str, Any] = _v2.get('fees') or {}
-    _pf2 = _f2.get('platformFee')
-    _cf2 = _f2.get('customFee')
-    _tf2 = _f2.get('transactionItemFee')
+    _pf2 = _f2.get('platformFee') or 0
+    _cf2 = _f2.get('customFee') or 0
+    _tf2 = _f2.get('transactionItemFee') or 0
     _tax2: dict[str, Any] = (_f2.get('customFeeBreakdown') or {}).get('TAX') or {}
     _taxPct2 = _tax2.get('unitPercentageFee')
     assert _taxPct2 == 0.1, f"step2 TAX费率 != 0.1, got {_taxPct2}"
@@ -268,15 +269,15 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert _j3.get('message') == 'success', f"step3 message != success, got {_j3.get('message')}"
     _v3 = ((_j3.get('data') or {}).get('items') or [{}])[0].get('variants') or [{}]
     _v3 = _v3[0]
-    _t3 = _v3.get('ticketPrice')
-    _p3 = _v3.get('price')
+    _t3 = _v3.get('ticketPrice') or 0
+    _p3 = _v3.get('price') or 0
     _f3: dict[str, Any] = _v3.get('fees') or {}
-    _pf3 = _f3.get('platformFee')
-    _cf3 = _f3.get('customFee')
-    _tf3 = _f3.get('transactionItemFee')
+    _pf3 = _f3.get('platformFee') or 0
+    _cf3 = _f3.get('customFee') or 0
+    _tf3 = _f3.get('transactionItemFee') or 0
     _tax3: dict[str, Any] = (_f3.get('customFeeBreakdown') or {}).get('TAX') or {}
     _taxPct3 = _tax3.get('unitPercentageFee')
-    _taxItem3 = _tax3.get('itemFee')
+    _taxItem3 = _tax3.get('itemFee') or 0
     assert _taxPct3 == 0.2, f"step3 TAX费率 != 0.2, got {_taxPct3}"
     assert abs(_taxItem3 - _cf3) <= 0.01, f"step3 TAX金额错误: itemFee={_taxItem3}, customFee={_cf3}"
     assert abs(_pf3 - (_tf3 - _cf3)) <= 0.01, f"step3 platformFee计算错误: platformFee={_pf3}, transactionItemFee-customFee={_tf3-_cf3}"
@@ -305,7 +306,9 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert isinstance(_d4, dict), "step4 data 非对象"
     _items4: list[Any] = _d4.get('items') or []
     assert isinstance(_items4, list) and len(_items4) > 0, "step4 data.items 为空"
-    assert isinstance(_d4.get('totalCount'), (int, float)) and _d4.get('totalCount') > 0, f"step4 totalCount 非法: {_d4.get('totalCount')}"
+    # 必须先落到局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _tc4 = _d4.get('totalCount')
+    assert isinstance(_tc4, (int, float)) and _tc4 > 0, f"step4 totalCount 非法: {_tc4}"
     for _item4 in _items4:
         _vs4: list[Any] = _item4.get('variants') or []
         assert isinstance(_vs4, list) and len(_vs4) > 0, "step4 variant 为空"

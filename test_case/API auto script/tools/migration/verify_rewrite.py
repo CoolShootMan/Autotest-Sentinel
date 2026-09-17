@@ -199,7 +199,11 @@ def new_fingerprint(path: Path, by_name: dict) -> tuple[dict, list]:
                     and ast.unparse(call.func).startswith("ctx.api.")):
                 problems.append(f"非 api 调用赋值: {ast.unparse(stmt)[:60]}")
                 continue
-            dom = call.func.value.attr               # ctx.api.<dom>.<method>（>=2 层）
+            dom_node = call.func.value               # ctx.api.<dom>.<method>（>=2 层）
+            if not isinstance(dom_node, ast.Attribute):
+                problems.append(f"非 api 调用赋值: {ast.unparse(stmt)[:60]}")
+                continue
+            dom = dom_node.attr
             minfo = by_name.get((dom, call.func.attr))
             if minfo is None:
                 problems.append(f"未知接口: {dom}.{call.func.attr}")

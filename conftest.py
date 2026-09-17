@@ -234,6 +234,9 @@ def pytest_generate_tests(metafunc):
                     # Replace {BASE_URL} placeholder at runtime
                     base_url = _resolve_base_url()
                     data = _replace_placeholders(data, base_url, CURRENT_ENV)
+                    if not isinstance(data, dict):
+                        logger.error(f"YAML root must be a mapping: {yaml_path}")
+                        continue
                     for k, v in data.items():
                         if isinstance(v, dict):
                             v["__yaml_path__"] = yaml_path

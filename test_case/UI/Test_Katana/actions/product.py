@@ -1,4 +1,6 @@
 import re
+from typing import cast
+
 from loguru import logger
 from playwright.sync_api import Page
 from .base import smart_click
@@ -178,11 +180,11 @@ def select_replacement_product(page: Page, v: dict):
         
     # Relaxed match: allow the name to be part of the text or the exact text
     candidates = [
-        drawer.get_by_text(product_name, exact=True),
-        drawer.get_by_role("paragraph").filter(has_text=re.compile(product_name, re.I)),
-        drawer.locator('.MuiCardActionArea-root').filter(has_text=re.compile(product_name, re.I)),
-        drawer.locator('.MuiStack-root').filter(has_text=re.compile(product_name, re.I)),
-        drawer.locator('div').filter(has_text=re.compile(product_name, re.I))
+        drawer.get_by_text(cast(str, product_name), exact=True),
+        drawer.get_by_role("paragraph").filter(has_text=re.compile(cast(str, product_name), re.I)),
+        drawer.locator('.MuiCardActionArea-root').filter(has_text=re.compile(cast(str, product_name), re.I)),
+        drawer.locator('.MuiStack-root').filter(has_text=re.compile(cast(str, product_name), re.I)),
+        drawer.locator('div').filter(has_text=re.compile(cast(str, product_name), re.I))
     ]
     
     card = None

@@ -11,6 +11,8 @@ Version          : 4.0 — Step Capture integrated
 
 import sys
 import os
+from typing import Any, cast
+
 import pytest
 import allure
 from playwright.sync_api import Page, Browser
@@ -127,7 +129,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 if not hasattr(page, "_sessions"):
                     setattr(page, "_sessions", {})
 
-                if session_name not in page._sessions:
+                if session_name not in getattr(page, "_sessions"):
                     logger.info(f">>> Auto-creating session: {session_name}")
                     create_session(page, {
                         "name": session_name,
@@ -135,13 +137,13 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                     })
 
                 # Set as active session
-                page._active_session = session_name
+                setattr(page, "_active_session", session_name)
 
         # Get the active page (session page or default page)
-        if target_session or hasattr(page, "_active_session") and page._active_session:
-            active_session_name = target_session or page._active_session
-            if active_session_name in page._sessions:
-                active_page = page._sessions[active_session_name]["page"]
+        if target_session or hasattr(page, "_active_session") and getattr(page, "_active_session", None):
+            active_session_name = target_session or getattr(page, "_active_session", None)
+            if active_session_name in getattr(page, "_sessions"):
+                active_page = getattr(page, "_sessions")[active_session_name]["page"]
                 logger.debug(f">>> Using page from session: {active_session_name}")
             else:
                 active_page = page
@@ -160,11 +162,11 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
 
         # --- Step Capture: before execution ---
         should_capture = step_capture and StepCapture.should_capture(k)
-        if should_capture:
+        if should_capture and step_capture:
             step_capture.step_start(k, v)
 
         # 1. Action Registry Lookup
-        action = get_action(actual_action_name)
+        action: Any = get_action(actual_action_name)
 
         step_status = "passed"
         step_error = None
@@ -182,24 +184,24 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
 
                     if actual_action:
                         # Ensure session exists
-                        if session_name not in page._sessions:
+                        if session_name not in getattr(page, "_sessions"):
                             create_session(page, {"name": session_name})
 
                         # Execute action in session context
-                        session_page = page._sessions[session_name]["page"]
-                        page._active_session = session_name
+                        session_page = getattr(page, "_sessions")[session_name]["page"]
+                        setattr(page, "_active_session", session_name)
 
                         logger.info(f">>> Executing '{action_name}' in session '{session_name}'")
                         actual_action(session_page, v)
-                        page._execution_history.append((k, v))
+                        getattr(page, "_execution_history").append((k, v))
                     else:
                         logger.error(f"Session action '{action_name}' not found")
                         step_status = "failed"
                         step_error = f"Session action '{action_name}' not found"
                 else:
                     # Regular action
-                    action(active_page, v)
-                    page._execution_history.append((k, v))
+                    cast(Any, action)(active_page, v)
+                    getattr(page, "_execution_history").append((k, v))
             except Exception as e:
                 step_status = "failed"
                 step_error = str(e)
@@ -209,7 +211,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 except: pass
 
                 # --- Step Capture: capture failed step ---
-                if should_capture:
+                if should_capture and step_capture:
                     step_capture.step_end(active_page, status="failed", error_msg=step_error)
                     test_failed = True
 
@@ -225,7 +227,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                        active_page.click(f"text={target_text}", timeout=5000)
                        logger.info(f"Fallback click success for: {target_text}")
                        fallback_success = True
-                       page._execution_history.append((k, v))
+                       getattr(page, "_execution_history").append((k, v))
                 except:
                    pass
 
@@ -234,14 +236,14 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 step_error = f"Step '{k}' not found or failed in fallback"
                 logger.error(f"FATAL: Step '{k}' could not be resolved by Registry or Fallback.")
 
-                if should_capture:
+                if should_capture and step_capture:
                     step_capture.step_end(active_page, status="failed", error_msg=step_error)
                     test_failed = True
 
                 pytest.fail(f"Step '{k}' not found or failed in fallback. Check actions/__init__.py or YAML key.")
 
         # --- Step Capture: after successful execution ---
-        if should_capture and step_status == "passed":
+        if should_capture and step_capture and step_status == "passed":
             step_capture.step_end(active_page, status="passed")
 
         # Post-step Crash Check

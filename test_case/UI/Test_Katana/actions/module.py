@@ -1,4 +1,6 @@
 import re as _re
+from typing import Any, cast
+
 from playwright.sync_api import Page
 from loguru import logger
 from .base import smart_click, verify_no_sibling_text
@@ -44,7 +46,7 @@ _HAMBURGER_SELECTOR = (
 )
 
 
-def click_shop_event_button(page: Page, v: dict = None):
+def click_shop_event_button(page: Page, v: dict | None = None):
     """Click the '+ Event' button (first button in the shop page top action bar).
     UI update 2026-06-18: Event creation entry was moved out of the '+ Add' dropdown
     and is now a standalone button (leftmost in the action row).
@@ -57,7 +59,7 @@ def click_shop_event_button(page: Page, v: dict = None):
     page.wait_for_timeout(1000)  # Wait for navigation to event creation page
 
 
-def click_shop_add_button(page: Page, v: dict = None):
+def click_shop_add_button(page: Page, v: dict | None = None):
     """Click the '+ Add' button (top-right corner of the shop page).
     This opens a dropdown menu with creation options including
     'Add a storefront module', 'Add post', etc."""
@@ -68,7 +70,7 @@ def click_shop_add_button(page: Page, v: dict = None):
     page.wait_for_timeout(800)  # Wait for dropdown animation
 
 
-def click_shop_hamburger(page: Page, v: dict = None):
+def click_shop_hamburger(page: Page, v: dict | None = None):
     """Click the hamburger menu icon (top-right corner, next to '+ Add').
     This opens a dropdown with navigation items: Explore, Account,
     Content, Orders, etc. (items that were previously in bottom tab bar)."""
@@ -78,7 +80,7 @@ def click_shop_hamburger(page: Page, v: dict = None):
     btn.click()
     page.wait_for_timeout(800)  # Wait for dropdown animation
 
-def click_add_storefront_module(page: Page, v: dict = None):
+def click_add_storefront_module(page: Page, v: dict | None = None):
     """Click 'Add storefront section' (formerly 'Add a storefront module') in the '+ Add' dropdown menu.
     This is the replacement for the old bottom-tab 'Module' button click.
     Supports both new ('Add storefront section') and old ('Add a storefront module') UI text."""
@@ -97,7 +99,7 @@ def click_add_storefront_module(page: Page, v: dict = None):
     menu_item.click()
     page.wait_for_timeout(1000)
 
-def click_shop_add_module(page: Page, v: dict = None):
+def click_shop_add_module(page: Page, v: dict | None = None):
     """One-step action: click '+ Add' button → click 'Add storefront section'.
     This is the direct replacement for: R_click: { role: 'button', name: 'Module' }
     Kept as click_shop_add_module for backward compatibility; also registered as click_shop_add_section."""
@@ -110,7 +112,7 @@ def click_module_edit_button(page: Page, v: dict):
     logger.info(f"Clicking edit button for module: {module_name}")
     # Use double-locator pattern: Find the container that has both the module name and buttons
     # Then click the second button (usually the 'More/Edit' icon)
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button")).last
+    container = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_role("button")).last
     container.scroll_into_view_if_needed()
     btn = container.get_by_role("button").nth(-1)
     btn.wait_for(state="visible", timeout=10000)
@@ -135,7 +137,7 @@ def delete_all_sections_by_name(page: Page, v: dict):
     for _ in range(max_iter):
         # Use the stable title testid instead of a build-specific hashed class.
         headers = page.locator("p[data-testid='base-storefront-text']").filter(
-            has=page.get_by_text(module_name, exact=True)
+            has=page.get_by_text(cast(str, module_name), exact=True)
         ).all()
         if not headers:
             break
@@ -237,7 +239,7 @@ def click_module_paragraph(page: Page, v: dict):
 def click_add_new_product(page: Page, v: dict):
     # Click "Add new" button within specific module header
     module_name = v.get("module_name")
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
+    container = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
     container.get_by_role("button", name="Add new").click(timeout=15000)
 
 def click_module_add_new(page: Page, v: dict):
@@ -247,7 +249,7 @@ def click_module_add_new(page: Page, v: dict):
     logger.info(f"Clicking 'Add new' for module: {module_name}")
     
     # 1. Find the deepest div that contains the module title AND an 'Add new' button
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
+    container = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_role("button", name="Add new")).last
     
     # 2. Click the button within that container
     container.get_by_role("button", name="Add new").click(timeout=10000)
@@ -261,7 +263,7 @@ def click_module_post_view_event_cta(page: Page, v: dict):
 
     # Step 1: Locate module header using double-filter pattern (exact text + button presence)
     header = page.locator("div").filter(
-        has=page.get_by_text(module_name, exact=True)
+        has=page.get_by_text(cast(str, module_name), exact=True)
     ).filter(
         has=page.get_by_role("button")
     ).last
@@ -272,7 +274,7 @@ def click_module_post_view_event_cta(page: Page, v: dict):
 
     # Step 3: Find the post card within module body by post_title
     post_card = module_container.locator(".post-card").filter(
-        has=page.get_by_text(post_title, exact=True)
+        has=page.get_by_text(cast(str, post_title), exact=True)
     ).last
     post_card.scroll_into_view_if_needed()
 
@@ -300,7 +302,7 @@ def click_module_item_more_icon(page: Page, v: dict):
     logger.info(f"Clicking more icon on item inside module: {module_name} (index: {target_index})")
 
     # Find the module header container first
-    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(
+    header = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(
         has=page.get_by_role("button")
     ).last
     header.scroll_into_view_if_needed()
@@ -324,7 +326,7 @@ def click_module_collapse(page: Page, v: dict):
     # so the matched div is the section header row (has icon + title + buttons), not the deeper
     # SectionTitle component (icon + title only). This keeps the click correct AND makes the
     # parent's parent (the section card) measurable in verify_* helpers.
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
+    container = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
     container.get_by_test_id("arrow-up-icon").first.click(timeout=10000)
 
 def click_module_expand(page: Page, v: dict):
@@ -333,7 +335,7 @@ def click_module_expand(page: Page, v: dict):
     """
     module_name = v.get("module_name")
     logger.info(f"Expanding module: {module_name}")
-    container = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
+    container = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
     container.get_by_test_id("arrow-up-icon").first.click(timeout=10000)
 
 def verify_module_collapsed(page: Page, v: dict):
@@ -342,7 +344,7 @@ def verify_module_collapsed(page: Page, v: dict):
     logger.info(f"Verifying module '{module_name}' is collapsed by measuring height...")
     # Anchor on the section header row (has icon + title + buttons).
     # Its parent (..) is the section card, which includes the body when expanded.
-    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
+    header = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
 
     import time
     start_time = time.time()
@@ -353,7 +355,8 @@ def verify_module_collapsed(page: Page, v: dict):
             logger.info(f"Module '{module_name}' is successfully collapsed (Visual Height: {box['height']:.1f}px)")
             return
         time.sleep(0.5)
-    raise AssertionError(f"Module '{module_name}' did not collapse. Current Height: {box['height']:.1f}px")
+    height = f"{box['height']:.1f}px" if box else "n/a"
+    raise AssertionError(f"Module '{module_name}' did not collapse. Current Height: {height}")
 
 def verify_module_expanded(page: Page, v: dict):
     """Verifies that a module's body is expanded by checking its overall container height grows."""
@@ -361,7 +364,7 @@ def verify_module_expanded(page: Page, v: dict):
     logger.info(f"Verifying module '{module_name}' is expanded by measuring height...")
     # Anchor on the section header row (has icon + title + buttons).
     # Its parent (..) is the section card, which includes the body when expanded.
-    header = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
+    header = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).filter(has=page.get_by_test_id("arrow-up-icon")).filter(has=page.locator("button")).last
 
     import time
     start_time = time.time()
@@ -372,7 +375,8 @@ def verify_module_expanded(page: Page, v: dict):
             logger.info(f"Module '{module_name}' is successfully expanded (Visual Height: {box['height']:.1f}px)")
             return
         time.sleep(0.5)
-    raise AssertionError(f"Module '{module_name}' did not expand. Current Height: {box['height']:.1f}px")
+    height = f"{box['height']:.1f}px" if box else "n/a"
+    raise AssertionError(f"Module '{module_name}' did not expand. Current Height: {height}")
 
 
 
@@ -474,7 +478,7 @@ def verify_element_style(page: Page, v: dict):
     if isinstance(property_names, str):
         properties = [property_names]
     else:
-        properties = property_names
+        properties = cast(list, property_names)
 
     # Get computed style values via JS property accessor (cs[key])
     # CSSStyleDeclaration named properties are prototype getters that don't survive Playwright serialization.
@@ -494,6 +498,7 @@ def verify_element_style(page: Page, v: dict):
         actual_value = computed_styles.get(prop, "")
 
         # Determine expected value
+        exp_value: Any
         if isinstance(expected, dict):
             exp_value = expected.get(prop, "")
         else:
@@ -626,14 +631,15 @@ def verify_carousel_scroll(page: Page, v: dict):
             logger.warning(f"verify_carousel_scroll: no horizontal scroller found for '{module_name}'; falling back to header anchor")
             header_el = page.locator("p[data-testid='base-storefront-text']").filter(has_text=module_name)
             if header_el.count() == 0:
-                header_el = page.locator("div.katana-1g3r82v").filter(has=page.get_by_text(module_name, exact=True))
+                header_el = page.locator("div.katana-1g3r82v").filter(has=page.get_by_text(cast(str, module_name), exact=True))
             if header_el.count() == 0:
                 raise AssertionError(f"Module '{module_name}' section not found on page")
             module_container = header_el.first.locator("xpath=..")
             scroll_el = module_container
 
     container_box = module_container.bounding_box()
-    logger.info(f"Found module container, size: {container_box['width']:.0f}x{container_box['height']:.0f}px")
+    if container_box:
+        logger.info(f"Found module container, size: {container_box['width']:.0f}x{container_box['height']:.0f}px")
 
     module_container.scroll_into_view_if_needed()
     page.wait_for_timeout(500)
@@ -851,7 +857,7 @@ def verify_carousel_nav_hidden_at_last(page: Page, v: dict):
     logger.info(f"verify_carousel_nav_hidden_at_last: Testing module '{module_name}'")
 
     # Find the LAST matching module (handles multiple modules on page)
-    all_modules = page.locator("div").filter(has=page.get_by_text(module_name, exact=True)).all()
+    all_modules = page.locator("div").filter(has=page.get_by_text(cast(str, module_name), exact=True)).all()
     if not all_modules:
         raise AssertionError(f"Module '{module_name}' not found on page")
     module_container = all_modules[-1]
@@ -1165,10 +1171,10 @@ def click_container_button(page: Page, v: dict):
     if container_text:
         container = page.locator("div", has_text=container_text).last
         if container_locator:
-            prefix = "xpath=" if container_locator.startswith("/") else ""
+            prefix = "xpath=" if cast(str, container_locator).startswith("/") else ""
             container = container.locator(f"{prefix}{container_locator}").last
     else:
-        prefix = "xpath=" if container_locator.startswith("/") else ""
+        prefix = "xpath=" if cast(str, container_locator).startswith("/") else ""
         container = page.locator(f"{prefix}{container_locator}").last
 
     container.scroll_into_view_if_needed()

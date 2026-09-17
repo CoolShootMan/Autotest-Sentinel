@@ -10,7 +10,7 @@ class EnterpriseTaskParser:
     Layer 2: AI/LLM (Smart, Costly, Global Context) - Placeholder for now
     """
 
-    def __init__(self, ai_api_key: str = None):
+    def __init__(self, ai_api_key: str | None = None):
         self.ai_api_key = ai_api_key
 
     async def parse(self, natural_language_instruction: str) -> dict:

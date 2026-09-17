@@ -12,8 +12,12 @@ import time
 import urllib.request
 import urllib.error
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 API_BASE = "https://api.apifox.com/api/v1"
+
+if TYPE_CHECKING:  # 仅类型检查期：session() 内部按需 import requests，这里供返回注解解析
+    import requests
 
 # Loaded from auth_state.json (Playwright storage state)
 DEFAULT_AUTH_STATE = Path(__file__).parent / "_apifox_export" / "auth_state.json"

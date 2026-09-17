@@ -30,9 +30,9 @@ class AIVisionService:
         self._configure_client(self.current_key)
 
     def _configure_client(self, key):
-        genai.configure(api_key=key)
+        genai.configure(api_key=key)  # pyright: ignore[reportPrivateImportUsage]
         # Use Gemini 3 Flash Preview as requested by user
-        self.model = genai.GenerativeModel('gemini-3-flash-preview')
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')  # pyright: ignore[reportPrivateImportUsage]
 
     def _rotate_key(self):
         old_key = self.current_key

@@ -18,8 +18,8 @@ env/
 .vscode/
 *.swp
 *.swo
-# Pylance/Pyright 本地静态分析配置（含本机绝对路径，不提交）
-pyrightconfig.json
+# Pylance/Pyright 静态分析配置：团队共用，进版本库
+# （内容均为相对路径，勿写入本机绝对路径 / venvPath，否则会污染队友 IDE 环境）
 
 # === Pytest ===
 .pytest_cache/

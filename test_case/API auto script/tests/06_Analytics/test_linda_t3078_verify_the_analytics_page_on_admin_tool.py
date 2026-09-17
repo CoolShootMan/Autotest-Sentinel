@@ -408,7 +408,9 @@ def test_linda_t3078_verify_the_analytics_page_on_admin_tool(ctx: "Context"):
     assert _j2.get('code') == 200, f"code应为200，实际={_j2.get('code')!r}"
     assert _j2.get('message') == 'success', f"message应为success，实际={_j2.get('message')!r}"
     _d2: dict[str, Any] = _j2.get('data') or {}
-    assert isinstance(_d2.get('totalCount'), (int, float)) and _d2.get('totalCount') >= 0, f"totalCount应为非负数字，实际={_d2.get('totalCount')!r}"
+    # 先落局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _tc2 = _d2.get('totalCount')
+    assert isinstance(_tc2, (int, float)) and _tc2 >= 0, f"totalCount应为非负数字，实际={_tc2!r}"
     _items2: list[Any] = _d2.get('items') or []
     assert len(_items2) > 0, "data.items 为空数组"
     _it2 = _items2[0]
@@ -421,7 +423,8 @@ def test_linda_t3078_verify_the_analytics_page_on_admin_tool(ctx: "Context"):
     assert _det2.get('alias') == 'automation-test-event-with-in-person-delivery-t4251', f"alias不符，实际={_det2.get('alias')!r}"
     for _i, _stat in enumerate(_ms2):
         _vis: dict[str, Any] = (_stat.get('visitors') or {}).get('Total Unique Visitors') or {}
-        assert isinstance(_vis.get('total'), (int, float)) and _vis.get('total') >= 0, f"第{_i+1}组访客总数非法：{_vis.get('total')!r}"
+        _vt = _vis.get('total')
+        assert isinstance(_vt, (int, float)) and _vt >= 0, f"第{_i+1}组访客总数非法：{_vt!r}"
         for _dn, _dv in (_stat.get('devices') or {}).items():
             _dt = (_dv or {}).get('total')
             assert isinstance(_dt, (int, float)) and _dt >= 0, f"第{_i+1}组devices[{_dn}].total非法：{_dt!r}"
