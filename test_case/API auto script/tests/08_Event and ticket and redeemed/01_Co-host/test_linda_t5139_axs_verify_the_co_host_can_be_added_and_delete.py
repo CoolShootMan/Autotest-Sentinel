@@ -161,7 +161,9 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert isinstance(_d2.get('curatorId'), str) and _d2.get('curatorId'), "curatorId 应为非空字符串"
     assert isinstance(_d2.get('collaboratorUserId'), str) and _d2.get('collaboratorUserId'), "collaboratorUserId 应为非空字符串"
     assert _d2.get('role') == 'BASIC', f"role预期BASIC，实际={_d2.get('role')!r}"
-    assert isinstance(_d2.get('identifier'), str) and '@' in _d2.get('identifier'), f"identifier应为含@的字符串，实际={_d2.get('identifier')!r}"
+    # 先落局部变量，isinstance 收窄才对后续 `in` 生效（重复 .get() 会丢失收窄）
+    _idt2 = _d2.get('identifier')
+    assert isinstance(_idt2, str) and '@' in _idt2, f"identifier应为含@的字符串，实际={_idt2!r}"
     assert isinstance(_d2.get('createdAt'), str) and _d2.get('createdAt'), "createdAt 应为非空字符串"
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"

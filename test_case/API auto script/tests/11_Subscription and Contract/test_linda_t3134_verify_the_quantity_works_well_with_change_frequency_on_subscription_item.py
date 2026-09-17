@@ -203,7 +203,7 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     # extractor:  = 
     # step 8: check the new contract details
     _resp8 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
-    _j: dict[str, Any] = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     _x = next((_z for _z in _arr if _z.get('id') == vars.get('contractId')), None)
     if _x: vars['contractNumber'] = _x.get('contractNumber')

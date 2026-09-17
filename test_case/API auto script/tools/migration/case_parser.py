@@ -95,8 +95,11 @@ def _src_of(node: ast.AST, lines: list[str]) -> str:
        （CPython 只对多行片段做 padding），此处统一补上语句所在行的前导空白。
     """
     seg = ast.get_source_segment("\n".join(lines), node, padded=True) or ""
-    if seg and not seg[0] in " \t" and 0 < node.lineno <= len(lines):
-        indent = re.match(r"[ \t]*", lines[node.lineno - 1]).group(0)
+    # ast.AST 基类没有 lineno（只有 stmt/expr 等子类有），故用 getattr 取位置信息
+    _lineno = getattr(node, "lineno", 0)
+    if seg and seg[0] not in " \t" and 0 < _lineno <= len(lines):
+        _m = re.match(r"[ \t]*", lines[_lineno - 1])
+        indent = _m.group(0) if _m else ""
         seg = indent + seg
     return seg
 
@@ -365,7 +368,7 @@ def _segments_of(try_node: ast.Try) -> list[str]:
             if isinstance(sub, ast.For) and isinstance(sub.iter, (ast.List, ast.Tuple)):
                 segs = [_const(e) for e in sub.iter.elts]
                 if all(s is not None for s in segs):
-                    return segs
+                    return [s for s in segs if s is not None]
     return []
 
 
@@ -475,5 +478,6 @@ def parse_case(path: Path, tests_root: Path | None = None) -> ParsedCase:
 
 def _raw_op(node: ast.AST, lines: list[str]) -> Op:
     src = _src_of(node, lines) or ast.unparse(node)
-    return Op(kind="raw", source=src, lineno=node.lineno,
-              end_lineno=node.end_lineno or node.lineno)
+    _lineno = getattr(node, "lineno", 0)
+    _end_lineno = getattr(node, "end_lineno", None) or _lineno
+    return Op(kind="raw", source=src, lineno=_lineno, end_lineno=_end_lineno)

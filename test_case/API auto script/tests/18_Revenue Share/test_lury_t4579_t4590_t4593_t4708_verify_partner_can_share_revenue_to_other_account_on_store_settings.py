@@ -266,7 +266,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
         "email": "{{M1}}",
     })
     try:
-        _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['P-21_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
@@ -284,7 +284,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
         "email": "{{merchant_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -328,7 +328,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
         "email": "{{consumer_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass

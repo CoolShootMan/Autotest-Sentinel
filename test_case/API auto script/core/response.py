@@ -49,7 +49,9 @@ class CaseInsensitiveHeaders(dict[str, str]):
         return super().__getitem__(self._real_key(key))
 
     def __contains__(self, key: object) -> bool:
-        return super().__contains__(self._real_key(key))
+        # __contains__ 协议签名要求 key: object（不能收窄为 str），而 _real_key 内部
+        # 本就 str(key) 归一化；传任意对象都是既有语义，故此处按调用契约收窄。
+        return super().__contains__(self._real_key(key))  # type: ignore[arg-type]
 
     def pop(self, key: str, *args: Any) -> Any:  # type: ignore[override]
         return super().pop(self._real_key(key), *args)

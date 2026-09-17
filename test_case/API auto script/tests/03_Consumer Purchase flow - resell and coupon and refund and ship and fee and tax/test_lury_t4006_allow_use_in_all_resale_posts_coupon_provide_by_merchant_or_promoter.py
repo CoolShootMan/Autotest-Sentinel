@@ -704,7 +704,7 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
         },
         "applicableCode": "333ppp",
     })
-    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -822,7 +822,7 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
         },
         "applicableCode": "111ppp",
     })
-    _j: dict[str, Any] = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')

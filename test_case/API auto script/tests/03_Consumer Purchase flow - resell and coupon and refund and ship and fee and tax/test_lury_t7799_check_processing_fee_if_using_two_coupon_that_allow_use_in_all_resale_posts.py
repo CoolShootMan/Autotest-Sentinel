@@ -515,7 +515,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
         "applicableCode": "manual5",
         "orderId": "{{orderId}}",
     })
-    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -578,7 +578,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     ctx.extract('curator_access_token', _resp14, '$.data.token')
     # step 15: get curator orders
     _resp15 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    _j: dict[str, Any] = _resp15.json() if _resp15.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp15.json() if _resp15.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
