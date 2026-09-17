@@ -61,4 +61,4 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     # assertion 2.检查rewarddata_rewardBalance: responseJson equal 0
     expect(_resp2).json('$.data.items[0].payoutBalance').equals('0')
     # assertion 2.assertion: responseJson equal {{promoterId}}
-    expect(_resp2).json('$.data.items[0].promoterId').equals(str(vars.get('promoterId')))
+    expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))

@@ -656,7 +656,7 @@ class EventsApi(BaseApi):
 
     # --- UI Automation Data Pre-configuration 专用接口 ---------------
 
-    def ticket_hub_discovery(
+    def ui_post_events_ticket_hub_discovery(
         self, *,
         body: Any = None, token: str | None = None,
         params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
@@ -688,7 +688,7 @@ class EventsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
-    def ticket_hub_check_imported(
+    def ui_post_events_ticket_hub_check_imported(
         self, *,
         body: Any = None, token: str | None = None,
         params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
@@ -704,7 +704,7 @@ class EventsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
-    def ticket_hub_import(
+    def ui_post_events_ticket_hub_import(
         self, *,
         body: Any = None, token: str | None = None,
         params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,

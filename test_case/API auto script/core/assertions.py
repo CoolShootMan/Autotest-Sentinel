@@ -44,17 +44,21 @@ def _to_str(value: Any) -> str:
        ``True``        ``'True'``          ``'true'``
        ``False``       ``'False'``         ``'false'``
        ``None``        ``'None'``          ``'null'``
+       ``2.0``         ``'2.0'``           ``'2'``
        ==============  ==================  ==================
 
-       数值不受影响（``str(25) == String(25) == '25'``）。146 条用例中
-       期望值为 ``'true'`` / ``'false'`` 的断言共 5 处，期望 ``'None'`` /
-       ``'null'`` 的为 0 处，故改为 JS 语义不会反转任何既有结论，
-       只会把 5 处「布尔误判」修回正确。
+       数值不受影响（``str(25) == String(25) == '25'``）。``2.0`` 一行是第三处差异：
+       迁移后大量期望值是 Python ``round(x, 2)`` 的结果（如 ``lifetimeEarning_placed = 0.0``），
+       而接口返回的是整数 ``0``；若不做归一，本应通过的断言会被判成失败。
+       仓库内「期望值为整形浮点或 ``'x.0'`` 字符串」的字面量共 0 处，
+       故此行只会把假失败修回通过，不反转任何既有结论。
     """
     if isinstance(value, bool):
         return "true" if value else "false"
     if value is None:
         return "null"
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
     return str(value)
 
 

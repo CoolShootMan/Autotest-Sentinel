@@ -403,7 +403,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 12: Verify P-21 earning summary is not changed
     _resp12 = ctx.api.earnings.summary(app_headers=False, token='Bearer {{P-21_access_token}}')
     # assertion 12.earning is + 10.78: responseJson equal {{lifetimeEarning_order}}
-    expect(_resp12).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp12).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_order}}'))
     # step 13: Verify Partner getPayoutSummary is not changed
     _resp13 = ctx.api.earnings.summary_2(app_headers=False, token='Bearer {{P-21_access_token}}')
     # assertion 13.Balance is not changed: responseJson equal {{balance_amount}}
@@ -420,7 +420,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 15: Verify promoter earning summary is +10
     _resp15 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 15.Verify the lineup earnings +1.46: responseJson equal {{lifetimeEarning_share}}
-    expect(_resp15).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp15).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_share}}'))
     # step 16: Verify promoter getPayoutSummary is not changed
     _resp16 = ctx.api.earnings.summary_2(app_headers=False, token='merchant_access_token')
     # assertion 16.Verify the lineup balance is not change before payment: responseJson equal {{balance_amount_p}}
@@ -504,7 +504,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 23: Verify promoter earning summary is not changed
     _resp23 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 23.Verify the lineup earnings is not changed: responseJson equal {{lifetimeEarning_share}}
-    expect(_resp23).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp23).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_share}}'))
     # step 24: Verify promoter getPayoutSummary is not changed
     _resp24 = ctx.api.earnings.summary_2(app_headers=False, token='merchant_access_token')
     # assertion 24.Verify the lineup balance is not change before payment: responseJson equal {{balance_amount_p}}

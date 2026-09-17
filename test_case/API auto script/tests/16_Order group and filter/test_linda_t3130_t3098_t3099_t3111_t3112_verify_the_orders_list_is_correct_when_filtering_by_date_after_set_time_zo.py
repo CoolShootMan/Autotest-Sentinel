@@ -543,8 +543,12 @@ WHERE
     # assertion 7.assertion: responseJson equal {{today_count}}
     expect(_resp7).json('$.data.extra.totalOrders').equals(ctx.render_text('{{today_count}}'))
     # assertion 7.assertion: responseJson equal {{total_revenue}}
-    # 人工补丁：本步（Apifox step8）自己的基准 SQL 提取的是 total_revenue0，
-    # 原文断言的 {{total_revenue}} 是上一步（FULFILLED）残留的陈旧值，恒为 0。
+    # ↓ 人工补丁（有意偏离源断言，勿按降级处理）：
+    #   源断言比 {{total_revenue}}，但该变量是上一步（FULFILLED）的陈旧基准，本步不刷新，恒为 0；
+    #   本步自己的 DB 基准 SQL 提取到的是 total_revenue0，源的 customScript 也用它：
+    #     pm.expect(Number(pm.response.json().data.extra.totalRevenue).toFixed(2))
+    #       .to.eql(Number(pm.environment.get("total_revenue0")).toFixed(2));
+    #   故此处等价改比 {{total_revenue0}}。
     expect(_resp7).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{total_revenue0}}'))
     # step 8: Check consumer order list group by the current time zoon
     # DB 步骤（Apifox database 处理器）: search the order group by created date

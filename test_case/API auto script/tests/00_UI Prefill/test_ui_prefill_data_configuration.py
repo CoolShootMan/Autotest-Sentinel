@@ -11900,7 +11900,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 126: discovery the TDC event data (GET events/ticket-hub/discovery?userId={{user_id}}&platform=TDC) ---
-    _resp126 = ctx.api.events.ticket_hub_discovery(token="admin_token", app_headers=True)
+    _resp126 = ctx.api.events.ui_post_events_ticket_hub_discovery(token="admin_token", app_headers=True)
     expect(_resp126).json('$.code').equals('200')
     expect(_resp126).json('$.message').equals('success')
     ctx.extract("TDC_eventHandle1", _resp126, "$.data.events[0].handle")
@@ -11916,7 +11916,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 127: Check Imported TDC event (POST events/ticket-hub/check-imported) ---
-    _resp127 = ctx.api.events.ticket_hub_check_imported(body="""{
+    _resp127 = ctx.api.events.ui_post_events_ticket_hub_check_imported(body="""{
         "eventHandles": [
             "{{TDC_eventHandle1}}"
         ],
@@ -11933,7 +11933,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 128: Import TDC event 01 (POST events/ticket-hub/import) ---
-    _resp128 = ctx.api.events.ticket_hub_import(body="""{
+    _resp128 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
         "eventHandle": "{{TDC_eventHandle1}}",
         "curatorId": "{{user_id}}",
         "platform": "TDC"
@@ -11946,7 +11946,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 129: Import TDC event 02 (POST events/ticket-hub/import) ---
-    _resp129 = ctx.api.events.ticket_hub_import(body="""{
+    _resp129 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
         "eventHandle": "{{TDC_eventHandle2}}",
         "curatorId": "{{user_id}}",
         "platform": "TDC"
@@ -12013,7 +12013,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 132: discovery the AXS event data (GET events/ticket-hub/discovery?userId={{user_id}}&platform=AXS) ---
-    _resp132 = ctx.api.events.ticket_hub_discovery(token="admin_token", app_headers=True)
+    _resp132 = ctx.api.events.ui_post_events_ticket_hub_discovery(token="admin_token", app_headers=True)
     expect(_resp132).json('$.code').equals('200')
     expect(_resp132).json('$.message').equals('success')
     ctx.extract("AXS_eventHandle1", _resp132, "$.data.events[0].handle")
@@ -12029,7 +12029,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 133: Check Imported AXS event (POST events/ticket-hub/check-imported) ---
-    _resp133 = ctx.api.events.ticket_hub_check_imported(body="""{
+    _resp133 = ctx.api.events.ui_post_events_ticket_hub_check_imported(body="""{
         "eventHandles": [
             "{{AXS_eventHandle1}}"
         ],
@@ -12046,7 +12046,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 134: Import AXS event 01 (POST events/ticket-hub/import) ---
-    _resp134 = ctx.api.events.ticket_hub_import(body="""{
+    _resp134 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
         "eventHandle": "{{AXS_eventHandle1}}",
         "curatorId": "{{user_id}}",
         "platform": "AXS"
@@ -12059,7 +12059,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 135: Import AXS event 02 (POST events/ticket-hub/import) ---
-    _resp135 = ctx.api.events.ticket_hub_import(body="""{
+    _resp135 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
         "eventHandle": "{{AXS_eventHandle2}}",
         "curatorId": "{{user_id}}",
         "platform": "AXS"
