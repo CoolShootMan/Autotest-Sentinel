@@ -61,7 +61,7 @@ testT2705_VerifyPartner:
     sleep_before_scroll: 2000
 
     # Scroll down the drawer to reveal the variants table
-    swipe_avoid_plus: { x: 0, y: 500 }
+    swipe_avoid_plus_drawer: { x: 0, y: 500 }
     sleep_step: 1000
 
     # Scroll the variant table to the right
