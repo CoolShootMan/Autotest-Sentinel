@@ -8,7 +8,7 @@ Cookie filenames and URLs are resolved dynamically from the BASE_URL environment
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Page, sync_playwright
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 

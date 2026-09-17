@@ -324,7 +324,7 @@ def main():
     token = env.get("JIRA_API_TOKEN")
     base_url = env.get("JIRA_BASE_URL")
 
-    if not all([email, token, base_url]):
+    if not email or not token or not base_url:
         print(f"Error: Missing Jira credentials in {env_path}", file=sys.stderr)
         print("Required: JIRA_EMAIL, JIRA_API_TOKEN, JIRA_BASE_URL", file=sys.stderr)
         sys.exit(1)

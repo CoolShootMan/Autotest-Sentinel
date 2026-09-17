@@ -131,9 +131,9 @@ def process_file(filepath, old_base, new_base, old_env, new_env, dry_run=False, 
     return total_count
 
 
-def preview_change(content, old_base, new_base):
+def preview_change(content, old_base, new_base, old_env, new_env):
     """Preview diff after replacement (simple string diff)"""
-    new_content = replace_content(content, old_base, new_base)
+    new_content = replace_content(content, old_base, new_base, old_env, new_env)
     if new_content == content:
         return None
     return new_content

@@ -12,7 +12,7 @@ def get_lan_ip():
     try:
         addrs = socket.getaddrinfo(socket.gethostname(), None)
         for addr in addrs:
-            ip = addr[4][0]
+            ip = str(addr[4][0])
             # Exclude WSL/Hyper-V virtual subnets (172.16-31.x.x)
             if ip.startswith("172."):
                 octet2 = int(ip.split(".")[1])
@@ -21,7 +21,7 @@ def get_lan_ip():
             if ip.startswith("192.168.") and not any(ip.startswith(f"192.168.{x}.") for x in ["56", "88", "23"]):
                 return ip
         for addr in addrs:
-            ip = addr[4][0]
+            ip = str(addr[4][0])
             if ip.startswith("127.") or ":" in ip:
                 continue
             if ip.startswith("172."):

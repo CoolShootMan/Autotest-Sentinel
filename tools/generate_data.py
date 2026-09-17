@@ -18,7 +18,7 @@ fake = Faker(locale='zh_CN')
 create_date = time.strftime('%Y%m%d', time.localtime(time.time()))
 appno = f'autotest-{create_date}-{random.randint(1000,9999)}'
 
-config_dict = {"channelNo": "CUP CAR LOAN_YIXIN", "appNo": appno, "certNo": fake.ssn(min_age=18, max_age=60),
+config_dict = {"channelNo": "CUP CAR LOAN_YIXIN", "appNo": appno, "certNo": fake.ssn(min_age=18, max_age=60),  # pyright: ignore[reportCallIssue]
               "nameValue": f"AutoTest{random.randint(1000,9999)}",
               "loanAmount": f"{random.randint(10000,99999)}", "productType": random.choice(['11', '13']),
               "mobileNo": f"199{random.randint(10000000,99999999)}"

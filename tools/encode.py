@@ -9,11 +9,11 @@
 @Desc    :   None
 """
 
-import string
 import requests
 import json
+from typing import Any
 from tools import logger
-def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> json:
+def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> Any:
   """
   Description: Request parameter encryption method
   ---------
@@ -32,7 +32,7 @@ def encode_request(url, plaintext_data, ChannelNo="CUP CAR LOAN_YIXIN") -> json:
   except BaseException as e:
     logger.error(f'encode_request error-{e}')
 
-def decode_request(url, ciphertext_data) -> string:
+def decode_request(url, ciphertext_data) -> str:
   """
   
   Description: Request parameter decryption method
@@ -56,7 +56,7 @@ def decode_request(url, ciphertext_data) -> string:
   logger.debug(f"Decrypted request parameter: {response.text}")
   return response.text
   
-def encode_respone(url, ciphertext_data) -> string:
+def encode_respone(url, ciphertext_data) -> str:
   """
   
   Description: Response parameter encryption
@@ -80,7 +80,7 @@ def encode_respone(url, ciphertext_data) -> string:
   return encode_response.text
 
 
-def decode_response(url, data) -> string:
+def decode_response(url, data) -> Any:
   try:
     decode_response_url = url + "/IM/decode/response"
     headers = {

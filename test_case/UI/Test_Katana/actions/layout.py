@@ -3,17 +3,23 @@ from loguru import logger
 from playwright.sync_api import Page
 import pytest
 
+
+def _box_height(card) -> float:
+    """bounding_box() returns None for detached/hidden cards; treat that as 0."""
+    box = card.bounding_box()
+    return float(box["height"]) if box else 0.0
+
 def verify_top_aligned_layout(page: Page, v: dict):
     # Use a specific selector and a higher threshold to avoid "noise"
     card_selector = '.post-card, .shop-link, .form-card'
     all_cards = page.locator(card_selector).all()
     
-    visible_cards = [card for card in all_cards if card.is_visible() and (card.bounding_box() and card.bounding_box()["height"] > 150)]
+    visible_cards = [card for card in all_cards if card.is_visible() and _box_height(card) > 150]
     
     if len(visible_cards) < 2:
         pytest.fail(f"Not enough product cards (>150px) found for verification. Found {len(visible_cards)}")
 
-    heights = [card.bounding_box()["height"] for card in visible_cards[:2]]
+    heights = [_box_height(card) for card in visible_cards[:2]]
     logger.info(f"Top-aligned check - First two card heights: {heights}")
     
     # Assert colors
@@ -24,12 +30,12 @@ def verify_waterfall_layout(page: Page, v: dict):
     card_selector = '.post-card, .shop-link, .form-card'
     all_cards = page.locator(card_selector).all()
     
-    visible_cards = [card for card in all_cards if card.is_visible() and (card.bounding_box() and card.bounding_box()["height"] > 150)]
+    visible_cards = [card for card in all_cards if card.is_visible() and _box_height(card) > 150]
     
     if len(visible_cards) < 2:
         pytest.fail(f"Not enough product cards (>150px) found for verification. Found {len(visible_cards)}")
 
-    heights = [card.bounding_box()["height"] for card in visible_cards[:5]]
+    heights = [_box_height(card) for card in visible_cards[:5]]
     logger.info(f"Waterfall check - Card heights: {heights}")
     
     unique_heights = set([round(h, 1) for h in heights])
