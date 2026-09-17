@@ -471,13 +471,13 @@ testPartner_verify_commission: # [LAST: BROKEN 2026-05-06]
           "Phone number": "3105558976",
           "are you happy?": "Yes",
           "Multiple": "1, 2",
-          "Instagram": "@pear_partner_official",
-          "Facebook": "@PearPartnerOfficial",
-          "Tiktok": "@pear_partner",
-          "X": "@PearPartnerHQ",
-          "Youtube": "@PearPartnerChannel",
-          "Linkedin": "@pear-partner-official",
-          'Threads': '@pear_partner_official'
+          "instagram": "@pear_partner_official",
+          "facebook": "@PearPartnerOfficial",
+          "tiktok": "@pear_partner",
+          "x": "@PearPartnerHQ",
+          "youtube": "@PearPartnerChannel",
+          "linkedin": "@pear-partner-official",
+          'threads': '@pear_partner_official'
         }
 
   expect_result:

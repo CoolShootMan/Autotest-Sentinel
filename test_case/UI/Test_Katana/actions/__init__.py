@@ -3,6 +3,7 @@
 from playwright.sync_api import Page
 from .base import (
     open_url,
+    open_until_ready,
     smart_click,
     _smart_click_with_fallback,
     smart_fill,
@@ -216,6 +217,7 @@ ACTIONS = {
     "click_relative_to_selector": click_relative_to_selector,
     "move_relative_to_selector": move_relative_to_selector,
     "reload": reload_page,
+    "open_until_ready": open_until_ready,
     "go_back": go_back,
     "page_scroll": page_scroll,
     "scroll_tab_content": scroll_tab_content,

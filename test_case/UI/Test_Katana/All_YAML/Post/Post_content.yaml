@@ -32,8 +32,11 @@ testT5442:
             verify_post_alias:
                 text: "auto-test-post-setting-t1742"
 
+            R_click_edit_content: { locator: "button[aria-label='Content']" }
+            sleep_step: 5000
+
             verify_no_hide_button:
-                text: "Hide"
+                text: "Hidden"
                 assert_not_visible: true
 
     # Test Steps ================================================================
