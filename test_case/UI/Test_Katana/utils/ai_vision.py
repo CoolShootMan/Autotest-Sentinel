@@ -2,6 +2,8 @@ import os
 import json
 import itertools
 from time import sleep
+from typing import Any
+
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
 from dotenv import load_dotenv
@@ -48,7 +50,7 @@ class AIVisionService:
         if not keys_str:
              logger.warning("GEMINI_API_KEY not configured. AI healing feature will be skipped.")
              self.api_keys = []
-             self.model = None
+             self.model: Any = None
              self.initialized = True
              return
 
@@ -59,11 +61,12 @@ class AIVisionService:
         self.initialized = True
 
     def _configure_client(self, key):
-        genai.configure(api_key=key)
+        genai.configure(api_key=key)  # pyright: ignore[reportPrivateImportUsage]
         # Use Flash for basic background checks/logging
-        self.model_flash = genai.GenerativeModel('gemini-2.0-flash')
+        self.model_flash = genai.GenerativeModel('gemini-2.0-flash')  # pyright: ignore[reportPrivateImportUsage]
         # Use Pro for specialized UI reasoning and pure vision navigation
-        self.model_pro = genai.GenerativeModel('gemini-2.0-flash') # Fallback to Flash due to 404 on Pro Exp
+        # Fallback to Flash due to 404 on Pro Exp
+        self.model_pro = genai.GenerativeModel('gemini-2.0-flash')  # pyright: ignore[reportPrivateImportUsage]
         self.model = self.model_flash # default fallback
 
     def _rotate_key(self):
@@ -110,7 +113,7 @@ class AIVisionService:
                 break
         return {"found": False}
 
-    def find_element_pure_vision(self, screenshot_path: str, instruction: str, history: list = None) -> dict:
+    def find_element_pure_vision(self, screenshot_path: str, instruction: str, history: list | None = None) -> dict:
         """
         Pure Vision-based identification with Introspection logic.
         Requires no DOM/SOM information.

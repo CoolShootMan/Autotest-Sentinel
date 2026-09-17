@@ -327,7 +327,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
 
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     vars['event_id'] = 'eventId'
-    _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items", 0, "tickets"]) or []
     _x = next((_z for _z in _arr if _z.get('title') == "General Admission"), None)
     if _x: vars['copyFromId'] = _x.get('id')
@@ -614,7 +614,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     # step 7: 4eb88c11-4f3a-413b-b776-5f3a7f7f38d7
     _resp7 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission}'}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission}}'})
     vars['unitid'] = 'unitId'
-    _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
     _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])

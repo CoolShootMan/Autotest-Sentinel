@@ -36,7 +36,7 @@ def start_autotest():
     logger.add(f'log/{create_date}.log', enqueue=True, encoding='utf-8', retention=30)
     logger.info(f"Python executable: {shutil.which('python')}")
     logger.info(f"sys.path: {sys.path}")
-    logger.info("""
+    logger.info(r"""
 
      _   _   _ _____ ___    _____ _____ ____ _____ 
     / \ | | | |_   _/ _ \  |_   _| ____/ ___|_   _|
@@ -157,7 +157,7 @@ def start_autotest():
         try:
             addrs = socket.getaddrinfo(socket.gethostname(), None)
             for addr in addrs:
-                ip = addr[4][0]
+                ip = str(addr[4][0])
                 # Exclude WSL/Hyper-V virtual subnets (172.16-31.x.x)
                 if ip.startswith("172."):
                     octet2 = int(ip.split(".")[1])
@@ -168,7 +168,7 @@ def start_autotest():
                     return ip
             # Fallback: any address that is not 127.x, 172.16-31.x, or IPv6
             for addr in addrs:
-                ip = addr[4][0]
+                ip = str(addr[4][0])
                 if ip.startswith("127.") or ":" in ip:
                     continue
                 if ip.startswith("172."):

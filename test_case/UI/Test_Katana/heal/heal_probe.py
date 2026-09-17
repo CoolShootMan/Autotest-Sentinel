@@ -117,9 +117,14 @@ def load_case(yaml_path: str, case_id: str) -> dict:
     env_name = _ENV_MAP.get(base_url, "release")
     if data:
         data = _replace_placeholders(data, base_url, env_name)
+    if not isinstance(data, dict):
+        raise ValueError(f"{yaml_path}: YAML root must be a mapping")
     if case_id not in data:
         raise KeyError(f"case '{case_id}' not found in {yaml_path}")
-    case = dict(data[case_id])
+    case_dict = data[case_id]
+    if not isinstance(case_dict, dict):
+        raise ValueError(f"{yaml_path}: case '{case_id}' must be a mapping")
+    case = dict(case_dict)
     case["__yaml_path__"] = yaml_path
     case["__case_id__"] = case_id
     return case

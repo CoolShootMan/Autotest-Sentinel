@@ -21,7 +21,7 @@
 --------
 CLI::
 
-    python tools/case_completeness.py tests/01_Login\ flow
+    python tools/case_completeness.py tests/01_Login\\ flow
     python tools/case_completeness.py tests --json --top 10
 
 输出 ``score >= 80`` 视为合格。
@@ -152,7 +152,10 @@ def _api_call_stats(tree: ast.Module) -> tuple[int, list[str]]:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
             continue
-        chain = node.func
+        func = node.func
+        if not isinstance(func, ast.Attribute):
+            continue      # 非 ctx.api.<mod>.<method> 形态不可能置起 seen_api
+        chain = func
         seen_api = False
         while isinstance(chain, ast.Attribute):
             if (isinstance(chain.value, ast.Name) and chain.value.id == "ctx"
@@ -162,7 +165,7 @@ def _api_call_stats(tree: ast.Module) -> tuple[int, list[str]]:
             chain = chain.value
         if seen_api:
             n += 1
-            mods.append(node.func.attr)
+            mods.append(func.attr)
     return n, sorted(set(mods))
 
 

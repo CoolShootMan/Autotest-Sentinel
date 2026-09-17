@@ -380,7 +380,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
 
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     vars['event_id'] = 'eventId'
-    _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items", 0, "tickets"]) or []
     _x = next((_z for _z in _arr if _z.get('title') == "General Admission 02"), None)
     if _x: vars['copyFromId'] = _x.get('id')
@@ -396,7 +396,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     # step 6: eb71fcde-3b2f-4f65-b404-38e3b58b2433
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
     vars['unitid'] = 'unitId'
-    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
     _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])

@@ -21,6 +21,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -43,7 +44,7 @@ def _try_load_dotenv() -> None:
             load_dotenv(env_file, override=False)
 
 
-def _expand_placeholders(obj, src_file: Path) -> object:
+def _expand_placeholders(obj: Any, src_file: Path) -> Any:
     """递归把 dict/list/str 中的 ``{{VAR}}`` 替换为 ``os.environ['VAR']``。
 
     找不到的变量抛 :class:`ConfigError`（带文件路径 + 变量名 + 出现位置的子串）。

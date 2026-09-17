@@ -216,9 +216,12 @@ def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx: "Con
     assert _j1.get('request_id'), f"request_id应为非空，实际={_j1.get('request_id')!r}"
     _d1: dict[str, Any] = _j1.get('data') or {}
     assert isinstance(_d1, dict) and len(_d1) > 0, "data 应为非空对象"
-    assert _d1.get('totalSold') is not None and isinstance(_d1.get('totalSold'), (int, float)), f"totalSold 应为有效数值，实际={_d1.get('totalSold')!r}"
-    assert _d1.get('totalRedeemed') is not None and isinstance(_d1.get('totalRedeemed'), (int, float)), f"totalRedeemed 应为有效数值，实际={_d1.get('totalRedeemed')!r}"
-    assert _d1.get('totalSold') >= _d1.get('totalRedeemed'), f"totalSold({_d1.get('totalSold')}) 应 >= totalRedeemed({_d1.get('totalRedeemed')})"
+    # 先落局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _ts1 = _d1.get('totalSold')
+    assert _ts1 is not None and isinstance(_ts1, (int, float)), f"totalSold 应为有效数值，实际={_ts1!r}"
+    _tr1 = _d1.get('totalRedeemed')
+    assert _tr1 is not None and isinstance(_tr1, (int, float)), f"totalRedeemed 应为有效数值，实际={_tr1!r}"
+    assert _ts1 >= _tr1, f"totalSold({_ts1}) 应 >= totalRedeemed({_tr1})"
     # ---- step2: search=linda 搜索结果匹配 ----
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"code预期200，实际={_j2.get('code')!r}"

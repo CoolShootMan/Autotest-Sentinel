@@ -95,7 +95,7 @@ def page_open(page: Page, url):
     cookies = page.context.cookies()
     logger.debug(f"Authentication state check - Cookies count: {len(cookies)}")
     if len(cookies) > 0:
-        logger.debug(f"Sample Cookie (session): {[c['name'] for c in cookies]}")
+        logger.debug(f"Sample Cookie (session): {[c.get('name') for c in cookies]}")
     else:
         logger.warning("No cookies found in context! Storage state may not be loaded.")
 

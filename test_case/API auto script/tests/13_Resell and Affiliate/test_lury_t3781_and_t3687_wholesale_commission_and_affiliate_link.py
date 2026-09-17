@@ -420,7 +420,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Cont
         "email": "{{consumer_email}}",
     }, app_headers=True)
     try:
-        _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -492,7 +492,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Cont
         "email": "{{M1}}",
     }, app_headers=True)
     try:
-        _j: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -504,7 +504,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Cont
         "email": "{{P1}}",
     }, app_headers=True)
     try:
-        _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
         vars['P1_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -519,7 +519,7 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Cont
         "email": "{{merchant_email}}",
     }, app_headers=True)
     try:
-        _j: dict[str, Any] = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -534,13 +534,13 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Cont
         "email": "{{promoter_email}}",
     }, app_headers=True)
     try:
-        _j: dict[str, Any] = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
         vars['promoter_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
     # step 14: get promoter orders
     _resp14 = ctx.api.orders.promoter(app_headers=True, token='promoter_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    _j: dict[str, Any] = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):

@@ -19,6 +19,7 @@ Heavy probe (browser per case): python self_heal.py --run <ts> [--heavy]
   -> for large batches run --heavy in a STANDALONE terminal; progress in heal_progress.log
 """
 from __future__ import annotations
+from typing import cast
 
 import sys
 import os
@@ -132,7 +133,7 @@ def process_case(fc: dict, budget: dict, fast: bool = False) -> dict:
     # L1 deterministic locator self-heal
     pr = ProbeResult(
         case_id=case_id, failed_step=probe.get("failed_step", fc["failed_step_key"]),
-        failure_signature=sig, original_locator=probe.get("original_locator"),
+        failure_signature=sig, original_locator=cast(dict, probe.get("original_locator")),
         dom_context=dom_ctx)
     diff = heal_locate(pr)
 
@@ -141,12 +142,12 @@ def process_case(fc: dict, budget: dict, fast: bool = False) -> dict:
         rec["proposed_fix"] = diff.get("yaml_patch")
         rec["confidence"] = diff.get("confidence")
         rec["repair_tier"] = diff.get("repair_tier", tier)
-        decision = route(sig, rec["repair_tier"], diff.get("confidence", 0), diff.get("strategy"))
+        decision = route(sig, rec["repair_tier"], diff.get("confidence", 0), cast(str, diff.get("strategy")))
         rec["action"] = decision
         # include both AUTO_APPLY and REVIEW diffs in the manifest so --include-t2
         # can apply reviewed (T1-low / T2) locator fixes; AUTO_APPLY is default.
         if rec.get("action") in ("AUTO_APPLY", "REVIEW") and rec.get("proposed_fix"):
-            pf = rec["proposed_fix"]
+            pf = cast(dict, rec["proposed_fix"])
             rec["_manifest_item"] = {
                 "yaml_path": fc["yaml_path"], "case_id": fc["case_id"],
                 "step_key": pf["step_key"], "new_value": pf["new_value"],
@@ -271,7 +272,7 @@ def main():
         if rec.get("_manifest_item"):
             manifest_items.append(rec["_manifest_item"])
         if rec.get("action") == "AUTO_APPLY" and rec.get("proposed_fix"):
-            pf = rec["proposed_fix"]
+            pf = cast(dict, rec["proposed_fix"])
             manifest_items.append({
                 "yaml_path": fc["yaml_path"], "case_id": fc["case_id"],
                 "step_key": pf["step_key"], "new_value": pf["new_value"],

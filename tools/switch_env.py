@@ -131,9 +131,14 @@ def process_file(filepath, old_base, new_base, old_env, new_env, dry_run=False, 
     return total_count
 
 
-def preview_change(content, old_base, new_base):
-    """Preview diff after replacement (simple string diff)"""
-    new_content = replace_content(content, old_base, new_base)
+def preview_change(content, old_base, new_base, old_env="release", new_env="staging"):
+    """Preview diff after replacement (simple string diff)
+
+    old_env/new_env 默认为 release->staging，与 config 中 current_env 的默认值一致。
+    两者只影响 cookie_<env>.json 文件名替换，URL 前缀替换与之无关；
+    因此省略它们时 URL 预览仍然正确，只是不做 cookie 文件名的替换预览。
+    """
+    new_content = replace_content(content, old_base, new_base, old_env, new_env)
     if new_content == content:
         return None
     return new_content

@@ -113,7 +113,7 @@ def _build_tree(index: list) -> dict:
 # ----------------------------------------------------------------------------
 
 class Run:
-    def __init__(self, case_ids: list[int], env: str = "Release"):
+    def __init__(self, case_ids: list[str], env: str = "Release"):
         self.id = uuid.uuid4().hex[:10]
         self.case_ids = case_ids
         self.env = env

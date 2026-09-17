@@ -1,5 +1,8 @@
 import os
-import faiss
+
+# Optional AI extra (not declared in any requirements file):
+#   pip install faiss-cpu sentence-transformers
+import faiss  # pyright: ignore[reportMissingImports]
 import numpy as np
 from loguru import logger
 
@@ -25,7 +28,7 @@ class RAGKnowledgeBase:
         self.model = None
         
         if _ENABLE_RAG:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import SentenceTransformer  # pyright: ignore[reportMissingImports]
             self._load_and_index()
         else:
             logger.debug("RAG Knowledge Base disabled (set ENABLE_AI_VISION=1 to enable)")
@@ -34,7 +37,7 @@ class RAGKnowledgeBase:
 
     def _load_and_index(self):
         try:
-            from sentence_transformers import SentenceTransformer
+            from sentence_transformers import SentenceTransformer  # pyright: ignore[reportMissingImports]
             logger.info("Initializing RAG Knowledge Base... Loading model (this might take a moment).")
             # Use a fast, small model
             self.model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -76,7 +79,7 @@ class RAGKnowledgeBase:
             
     def query(self, query_text: str, top_k: int = 2) -> str:
         """Query the knowledge base and return relevant text."""
-        if not self.index or not self.chunks:
+        if not self.model or not self.index or not self.chunks:
             return ""
             
         try:

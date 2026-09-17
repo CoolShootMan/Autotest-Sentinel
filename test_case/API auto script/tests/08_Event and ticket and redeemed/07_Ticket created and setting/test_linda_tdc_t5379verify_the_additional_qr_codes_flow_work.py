@@ -381,7 +381,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     # step 6: 61e71fa6-c51d-495c-ae2a-e5ce68457d94
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
     vars['unitid'] = 'unitId'
-    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
     _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])

@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 import sys
+from typing import cast
+
 from playwright.sync_api import Page, Locator, expect
 from loguru import logger
 
@@ -316,7 +318,7 @@ def smart_if(page: Page, v: dict):
             action = get_action(k)
             if action:
                 action(page, step_v)
-                page._execution_history.append((k, step_v))
+                getattr(page, "_execution_history").append((k, step_v))
             else:
                 logger.error(f"  >>> If-block: Action '{k}' not found.")
                 raise Exception(f"Action '{k}' not found in if block.")
@@ -349,8 +351,8 @@ def smart_fill(page: Page, v: dict):
             page.get_by_role(v["role"], name=target_name, exact=v.get("exact", False)).nth(target_index).fill(str(target_value), timeout=fill_timeout)
         else:
             candidates = [
-                page.get_by_label(target_name, exact=False),
-                page.get_by_placeholder(target_name, exact=False),
+                page.get_by_label(cast(str, target_name), exact=False),
+                page.get_by_placeholder(cast(str, target_name), exact=False),
                 page.locator(f"input[name*='{target_name}'], textarea[name*='{target_name}']")
             ]
             target_id = v.get("index", 0)
@@ -559,9 +561,9 @@ def smart_upload(page: Page, v: dict):
             if "locator" in v:
                 page.locator(v["locator"]).nth(target_index).click()
             else:
-                page.get_by_text(v.get("text"), exact=True).nth(target_index).click()
+                page.get_by_text(cast(str, v.get("text")), exact=True).nth(target_index).click()
         fc = fc_info.value
-        fc.set_files(file_path if isinstance(file_path, list) else [file_path])
+        fc.set_files(cast("list[str]", file_path if isinstance(file_path, list) else [file_path]))
 
 def _smart_click_core(page: Page, v: dict):
     """
@@ -622,7 +624,7 @@ def _smart_click_core(page: Page, v: dict):
             elif target_locator:
                 candidate = page.locator(target_locator).nth(target_index)
             else:
-                candidate = page.get_by_text(target_name, exact=target_exact).nth(target_index)
+                candidate = page.get_by_text(cast(str, target_name), exact=target_exact).nth(target_index)
             if candidate.is_disabled(timeout=3000):
                 logger.info(f"skip_if_disabled: '{target_name or target_locator}' is disabled, skipping step.")
                 return
@@ -934,7 +936,7 @@ def _smart_click_with_fallback(page: Page, v, primary_error):
 
             if suggested and yaml_path and case_id:
                 try:
-                    from .utils.yaml_patcher import patch_yaml_step
+                    from ..utils.yaml_patcher import patch_yaml_step
                     patch_yaml_step(yaml_path, case_id, target_name, suggested)
                 except Exception as py_ex:
                     logger.warning(f"Self-Patching failed: {py_ex}")
@@ -1034,10 +1036,10 @@ def verify_text_visible(page: Page, v: dict):
 
     logger.info(f"Verifying text visibility: {text}")
     try:
-        search_root.get_by_text(text, exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
+        search_root.get_by_text(cast(str, text), exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
         logger.info(f"Text '{text}' is visible.")
     except Exception as e:
-        page.screenshot(path=f"fail_verify_{text[:10]}.png")
+        page.screenshot(path=f"fail_verify_{str(text)[:10]}.png")
         raise AssertionError(f"Text '{text}' not found.")
 
 def verify_text_hidden(page: Page, v: dict):
@@ -1045,7 +1047,7 @@ def verify_text_hidden(page: Page, v: dict):
     timeout = v.get("timeout", 10000)
     logger.info(f"Verifying text hidden: {text}")
     try:
-        element = page.get_by_text(text, exact=v.get("exact", False)).first
+        element = page.get_by_text(cast(str, text), exact=v.get("exact", False)).first
         
         # Evaluate visibility with JS. MUI uses height=0 and overflow=hidden for collapse.
         # Playwright's native hidden state sometimes thinks an element is visible if its own bounding rect is > 0, 
@@ -1090,7 +1092,7 @@ def verify_text_hidden(page: Page, v: dict):
             
         raise AssertionError(f"Timeout {timeout}ms exceeded. Text '{text}' remained visible.")
     except Exception as e:
-        page.screenshot(path=f"fail_verify_hidden_{text[:10]}.png")
+        page.screenshot(path=f"fail_verify_hidden_{str(text)[:10]}.png")
         raise AssertionError(f"Text '{text}' is still visible! Exception: {str(e)}")
 
 def smart_wait(page: Page, v: dict):
@@ -1466,8 +1468,8 @@ def duplicate_post(page: Page, v):
 
     # Store in context
     if not hasattr(page, "_workflow_context"):
-        page._workflow_context = {}
-    page._workflow_context[capture_key] = new_post_id
+        setattr(page, "_workflow_context", {})
+    getattr(page, "_workflow_context")[capture_key] = new_post_id
     logger.info(f"[duplicate_post] Stored {capture_key} = {new_post_id} in workflow context")
 
 def verify_value(page: Page, v: dict):
@@ -1494,7 +1496,7 @@ def verify_value_near(page: Page, v: dict):
     expected_value = str(v.get("expected") or v.get("value"))
     logger.info(f"Verifying value near text '{near_text}', expected: '{expected_value}'")
     # Search for an input near the exact text match
-    el = page.get_by_text(near_text, exact=False).locator("xpath=../..//input").first
+    el = page.get_by_text(cast(str, near_text), exact=False).locator("xpath=../..//input").first
     el.wait_for(state="visible", timeout=5000)
     actual_value = str(el.input_value())
     if actual_value != expected_value:
@@ -1637,11 +1639,12 @@ def drag_element(page: Page, v: dict):
 
         if best_handle is not None and best_distance < 60:
             h_box = best_handle.bounding_box()
-            logger.info(
-                f"Matched drag handle for '{text}' — "
-                f"handle centre=({h_box['x'] + h_box['width']/2:.0f}, {h_box['y'] + h_box['height']/2:.0f}), "
-                f"y-distance={best_distance:.0f}px"
-            )
+            if h_box is not None:
+                logger.info(
+                    f"Matched drag handle for '{text}' — "
+                    f"handle centre=({h_box['x'] + h_box['width']/2:.0f}, {h_box['y'] + h_box['height']/2:.0f}), "
+                    f"y-distance={best_distance:.0f}px"
+                )
             return best_handle
 
         logger.warning(f"No nearby drag handle for '{text}' (best distance={best_distance:.0f}px), falling back to text element")
@@ -1767,6 +1770,8 @@ def drag_and_drop_by_coordinates(page: Page, v: dict):
         actual_end_y = end_y
     else:
         # Use relative coordinates from source element
+        if source_box is None:
+            raise RuntimeError("Could not obtain bounding box for drag source element")
         actual_start_x = source_box["x"] + source_box["width"] / 2 + start_x
         actual_start_y = source_box["y"] + source_box["height"] / 2 + start_y
         actual_end_x = source_box["x"] + source_box["width"] / 2 + end_x
@@ -1857,7 +1862,9 @@ def swipe_to_element(page: Page, v: dict):
         pass
 
     # Calculate swipe coordinates based on direction
-    viewport_size = page.viewport_size()
+    viewport_size = page.viewport_size
+    if viewport_size is None:
+        raise ValueError("swipe_to_element requires a fixed viewport (no_viewport must be False)")
 
     # Center of viewport
     center_x = viewport_size["width"] / 2
@@ -2766,15 +2773,15 @@ def create_session(page: Page, v: dict):
             logger.info(f"✓ Session '{session_name}' loaded")
 
         # Store session
-        page._sessions[session_name] = {
+        getattr(page, "_sessions")[session_name] = {
             "page": new_page,
             "context": new_context,
-            "parent_session": page._active_session,
+            "parent_session": getattr(page, "_active_session", None),
             "url": new_page.url
         }
 
         # Set as active session
-        page._active_session = session_name
+        setattr(page, "_active_session", session_name)
         logger.info(f">>> Active session set to: {session_name}")
 
         # Return for potential chaining
@@ -2802,12 +2809,12 @@ def switch_session(page: Page, v: dict):
     if not session_name:
         raise ValueError("switch_session: 'name' parameter is required")
 
-    if not hasattr(page, "_sessions") or session_name not in page._sessions:
-        raise ValueError(f"Session '{session_name}' not found. Available sessions: {list(page._sessions.keys()) if hasattr(page, '_sessions') else []}")
+    if not hasattr(page, "_sessions") or session_name not in getattr(page, "_sessions"):
+        raise ValueError(f"Session '{session_name}' not found. Available sessions: {list(getattr(page, '_sessions').keys()) if hasattr(page, '_sessions') else []}")
 
     # Set as active session
-    page._active_session = session_name
-    session = page._sessions[session_name]
+    setattr(page, "_active_session", session_name)
+    session = getattr(page, "_sessions")[session_name]
 
     logger.info(f">>> Switched to session: {session_name}")
     logger.info(f">>> Session URL: {session['url']}")
@@ -2835,21 +2842,21 @@ def close_session(page: Page, v: dict):
     if not session_name:
         raise ValueError("No active session to close")
 
-    if not hasattr(page, "_sessions") or session_name not in page._sessions:
+    if not hasattr(page, "_sessions") or session_name not in getattr(page, "_sessions"):
         logger.warning(f"Session '{session_name}' not found")
         return
 
-    session = page._sessions[session_name]
+    session = getattr(page, "_sessions")[session_name]
 
     try:
         # Close the page and context
         session["context"].close()
-        del page._sessions[session_name]
+        del getattr(page, "_sessions")[session_name]
 
         # If we closed the active session, switch to parent or default
-        if page._active_session == session_name:
+        if getattr(page, "_active_session", None) == session_name:
             parent_session = session.get("parent_session")
-            page._active_session = parent_session if parent_session else None
+            setattr(page, "_active_session", parent_session if parent_session else None)
 
         logger.info(f"✓ Closed session: {session_name}")
 
@@ -2987,8 +2994,8 @@ def execute_js(page: Page, v):
     # Save to workflow context
     if save_as:
         if not hasattr(page, "_workflow_context"):
-            page._workflow_context = {}
-        page._workflow_context[save_as] = result
+            setattr(page, "_workflow_context", {})
+        getattr(page, "_workflow_context")[save_as] = result
         logger.info(f"execute_js: saved result as '{save_as}' = {result!r}")
 
     return result

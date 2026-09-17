@@ -103,7 +103,7 @@ SKIP_CAPTURE_KEYS = {"sleep", "wait", "smart_sleep", "smart_wait",
 class StepCapture:
     """Captures step-level data during test execution."""
 
-    def __init__(self, case_name: str, output_dir: str = None,
+    def __init__(self, case_name: str, output_dir: str | None = None,
                  capture_screenshot: bool = True,
                  capture_dom_raw: bool = False,
                  max_screenshot_kb: int = 200,
@@ -164,7 +164,7 @@ class StepCapture:
             "error_msg": None,
         }
 
-    def step_end(self, page, status: str = "passed", error_msg: str = None):
+    def step_end(self, page, status: str = "passed", error_msg: str | None = None):
         """Capture page state AFTER step execution. Call AFTER execution (success or failure).
 
         Args:
@@ -220,7 +220,7 @@ class StepCapture:
         self._steps.append(self._current_step)
         self._current_step = None
 
-    def finalize(self, test_passed: bool, case_metadata: Dict = None):
+    def finalize(self, test_passed: bool, case_metadata: Dict | None = None):
         """Write all captured data to disk. Call at test end.
 
         Args:
@@ -284,7 +284,7 @@ class StepCapture:
 # Standalone utilities for reading captured data
 # ---------------------------------------------------------------------------
 
-def load_capture(case_name: str, captures_dir: str = None) -> Optional[Dict]:
+def load_capture(case_name: str, captures_dir: str | None = None) -> Optional[Dict]:
     """Load a captured manifest by case name."""
     if captures_dir is None:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -296,7 +296,7 @@ def load_capture(case_name: str, captures_dir: str = None) -> Optional[Dict]:
         return json.load(f)
 
 
-def list_captures(captures_dir: str = None) -> List[Dict]:
+def list_captures(captures_dir: str | None = None) -> List[Dict]:
     """List all available captures with summary info."""
     if captures_dir is None:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

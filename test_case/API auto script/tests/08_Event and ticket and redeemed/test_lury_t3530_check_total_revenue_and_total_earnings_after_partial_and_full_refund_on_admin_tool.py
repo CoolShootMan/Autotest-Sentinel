@@ -462,7 +462,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{M1}}",
     })
     try:
-        _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
@@ -495,7 +495,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{merchant_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -551,7 +551,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{consumer_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
@@ -625,7 +625,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{M1}}",
     })
     try:
-        _j: dict[str, Any] = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
@@ -684,7 +684,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{merchant_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp18.json() if _resp18.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp18.json() if _resp18.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -741,7 +741,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{M1}}",
     })
     try:
-        _j: dict[str, Any] = _resp23.json() if _resp23.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp23.json() if _resp23.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
@@ -781,7 +781,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{merchant_email}}",
     })
     try:
-        _j: dict[str, Any] = _resp27.json() if _resp27.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp27.json() if _resp27.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -839,7 +839,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "email": "{{M1}}",
     })
     try:
-        _j: dict[str, Any] = _resp32.json() if _resp32.headers.get('content-type','').startswith('application/json') else {}
+        _j = _resp32.json() if _resp32.headers.get('content-type','').startswith('application/json') else {}
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass

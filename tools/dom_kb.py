@@ -108,7 +108,7 @@ def get_embedder():
     """Lazy-load sentence-transformers model. Uses a small fast model."""
     global _model
     if _model is None:
-        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import SentenceTransformer  # pyright: ignore[reportMissingImports]
         model_name = "all-MiniLM-L6-v2"
         cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".models")
         if os.path.isdir(os.path.join(cache_dir, model_name)):
@@ -143,7 +143,7 @@ def build_index(elements: List[dict], url_map: Dict[str, str]) -> str:
         path to the saved index directory
     """
     import numpy as np
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
 
     os.makedirs(KB_DIR, exist_ok=True)
 
@@ -204,7 +204,7 @@ def build_index(elements: List[dict], url_map: Dict[str, str]) -> str:
 
 def load_index() -> Optional[tuple]:
     """Load FAISS index and metadata. Returns (index, meta) or None."""
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
     index_path = os.path.join(KB_DIR, "faiss.index")
     meta_path = os.path.join(KB_DIR, "meta.pkl")
     if not os.path.exists(index_path) or not os.path.exists(meta_path):
@@ -284,7 +284,7 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
         True if successfully added, False otherwise
     """
     import numpy as np
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
 
     result = load_index()
     if result is None:

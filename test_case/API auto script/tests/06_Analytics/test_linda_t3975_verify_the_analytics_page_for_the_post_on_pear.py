@@ -333,7 +333,9 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx: "Contex
     assert _j1.get('code') == 200, f"响应码code应为200，实际={_j1.get('code')!r}"
     assert _j1.get('message') == 'success', f"响应消息message应为success，实际={_j1.get('message')!r}"
     _d1: dict[str, Any] = _j1.get('data') or {}
-    assert isinstance(_d1.get('totalCount'), (int, float)) and _d1.get('totalCount') >= 0, f"totalCount应为非负数字，实际={_d1.get('totalCount')!r}"
+    # 先落局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _tc1 = _d1.get('totalCount')
+    assert isinstance(_tc1, (int, float)) and _tc1 >= 0, f"totalCount应为非负数字，实际={_tc1!r}"
     _items1: list[Any] = _d1.get('items') or []
     assert len(_items1) > 0, "data.items 为空数组"
     _det1: dict[str, Any] = _items1[0].get('detail') or {}
@@ -346,7 +348,8 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx: "Contex
     assert _j2.get('message') == 'success', f"响应消息message应为success，实际={_j2.get('message')!r}"
     assert isinstance(_j2.get('request_id'), str) and _j2.get('request_id'), f"request_id应为非空字符串，实际={_j2.get('request_id')!r}"
     _d2: dict[str, Any] = _j2.get('data') or {}
-    assert isinstance(_d2.get('totalCount'), (int, float)) and _d2.get('totalCount') >= 0, f"totalCount应为非负数字，实际={_d2.get('totalCount')!r}"
+    _tc2 = _d2.get('totalCount')
+    assert isinstance(_tc2, (int, float)) and _tc2 >= 0, f"totalCount应为非负数字，实际={_tc2!r}"
     _items2: list[Any] = _d2.get('items') or []
     assert len(_items2) > 0, "data.items 为空数组"
     _it2 = _items2[0]
@@ -359,7 +362,8 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx: "Contex
     assert len(_ms2) == 3, f"mutiStatistics 长度应为3，实际={len(_ms2)}"
     for _i, _stat in enumerate(_ms2):
         _vis: dict[str, Any] = (_stat.get('visitors') or {}).get('Total Unique Visitors') or {}
-        assert isinstance(_vis.get('total'), (int, float)) and _vis.get('total') >= 0, f"第{_i+1}组访客总数非法：{_vis.get('total')!r}"
+        _vt = _vis.get('total')
+        assert isinstance(_vt, (int, float)) and _vt >= 0, f"第{_i+1}组访客总数非法：{_vt!r}"
         for _dn, _dv in (_stat.get('devices') or {}).items():
             _dt = (_dv or {}).get('total')
             assert isinstance(_dt, (int, float)) and _dt >= 0, f"第{_i+1}组devices[{_dn}].total非法：{_dt!r}"
