@@ -34,8 +34,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # ======================================================================
     # step_0
     # ======================================================================
-    # --- step 1: admin login (POST /auth/login) ---
-    _resp1 = ctx.api.auth.login(body="""{
+    # --- step 1: admin login (POST {{adminurl}}/auth/login) ---
+    # NOTE: 管理后台登录在 admin 域（{{adminurl}} = https://release.admin.katana-api.1m.app）。
+    # 迁移时误写成 ctx.api.auth.login -> 打到 base 域 /auth/login，后端直接 404
+    # "Cannot POST /auth/login"，导致第 1 步就挂、后面 136 步全部没机会跑。
+    _resp1 = ctx.api.admin.auth_login(body="""{
     "email": "{{UIauto_admin_email}}",
     "password": "{{adminpassword}}"
 }""", app_headers=True, token="admin_token")
@@ -45,7 +48,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 2: Admin search partner 999 (POST /users/search) ---
-    _resp2 = ctx.api.users.search(body="""{
+    _resp2 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_partner_email}}",
     "filter": {
         "userRoles": [
@@ -63,12 +66,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 """, app_headers=True, token="admin_token")
     expect(_resp2).json('$.code').equals('200')
     expect(_resp2).json('$.message').equals('success')
-    ctx.extract("user_id", _resp2, "$.data.userId")
+    ctx.extract("user_id", _resp2, "$.data.items[0].id")
 
 
 
     # --- step 3: Admin search partner 997 (POST /users/search) ---
-    _resp3 = ctx.api.users.search(body="""{
+    _resp3 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_partner997_email}}",
     "filter": {
         "userRoles": [
@@ -83,12 +86,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="admin_token")
     expect(_resp3).json('$.code').equals('200')
     expect(_resp3).json('$.message').equals('success')
-    ctx.extract("user_partner997_id", _resp3, "$.data.userId")
+    ctx.extract("user_partner997_id", _resp3, "$.data.items[0].id")
 
 
 
     # --- step 4: Admin search coseller 998 (POST /users/search) ---
-    _resp4 = ctx.api.users.search(body="""{
+    _resp4 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_coseller_email}}",
     "filter": {
         "userRoles": [
@@ -103,13 +106,13 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="admin_token")
     expect(_resp4).json('$.code').equals('200')
     expect(_resp4).json('$.message').equals('success')
-    ctx.extract("user_coseller_id", _resp4, "$.data.userId")
+    ctx.extract("user_coseller_id", _resp4, "$.data.items[0].id")
 
     if vars.get("user_id"):
 
 
         # --- step 5: delete the users and check the user delete success (DELETE /users/{{user_id}}) ---
-        _resp5 = ctx.api.users.delete_by_user_id(path_vars={"user_id": vars.get("user_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
+        _resp5 = ctx.api.admin.users_by_user_id(params={"deleteOrders": "true"}, path_vars={"user_id": vars.get("user_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
         expect(_resp5).json('$.code').equals('200')
         expect(_resp5).json('$.message').equals('success')
         expect(_resp5).json('$.data.status').equals('ok')
@@ -118,7 +121,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
         # --- step 6: delete the users and check the user delete success (DELETE /users/{{user_coseller_id}}) ---
-        _resp6 = ctx.api.users.delete_by_user_id(path_vars={"user_id": vars.get("user_coseller_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
+        _resp6 = ctx.api.admin.users_by_user_id(params={"deleteOrders": "true"}, path_vars={"user_id": vars.get("user_coseller_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
         expect(_resp6).json('$.code').equals('200')
         expect(_resp6).json('$.message').equals('success')
         expect(_resp6).json('$.data.status').equals('ok')
@@ -127,7 +130,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
         # --- step 7: delete the users and check the user delete success (DELETE /users/{{user_partner997_id}}) ---
-        _resp7 = ctx.api.users.delete_by_user_id(path_vars={"user_id": vars.get("user_partner997_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
+        _resp7 = ctx.api.admin.users_by_user_id(params={"deleteOrders": "true"}, path_vars={"user_id": vars.get("user_partner997_id", "")}, body="""{"deleteOrders":true}""", app_headers=True, token="admin_token")
         expect(_resp7).json('$.code').equals('200')
         expect(_resp7).json('$.message').equals('success')
         expect(_resp7).json('$.data.status').equals('ok')
@@ -135,19 +138,24 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 8: Create partner999 on admin tools (POST /users/tool/external-user-import/partner) ---
-    _resp8 = ctx.api.users.external_user_import_partner(body="""{
+    _resp8 = ctx.api.admin.users_tool_external_user_import_partner(body="""{
     "allowSyncResalePosts": true,
     "defaultModuleName": "Upcoming Events",
     "email": "{{UIauto_partner_email}}"
 }""", app_headers=True, token="admin_token")
     expect(_resp8).json('$.code').equals('200')
     expect(_resp8).json('$.message').equals('success')
-    ctx.extract("password", _resp8, "$.data.md5Password")
+    # 注意: 原始集合此处 pm.environment.set("password", MD5(res.data.password)) 属于**死写**——
+    # 后续所有「设置密码 / 登录」节点用的都是字面量 7EbE8F4BdE4A38768AcF9C2833aF2Db5
+    # （= MD5("Happy123")，即环境变量 {{password}} 的取值），从不读这个被覆盖的 password。
+    # 迁移时误写成 extract("password", resp, "$.data.md5Password")：该字段不存在，
+    # 会把 {{password}} 清空 -> PUT /users/{id}/password 500 PasswordStrengthError。
+    # 故此处**不得**再覆盖 {{password}}。
 
 
 
     # --- step 9: Admin search partner 999 (POST /users/search) ---
-    _resp9 = ctx.api.users.search(body="""{
+    _resp9 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_partner_email}}",
     "filter": {
         "userRoles": [
@@ -161,26 +169,28 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="admin_token")
     expect(_resp9).json('$.code').equals('200')
     expect(_resp9).json('$.message').equals('success')
-    ctx.extract("user_id", _resp9, "$.data.userId")
+    ctx.extract("user_id", _resp9, "$.data.items[0].id")
 
 
 
     # --- step 10: set partner999 password to Happy123 (PUT /users/{{user_id}}/password) ---
-    _resp10 = ctx.api.users.set_password(path_vars={"user_id": vars.get("user_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
+    _resp10 = ctx.api.admin.users_password(path_vars={"user_id": vars.get("user_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
     expect(_resp10).json('$.code').equals('200')
     expect(_resp10).json('$.message').equals('success')
 
 
 
     # --- step 11: Create partner997 on admin tools (POST /users/tool/external-user-import/partner) ---
-    _resp11 = ctx.api.users.external_user_import_partner(body="""{
+    _resp11 = ctx.api.admin.users_tool_external_user_import_partner(body="""{
     "allowSyncResalePosts": true,
     "defaultModuleName": "Upcoming Events",
     "email": "{{UIauto_partner997_email}}"
 }""", app_headers=True, token="admin_token")
     expect(_resp11).json('$.code').equals('200')
     expect(_resp11).json('$.message').equals('success')
-    ctx.extract("password", _resp11, "$.data.password")
+    # 注意: 同 step 8 —— 原始集合的 pm.environment.set("password", res.data.password)
+    # 是死写（这里是明文随机密码，后端要求的是 MD5），后续节点用的是字面量。
+    # 覆盖 {{password}} 会让后续 PUT 设为弱口令 / 登录失败，故此处不提取。
     expect(_resp11).status().is_(201)
     expect(_resp11).json('$.data.password').is_string()
     expect(_resp11).json('$.data.password').is_not_empty()
@@ -188,7 +198,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 12: Admin search partner 997 (POST /users/search) ---
-    _resp12 = ctx.api.users.search(body="""{
+    _resp12 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_partner997_email}}",
     "filter": {
         "userRoles": [
@@ -202,12 +212,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="admin_token")
     expect(_resp12).json('$.code').equals('200')
     expect(_resp12).json('$.message').equals('success')
-    ctx.extract("user_partner997_id", _resp12, "$.data.userId")
+    ctx.extract("user_partner997_id", _resp12, "$.data.items[0].id")
 
 
 
     # --- step 13: set partner997 password (PUT /users/{{user_partner997_id}}/password) ---
-    _resp13 = ctx.api.users.set_password(path_vars={"user_id": vars.get("user_partner997_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
+    _resp13 = ctx.api.admin.users_password(path_vars={"user_id": vars.get("user_partner997_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
     expect(_resp13).json('$.code').equals('200')
     expect(_resp13).json('$.message').equals('success')
 
@@ -226,7 +236,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 17: Connect 999 and 997  (POST /users/promoter-associations/connect/{{user_id}}) ---
-    _resp17 = ctx.api.users.promoter_associations_connect(path_vars={"user_id": vars.get("user_id", "")}, body="""{"promoterInfo":"{{UIauto_partner997_email}}"}""", app_headers=True, token="admin_token")
+    _resp17 = ctx.api.admin.users_promoter_associations_connect_by_user_id(path_vars={"user_id": vars.get("user_id", "")}, body="""{"promoterInfo":"{{UIauto_partner997_email}}"}""", app_headers=True, token="admin_token")
     expect(_resp17).json('$.code').equals('200')
     expect(_resp17).json('$.message').equals('success')
 
@@ -241,8 +251,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp18).json('$.code').equals('200')
     expect(_resp18).json('$.message').equals('success')
     ctx.extract("user_id", _resp18, "$.data.id")
-    ctx.extract("user_coseller_id", _resp18, "$.data.id")
-    ctx.extract("user_partner997_id", _resp18, "$.data.id")
+    # 原始集合 node「Partner 999 login」的 syncUserVariable() 按“当前登录邮箱”分流：
+    #   邮箱 == UIauto_partner_email    -> set user_id
+    #   邮箱 == UIauto_coseller_email   -> set user_coseller_id
+    #   邮箱 == UIauto_partner997_email -> set user_partner997_id
+    # 本步登录的是 999，因此【只能】写 user_id。
+    # 绝不能把登录响应的 data.id 写进 user_coseller_id / user_partner997_id：
+    # 那会把 997 的 id（来自前面 admin users/search）覆盖成 999 自己的 id，
+    # 导致后续 posts/curator/{post0_id}/promoters/sync 把帖子同步给 999 自己，
+    # 从而不产生 resell 子帖，GET /post/{post0_id}/children 返回 items:[]。
     ctx.extract("token", _resp18, "$.data.token")
 
 
@@ -289,17 +306,17 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 20: get partner 999's uncoming module id (GET store-front/shop/autotestshop) ---
-    _resp20 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": 'autotestshop'}, token="token", app_headers=True)
+    _resp20 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": 'autotestshop'}, params={"public": "false"}, token="token", app_headers=True)
     expect(_resp20).json('$.code').equals('200')
     expect(_resp20).json('$.message').equals('success')
     ctx.extract("module_id", _resp20, '$.data.shopModules[?(@.title=="Upcoming Events")].id')
 
 
     # --- step 21: get partner 999's uncoming module id (GET /store-front/shop/{{partner_vanityUrl}}) ---
-    _resp21 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": vars.get("partner_vanityUrl", "")}, app_headers=True, token="token")
+    _resp21 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": vars.get("partner_vanityUrl", "")}, params={"public": "false"}, app_headers=True, token="token")
     expect(_resp21).json('$.code').equals('200')
     expect(_resp21).json('$.message').equals('success')
-    ctx.extract("module_id", _resp21, "$.data.targetModule.id")
+    ctx.extract("module_id", _resp21, '$.data.shopModules[?(@.title=="Upcoming Events")].id')
 
 
 
@@ -308,7 +325,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 23: Partner Create event (POST /product-event/v2) ---
-    _resp23 = ctx.api.events.create_v2(body="""{
+    _resp23 = ctx.api.events.create_v2(body=r"""{
     "ignoreStartTime": true,
     "ignoreEndTime": true,
     "isTimeUnspecified": false,
@@ -453,7 +470,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp23).json('$.code').equals('200')
     expect(_resp23).json('$.message').equals('success')
-    ctx.extract("created_event_id", _resp23, "$.data.eventId")
+    ctx.extract("created_event_id", _resp23, "$.data.id")
     expect(_resp23).status().is_(201)
     expect(_resp23).json('$.data').exists()
     expect(_resp23).json('$.data.id').exists()
@@ -572,8 +589,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp26 = ctx.api.events.lineup_batch(path_vars={"created_event_id": vars.get("created_event_id", "")}, body="""{"lineup":[]}""", app_headers=True, token="token")
     expect(_resp26).json('$.code').equals('200')
     expect(_resp26).json('$.message').equals('success')
-    ctx.extract("ticket_id", _resp26, "$.data.ticketId")
-    ctx.extract("variant_id", _resp26, "$.data.variantId")
+    ctx.extract("ticket_id", _resp26, "$.data.tickets[0].id")
+    ctx.extract("variant_id", _resp26, "$.data.tickets[0].variants[0].id")
     expect(_resp26).json('$.data.title').equals('verify-co-seller-auto-archive')
     expect(_resp26).json('$.data.tickets[0].id').is_string()
     expect(_resp26).json('$.data.tickets[0].id').is_not_empty()
@@ -586,7 +603,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp27 = ctx.api.posts.curator_event_posts(path_vars={"event_id": vars.get("created_event_id", "")}, app_headers=True, token="token")
     expect(_resp27).json('$.code').equals('200')
     expect(_resp27).json('$.message').equals('success')
-    ctx.extract("post0_id", _resp27, "$.data.postId")
+    ctx.extract("post0_id", _resp27, "$.data.items[0].id")
     expect(_resp27).json('$.data.items[0].id').is_string()
     expect(_resp27).json('$.data.items[0].id').is_not_empty()
 
@@ -605,7 +622,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 29: duplicate event for yuxiao (POST /product-event/v2/duplicate) ---
-    _resp29 = ctx.api.events.v2_duplicate(body="""{
+    _resp29 = ctx.api.events.v2_duplicate(body=r"""{
     "title": "verify-post-shipping_fee",
     "curatorId": "{{user_id}}",
     "description": "",
@@ -1008,13 +1025,13 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp29).json('$.code').equals('200')
     expect(_resp29).json('$.message').equals('success')
-    ctx.extract("neweventid", _resp29, "$.data.eventId")
-    ctx.extract("shipping_fee_postsId", _resp29, "$.data.postId")
+    ctx.extract("neweventid", _resp29, "$.data.id")
+    ctx.extract("shipping_fee_postsId", _resp29, "$.data.posts[0].id")
 
 
 
     # --- step 30: update the post title to verify-post-shipping-fee (PATCH /post/{{shipping_fee_postsId}}) ---
-    _resp30 = ctx.api.posts.patch_by_id(path_vars={"post_id": vars.get("shipping_fee_postsId", "")}, body="""{
+    _resp30 = ctx.api.admin.post_by_post_id(path_vars={"post_id": vars.get("shipping_fee_postsId", "")}, body="""{
     "urlAlias": "verify-post-shipping-fee",
     "headline": "verify-post-shipping-fee",
     "title": "verify-post-shipping_fee",
@@ -1027,14 +1044,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "hideInStore": false,
     "checkoutInPost": true,
     "status": "ACTIVE"
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="admin_token")
     expect(_resp30).json('$.code').equals('200')
     expect(_resp30).json('$.message').equals('success')
 
 
 
     # --- step 31: duplicate event for form (POST /product-event/v2/duplicate) ---
-    _resp31 = ctx.api.events.v2_duplicate(body="""{
+    _resp31 = ctx.api.events.v2_duplicate(body=r"""{
     "title": "event-for-rte-insert-form",
     "curatorId": "{{user_id}}",
     "description": "",
@@ -1437,10 +1454,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp31).json('$.code').equals('200')
     expect(_resp31).json('$.message').equals('success')
-    ctx.extract("post_id", _resp31, "$.data.postId")
-    ctx.extract("createFromEventId", _resp31, "$.data.eventId")
-    ctx.extract("ticketsid", _resp31, "$.data.ticketId")
-    ctx.extract("variantsid", _resp31, "$.data.variantId")
+    ctx.extract("post_id", _resp31, "$.data.posts[0].id")
+    ctx.extract("createFromEventId", _resp31, "$.data.id")
+    ctx.extract("ticketsid", _resp31, "$.data.tickets[0].id")
+    ctx.extract("variantsid", _resp31, "$.data.tickets[0].variants[0].id")
 
 
 
@@ -1458,7 +1475,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 33: update the post auto sync false form (PUT /posts/curator/{{post_id}}) ---
-    _resp33 = ctx.api.posts.curator_update(body="""{
+    _resp33 = ctx.api.posts.curator_update(body=r"""{
     "id": "{{post_id}}",
     "announcements": null,
     "createFromEventId": "{{createFromEventId}}",
@@ -1733,7 +1750,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 34: duplicate event for auto coupon apply (POST /product-event/v2/duplicate) ---
-    _resp34 = ctx.api.events.v2_duplicate(body="""{
+    _resp34 = ctx.api.events.v2_duplicate(body=r"""{
     "title": "verify auto coupon apply",
     "curatorId": "{{user_id}}",
     "description": "",
@@ -2136,12 +2153,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp34).json('$.code').equals('200')
     expect(_resp34).json('$.message').equals('success')
-    ctx.extract("post_id", _resp34, "$.data.postId")
-    ctx.extract("createFromEventId", _resp34, "$.data.eventId")
-    ctx.extract("ticketsid", _resp34, "$.data.ticketId")
-    ctx.extract("variantsid", _resp34, "$.data.variantId")
-    ctx.extract("neweventid", _resp34, "$.data.eventId")
-    ctx.extract("auto_coupon_postsId", _resp34, "$.data.postId")
+    ctx.extract("post_id", _resp34, "$.data.posts[0].id")
+    ctx.extract("createFromEventId", _resp34, "$.data.id")
+    ctx.extract("ticketsid", _resp34, "$.data.tickets[0].id")
+    ctx.extract("variantsid", _resp34, "$.data.tickets[0].variants[0].id")
+    ctx.extract("neweventid", _resp34, "$.data.id")
+    ctx.extract("auto_coupon_postsId", _resp34, "$.data.posts[0].id")
     expect(_resp34).json('$.data.posts').is_array()
     expect(_resp34).json('$.data.posts').is_not_empty()
     expect(_resp34).json('$.data.tickets').is_array()
@@ -2152,7 +2169,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 35: update the post title to verify-post-auto-coupon (PATCH /post/{{auto_coupon_postsId}}) ---
-    _resp35 = ctx.api.posts.patch_by_id(path_vars={"post_id": "{{auto_coupon_postsId}}"}, body="""{
+    _resp35 = ctx.api.admin.post_by_post_id(path_vars={"post_id": "{{auto_coupon_postsId}}"}, body="""{
     "urlAlias": "verify-auto-coupon-apply",
     "headline": "verify auto coupon apply",
     "title": "verify auto coupon apply",
@@ -2165,14 +2182,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "hideInStore": false,
     "checkoutInPost": true,
     "status": "ACTIVE"
-}""", token="token", app_headers=True)
+}""", token="admin_token", app_headers=True)
     expect(_resp35).json('$.code').equals('200')
     expect(_resp35).json('$.message').equals('success')
 
 
 
     # --- step 36: duplicate event for demi (POST /product-event/v2/duplicate) ---
-    _resp36 = ctx.api.events.v2_duplicate(body="""{
+    _resp36 = ctx.api.events.v2_duplicate(body=r"""{
     "title": "test event with two tickets",
     "curatorId": "{{user_id}}",
     "description": "",
@@ -2575,12 +2592,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp36).json('$.code').equals('200')
     expect(_resp36).json('$.message').equals('success')
-    ctx.extract("post_id", _resp36, "$.data.postId")
-    ctx.extract("createFromEventId", _resp36, "$.data.eventId")
-    ctx.extract("ticketsid", _resp36, "$.data.ticketId")
-    ctx.extract("variantsid", _resp36, "$.data.variantId")
-    ctx.extract("neweventid", _resp36, "$.data.eventId")
-    ctx.extract("two_tickets_postsid", _resp36, "$.data.postId")
+    ctx.extract("post_id", _resp36, "$.data.posts[0].id")
+    ctx.extract("createFromEventId", _resp36, "$.data.id")
+    ctx.extract("ticketsid", _resp36, "$.data.tickets[0].id")
+    ctx.extract("variantsid", _resp36, "$.data.tickets[0].variants[0].id")
+    ctx.extract("neweventid", _resp36, "$.data.id")
+    ctx.extract("two_tickets_postsid", _resp36, "$.data.posts[0].id")
     expect(_resp36).json('$.data.posts').is_array()
     expect(_resp36).json('$.data.posts').is_not_empty()
     expect(_resp36).json('$.data.tickets').is_array()
@@ -2591,7 +2608,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 37: update the post title to verify post with two tickets (PATCH /post/{{two_tickets_postsid}}) ---
-    _resp37 = ctx.api.posts.patch_by_id(path_vars={"post_id": "{{two_tickets_postsid}}"}, body="""{
+    _resp37 = ctx.api.admin.post_by_post_id(path_vars={"post_id": "{{two_tickets_postsid}}"}, body="""{
     "urlAlias": "test-event-with-two-tickets",
     "headline": "test event with two tickets",
     "title": "test event with two tickets",
@@ -2604,7 +2621,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "hideInStore": false,
     "checkoutInPost": true,
     "status": "ACTIVE"
-}""", token="token", app_headers=True)
+}""", token="admin_token", app_headers=True)
     expect(_resp37).json('$.code').equals('200')
     expect(_resp37).json('$.message').equals('success')
 
@@ -2621,7 +2638,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 39: update the ticket price to 0 (PUT /v2/products/{{ticketsid}}) ---
-    _resp39 = ctx.api.products.update_v2(path_vars={"ticket_id": "{{ticketsid}}"}, body="""{
+    _resp39 = ctx.api.products.update_v2(path_vars={"ticket_id": "{{ticketsid}}"}, body=r"""{
     "id": "{{ticketsid}}",
     "remote_id": null,
     "platform": "PEAR",
@@ -2816,7 +2833,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 40: Add ticket 002 (POST /v2/products) ---
-    _resp40 = ctx.api.products.create_v2(body="""{
+    _resp40 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{eventcatalog_id}}",
     "shippingType": "NO_SHIPPING_REQUIRED",
     "isFeatured": false,
@@ -2927,6 +2944,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp42).json('$.code').equals('200')
     expect(_resp42).json('$.message').equals('success')
+    ctx.extract("partner997_auth_token", _resp42, "$.data.token")
 
 
 
@@ -2965,7 +2983,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         },
         "vanityUrl": "{{partner997_vanityUrl}}"
     }
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="partner997_auth_token")
     expect(_resp43).json('$.code').equals('200')
     expect(_resp43).json('$.message').equals('success')
 
@@ -2978,10 +2996,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "title": "Expired events",
     "linkType": null,
     "visible": true
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="partner997_auth_token")
     expect(_resp44).json('$.code').equals('200')
     expect(_resp44).json('$.message').equals('success')
-    ctx.extract("cosellermodule_id", _resp44, "$.data.moduleId")
+    ctx.extract("cosellermodule_id", _resp44, "$.data.id")
     expect(_resp44).status().is_(201)
     expect(_resp44).json('$.data.id').is_string()
     expect(_resp44).json('$.data.id').is_not_empty()
@@ -2991,10 +3009,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 45: get the coseller's resell post id (GET /post/{{post0_id}}/children) ---
-    _resp45 = ctx.api.posts.children(path_vars={"post_id": "{{post0_id}}"}, token="token", app_headers=True)
+    _resp45 = ctx.api.admin.post_children(params={"pageNumber": "1", "pageSize": "20", "includeFinancialInfo": "false"}, path_vars={"post_id": "{{post0_id}}"}, token="admin_token", app_headers=True)
     expect(_resp45).json('$.code').equals('200')
     expect(_resp45).json('$.message').equals('success')
-    ctx.extract("cosellpost_id", _resp45, "$.data.cosellId")
+    ctx.extract("cosellpost_id", _resp45, "$.data.items[0].id")
     expect(_resp45).json('$.data.items[0].id').is_string()
     expect(_resp45).json('$.data.items[0].id').is_not_empty()
 
@@ -3004,7 +3022,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp46 = ctx.api.posts.curator_event_posts(path_vars={"event_id": vars.get("created_event_id", "")}, app_headers=True, token="token")
     expect(_resp46).json('$.code').equals('200')
     expect(_resp46).json('$.message').equals('success')
-    ctx.extract("post0_id", _resp46, "$.data.postId")
+    ctx.extract("post0_id", _resp46, "$.data.items[0].id")
     expect(_resp46).json('$.data.items[0].id').is_string()
     expect(_resp46).json('$.data.items[0].id').is_not_empty()
 
@@ -3019,15 +3037,16 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "position": 1
         }
     ]
-}""", token="token", app_headers=True)
+}""", token="partner997_auth_token", app_headers=True)
     expect(_resp47).json('$.code').equals('200')
     expect(_resp47).json('$.message').equals('success')
     expect(_resp47).status().is_(200)
-    expect(_resp47).json('$.data.title').equals('Expiredevents')
+    expect(_resp47).json('$.data.title').equals('Expired events')
     expect(_resp47).json('$.data.type').equals('POST')
     expect(_resp47).json('$.data.items[0]').is_object()
     expect(_resp47).json('$.data.items[0].postType').equals('EVENT')
     expect(_resp47).json('$.data.items[0].status').equals('ACTIVE')
+    expect(_resp47).json('$.data.items[0].event.status').equals('UPCOMING')
     expect(_resp47).json('$.data.items[0].id').is_string()
     expect(_resp47).json('$.data.items[0].id').is_not_empty()
     expect(_resp47).json('$.data.items[0].event.status').equals('UPCOMING')
@@ -3035,7 +3054,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 48: Partner Create event T1742 (POST /product-event/v2) ---
-    _resp48 = ctx.api.events.create_v2(body="""{
+    _resp48 = ctx.api.events.create_v2(body=r"""{
     "ignoreStartTime": true,
     "ignoreEndTime": true,
     "isTimeUnspecified": false,
@@ -3180,7 +3199,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp48).json('$.code').equals('200')
     expect(_resp48).json('$.message').equals('success')
-    ctx.extract("created_event_id", _resp48, "$.data.eventId")
+    ctx.extract("created_event_id", _resp48, "$.data.id")
     expect(_resp48).status().is_(201)
     expect(_resp48).json('$.data').exists()
     expect(_resp48).json('$.data.id').exists()
@@ -3384,9 +3403,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp50).json('$.code').equals('200')
     expect(_resp50).json('$.message').equals('success')
     # 原 Apifox 在该请求的 test script 里按 ticket.title 匹配写入 3 组变量
-    # （ticket_id_* / variant_id_* / productId_*）。其中 ticket_id_* 由 step 106/110、
-    # productId_* 由 step 107 的循环再次写入，此处补齐 body 真正引用、但迁移时无人生成
-    # 的 variant_id_*（见 step 106/116 body 中 variants[].id）。
+    # （ticket_id_* / variant_id_* / productId_*）。迁移只实现了 variant_id_*，
+    # 另两组被误标成「由 step 106/107 的循环写入」——但 step 106 的**请求体自身**
+    # 就引用了 tickets[].id / tickets[].copyFromId = {{ticket_id_General_Admission*}}，
+    # 用「step 106 的响应」当来源是自引用死局（响应还没产生就要求值），
+    # 因此这里必须按原始脚本补齐 ticket_id_*（来源=本次 ticket/batch 响应里对应 title 的票）。
     for _t50_title, _t50_sfx in (
         ("General Admission 02", "_General_Admission_02"),
         ("General Admission 01", "_General_Admission_01"),
@@ -3394,6 +3415,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     ):
         ctx.extract("variant_id" + _t50_sfx, _resp50,
                     '$.data.tickets[?(@.title=="%s")].variants[0].id' % _t50_title)
+        ctx.extract("ticket_id" + _t50_sfx, _resp50,
+                    '$.data.tickets[?(@.title=="%s")].id' % _t50_title)
 
 
 
@@ -3405,7 +3428,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 52: Partner Check event details T1742 (GET /product-event/v2/{{created_event_id}}/config) ---
-    _resp52 = ctx.api.events.v2_config(token="token", app_headers=True)
+    _resp52 = ctx.api.events.v2_config(params={"keyword": "", "pageSize": "30", "pageNumber": "1"}, token="token", app_headers=True)
     expect(_resp52).json('$.code').equals('200')
     expect(_resp52).json('$.message').equals('success')
     expect(_resp52).json('$.data.title').equals('Auto-Test-post-setting')
@@ -3416,14 +3439,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp53 = ctx.api.posts.curator_event_posts(path_vars={"event_id": vars.get("created_event_id", "")}, app_headers=True, token="token")
     expect(_resp53).json('$.code').equals('200')
     expect(_resp53).json('$.message').equals('success')
-    ctx.extract("post0_id", _resp53, "$.data.postId")
+    ctx.extract("post0_id", _resp53, "$.data.items[0].id")
     expect(_resp53).json('$.data.items[0].id').is_string()
     expect(_resp53).json('$.data.items[0].id').is_not_empty()
 
 
 
     # --- step 54: Admin update the partner's the t1742 post  url (PATCH /post/{{post0_id}}) ---
-    _resp54 = ctx.api.posts.patch_by_id(path_vars={"post_id": vars.get("post0_id", "")}, body="""{
+    _resp54 = ctx.api.admin.post_by_post_id(path_vars={"post_id": vars.get("post0_id", "")}, body="""{
     "urlAlias": "auto-test-post-setting-t1742",
     "headline": "Auto-Test-post-setting ",
     "title": "Auto-Test-post-setting ",
@@ -3436,7 +3459,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "hideInStore": false,
     "checkoutInPost": true,
     "status": "ACTIVE"
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="admin_token")
     expect(_resp54).json('$.code').equals('200')
     expect(_resp54).json('$.message').equals('success')
     expect(_resp54).status().is_one_of([200,201])
@@ -3447,7 +3470,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 55: Get the Upcoming Events sections id (GET store-front/shop/autotestshop) ---
-    _resp55 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": 'autotestshop'}, token="token", app_headers=True)
+    _resp55 = ctx.api.storefront.shop(path_vars={"partner_vanityUrl": 'autotestshop'}, params={"public": "false"}, token="token", app_headers=True)
     expect(_resp55).json('$.code').equals('200')
     expect(_resp55).json('$.message').equals('success')
     ctx.extract("section", _resp55, '$.data.shopModules[?(@.title=="Upcoming Events")].id')
@@ -3469,7 +3492,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 57: Partner Create event T2830 (POST /product-event/v2) ---
-    _resp57 = ctx.api.events.create_v2(body="""{
+    _resp57 = ctx.api.events.create_v2(body=r"""{
     "ignoreStartTime": true,
     "ignoreEndTime": true,
     "isTimeUnspecified": false,
@@ -3614,7 +3637,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp57).json('$.code').equals('200')
     expect(_resp57).json('$.message').equals('success')
-    ctx.extract("created_event_id", _resp57, "$.data.eventId")
+    ctx.extract("created_event_id", _resp57, "$.data.id")
     ctx.extract("autoCreatedPostId", _resp57, "$.data.autoCreatedPostId")
     expect(_resp57).json('$.data').exists()
     expect(_resp57).json('$.data.id').exists()
@@ -3733,12 +3756,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 61: Partner Check event details (GET /product-event/v2/{{created_event_id}}/config) ---
-    _resp61 = ctx.api.events.v2_config(token="token", app_headers=True)
+    _resp61 = ctx.api.events.v2_config(params={"keyword": "", "pageSize": "30", "pageNumber": "1"}, token="token", app_headers=True)
     expect(_resp61).json('$.code').equals('200')
     expect(_resp61).json('$.message').equals('success')
-    ctx.extract("ticket_id", _resp61, "$.data.firstTicketId")
+    ctx.extract("ticket_id", _resp61, "$.data.tickets[0].id")
     expect(_resp61).status().is_(200)
-    expect(_resp61).json('$.data.title').equals('Testeventpostvariantsettings')
+    expect(_resp61).json('$.data.title').equals('Test event post variant settings')
     expect(_resp61).json('$.data.tickets').is_array()
     expect(_resp61).json('$.data.tickets').is_not_empty()
     expect(_resp61).json('$.data.tickets[0].id').is_string()
@@ -3748,7 +3771,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 62: update the ticket variant and price to 0 (PUT /v2/products/{{ticket_id}}) ---
-    _resp62 = ctx.api.products.update_v2(body="""{
+    _resp62 = ctx.api.products.update_v2(body=r"""{
     "id": "{{ticket_id}}",
     "remote_id": null,
     "platform": "PEAR",
@@ -3940,14 +3963,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", token="token", app_headers=True)
     expect(_resp62).json('$.code').equals('200')
     expect(_resp62).json('$.message').equals('success')
-    ctx.extract("current_product_id", _resp62, "$.data.productId")
-    ctx.extract("current_variants_json", _resp62, "$.data.JSON.stringify(variants)")
+    ctx.extract("current_product_id", _resp62, "$.data.id")
+    ctx.extract("current_variants_json", _resp62, "$.data.variants")
     expect(_resp62).status().is_(200)
 
 
 
     # --- step 63: Add merch001 (POST /v2/products) ---
-    _resp63 = ctx.api.products.create_v2(body="""{
+    _resp63 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{eventcatalog_id}}",
     "shippingType": "NO_SHIPPING_REQUIRED",
     "isFeatured": false,
@@ -4039,7 +4062,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 64: Add merch002 (POST /v2/products) ---
-    _resp64 = ctx.api.products.create_v2(body="""{
+    _resp64 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{eventcatalog_id}}",
     "shippingType": "NO_SHIPPING_REQUIRED",
     "isFeatured": false,
@@ -4134,7 +4157,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp65 = ctx.api.posts.curator_event_posts(path_vars={"event_id": vars.get("created_event_id", "")}, app_headers=True, token="token")
     expect(_resp65).json('$.code').equals('200')
     expect(_resp65).json('$.message').equals('success')
-    ctx.extract("post0_id", _resp65, "$.data.postId")
+    ctx.extract("post0_id", _resp65, "$.data.items[0].id")
     expect(_resp65).json('$.data.items[0].id').is_string()
     expect(_resp65).json('$.data.items[0].id').is_not_empty()
 
@@ -4156,7 +4179,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 67: Admin update the partner's the t2830 post  url (PATCH /post/{{post0_id}}) ---
-    _resp67 = ctx.api.posts.patch_by_id(path_vars={"post_id": vars.get("post0_id", "")}, body="""{
+    _resp67 = ctx.api.admin.post_by_post_id(path_vars={"post_id": vars.get("post0_id", "")}, body="""{
     "urlAlias": "test-event-post-variant-settings",
     "headline": "test-event-post-variant-settings ",
     "title": "test-event-post-variant-settings ",
@@ -4169,7 +4192,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "hideInStore": false,
     "checkoutInPost": true,
     "status": "ACTIVE"
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="admin_token")
     expect(_resp67).json('$.code').equals('200')
     expect(_resp67).json('$.message').equals('success')
     expect(_resp67).status().is_one_of([200,201])
@@ -4180,7 +4203,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 68: Create event with no ticket (POST /product-event/v2) ---
-    _resp68 = ctx.api.events.create_v2(body="""{
+    _resp68 = ctx.api.events.create_v2(body=r"""{
     "ignoreStartTime": true,
     "ignoreEndTime": true,
     "isTimeUnspecified": false,
@@ -4354,7 +4377,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp68).json('$.code').equals('200')
     expect(_resp68).json('$.message').equals('success')
-    ctx.extract("created_event_id02", _resp68, "$.data.eventId")
+    ctx.extract("created_event_id02", _resp68, "$.data.id")
     expect(_resp68).status().is_(201)
     expect(_resp68).json('$.data').exists()
     expect(_resp68).json('$.data.id').exists()
@@ -4432,9 +4455,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp72).json('$.code').equals('200')
     expect(_resp72).json('$.message').equals('success')
-    ctx.extract("merchant_id_autotest", _resp72, "$.data.merchantId")
+    ctx.extract("merchant_id_autotest", _resp72, "$.data.id")
     expect(_resp72).status().is_(201)
-    expect(_resp72).json('$.data.storeName').equals('autotest')
+    expect(_resp72).json('$.data.storeName').equals('auto test')
     expect(_resp72).json('$.data.commissionRate').equals(25)
     expect(_resp72).json('$.data.id').is_string()
     expect(_resp72).json('$.data.id').is_not_empty()
@@ -4445,12 +4468,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp73 = ctx.api.merchants.shipping_options_by_merchant_id(path_vars={"merchant_id": vars.get("merchant_id_autotest", "")}, app_headers=True, token="token")
     expect(_resp73).json('$.code').equals('200')
     expect(_resp73).json('$.message').equals('success')
-    ctx.extract("shipping_option_id", _resp73, "$.data.shippingId")
+    ctx.extract("shipping_option_id", _resp73, "$.data.items[0].id")
     expect(_resp73).status().is_(200)
     expect(_resp73).json('$.data.items').is_array()
     expect(_resp73).json('$.data.items').is_not_empty()
     expect(_resp73).json('$.data.totalCount').at_least(1)
-    expect(_resp73).json('$.data.items[0].title').equals('FlatShipping')
+    expect(_resp73).json('$.data.items[0].title').equals('Flat Shipping')
     expect(_resp73).json('$.data.items[0].shippingFee').equals(4.99)
     expect(_resp73).json('$.data.items[0].isDefault').equals(True)
     expect(_resp73).json('$.data.items[0].id').is_string()
@@ -4459,7 +4482,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 74: create general product and setting the shipping option is flat shipping (POST /v2/products) ---
-    _resp74 = ctx.api.products.create_v2(body="""{
+    _resp74 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{merchant_id_autotest}}",
     "shippingType": "INHERIT_SHIPPING",
     "isFeatured": false,
@@ -4575,6 +4598,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp74).json('$.code').equals('200')
     expect(_resp74).json('$.message').equals('success')
     expect(_resp74).json('$.data.title').equals('test_general_products')
+    # 原始集合 node「create general product and setting the shipping option is flat shipping」
+    # 把响应 $.data.id 存为 productId0（下游 shipping-options PUT 与 POST /posts/curator 依赖它）
+    ctx.extract("productId0", _resp74, "$.data.id")
 
 
 
@@ -4616,7 +4642,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 76: create product and update alias (POST /v2/products) ---
-    _resp76 = ctx.api.products.create_v2(body="""{
+    _resp76 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{merchant_id_autotest}}",
     "shippingType": "INHERIT_SHIPPING",
     "isFeatured": false,
@@ -4732,11 +4758,30 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp76).json('$.code').equals('200')
     expect(_resp76).json('$.message').equals('success')
     expect(_resp76).json('$.data.title').equals('autotest product title - do not delete')
+    # 原始集合 node「create product and update alias」把响应 $.data.id 存为 productId1
+    # （下游 POST /posts/curator 的 relatedProducts[1].merchantProductId 依赖它，缺失会 400）
+    ctx.extract("productId1", _resp76, "$.data.id")
 
 
 
     # --- step 77: get the two products url allias (GET /merchant/product/list) ---
-    _resp77 = ctx.api.products.merchant_product_list(app_headers=True, token="token")
+    # 原始集合带了完整查询串（缺 merchantId 会 400 "merchantId must be a UUID"）：
+    #   keyword=&sortCreatedAt=desc&merchantId={{merchant_id_autotest}}
+    #   &status[]=ACTIVE&status[]=DRAFT
+    #   &lifecycleStatus[]=LIFECYCLE_STATUS_NORMAL&lifecycleStatus[]=LIFECYCLE_STATUS_ON_HOLD
+    #   &pageSize=50&pageNumber=1
+    # 重复键（status[] / lifecycleStatus[]）用 list 值表达，requests 会展开成重复参数。
+    _resp77 = ctx.api.products.merchant_product_list(
+        params={
+            "keyword": "",
+            "sortCreatedAt": "desc",
+            "merchantId": "{{merchant_id_autotest}}",
+            "status[]": ["ACTIVE", "DRAFT"],
+            "lifecycleStatus[]": ["LIFECYCLE_STATUS_NORMAL", "LIFECYCLE_STATUS_ON_HOLD"],
+            "pageSize": "50",
+            "pageNumber": "1",
+        },
+        app_headers=True, token="token")
     expect(_resp77).json('$.code').equals('200')
     expect(_resp77).json('$.message').equals('success')
     # 原 Apifox 遍历 response.data.items，按 title 匹配后取 alias：
@@ -4750,27 +4795,27 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 78: get partner 999 promoter ProductId0 (GET /promoter/product/public/{{alias0}}/product-detail) ---
-    _resp78 = ctx.api.promoters.product_public_detail(path_vars={"alias": vars.get("alias0", "")}, app_headers=True, token="token")
+    _resp78 = ctx.api.promoters.product_public_detail(path_vars={"alias": vars.get("alias0", "")}, params={"vanityUrl": "{{partner_vanityUrl}}"}, app_headers=True, token="token")
     expect(_resp78).json('$.code').equals('200')
     expect(_resp78).json('$.message').equals('success')
-    ctx.extract("ProductVariantId0", _resp78, "$.data.variantId")
+    ctx.extract("ProductVariantId0", _resp78, "$.data.product.variants[0].merchantProductVariantId")
     expect(_resp78).json('$.data.product.variants[0].merchantProductVariantId').is_string()
     expect(_resp78).json('$.data.product.variants[0].merchantProductVariantId').is_not_empty()
 
 
 
     # --- step 79: get partner 999 promoter ProductId1 (GET /promoter/product/public/{{alias1}}/product-detail) ---
-    _resp79 = ctx.api.promoters.product_public_detail(path_vars={"alias": vars.get("alias1", "")}, app_headers=True, token="token")
+    _resp79 = ctx.api.promoters.product_public_detail(path_vars={"alias": vars.get("alias1", "")}, params={"vanityUrl": "{{partner_vanityUrl}}"}, app_headers=True, token="token")
     expect(_resp79).json('$.code').equals('200')
     expect(_resp79).json('$.message').equals('success')
-    ctx.extract("ProductVariantId1", _resp79, "$.data.variantId")
+    ctx.extract("ProductVariantId1", _resp79, "$.data.product.variants[0].merchantProductVariantId")
     expect(_resp79).json('$.data.product.variants[0].merchantProductVariantId').is_string()
     expect(_resp79).json('$.data.product.variants[0].merchantProductVariantId').is_not_empty()
 
 
 
     # --- step 80: Partner999 create general post with 2 products  (POST /posts/curator) ---
-    _resp80 = ctx.api.posts.curator(body="""{
+    _resp80 = ctx.api.posts.curator(body=r"""{
     "title": "auto test T3788",
     "links": [],
     "allowPromotersResell": true,
@@ -5035,14 +5080,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp82).json('$.code').equals('200')
     expect(_resp82).json('$.message').equals('success')
-    ctx.extract("is_products_tab_enabled", _resp82, "$.data.productsTab.checked")
+    ctx.extract("is_products_tab_enabled", _resp82, '$.data.storeTabs[?(@.name=="Products")].checked')
     expect(_resp82).status().is_(200)
     expect(_resp82).json('$.data.storeTabs').is_array()
     expect(_resp82).json('$.data.storeTabs.length').equals(4)
-    expect(_resp82).json('$.data.storeTabs.name').includes('Posts')
-    expect(_resp82).json('$.data.storeTabs.name').includes('Links')
-    expect(_resp82).json('$.data.storeTabs.name').includes('Products')
-    expect(_resp82).json('$.data.storeTabs.name').includes('Forms')
+    expect(_resp82).json('$.data..storeTabs..name').includes('Posts')
+    expect(_resp82).json('$.data..storeTabs..name').includes('Links')
+    expect(_resp82).json('$.data..storeTabs..name').includes('Products')
+    expect(_resp82).json('$.data..storeTabs..name').includes('Forms')
     expect(_resp82).json('$.data.storeTabs[?(@.name=="Posts")].checked').equals(True)
 
 
@@ -5067,17 +5112,17 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "checked": true
         }
     ]
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="partner997_auth_token")
     expect(_resp83).json('$.code').equals('200')
     expect(_resp83).json('$.message').equals('success')
-    ctx.extract("is_products_tab_enabled", _resp83, "$.data.productsTab.checked")
+    ctx.extract("is_products_tab_enabled", _resp83, '$.data.storeTabs[?(@.name=="Products")].checked')
     expect(_resp83).status().is_(200)
     expect(_resp83).json('$.data.storeTabs').is_array()
     expect(_resp83).json('$.data.storeTabs.length').equals(4)
-    expect(_resp83).json('$.data.storeTabs.name').includes('Posts')
-    expect(_resp83).json('$.data.storeTabs.name').includes('Links')
-    expect(_resp83).json('$.data.storeTabs.name').includes('Products')
-    expect(_resp83).json('$.data.storeTabs.name').includes('Forms')
+    expect(_resp83).json('$.data..storeTabs..name').includes('Posts')
+    expect(_resp83).json('$.data..storeTabs..name').includes('Links')
+    expect(_resp83).json('$.data..storeTabs..name').includes('Products')
+    expect(_resp83).json('$.data..storeTabs..name').includes('Forms')
     expect(_resp83).json('$.data.storeTabs[?(@.name=="Posts")].checked').equals(True)
 
 
@@ -5092,10 +5137,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="token")
     expect(_resp84).json('$.code').equals('200')
     expect(_resp84).json('$.message').equals('success')
-    ctx.extract("form_id", _resp84, "$.data.data.id")
-    ctx.extract("user_id", _resp84, "$.data.data.userId")
+    ctx.extract("form_id", _resp84, "$.data.id")
+    ctx.extract("user_id", _resp84, "$.data.userId")
     expect(_resp84).json('$.data.title').equals('MyForm')
-    expect(_resp84).json('$.data.type').equals('MIXED')
+    expect(_resp84).json('$.data.type').equals('FORM')
     expect(_resp84).json('$.data.direction').equals('VERTICAL')
     expect(_resp84).json('$.data.visible').equals(True)
     expect(_resp84).json('$.data.items').is_array()
@@ -5139,9 +5184,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 """, app_headers=True, token="token")
     expect(_resp85).json('$.code').equals('200')
     expect(_resp85).json('$.message').equals('success')
-    ctx.extract("itemId", _resp85, "$.data.idValue")
+    ctx.extract("itemId", _resp85, "$.data.id")
     expect(_resp85).json('$.data').is_object()
-    expect(_resp85).json('$.data.title').equals('10imagesuploadedcase')
+    expect(_resp85).json('$.data.title').equals('10 images uploaded case')
     expect(_resp85).json('$.data.id').is_string()
     expect(_resp85).json('$.data.id').is_not_empty()
 
@@ -5160,7 +5205,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp86).json('$.code').equals('200')
     expect(_resp86).json('$.message').equals('success')
     expect(_resp86).json('$.data.title').equals('MyForm')
-    expect(_resp86).json('$.data.type').equals('MIXED')
+    expect(_resp86).json('$.data.type').equals('FORM')
     expect(_resp86).json('$.data').is_object()
     expect(_resp86).json('$.data.id').exists()
 
@@ -5171,12 +5216,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "commissionRate": 25,
     "storeName": "auto test",
     "isVisible": true
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="partner997_auth_token")
     expect(_resp87).json('$.code').equals('200')
     expect(_resp87).json('$.message').equals('success')
-    ctx.extract("merchant_id", _resp87, "$.data.merchantId")
+    ctx.extract("merchant_id", _resp87, "$.data.id")
     expect(_resp87).status().is_(201)
-    expect(_resp87).json('$.data.storeName').equals('autotest')
+    expect(_resp87).json('$.data.storeName').equals('auto test')
     expect(_resp87).json('$.data.commissionRate').equals(25)
     expect(_resp87).json('$.data.id').is_string()
     expect(_resp87).json('$.data.id').is_not_empty()
@@ -5184,15 +5229,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 88: Partner997 get shipping-options (GET /merchants/{{merchant_id}}/shipping-options) ---
-    _resp88 = ctx.api.merchants.shipping_options_by_merchant_id(path_vars={"merchant_id": vars.get("merchant_id", "")}, app_headers=True, token="token")
+    _resp88 = ctx.api.merchants.shipping_options_by_merchant_id(path_vars={"merchant_id": vars.get("merchant_id", "")}, app_headers=True, token="partner997_auth_token")
     expect(_resp88).json('$.code').equals('200')
     expect(_resp88).json('$.message').equals('success')
-    ctx.extract("shipping_option_id", _resp88, "$.data.shippingId")
+    ctx.extract("shipping_option_id", _resp88, "$.data.items[0].id")
     expect(_resp88).status().is_(200)
     expect(_resp88).json('$.data.items').is_array()
     expect(_resp88).json('$.data.items').is_not_empty()
     expect(_resp88).json('$.data.totalCount').at_least(1)
-    expect(_resp88).json('$.data.items[0].title').equals('FlatShipping')
+    expect(_resp88).json('$.data.items[0].title').equals('Flat Shipping')
     expect(_resp88).json('$.data.items[0].shippingFee').equals(4.99)
     expect(_resp88).json('$.data.items[0].isDefault').equals(True)
     expect(_resp88).json('$.data.items[0].id').is_string()
@@ -5201,7 +5246,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 89: Patner 997create general product and setting no shipping (POST /v2/products) ---
-    _resp89 = ctx.api.products.create_v2(body="""{
+    _resp89 = ctx.api.products.create_v2(body=r"""{
     "merchantId": "{{merchant_id}}",
     "shippingType": "NO_SHIPPING_REQUIRED",
     "isFeatured": false,
@@ -5302,7 +5347,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         }
     ],
     "isMultipleDaysPassEnabled": false
-}""", app_headers=True, token="token")
+}""", app_headers=True, token="partner997_auth_token")
     expect(_resp89).json('$.code').equals('200')
     expect(_resp89).json('$.message').equals('success')
     expect(_resp89).json('$.data.title').equals('auto-test-997-default-product')
@@ -5310,14 +5355,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 90: Create coseller 998 on admin tools (POST /users/tool/external-user-import/promoter) ---
-    _resp90 = ctx.api.users.external_user_import_promoter(body="""{
+    _resp90 = ctx.api.admin.users_tool_external_user_import_promoter(body="""{
   "allowSyncResalePosts": true,
   "email": "{{UIauto_coseller_email}}",
   "partnerId": "{{user_id}}"
 }""", app_headers=True, token="admin_token")
     expect(_resp90).json('$.code').equals('200')
     expect(_resp90).json('$.message').equals('success')
-    ctx.extract("password", _resp90, "$.data.password")
+    # 注意: 同 step 8 / 11 —— 原始集合的 pm.environment.set("password", res.data.password)
+    # 是死写，后续节点用字面量 MD5("Happy123")。不要覆盖 {{password}}。
     expect(_resp90).status().is_(201)
     expect(_resp90).json('$.data.password').is_string()
     expect(_resp90).json('$.data.password').is_not_empty()
@@ -5325,7 +5371,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 91: Admin search coseller 998 (POST /users/search) ---
-    _resp91 = ctx.api.users.search(body="""{
+    _resp91 = ctx.api.admin.users_search(body="""{
     "query": "{{UIauto_coseller_email}}",
     "filter": {
         "userRoles": [
@@ -5339,12 +5385,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", app_headers=True, token="admin_token")
     expect(_resp91).json('$.code').equals('200')
     expect(_resp91).json('$.message').equals('success')
-    ctx.extract("user_coseller_id", _resp91, "$.data.userId")
+    ctx.extract("user_coseller_id", _resp91, "$.data.items[0].id")
 
 
 
     # --- step 92: set coseller998 password (PUT /users/{{user_coseller_id}}/password) ---
-    _resp92 = ctx.api.users.set_password(path_vars={"user_id": vars.get("user_coseller_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
+    _resp92 = ctx.api.admin.users_password(path_vars={"user_id": vars.get("user_coseller_id", "")}, body="""{"password":"{{password}}"}""", app_headers=True, token="admin_token")
     expect(_resp92).json('$.code').equals('200')
     expect(_resp92).json('$.message').equals('success')
 
@@ -5355,9 +5401,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "email": "{{UIauto_coseller_email}}",
     "password": "{{password}}"
 
-}""", app_headers=True, token="admin_token")
+}""", app_headers=True, token="token")
     expect(_resp93).json('$.code').equals('200')
     expect(_resp93).json('$.message').equals('success')
+    ctx.extract("coseller_auth_token", _resp93, "$.data.token")
 
 
 
@@ -5396,7 +5443,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         },
         "vanityUrl": "{{coseller_vanityUrl}}"
     }
-}""", app_headers=True, token="admin_token")
+}""", app_headers=True, token="coseller_auth_token")
     expect(_resp94).json('$.code').equals('200')
     expect(_resp94).json('$.message').equals('success')
 
@@ -5418,7 +5465,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "checked": true
         }
     ]
-}""", app_headers=True, token="admin_token")
+}""", app_headers=True, token="coseller_auth_token")
     expect(_resp95).json('$.code').equals('200')
     expect(_resp95).json('$.message').equals('success')
     # 注：循环 tabName='Posts'
@@ -5447,7 +5494,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "isSetCommission": false,
         "commissionRate": null
     }
-]""", app_headers=True, token="admin_token")
+]""", app_headers=True, token="token")
     expect(_resp96).json('$.code').equals('200')
     expect(_resp96).json('$.message').equals('success')
 
@@ -5464,7 +5511,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "isSetCommission": false,
         "commissionRate": null
     }
-]""", app_headers=True, token="admin_token")
+]""", app_headers=True, token="token")
     expect(_resp97).json('$.code').equals('200')
     expect(_resp97).json('$.message').equals('success')
 
@@ -5476,7 +5523,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 98: set coseller998 password (PUT users/{{user_coseller_id}}/password) ---
     # NOTE: steps 100-105 duplicate the coseller-998 setup already performed at steps 92-99 in the source Apifox collection; kept for 1:1 fidelity. Password uses the existing {{password}} placeholder (no literal).
-    _resp98 = ctx.api.users.set_password(path_vars={"user_id": "{{user_coseller_id}}"}, body="""{"password":"{{password}}"}""", token="admin_token", app_headers=True)
+    _resp98 = ctx.api.admin.users_password(path_vars={"user_id": "{{user_coseller_id}}"}, body="""{"password":"{{password}}"}""", token="admin_token", app_headers=True)
     expect(_resp98).json('$.code').equals('200')
     expect(_resp98).json('$.message').equals('success')
 
@@ -5491,7 +5538,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     }""", app_headers=True)
     expect(_resp99).json('$.code').equals('200')
     expect(_resp99).json('$.message').equals('success')
-    ctx.extract("token", _resp99, "$.data.token")
+    # ⚠️ 不要在此提取 "token"：原始集合里 `token` 只在「Partner 999 login」(node[25]) 设过一次，
+    #    998 登录（node[96]）只写 `coseller_auth_token`。迁移器多写的这一句会把 999 的
+    #    token 覆盖成 998 的，导致后续以 {{token}} 发出的请求（Authorize Product 999 to 998/997、
+    #    GET /product-event/default-catalog 等）实际以 998 身份执行——default-catalog 会因此
+    #    返回 998 的默认 catalog，而不是 999 的。已按集合语义移除此提取。
     ctx.extract("coseller_auth_token", _resp99, "$.data.token")
 
 
@@ -5561,10 +5612,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp101).status().is_(200)
     expect(_resp101).json('$.data.storeTabs').is_array()
     expect(_resp101).json('$.data.storeTabs.length').equals(4)
-    expect(_resp101).json('$.data.storeTabs.name').includes('Posts')
-    expect(_resp101).json('$.data.storeTabs.name').includes('Links')
-    expect(_resp101).json('$.data.storeTabs.name').includes('Products')
-    expect(_resp101).json('$.data.storeTabs.name').includes('Forms')
+    expect(_resp101).json('$.data..storeTabs..name').includes('Posts')
+    expect(_resp101).json('$.data..storeTabs..name').includes('Links')
+    expect(_resp101).json('$.data..storeTabs..name').includes('Products')
+    expect(_resp101).json('$.data..storeTabs..name').includes('Forms')
     expect(_resp101).json('$.data.storeTabs[?(@.name=="Posts")].checked').equals(True)
 
 
@@ -5612,8 +5663,20 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     _resp105 = ctx.api.events.default_catalog(token="token", app_headers=True)
     expect(_resp105).json('$.code').equals('200')
     expect(_resp105).json('$.message').equals('success')
-    ctx.extract("curator_id", _resp105, "$.data.curatorId")
+    # ⚠️ 响应里没有 curatorId 这个字段（实测 200 响应为 id/storeName/description/logo/bio/
+    #    commissionRate/shippingFee/type/returnPolicy/returnPolicyTag/tier/**userId**/...），
+    #    原路径 $.data.curatorId 恒为 None → {{curator_id}} 渲染成空/字面量。
+    #    curator_id 的用途是 PATCH users/tool/feature-flags?userId={{curator_id}} 与
+    #    productOwnerId，需要一个「用户 id」，即 $.data.userId（默认 catalog 的属主）。
+    ctx.extract("curator_id", _resp105, "$.data.userId")
     ctx.extract("catalog_id", _resp105, "$.data.id")
+    # 原 Apifox 工程里 eventcatalog_id 由一条 SQL（database）步骤产出：
+    #   select id from "Merchant" where user_id='{{user_id}}' and catalog_type='EVENT'
+    # 本集合是「- no sql」导出，该步骤被整体剪掉，所以 eventcatalog_id 在 vars.yaml 里
+    # 只是个空串槽位（body 里 7 处 merchantId / id 引用它 → 全部渲染成空）。
+    # 经用户确认，改用本请求的响应取值：GET /product-event/default-catalog 的 $.data.id。
+    # （Apifox 原始后置脚本同样是把 responseData.data.id 写入环境变量。）
+    ctx.extract("eventcatalog_id", _resp105, "$.data.id")
     expect(_resp105).json('$.data').is_object()
     expect(_resp105).json('$.data.id').is_string()
     expect(_resp105).json('$.data.id').is_not_empty()
@@ -5631,12 +5694,13 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     vars["event_title"] = "event-for-ui-auto-venue-map"
 
     # --- step 106: duplicate event for venue map (POST product-event/v2/duplicate) ---
-    # NOTE: body 引用的 venue_map_* / ticket_id_* / productId_* / categoryId_* 已在
-    #       step 106 / 107 / 110 的循环里按票种标题提取（见下方 ctx.extract）。
-    #       仍未解决的变量：eventcatalog_id —— 原 Apifox 由一条 SQL（database）步骤
-    #       `select id from "Merchant" where user_id='{{user_id}}' and catalog_type='EVENT'`
-    #       产出，而本集合是 "- no sql" 导出，没有生产方，需另行决定取值来源。
-    _resp106 = ctx.api.events.v2_duplicate(body="""{
+    # NOTE: eventcatalog_id 已由 step 105（GET /product-event/default-catalog 的 $.data.id）产出。
+    #       仍未解决：body 里 tickets[].copyFromId 引用的 ticket_id_General_Admission*,
+    #       venue_map_variant_id_General_Admission* / venue_map_productId_* /
+    #       venue_map_promoterProductId_* / categoryId_General_Admission* ——
+    #       这些变量在本仓库全文件无任何生产方（既无 ctx.extract 也无 vars[...] 赋值），
+    #       来源是另一份 Apifox 集合，需补源后才能修。
+    _resp106 = ctx.api.events.v2_duplicate(body=r"""{
         "title": "{{event_title}}",
         "curatorId": "{{catalog_id}}",
         "description": "",
@@ -6204,14 +6268,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "excludedByImportingTag": false,
                 "isFeatured": false,
                 "featuredScore": null,
-                "inventoryQuantity": 10000,
-                "inventoryQuantityOriginal": 10000,
+                "inventoryQuantity": 3000,
+                "inventoryQuantityOriginal": 3000,
                 "soldQuantity": 0,
-                "priceDisplay": 92.22,
+                "priceDisplay": 0,
                 "priceDisplayAnchor": 0,
-                "priceMin": 92.22,
+                "priceMin": 0,
                 "priceMinAnchor": 0,
-                "priceMax": 92.22,
+                "priceMax": 0,
                 "priceMaxAnchor": 0,
                 "priceImportedMin": 0,
                 "priceImportedMax": 0,
@@ -6340,10 +6404,18 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 ],
                 "options": [
                     {
-                        "name": "Title",
+                        "name": "Time",
                         "images": [
                             {
-                                "value": "Default Title",
+                                "value": "5 people",
+                                "image": null
+                            },
+                            {
+                                "value": "7 people",
+                                "image": null
+                            },
+                            {
+                                "value": "9 people",
                                 "image": null
                             }
                         ]
@@ -6364,40 +6436,132 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "inventoryManagement": "Pear",
                         "inventoryPolicy": "DENY",
                         "isInventoryQuantityUnlimited": false,
-                        "inventoryQuantity": 10000,
-                        "inventoryQuantityOriginal": 10000,
+                        "inventoryQuantity": 1000,
+                        "inventoryQuantityOriginal": 1000,
                         "soldQuantity": 0,
                         "option": {
-                            "option1": "Default Title"
+                            "option1": "5 people"
                         },
                         "position": 1,
-                        "price": "92.22",
+                        "price": 0,
                         "priceAnchor": "0",
                         "priceImported": "0.00",
                         "productId": "{{ticket_id_General_Admission}}",
                         "sku": "",
                         "taxCode": null,
                         "taxable": true,
-                        "title": "Default Title",
+                        "title": "5 people",
                         "weight": null,
                         "weightUnit": null,
                         "platform": null,
-                        "fees": 10.22,
+                        "fees": 0,
                         "transactionFee": {
                             "customFee": 0,
-                            "platformFee": 10.22,
-                            "customFeeBreakdown": {
-                                "TAX": {
-                                    "index": 0,
-                                    "title": "Taxes",
-                                    "itemFee": 0,
-                                    "unitFixedFee": 0,
-                                    "unitPercentageFee": 0
-                                }
-                            },
-                            "transactionItemFee": 10.22
+                            "platformFee": 0,
+                            "customFeeBreakdown": {},
+                            "transactionItemFee": 0
                         },
-                        "ticketPrice": 82,
+                        "ticketPrice": 0,
+                        "isMinPurchaseQuantityEnabled": false,
+                        "minPurchaseQuantity": 0,
+                        "isMaxPurchaseQuantityEnabled": false,
+                        "maxPurchaseQuantity": 0,
+                        "isPackSizeEnabled": false,
+                        "packSize": null,
+                        "transactionFeeConfig": null,
+                        "transactionFeeRebateConfig": null,
+                        "image": null
+                    },
+                    {
+                        "id": null,
+                        "remote_id": null,
+                        "createdAt": "2026-08-21T08:59:13.103Z",
+                        "updatedAt": "2026-08-21T08:59:13.103Z",
+                        "compareAtPrice": null,
+                        "fulfillmentService": "manual",
+                        "grams": 0,
+                        "imageId": null,
+                        "imageIds": [],
+                        "inventoryItemId": null,
+                        "inventoryManagement": "Pear",
+                        "inventoryPolicy": "DENY",
+                        "isInventoryQuantityUnlimited": false,
+                        "inventoryQuantity": 1000,
+                        "inventoryQuantityOriginal": 1000,
+                        "soldQuantity": 0,
+                        "option": {
+                            "option1": "7 people"
+                        },
+                        "position": 2,
+                        "price": 0,
+                        "priceAnchor": "0",
+                        "priceImported": "0.00",
+                        "productId": "{{ticket_id_General_Admission}}",
+                        "sku": "",
+                        "taxCode": null,
+                        "taxable": true,
+                        "title": "7 people",
+                        "weight": null,
+                        "weightUnit": null,
+                        "platform": null,
+                        "fees": 0,
+                        "transactionFee": {
+                            "customFee": 0,
+                            "platformFee": 0,
+                            "customFeeBreakdown": {},
+                            "transactionItemFee": 0
+                        },
+                        "ticketPrice": 0,
+                        "isMinPurchaseQuantityEnabled": false,
+                        "minPurchaseQuantity": 0,
+                        "isMaxPurchaseQuantityEnabled": false,
+                        "maxPurchaseQuantity": 0,
+                        "isPackSizeEnabled": false,
+                        "packSize": null,
+                        "transactionFeeConfig": null,
+                        "transactionFeeRebateConfig": null,
+                        "image": null
+                    },
+                    {
+                        "id": null,
+                        "remote_id": null,
+                        "createdAt": "2026-08-21T08:59:13.103Z",
+                        "updatedAt": "2026-08-21T08:59:13.103Z",
+                        "compareAtPrice": null,
+                        "fulfillmentService": "manual",
+                        "grams": 0,
+                        "imageId": null,
+                        "imageIds": [],
+                        "inventoryItemId": null,
+                        "inventoryManagement": "Pear",
+                        "inventoryPolicy": "DENY",
+                        "isInventoryQuantityUnlimited": false,
+                        "inventoryQuantity": 1000,
+                        "inventoryQuantityOriginal": 1000,
+                        "soldQuantity": 0,
+                        "option": {
+                            "option1": "9 people"
+                        },
+                        "position": 3,
+                        "price": 0,
+                        "priceAnchor": "0",
+                        "priceImported": "0.00",
+                        "productId": "{{ticket_id_General_Admission}}",
+                        "sku": "",
+                        "taxCode": null,
+                        "taxable": true,
+                        "title": "9 people",
+                        "weight": null,
+                        "weightUnit": null,
+                        "platform": null,
+                        "fees": 0,
+                        "transactionFee": {
+                            "customFee": 0,
+                            "platformFee": 0,
+                            "customFeeBreakdown": {},
+                            "transactionItemFee": 0
+                        },
+                        "ticketPrice": 0,
                         "isMinPurchaseQuantityEnabled": false,
                         "minPurchaseQuantity": 0,
                         "isMaxPurchaseQuantityEnabled": false,
@@ -6569,8 +6733,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     }""", token="token", app_headers=True)
     expect(_resp106).json('$.code').equals('200')
     expect(_resp106).json('$.message').equals('success')
-    ctx.extract("venue_map_event_id", _resp106, "$.data.eventId")
-    ctx.extract("venue_map_post_id", _resp106, "$.data.postId")
+    # ⚠️ 该响应里没有 eventId / postId 字段（实测 201 响应的 data 为事件对象：
+    #    id / title / curatorId / ... / tickets[3] / posts[1] / storeFrontModules[1]）。
+    #    新事件 id 取 data.id，新建的帖子取 data.posts[0].id —— 原路径会恒为 None，
+    #    导致 URL/PATCH body 里的 {{venue_map_event_id}} / {{venue_map_post_id}} 渲染不出。
+    ctx.extract("venue_map_event_id", _resp106, "$.data.id")
+    ctx.extract("venue_map_post_id", _resp106, "$.data.posts[0].id")
     # 按票种标题提取 venue map 所需的 ticket / product / variant id
     # （原 Apifox 在该请求的 test script 里用 JS 循环 pm.environment.set 完成）
     for _vm_title, _vm_sfx in (
@@ -6583,6 +6751,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         ctx.extract("venue_map_productId" + _vm_sfx, _resp106, _vm_ticket + ".id")
         ctx.extract("venue_map_variant_id" + _vm_sfx, _resp106, _vm_ticket + ".variants[0].id")
         ctx.extract("ticket_id" + _vm_sfx, _resp106, _vm_ticket + ".id")
+        # GA 票现在是 3 个 variant（5/7/9 people，见本 step 的 body）；step 109 的 post 商品
+        # 快照要按 variant 逐个写 merchantProductVariantId —— variants[0] 已由上面的循环写入
+        # venue_map_variant_id_General_Admission，这里补 variants[1] / variants[2]。
+        _vm_ga = '$.data.tickets[?(@.title=="General Admission")]'
+        ctx.extract("venue_map_variant_id_General_Admission_7p", _resp106, _vm_ga + ".variants[1].id")
+        ctx.extract("venue_map_variant_id_General_Admission_9p", _resp106, _vm_ga + ".variants[2].id")
 
 
 
@@ -6590,7 +6764,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # NOTE: 原 Apifox 用 JS 循环提取 productId / promoterProductId / merchantProductVariantId；
     #       下方按票种标题过滤提取（core.jsonpath 支持 [?(@.field=="value")] 谓词）。
     #       未命中时写入 None，渲染器跳过 None（占位符保持字面量），与迁移前行为一致。
-    _resp107 = ctx.api.posts.relate_products(token="admin_token", app_headers=True)
+    # ⚠️ 该接口只在 admin 域存在：实测 base 域 → 404（Cannot GET），
+    #    admin 域 + {{token}}(999) → 401，admin 域 + {{admin_token}} → 200。
+    _resp107 = ctx.api.admin.post_v2_relate_products(
+        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp107).json('$.code').equals('200')
     expect(_resp107).json('$.message').equals('success')
     for _vm_title, _vm_sfx in (
@@ -6621,14 +6799,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 108: enable venue map (PATCH users/tool/feature-flags?userId={{curator_id}}) ---
-    _resp108 = ctx.api.users.update_feature_flags(body="""{"name":"enableVenueMap","enabled":true}""", token="admin_token", app_headers=True)
+    _resp108 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("curator_id", "")}, body="""{"name":"enableVenueMap","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp108).json('$.code').equals('200')
     expect(_resp108).json('$.message').equals('success')
 
 
 
     # --- step 109: Insert all tickets and all merch section (PATCH posts/curator/{{venue_map_post_id}}/content) ---
-    _resp109 = ctx.api.posts.update_curator_content(body="""{
+    _resp109 = ctx.api.posts.update_curator_content(body=r"""{
         "id": "{{venue_map_post_id}}",
         "createFromEventId": "{{venue_map_event_id}}",
         "headline": "{{event_title}}",
@@ -7034,9 +7213,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "displayVariantId": "{{venue_map_variant_id_General_Admission}}",
                 "options": [
                     {
-                        "name": "Title",
+                        "name": "Time",
                         "values": [
-                            "Default Title"
+                            "5 people",
+                            "7 people",
+                            "9 people"
                         ],
                         "position": 1
                     }
@@ -7097,9 +7278,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "bodyText": "",
                 "promoterProductId": "{{venue_map_promoterProductId_General_Admission}}",
                 "productOwnerId": "{{curator_id}}",
-                "priceMin": 92.22,
-                "priceMax": 92.22,
-                "priceDisplay": 92.22,
+                "priceMin": 0,
+                "priceMax": 0,
+                "priceDisplay": 0,
                 "priceDisplayAnchor": 0,
                 "priceMinAnchor": 0,
                 "maxDiscountPercent": 0,
@@ -7112,21 +7293,21 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "variants": [
                     {
                         "defaultCommissionRateForPromoters": 7,
-                        "defaultWholesalePriceForPromoters": 85.76,
+                        "defaultWholesalePriceForPromoters": 0,
                         "isExcluded": false,
                         "isDefault": false,
                         "priceImported": "0.00",
                         "compareAtPrice": null,
-                        "title": "Default Title",
-                        "catalogPrice": 92.22,
+                        "title": "5 people",
+                        "catalogPrice": 0,
                         "catalogPriceAnchor": 0,
                         "id": "{{venue_map_variant_id_General_Admission}}",
                         "position": 1,
                         "imageId": null,
-                        "inventoryQuantity": 10000,
+                        "inventoryQuantity": 1000,
                         "isInventoryQuantityUnlimited": false,
                         "option": {
-                            "option1": "Default Title"
+                            "option1": "5 people"
                         },
                         "merchantProductVariantId": "{{venue_map_variant_id_General_Admission}}",
                         "inventoryItemId": null,
@@ -7135,13 +7316,95 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "commissionRateForMe": 100,
                         "costPrice": 0,
                         "wholesalePriceForPromoters": 0,
-                        "price": 92.22,
+                        "price": 0,
                         "priceAnchor": 0,
                         "imageIds": [],
                         "inPost": true,
                         "discountPercent": 0,
                         "subscriptionPlanOptionPrices": [],
-                        "fees": 10.22,
+                        "fees": 0,
+                        "isMinPurchaseQuantityEnabled": false,
+                        "minPurchaseQuantity": null,
+                        "isMaxPurchaseQuantityEnabled": false,
+                        "maxPurchaseQuantity": null,
+                        "isPackSizeEnabled": false,
+                        "packSize": null,
+                        "weight": null,
+                        "weightUnit": null
+                    },
+                    {
+                        "defaultCommissionRateForPromoters": 7,
+                        "defaultWholesalePriceForPromoters": 0,
+                        "isExcluded": false,
+                        "isDefault": false,
+                        "priceImported": "0.00",
+                        "compareAtPrice": null,
+                        "title": "7 people",
+                        "catalogPrice": 0,
+                        "catalogPriceAnchor": 0,
+                        "id": "{{venue_map_variant_id_General_Admission_7p}}",
+                        "position": 2,
+                        "imageId": null,
+                        "inventoryQuantity": 1000,
+                        "isInventoryQuantityUnlimited": false,
+                        "option": {
+                            "option1": "7 people"
+                        },
+                        "merchantProductVariantId": "{{venue_map_variant_id_General_Admission_7p}}",
+                        "inventoryItemId": null,
+                        "inventoryPolicy": "DENY",
+                        "commissionRateForPromoters": 7,
+                        "commissionRateForMe": 100,
+                        "costPrice": 0,
+                        "wholesalePriceForPromoters": 0,
+                        "price": 0,
+                        "priceAnchor": 0,
+                        "imageIds": [],
+                        "inPost": true,
+                        "discountPercent": 0,
+                        "subscriptionPlanOptionPrices": [],
+                        "fees": 0,
+                        "isMinPurchaseQuantityEnabled": false,
+                        "minPurchaseQuantity": null,
+                        "isMaxPurchaseQuantityEnabled": false,
+                        "maxPurchaseQuantity": null,
+                        "isPackSizeEnabled": false,
+                        "packSize": null,
+                        "weight": null,
+                        "weightUnit": null
+                    },
+                    {
+                        "defaultCommissionRateForPromoters": 7,
+                        "defaultWholesalePriceForPromoters": 0,
+                        "isExcluded": false,
+                        "isDefault": false,
+                        "priceImported": "0.00",
+                        "compareAtPrice": null,
+                        "title": "9 people",
+                        "catalogPrice": 0,
+                        "catalogPriceAnchor": 0,
+                        "id": "{{venue_map_variant_id_General_Admission_9p}}",
+                        "position": 3,
+                        "imageId": null,
+                        "inventoryQuantity": 1000,
+                        "isInventoryQuantityUnlimited": false,
+                        "option": {
+                            "option1": "9 people"
+                        },
+                        "merchantProductVariantId": "{{venue_map_variant_id_General_Admission_9p}}",
+                        "inventoryItemId": null,
+                        "inventoryPolicy": "DENY",
+                        "commissionRateForPromoters": 7,
+                        "commissionRateForMe": 100,
+                        "costPrice": 0,
+                        "wholesalePriceForPromoters": 0,
+                        "price": 0,
+                        "priceAnchor": 0,
+                        "imageIds": [],
+                        "inPost": true,
+                        "discountPercent": 0,
+                        "subscriptionPlanOptionPrices": [],
+                        "fees": 0,
                         "isMinPurchaseQuantityEnabled": false,
                         "minPurchaseQuantity": null,
                         "isMaxPurchaseQuantityEnabled": false,
@@ -7197,7 +7460,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "timeZoneId": "America/New_York",
                     "venue": "Test venue 路 West Mound Street, Columbus, OH"
                 },
-                "feesDisplay": 10.22,
+                "feesDisplay": 0,
                 "hideFees": false,
                 "toReplaceMerchantProductIds": null,
                 "event": {
@@ -7391,7 +7654,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # --- step 110: search the category id (GET merchant/product/search?pageSize=100&eventId={{venue_map_event_id}}) ---
     # NOTE: 原 Apifox 用 JS 循环从 $.data.items 提取 ticket_id / categoryId / venueUnitCategoryId；
     #       下方按票种标题过滤提取（categoryId 缺失时回退 venueCategoryId，与 JS 的 `||` 一致）。
-    _resp110 = ctx.api.products.merchant_product_search(token="admin_token", app_headers=True)
+    # ⚠️ 该接口只在 admin 域存在（base 域：带 admin_token → 401，带 {{token}} → 500），
+    #    且必须带 ?pageSize=&eventId=，需 admin_token。
+    _resp110 = ctx.api.admin.merchant_product_search(
+        params={"pageSize": "100", "eventId": vars.get("venue_map_event_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp110).json('$.code').equals('200')
     expect(_resp110).json('$.message').equals('success')
     for _vm_title, _vm_sfx in (
@@ -7410,7 +7677,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 111: Create Venue map (POST events/{{venue_map_event_id}}/venue-map) ---
-    _resp111 = ctx.api.events.venue_map_create(body="""{
+    # ⚠️ 该接口只存在于 admin 域（base 域 404 Cannot POST；admin 域 + {{token}}(999) → 401），
+    #    需 admin_token + 路径参数 venue_map_event_id。
+    _resp111 = ctx.api.admin.events_venue_map_create(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        body="""{
         "venueData": {
             "version": 1,
             "mode": "SECTION",
@@ -7418,7 +7689,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "rows": [
                 {
                     "id": "84743235-32b0-4a91-a8c2-b4ff48781e87",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -7836,7 +8107,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "f7bd43cd-5acd-47a9-8008-a9e3e5385a71",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -8254,7 +8525,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "95d63e15-56f5-486b-b47c-c750c53c629d",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -8722,7 +8993,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 113: publish the seat (POST events/{{venue_map_event_id}}/venue-map/publish) ---
-    _resp113 = ctx.api.events.venue_map_publish(token="admin_token", app_headers=True)
+    # ⚠️ 同 step 111：仅 admin 域 + admin_token。
+    _resp113 = ctx.api.admin.events_venue_map_publish(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp113).json('$.code').equals('200')
     expect(_resp113).json('$.message').equals('success')
 
@@ -8734,7 +9008,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 115: Bind the seat to the product (POST events/{{venue_map_event_id}}/venue-map/associations) ---
-    _resp115 = ctx.api.events.venue_map_associations(body="""{
+    # ⚠️ 同 step 111：仅 admin 域 + admin_token。
+    _resp115 = ctx.api.admin.events_venue_map_associations(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        body="""{
         "associations": [
             {
                 "categoryId": "{{categoryId_General_Admission_02}}",
@@ -8770,7 +9047,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     vars["event_title"] = "event-for-api-auto-venue-map"
 
     # --- step 116: duplicate event for venue map (POST product-event/v2/duplicate) ---
-    _resp116 = ctx.api.events.v2_duplicate(body="""{
+    _resp116 = ctx.api.events.v2_duplicate(body=r"""{
         "title": "{{event_title}}",
         "curatorId": "{{catalog_id}}",
         "description": "",
@@ -9704,16 +9981,34 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     }""", token="token", app_headers=True)
     expect(_resp116).json('$.code').equals('200')
     expect(_resp116).json('$.message').equals('success')
-    ctx.extract("venue_map_event_id", _resp116, "$.data.eventId")
-    ctx.extract("venue_map_post_id", _resp116, "$.data.postId")
+    # 同 step 106：响应为事件对象，无 eventId/postId 字段（事件 id=data.id，帖子=data.posts[0].id）
+    ctx.extract("venue_map_event_id", _resp116, "$.data.id")
+    ctx.extract("venue_map_post_id", _resp116, "$.data.posts[0].id")
 
 
 
     # --- step 117: Catch the ProductId promoterProductId merchantProductVariantId (GET post/v2/{{venue_map_post_id}}/relate-products) ---
     # NOTE: Same per-product JS-loop extraction as step 109 (second venue-map flow).
-    _resp117 = ctx.api.posts.relate_products(token="admin_token", app_headers=True)
+    # 同 step 107：接口仅在 admin 域存在，需 admin_token（base 域 404）。
+    _resp117 = ctx.api.admin.post_v2_relate_products(
+        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp117).json('$.code').equals('200')
     expect(_resp117).json('$.message').equals('success')
+    # NOTE: 迁移时本段漏了提取（只有断言），导致 step 122 的 productId 仍沿用上一段
+    #       （属于另一个 event）的 merchantProductId，后端报
+    #       "Product <id> is not a ticket of this event"。此处按 step 107 的同一
+    #       过滤规则补回提取，用本段 relate-products 的结果覆盖。
+    for _vm_title, _vm_sfx in (
+        ("General Admission 02", "_General_Admission_02"),
+        ("General Admission 01", "_General_Admission_01"),
+        ("General Admission", "_General_Admission"),
+    ):
+        _vm_prod = '$.data.relatedProducts[?(@.title=="%s")]' % _vm_title
+        ctx.extract("productId" + _vm_sfx, _resp117, _vm_prod + ".merchantProductId")
+        ctx.extract("venue_map_promoterProductId" + _vm_sfx, _resp117, _vm_prod + ".promoterProductId")
+        ctx.extract("merchantProductVariantId" + _vm_sfx, _resp117,
+                    _vm_prod + ".variants[0].merchantProductVariantId")
     expect(_resp117).json('$.data.relatedProducts').is_array()
     expect(_resp117).json('$.data.relatedProducts').is_not_empty()
     # 注：源为循环变量 product（脚本外定义），此处取数组 relatedProducts 的第 0 个元素
@@ -9732,7 +10027,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 118: Insert all tickets and all merch section (PATCH posts/curator/{{venue_map_post_id}}/content) ---
-    _resp118 = ctx.api.posts.update_curator_content(body="""{
+    _resp118 = ctx.api.posts.update_curator_content(body=r"""{
         "id": "{{venue_map_post_id}}",
         "createFromEventId": "{{venue_map_event_id}}",
         "headline": "{{event_title}}",
@@ -10494,15 +10789,35 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 119: search the category id (GET merchant/product/search?pageSize=100&eventId={{venue_map_event_id}}) ---
     # NOTE: Same search-id JS-loop extraction as step 112 (second venue-map flow).
-    _resp119 = ctx.api.products.merchant_product_search(token="admin_token", app_headers=True)
+    # 同 step 110：接口仅在 admin 域存在，且需 ?pageSize=&eventId= 与 admin_token。
+    _resp119 = ctx.api.admin.merchant_product_search(
+        params={"pageSize": "100", "eventId": vars.get("venue_map_event_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp119).json('$.code').equals('200')
     expect(_resp119).json('$.message').equals('success')
+    # NOTE: 迁移时本段漏了提取（只有长度断言），导致 step 120/122 的
+    #       {{categoryId_*}} 渲染成字面量、venue-map 建图与绑定的类目全空。
+    #       按 step 110 的同一规则补回提取（categoryId 缺失时回退 venueCategoryId）。
+    for _vm_title, _vm_sfx in (
+        ("General Admission 02", "_General_Admission_02"),
+        ("General Admission 01", "_General_Admission_01"),
+        ("General Admission", "_General_Admission"),
+    ):
+        _vm_item = '$.data.items[?(@.title=="%s")]' % _vm_title
+        ctx.extract("ticket_id" + _vm_sfx, _resp119, _vm_item + ".id")
+        ctx.extract("venueUnitCategoryId" + _vm_sfx, _resp119, _vm_item + ".venueUnitCategoryId")
+        _vm_cat = ctx.extract("categoryId" + _vm_sfx, _resp119, _vm_item + ".categoryId")
+        if _vm_cat is None:
+            ctx.extract("categoryId" + _vm_sfx, _resp119, _vm_item + ".venueCategoryId")
     expect(_resp119).json('$.data.items.length').at_least(1)
 
 
 
     # --- step 120: Create Venue map (POST events/{{venue_map_event_id}}/venue-map) ---
-    _resp120 = ctx.api.events.venue_map_create(body="""{
+    # ⚠️ 同 step 111：仅 admin 域 + admin_token。
+    _resp120 = ctx.api.admin.events_venue_map_create(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        body="""{
         "venueData": {
             "version": 1,
             "mode": "SECTION",
@@ -10510,7 +10825,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "rows": [
                 {
                     "id": "84743235-32b0-4a91-a8c2-b4ff48781e87",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -10928,7 +11243,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "f7bd43cd-5acd-47a9-8008-a9e3e5385a71",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -11346,7 +11661,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "95d63e15-56f5-486b-b47c-c750c53c629d",
-                    "chairSpacing": 5,
+                    "chairSpacing": 20,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -11808,14 +12123,20 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 121: publish the seat (POST events/{{venue_map_event_id}}/venue-map/publish) ---
-    _resp121 = ctx.api.events.venue_map_publish(token="admin_token", app_headers=True)
+    # ⚠️ 同 step 111：仅 admin 域 + admin_token。
+    _resp121 = ctx.api.admin.events_venue_map_publish(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        token="admin_token", app_headers=True)
     expect(_resp121).json('$.code').equals('200')
     expect(_resp121).json('$.message').equals('success')
 
 
 
     # --- step 122: Bind the seat to the product (POST events/{{venue_map_event_id}}/venue-map/associations) ---
-    _resp122 = ctx.api.events.venue_map_associations(body="""{
+    # ⚠️ 同 step 111：仅 admin 域 + admin_token。
+    _resp122 = ctx.api.admin.events_venue_map_associations(
+        path_vars={"venue_map_event_id": vars.get("venue_map_event_id", "")},
+        body="""{
         "associations": [
             {
                 "categoryId": "{{categoryId_General_Admission_02}}",
@@ -11842,14 +12163,18 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 123: setting the partner 999 is testing user (PATCH users/{{user_id}}) ---
-    _resp123 = ctx.api.users.update_by_user_id(body="""{"phoneNumber":"","testing":true}""", token="admin_token", app_headers=True)
+    # ⚠️ base 域 PATCH /users/{id} → 404 Cannot PATCH；仅 admin 域 + admin_token → 200。
+    _resp123 = ctx.api.admin.users_update_by_user_id(
+        path_vars={"user_id": vars.get("user_id", "")},
+        body="""{"phoneNumber":"","testing":true}""", token="admin_token", app_headers=True)
     expect(_resp123).json('$.code').equals('200')
     expect(_resp123).json('$.message').equals('success')
 
 
 
     # --- step 124: enable TDC API Credentials (PATCH users/tool/feature-flags?userId={{curator_id}}) ---
-    _resp124 = ctx.api.users.update_feature_flags(body="""{"name":"enablePlatformTDC","enabled":true}""", token="admin_token", app_headers=True)
+    _resp124 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("curator_id", "")}, body="""{"name":"enablePlatformTDC","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp124).json('$.code').equals('200')
     expect(_resp124).json('$.message').equals('success')
 
@@ -11857,7 +12182,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 125: setting TDC API (PUT users/{{user_id}}/api-platform-credentials) ---
     # NOTE: Credential values (clientSecret/accessToken/apiKey/clientId) use {{tdc_*}} placeholders; supply them via .vars.yaml / environment, never commit literals.
-    _resp125 = ctx.api.users.set_api_platform_credentials(body="""{
+    # ⚠️ base 域 PUT → 404 Cannot PUT；仅 admin 域 + admin_token 有效（缺 apiCredentials 时 400）。
+    _resp125 = ctx.api.admin.users_api_platform_credentials(
+        path_vars={"user_id": vars.get("user_id", "")}, body=r"""{
         "apiPlatform": "TDC",
         "apiCredentials": {
             "baseUrl": "https://sandbox.pvapi.provenue.com",
@@ -11868,8 +12195,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "deliveryMethodId": 3683,
             "paymentMethodId": 3289,
             "ticket": {
-                "linkTemplate": "linkTemplate\": \"https://mpvsb.tickets.com/?agency=MLBM_MYTIXX&orgid=48650&supp_oid=44135946",
-                "messageTemplate": "messageTemplate\": \"You're all set — tickets confirmed! Tickets typically show up in 1–2\nhours, and will be available before the event.\\n\\nClick View Tickets and log in with your\nMLB.com username ({{email}}) and password to view your tickets."
+                "linkTemplate": "https://mpvsb.tickets.com/?agency=MLBM_MYTIXX&orgid=48650&supp_oid=44135946",
+                "messageTemplate": "You're all set — tickets confirmed! Tickets typically show up in 1–2\nhours, and will be available before the event.\n\nClick View Tickets and log in with your\nMLB.com username ({{email}}) and password to view your tickets."
             }
         }
     }""", token="admin_token", app_headers=True)
@@ -11890,8 +12217,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp125).json('$.data.apiCredentials.paymentMethodId').equals(3289)
     expect(_resp125).json('$.data.apiCredentials.deliveryMethodId').equals(3683)
     expect(_resp125).json('$.data.apiCredentials.ticket').is_object()
-    expect(_resp125).json('$.data.apiCredentials.ticket.linkTemplate').includes('https://mpvsb.tickets.com/?agency=MLBM_MYTIXX')
-    expect(_resp125).json('$.data.apiCredentials.ticket.messageTemplate').includes('You\'reallset—ticketsconfirmed!')
+    expect(_resp125).json('$.data.apiCredentials.ticket.linkTemplate').contains('https://mpvsb.tickets.com/?agency=MLBM_MYTIXX')
+    expect(_resp125).json('$.data.apiCredentials.ticket.messageTemplate').contains("You're all set — tickets confirmed!")
     expect(_resp125).json('$.data.createdAt').is_string()
     expect(_resp125).json('$.data.createdAt').is_not_empty()
     expect(_resp125).json('$.data.updatedAt').is_string()
@@ -11900,11 +12227,18 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 126: discovery the TDC event data (GET events/ticket-hub/discovery?userId={{user_id}}&platform=TDC) ---
-    _resp126 = ctx.api.events.ui_post_events_ticket_hub_discovery(token="admin_token", app_headers=True)
+    # ⚠️ base 域 → 404 Cannot GET；仅 admin 域 + admin_token。
+    #    且必须带 ?userId= 与 ?platform=，否则后端拿不到该用户的 TDC 凭据 → 503。
+    _resp126 = ctx.api.admin.events_ticket_hub_discovery(
+        params={"userId": vars.get("user_id", ""), "platform": "TDC"},
+        token="admin_token", app_headers=True)
     expect(_resp126).json('$.code').equals('200')
     expect(_resp126).json('$.message').equals('success')
-    ctx.extract("TDC_eventHandle1", _resp126, "$.data.events[0].handle")
-    ctx.extract("TDC_eventHandle2", _resp126, "$.data.events[1].handle")
+    # NOTE: 迁移时提取路径误写成 "$.data.events[i].handle"（该字段不存在 → 提取为 None →
+    #       占位符保持字面量，后续 check-imported 会拿字面量比对而「假通过」）。
+    #       同段断言用的是 events[i].eventHandle，据此改正。
+    ctx.extract("TDC_eventHandle1", _resp126, "$.data.events[0].eventHandle")
+    ctx.extract("TDC_eventHandle2", _resp126, "$.data.events[1].eventHandle")
     expect(_resp126).status().is_(200)
     expect(_resp126).json('$.data.events').is_array()
     expect(_resp126).json('$.data.events.length').at_least(2)
@@ -11916,7 +12250,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 127: Check Imported TDC event (POST events/ticket-hub/check-imported) ---
-    _resp127 = ctx.api.events.ui_post_events_ticket_hub_check_imported(body="""{
+    # ⚠️ base 域 → 404；仅 admin 域 + admin_token（返回 HTTP 201）。
+    _resp127 = ctx.api.admin.events_ticket_hub_check_imported(body="""{
         "eventHandles": [
             "{{TDC_eventHandle1}}"
         ],
@@ -11933,7 +12268,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 128: Import TDC event 01 (POST events/ticket-hub/import) ---
-    _resp128 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
+    # ⚠️ base 域 → 404；仅 admin 域 + admin_token。
+    _resp128 = ctx.api.admin.events_ticket_hub_import(body="""{
         "eventHandle": "{{TDC_eventHandle1}}",
         "curatorId": "{{user_id}}",
         "platform": "TDC"
@@ -11946,7 +12282,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 129: Import TDC event 02 (POST events/ticket-hub/import) ---
-    _resp129 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
+    # ⚠️ base 域 → 404；仅 admin 域 + admin_token。
+    _resp129 = ctx.api.admin.events_ticket_hub_import(body="""{
         "eventHandle": "{{TDC_eventHandle2}}",
         "curatorId": "{{user_id}}",
         "platform": "TDC"
@@ -11959,7 +12296,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 130: enable AXS API Credentials (PATCH users/tool/feature-flags?userId={{curator_id}}) ---
-    _resp130 = ctx.api.users.update_feature_flags(body="""{"name":"enablePlatformAXS","enabled":true}""", token="admin_token", app_headers=True)
+    _resp130 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("curator_id", "")}, body="""{"name":"enablePlatformAXS","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp130).json('$.code').equals('200')
     expect(_resp130).json('$.message').equals('success')
 
@@ -11967,7 +12305,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 131: setting AXS API (PUT users/{{user_id}}/api-platform-credentials) ---
     # NOTE: Credential values (clientSecret/accessToken/apiKey/clientId) use {{axs_*}} placeholders; supply them via .vars.yaml / environment, never commit literals.
-    _resp131 = ctx.api.users.set_api_platform_credentials(body="""{
+    # ⚠️ 同 step 125：仅 admin 域 + admin_token。
+    _resp131 = ctx.api.admin.users_api_platform_credentials(
+        path_vars={"user_id": vars.get("user_id", "")}, body="""{
         "apiPlatform": "AXS",
         "apiCredentials": {
             "accessToken": "{{axs_accessToken}}",
@@ -12004,7 +12344,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp131).json('$.data.apiCredentials.accessToken').is_not_empty()
     expect(_resp131).json('$.data.apiCredentials.ticket').is_object()
     expect(_resp131).json('$.data.apiCredentials.ticket.linkTemplate').equals('https://axs.page.link/mobile')
-    expect(_resp131).json('$.data.apiCredentials.ticket.messageTemplate').includes('loginwithyourAXSaccount')
+    expect(_resp131).json('$.data.apiCredentials.ticket.messageTemplate').contains('log in with your AXS account')
     expect(_resp131).json('$.data.createdAt').is_string()
     expect(_resp131).json('$.data.createdAt').is_not_empty()
     expect(_resp131).json('$.data.updatedAt').is_string()
@@ -12013,11 +12353,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 132: discovery the AXS event data (GET events/ticket-hub/discovery?userId={{user_id}}&platform=AXS) ---
-    _resp132 = ctx.api.events.ui_post_events_ticket_hub_discovery(token="admin_token", app_headers=True)
+    # ⚠️ 同 step 126：仅 admin 域 + admin_token，且必须带 userId 与 platform。
+    _resp132 = ctx.api.admin.events_ticket_hub_discovery(
+        params={"userId": vars.get("user_id", ""), "platform": "AXS"},
+        token="admin_token", app_headers=True)
     expect(_resp132).json('$.code').equals('200')
     expect(_resp132).json('$.message').equals('success')
-    ctx.extract("AXS_eventHandle1", _resp132, "$.data.events[0].handle")
-    ctx.extract("AXS_eventHandle2", _resp132, "$.data.events[1].handle")
+    # NOTE: 同 step 126，原提取路径 $.data.events[i].handle 不存在，改为 eventHandle。
+    ctx.extract("AXS_eventHandle1", _resp132, "$.data.events[0].eventHandle")
+    ctx.extract("AXS_eventHandle2", _resp132, "$.data.events[1].eventHandle")
     expect(_resp132).status().is_(200)
     expect(_resp132).json('$.data.events').is_array()
     expect(_resp132).json('$.data.events.length').at_least(2)
@@ -12029,7 +12373,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 133: Check Imported AXS event (POST events/ticket-hub/check-imported) ---
-    _resp133 = ctx.api.events.ui_post_events_ticket_hub_check_imported(body="""{
+    # ⚠️ 同 step 127：仅 admin 域 + admin_token。
+    _resp133 = ctx.api.admin.events_ticket_hub_check_imported(body="""{
         "eventHandles": [
             "{{AXS_eventHandle1}}"
         ],
@@ -12046,7 +12391,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 134: Import AXS event 01 (POST events/ticket-hub/import) ---
-    _resp134 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
+    # ⚠️ 同 step 128：仅 admin 域 + admin_token。
+    _resp134 = ctx.api.admin.events_ticket_hub_import(body="""{
         "eventHandle": "{{AXS_eventHandle1}}",
         "curatorId": "{{user_id}}",
         "platform": "AXS"
@@ -12059,7 +12405,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 135: Import AXS event 02 (POST events/ticket-hub/import) ---
-    _resp135 = ctx.api.events.ui_post_events_ticket_hub_import(body="""{
+    # ⚠️ 同 step 128：仅 admin 域 + admin_token。
+    _resp135 = ctx.api.admin.events_ticket_hub_import(body="""{
         "eventHandle": "{{AXS_eventHandle2}}",
         "curatorId": "{{user_id}}",
         "platform": "AXS"
