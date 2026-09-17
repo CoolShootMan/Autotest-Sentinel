@@ -20,9 +20,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2303_verify_user_can_login_with_phone_number_and_password(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2303_verify_user_can_login_with_phone_number_and_password(ctx: "Context"):
     """Apifox case #6112669: Linda_T2303_Verify_user_can_login_with_phone_number_and_password"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

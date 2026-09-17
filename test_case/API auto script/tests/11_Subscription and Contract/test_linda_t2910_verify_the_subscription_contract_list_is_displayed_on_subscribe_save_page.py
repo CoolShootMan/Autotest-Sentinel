@@ -30,9 +30,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2910_verify_the_subscription_contract_list_is_displayed_on_subscribe_save_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2910_verify_the_subscription_contract_list_is_displayed_on_subscribe_save_page(ctx: "Context"):
     """Apifox case #6130186: Linda_T2910_Verify_the_subscription_contract_list_is_displayed_on_subscribe_save"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

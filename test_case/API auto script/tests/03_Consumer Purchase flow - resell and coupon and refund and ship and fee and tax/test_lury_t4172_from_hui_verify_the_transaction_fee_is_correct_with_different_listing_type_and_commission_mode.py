@@ -578,9 +578,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode(ctx: "Context"):
     """Apifox case #7551337: Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

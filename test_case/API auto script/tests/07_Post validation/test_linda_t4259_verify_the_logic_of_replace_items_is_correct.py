@@ -275,9 +275,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"):
     """Apifox case #8004777: Linda_T4259_Verify_the_logic_of_replace_items_is_correct"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

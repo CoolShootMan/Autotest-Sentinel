@@ -1,0 +1,5 @@
+{
+  "_说明": "把下面 webhook_url 换成 Slack 里为 #qae-team 生成的 Incoming Webhook URL，tools/notify_slack.py 就会自动读取。文件可安全地不提交到仓库（含密钥）。",
+  "webhook_url": "",
+  "channel": "qae-team"
+}

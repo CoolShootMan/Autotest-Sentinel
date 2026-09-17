@@ -187,11 +187,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affiliate_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affiliate_post(ctx: "Context"):
     """Apifox case #8547898: Lury_T5543_Allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affili"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -252,7 +258,7 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
         },
         "applicableCode": "affcode",
     })
-    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')

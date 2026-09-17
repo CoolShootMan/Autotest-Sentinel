@@ -35,9 +35,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order_to_existing_account(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order_to_existing_account(ctx: "Context"):
     """Apifox case #7855343: Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order_to_existing_accoun"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -46,7 +52,7 @@ def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
     }, app_headers=False)
     # customScript: extract access_token from step1 response data
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     vars['access_token'] = (_j1 or {}).get('data', '')
     # step 2: buy now
     _resp2 = ctx.api.orders.buy_now(body={
@@ -81,8 +87,8 @@ def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order
         ],
     }, token='access_token')
     # customScript: extract orderNumber/orderId from step2 response data
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
-    _d2 = _j2.get('data') or {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _d2: dict[str, Any] = _j2.get('data') or {}
     vars['orderNumber'] = _d2.get('orderNumber', '')
     vars['orderId'] = _d2.get('orderId', '')
     # step 3: create Order

@@ -67,17 +67,23 @@ ENV_NAME = "Release"
 import random
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_axs_t4838_add_and_remove_guest(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_axs_t4838_add_and_remove_guest(ctx: "Context"):
     """Apifox case #8709199: Linda_AXS_T4838_Add_and_Remove_guest"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: cf2e1886-68cf-47e0-94d7-b2c2b33da7aa
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # --- post 脚本: 从响应 data.items 中提取 event_id ---
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
-    _items1 = (_j1.get('data') or {}).get('items') or []
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _items1: list[Any] = (_j1.get('data') or {}).get('items') or []
     _target1 = next((it for it in _items1 if it.get('platform') == "AXS"), None)
     assert _target1 is not None, "未找到匹配的事件"
     _eid1 = _target1.get('id')
@@ -97,7 +103,7 @@ def test_linda_axs_t4838_add_and_remove_guest(ctx):
         "eventId": "{{event_id}}",
     }, token='yuxiao999_token')
     # --- post 脚本: 提取 guest_id ---
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert isinstance(_j2.get('data'), dict), f"data 不是对象: {_j2!r}"
     _gid2 = _j2['data'].get('id')
     assert isinstance(_gid2, str) and _gid2, f"guest_id 为空: {_j2.get('data')!r}"

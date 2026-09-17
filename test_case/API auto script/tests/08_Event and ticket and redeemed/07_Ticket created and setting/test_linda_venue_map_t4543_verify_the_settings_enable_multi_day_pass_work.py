@@ -406,12 +406,18 @@ def _json(resp):
 import datetime
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 from core.compat import legacy_render
 
-def test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Context"):
     """Apifox case #8660683 — ported from the pre/post/extractor/assertion scripts
 preserved as comments above. Variables resolve from env/Global.yaml + env/Release.yaml
 + the co-located <slug>.vars.yaml via the shared _ctx fixture (no live Apifox fetch)."""
@@ -433,12 +439,12 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # step 2: e9985ede-c59f-4723-bad2-ed9a86c642f2  (GET /product-event/list)
     _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     _j2 = _json(_resp2)
-    _items2 = (_j2.get('data') or {}).get('items') or []
+    _items2: list[Any] = (_j2.get('data') or {}).get('items') or []
     _evt = next((it for it in _items2 if it.get('title') == vars['event_title']), None)
     assert _evt is not None, f"列表中未找到 title 为 [{vars['event_title']}] 的事件"
     assert isinstance(_evt.get('id'), str) and _evt['id'], "提取的 event_id 格式不正确"
     vars['event_id'] = _evt['id']
-    _tickets = _evt.get('tickets') or []
+    _tickets: list[Any] = _evt.get('tickets') or []
     _matched = next((t for t in _tickets if t.get('title') == vars['target_ticket_title']), None) or (_tickets[0] if _tickets else None)
     assert _matched is not None, "目标事件下未查找到任何 tickets / 未匹配到 Ticket"
     assert isinstance(_matched.get('id'), str) and _matched['id'], "提取的 ticket id 格式不正确"
@@ -446,7 +452,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # step 3: 4760ca1d-561e-48c2-94ce-e17af75a0809  (GET /posts/curator/event/{{event_id}}/posts)
     _resp3 = ctx.api.posts.curator_event_posts(token='yuxiao999_token')
     _j3 = _json(_resp3)
-    _items3 = (_j3.get('data') or {}).get('items') or []
+    _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
     assert _items3, "posts 列表为空，无法提取 post0_id"
     _post0 = _items3[0].get('id')
     assert isinstance(_post0, str) and _post0, "提取的 post0_id 格式不正确"
@@ -460,7 +466,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # step 5: 2a013c4d-46d5-4977-a422-b98dad043210  (GET {{adminurl}}/post/v2/{{post0_id}}/relate-products)
     _resp5 = ctx.api.admin.post_v2_relate_products(post0_id='{{post0_id}}', token='admin_token')
     _j5 = _json(_resp5)
-    _products = (_j5.get('data') or {}).get('relatedProducts') or []
+    _products: list[Any] = (_j5.get('data') or {}).get('relatedProducts') or []
     for _p in _products:
         _title = _p.get('title') or ''
         _fmt = _title.strip().replace(' ', '_') or f'index_{_products.index(_p)}'
@@ -480,7 +486,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # step 6: 3e9b843d-988b-42d1-8b61-a2b00674881f  (GET /product-event/tickets/{{productId_General_Admission_01}}/venue-units)
     _resp6 = ctx.api.events.tickets_venue_units(params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_01}}'}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     _j6 = _json(_resp6)
-    _items6 = (_j6.get('data') or {}).get('items') or []
+    _items6: list[Any] = (_j6.get('data') or {}).get('items') or []
     _null_order = [it for it in _items6 if it.get('orderNumber') is None]
     assert _null_order, "未找到 orderNumber 为 null 的数据项"
     # NOTE: original Apifox used Math.random() to pick; we pick the first match for determinism.
@@ -584,7 +590,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     }, app_headers=True, token='linda10_token')
     # extractor: orderNumber = data.orderNumbers[0]
     _j12 = _json(_resp12)
-    _order_numbers = (_j12.get('data') or {}).get('orderNumbers') or []
+    _order_numbers: list[Any] = (_j12.get('data') or {}).get('orderNumbers') or []
     assert _order_numbers, "orderNumbers 数组不存在或为空"
     assert isinstance(_order_numbers[0], str) and _order_numbers[0], "orderNumbers[0] 值为空"
     vars['orderNumber'] = _order_numbers[0]

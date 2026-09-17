@@ -73,11 +73,17 @@ ENV_NAME = "Release"
 
 
 
+from typing import Any, TYPE_CHECKING
+
 from core.compat import get_path as _get_path
 from core.assertions import expect
 from core.compat import legacy_render
 
-def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_the_order_details_and_sales_details(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_the_order_details_and_sales_details(ctx: "Context"):
     """Apifox case #6112168: Linda_T3278_T3277_Verify_after_add_a_note_when_checkout_it_display_on_the_order_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     _render = legacy_render(ctx)
@@ -85,7 +91,7 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # Apifox 后置脚本（迁移时被丢弃）：优先取默认地址，否则取第一个
-    _items = _get_path(_resp1.json(), ['data', 'items']) or []
+    _items: list[Any] = _get_path(_resp1.json(), ['data', 'items']) or []
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
     # step 2: 32ece22e-a265-40fe-9dff-15be514034ec

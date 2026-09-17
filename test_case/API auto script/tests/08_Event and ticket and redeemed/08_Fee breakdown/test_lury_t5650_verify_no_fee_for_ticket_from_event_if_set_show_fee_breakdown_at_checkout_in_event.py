@@ -169,9 +169,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event(ctx: "Context"):
     """Apifox case #8677224: Lury_T5650_Verify_no_fee_for_ticket_from_event_if_set_Show_fee_breakdown_at_chec"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

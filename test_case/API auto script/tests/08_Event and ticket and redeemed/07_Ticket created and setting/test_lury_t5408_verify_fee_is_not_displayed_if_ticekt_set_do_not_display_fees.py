@@ -52,9 +52,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5408_verify_fee_is_not_displayed_if_ticekt_set_do_not_display_fees(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5408_verify_fee_is_not_displayed_if_ticekt_set_do_not_display_fees(ctx: "Context"):
     """Apifox case #8662408: Lury_T5408_Verify_fee_is_not_displayed_if_ticekt_set_Do_not_display_fees"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

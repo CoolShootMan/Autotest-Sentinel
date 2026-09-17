@@ -66,10 +66,16 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 from core.compat import legacy_render
 
-def test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card_from_admin(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card_from_admin(ctx: "Context"):
     """Apifox case #5735876: Linda_T1291_Verify_the_partilly_refunded_order_could_be_sync_Strip_Card_From_Adm"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     _render = legacy_render(ctx)

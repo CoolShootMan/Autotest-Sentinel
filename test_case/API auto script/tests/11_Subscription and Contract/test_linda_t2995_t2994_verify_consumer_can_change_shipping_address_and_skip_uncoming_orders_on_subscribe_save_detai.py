@@ -119,21 +119,27 @@ ENV_NAME = "Release"
 import random
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_uncoming_orders_on_subscribe_save_detai(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_uncoming_orders_on_subscribe_save_detai(ctx: "Context"):
     """Apifox case #6108487: Linda_T2995_T2994_Verify_consumer_can_change_shipping_address_and_Skip_uncoming_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
-    _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     if _arr:
         vars['oldAddressId'] = random.choice(_arr).get('id')
-    _j = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     if _arr:
         vars['newAddressId'] = random.choice(_arr).get('id')
@@ -211,7 +217,7 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     _resp7 = ctx.api.users.self_contracts(token='linda10_token')
     # step 8: check the new contract details
     _resp8 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
-    _j = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     _x = next((_z for _z in _arr if _z.get('id') == vars.get('contractId')), None)
     if _x: vars['contractNumber'] = _x.get('contractNumber')

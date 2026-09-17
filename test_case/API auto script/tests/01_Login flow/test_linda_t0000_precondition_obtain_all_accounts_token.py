@@ -51,9 +51,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t0000_precondition_obtain_all_accounts_token(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t0000_precondition_obtain_all_accounts_token(ctx: "Context"):
     """Apifox case #8604667: Linda_T0000_Precondition_obtain_all_accounts_token"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

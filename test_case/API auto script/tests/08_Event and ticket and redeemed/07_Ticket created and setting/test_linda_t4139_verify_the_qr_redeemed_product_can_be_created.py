@@ -106,9 +106,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx: "Context"):
     """Apifox case #7675144: Linda_T4139_Verify_the_QR_redeemed_product_can_be_created"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

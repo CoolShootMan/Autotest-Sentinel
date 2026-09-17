@@ -15,16 +15,22 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_draft_t2622_verify_that_the_default_invite_link_of_my_collabs_can_be_edited_and_deleted(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_draft_t2622_verify_that_the_default_invite_link_of_my_collabs_can_be_edited_and_deleted(ctx: "Context"):
     """Apifox case #8371959: Linda_Draft_T2622_Verify_that_the_default_invite_link_of_My_Collabs_can_be_edite"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 0ff3698e-2b07-42d3-a885-282ab23ad2e8
     _resp1 = ctx.api.promoters.invitation_link(body=None, token='linda05_token')
     # === 断言（源头无断言，按接口通用格式设计）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     assert _resp1.status_code == 200, f"step1 status != 200, got {_resp1.status_code}"
     assert _j1.get('code') == 200, f"step1 code != 200, got {_j1.get('code')}"
     assert _j1.get('message') == 'success', f"step1 message != success, got {_j1.get('message')}"

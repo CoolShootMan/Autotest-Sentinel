@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,11 +21,12 @@ class CampaignsApi(BaseApi):
 
     def by_campaign_id(
         self, *,
-        campaignId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        campaignId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /campaigns/{{campaignId}}  （用例中出现 6 次）"""
         return self._call(
             "PUT", '/campaigns/{{campaignId}}',
@@ -32,11 +38,12 @@ class CampaignsApi(BaseApi):
 
     def by_campaign_id_2(
         self, *,
-        campaignId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        campaignId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /campaigns/{{campaignId}}  （用例中出现 2 次）"""
         return self._call(
             "GET", '/campaigns/{{campaignId}}',
@@ -48,11 +55,12 @@ class CampaignsApi(BaseApi):
 
     def by_random_linda_automation_id(
         self, *,
-        randomLindaAutomationId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        randomLindaAutomationId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /campaigns/{{randomLindaAutomationId}}"""
         return self._call(
             "DELETE", '/campaigns/{{randomLindaAutomationId}}',
@@ -64,10 +72,11 @@ class CampaignsApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns  （用例中出现 7 次）"""
         return self._call(
             "POST", '/campaigns',
@@ -79,10 +88,11 @@ class CampaignsApi(BaseApi):
 
     def duplicate(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns/duplicate  （用例中出现 2 次）"""
         return self._call(
             "POST", '/campaigns/duplicate',
@@ -94,10 +104,11 @@ class CampaignsApi(BaseApi):
 
     def list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /campaigns  （用例中出现 3 次）"""
         return self._call(
             "GET", '/campaigns',
@@ -109,10 +120,11 @@ class CampaignsApi(BaseApi):
 
     def save_recipients(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns/save-recipients  （用例中出现 7 次）"""
         return self._call(
             "POST", '/campaigns/save-recipients',
@@ -124,10 +136,11 @@ class CampaignsApi(BaseApi):
 
     def send_campaign(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns/send-campaign  （用例中出现 3 次）"""
         return self._call(
             "POST", '/campaigns/send-campaign',
@@ -139,10 +152,11 @@ class CampaignsApi(BaseApi):
 
     def test_email(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns/test/email"""
         return self._call(
             "POST", '/campaigns/test/email',
@@ -154,10 +168,11 @@ class CampaignsApi(BaseApi):
 
     def test_sms(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /campaigns/test/sms"""
         return self._call(
             "POST", '/campaigns/test/sms',

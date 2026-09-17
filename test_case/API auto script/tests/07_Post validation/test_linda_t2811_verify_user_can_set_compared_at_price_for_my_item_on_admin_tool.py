@@ -38,10 +38,16 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 import random as _random
 
-def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_tool(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_tool(ctx: "Context"):
     """Apifox case #6111088: Linda_T2811_Verify_user_can_set_compared_at_price_for_my_item_on_admin_tool"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

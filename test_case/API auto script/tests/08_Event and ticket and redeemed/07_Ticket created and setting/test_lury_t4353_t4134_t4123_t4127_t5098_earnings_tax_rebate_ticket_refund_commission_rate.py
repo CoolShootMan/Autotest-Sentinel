@@ -529,11 +529,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_commission_rate(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_commission_rate(ctx: "Context"):
     """Apifox case #7581016: Lury_T4353_T4134_T4123_T4127_T5098_Earnings_tax_Rebate_Ticket_refund_commission_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -614,12 +620,12 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
     # extractor: refund_id = refund_id
     ctx.extract('refund_id', _resp7, 'refund_id')
-    _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     for _line_item in _arr:
         if _line_item.get('variantInfo', {}).get('id') == "709c0762-dace-4d22-ab34-18c226a8f003":
             vars['orderLineItemId'] = _line_item.get('orderLineItemId')
-    _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     vars['item_unit_id_list'] = [_u.get('id') for _p in _arr for _u in _p.get('orderLineItemUnits') or []]
     # step 8: Login - merchant

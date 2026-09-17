@@ -40,9 +40,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_item_when_creating_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_item_when_creating_post(ctx: "Context"):
     """Apifox case #6111855: Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_item_when_creating_p"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

@@ -382,11 +382,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     """Apifox case #7897954: Linda_T4293_Verify_the_ticket_can_be_redeemd_success"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # Original Apifox pre-script set scan_token to a hardcoded curator/event JWT used
@@ -410,15 +416,15 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
         "status": "IN_PROCESSING",
     }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
-    _units2 = (_j2.get('data') or {}).get('units') or {}
+    _units2: dict[str, Any] = (_j2.get('data') or {}).get('units') or {}
     assert _units2.get('count') == 1, f"step2 data.units.count != 1, got {_units2.get('count')}"
     assert isinstance(_units2.get('count'), (int, float)), f"step2 count 非数字: {_units2.get('count')}"
     # step 3: 3af00c65-523b-4e80-accb-5b6cf2cd9fc6
     _resp3 = ctx.api.events.fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary(body=None, token='linda05_token')
     # === 断言/提取（由Apifox customScript翻译）===
-    _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"step3 code != 200, got {_j3.get('code')}"
     assert _j3.get('message') == 'success', f"step3 message != success, got {_j3.get('message')}"
     assert _j3.get('data') is not None, "step3 data 缺失"
@@ -435,7 +441,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
         "forceRedeem": False,
     }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
-    _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     assert _j4.get('code') == 200, f"step4 code != 200, got {_j4.get('code')}"
     assert _j4.get('message') == 'success', f"step4 message != success, got {_j4.get('message')}"
     assert isinstance(_j4.get('request_id'), str) and _j4.get('request_id'), "step4 request_id 缺失"
@@ -451,14 +457,14 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
     assert _fi4.get('orderStatus') == 'COMPLETED', f"step4 items[0].orderStatus != COMPLETED, got {_fi4.get('orderStatus')}"
     assert isinstance(_fi4.get('redeemedAt'), str) and _fi4.get('redeemedAt'), "step4 redeemedAt 缺失"
     assert _d4.get('listingType') == 'TICKET', f"step4 listingType != TICKET, got {_d4.get('listingType')}"
-    _extra4 = _fi4.get('extraInfo') or {}
+    _extra4: dict[str, Any] = _fi4.get('extraInfo') or {}
     assert _extra4.get('event') == 'Automation test T4131', f"step4 活动名不匹配: {_extra4.get('event')}"
     assert _d4.get('orderNumber') == _fi4.get('orderNumber'), f"step4 订单号不一致: 外层{_d4.get('orderNumber')} vs item{_fi4.get('orderNumber')}"
     assert isinstance(_fi4.get('quantity'), (int, float)) and _fi4.get('quantity') == 1, f"step4 quantity != 1, got {_fi4.get('quantity')}"
     # step 6: 0c7a54ab-93db-4faf-bdc1-7ed00195d329
     _resp6 = ctx.api.events.fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary(body=None, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
-    _j6 = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     assert _j6.get('code') == 200, f"step6 code != 200, got {_j6.get('code')}"
     assert _j6.get('message') == 'success', f"step6 message != success, got {_j6.get('message')}"
     assert _j6.get('data') is not None, "step6 data 缺失"
@@ -478,7 +484,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx):
         "forceRedeem": False,
     }, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
-    _j7 = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
+    _j7: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     assert _j7.get('code') == 400, f"step7 code != 400, got {_j7.get('code')}"
     assert _j7.get('message') == 'This item has already been redeemed', f"step7 message 不匹配: {_j7.get('message')}"
     assert isinstance(_j7.get('request_id'), str) and _j7.get('request_id'), "step7 request_id 缺失"

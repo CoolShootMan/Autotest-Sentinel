@@ -48,9 +48,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_correct(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_correct(ctx: "Context"):
     """Apifox case #5814765: Linda_T1074_Verify_merchant_ship_partial_of_same_items_all_items_show_correct"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())

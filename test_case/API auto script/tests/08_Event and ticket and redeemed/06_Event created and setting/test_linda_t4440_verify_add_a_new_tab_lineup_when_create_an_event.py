@@ -33,9 +33,15 @@ def _gen_lineup_random():
 
 
 import random
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event(ctx: "Context"):
     """Apifox case #7511246: Linda_T4440_Verify_add_a_new_tab_Lineup_when_create_an_event"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # Restore pre-script generated var that was dropped during migration.
