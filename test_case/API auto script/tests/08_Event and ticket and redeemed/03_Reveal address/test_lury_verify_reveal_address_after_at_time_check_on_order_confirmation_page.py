@@ -102,9 +102,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_page(ctx: "Context"):
     """Apifox case #8600639: Lury_Verify_reveal_address_after_at_time_check_on_order_confirmation_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

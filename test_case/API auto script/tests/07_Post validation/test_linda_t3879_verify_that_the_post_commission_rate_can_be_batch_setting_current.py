@@ -119,9 +119,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current(ctx: "Context"):
     """Apifox case #8008202: Linda_T3879_Verify_that_the_Post_commission_rate_can_be_Batch_setting_Current"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

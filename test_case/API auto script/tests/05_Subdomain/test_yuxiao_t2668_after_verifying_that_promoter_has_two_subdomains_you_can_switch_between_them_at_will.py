@@ -14,9 +14,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_switch_between_them_at_will(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_switch_between_them_at_will(ctx: "Context"):
     """Apifox case #5530131: YuXiao_T2668_After_verifying_that_promoter_has_two_subdomains_you_can_switch_bet"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

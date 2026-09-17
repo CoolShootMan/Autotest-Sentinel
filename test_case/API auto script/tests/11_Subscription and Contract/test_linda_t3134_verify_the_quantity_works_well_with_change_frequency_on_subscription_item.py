@@ -108,18 +108,24 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_subscription_item(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_subscription_item(ctx: "Context"):
     """Apifox case #5844297: Linda_T3134_Verify_the_quantity_works_well_with_change_frequency_on_subscription"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # Apifox 后置脚本（迁移时被丢弃）：优先取默认地址，否则取第一个
-    _items = _get_path(_resp1.json(), ['data', 'items']) or []
+    _items: list[Any] = _get_path(_resp1.json(), ['data', 'items']) or []
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
     # step 2: e244c926-4f50-4f92-b236-25e7340c0057
@@ -197,7 +203,7 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     # extractor:  = 
     # step 8: check the new contract details
     _resp8 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
-    _j = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     _x = next((_z for _z in _arr if _z.get('id') == vars.get('contractId')), None)
     if _x: vars['contractNumber'] = _x.get('contractNumber')
@@ -228,7 +234,7 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     }, app_headers=True, token='linda10_token')
     # step 11: check the new contract details
     _resp11 = ctx.api.users.self_contracts_by_contract_id_2(token='linda10_token')
-    _j = _resp7.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp7.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     _x = next((_z for _z in _arr if _z.get('id') == vars.get('contractId')), None)
     if _x: vars['contractNumber'] = _x.get('contractNumber')

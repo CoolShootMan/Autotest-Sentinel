@@ -82,17 +82,23 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_details_sales_details_email(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_details_sales_details_email(ctx: "Context"):
     """Apifox case #6151203: Linda_T2885_Verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_de"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # customScript: 提取地址ID（优先默认地址，无则取第一个）
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
-    _addr_items = ((_j1 or {}).get('data') or {}).get('items') or []
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _addr_items: list[Any] = ((_j1 or {}).get('data') or {}).get('items') or []
     _default_addr = next((a for a in _addr_items if a.get('isDefault') is True), None)
     vars['addressId'] = (_default_addr or _addr_items[0]).get('id') if _addr_items else ''
     # step 2: 2165a45d-d601-417c-8b81-d0ee0919d8b2

@@ -114,16 +114,22 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx: "Context"):
     """Apifox case #8607884: Linda_T5139_Verify_the_Co_host_can_be_added_and_delete"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: a460e4d7-1877-4965-a029-94f3dc89a5e5
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     _t1 = next((it for it in (_j1.get('data') or {}).get('items') or [] if it.get('title') == 'event-for-API-testing'), None)
     assert _t1 is not None, "未找到 title 为 'event-for-API-testing' 的事件"
     assert isinstance(_t1.get('id'), str) and _t1.get('id'), f"提取的 id 为空，实际={_t1.get('id')!r}"
@@ -137,7 +143,7 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx):
     ctx.extract('co-hostid', _resp2, '$.data.id')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     assert _resp2.status_code == 201, f"HTTP状态码应为201，实际={_resp2.status_code}"
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"code预期200，实际={_j2.get('code')!r}"
     assert _j2.get('message') == 'success', f"message预期success，实际={_j2.get('message')!r}"
     assert isinstance(_j2.get('request_id'), str) and _j2.get('request_id'), f"request_id应为非空字符串，实际={_j2.get('request_id')!r}"
@@ -158,8 +164,8 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx):
     _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id 一致 ----
-    _j3 = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
-    _items3 = (_j3.get('data') or {}).get('items') or []
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
+    _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
     assert len(_items3) > 0, "返回的 items 数组为空或不存在"
     _ev_id = vars.get('event_id')
     assert isinstance(_ev_id, str) and _ev_id, "环境变量 {{event_id}} 未定义或为空"
@@ -168,7 +174,7 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx):
     assert _t3.get('id') == _ev_id, f"匹配事件 id {_t3.get('id')!r} 与 {{event_id}} {_ev_id!r} 不一致"
     # ---- step4: 删除 co-host ----
     assert _resp4.status_code == 200, f"HTTP状态码应为200，实际={_resp4.status_code}"
-    _j4 = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
     assert _j4.get('code') == 200, f"code预期200，实际={_j4.get('code')!r}"
     assert _j4.get('message') == 'success', f"message预期success，实际={_j4.get('message')!r}"
     assert isinstance(_j4.get('request_id'), str) and _j4.get('request_id'), f"request_id应为非空字符串，实际={_j4.get('request_id')!r}"

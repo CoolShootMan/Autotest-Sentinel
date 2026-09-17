@@ -201,9 +201,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_check_axs_event_fee_breakdown(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_check_axs_event_fee_breakdown(ctx: "Context"):
     """Apifox case #8712026: Check_AXS_event_fee_breakdown"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -216,7 +222,7 @@ def test_check_axs_event_fee_breakdown(ctx):
     # step 2: List events
     _resp2 = ctx.api.events.list(app_headers=False, params={'pageSize': '50', 'pageNumber': '1'})
     # orig: for (line_item of res['data']['items']) if platform==='AXS' and ticket.inventoryQuantity -> set axs_event_id
-    _j_axs_event_id = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j_axs_event_id: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     for _li in ((_j_axs_event_id.get('data') or {}).get('items') or []):
         if _li.get('platform') != 'AXS':
             continue

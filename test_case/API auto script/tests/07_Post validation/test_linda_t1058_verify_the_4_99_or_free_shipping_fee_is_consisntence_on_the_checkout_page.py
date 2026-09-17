@@ -76,9 +76,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout_page(ctx: "Context"):
     """Apifox case #5808749: Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
@@ -93,11 +99,11 @@ def test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisnte
     ctx.extract('access_token', _resp1, '$.data')
     # step 2: get Cart
     _resp2 = ctx.api.cart.list(token='access_token')
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
-    _cartItems = (_j2.get('data') or {}).get('items') or []
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _cartItems: list[Any] = (_j2.get('data') or {}).get('items') or []
     _clearItems = []
     for _it in _cartItems:
-        _var = _it.get('variant') or {}
+        _var: dict[str, Any] = _it.get('variant') or {}
         _clearItems.append({
             'id': _it.get('id'),
             'quantity': -1,

@@ -60,9 +60,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear(ctx: "Context"):
     """Apifox case #5748560: Linda_T1291_Verify_the_fully_refunded_order_could_be_sync_Strip_Card_From_Pear"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())

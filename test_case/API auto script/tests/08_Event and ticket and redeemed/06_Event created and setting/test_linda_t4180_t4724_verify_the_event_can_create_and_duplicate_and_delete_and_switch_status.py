@@ -454,11 +454,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_and_switch_status(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_and_switch_status(ctx: "Context"):
     """Apifox case #8620470: Linda_T4180_T4724_Verify_the_Event_can_create_and_duplicate_and_delete_and_switc"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
@@ -820,14 +826,14 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success
     expect(_resp6).json('$.message').equals('success')
-    _d6 = _resp6.json().get('data', {}) or {}
+    _d6: dict[str, Any] = _resp6.json().get('data', {}) or {}
     _tk6 = (_d6.get('tickets') or [{}])[0]
     vars['ticket_id'] = _tk6.get('id')
     vars['variant_id'] = (_tk6.get('variants') or [{}])[0].get('id')
     # step 7: a94879d6-2c75-4727-a315-996b5f67b588
     _resp7 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    _d7 = _resp7.json().get('data', {}) or {}
-    _items7 = _d7.get('items') or []
+    _d7: dict[str, Any] = _resp7.json().get('data', {}) or {}
+    _items7: list[Any] = _d7.get('items') or []
     _target7 = next((i for i in _items7 if i.get('title') == 'Verify the Event can create and duplicate and delete success'), None)
     vars['event_id'] = _target7.get('id') if _target7 else None
     # step 8: 33516490-440b-4838-a47f-1461996a3f0f
@@ -1343,13 +1349,13 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
         ],
     },
 }, token='yuxiao999_token')
-    _d8 = _resp8.json().get('data', {}) or {}
+    _d8: dict[str, Any] = _resp8.json().get('data', {}) or {}
     vars['dup_event_id'] = _d8.get('id')
     vars['lineup_id'] = (_d8.get('lineup') or [{}])[0].get('id')
     # step 9: db5f22cf-c39a-4076-923d-1f60f4c0c4d8
     _resp9 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
-    _d9 = _resp9.json().get('data', {}) or {}
-    _items9 = _d9.get('items') or []
+    _d9: dict[str, Any] = _resp9.json().get('data', {}) or {}
+    _items9: list[Any] = _d9.get('items') or []
     # Apifox 原文按 `item.title === event_title` 精确匹配。实测服务端「复制事件」后自动生成的
     # post 有时把新标题只落在 `headline` 上、`title` 仍是源事件标题，于是精确匹配偶发失败，
     # 表现为 postId=None → 下游 request body 里残留未渲染的 "{{postId}}"
@@ -1760,11 +1766,11 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     expect(_resp12).json('$.code').equals('200')
     # step 13: df7a27c2-2d97-48ff-87ea-86664d852da8
     _resp13 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-    _d13 = _resp13.json().get('data', {}) or {}
-    _rels13 = _d13.get('relatedProducts') or []
+    _d13: dict[str, Any] = _resp13.json().get('data', {}) or {}
+    _rels13: list[Any] = _d13.get('relatedProducts') or []
     _tp13 = next((p for p in _rels13 if p.get('title') == 'ticket on hold'), None)
     vars['promoterProductId'] = _tp13.get('displayVariantId') if _tp13 else None
-    _j = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp13.json() if _resp13.headers.get('content-type','').startswith('application/json') else {}
     vars['merchantProductVariantId'] = _get_path(_j, ['data', 'relatedProducts', 0, 'variants', 0, 'merchantProductVariantId'])
     # step 14: e0be15d0-ecb6-43e3-bae4-69810fd15ef2
     _resp14 = ctx.api.auth.guest_login(body={
@@ -1836,8 +1842,8 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     }, app_headers=True, token='access_token')
     # step 18: ae434884-2837-49a2-a94f-355beb0683e5
     _resp18 = ctx.api.merchants.shipping_options(body=None, token='yuxiao999_token')
-    _d18 = _resp18.json().get('data', {}) or {}
-    _items18 = _d18.get('items') or []
+    _d18: dict[str, Any] = _resp18.json().get('data', {}) or {}
+    _items18: list[Any] = _d18.get('items') or []
     vars['shipping_option_id'] = _items18[0].get('id') if _items18 else None
     # step 19: c4dc4dbe-13c6-4e92-adf9-8419218f554d
     _resp19 = ctx.api.events.by_dup_event_id(body={

@@ -44,10 +44,16 @@ ENV_NAME = "Release"
 import uuid
 import string
 import pytest
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
 @pytest.mark.xfail(reason="Release 环境接口 GET /post/simplify/shop/linda 已下线（404 Cannot GET），属后端移除端点，非迁移缺陷")
-def test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_price_on_post_card(ctx):
+def test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_price_on_post_card(ctx: "Context"):
     """Apifox case #5816106: Linda_T3028_Verify_the_price_range_and_discount_contains_subscription_price_on_p"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())

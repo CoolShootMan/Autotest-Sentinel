@@ -66,9 +66,15 @@ ENV_NAME = "Release"
 
 import uuid as _uuid
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post(ctx: "Context"):
     """Apifox case #7886135: Linda_T4955_Verify_user_can_edit_access_code_in_original_post"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

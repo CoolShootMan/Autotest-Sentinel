@@ -21,9 +21,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_t0000_verify_that_the_shipping_status_can_sync_to_pear(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_t0000_verify_that_the_shipping_status_can_sync_to_pear(ctx: "Context"):
     """Apifox case #8287376: T0000_Verify_that_the_shipping_status_can_sync_to_pear"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

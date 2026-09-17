@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class PaymentsApi(BaseApi):
 
     def method(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /payment/method"""
         return self._call(
             "POST", '/payment/method',
@@ -31,10 +37,11 @@ class PaymentsApi(BaseApi):
 
     def method_2(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /payment/method"""
         return self._call(
             "DELETE", '/payment/method',
@@ -46,10 +53,11 @@ class PaymentsApi(BaseApi):
 
     def methods(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /payment/methods  （用例中出现 2 次）"""
         return self._call(
             "GET", '/payment/methods',
@@ -61,10 +69,11 @@ class PaymentsApi(BaseApi):
 
     def stripe_setup_intent(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /payment/stripe/setup-intent"""
         return self._call(
             "POST", '/payment/stripe/setup-intent',

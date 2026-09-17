@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class ExternalApi(BaseApi):
 
     def demi_release_post_538yja(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET https://release.notip.com.cn/demi-release/post/538yja
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""
@@ -33,10 +39,11 @@ class ExternalApi(BaseApi):
 
     def lindazhou_curator(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET https://release.notip.com.cn/lindazhouCurator
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""
@@ -50,10 +57,11 @@ class ExternalApi(BaseApi):
 
     def list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET https://release.notip.com.cn/
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""
@@ -67,11 +75,12 @@ class ExternalApi(BaseApi):
 
     def v1_setup_intents_confirm(
         self, *,
-        Stripeid=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        Stripeid: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST https://api.stripe.com/v1/setup_intents/{{Stripeid}}/confirm
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""
@@ -85,10 +94,11 @@ class ExternalApi(BaseApi):
 
     def v_1129(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET https://demi0214.notip.com.cn/1129
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""
@@ -102,10 +112,11 @@ class ExternalApi(BaseApi):
 
     def v_1129_2(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET https://release.notip.com.cn/1129
 
         .. warning:: 该接口的域名写死在路径里（迁移遗留），切换环境时需要一并修改；建议后续改为环境变量。"""

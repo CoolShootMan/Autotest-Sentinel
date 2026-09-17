@@ -157,9 +157,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products_to_the_post(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products_to_the_post(ctx: "Context"):
     """Apifox case #8014988: Linda_T2487_Verify_the_post_coupon_can_be_created_after_adding_products_to_the_p"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

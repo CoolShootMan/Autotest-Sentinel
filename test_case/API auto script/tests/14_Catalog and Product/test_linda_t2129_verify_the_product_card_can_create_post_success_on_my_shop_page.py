@@ -114,9 +114,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import Any, TYPE_CHECKING
+
 from core.compat import LegacyClient, legacy_render, legacy_url
 
-def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page(ctx: "Context"):
     """Apifox case #7674680: Linda_T2129_Verify_the_Product_card_can_create_post_success_on_my_shop_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     base_url = ctx.base_url
@@ -389,7 +395,7 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
     'headline': '{{posttitle}}',
 }, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"接口返回code错误，预期200，实际={_j1.get('code')!r}"
     assert _j1.get('message') == 'success', f"接口返回message错误，预期success，实际={_j1.get('message')!r}"
     _d1 = _j1.get('data')
@@ -399,7 +405,7 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
     # step 2: db3ae71c-5ae8-4737-b52a-d305261dc6cc
     _resp2 = ctx.api.posts.curator_by_post_id_2(body=None, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"删除接口响应code错误，期望200，实际={_j2.get('code')!r}"
     assert _j2.get('data', {}).get('id'), f"删除接口data.id为空，实际={_j2.get('data')!r}"
     # 二次查询验证 post 已删除（原 customScript 逻辑：查询详情断言 code != 200 且 message 含 Requested resource not found）
@@ -411,6 +417,6 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
             headers={k:_render(v, vars) for k, v in [('Authorization', 'Bearer {{linda01_token}}'), ('Content-Type', 'application/json')]},
             data=_render(None, vars) if False else None,
         )
-        _qj = _q.json() if _q.headers.get('content-type', '').startswith('application/json') else {}
+        _qj: dict[str, Any] = _q.json() if _q.headers.get('content-type', '').startswith('application/json') else {}
         assert _qj.get('code') != 200, f"验证post已删除失败：code应为非200，实际={_qj.get('code')!r}"
         assert 'Requested resource not found' in (_qj.get('message') or ''), f"删除验证message未包含预期文本，实际={_qj.get('message')!r}"

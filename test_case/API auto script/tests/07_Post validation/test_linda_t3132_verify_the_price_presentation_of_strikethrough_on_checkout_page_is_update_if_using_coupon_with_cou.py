@@ -35,9 +35,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_using_coupon_with_cou(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_using_coupon_with_cou(ctx: "Context"):
     """Apifox case #5853677: Linda_T3132_Verify_the_price_presentation_of_strikethrough_on_checkout_page_is_u"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())

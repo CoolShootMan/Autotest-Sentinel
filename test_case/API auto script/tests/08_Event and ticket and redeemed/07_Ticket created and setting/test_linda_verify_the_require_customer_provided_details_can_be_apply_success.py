@@ -258,9 +258,15 @@ ENV_NAME = "Release"
 
 
 import random
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_verify_the_require_customer_provided_details_can_be_apply_success(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_verify_the_require_customer_provided_details_can_be_apply_success(ctx: "Context"):
     from core.compat import get_path as _get_path
     """Apifox case #8612233: Linda_Verify_the_Require_customer_provided_details_can_be_apply_success"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用

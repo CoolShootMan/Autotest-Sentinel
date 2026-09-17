@@ -121,19 +121,25 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report(ctx: "Context"):
     """Apifox case #7976339: Linda_T4519_Verify_all_data_are_displayed_correct_in_the_Event_report"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 01a255a7-7e95-419d-8f0c-82c84bc44069
     _resp1 = ctx.api.events.bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_summary(body=None, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp1.status_code == 200, f"状态码期望200，实际={_resp1.status_code}"
     assert _j1.get('code') == 200, f"响应code期望200，实际={_j1.get('code')!r}"
-    _s1 = _j1.get('data') or {}
+    _s1: dict[str, Any] = _j1.get('data') or {}
     # Financial Summary（对应报告第1页）
     assert _s1.get('grossSalesBeforeDiscount') == 19917.12, f"grossSalesBeforeDiscount期望19917.12，实际={_s1.get('grossSalesBeforeDiscount')!r}"
     assert _s1.get('totalDiscount') == 3077.83, f"totalDiscount期望3077.83，实际={_s1.get('totalDiscount')!r}"
@@ -156,10 +162,10 @@ def test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report(c
     # step 2: b8de82bb-c8f9-45c2-873f-60a3b16c9d2f
     _resp2 = ctx.api.events.bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_promoters(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp2.status_code == 200, f"状态码期望200，实际={_resp2.status_code}"
     assert _j2.get('code') == 200, f"响应code期望200，实际={_j2.get('code')!r}"
-    _items2 = (_j2.get('data') or {}).get('items') or []
+    _items2: list[Any] = (_j2.get('data') or {}).get('items') or []
     # Co-seller Individual Metrics（对应报告第2页）
     _eli = next((_i for _i in _items2 if _i.get('shopName') == 'ELI'), None)
     assert _eli is not None, "未找到shopName=ELI的co-seller"

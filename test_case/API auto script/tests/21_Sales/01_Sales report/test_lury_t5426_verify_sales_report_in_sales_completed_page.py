@@ -704,9 +704,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5426_verify_sales_report_in_sales_completed_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5426_verify_sales_report_in_sales_completed_page(ctx: "Context"):
     """Apifox case #8687310: Lury_T5426_Verify_sales_report_in_sales_completed_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

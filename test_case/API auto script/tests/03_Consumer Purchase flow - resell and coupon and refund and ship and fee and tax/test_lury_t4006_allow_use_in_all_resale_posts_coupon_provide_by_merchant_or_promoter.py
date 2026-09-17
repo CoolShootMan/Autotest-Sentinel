@@ -636,11 +636,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter(ctx: "Context"):
     """Apifox case #7557600: Lury_T4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -698,7 +704,7 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
         },
         "applicableCode": "333ppp",
     })
-    _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -816,7 +822,7 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
         },
         "applicableCode": "111ppp",
     })
-    _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -916,7 +922,7 @@ def test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_
         },
         "applicableCode": "10ppp",
     })
-    _j = _resp25.json() if _resp25.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp25.json() if _resp25.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')

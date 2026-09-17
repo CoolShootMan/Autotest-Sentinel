@@ -344,11 +344,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context"):
     """Apifox case #8677597: Linda_TDC_T5379Verify_the_Additional_QR_codes_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -375,9 +381,9 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx):
     # step 6: 61e71fa6-c51d-495c-ae2a-e5ce68457d94
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
     vars['unitid'] = 'unitId'
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
     vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])
     # step 7: 309acb6a-6b12-42b4-8689-4d51c67430f6
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
