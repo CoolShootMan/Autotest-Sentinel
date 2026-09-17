@@ -63,7 +63,7 @@ testT5007:  # [LAST: PASSED 2026-05-06]
 
     R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_form: 1000
-    fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'short msg' }
+    fill_form_field: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
     
     # email - realistic business email
     fill_email:
@@ -259,8 +259,16 @@ testT4860:  # [LAST: PASSED 2026-05-06]
     #verify_published: { text: 'Post published!' }
 
     # Verify CTA button on storefront opens form modal
-    open_storefront: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
-    sleep_after_open_storefront: 3000
+    # Publishing fires a client-side redirect back to the event view, which can race
+    # the next page.goto and abort it (net::ERR_ABORTED). Re-open until the CTA button
+    # has hydrated on the storefront instead of trusting a fixed sleep.
+    open_until_ready:
+      url: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
+      ready: 'button[data-testid="button"]:has-text("test form")'
+      retries: 6
+      timeout: 8000
+      retry_delay: 3000
+    sleep_after_open_storefront: 1000
     R_click_test_form_btn: { role: 'button', text: 'test form' }
     sleep_after_modal: 2000
     verify_contact_us: { locator: 'h4.MuiTypography-h4', text: 'Contact us' }
@@ -310,8 +318,16 @@ testT4867:  # [LAST: PASSED 2026-05-06]
     verify_published: { text: 'Post published!' }
 
     # Verify CTA button no longer exists on storefront
-    open_storefront: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
-    sleep_after_open_storefront: 3000
+    # Publishing fires a client-side redirect back to the event view, which can race
+    # the next page.goto and abort it (net::ERR_ABORTED). Re-open until the post page
+    # really renders; anchor on the post title since the CTA button was just deleted.
+    open_until_ready:
+      url: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
+      ready: 'text="event-for-rte-insert-form"'
+      retries: 6
+      timeout: 8000
+      retry_delay: 3000
+    sleep_after_open_storefront: 1000
     verify_btn_removed: { locator: 'button', text: 'test form', timeout: 5000, assert_not_visible: true }
 
   expect_result:
@@ -488,10 +504,18 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     sleep_step4: 3000
 
     # --- Part 3: Verify updated text on storefront ---
-    open_storefront:
+    # Part 2 ends with a publish (Update). Publishing fires a client-side redirect
+    # back to the event view, which can race the very next page.goto and abort it
+    # (net::ERR_ABORTED -> "broken", page stuck on the admin view). Re-open and wait
+    # until the updated button really renders, instead of relying on a fixed sleep.
+    open_until_ready:
       url: "{BASE_URL}/autotestshop/post/event-for-rte-insert-form"
+      ready: 'button[data-testid="button"]:has-text("test form test1")'
+      retries: 6
+      timeout: 8000
+      retry_delay: 3000
       auto_handle_modals: false
-    sleep_after_open_storefront: 3000
+    sleep_after_open_storefront: 1000
     verify_updated_btn: { text: 'test form test1' }
 
     # --- Part 4: Delete the CTA button ---
@@ -507,13 +531,22 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     R_click_edit_p4: { role: 'button', name: 'Content', exact: true, index: 0 }
     sleep_p4_step4: 1500
+    # The CTA form button is a Lexical client-hydrated decorator: it attaches to the
+    # DOM only AFTER the RTE hydrates. Wait for it before the force-click select — the
+    # same guard Part 2 and testT4867 already use (otherwise the click can miss it).
+    wait_cta_button_p4: { locator: 'button[data-testid="button"]:has-text("test form")', timeout: 15000 }
     R_click_cta_btn_delete: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0, force: true }
     sleep_after_select_delete: 500
     R_click_delete_btn: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
+    # Publish the deletion. Keep the two "Update" clicks back-to-back (editor save +
+    # confirm), exactly like Part 1 / Part 2 and testT4867. A long pause in between
+    # let the confirm step lapse, so the removal was never published and the post
+    # silently kept the button (no assertion caught it). Assert the publish here.
     R_click_update_5: { role: 'button', name: 'Update' }
-    sleep_after_update_3: 3000
     R_click_update_6: { role: 'button', name: 'Update' }
+    sleep_after_update_3: 3000
+    verify_deleted_published: { text: 'Post published!' }
     sleep_step5: 3000
 
   expect_result:
