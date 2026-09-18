@@ -294,6 +294,8 @@ Jira 侧回写：`tools/jira_backfill_test_link.py`（回填 `customfield_10090`
 1. **项目记忆** → `.workbuddy/memory/YYYY-MM-DD.md`（append）：本票的入口路径、真实控件名、踩到的坑与对策。
 2. **稳定定位器 / 配置路径 / 业务规则** → `.workbuddy/memory/` 或 `overview_<KEY>_*.md`，同类票直接复用。
 3. **DOM 知识库** → 若本票涉及**页面结构变化**（新控件、改名、新页面、改布局），跑 skill **`autotest-kb-refresh`** 把 `dom_kb` 刷新一遍。否则下次别人（或未来的你）在 KB 里查到的是**过期控件名**。
+   ⚠️ **新功能尤其别只跑静态快照**：`ui_snapshot.py` 只覆盖 `MONITORED_URLS` 里那 11 个静态 URL，而新控件基本都在**点击路径后面**（配置面板、弹窗、二级页）。
+   必须补一条 **flow 采集**：`py -3.9 tools/kb_capture_flow.py --flow data/kb_flows/<本票>.json`（只做只读动作，**绝不点会被保存的开关**）。否则 KB 里永远查不到本票的新控件，RAG 自愈也就帮不上忙。
 4. **skill 本身的修正** → 发现本 skill 的结论被实测推翻（如 2026-09-18 的"refresh cookie 能自举"）、或文档里的坑已修复，**当场改掉**，别让它继续误导下一个人。
 5. **真实 bug** → 另出一段"给开发的复现说明"（环境 + 账号视角 + 步骤 + 证据），可直接贴票。
 
