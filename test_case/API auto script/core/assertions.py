@@ -124,16 +124,34 @@ class _JsonAssertion:
             self._fail("(不存在)", "不存在")
         return self
 
+    def _includes_hit(self, expected: Any) -> bool:
+        """``includes`` / ``not_includes`` 共用的命中判定。
+
+        两种命中语义（对应 Apifox 的 ``to.include`` 的两种用法）：
+
+        1. **路径取值本身是数组**（``$.data.notImported``）——判断数组里是否有
+           等于 ``expected`` 的**元素**。迁移前只比较「命中值」列表里的整体取值，
+           数组会被当成一个整体去比较，于是
+           ``expect(resp).json('$.data.notImported').includes(handle)`` 永远失败
+           （``['h1'] != 'h1'``）。
+        2. **递归路径**（``$.data..storeTabs..name``）——路径本身会展开成多个命中值，
+           任一命中值等于 ``expected`` 即命中。
+
+        两种都做，才能同时兼容上面两种写法。
+        """
+        if isinstance(self.actual, list):
+            if any(_to_str(v) == _to_str(expected) for v in self.actual):
+                return True
+        return any(_to_str(v) == _to_str(expected) for v in self._hits)
+
     def includes(self, expected: Any) -> "_JsonAssertion":
-        """递归命中的任一值等于期望值。"""
-        hits = self._hits
-        if not any(_to_str(v) == _to_str(expected) for v in hits):
+        """包含：递归命中的任一值等于期望值；路径取值是数组时按**数组元素**匹配。"""
+        if not self._includes_hit(expected):
             self._fail(expected, "包含")
         return self
 
     def not_includes(self, expected: Any) -> "_JsonAssertion":
-        hits = self._hits
-        if any(_to_str(v) == _to_str(expected) for v in hits):
+        if self._includes_hit(expected):
             self._fail(expected, "不包含")
         return self
 
