@@ -262,7 +262,30 @@ ONES 用例（尤其 AI 生成的）给的是**意图级**步骤，通常**没�
 py -3.9 -m pytest test_case/UI/Test_Katana/test_ui.py -k testT<number> --alluredir=allure-results
 ```
 
-可选回写（**先确认再动手，不默认执行**）：ONES 用例步骤带 `execute_result / actual_result` 字段，可承载执行结论，但**写入路径未验证**；Jira 侧回写已有先例 `tools/jira_backfill_test_link.py`（回填 `customfield_10090`）。
+**回写 ONES 计划执行结果（默认要做，否则计划看板全是「未执行」）**：
+
+浏览器验完只写 `report.md` 是**不够的** —— ONES 计划里每条用例的执行状态默认是 `to_do`（UI 显示「未执行」），不去回写，别人打开计划看到的就是"一条都没跑"。实测端点与用法（2026-09-18 验证）：
+
+```bash
+# 批量回写（推荐：JSON 文件，避免命令行中文编码坑）
+py -3.9 tools/ones_plan_result.py --plan <plan_uuid> --json data/verify/<KEY>/ones_results.json
+# 单条 / 读回
+py -3.9 tools/ones_plan_result.py --plan <plan_uuid> --set 7UdpmKjo=failed:"关闭开关无法保存"
+py -3.9 tools/ones_plan_result.py --plan <plan_uuid> --show
+```
+
+- 端点：`POST /project/api/project/team/{team}/testcase/plan/{plan}/cases/update`，body `{"cases":[{"uuid","result","note"}]}` → `{"success_cases":[...]}`。
+- `result` 枚举：`to_do` / `passed` / `failed` / `blocked` / `skipped`（其它值 400 `InvalidParameter.TestCase.Result.InvalidType`，**不会静默写坏**）。
+- `note` 是计划内备注，适合写"一句结论 + 证据文件名"。
+- 回写后**必须读回校验**（工具已内置）。
+- 注意：用例**步骤**上的 `execute_result / actual_result` 与**计划内**的 `result` 是两套东西；计划看板的「未执行」看的是后者。
+
+Jira 侧回写：`tools/jira_backfill_test_link.py`（回填 `customfield_10090`）；**补全 bug 票描述**用 `tools/jira_writer.py`
+（markdown→ADF，`--description-file` / `--append-description-file` / `--comment-file` / `--dry-run` / `--out`）。
+🔴 描述里的截图是 ADF `mediaSingle` **节点** → 整体替换**必须** `--keep-media` 且在 md 里放 `<!--MEDIA-->` 占位，否则图会丢。
+
+**归并同类现象**：一个根因常常有多个可观测现象（如"转售贴不继承设置" + "co-seller 视角看该贴显示 Business 默认邮箱"）。
+**按根因归并进同一张票**，不要拆成"未解释的发现"再去追问开发 —— 先归因、再让用户裁定。
 
 ### Phase 5 — 沉淀（**测试的价值在于这一阶段**）
 

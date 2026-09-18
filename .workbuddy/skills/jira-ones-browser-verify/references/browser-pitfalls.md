@@ -62,3 +62,18 @@
    - 铁律：**每次开跑前重新拉一次用例**（`ones_reader.py --out <dir>/ones_cases_live.json`），并用 `tools/ones_case_diff.py <dir>/ones_cases.json <dir>/ones_cases_live.json` 与本地镜像 diff；`changed=0` 才可复用。
    - 有差异时：**以线上为准**，把"旧→新"明细写进报告；**不要**只留一份会被下一次 diff 覆盖的文件当证据（`data/verify/<KEY>/` 不在 git 里，覆盖后无法恢复）。
    - 判别口诀：期望元素缺失时，先问"这是**待实现的需求**，还是**已被删掉的旧期望**？"分不清就别急着报 FAIL。
+
+## 七、实测新增（KAT-12117 踩到，2026-09-18）
+
+1. **Post settings 是整页**：`/post/<POST_ID>/settings`（不是 Drawer/侧栏）。入口两条：编辑器工具栏 `button[data-testid="enhance-button"][aria-label="Settings"]`，或深链直达。
+2. **齿轮 ≠ 那个 tooltip 按钮**（最容易点错，点了只弹 tooltip、看不到弹窗还以为功能没做）：
+   - 齿轮（真正打开配置弹窗）＝ `button[data-testid="manage-button"]`，**仅当该开关为 On 时才存在于 DOM**；
+   - 开关旁边 `aria-label="Use a different contact email"` 的按钮 class 含 `tooltip-control-button-icon` —— 它只负责 tooltip。
+3. **MUI 弹窗选择器**：用 `.MuiDialog-root` —— **不是** `div[role="dialog"]`（按 `role=dialog` 查会得到"没弹窗"的错误结论）。
+4. **MUI Switch 怎么点**：`.check()` 会报 `Clicking the checkbox did not change its state`（透明遮罩）。可靠做法：`boundingBox()` 取中心 → `page.mouse.click(cx, cy)`。
+5. 🔴 **残留弹窗会静默吃掉点击**：MUI 弹窗（onboarding、"This post has been added to your shop." 确认框等）盖在上层时，`page.mouse.click` / `browser_click` **看起来成功但元素状态根本不变**。点关键控件前先 `document.elementFromPoint(cx, cy)` 看顶层是谁；若是 `.MuiDialog-container` 就先关弹窗。
+6. **大响应别灌进上下文**：`browser_network_request` 的 `filename` 参数**落盘不生效**（文件不会出现）。要取大 JSON 里的几个字段，用 `browser_run_code_unsafe` + `page.waitForResponse(<url 片段>)` 拿 `resp.json()`，**只 return 需要的字段**。注意 SPA 里 `page.reload()` 可能走缓存**不重新发请求** → 改从别的页面 `goto` 过来触发。
+7. **同一个 Post 的前台邮箱会随"浏览者身份"变化**：KAT-12117 实测 owner 与访客都看到帖子自定义邮箱，而 **co-seller 登录态看到的是 Business 默认邮箱**。⇒ 断言"前台显示 X"必须写清**用的哪个身份**，否则同一功能会得出互相矛盾的结论。（桌面视口 + 移动视口同理。）
+8. **并发数据漂移**：执行期间别人（常常就是提单/提需求的人自己）会同时改同一条数据。关键断言前后都读一次接口的 `updatedAt` 与字段值；报告里注明"被测数据在 <时间> 被外部改动"。**不要**把"值和我上次设的不一样"直接当产品 bug 报。
+9. **开关为 Off 且字段为 null 时，点开关会自动弹配置弹窗**：转售贴 `contactEmail=null` 时点开关 → 直接弹出邮箱弹窗，**填完 Update 开关才变 On**。别误判成"开关点不动"。
+10. **别把 token 灌进 `browser_run_code_unsafe`**：该工具会**回显整段 code**，内联的 access token / 密码就进了对话日志。优先改成"本地脚本读 .env 生成 snippet 文件 → `filename=` 调用"（见 `tools/inject_cookie.py`）。

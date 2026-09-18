@@ -152,6 +152,15 @@ Write cases the way this project's QA engineers write them: **one case per real 
 - Set `ONES_DEFAULT_MODULE_UUID=<uuid>` in `backend/.env` **temporarily for this ticket**, or pass `--module <uuid>` to `ones_writer.py batch`, or set `module_uuid` on each case in the JSON.
 - If unsure, ask the user before creating cases.
 
+**Creating a new (sub-)module** — use the dedicated tool (discovered 2026-09-18 on KAT-12117):
+```
+py -3.9 tools/ones_create_module.py --name "Contact email" --parent <PARENT_UUID>
+```
+- ONES has **no** GraphQL mutation for modules, and `items/add` with `item_type=testcase_module` returns **500**. The web UI's own endpoint does work:
+  `POST {ONES_URL}/project/api/project/team/{team}/testcase/library/{lib}/modules/add` with body **`{"module": {"name","parent_uuid","library_uuid"}}`** — note the `module` wrapper is required; the flat shape returns 500.
+- Returns the new module UUID and verifies it appears in the module tree (idempotent: exits 3 if a same-name sibling already exists).
+- Verified example (KAT-12117): `--name "Contact email" --parent MbFknFcK` → `RyKqbvvV` under `My Shop / Storefront / Posts / Create and Edit / Advanced settings`.
+
 Only use **P0 and P1** priorities (user convention). Map to ONES priority UUIDs via the reference file.
 
 ### ⛔ CRITICAL — Modifying existing cases (T4101 incident, 2026-07-22)
@@ -332,6 +341,30 @@ The tool reads `JIRA_EMAIL` / `JIRA_API_TOKEN` from `backend/.env` (already conf
 
 **Do not let the user ask for this step.** Treat `ones_create_plan_v3.py` finishing as the trigger to backfill right then and there. If something blocks backfill (token expired, Jira down, etc.), report the cause explicitly — never silently leave the field empty.
 
+### Step 7.5 — Other Jira writes (`tools/jira_writer.py`)
+
+Beyond `customfield_10090`, two writes recur:
+
+- **Complete a defect ticket's description** when the reporter left `Actual Result` empty or the steps unusable. `py -3.9 tools/jira_writer.py <KEY> --description-file d.md --keep-media` (markdown → ADF).
+  🔴 The screenshot inside a Jira description is an ADF **`mediaSingle` node**, not an attachment reference — a wholesale description replacement **must** pass `--keep-media` and the markdown **must** contain a `<!--MEDIA-->` placeholder, otherwise the image silently disappears. The tool re-reads and asserts the media-node count.
+  🔴 md→ADF converter pitfall: a `- ` sub-bullet nested inside a `1.` list **breaks the numbering** (the following `2.`/`3.` restart at 1). Use flat lists in ticket descriptions.
+- **Add a comment** (e.g. hand-off note): `--comment-file c.md`.
+
+Always `--show-description` first to see the original, and `--dry-run` before committing. Use `--out <file>` rather than relying on stdout — the Windows console mangles non-ASCII output.
+
+### Step 7.6 — Write execution results back to the ONES plan
+
+An executed test run that is not written back shows **「未执行」/ `to_do`** on the plan board, which reads as "nothing was run". After the browser pass, write the verdicts:
+
+```
+py -3.9 tools/ones_plan_result.py --plan <PLAN_UUID> --json data/verify/<KEY>/ones_results.json
+py -3.9 tools/ones_plan_result.py --plan <PLAN_UUID> --show      # read back
+```
+
+Endpoint: `POST /project/api/project/team/{team}/testcase/plan/{plan}/cases/update` with `{"cases":[{"uuid","result","note"}]}`.
+`result` ∈ `to_do | passed | failed | blocked | skipped` (anything else → 400 `InvalidParameter.TestCase.Result.InvalidType`).
+Note the two different fields: the **plan-level `result`** is the execution status shown on the board; the **step-level `execute_result` / `actual_result`** are per-step notes. Writing the wrong one leaves the board at 「未执行」.
+
 ### Step 8 — Final verification (manual spot-check)
 
 After the full pipeline, do a quick visual check in ONES and Jira:
@@ -387,3 +420,7 @@ These save a lot of trial-and-error when you need to inspect modules/cases:
 ## Cleanup
 
 Temporary probe scripts (`tools/_*.py`) accumulate during exploration. After a ticket's flow is complete, delete them; only stable tools (without the `_` prefix) should remain.
+
+## 变更记录
+
+- **2026-09-18**（KAT-12117）：新增 `tools/ones_create_module.py` 与「建子模块」配方（`POST …/testcase/library/{lib}/modules/add`，body 必须包一层 `module`）；确认 ONES token 会在流程中途失效（401 `AuthFailure.InvalidToken`）——长流程中直接再跑一次 `ones_writer.py refresh-token` 即可，不要怀疑脚本。
