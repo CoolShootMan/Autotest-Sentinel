@@ -199,6 +199,11 @@ data/ones_*.png
 data/ones_*.json
 data/debug_*.png
 tools/_*.py
+# 临时探针产物（下划线前缀 = 用完即删的 scratch），以及 cookie 注入脚本
+# （tools/_inject_cookie.js **内联了 access token**，绝不能入库）
+data/_*
+data/_probe_shots/
+tools/_inject_cookie.js
 /qa_workflow_requirements.md
 
 # === prefill_runner debug/temp artifacts (Apifox export residue, do not commit) ===

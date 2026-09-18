@@ -64,11 +64,13 @@ JS_EXTRACT_INTERACTIVE = """
     ];
     const results = [];
     const isVisible = (el) => {
-        if (!el.offsetParent && el.tagName !== 'BODY') return false;
+        // 与 Playwright 可见性对齐（有尺寸即可见）。曾经的 `opacity===0` / `!offsetParent`
+        // 判据会把 MUI 开关的原生 input（opacity:0，但 Playwright 可点）整批漏掉。
         const style = getComputedStyle(el);
         if (style.display === 'none') return false;
         if (style.visibility === 'hidden') return false;
-        if (parseFloat(style.opacity) === 0) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return false;
         return true;
     };
     SELECTORS.forEach(sel => {
@@ -82,6 +84,7 @@ JS_EXTRACT_INTERACTIVE = """
                 testid:     el.getAttribute('data-testid') || '',
                 type:       el.getAttribute('type') || '',
                 placeholder: el.getAttribute('placeholder') || '',
+                nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 80),
                 href:       el.getAttribute('href') || '',
                 className:  (el.className || '').substring(0, 60),

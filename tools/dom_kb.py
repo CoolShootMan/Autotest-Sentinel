@@ -71,6 +71,13 @@ def element_to_text(el: dict, url_template: str = "") -> str:
     placeholder = el.get("placeholder", "")
     if placeholder:
         parts.append(f"placeholder:{placeholder}")
+    # HTML `name` 属性（≠ 上面的 name 字段，那个是 aria-label/innerText）。
+    # 本套 App 的表单控件大量靠它定位（`input[name="contactEmail"]`、
+    # `span.MuiSwitch-switchBase:has(input[name=contactEmail])`），
+    # 不采集的话这类控件在 KB 里就是"无名"的，查不回来。
+    name_attr = el.get("nameAttr") or ""
+    if name_attr:
+        parts.append(f"nameattr:{name_attr}")
     elem_type = el.get("type", "")
     if elem_type and elem_type != tag:
         parts.append(f"type:{elem_type}")
@@ -99,6 +106,7 @@ def element_signature(el: dict, url_template: str = "") -> str:
         el.get("text", ""),
         el.get("placeholder", ""),
         el.get("type", ""),
+        el.get("nameAttr") or "",
     ])
 
 
@@ -378,7 +386,14 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
 
 def build_from_snapshot(env: str = "release", account: str = "main",
                         label: str = "baseline") -> str:
-    """Load latest snapshot and build FAISS index."""
+    """Load latest snapshot and build FAISS index.
+
+    Also merges every `ui_snapshots/flows__<env>__*.json` (produced by
+    tools/kb_capture_flow.py).  Why: build_index() REBUILDS the whole index from
+    scratch, so anything that only ever went through add_elements() would be
+    silently wiped by the next build.  Folding the flow snapshots in here makes
+    click-path knowledge survive rebuilds (= "越攒越多").
+    """
     result = load_latest_snapshot(label, env)
     if result is None:
         print(f"[dom_kb] No snapshot found for label='{label}', env='{env}'")
@@ -390,6 +405,27 @@ def build_from_snapshot(env: str = "release", account: str = "main",
 
     urls_data = data.get("urls", {})
     base_url = data.get("base_url", "")
+
+    # --- merge flow snapshots (click-path pages not reachable as static URLs) ---
+    import glob
+    flow_paths = sorted(glob.glob(os.path.join(SNAPSHOT_DIR, f"flows__{env}__*.json")))
+    for fp in flow_paths:
+        try:
+            with open(fp, encoding="utf-8") as f:
+                flow_data = json.load(f)
+        except Exception as e:
+            print(f"[dom_kb] WARN 跳过坏掉的 flow 快照 {fp}: {str(e)[:120]}")
+            continue
+        if not base_url and flow_data.get("base_url"):
+            base_url = flow_data["base_url"]
+        merged = 0
+        for url_tpl, elements in (flow_data.get("urls") or {}).items():
+            if url_tpl in urls_data:
+                urls_data[url_tpl] = urls_data[url_tpl] + elements
+            else:
+                urls_data[url_tpl] = elements
+            merged += len(elements)
+        print(f"[dom_kb] + flow snapshot {os.path.basename(fp)} ({merged} elements)")
 
     # Flatten all elements with URL context
     all_elements = []
@@ -480,6 +516,12 @@ def cmd_query(args):
         print(f"  Name:   {el.get('name', '')}")
         print(f"  Label:  {el.get('ariaLabel', '')}")
         print(f"  TestID: {el.get('testid', '')}")
+        # HTML `name` / `type` / `placeholder` 是本套 App 表单控件真正的定位锚点
+        # （如 input[name="contactEmail"]）；有值就显示，否则会看不出这是哪个控件。
+        for _key, _label in (("nameAttr", "NameAttr"), ("type", "Type"), ("placeholder", "Placeholder")):
+            _val = el.get(_key) or ""
+            if _val:
+                print(f"  {_label}: {_val}")
         print(f"  Text:   {el.get('text', '')}")
         print()
 
