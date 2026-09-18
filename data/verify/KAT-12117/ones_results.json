@@ -1,0 +1,22 @@
+{
+  "Ds8QUXpQ": {
+    "result": "passed",
+    "note": "Owner set custom email kat12117-owner@1m.app; post bottom shows it to owner and to guest (Business default is test@pear.us, so the comparison is meaningful). Evidence: C1_s4_post_bottom_custom_email.png / C1_s5_guest_bottom_custom_email.png"
+  },
+  "JPioSgHX": {
+    "result": "passed",
+    "note": "Invalid formats 'abc', 'abc@', 'a b@c.com' all keep the Update button disabled; a valid address re-enables it. Evidence: C2_s1_invalid_abc_update_disabled.png / C2_s3_invalid_space_update_disabled.png / C2_s4_valid_update_enabled.png"
+  },
+  "7UdpmKjo": {
+    "result": "failed",
+    "note": "NEW BUG: switch Off then Save -> form error 'contactEmail must be an email', no PATCH /advanced is sent and the switch reverts to On after reload, so the custom email can never be turned off. Evidence: C3_s2_save_error_contactEmail_must_be_an_email.png"
+  },
+  "4ZmiXCrP": {
+    "result": "failed",
+    "note": "Resale post does NOT inherit the setting: GET /posts/curator/preview/<resale id> returns contactEmail = null while parentPostId points to the configured parent. Same defect as KAT-12123. Evidence: C4_s3_resale_post_settings_contactEmail_off.png"
+  },
+  "5wZH1Hhx": {
+    "result": "passed",
+    "note": "Co-seller set kat12117-coseller@1m.app on the resale post (saved OK, shown at post bottom) and the parent post kept its own value. Precondition deviation: because of the C4 defect the resale post started Off instead of inheriting X. Evidence: C5_s2_resale_switch_on_after_update.png / C5_s3_resale_post_bottom_email.png"
+  }
+}
