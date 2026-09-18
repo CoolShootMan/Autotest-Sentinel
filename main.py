@@ -75,7 +75,31 @@ def start_autotest():
         pytest_args.append('--headed')
     logger.info(f"Running with YAMLs: {yaml_files}")
 
-    # ── 1. Fetch cookies for all 3 test accounts ──
+    # ── 1. API 预制脚本：UI Automation Data Pre-configuration ──
+    # UI 用例依赖这条 API 预制脚本先造好测试数据（用户 / event / ticket / product /
+    # post / coupon 等），所以每次跑 UI 用例【之前】必须先跑它。
+    # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
+    # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
+    # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
+    api_dir = os.path.join(BASE_DIR, 'test_case', 'API auto script')
+    prefill_runner = os.path.join(api_dir, 'run_suite.py')
+    prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
+    logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
+    logger.info(f"Running command: {prefill_runner} {prefill_suite}")
+    prefill_result = subprocess.run(
+        [sys.executable, prefill_runner, prefill_suite],
+        cwd=api_dir, capture_output=True, text=True
+    )
+    logger.info(f"Prefill stdout: {prefill_result.stdout}")
+    if prefill_result.returncode != 0:
+        # 预制失败 → UI 用例会因缺数据大面积假失败；直接中止，避免白跑一整轮（CI 一次约 110 分钟）。
+        logger.error(
+            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+            f"stderr: {prefill_result.stderr}"
+        )
+        raise SystemExit(prefill_result.returncode)
+
+    # ── 2. Fetch cookies for all 3 test accounts ──
     # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），
     # 过期后所有需要登录态的用例会以 "locator not found" 假失败，极难察觉。
     # 所以不要用 `if CI` 把本地排除掉——每次运行前统一重新登录 3 个账号拿最新 cookie。
@@ -89,7 +113,7 @@ def start_autotest():
     if cookie_result.returncode != 0:
         logger.error(f"Cookie script stderr: {cookie_result.stderr}")
 
-    # ── 2. Login with latest cookies and dismiss EDU popups ──
+    # ── 3. Login with latest cookies and dismiss EDU popups ──
     dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
     logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
     dismiss_result = subprocess.run(
@@ -100,7 +124,7 @@ def start_autotest():
     if dismiss_result.returncode != 0:
         logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
 
-    # ── 3. Run pytest ──
+    # ── 4. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")

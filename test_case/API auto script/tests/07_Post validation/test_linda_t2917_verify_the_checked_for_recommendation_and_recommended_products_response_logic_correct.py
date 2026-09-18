@@ -168,8 +168,8 @@ def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_produ
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 1ed004ca-9615-47c9-9d46-6e774aa66402
-    _resp1 = ctx.api.posts.curator_ff9274b0_b4b1_442c_b9ea_afcaf67912ae(body={
-    'id': 'ff9274b0-b4b1-442c-b9ea-afcaf67912ae',
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T2917_post_id}}', body={
+    'id': '{{T2917_post_id}}',
     'announcements': [],
     'createFromEventId': '0fe6623e-a3ba-40fb-815d-3d6f444775c3',
     'title': 'API Test T2917',
