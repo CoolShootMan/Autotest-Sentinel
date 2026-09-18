@@ -10,14 +10,13 @@ agent_created: true
 
 End-to-end pipeline that turns a Jira ticket (e.g. `KAT-11397`) into a fully populated ONES test plan: read the requirement from Jira, generate test cases, create them via the ONES REST API, create a test plan via UI automation, link the cases to the plan via API, and backfill the ONES plan URL into the Jira ticket's `Test Case Link for QA` field. The pipeline is project-specific and depends on the tools already present in this repo.
 
+**Related skill**: `jira-ones-browser-verify` covers the downstream half — taking a Jira ticket + an existing ONES case set and executing it in a browser (agent-browser / Playwright) to a verification report. This skill stops once cases are recorded, linked, and Jira is backfilled; it does not execute cases.
+
 ## Prerequisites
 
-- Managed Python venv `C:\Users\tester\.workbuddy\binaries\python\envs\default\Scripts\python.exe` with `playwright` installed. If it is missing deps, install them with:
-  ```
-  C:\Users\tester\.workbuddy\binaries\python\versions\3.13.12\python.exe -m venv C:\Users\tester\.workbuddy\binaries\python\envs\default
-  C:\Users\tester\.workbuddy\binaries\python\envs\default\Scripts\python.exe -m pip install playwright
-  C:\Users\tester\.workbuddy\binaries\python\envs\default\Scripts\python.exe -m playwright install chromium
-  ```
+- **Python — use `py -3.9`** (system `D:\Program Files\python.exe`, 3.9.8; it is the **only** interpreter on this machine that has `playwright` — verified 2026-09-18). Use it for every script below.
+  ⚠️ Do **not** use the managed venv `C:\Users\tester\.workbuddy\binaries\python\envs\default` — it has no `Scripts\*.exe` (broken shell, only `Lib`). (`py -0p` lists only the 3.9; the managed 3.13 has **no** playwright.)
+  ⚠️ **3.9 vs PEP 604 (`X | None`)**: several `tools/` scripts used `X | None` annotations, which need Python ≥3.10 — on `py -3.9` they die **at import time** with `TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'`, so `ones_writer.py` (and thus the whole write flow) was unrunnable on this machine. Fixed 2026-09-18 by adding `from __future__ import annotations` at the top of `ones_writer.py` — one line, compatible with both 3.9 and 3.10+. If any other tool under `tools/` raises the same TypeError, apply the same fix (nothing in this repo introspects annotations at runtime, so it is safe).
 - Run from the repo root so relative paths resolve.
 
 ### Credential setup (first-time onboarding)
@@ -74,7 +73,7 @@ See `references/ones_jira_reference.md` for the authoritative list of ONES UUIDs
 ### Step 1 — Read the Jira requirement
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/jira_reader.py KAT-11397 --format text
+py -3.9 tools/jira_reader.py KAT-11397 --format text
 ```
 
 Extract: summary (becomes the test plan title suffix), description (test case source), and `QA` field (`customfield_10083`) — the QA person becomes the test plan owner.
@@ -84,7 +83,7 @@ Extract: summary (becomes the test plan title suffix), description (test case so
 If the Jira description contains a Figma link, **always** pull the design via the Figma REST API before writing cases. Do not rely solely on the Jira text — UI details (button labels, field order, error states) live in Figma.
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/figma_api_reader.py --url "<FIGMA_URL>" --output data/figma_<TICKET> --analyze
+py -3.9 tools/figma_api_reader.py --url "<FIGMA_URL>" --output data/figma_<TICKET> --analyze
 ```
 
 `figma_api_reader.py`:
@@ -175,6 +174,38 @@ When a ticket's feature is "copied" to a new flow (e.g. post preferences appear 
    - "Update title + ADD steps" (append only) — the default
    - "Update title + REPLACE steps" (full overwrite) — only when the user explicitly says the entire flow changed
 
+**Tested recipe — rewriting a case whose expected behaviour was wrong** (KAT-12069 / T5726, 2026-09-18):
+
+```python
+import sys; sys.path.insert(0, "tools")
+from ones_writer import load_env, graphql, update_case_steps
+
+CASE_UUID = "4WBTxGGR"; MODULE = "3moKQuHE"; env = load_env()
+
+# 1) FETCH current definition + steps, then BACKUP -> data/<TICKET>_case_backup_<UUID>.json
+mq = """query ($f: Filter, $n: Int) { testcaseCases(filter: $f, limit: $n) {
+        uuid name number condition desc priority { uuid } testcaseModule { uuid } assign { uuid } type { uuid } } }"""
+sq = """query ($f: testcaseCaseStepsFilter) { testcaseCaseSteps(filter: $f) {
+        testcaseCase { uuid } desc result index } }"""
+graphql(mq, {"f": {"testcaseModule_in": [MODULE]}, "n": 1000}, env)   # find your case by uuid
+graphql(sq, {"f": {"testcaseCase_in": [CASE_UUID]}}, env)
+
+# 2) UPDATE — update_case_steps() sends the FULL field set; pass `assign` EXPLICITLY to preserve it
+ok, msg = update_case_steps(CASE_UUID, {
+    "name": "Verify ...", "desc": "...", "condition": "...",
+    "steps": [{"desc": "...", "result": "..."}, {"desc": "...", "result": "..."}],
+    "priority": "high", "type": "functional",
+    "module_uuid": MODULE,
+    "assign": "<uuid read back in step 1>",   # NEVER omit — the default silently reassigns to the current user
+}, env)
+
+# 3) VERIFY by reading back (never trust the 200/OK alone)
+```
+
+- `mq` projections that **do** resolve on `testcaseCases`: `name`, `number`, `desc`, `condition`, `priority { uuid }`, `testcaseModule { uuid }`, `assign { uuid }`, `type { uuid }`. `assign { name }` / `type { name }` do **not** — keep projections minimal or the query returns `Malformed.GraphQL`.
+- REPLACE of steps = just pass the new array (indices are regenerated); APPEND = fetch old steps first and concatenate.
+- `update_case_steps` returns `(success, message)`, e.g. `(True, "3 steps written")`.
+
 **Title naming convention**:
 - Do NOT prefix case titles with the ticket number or internal tracking IDs (e.g. `KAT-11397 T1:`).
 - Start the title with a clear action verb, preferably **`Verify ...`** (e.g. `Verify redirect URL works after form submission`, `Verify invalid redirect URL format is rejected`). This makes the test intent immediately obvious, matching the T5506 style in ONES.
@@ -183,7 +214,7 @@ When a ticket's feature is "copied" to a new flow (e.g. post preferences appear 
 ### Step 3 — Create cases in ONES (REST API)
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_writer.py batch data/<TICKET>_test_cases.json
+py -3.9 tools/ones_writer.py batch data/<TICKET>_test_cases.json
 ```
 
 **Input format**: the file must be a **pure JSON array** of case objects — NOT a `{"cases": [...]}` wrapper. A wrapped object aborts with `must contain a JSON array of cases`.
@@ -192,7 +223,7 @@ Creates cases under the target module. Results (with new UUIDs) are written to `
 
 To override the module for the whole batch (e.g. when `ONES_DEFAULT_MODULE_UUID` is not set and the JSON lacks `module_uuid`):
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_writer.py batch data/<TICKET>_test_cases.json --module <MODULE_UUID>
+py -3.9 tools/ones_writer.py batch data/<TICKET>_test_cases.json --module <MODULE_UUID>
 ```
 
 **Steps are written in a separate call**: ONES `items/add` silently ignores the `steps` field (and `testcase_case_steps: []` in the body will clear them). `ones_writer.py` handles this automatically — after `items/add` returns the new UUID, it calls the correct endpoint:
@@ -261,7 +292,7 @@ To verify priorities after batch creation, query GraphQL `testcaseCaseSteps` (sa
 ### Step 5 — Create the test plan (UI automation)
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_create_plan_v3.py <TICKET> --owner <OWNER_QUERY> [--date YYYY-MM-DD]
+py -3.9 tools/ones_create_plan_v3.py <TICKET> --owner <OWNER_QUERY> [--date YYYY-MM-DD]
 ```
 
 **Parameters**:
@@ -285,7 +316,7 @@ UI entry: `https://ones.cn/project/#/testcase/team/<TEAM>/index` → click 「�
 
 `ones_create_plan_v3.py` auto-links cases from `data/ones_create_results.json` (newly created cases only). If you also modified existing cases, link them separately:
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/ones_writer.py add-to-plan <PLAN_UUID> <CASE_UUID>...
+py -3.9 tools/ones_writer.py add-to-plan <PLAN_UUID> <CASE_UUID>...
 ```
 Uses the `addTestcasePlanCase` GraphQL mutation.
 
@@ -294,7 +325,7 @@ Uses the `addTestcasePlanCase` GraphQL mutation.
 ONES UI URL is auto-captured in `data/ones_create_plan.json` (or printed by `ones_create_plan_v3.py` as `https://ones.cn/project/#/testcase/team/<TEAM>/plan/<PLAN_UUID>/library`). PUT it into Jira's `Test Case Link for QA` field (`customfield_10090`, string) using the dedicated tool:
 
 ```
-"C:/Users/tester/.workbuddy/binaries/python/envs/default/Scripts/python.exe" tools/jira_backfill_test_link.py <TICKET> <PLAN_UUID>
+py -3.9 tools/jira_backfill_test_link.py <TICKET> <PLAN_UUID>
 ```
 
 The tool reads `JIRA_EMAIL` / `JIRA_API_TOKEN` from `backend/.env` (already configured for this repo), issues `PUT /rest/api/3/issue/<TICKET>` with `{"fields": {"customfield_10090": "<ONES_PLAN_URL>"}}`, then immediately re-fetches the field to verify. Success: HTTP 204 + MATCH. Failure: HTTP error or MISMATCH (exit 1).
@@ -309,6 +340,33 @@ After the full pipeline, do a quick visual check in ONES and Jira:
 - **ONES case titles**: Confirm titles start with `Verify ...` (or another clear action verb) and contain no internal tracking prefixes (`KAT-XXXX TN:`).
 - **Jira**: Confirm the `Test Case Link for QA` field shows the correct ONES plan URL (it was just backfilled in Step 7; quick re-fetch should match).
 
+## ONES GraphQL recipes (verified 2026-09-17, KAT-12069)
+
+These save a lot of trial-and-error when you need to inspect modules/cases:
+
+- **Listing modules does NOT print the name path.** `ones_writer.py modules` prints a flat list with `uuid` + `testcaseCaseCount`; the returned GraphQL objects DO carry `parent{uuid}`, so rebuild the readable path yourself:
+  ```python
+  import sys; sys.path.insert(0,'tools')
+  from ones_writer import load_env, get_modules
+  ms=get_modules(load_env()); by={m['uuid']:m for m in ms}
+  def full(m):
+      parts=[]; cur=m; seen=set()
+      while cur and cur['uuid'] not in seen:
+          seen.add(cur['uuid']); parts.append(cur['name'])
+          cur=by.get((cur.get('parent') or {}).get('uuid'))
+      return ' / '.join(reversed(parts))
+  for m in ms: print(full(m), m['uuid'], m['testcaseCaseCount'])
+  ```
+- **List cases under a module**: GraphQL `testcaseCases(filter: {testcaseModule_in: ["<MODULE_UUID>"]}, limit: N) { uuid name }`. Note the arg is `testcaseModule_in` (the error message's suggested `module_in` / `testcase_module_in` / `uuid_in` are all INVALID).
+- **`priority` is an OBJECT field** in GraphQL — project it as `priority { uuid }` (it has no `name` sub-field; a bare `priority` errors with `object field must have selections`).
+- **Priority UUID → label**: `3g7bLpa1`=P0/highest, `VRXHXgbp`=P1/high.
+- **Plan→cases link check**: GraphQL `testcasePlanCases(filter: {testcasePlan_in: ["<PLAN_UUID>"]}) { testcaseCase { uuid name } }`.
+- **Steps check**: `testcaseCaseSteps(filter: {testcaseCase_in: [<uuids>]}) { testcaseCase{uuid} desc result index }`.
+
+**Figma link location**: it may live in the ticket **comments**, not the description. `jira_reader.py --format text` prints comments — scan them for the `figma.com/design/...` URL before concluding "no Figma".
+
+**Module for storefront-display features**: `My Shop / Storefront / Edit Profile / Storefront` (`3moKQuHE`) holds storefront-level display/config (nav bar, tab visibility, default tab). Use it for storefront footnote/footer-type tickets unless the feature clearly belongs to a deeper child module.
+
 ## Critical Constraints & Pitfalls
 
 - **Priority map is P0/P1 only** for this project. Do not use P2–P4.
@@ -320,7 +378,8 @@ After the full pipeline, do a quick visual check in ONES and Jira:
 - Token expires ~1h; refresh with `python tools/ones_writer.py refresh-token` (uses Playwright login).
 - ONES UI uses `ones-` class prefix (not `ant-`): `.ones-user-select`, `.ones-picker`, `.ones-select`.
 - `updateTestcaseCase` requires `key: "testcase_case-<UUID>"` format, not bare `uuid`.
-- Use the managed Python venv (`C:\Users\tester\.workbuddy\binaries\python\envs\default\Scripts\python.exe`) for all scripts. If it lacks `playwright`, install via the managed runtime (see Prerequisites).
+- Use `py -3.9` (system `D:\Program Files\python.exe`) for all scripts — `playwright` is already installed there. The managed venv is a broken shell (see Prerequisites).
+- **Reading cases back** (e.g. to draft from an existing ONES case): use `py -3.9 tools/ones_reader.py "<ONES_LINK>" --markdown`. It reads a plan/module/single case with steps in 2 GraphQL calls (`testcaseCases` filtered by `testcaseModule_in` + bulk `testcaseCaseSteps`), and never writes. See the `jira-ones-browser-verify` skill for the read-side details.
 - **Steps API**: `items/add` silently drops `steps`; use `cases/update` REST endpoint instead. `ones_writer.py` does this automatically; `ones_update_steps.py` can fix missing steps retroactively.
 - **Silent empty fields**: `case_data.get(key, "")` never raises on a missing/misspelled key — a wrong field name (e.g. `description` vs `desc` before the alias fix) produces empty strings in ONES with `success: true`. Always re-read created cases from ONES via GraphQL and assert `desc` / `condition` are non-empty, the same way Step 3.5 asserts steps exist.
 - **Point conservation**: Simple manual operations (editing a title, changing a dropdown) are cheaper for the user to do by hand than for the agent to automate. Reserve agent work for API calls, batch operations, and tasks requiring code.

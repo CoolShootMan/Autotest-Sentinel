@@ -1,0 +1,19 @@
+# =============================================================================
+# requirements-kb.txt — DOM 知识库（dom_kb）**可选**依赖
+# =============================================================================
+# 只有要用这些能力时才需要装：
+#   - skill `autotest-kb-refresh`（刷新 DOM 知识库）
+#   - `tools/dom_kb.py`（RAG 定位器自愈检索）
+#   - `tools/diagnose_failed.py` / `tools/step_analyzer.py` 的 RAG 候选召回
+#
+# 安装（和主依赖装进同一个解释器 py -3.9）：
+#   py -3.9 -m pip install -r requirements-kb.txt
+#
+# ⚠️ sentence-transformers 会拉 **torch（约 2GB）**。不跑知识库就别装这个文件。
+#    首次查询还会自动下载 `all-MiniLM-L6-v2`（约 80MB）到 `.models/`（已 gitignore）。
+# =============================================================================
+
+faiss-cpu==1.13.0
+sentence-transformers==5.1.2
+numpy==2.0.2
+scikit-learn==1.6.1

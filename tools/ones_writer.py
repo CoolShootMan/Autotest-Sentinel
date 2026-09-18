@@ -40,6 +40,8 @@ Case JSON format:
     type: "functional" | "performance" | "api" | "install" | "config" | "safety" | "other"
     module_uuid: optional, defaults to env ONES_DEFAULT_MODULE_UUID or root module
 """
+from __future__ import annotations
+
 import argparse
 import json
 import os

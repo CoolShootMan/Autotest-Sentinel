@@ -5,14 +5,17 @@ Builds a FAISS vector index from UI snapshots so that failed test steps
 can query the latest page DOM for similar elements.
 
 Usage:
-    # Build index from latest snapshot
+    # ① Take a fresh DOM snapshot first (the index is built FROM a snapshot)
+    python tools/ui_snapshot.py snapshot --env release --account main --label baseline
+
+    # ② Build index from the latest snapshot
     python tools/dom_kb.py build --env release --account main
 
     # Query: find elements similar to a failed locator
-    python tools/dom_kb.py query --role button --name "Edit post"
+    python tools/dom_kb.py query --role button --name "Edit footer"
 
-    # Build + query in one shot (for debugging)
-    python tools/dom_kb.py search --role button --name "Edit post" --url "{BASE_URL}/autotestshop"
+Note: there is no `search` subcommand — it was documented but never implemented.
+      Use `build` then `query`.
 """
 
 import typing
@@ -72,6 +75,31 @@ def element_to_text(el: dict, url_template: str = "") -> str:
     if elem_type and elem_type != tag:
         parts.append(f"type:{elem_type}")
     return " ".join(parts)
+
+
+def element_signature(el: dict, url_template: str = "") -> str:
+    """Stable identity of an element for dedup purposes.
+
+    ⚠️ Do NOT dedup by ``data-testid`` alone (the old behaviour). Testids in this
+    app are frequently **generic and reused** — e.g. ``enhance-button`` appeared
+    62x and ``mui-box`` covers every MUI box button on one page. Collapsing on the
+    testid threw away 402 -> 66 elements (2026-09-18) and made genuinely distinct
+    controls (``Add footer`` / ``Edit footer``) unretrievable.
+
+    Two elements are only interchangeable when they agree on every identifying
+    attribute, so the signature spans the whole tuple.
+    """
+    return "|".join([
+        url_template,
+        el.get("tag", ""),
+        el.get("role", ""),
+        el.get("testid", ""),
+        el.get("ariaLabel", ""),
+        el.get("name", ""),
+        el.get("text", ""),
+        el.get("placeholder", ""),
+        el.get("type", ""),
+    ])
 
 
 def locator_to_text(role: str = "", name: str = "", text: str = "",
@@ -147,12 +175,12 @@ def build_index(elements: List[dict], url_map: Dict[str, str]) -> str:
 
     os.makedirs(KB_DIR, exist_ok=True)
 
-    # Deduplicate by (url_template, key) - prefer elements with testid/role
+    # Deduplicate by full element signature (see element_signature for why the
+    # old "url||testid" key was destructive) - prefer elements with testid/role
     seen = {}
     for el in elements:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        dedup_key = f"{url_tpl}||{key}"
+        dedup_key = element_signature(el, url_tpl)
         existing = seen.get(dedup_key)
         if existing is None:
             seen[dedup_key] = el
@@ -299,18 +327,16 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
             el_copy["_url_template"] = url_template
         elements.append(el_copy)
 
-    # Deduplicate against existing elements
+    # Deduplicate against existing elements (full signature, see element_signature)
     existing_keys = set()
     for el in meta["elements"]:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        existing_keys.add(f"{url_tpl}||{key}")
+        existing_keys.add(element_signature(el, url_tpl))
 
     new_unique = []
     for el in elements:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        dedup_key = f"{url_tpl}||{key}"
+        dedup_key = element_signature(el, url_tpl)
         if dedup_key not in existing_keys:
             new_unique.append(el)
             existing_keys.add(dedup_key)
