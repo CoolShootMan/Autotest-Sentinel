@@ -4,6 +4,7 @@
 Parse test case statuses from Allure report's behaviors.json,
 handle merged case numbers (e.g. T5033_5034), and generate a status map for ONES updates.
 """
+from __future__ import annotations
 
 import json
 import os

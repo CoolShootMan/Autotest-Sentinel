@@ -25,6 +25,7 @@ Usage:
     # Specify environment
     python tools/diagnose_failed.py --env release
 """
+from __future__ import annotations
 
 import ast
 import argparse

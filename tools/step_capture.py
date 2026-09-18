@@ -33,6 +33,7 @@ Usage in conftest.py / test_ui.py:
 CLI option:
     --step-capture on|on-failure|off   (default: on-failure)
 """
+from __future__ import annotations
 
 import base64
 import json

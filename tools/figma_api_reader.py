@@ -14,6 +14,7 @@ Requires a Figma Personal Access Token with:
 
 Token can be passed via --token or the FIGMA_TOKEN environment variable.
 """
+from __future__ import annotations
 
 import argparse
 import json

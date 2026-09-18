@@ -6,6 +6,7 @@ ONES Test Status Updater v5 (with debug output)
 Usage:
     python tools/update_test_status.py [report_dir]
 """
+from __future__ import annotations
 
 import json
 import os
