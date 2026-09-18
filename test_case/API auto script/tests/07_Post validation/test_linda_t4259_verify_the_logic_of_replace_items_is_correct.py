@@ -296,8 +296,8 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     ctx.extract('linda05_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: d20be068-d238-4265-9700-84b9d485cd5f
-    _resp2 = ctx.api.posts.curator_fe26aba1_17b9_4e04_872e_3759ce5fc842(body={
-    'id': 'fe26aba1-17b9-4e04-872e-3759ce5fc842',
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T4259_post_id}}', body={
+    'id': '{{T4259_post_id}}',
     'announcements': [],
     'createFromEventId': '0fe6623e-a3ba-40fb-815d-3d6f444775c3',
     'title': 'API Test T4259',

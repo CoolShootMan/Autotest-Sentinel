@@ -285,8 +285,8 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: 39c21944-7359-485c-9c3d-5c9d033ef018
-    _resp2 = ctx.api.posts.curator_907f5bec_0233_4778_8f46_7820e8b2eb7c(body={
-        "id": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T2895_post_id}}', body={
+        "id": "{{T2895_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T2895",

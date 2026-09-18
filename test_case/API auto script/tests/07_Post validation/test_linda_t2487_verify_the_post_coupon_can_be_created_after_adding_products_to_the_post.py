@@ -177,8 +177,8 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: bd8f74c7-a340-487a-92c7-b47ac97fe7d7
-    _resp2 = ctx.api.posts.curator_24232e2c_b3af_4517_be24_4dfddb1ca79f(body={
-        "id": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T2487_post_id}}', body={
+        "id": "{{T2487_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T2487 ",
@@ -191,24 +191,6 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
         "allowPromotersHideProducts": True,
         "allowPromotersCustomizeMedia": True,
         "allowPromotersCreateCoupon": True,
-        "promotions": [
-            {
-                "amountThresholdDiscounts": [
-                    {
-                        "amountThreshold": 100,
-                        "discountPercentage": 10,
-                    },
-                ],
-                "applicableCode": "ygzaz9jm",
-                "codeAliases": None,
-                "title": "",
-                "description": "",
-                "autoApplied": False,
-                "oneTimeUsePerCustomer": False,
-                "isExtend": False,
-                "startTime": "2026-03-12T09:12:48.935Z",
-            },
-        ],
         "isPurchaseQuantityLimited": False,
         "purchaseQuantityLimit": 0,
         "isAccessRestricted": False,
@@ -594,6 +576,36 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     expect(_resp2).json('$.message').equals('success')
     # assertion 2.assertion: responseJson equal ACTIVE
     expect(_resp2).json('$.data.status').equals('ACTIVE')
+    # step 2b: 通过专用 /promotions 子端点添加 coupon
+    # 与手动 curl（PATCH /posts/curator/{id}/promotions）一致，绕开整帖 PUT 触发的
+    # katana-promotion /api/promotions-by-promoter 抖动（500 → 外层 503）。
+    _resp2b = ctx.api.posts.curator_promotions_update(
+        post_id='{{T2487_post_id}}',
+        body={
+            "announcements": [],
+            "promotions": [
+                {
+                    "amountThresholdDiscounts": [
+                        {
+                            "amountThreshold": 100,
+                            "discountPercentage": 10,
+                        },
+                    ],
+                    "applicableCode": "ygzaz9jm",
+                    "codeAliases": None,
+                    "title": "",
+                    "description": "",
+                    "autoApplied": False,
+                    "oneTimeUsePerCustomer": False,
+                    "isExtend": False,
+                    "startTime": "2026-03-12T09:12:48.935Z",
+                },
+            ],
+            "hideCouponBox": False,
+        },
+        token='linda05_token',
+    )
+    expect(_resp2b).json('$.code').equals('200')
     # step 3: guest get token
     _resp3 = ctx.api.auth.guest_login(body={
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
@@ -608,13 +620,13 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # step 4: 5a7c7672-3428-4e58-9521-f17a335f20bf
     _resp4 = ctx.api.orders.buy_now(body={
-        "postIdForFilter": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+        "postIdForFilter": "{{T2487_post_id}}",
         "updateCartItems": [
             {
                 "quantity": 2,
                 "promoterProductVariantId": "b50e488e-575c-4e8c-81a4-881c9708fd6d",
                 "price": 56.67,
-                "postId": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+                "postId": "{{T2487_post_id}}",
                 "selected": True,
                 "customFields": [],
             },
@@ -632,7 +644,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
             {
                 "quantity": 2,
                 "id": "b50e488e-575c-4e8c-81a4-881c9708fd6d",
-                "postId": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+                "postId": "{{T2487_post_id}}",
                 "price": 113.34,
                 "customFields": [],
             },
@@ -642,7 +654,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     ctx.extract('orderNumber', _resp4, '$.data.orderNumber')
     # step 5: dc8ea801-3fd0-4d34-86bd-59b5f0b311eb
     _resp5 = ctx.api.orders.update_promotions(body={
-        "postIdForFilter": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+        "postIdForFilter": "{{T2487_post_id}}",
         "orderId": "{{orderId}}",
         "shippingAddress": {
             "line1": "",
@@ -661,7 +673,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
                 "quantity": -1,
                 "promoterProductVariantId": "b50e488e-575c-4e8c-81a4-881c9708fd6d",
                 "price": 56.67,
-                "postId": "24232e2c-b3af-4517-be24-4dfddb1ca79f",
+                "postId": "{{T2487_post_id}}",
                 "selected": True,
             },
         ],

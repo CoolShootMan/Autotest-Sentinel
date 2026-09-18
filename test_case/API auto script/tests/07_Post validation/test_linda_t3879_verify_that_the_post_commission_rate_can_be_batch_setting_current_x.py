@@ -106,8 +106,8 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: c00988c0-aa6d-43df-a32a-bc4e5f335d77
-    _resp1 = ctx.api.posts.curator_ed73ae71_ad44_4391_8b69_02e5a21982e9(body={
-        "id": "ed73ae71-ad44-4391-8b69-02e5a21982e9",
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T3879_x_post_id}}', body={
+        "id": "{{T3879_x_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T3879 commission multiply ",
@@ -494,7 +494,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     # assertion 1.assertion: responseJson equal ACTIVE
     expect(_resp1).json('$.data.status').equals('ACTIVE')
     # step 2: 00164776-19b0-4877-a7f0-24a3f8b4cb55
-    _resp2 = ctx.api.posts.curator_event_0fe6623e_a3ba_40fb_815d_3d6f444775c3_posts(body=None, token='linda05_token')
+    _resp2 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
     # step 3: Get Co-seller linda06 token
     _resp3 = ctx.api.auth.sign_in(body={
         "email": "linda.zhou.ext+06@1m.app",

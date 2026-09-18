@@ -38,7 +38,7 @@ jobs:
   api-automation:
     name: API Automation (Release env)
     runs-on: ubuntu-latest
-    timeout-minutes: 240   # 129 条用例（linda 82 + lury 47）打真实 Release 环境，含重试，给足余量
+    timeout-minutes: 240   # 128 条用例（linda 81 + lury 47）打真实 Release 环境，含重试，给足余量
     steps:
       - name: Checkout
         uses: actions/checkout@v4
