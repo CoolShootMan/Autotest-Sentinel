@@ -211,6 +211,20 @@ variables:
   posttitle: ''
   urlAlias: ''
   post_id: ''
+  # ── 按用例编号命名的 post / event id（纯 UUID，非凭据；用例里用 {{T####_post_id}} 引用）──
+  T2487_post_id: 24232e2c-b3af-4517-be24-4dfddb1ca79f
+  T3115_post_id: 397367e3-1140-4a14-9ba1-26f92bd7f24a
+  T2601_post_id: 504d5e2a-d2e9-4782-9333-536a696b9669
+  T2601_edit_post_id: ac273ab5-3f9a-4f89-8e07-72d19c463b18
+  T1742_post_id: 7dd8e66d-7d42-4715-ab73-3cf8d7c03632
+  T2895_post_id: 907f5bec-0233-4778-8f46-7820e8b2eb7c
+  T3128_post_id: 9fd62b45-6f4a-4bca-ac59-778e44c2813b
+  T2705_post_id: de6f0abd-c8f8-41e5-b2d1-1eb2ba05f839
+  T3879_post_id: 1a6bf2bd-f228-40f2-ba24-e0128b88bccd
+  T3879_x_post_id: ed73ae71-ad44-4391-8b69-02e5a21982e9
+  T4259_post_id: fe26aba1-17b9-4e04-872e-3759ce5fc842
+  T4259_event_id: 0fe6623e-a3ba-40fb-815d-3d6f444775c3
+  T2917_post_id: ff9274b0-b4b1-442c-b9ea-afcaf67912ae
   deletedProductId: ''
   merchantIDf: f29cfb7e-6db7-4fe5-bd12-f15940546b98
   promoter_earnings: ''
