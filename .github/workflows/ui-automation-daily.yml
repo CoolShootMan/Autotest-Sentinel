@@ -1,6 +1,5 @@
 name: ui-automation-daily
-
-# 每天 12:00 北京时间（= 04:00 UTC）自动跑 UI 自动化。
+# 每天 18:00 北京时间（= 10:00 UTC）自动跑 UI 自动化。
 #
 # 运行环境：GitHub 托管 runner（ubuntu-latest），**不需要注册 self-hosted runner**，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
@@ -11,34 +10,25 @@ name: ui-automation-daily
 #
 # 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
 #
-# Slack 通知：默认关闭（见下方 SLACK_NOTIFY_ENABLED）。
-#   旧群 cache-regression-detection-report 已停用，需要时再按新需求指向新群：
-#   在仓库 Secrets 新建 SLACK_WEBHOOK_URL_UI_AUTOMATION，然后把开关改成 'true'。
+# Slack 通知：已开启，目标群 qae-team，频道ID：C05EMKCS4FN
+#   在仓库 Secrets 配置 SLACK_WEBHOOK_URL_UI_AUTOMATION（qae-team 群 Incoming Webhook URL）
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
-
 on:
   schedule:
-    - cron: '0 4 * * *'       # 04:00 UTC = 12:00 北京时间（每天中午）
+    - cron: '0 10 * * *'       # 10:00 UTC = 18:00 北京时间（每天下午6点）
   workflow_dispatch:          # 允许手动触发，便于随时验证
-
 # 同一 workflow 只允许一个实例在跑，避免并发争抢
 concurrency:
   group: ui-automation-daily
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 env:
   # ── Slack 通知总开关 ──
-  # 'false' = 不向任何 Slack 群发送结果（当前设定：调试期间 + 旧群已停用）。
-  # 后续要发到新的 Slack 群时：
-  #   1) 在仓库 Secrets 新建 SLACK_WEBHOOK_URL_UI_AUTOMATION（新群的 Incoming Webhook URL）
-  #   2) 把下面的值改成 'true'
-  # 旧的 SLACK_WEBHOOK_URL（指向 cache-regression-detection-report 群）已不再被引用。
-  SLACK_NOTIFY_ENABLED: 'false'
-
+  # 'true' = 向 qae-team(C05EMKCS4FN) Slack 群发送结果
+  # Secrets: SLACK_WEBHOOK_URL_UI_AUTOMATION = qae-team incoming webhook url
+  SLACK_NOTIFY_ENABLED: 'true'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
@@ -47,28 +37,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: venv_requirements.txt
-
       - name: Setup Java (bundled Allure CLI needs it)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r venv_requirements.txt
-
       - name: Install Playwright Chromium
         run: python -m playwright install --with-deps chromium
-
       - name: Print environment info (debug)
         run: |
           python -V
@@ -76,7 +61,6 @@ jobs:
           python -m pytest --version
           python -m playwright --version
           ./allure/bin/allure --version
-
       - name: Run UI Automation (main.py)
         id: run
         env:
@@ -85,7 +69,6 @@ jobs:
         run: |
           set -o pipefail
           python main.py 2>&1 | tee run.log
-
       - name: Locate result directories
         if: always()
         id: locate
@@ -97,7 +80,6 @@ jobs:
           echo "video_dir=${VIDEO_DIR}" >> "$GITHUB_OUTPUT"
           echo "report=$REPORT_DIR"
           echo "video=$VIDEO_DIR"
-
       - name: Upload Allure report (artifact)
         if: always() && steps.locate.outputs.report_dir != ''
         uses: actions/upload-artifact@v4
@@ -106,7 +88,6 @@ jobs:
           path: ${{ steps.locate.outputs.report_dir }}
           retention-days: 30
           if-no-files-found: warn
-
       - name: Upload logs (artifact)
         if: always()
         uses: actions/upload-artifact@v4
@@ -117,7 +98,6 @@ jobs:
             log/
           retention-days: 14
           if-no-files-found: ignore
-
       - name: Upload failure videos (artifact)
         if: failure() && steps.locate.outputs.video_dir != ''
         uses: actions/upload-artifact@v4
@@ -126,7 +106,6 @@ jobs:
           path: ${{ steps.locate.outputs.video_dir }}
           retention-days: 14
           if-no-files-found: ignore
-
       - name: Write job summary
         if: always()
         shell: bash
@@ -147,9 +126,8 @@ jobs:
             tail -n 60 run.log 2>/dev/null || echo '(无 run.log)'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Send Slack notification
-        # 三重条件：总开关打开 + 已配置新群 webhook + 非空。当前开关为 'false'，不会发送。
+        # 三重条件：总开关打开 + 已配置新群 webhook + 非空。
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
@@ -157,30 +135,30 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
-
           run_url = "{server}/{repo}/actions/runs/{run_id}".format(
               server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
               repo=os.environ.get("GITHUB_REPOSITORY", ""),
               run_id=os.environ.get("GITHUB_RUN_ID", ""),
           )
           status = os.environ.get("RUN_OUTCOME", "unknown")
-          icon = ":white_check_mark:" if status == "success" else ":warning:"
+          icon = ":white_check_mark:" if status == "success" else ":x:"
           text = (
-              "{icon} *UI Automation 每日报告*\n"
-              "> main.py 结果: *{status}*\n"
+              "{icon} *UI Automation 每日报告【qae-team】*\n"
+              "> main.py 执行结果: *{status}*\n"
+              "> 频道ID: C05EMKCS4FN\n"
               "> 运行详情: {run}\n"
-              "> Allure 报告: 见该 run 的 Artifacts"
+              "> Allure 报告: 打开链接查看 Artifacts"
           ).format(icon=icon, status=status, run=run_url)
-
+          payload = json.dumps({"text": text, "channel": "C05EMKCS4FN"}).encode("utf-8")
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
-              data=json.dumps({"text": text}).encode("utf-8"),
+              data=payload,
               headers={"Content-Type": "application/json"},
               method="POST",
           )
           try:
-              urllib.request.urlopen(req)
-              print("Slack 已发送")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  print("Slack 消息发送成功, response:", resp.read().decode())
           except Exception as e:
               print("Slack 发送失败:", e)
           PY
