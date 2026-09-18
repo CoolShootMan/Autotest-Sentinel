@@ -1,0 +1,170 @@
+name: api-automation-daily
+
+# 每天 09:00 北京时间（= 01:00 UTC）自动跑 API 自动化，环境 = Release。
+# 顺序执行两条 suite：先 linda.yaml，再 lury.yaml（linda 失败也继续跑 lury，保证两套都跑）。
+# 结果发到 Slack #qae-team（通过仓库 Secret SLACK_WEBHOOK_URL_QAE_TEAM）。
+#
+# 运行环境：GitHub 托管 runner（ubuntu-latest），不需要 self-hosted runner，
+# 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
+#
+# Slack 通知：默认开启（SLACK_NOTIFY_ENABLED='true'）。需要先在仓库
+# Secrets 新建 SLACK_WEBHOOK_URL_QAE_TEAM（值为 #qae-team 的 Incoming Webhook URL，
+# 即本地 config/slack.json 里 webhook_url 那串）。若 Secret 未配置，条件不满足不会发送、也不报错。
+#
+# 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
+
+on:
+  schedule:
+    - cron: '0 1 * * *'       # 01:00 UTC = 09:00 北京时间（每天上午）
+  workflow_dispatch:          # 允许手动触发，便于随时验证
+
+# 同一 workflow 只允许一个实例在跑，避免并发争抢
+concurrency:
+  group: api-automation-daily
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # ── Slack 通知总开关 ──
+  # 'true' = 跑完把结果发到 #qae-team。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_QAE_TEAM。
+  # 若 Secret 未配置，下方 Send Slack 步骤的条件不满足，自动跳过（不会报错）。
+  SLACK_NOTIFY_ENABLED: 'true'
+  # API 框架运行环境：对应 config/environments/Release.yaml -> https://release.katana-api.1m.app
+  API_ENV: Release
+
+jobs:
+  api-automation:
+    name: API Automation (Release env)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240   # 129 条用例（linda 82 + lury 47）打真实 Release 环境，含重试，给足余量
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        # run_suite.py 用 PyYAML 解析 suite yaml，但 requirements.txt 未列，这里单独补装
+        working-directory: test_case/API auto script
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyyaml
+
+      - name: Print environment info (debug)
+        run: |
+          python -V
+          python -m pytest --version
+
+      - name: Run API suite - linda
+        id: linda
+        env:
+          CI: "true"
+          API_ENV: Release
+        run: |
+          cd "test_case/API auto script"
+          set -o pipefail
+          python run_suite.py suites/linda.yaml 2>&1 | tee linda.log
+
+      - name: Run API suite - lury
+        # linda 失败也继续跑 lury，保证两套都执行；最后统一看两个 step 的 outcome
+        id: lury
+        if: always()
+        env:
+          CI: "true"
+          API_ENV: Release
+        run: |
+          cd "test_case/API auto script"
+          set -o pipefail
+          python run_suite.py suites/lury.yaml 2>&1 | tee lury.log
+
+      - name: Upload logs & results (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-run-logs-${{ github.run_number }}
+          path: |
+            test_case/API auto script/linda.log
+            test_case/API auto script/lury.log
+            test_case/API auto script/results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "# API Automation 每日执行结果 (Release)"
+            echo ""
+            echo "| 项目 | 值 |"
+            echo "| --- | --- |"
+            echo "| 触发方式 | \`${{ github.event_name }}\` |"
+            echo "| 运行环境 | ubuntu-latest |"
+            echo "| API_ENV | \`${{ env.API_ENV }}\` |"
+            echo "| linda 套结果 | \`${{ steps.linda.outcome }}\` |"
+            echo "| lury 套结果 | \`${{ steps.lury.outcome }}\` |"
+            echo ""
+            echo "日志与结果见本次 run 的 Artifacts：\`api-run-logs-${{ github.run_number }}\`。"
+            echo ""
+            echo "## linda.log 尾部"
+            echo '```'
+            tail -n 40 "test_case/API auto script/linda.log" 2>/dev/null || echo '(无 linda.log)'
+            echo '```'
+            echo ""
+            echo "## lury.log 尾部"
+            echo '```'
+            tail -n 40 "test_case/API auto script/lury.log" 2>/dev/null || echo '(无 lury.log)'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Send Slack notification (#qae-team)
+        # 总开关打开 + 已配置 #qae-team webhook + 非空才发送
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
+          LINDA_OUTCOME: ${{ steps.linda.outcome }}
+          LURY_OUTCOME: ${{ steps.lury.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          run_url = "{server}/{repo}/actions/runs/{run_id}".format(
+              server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
+              repo=os.environ.get("GITHUB_REPOSITORY", ""),
+              run_id=os.environ.get("GITHUB_RUN_ID", ""),
+          )
+          linda = os.environ.get("LINDA_OUTCOME", "unknown")
+          lury = os.environ.get("LURY_OUTCOME", "unknown")
+          icon = ":white_check_mark:" if (linda == "success" and lury == "success") else ":warning:"
+          text = (
+              "{icon} *API Automation 每日报告 (Release)*\n"
+              "> linda 套: *{linda}*\n"
+              "> lury 套: *{lury}*\n"
+              "> 运行详情与日志: {run}\n"
+              "> 结果 Artifacts: api-run-logs-{run_id}"
+          ).format(
+              icon=icon,
+              linda=linda,
+              lury=lury,
+              run=run_url,
+              run_id=os.environ.get("GITHUB_RUN_ID", ""),
+          )
+
+          req = urllib.request.Request(
+              os.environ["SLACK_WEBHOOK_URL"],
+              data=json.dumps({"text": text}).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          try:
+              urllib.request.urlopen(req)
+              print("Slack 已发送 (#qae-team)")
+          except Exception as e:
+              print("Slack 发送失败:", e)
+          PY
