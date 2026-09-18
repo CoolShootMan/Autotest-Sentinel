@@ -10,8 +10,7 @@ name: ui-automation-daily
 #
 # 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
 #
-# Slack 通知：已开启，目标群 qae-team，频道ID：C05EMKCS4FN
-#   在仓库 Secrets 配置 SLACK_WEBHOOK_URL_UI_AUTOMATION（qae-team 群 Incoming Webhook URL）
+# Slack 通知：已开启，目标群 qae-team，Webhook 已配置在仓库secret SLACK_WEBHOOK_URL_UI_AUTOMATION
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 on:
@@ -26,7 +25,7 @@ permissions:
   contents: read
 env:
   # ── Slack 通知总开关 ──
-  # 'true' = 向 qae-team(C05EMKCS4FN) Slack 群发送结果
+  # 'true' = 向 qae-team Slack 群发送结果
   # Secrets: SLACK_WEBHOOK_URL_UI_AUTOMATION = qae-team incoming webhook url
   SLACK_NOTIFY_ENABLED: 'true'
 jobs:
@@ -145,11 +144,10 @@ jobs:
           text = (
               "{icon} *UI Automation 每日报告【qae-team】*\n"
               "> main.py 执行结果: *{status}*\n"
-              "> 频道ID: C05EMKCS4FN\n"
               "> 运行详情: {run}\n"
               "> Allure 报告: 打开链接查看 Artifacts"
           ).format(icon=icon, status=status, run=run_url)
-          payload = json.dumps({"text": text, "channel": "C05EMKCS4FN"}).encode("utf-8")
+          payload = json.dumps({"text": text}).encode("utf-8")
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
               data=payload,
