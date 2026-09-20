@@ -29,6 +29,49 @@ _logger = logging.getLogger("api.framework")  # 与 core/context.py 同一日志
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 IDE 能把 ctx.api.<域>.<方法>() 跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
+
+
+def _relate_products_with_retry(
+    ctx: "Context",
+    post_id: str,
+    *,
+    attempts: int = 5,
+    delay: float = 3.0,
+) -> "ApiResponse":
+    """GET ``post/v2/<post_id>/relate-products``，并对「空数组」做重试。
+
+    step 107 / 117 共用。``relatedProducts`` 由「事件 → 帖子」的产品关联**异步**落地
+    （eventually-consistent）：刚建完帖子立即查，有时会拿到空数组。CI 实测同一份代码
+    09-18 为空、09-19 非空，属时序抖动，不是数据真缺失。下游 step 109 / 118 会从本次
+    结果提取 ``venue_map_promoterProductId_*`` / ``merchantProductVariantId_*``，
+    空数组会导致提取失败，故必须重试到非空再继续。
+
+    仅在「HTTP 200 但 ``relatedProducts`` 为空」时重试；``code`` / ``message`` 非 200
+    属真实失败，由 ``expect`` 直接抛出、不重试。
+
+    Note:
+        该接口只存在于 admin 域（base 域 404），且需 ``admin_token``
+        （实测 admin 域 + ``{{token}}``(999) → 401）。
+
+    Returns:
+        ApiResponse: 最后一次尝试的响应（已确认 ``relatedProducts`` 非空）。
+    """
+    for attempt in range(attempts):
+        resp = ctx.api.admin.post_v2_relate_products(
+            path_vars={"post0_id": post_id}, token="admin_token", app_headers=True)
+        expect(resp).json("$.code").equals("200")
+        expect(resp).json("$.message").equals("success")
+        try:
+            expect(resp).json("$.data.relatedProducts").is_not_empty()
+        except Exception:
+            if attempt < attempts - 1:
+                time.sleep(delay)
+                continue
+            raise
+        return resp
+    # attempts >= 1 时循环必然 return 或 raise，走到这里说明传入了非法的 attempts
+    raise AssertionError(f"relate-products 重试参数非法：attempts={attempts}（需 >= 1）")
 
 
 def test_ui_prefill_data_configuration(ctx: "Context"):
@@ -6809,26 +6852,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     #       未命中时写入 None，渲染器跳过 None（占位符保持字面量），与迁移前行为一致。
     # ⚠️ 该接口只在 admin 域存在：实测 base 域 → 404（Cannot GET），
     #    admin 域 + {{token}}(999) → 401，admin 域 + {{admin_token}} → 200。
-    # 🔁 重试：relate-products 的 relatedProducts 由「事件 → 帖子」产品关联异步落地
-    #    （eventually-consistent）。CI 多次 run 实测 09-18 为空、09-19 非空，属时序抖动，
-    #    不是数据真缺失。这里最多重试 5 次、每次间隔 3s，仍为空才视为真实失败。
-    #    （code/message != 200 是真实失败，不重试，直接抛出。）
-    _resp107 = None
-    for _rp_try in range(5):
-        _resp107 = ctx.api.admin.post_v2_relate_products(
-            path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-            token="admin_token", app_headers=True)
-        expect(_resp107).json('$.code').equals('200')
-        expect(_resp107).json('$.message').equals('success')
-        try:
-            expect(_resp107).json('$.data.relatedProducts').is_not_empty()
-        except Exception:
-            if _rp_try < 4:
-                time.sleep(3)
-                continue
-            raise
-        else:
-            break
+    # 🔁 重试：relatedProducts 由「事件 → 帖子」产品关联异步落地，偶发空数组，
+    #    详见 _relate_products_with_retry 的 docstring（最多 5 次、间隔 3s）。
+    _resp107 = _relate_products_with_retry(ctx, vars.get("venue_map_post_id", ""))
     for _vm_title, _vm_sfx in (
         ("General Admission 02", "_General_Admission_02"),
         ("General Admission 01", "_General_Admission_01"),
@@ -10048,23 +10074,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # --- step 117: Catch the ProductId promoterProductId merchantProductVariantId (GET post/v2/{{venue_map_post_id}}/relate-products) ---
     # NOTE: Same per-product JS-loop extraction as step 109 (second venue-map flow).
     # 同 step 107：接口仅在 admin 域存在，需 admin_token（base 域 404）。
-    # 🔁 重试：同 step 107（relate-products 异步落地，偶发为空）。最多 5 次、间隔 3s。
-    _resp117 = None
-    for _rp_try in range(5):
-        _resp117 = ctx.api.admin.post_v2_relate_products(
-            path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-            token="admin_token", app_headers=True)
-        expect(_resp117).json('$.code').equals('200')
-        expect(_resp117).json('$.message').equals('success')
-        try:
-            expect(_resp117).json('$.data.relatedProducts').is_not_empty()
-        except Exception:
-            if _rp_try < 4:
-                time.sleep(3)
-                continue
-            raise
-        else:
-            break
+    # 🔁 重试：同 step 107（relatedProducts 异步落地，偶发空数组），
+    #    共用 _relate_products_with_retry（最多 5 次、间隔 3s）。
+    _resp117 = _relate_products_with_retry(ctx, vars.get("venue_map_post_id", ""))
     # NOTE: 迁移时本段漏了提取（只有断言），导致 step 122 的 productId 仍沿用上一段
     #       （属于另一个 event）的 merchantProductId，后端报
     #       "Product <id> is not a ticket of this event"。此处按 step 107 的同一
