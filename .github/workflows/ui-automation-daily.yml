@@ -95,6 +95,7 @@ jobs:
           path: |
             run.log
             log/
+            test_case/API auto script/results/runs/
           retention-days: 14
           if-no-files-found: ignore
       - name: Upload failure videos (artifact)
@@ -106,6 +107,7 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
       - name: Write job summary
+        # 无论成功失败都写：逐条用例的真实通过/失败状态、失败原因、预制结果都要留下。
         if: always()
         shell: bash
         run: |
@@ -115,16 +117,17 @@ jobs:
             echo "| 项目 | 值 |"
             echo "| --- | --- |"
             echo "| 触发方式 | \`${{ github.event_name }}\` |"
+            echo "| 提交 | \`${{ github.sha }}\` |"
             echo "| 运行环境 | ubuntu-latest（headless） |"
             echo "| main.py 结果 | \`${{ steps.run.outcome }}\` |"
             echo ""
-            echo "Allure 报告见本次 run 页面底部的 Artifacts：\`allure-report-${{ github.run_number }}\`。"
-            echo ""
-            echo "## main.py 日志尾部"
-            echo '```'
-            tail -n 60 run.log 2>/dev/null || echo '(无 run.log)'
-            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # 逐条用例真实状态 + 预制结果 + 失败清单。
+          # 脚本只读汇总：任何文件缺失都降级成一句说明，不会让本步骤失败。
+          python3 tools/ci_summary.py \
+            --prefill-root "test_case/API auto script/results/runs" \
+            --allure-root allure-results \
+            --run-log run.log >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack notification
         # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
         # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。

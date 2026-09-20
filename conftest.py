@@ -239,11 +239,6 @@ def pytest_generate_tests(metafunc):
                         continue
                     for k, v in data.items():
                         if isinstance(v, dict):
-                            if v.get("skip"):
-                                logger.warning(
-                                    f"SKIPPED (quarantined) test case: {k} — reason: {v.get('skip_reason', '(no reason given)')}"
-                                )
-                                continue
                             v["__yaml_path__"] = yaml_path
                             all_argvalues.append({k: v})
                             # Add yaml prefix + short description slug to test ID for readability

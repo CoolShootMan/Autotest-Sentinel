@@ -9,3 +9,8 @@ include:
   - UI Automation Data Pre-configuration (staging & release, no SQL)
 pytest_args:
 - -v
+# tee-sys：既保留 pytest 的捕获（失败时仍能看到完整的 Captured 段落），又把输出实时
+# 透传到终端。原因：框架日志（core/logging_util.py）用 propagate=False + 自建
+# StreamHandler，pytest 的 --log-cli-level 收不到这些记录，默认捕获下「预制内的
+# DB 步骤日志」（如 step 76 的 alias 写入与影响行数）在通过时会被吞掉。
+- --capture=tee-sys

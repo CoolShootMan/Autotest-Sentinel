@@ -105,6 +105,24 @@ def query(connection_id: int, sql: str, env_vars: dict | None = None) -> list:
         raise DatabaseError(f"SQL 执行失败 (connectionId={connection_id}): {exc}") from exc
 
 
+def execute(connection_id: int, sql: str, env_vars: dict | None = None) -> int:
+    """执行 DML（UPDATE / INSERT / DELETE）并**提交**，返回受影响行数。
+
+    与 :func:`query` 的区别：``query`` 用 ``engine.connect()`` 只读查询，退出时
+    事务被回滚——直接拿它跑 UPDATE 会**静默不生效**（看起来成功、库里没改）。
+    写入场景必须走本函数（``engine.begin()`` 在块结束时 commit）。
+    """
+    from sqlalchemy import text
+
+    engine = _engine(connection_id, env_vars or {})
+    try:
+        with engine.begin() as conn:  # begin(): 正常退出即 commit，异常回滚
+            result = conn.execute(text(sql))
+            return result.rowcount if result.rowcount is not None else 0
+    except Exception as exc:  # noqa: BLE001 - 统一包成可读的领域异常
+        raise DatabaseError(f"SQL 执行失败 (connectionId={connection_id}): {exc}") from exc
+
+
 def extract(rows: list, expr: str):
     """按 Apifox 风格的 jsonPath 取值。
 
