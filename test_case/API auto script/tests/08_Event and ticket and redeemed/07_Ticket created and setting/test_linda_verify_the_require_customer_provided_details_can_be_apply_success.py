@@ -279,7 +279,8 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     vars['postId'] = 'targetItem.id'
     # step 3: f8103b38-4568-4c92-b48c-0c7094e1b58a
     _resp3 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量（修复：此前误把 JS 变量名当字面量）
+    ctx.extract('catalog_id', _resp3, '$.data.id')
     # step 4: 4cbbf838-a62d-440a-9d77-634dffb20024
     _resp4 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',

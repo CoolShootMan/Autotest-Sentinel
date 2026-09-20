@@ -390,7 +390,8 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 530b88c6-e2f0-45f6-ad2a-c42e9400b14c
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 50f1455b-62cc-4bac-81a1-a846635ccf16
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # step 6: eb71fcde-3b2f-4f65-b404-38e3b58b2433

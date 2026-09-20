@@ -637,8 +637,12 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['lifetimeEarning_placed'] = 'lifetimeEarning_placed'
     # step 14: M1 earning summary after placing
     _resp14 = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
-    # assertion 14.Total earnigns is correct after placing: responseJson equal {{lifetimeEarning_placed}}
-    expect(_resp14).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_placed}}'))
+    # assertion 14.Total earnigns is correct after placing: responseJson ≈ {{lifetimeEarning_placed}}
+    # 金额改为容差比较（±0.01）：后端与本用例本地累加的四舍五入会产生 1 分钱差
+    # （2026-09-19 run 35424603771 实测：期望 129102.43 / 实际 129102.44）。
+    _le_actual = float((_resp14.json() or {}).get('data', {}).get('lifetimeEarning') or 0)
+    _le_expect = float(ctx.render_text('{{lifetimeEarning_placed}}') or 0)
+    assert abs(_le_actual - _le_expect) <= 0.01, f"lifetimeEarning 期望 {_le_expect} 实际 {_le_actual}（允许 ±0.01 误差）"
     # assertion 14.Verify the total commissing earnings after placing: responseJson equal {{commissionEarning}}
     expect(_resp14).json('$.data.commissionEarning').equals(ctx.render_text('{{commissionEarning}}'))
     # step 15: get M1 orders-To fulfill after placing

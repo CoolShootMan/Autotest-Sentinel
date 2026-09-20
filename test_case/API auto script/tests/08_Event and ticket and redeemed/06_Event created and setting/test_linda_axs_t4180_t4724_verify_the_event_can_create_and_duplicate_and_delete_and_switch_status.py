@@ -585,7 +585,8 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars['copyFromId'] = 'copyFromId'
     # step 2: cb92454b-5c3f-41bc-a204-17c47db601f0
     _resp2 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp2, '$.data.id')
     # step 3: 7722151d-7d59-4d5e-b875-a462da878e63
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
