@@ -117,7 +117,7 @@ jobs:
           python3 tools/ci_summary.py \
             --prefill-root "test_case/API auto script/results/runs" \
             --allure-root allure-results \
-            --run-log run.log \
+            --run-log log \
             --event-name "${{ github.event_name }}" \
             --sha "${{ github.sha }}" \
             --outcome "${{ steps.run.outcome }}" \
@@ -136,7 +136,7 @@ jobs:
           python3 tools/ci_summary.py \
             --prefill-root "test_case/API auto script/results/runs" \
             --allure-root allure-results \
-            --run-log run.log \
+            --run-log log \
             --github-annotations
       - name: Send Slack notification
         # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；

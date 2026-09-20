@@ -23,7 +23,7 @@
     python3 tools/ci_summary.py \
         --prefill-root "test_case/API auto script/results/runs" \
         --allure-root allure-results \
-        --run-log run.log \
+        --run-log log \          # 传目录：取最新的 log/<日期>.log（run.log 几乎为空）
         --event-name workflow_dispatch --sha abc1234 --outcome failure \
         --report-dir "report/html/20260920_031254" >> "$GITHUB_STEP_SUMMARY"
 
@@ -50,6 +50,20 @@ ANNOTATION_MAX = 10
 
 
 # ── 通用小工具 ──────────────────────────────────────────────────────────────
+
+def _resolve_run_log(path: str) -> str:
+    """允许 ``--run-log`` 传目录：取其中最新修改的 ``*.log``。
+
+    main.py 把框架日志写到 ``log/<日期>.log``，而 ``run.log``（workflow 里
+    ``python main.py 2>&1 | tee run.log``）只留下最后一行报告路径 —— 日志尾部、
+    预制内 DB 行、pytest 汇总行其实都在 ``log/`` 下。传目录即可自动定位。
+    """
+    if not path or not os.path.isdir(path):
+        return path
+    candidates = glob.glob(os.path.join(path, "*.log"))
+    if not candidates:
+        return path
+    return max(candidates, key=os.path.getmtime)
 
 def _md_escape(text: str, limit: int = 300) -> str:
     """转义会破坏 Markdown 表格/单行的字符，并按需截断。"""
@@ -266,6 +280,30 @@ def _counts_phrase(counts: dict) -> str:
 
 # ── 汇总数据装配（Job Summary / 注解 / 输出 共用）───────────────────────────
 
+# main.py 在跑 UI 用例【之前】就可能中止（前置/环境问题）。这些是「未跑用例」，
+# 不是「用例失败」——必须在 summary 顶部与注解里区分开，否则会被误读成 20 条全挂。
+_INFRA_ABORTS = (
+    ("Login/EDU preflight FAILED", "登录态预检失败（dismiss EDU 走不通）"),
+    ("Auth cookie preflight FAILED", "登录态预检失败（cookie 已不是登录态）"),
+    ("API prefill FAILED", "API 预制失败"),
+)
+
+
+def detect_infra_abort(run_log: str) -> str | None:
+    """识别 main.py 的「预检中止」，返回可读原因；没有则返回 None。"""
+    if not run_log or not os.path.exists(run_log):
+        return None
+    try:
+        with open(run_log, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except Exception:  # noqa: BLE001
+        return None
+    for needle, label in _INFRA_ABORTS:
+        if needle in text:
+            return label
+    return None
+
+
 def gather(args: argparse.Namespace) -> dict:
     """把三路来源装配成一份统一的结果快照。任何一步失败都降级，不抛错。"""
     allure_dir, rows, allure_counts = collect_ui_results(args.allure_root)
@@ -304,6 +342,7 @@ def gather(args: argparse.Namespace) -> dict:
         "prefill_failed": prefill_failed,
         "prefill_ok": prefill_ok,
         "pytest_sum": pytest_sum,
+        "infra_abort": detect_infra_abort(getattr(args, "run_log", "")),
     }
 
 
@@ -347,10 +386,19 @@ def build_report(args: argparse.Namespace) -> str:
             out.append("")
             out.append(f"共 {ui_total} 条 UI 用例")
     else:
-        out.append("# ⚠️ UI Automation：未取到用例结果")
-        out.append("")
-        out.append("`allure-results/` 与 `run.log` 的 pytest 汇总行都不可用 —— "
-                   "UI 阶段可能未执行（如预制失败提前中止），详情见下方日志尾部。")
+        infra = d.get("infra_abort")
+        if infra:
+            out.append("# 🚧 UI Automation：未跑用例（预检中止）")
+            out.append("")
+            out.append(f"main.py 在跑 UI 用例**之前**就中止了：**{infra}**。")
+            out.append("")
+            out.append("这类中断是环境 / 前置条件问题（例如账号登录态失效、预制失败），"
+                       "**不代表任何用例失败** —— 修好前置后重跑即可。详见下方日志尾部。")
+        else:
+            out.append("# ⚠️ UI Automation：未取到用例结果")
+            out.append("")
+            out.append("`allure-results/` 与运行日志里的 pytest 汇总行都不可用 —— "
+                       "UI 阶段可能未执行，详情见下方日志尾部。")
 
     if ui_failed or prefill_failed:
         out.append("")
@@ -481,8 +529,13 @@ def build_annotations(args: argparse.Namespace) -> list[str]:
     ]
 
     if not ui_counts and not failed_names:
+        infra = d.get("infra_abort")
+        if infra:
+            return [f"::error title=🚧 未跑用例（{_cmd_escape(infra, 60)}）::"
+                    f"main.py 在跑 UI 用例前中止 —— 环境/前置问题，非用例失败。"
+                    f"详见 Job Summary。"]
         return ["::warning title=⚠️ UI Automation 未取到结果::"
-                "allure-results 与 run.log 的 pytest 汇总行都不可用，"
+                "allure-results 与运行日志的 pytest 汇总行都不可用，"
                 "UI 阶段可能未执行。详见 Job Summary。"]
 
     rate, executed = _pass_rate(ui_counts)
@@ -564,6 +617,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("-o", "--output", default="",
                         help="Job Summary 输出文件（默认 stdout；'-' 也是 stdout）")
     args = parser.parse_args(argv)
+
+    # main.py 真正的日志写在 log/<日期>.log（run.log 里只有最后一行报告路径），
+    # 所以 --run-log 允许传目录，这里解析成「最新那个日志文件」。
+    args.run_log = _resolve_run_log(args.run_log)
 
     # 注解模式与其他输出互斥，避免 workflow command 混进 Job Summary。
     if args.github_annotations:
