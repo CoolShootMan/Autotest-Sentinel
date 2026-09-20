@@ -126,8 +126,9 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack notification
-        # 三重条件：总开关打开 + 已配置新群 webhook + 非空。
-        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
+        # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。
+        if: ${{ success() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
           RUN_OUTCOME: ${{ steps.run.outcome }}
