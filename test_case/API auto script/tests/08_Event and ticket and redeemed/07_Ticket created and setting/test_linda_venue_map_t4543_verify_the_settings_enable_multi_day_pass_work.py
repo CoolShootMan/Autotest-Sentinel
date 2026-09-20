@@ -517,8 +517,247 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars['endDateDisplay'] = _end_display
     vars['multipleDaysPass_days'] = json.dumps(_dynamic_days)
     # render the product body (substitutes {{catalog_id}}/{{productId_...}}/{{multipleDaysPass_days}}), then attach the parsed array
-    _body7 = json.loads(_render('{\n    "id": "{{productId_General_Admission_01}}",\n    "remote_id": null,\n    "platform": "PEAR",\n    "createdAt": "2026-08-25T06:03:23.925Z",\n    "updatedAt": "2026-08-25T06:09:57.463Z",\n    "merchantId": "{{catalog_id}}",\n    "title": "General Admission 01",\n    "bodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "originalBodyHtml": "<p class=\\"katana__paragraph katana__paragraph--align-left\\" dir=\\"ltr\\"><br></p>",\n    "isBodyHtmlOverridden": false,\n    "bodyText": "\\n",\n    "handle": null,\n    "productType": "",\n    "publishedAt": "2026-08-25T06:03:23.965Z",\n    "publishedScope": "",\n    "status": "ACTIVE",\n    "externalStatus": "ACTIVE",\n    "followExternalStatus": false,\n    "tags": [],\n    "templateSuffix": null,\n    "vendor": "Pear",\n    "syncAt": null,\n    "deletedAt": null,\n    "delisted": false,\n    "excludedByImportingTag": false,\n    "isFeatured": false,\n    "featuredScore": null,\n    "inventoryQuantity": 15,\n    "inventoryQuantityOriginal": 15,\n    "soldQuantity": 0,\n    "priceDisplay": 67.77,\n    "priceDisplayAnchor": 0,\n    "priceMin": 67.77,\n    "priceMinAnchor": 0,\n    "priceMax": 67.77,\n    "priceMaxAnchor": 0,\n    "priceImportedMin": 0,\n    "priceImportedMax": 0,\n    "imageCount": 1,\n    "isUsed": "NWT",\n    "shippingType": "NO_SHIPPING_REQUIRED",\n    "additionalShippingFee": 0,\n    "deliveryTime": [\n        0,\n        5\n    ],\n    "returnPolicyApplied": true,\n    "isAvailable": true,\n    "commissionRate": 7,\n    "textForShare": null,\n    "priceSyncImported": false,\n    "coverImage": {\n        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",\n        "width": 3072,\n        "height": 2048,\n        "position": 0,\n        "mediaType": "IMAGE",\n        "mediaDuration": 0\n    },\n    "useEventPosterAsCover": true,\n    "reviewCount": null,\n    "reviewOverallScore": null,\n    "reviewAggregate": null,\n    "displayReviews": true,\n    "links": null,\n    "taxEnable": false,\n    "taxJarCategory": "",\n    "customTaxRate": null,\n    "subscriptionPlanId": null,\n    "reviewRedirectProductId": null,\n    "reviewSummary": null,\n    "customFieldsInfo": null,\n    "listingType": "TICKET",\n    "ticketType": "TICKET_TYPE_STANDARD",\n    "ticketHubInfo": null,\n    "customizedFields": [],\n    "shippingOptions": [],\n    "shippingNote": null,\n    "autoFulfill": true,\n    "lifecycleStatus": "LIFECYCLE_STATUS_NORMAL",\n    "copyFromId": "{{copyFromId}}",\n    "stopSellingAfter": null,\n    "deliveryMethod": "QR_CODE",\n    "thirdPartyDeliveryMessage": "",\n    "isMultipleDaysPassEnabled": true,\n    "isVenueUnitEnabled": true,\n    "venueUnitCategoryId": "{{venueUnitCategoryId}}",\n    "multipleDaysPass": {\n        "days":{{multipleDaysPass_days}}\n    },\n    "isPickupEtaEnabled": null,\n    "eventMatchingRules": null,\n    "expirationTime": null,\n    "allowAtDoorSales": false,\n    "isTipEnabled": false,\n    "isPlatformFeeConfigCustomized": false,\n    "isVariantPlatformFeeConfigCustomized": false,\n    "transactionFeeConfig": {\n        "baseConfig": {\n            "unitFixedFee": 1,\n            "unitPercentageFee": 0.1\n        }\n    },\n    "transactionFeeRebateConfig": {\n        "baseConfig": {\n            "unitFixedFee": 0,\n            "unitPercentageFee": 0\n        }\n    },\n    "transactionCustomFeeConfig": null,\n    "options": [\n        {\n            "remote_id": null,\n            "productId": "{{productId_General_Admission_01}}",\n            "name": "Title",\n            "position": 1,\n            "values": [\n                "Default Title"\n            ],\n            "images": [\n                {\n                    "value": "Default Title",\n                    "imageId": null\n                }\n            ]\n        }\n    ],\n    "variants": [\n        {\n            "id": "{{merchantProductVariantId_General_Admission_01}}",\n            "remote_id": null,\n            "createdAt": "2026-08-25T06:03:24.017Z",\n            "updatedAt": "2026-08-25T06:09:57.779Z",\n            "compareAtPrice": null,\n            "fulfillmentService": "manual",\n            "grams": 0,\n            "imageIds": [],\n            "inventoryItemId": null,\n            "inventoryManagement": "Pear",\n            "inventoryPolicy": "DENY",\n            "isInventoryQuantityUnlimited": false,\n            "inventoryQuantity": 15,\n            "inventoryQuantityOriginal": 15,\n            "soldQuantity": 0,\n            "option": {\n                "option1": "Default Title"\n            },\n            "position": 1,\n            "price": 67.77,\n            "priceAnchor": 0,\n            "priceImported": "0.00",\n            "productId": "{{productId_General_Admission_01}}",\n            "sku": "",\n            "taxCode": null,\n            "taxable": true,\n            "title": "Default Title",\n            "weight": null,\n            "weightUnit": "lb",\n            "platform": null,\n            "fees": 7.77,\n            "transactionFee": {\n                "platformFee": 7.77,\n                "customFee": 0,\n                "customFeeBreakdown": {\n                    "TAX": {\n                        "title": "Taxes",\n                        "unitFixedFee": 0,\n                        "unitPercentageFee": 0,\n                        "index": 0,\n                        "itemFee": 0\n                    }\n                },\n                "transactionItemFee": 7.77\n            },\n            "ticketPrice": 60,\n            "isMinPurchaseQuantityEnabled": false,\n            "minPurchaseQuantity": null,\n            "isMaxPurchaseQuantityEnabled": false,\n            "maxPurchaseQuantity": null,\n            "isPackSizeEnabled": false,\n            "packSize": null,\n            "transactionFeeConfig": null,\n            "transactionFeeRebateConfig": null,\n            "minPriceForCheckFees": 0\n        }\n    ],\n    "readOnlyFields": [],\n    "isInventoryQuantityUnlimited": false,\n    "showInEventPost": true,\n    "visibleInPosts": [\n        {\n            "postId": "{{post0_id}}",\n            "isVisible": true\n        }\n    ],\n    "excludeFromPostSync": false,\n    "catalogCommissionRate": 0,\n    "hasLimitPurchaseQuantity": false,\n    "hasSpecialRedemption": false,\n    "earliestTime": "2026-08-25T04:00:00.000Z",\n    "styleSettings": {\n        "recentUsedColors": [\n            "#ffffff"\n        ]\n    },\n    "isProductFormEnabled": false,\n    "isInclusionsEnabled": false,\n    "inclusions": [],\n    "isVariantPriceDisplayEnabled": false,\n    "stopSellingAfterDisplay": "",\n    "overrideEventTax": false,\n    "overrideEventCustomFee": false,\n    "hideFees": false,\n    "bodyJson": "{\\"root\\":{\\"children\\":[{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}",\n    "images": [\n        {\n            "id": "52d5b590-879c-4b67-b466-ff33a41915db",\n            "remote_id": null,\n            "createdAt": "2026-08-25T06:03:24.017Z",\n            "updatedAt": "2026-08-25T06:03:24.017Z",\n            "height": 1000,\n            "width": 1000,\n            "position": 1,\n            "productId": "{{productId_General_Admission_01}}",\n            "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",\n            "variantIds": [],\n            "mediaType": "IMAGE",\n            "mediaSrc": null,\n            "mediaDuration": 0,\n            "contributedBy": 3,\n            "contributorId": null,\n            "productImageType": "PRODUCT",\n            "source": null,\n            "setThumbnail": true\n        }\n    ],\n    "eventId": "{{event_id}}",\n    "isExpirationEnabled": false\n}', vars))
-    _body7['isMultipleDaysPassEnabled'] = True
+    _body7 = {
+        "id": '{{productId_General_Admission_01}}',
+        "remote_id": None,
+        "platform": 'PEAR',
+        "createdAt": '2026-08-25T06:03:23.925Z',
+        "updatedAt": '2026-08-25T06:09:57.463Z',
+        "merchantId": '{{catalog_id}}',
+        "title": 'General Admission 01',
+        "bodyHtml": '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+        "originalBodyHtml": '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+        "isBodyHtmlOverridden": False,
+        "bodyText": '\n',
+        "handle": None,
+        "productType": '',
+        "publishedAt": '2026-08-25T06:03:23.965Z',
+        "publishedScope": '',
+        "status": 'ACTIVE',
+        "externalStatus": 'ACTIVE',
+        "followExternalStatus": False,
+        "tags": [],
+        "templateSuffix": None,
+        "vendor": 'Pear',
+        "syncAt": None,
+        "deletedAt": None,
+        "delisted": False,
+        "excludedByImportingTag": False,
+        "isFeatured": False,
+        "featuredScore": None,
+        "inventoryQuantity": 15,
+        "inventoryQuantityOriginal": 15,
+        "soldQuantity": 0,
+        "priceDisplay": 67.77,
+        "priceDisplayAnchor": 0,
+        "priceMin": 67.77,
+        "priceMinAnchor": 0,
+        "priceMax": 67.77,
+        "priceMaxAnchor": 0,
+        "priceImportedMin": 0,
+        "priceImportedMax": 0,
+        "imageCount": 1,
+        "isUsed": 'NWT',
+        "shippingType": 'NO_SHIPPING_REQUIRED',
+        "additionalShippingFee": 0,
+        "deliveryTime": [
+            0,
+            5
+        ],
+        "returnPolicyApplied": True,
+        "isAvailable": True,
+        "commissionRate": 7,
+        "textForShare": None,
+        "priceSyncImported": False,
+        "coverImage": {
+            "src": 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            "width": 3072,
+            "height": 2048,
+            "position": 0,
+            "mediaType": 'IMAGE',
+            "mediaDuration": 0
+        },
+        "useEventPosterAsCover": True,
+        "reviewCount": None,
+        "reviewOverallScore": None,
+        "reviewAggregate": None,
+        "displayReviews": True,
+        "links": None,
+        "taxEnable": False,
+        "taxJarCategory": '',
+        "customTaxRate": None,
+        "subscriptionPlanId": None,
+        "reviewRedirectProductId": None,
+        "reviewSummary": None,
+        "customFieldsInfo": None,
+        "listingType": 'TICKET',
+        "ticketType": 'TICKET_TYPE_STANDARD',
+        "ticketHubInfo": None,
+        "customizedFields": [],
+        "shippingOptions": [],
+        "shippingNote": None,
+        "autoFulfill": True,
+        "lifecycleStatus": 'LIFECYCLE_STATUS_NORMAL',
+        "copyFromId": '{{copyFromId}}',
+        "stopSellingAfter": None,
+        "deliveryMethod": 'QR_CODE',
+        "thirdPartyDeliveryMessage": '',
+        "isMultipleDaysPassEnabled": True,
+        "isVenueUnitEnabled": True,
+        "venueUnitCategoryId": '{{venueUnitCategoryId}}',
+        "multipleDaysPass": {
+            "days": '{{multipleDaysPass_days}}'
+        },
+        "isPickupEtaEnabled": None,
+        "eventMatchingRules": None,
+        "expirationTime": None,
+        "allowAtDoorSales": False,
+        "isTipEnabled": False,
+        "isPlatformFeeConfigCustomized": False,
+        "isVariantPlatformFeeConfigCustomized": False,
+        "transactionFeeConfig": {
+            "baseConfig": {
+                "unitFixedFee": 1,
+                "unitPercentageFee": 0.1
+            }
+        },
+        "transactionFeeRebateConfig": {
+            "baseConfig": {
+                "unitFixedFee": 0,
+                "unitPercentageFee": 0
+            }
+        },
+        "transactionCustomFeeConfig": None,
+        "options": [
+            {
+                "remote_id": None,
+                "productId": '{{productId_General_Admission_01}}',
+                "name": 'Title',
+                "position": 1,
+                "values": [
+                    'Default Title'
+                ],
+                "images": [
+                    {
+                        "value": 'Default Title',
+                        "imageId": None
+                    }
+                ]
+            }
+        ],
+        "variants": [
+            {
+                "id": '{{merchantProductVariantId_General_Admission_01}}',
+                "remote_id": None,
+                "createdAt": '2026-08-25T06:03:24.017Z',
+                "updatedAt": '2026-08-25T06:09:57.779Z',
+                "compareAtPrice": None,
+                "fulfillmentService": 'manual',
+                "grams": 0,
+                "imageIds": [],
+                "inventoryItemId": None,
+                "inventoryManagement": 'Pear',
+                "inventoryPolicy": 'DENY',
+                "isInventoryQuantityUnlimited": False,
+                "inventoryQuantity": 15,
+                "inventoryQuantityOriginal": 15,
+                "soldQuantity": 0,
+                "option": {
+                    "option1": 'Default Title'
+                },
+                "position": 1,
+                "price": 67.77,
+                "priceAnchor": 0,
+                "priceImported": '0.00',
+                "productId": '{{productId_General_Admission_01}}',
+                "sku": '',
+                "taxCode": None,
+                "taxable": True,
+                "title": 'Default Title',
+                "weight": None,
+                "weightUnit": 'lb',
+                "platform": None,
+                "fees": 7.77,
+                "transactionFee": {
+                    "platformFee": 7.77,
+                    "customFee": 0,
+                    "customFeeBreakdown": {
+                        "TAX": {
+                            "title": 'Taxes',
+                            "unitFixedFee": 0,
+                            "unitPercentageFee": 0,
+                            "index": 0,
+                            "itemFee": 0
+                        }
+                    },
+                    "transactionItemFee": 7.77
+                },
+                "ticketPrice": 60,
+                "isMinPurchaseQuantityEnabled": False,
+                "minPurchaseQuantity": None,
+                "isMaxPurchaseQuantityEnabled": False,
+                "maxPurchaseQuantity": None,
+                "isPackSizeEnabled": False,
+                "packSize": None,
+                "transactionFeeConfig": None,
+                "transactionFeeRebateConfig": None,
+                "minPriceForCheckFees": 0
+            }
+        ],
+        "readOnlyFields": [],
+        "isInventoryQuantityUnlimited": False,
+        "showInEventPost": True,
+        "visibleInPosts": [
+            {
+                "postId": '{{post0_id}}',
+                "isVisible": True
+            }
+        ],
+        "excludeFromPostSync": False,
+        "catalogCommissionRate": 0,
+        "hasLimitPurchaseQuantity": False,
+        "hasSpecialRedemption": False,
+        "earliestTime": '2026-08-25T04:00:00.000Z',
+        "styleSettings": {
+            "recentUsedColors": [
+                '#ffffff'
+            ]
+        },
+        "isProductFormEnabled": False,
+        "isInclusionsEnabled": False,
+        "inclusions": [],
+        "isVariantPriceDisplayEnabled": False,
+        "stopSellingAfterDisplay": '',
+        "overrideEventTax": False,
+        "overrideEventCustomFee": False,
+        "hideFees": False,
+        "bodyJson": '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":"","style":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+        "images": [
+            {
+                "id": '52d5b590-879c-4b67-b466-ff33a41915db',
+                "remote_id": None,
+                "createdAt": '2026-08-25T06:03:24.017Z',
+                "updatedAt": '2026-08-25T06:03:24.017Z',
+                "height": 1000,
+                "width": 1000,
+                "position": 1,
+                "productId": '{{productId_General_Admission_01}}',
+                "src": 'https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png',
+                "variantIds": [],
+                "mediaType": 'IMAGE',
+                "mediaSrc": None,
+                "mediaDuration": 0,
+                "contributedBy": 3,
+                "contributorId": None,
+                "productImageType": 'PRODUCT',
+                "source": None,
+                "setThumbnail": True
+            }
+        ],
+        "eventId": '{{event_id}}',
+        "isExpirationEnabled": False
+    }
+
     _body7['multipleDaysPass'] = {"days": json.loads(vars['multipleDaysPass_days'])}
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body=_body7, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     # === 断言（step7 PUT 启用 multi-day pass 的响应校验）===
