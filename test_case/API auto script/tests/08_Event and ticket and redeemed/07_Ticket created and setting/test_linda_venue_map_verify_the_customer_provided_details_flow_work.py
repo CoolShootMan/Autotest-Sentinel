@@ -337,7 +337,8 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 9e4780d8-8424-4058-b104-74921554cf20
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 9ae76895-28f0-42c4-881a-00ee02925703
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # step 6: 2c877493-cea9-4398-b82d-6f44d1eb26ae

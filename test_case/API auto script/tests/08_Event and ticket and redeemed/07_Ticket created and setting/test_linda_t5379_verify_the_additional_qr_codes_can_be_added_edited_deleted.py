@@ -302,7 +302,8 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     vars['postId'] = 'targetItem.id'
     # step 4: 1d147e0c-10eb-4542-b1ba-9e08f1b76835
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 5fe163d3-20f8-4e95-8a9f-895ac97b9b5d
     _resp5 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',

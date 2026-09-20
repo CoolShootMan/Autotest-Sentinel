@@ -298,7 +298,8 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 3a42a638-1733-468e-8343-378e4a35997f
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 335db91f-b619-4cb9-9bf3-799455463f16
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     vars['ticket_title'] = 'ticketTitle'

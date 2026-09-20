@@ -375,7 +375,8 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 67d34753-d40c-4576-9ac1-01ad291cc1b2
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 122b2d2a-2827-4d8c-b162-de9276af7a0c
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # step 6: 61e71fa6-c51d-495c-ae2a-e5ce68457d94
