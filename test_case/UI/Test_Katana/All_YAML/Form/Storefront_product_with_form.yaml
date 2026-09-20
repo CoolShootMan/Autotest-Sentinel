@@ -247,7 +247,11 @@ testT4860:  # [LAST: PASSED 2026-05-06]
 
     # Select "Form" action from dropdown
     R_click_action_select: { role: 'button', name: 'Select an action' }
-    R_click_form_option: { role: 'menuitem', name: 'Form', exact: true }
+    # 2026-09-20: 改用页面级 locator。menuitem 是 portal 渲染的下拉项，用 `role:` 会被框架的
+    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4866 成功、T4860 却报
+    # element not found（纯 DOM 顺序抖动）。本仓库既有约定同样是用 locator，见
+    # Post_setting.yaml / Post_content.yaml / Section.yaml 里的 menuitem 写法。
+    R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }
     sleep_after_select_type: 500
 
     # Select the form created in testT4970
@@ -305,14 +309,25 @@ testT4867:  # [LAST: PASSED 2026-05-06]
     # though its testid/text never changed. Wait for it to be visible instead.
     wait_cta_button: { locator: 'button[data-testid="button"]:has-text("test form")', timeout: 15000 }
 
-    # Click on CTA button in editor to select it.
-    # force:true is REQUIRED — the CTA is wrapped in a Lexical
-    # data-lexical-decorator node whose wrapper (MuiBox katana-44v1pa)
-    # intercepts pointer events, so a normal click cannot land on the button.
-    R_click_cta_btn: { locator: 'button[data-testid="button"]:has-text("test form")', index: 0, force: true }
+    # 选中编辑器里的 CTA 装饰器 —— 只有装饰器被选中，才会出现带 Delete 的工具条。
+    # 2026-09-20 真机探测（localhost 探针，1280x720 与 CI 同视口）：
+    #   · 该 button 在装饰器内铺满整块：各层祖先包围盒与装饰器完全一致（x309 y630 w662 h42），
+    #     四周唯一的「留白」就是按钮自己的圆角。
+    #   · 点按钮**中心**会触发按钮自身行为，装饰器不会被选中 -> 之后 `R_click_delete`
+    #     找不到 `[aria-label="Delete"]`（框架实测 aria-label 兜底 3s 超时、role 兜底 5s/30s 全败）。
+    #   · 点装饰器**圆角处的留白**（position 3,3，落在按钮圆角之外、装饰器之内）才能选中它，
+    #     工具条随即出现：button[aria-label="Delete"][data-testid="toolbar-icon-control"]，
+    #     1500ms 后稳定可见（连续两次探测均一致）。
+    # 故这里改为点「装饰器」而不是「按钮」：position 3,3 为必需，不能用默认中心点。
+    R_click_cta_btn:
+      locator: 'div[data-lexical-decorator="true"]:has(button[data-testid="button"]:has-text("test form"))'
+      index: 0
+      position: { x: 3, y: 3 }
+      force: true
     sleep_after_select: 500
 
-    # Delete the CTA button
+    # Delete the CTA button（工具条是 portal 渲染的浮层，框架的 strategy 3
+    # 用 `[aria-label*="Delete"]` 命中；装饰器选中后该按钮才存在）
     R_click_delete: { role: 'button', name: 'Delete' }
     sleep_after_delete: 500
 
@@ -466,7 +481,11 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     fill_button_text: { role: 'textbox', name: 'Button text', id: 'field_label', value: 'test form' }
 
     R_click_action_select: { role: 'button', name: 'Select an action' }
-    R_click_form_option: { role: 'menuitem', name: 'Form', exact: true }
+    # 2026-09-20: 改用页面级 locator。menuitem 是 portal 渲染的下拉项，用 `role:` 会被框架的
+    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4866 成功、T4860 却报
+    # element not found（纯 DOM 顺序抖动）。本仓库既有约定同样是用 locator，见
+    # Post_setting.yaml / Post_content.yaml / Section.yaml 里的 menuitem 写法。
+    R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }
     sleep_after_select_type: 500
 
     R_click_form_dropdown: { text: 'Link to a formPlease select a' }
