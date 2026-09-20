@@ -25,6 +25,8 @@ PH = re.compile(r"\{\{\s*([A-Za-z_][\w]*)\s*\}\}")
 
 def _vars(path: Path) -> dict:
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        return {}
     return dict(data.get("variables") or {})
 
 

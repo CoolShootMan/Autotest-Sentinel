@@ -186,6 +186,7 @@ ENV_NAME = "Release"
 
 
 import json
+import time
 
 from typing import Any, TYPE_CHECKING
 
@@ -208,7 +209,7 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now 
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "3f6a6723-9223-418e-953c-e861a0c9969e",
@@ -242,11 +243,11 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
             },
         ],
         "subdomainVanityUrl": "",
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: apply promotion
     _resp4 = ctx.api.orders.update_promotions(body={
         "orderId": "{{orderId}}",
@@ -257,7 +258,7 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
             "state": "",
         },
         "applicableCode": "affcode",
-    })
+    }, token='consumer_access_token')
     _j: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
@@ -282,7 +283,7 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -290,7 +291,7 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
     })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 8: Login -affiliate
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -298,7 +299,21 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
     })
     ctx.extract('affiliate_access_token', _resp8, '$.data.token')
     # step 9: get affiliate promoter orders
-    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P5_OrderId'] = 'curatorOrderId'
+    # 2026-09-20 修复：promoter 订单列表为异步聚合（新单最多延迟数十秒才出现在首页），
+    # 直接断言首页命中会偶发失败（admin 侧可查、detail 接口 200 但列表未同步）。
+    # 改为条件轮询：最多 6 次 × 3s，命中即 break（与订阅用例同款模式）。
+    vars['P5_OrderId'] = ''
+    for _attempt in range(6):
+        _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='affiliate_access_token')
+        _j9 = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
+        _arr9 = _get_path(_j9, ['data', 'items']) or []
+        _hit9 = next((o for o in _arr9 if o.get('orderNumber') == vars.get('orderNumber')), None)
+        if _hit9:
+            vars['P5_OrderId'] = _hit9.get('id')
+            break
+        time.sleep(3)
+    assert vars.get('P5_OrderId'), (
+        f"test_lury_t5543_allow_use_in_all_co_sell L302: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr9)}）")
     # step 10: get affiliate order detail v2
-    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'})
+    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'}, token='affiliate_access_token')

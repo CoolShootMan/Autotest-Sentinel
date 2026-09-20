@@ -54,7 +54,7 @@ def check_one(filename: str) -> tuple[bool, str]:
         return False, f"无法解析 JSON：{exc}"
 
     cookies = {
-        c.get("name"): c for c in state.get("cookies", []) if isinstance(c, dict)
+        c.get("name") or "": c for c in state.get("cookies", []) if isinstance(c, dict)
     }
     if AUTH_COOKIE not in cookies:
         if REFRESH_COOKIE in cookies:

@@ -160,7 +160,7 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "c7a1c9bf-56fa-4eec-967b-10a04941429a",
@@ -193,11 +193,11 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
             },
         ],
         "subdomainVanityUrl": "",
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -218,7 +218,7 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: M1-login
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -226,7 +226,7 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
     })
     ctx.extract('P-21_access_token', _resp5, '$.data.refreshToken')
     # step 6: Check partner release schedule
-    _resp6 = ctx.api.misc.earnings_merchant_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'})
+    _resp6 = ctx.api.misc.earnings_merchant_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'}, token='P-21_access_token')
     # step 7: Login - merchant
     _resp7 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -234,4 +234,4 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
     })
     ctx.extract('merchant_access_token', _resp7, '$.data.refreshToken')
     # step 8: Check merchant release schedule
-    _resp8 = ctx.api.misc.earnings_promoter_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Commissions'})
+    _resp8 = ctx.api.misc.earnings_promoter_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Commissions'}, token='merchant_access_token')

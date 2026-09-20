@@ -144,7 +144,7 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now after check-in expiration
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "885eaa07-e64b-4eff-90aa-d5b1582034e9",
@@ -167,7 +167,7 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/mcc/post/lury-automation-test-check-in-expiration",
         },
-    })
+    }, token='consumer_access_token')
     # step 4: buy now before check-in expiration
     _resp4 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "885eaa07-e64b-4eff-90aa-d5b1582034e9",
@@ -199,11 +199,11 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp4, 'orderNumber')
+    ctx.extract('orderNumber', _resp4, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp4, 'orderId')
+    ctx.extract('orderId', _resp4, '$.data.orderId')
     # step 5: create Order
     _resp5 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -224,6 +224,6 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 6: get consumer order detail
-    _resp6 = ctx.api.orders.consumer_detail_by_order_number()
+    _resp6 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')

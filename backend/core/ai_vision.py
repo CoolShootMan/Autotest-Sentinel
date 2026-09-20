@@ -4,8 +4,8 @@ import base64
 import json
 import itertools
 from time import sleep
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+import google.generativeai as genai  # pyright: ignore[reportMissingImports]  venv 内已安装，静态解析因 google 命名空间包不稳定
+from google.api_core.exceptions import ResourceExhausted  # pyright: ignore[reportMissingImports]
 from dotenv import load_dotenv
 
 load_dotenv()

@@ -12,6 +12,7 @@ import json
 from datetime import datetime
 from typing import Union
 import pymysql
+import pymysql.cursors  # noqa: F401  显式导入子模块（pymysql 1.2 惰性加载，静态检查解析不到）
 from tools.read_file import ReadFile
 
 

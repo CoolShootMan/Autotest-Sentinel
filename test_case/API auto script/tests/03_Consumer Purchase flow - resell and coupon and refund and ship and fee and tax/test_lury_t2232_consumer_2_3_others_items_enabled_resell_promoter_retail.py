@@ -247,7 +247,7 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "updateCartItems": [
@@ -278,11 +278,11 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -305,7 +305,7 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: Login - P1
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
@@ -313,7 +313,7 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
     })
     ctx.extract('P1_access_token', _resp5, '$.data.token')
     # step 6: get P1 order detail v2
-    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDb}}'})
+    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDb}}'}, token='P1_access_token')
     # step 7: Login - merchant
     _resp7 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -321,10 +321,10 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
     })
     ctx.extract('merchant_access_token', _resp7, '$.data.token')
     # step 8: get merchant orders
-    _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
     vars['merchantOrderId'] = 'curatorOrderId'
     # step 9: get merhcant order detail v2
-    _resp9 = ctx.api.orders.promoter_detail_v2()
+    _resp9 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 10: Login - promoter
     _resp10 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -332,11 +332,11 @@ def test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail(ctx
     })
     ctx.extract('promoter_access_token', _resp10, '$.data.token')
     # step 11: get promoter orders
-    _resp11 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp11 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='promoter_access_token')
     _j: dict[str, Any] = _resp11.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['promoterOrderId'] = _order.get('id')
     # step 12: get promoter order detail v2
-    _resp12 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'})
+    _resp12 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='promoter_access_token')

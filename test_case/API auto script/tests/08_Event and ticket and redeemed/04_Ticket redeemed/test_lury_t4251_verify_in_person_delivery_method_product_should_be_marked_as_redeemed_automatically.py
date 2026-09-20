@@ -271,7 +271,7 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "ad8159a0-6273-4830-8fa4-55b7a3b9a9f8",
@@ -301,11 +301,11 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
                 "price": 12.22,
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -326,9 +326,9 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: get consumer order detail
-    _resp5 = ctx.api.orders.consumer_detail_by_order_number()
+    _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
     ctx.extract('numberCode', _resp5, '$.data.lineItems[0].orderLineItemUnits[0].numberCode')
     # step 6: Login - merchant
     _resp6 = ctx.api.auth.sign_in(body={
@@ -337,7 +337,7 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     })
     ctx.extract('merchant_access_token', _resp6, '$.data.refreshToken')
     # step 7: get merchant commission charge
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantIDf}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantIDf}}'}, token='merchant_access_token')
     # step 8: Login - curator
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -345,11 +345,11 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     })
     ctx.extract('curator_access_token', _resp8, '$.data.token')
     # step 9: get curator orders
-    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='curator_access_token')
     _j: dict[str, Any] = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['promoterOrderId'] = _order.get('id')
     # step 10: get curator order detail v2
-    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'})
+    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='curator_access_token')

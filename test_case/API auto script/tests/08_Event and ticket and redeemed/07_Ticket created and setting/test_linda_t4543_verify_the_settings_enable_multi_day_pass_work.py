@@ -548,6 +548,6 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         },
     }, app_headers=True, token='linda10_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp12, 'orderNumber')
+    ctx.extract('orderNumber', _resp12, '$.data.orderNumber')
     # step 13: Check the merchant order detail exist ticket Redemptions contents
     _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')

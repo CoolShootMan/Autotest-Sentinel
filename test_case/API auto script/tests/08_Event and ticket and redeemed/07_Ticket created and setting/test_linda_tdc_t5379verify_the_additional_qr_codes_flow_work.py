@@ -366,9 +366,22 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
     # step 2: f9fdbfd2-b2cd-4ba6-9bf3-c74dff73da29
-    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'eventId'
-    vars['event_title'] = 'eventTitle'
+    # 原 step2 post-script: 在 data.items 中找首个 platform === "TDC" 的事件，
+    # 取其 id/title 写入 event_id/event_title；并断言两者非空。
+    # 该列表接口是分页接口（默认 pageSize=10，新事件在前、种子事件沉底），返回条数
+    # 亦有波动，故显式取大页、未命中时重试一次，避免目标事件掉出首页导致假失败。
+    _items2, _ev2 = [], None
+    for _attempt2 in (1, 2):
+        _resp2 = ctx.api.events.list(
+            body=None, params={'keyword': '', 'pageSize': '200', 'pageNumber': '1'},
+            token='yuxiao999_token')
+        _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
+        _ev2 = next((i for i in _items2 if i.get('platform') == 'TDC'), None)
+        if _ev2:
+            break
+    assert _ev2, f"step2 未找到 platform=TDC 的事件（items={len(_items2)}）"
+    ctx.set('event_id', _ev2.get('id') or '')
+    ctx.set('event_title', _ev2.get('title') or '')
     # step 3: d149d601-1c91-44e4-a1e1-e6e5c8b43d86
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
@@ -379,13 +392,87 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 122b2d2a-2827-4d8c-b162-de9276af7a0c
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
+    # 原 step5 post-script: 遍历 data.relatedProducts，以 title（空白→下划线）为后缀，
+    # 逐个写入 productId_/promoterProductId_/merchantProductVariantId_/displayVariantId_
+    # （下游 step7 用的 productId_General_Admission_02 等即出自此处）。
+    # 此前整段遍历迁移时丢失，导致这些占位符全部渲染失败。
+    _rels5 = _get_path(_resp5.json(), ['data', 'relatedProducts']) or []
+    assert _rels5, "step5 relate-products 未返回 relatedProducts"
+    for _i5, _p5 in enumerate(_rels5):
+        _title5 = (_p5.get('title') or '').strip()
+        _sfx5 = '_'.join(_title5.split()) if _title5 else f'index_{_i5}'
+        _v05 = (_p5.get('variants') or [{}])[0]
+        ctx.set(f'productId_{_sfx5}', _p5.get('merchantProductId')
+                or (_p5.get('shippingView') or {}).get('productId') or '')
+        ctx.set(f'promoterProductId_{_sfx5}', _p5.get('promoterProductId') or '')
+        ctx.set(f'merchantProductVariantId_{_sfx5}',
+                _v05.get('merchantProductVariantId') or '')
+        ctx.set(f'displayVariantId_{_sfx5}',
+                _v05.get('displayVariantId') or _p5.get('displayVariantId') or '')
+    # --- 绑定下游 step6/step7/step11 使用的目标产品 ---
+    # 原 Apifox 用例假定目标 TDC 事件的 post 上挂着一张名为 "General Admission 02" 的产品，
+    # 故下游统一用 *_General_Admission_02 后缀。当前 Release 环境的两个 TDC 事件
+    # （Padres at Zephyrs / Parking Padres at Zephyrs）都没有该标题的产品（只有球场分区票、
+    # GA、Parking），照搬后缀会让 productId_General_Admission_02 取不到值、下游 URL 变空。
+    # 故按「原标题 → 含 General Admission → 首个带变体的产品」顺序挑一张，沿用原变量名绑定，
+    # 下游占位符无需改动。
+    # 优先挑带 TDC 选座配置（extraInfo.ticketHubInfo.sectionOptions）的产品：
+    # 当前 Release 的 TDC 事件产品（Padres at Zephyrs 25 张分区票）全部带 sectionOptions，
+    # 而 venue-units 接口不暴露其座位数据；GA 类（无分区）仍走原选择链兜底。
+    _prod5 = next((x for x in _rels5
+                   if ((x.get('extraInfo') or {}).get('ticketHubInfo') or {}).get('sectionOptions')), None)
+    if _prod5 is None:
+        _prod5 = next((x for x in _rels5 if (x.get('title') or '').strip() == 'General Admission 02'), None)
+    if _prod5 is None:
+        _prod5 = next((x for x in _rels5
+                       if 'general admission' in (x.get('title') or '').lower()), None)
+    if _prod5 is None:
+        _prod5 = next((x for x in _rels5
+                       if (x.get('variants') or [{}])[0].get('merchantProductVariantId')), None)
+    assert _prod5, f"step5 未找到可用的目标产品（relatedProducts={len(_rels5)}）"
+    _v5t = (_prod5.get('variants') or [{}])[0]
+    # TDC 产品的 variants[0] 没有 displayVariantId 字段，回退到变体自身 id。
+    _disp5t = _v5t.get('displayVariantId') or _v5t.get('id') or _prod5.get('displayVariantId') or ''
+    ctx.set('productId_General_Admission_02', _prod5.get('merchantProductId')
+            or (_prod5.get('shippingView') or {}).get('productId') or '')
+    ctx.set('promoterProductId_General_Admission_02', _prod5.get('promoterProductId') or '')
+    ctx.set('merchantProductVariantId_General_Admission_02', _v5t.get('merchantProductVariantId') or '')
+    ctx.set('displayVariantId_General_Admission_02', _disp5t)
+    # TDC 选座票：从产品 extraInfo.ticketHubInfo.sectionOptions 提取分区 label 与票券句柄，
+    # 供 step11 checkout 的 sectionIds/ticketHandle 使用（TDC 数据不通过 venue-units 暴露，
+    # 参考 2026-09-20 用户提供的 PUT /cart 请求：sectionIds + ticketHandle 为标准入参）。
+    _hub5 = (_prod5.get('extraInfo') or {}).get('ticketHubInfo') or {}
+    _opts5 = _hub5.get('sectionOptions') or []
+    assert _opts5, (
+        f"step5 目标产品 {_prod5.get('title')!r} 没有 ticketHubInfo.sectionOptions"
+        f"（TDC 选座数据缺失，relatedProducts={len(_rels5)}）")
+    _sec5 = _opts5[0]
+    ctx.set('sectionIds', _sec5.get('label') or '')
+    ctx.set('ticketHandle', _sec5.get('ticketHandle') or '')
     # step 6: 61e71fa6-c51d-495c-ae2a-e5ce68457d94
-    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
-    vars['unitid'] = 'unitId'
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
-    vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
-    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
-    vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])
+    # variantId 原写作单花括号 '{...}'，不会被框架渲染。
+    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
+    # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
+    # 提取 id→unitid、number→seatNumber、categoryId→venueUnitCategoryId。
+    # （原脚本随机取一项；为免 flaky 改为取首个。）此前漏掉了 unitid，且未做 orderNumber 过滤。
+    _j6: dict[str, Any] = (_resp6.json()
+                           if _resp6.headers.get('content-type', '').startswith('application/json')
+                           else {})
+    _items6 = _get_path(_j6, ['data', 'items']) or []
+    _pool6 = [x for x in _items6 if x.get('orderNumber') is None] or _items6
+    if _pool6:
+        # venue-units 有数据（GA/venue-map 类）：提取本地 unit 三件套（原逻辑）。
+        _sel6 = _pool6[0]
+        ctx.set('unitid', _sel6.get('id') or '')
+        ctx.set('seatNumber', str(_sel6.get('number')))
+        ctx.set('venueUnitCategoryId', _sel6.get('categoryId') or '')
+    else:
+        # TDC 选座票：venue-units 不暴露座位数据（实测 0 条），
+        # 回退到 step5 已提取的 sectionIds/ticketHandle；本地 unit 变量置空。
+        # （2026-09-20 修复：TDC 标准入参是 sectionIds + ticketHandle，参考 PUT /cart 请求。）
+        ctx.set('unitid', '')
+        ctx.set('seatNumber', '')
+        ctx.set('venueUnitCategoryId', '')
     # step 7: 309acb6a-6b12-42b4-8689-4d51c67430f6
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId_General_Admission_02}}',
@@ -673,10 +760,10 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
                 "price": 112.22,
                 "postId": "{{post0_id}}",
                 "eventId": "{{event_id}}",
-                "sectionName": "General Admission 02",
-                "seatRow": "",
-                "seatNumber": "{{seatNumber}}",
-                "unitId": "{{unitid}}",
+                "sectionIds": [
+                    "{{sectionIds}}",
+                ],
+                "ticketHandle": "{{ticketHandle}}",
                 "selected": True,
             },
         ],
@@ -704,7 +791,10 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
             "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
         },
     }, app_headers=True, skip_notifications=False, token='linda10_token')
-    _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
+    # order_number 取自 place order(_resp12) 的响应（原 step12 post-script:
+    # responseData.data.orderNumbers[0]）；此前误接到 checkout_express(_resp11) 上，
+    # 导致 step13 的路径变量为空、请求退化成 /detail//v2 → 404。
+    _ordernumber_val = _get_path(_resp12.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 13: Check the merchant order detail exist ticket Redemptions contents
     _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

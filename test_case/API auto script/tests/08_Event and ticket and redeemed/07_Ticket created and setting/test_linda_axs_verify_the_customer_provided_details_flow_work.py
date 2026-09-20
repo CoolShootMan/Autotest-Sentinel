@@ -268,12 +268,66 @@ ENV_NAME = "Release"
 
 
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 from core.assertions import expect
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
+
+
+_T = TypeVar("_T")
+
+def _pick_first(items: list[_T], predicate: Callable[[_T], bool]) -> _T | None:
+    """返回 items 中第一个满足 predicate 的元素；未命中返回 None。"""
+    return next((i for i in items if predicate(i)), None)
+
+
+def _product_has_stock(product: dict) -> bool:
+    """原 post-script 的库存判定：优先 ``variants[0].inventoryQuantity``，
+    回退 ``product.inventoryQuantity``，> 0 视为有货。"""
+    variants = product.get('variants') or []
+    inv = variants[0].get('inventoryQuantity') if variants else None
+    if inv is None:
+        inv = product.get('inventoryQuantity')
+    try:
+        return float(inv or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _apply_related_product(ctx: "Context", product: dict) -> None:
+    """把「首个库存 > 0 的关联产品」的字段写入上下文（原 step5 post-script）。
+
+    一律写空串/0 而非 None —— ``templating.render_text`` 会**跳过 None** 的值，
+    占位符便无法被替换而原样残留进 request body。
+    """
+    variants = product.get('variants') or []
+    variant0 = variants[0] if variants else {}
+    assert isinstance(variant0, dict), "variants 元素应为 dict"
+    hub = (product.get('extraInfo') or {}).get('ticketHubInfo') or {}
+    sections = hub.get('sectionOptions') or []
+    section0 = sections[0] if sections else {}
+    assert isinstance(section0, dict), "sectionOptions 元素应为 dict"
+    try:
+        quantity = int(float(section0.get('availableQuantity') or 0))
+    except (TypeError, ValueError):
+        quantity = 0
+    ctx.set('ticket_title', (product.get('title') or '').strip())
+    ctx.set('productId', product.get('merchantProductId')
+            or (product.get('shippingView') or {}).get('productId') or '')
+    ctx.set('promoterProductId', product.get('promoterProductId') or '')
+    ctx.set('merchantProductVariantId', variant0.get('merchantProductVariantId') or '')
+    ctx.set('displayVariantId', variant0.get('displayVariantId')
+            or product.get('displayVariantId') or '')
+    ctx.set('ticketHubInfo_id', hub.get('ticketHandle') or '')
+    ctx.set('ticketHandle', section0.get('ticketHandle') or '')
+    ctx.set('availableQuantity', quantity)
+    ctx.set('sectionIds', section0.get('label') or '')
+    # 源 section 自带 isGeneralAdmission（GA 票为 True、有座区为 False）。
+    # 下游 step6 的 body 把它写死成 True，与源数据不一致会让 hub 校验失败，故按源值透传。
+    ctx.set('isGeneralAdmission', bool(section0.get('isGeneralAdmission', True)))
+
 
 
 def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx: "Context"):
@@ -290,8 +344,13 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
     # step 2: 66d5d716-3a02-4b8c-a925-0485796bcb40
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'axsEvent.id'
-    vars['event_title'] = 'axsEvent.title'
+    # 原 step2 post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
+    # 取其 id/title 写入 event_id/event_title。
+    _items2: list[dict] = (_resp2.json().get('data') or {}).get('items') or []
+    _axs_event = _pick_first(_items2, lambda i: i.get('platform') == 'AXS')
+    assert _axs_event, f"step2 事件列表中未找到 platform=AXS 的项目（items={len(_items2)}）"
+    ctx.set('event_id', _axs_event.get('id') or '')
+    ctx.set('event_title', _axs_event.get('title') or '')
     # step 3: c10ed67d-5174-4977-9f37-b1a977fddbb2
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
@@ -302,15 +361,12 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 335db91f-b619-4cb9-9bf3-799455463f16
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
-    vars['ticket_title'] = 'ticketTitle'
-    vars['productId'] = 'productId'
-    vars['promoterProductId'] = 'promoterProductId'
-    vars['merchantProductVariantId'] = 'merchantProductVariantId'
-    vars['displayVariantId'] = 'displayVariantId'
-    vars['ticketHubInfo_id'] = 'ticketHubInfo_id'
-    vars['ticketHandle'] = 'ticketHandle'
-    vars['availableQuantity'] = 'availableQuantity'
-    vars['sectionIds'] = 'sectionIds'
+    # 原 step5 post-script: 在 data.relatedProducts 中取首个库存 > 0 的产品，提取
+    # title/merchantProductId/promoterProductId/variants[0].*/ticketHubInfo.* 共 9 个变量。
+    _rels5: list[dict] = (_resp5.json().get('data') or {}).get('relatedProducts') or []
+    _prod5 = _pick_first(_rels5, _product_has_stock)
+    assert _prod5, f"step5 未找到库存 > 0 的关联产品（relatedProducts={len(_rels5)}）"
+    _apply_related_product(ctx, _prod5)
     # step 6: 7a6d4176-bb6b-499b-9cc7-b7e7ba3ce08b
     _resp6 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId}}',
@@ -624,7 +680,12 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     expect(_resp9).json('$.code').equals('200')
     # assertion 9.assertion: responseJson equal success
     expect(_resp9).json('$.message').equals('success')
-    vars['usPhoneNumber'] = 'usPhoneNumber'
+    # 原 pre-request script: usPhoneNumber = `+1${randomAreaCode}${random7Digits}`
+    # （随机生成美国手机号）。此前迁移成了把变量名本身当值写死的 'usPhoneNumber'。
+    import random as _random
+    ctx.set('usPhoneNumber',
+            '+1' + _random.choice(['202', '312', '415', '650', '212', '310'])
+            + str(_random.randint(1000000, 9999999)))
     # step 10: 25bd242e-da1a-4a23-8754-10ad95bb3bef
     _resp10 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -639,6 +700,26 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
                 "ticketHandle": "{{ticketHandle}}",
                 "eventId": "{{event_id}}",
                 "selected": True,
+                "customFields": [
+                    {
+                        "content": "{{$internet.email(locale='en')}}",
+                        "field": "EMAIL_ADDRESS",
+                        "position": 3,
+                        "title": "Email",
+                    },
+                    {
+                        "content": "{{$randomFullName}}",
+                        "field": "SHORT_ANSWER",
+                        "position": 1,
+                        "title": "Name",
+                    },
+                    {
+                        "content": "{{usPhoneNumber}}",
+                        "field": "PHONE_NUMBER",
+                        "position": 2,
+                        "title": "Phone",
+                    },
+                ],
             },
         ],
         "fbAdParams": {
@@ -674,7 +755,8 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
             "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
         },
     }, skip_notifications=False, token='linda10_token')
-    _ordernumber_val = _get_path(_resp10.json(), ['data', 'orderNumbers', 0])
+    # order_number 取自 place order 的响应（原 step11 post-script: responseData.data.orderNumbers[0]）。
+    _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail exist ticket Redemptions contents
     _resp12 = ctx.api.orders.merchant_detail_v2(token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

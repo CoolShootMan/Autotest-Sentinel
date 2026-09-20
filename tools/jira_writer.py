@@ -112,12 +112,16 @@ def _inlines(text: str) -> list:
         elif tok.startswith("**"):
             nodes.append({"type": "text", "text": tok[2:-2], "marks": [{"type": "strong"}]})
         else:
-            label, url = re.match(r"\[([^\]]+)\]\(([^)]+)\)", tok).groups()
-            nodes.append({
-                "type": "text",
-                "text": label,
-                "marks": [{"type": "link", "attrs": {"href": url}}],
-            })
+            m_link = re.match(r"\[([^\]]+)\]\(([^)]+)\)", tok)
+            if not m_link:
+                nodes.append({"type": "text", "text": tok})
+            else:
+                label, url = m_link.groups()
+                nodes.append({
+                    "type": "text",
+                    "text": label,
+                    "marks": [{"type": "link", "attrs": {"href": url}}],
+                })
         pos = m.end()
     if pos < len(text):
         nodes.append({"type": "text", "text": text[pos:]})

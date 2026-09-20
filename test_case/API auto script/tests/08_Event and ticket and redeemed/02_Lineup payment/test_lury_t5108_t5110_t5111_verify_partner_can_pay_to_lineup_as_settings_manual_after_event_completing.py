@@ -239,11 +239,11 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
             "mediaType": "IMAGE",
         },
         "startDateDisplay": "{{start_time}}",
-    })
+    }, token='merchant_access_token')
     # extractor: event_post_id = event_post_id
-    ctx.extract('event_post_id', _resp7, 'event_post_id')
+    ctx.extract('event_post_id', _resp7, '$.data.autoCreatedPostId')
     # extractor: event_id = event_id
-    ctx.extract('event_id', _resp7, 'event_id')
+    ctx.extract('event_id', _resp7, '$.data.id')
     # step 8: Create event ticket
     _resp8 = ctx.api.events.v2_ticket_batch_v2(body={
     'poster': {
@@ -310,7 +310,7 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
         },
     ],
     'coSellingCommissionRate': 25,
-})
+}, token='merchant_access_token')
     # assertion 8.get_200_status: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
     # step 9: Add lineup and payment in event
@@ -341,15 +341,15 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
                 "order": 0,
             },
         ],
-    })
+    }, token='merchant_access_token')
     # assertion 9.get_status_code: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
     # step 10: Verify P-21 earning summary is not changed
-    _resp10 = ctx.api.earnings.summary()
+    _resp10 = ctx.api.earnings.summary(token='merchant_access_token')
     # assertion 10.earning is not changed: responseJson equal {{lifetimeEarning}}
     expect(_resp10).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning}}'))
     # step 11: Verify Partner getPayoutSummary is not changed
-    _resp11 = ctx.api.earnings.summary_2()
+    _resp11 = ctx.api.earnings.summary_2(token='merchant_access_token')
     # assertion 11.Balance is not changed: responseJson equal {{balance_amount}}
     expect(_resp11).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount}}'))
     # step 12: Verify promoter earning summary is +10
@@ -388,13 +388,13 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
     # step 17: payment for lineup
     _resp17 = ctx.api.events.lineup_transactions(body={
         "eventId": "{{event_id}}",
-    })
+    }, token='admin_access_token')
     # step 18: Verify P-21 earning summary is not changed
-    _resp18 = ctx.api.earnings.summary()
+    _resp18 = ctx.api.earnings.summary(token='admin_access_token')
     # assertion 18.earning is not changed: responseJson equal {{lifetimeEarning}}
     expect(_resp18).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning}}'))
     # step 19: Verify Partner getPayoutSummary is not changed
-    _resp19 = ctx.api.earnings.summary_2()
+    _resp19 = ctx.api.earnings.summary_2(token='admin_access_token')
     # assertion 19.Balance is -10: responseJson equal {{balance_amount_lineup}}
     expect(_resp19).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount_lineup}}'))
     # step 20: Verify promoter earning summary is +10
@@ -406,7 +406,7 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
     # assertion 21.Verify the lineup balance is +10 after payment: responseJson equal {{balance_amount_p_lineup}}
     expect(_resp21).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount_p_lineup}}'))
     # step 22: Verify the lineup payment show in event report
-    _resp22 = ctx.api.events.metrics_summary()
+    _resp22 = ctx.api.events.metrics_summary(token='admin_access_token')
     # assertion 22.Verify the lineup payment is 10: responseJson equal 10
     expect(_resp22).json('$.data.totalLineupFee').equals('10')
     # assertion 22.Verify the total net earnings is -10: responseJson equal -10

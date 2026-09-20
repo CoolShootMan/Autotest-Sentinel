@@ -108,13 +108,13 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Conte
                 "customFields": [],
             },
         ],
-    })
+    }, token='access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp2, 'orderNumber')
+    ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp2, 'orderId')
+    ctx.extract('orderId', _resp2, '$.data.orderId')
     # step 3: get Checkout
-    _resp3 = ctx.api.orders.checkout_2()
+    _resp3 = ctx.api.orders.checkout_2(token='access_token')
     _j: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     for _item in _arr:
@@ -131,4 +131,4 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Conte
             "zipcode": "78759",
         },
         "applicableCode": "autocoupon10",
-    })
+    }, token='access_token')
