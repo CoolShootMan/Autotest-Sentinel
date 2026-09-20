@@ -114,7 +114,7 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
             data = yaml.safe_load(f)
 
         cases = []
-        if data:
+        if isinstance(data, dict):
             for key in data.keys():
                 matches = re.findall(r'T\d+', key)
                 cases.extend(matches)

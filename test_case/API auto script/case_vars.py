@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import yaml
 from pathlib import Path
+from typing import cast
 
 ROOT = Path(__file__).parent
 ENV_DIR = ROOT / "env"
@@ -39,7 +40,8 @@ RUNTIME_TOKENS_FILE = ENV_DIR / "_runtime_tokens.yaml"
 def _load_yaml(path: Path) -> dict:
     if not path.exists():
         return {}
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return data if isinstance(data, dict) else {}
 
 
 def load_runtime_tokens() -> dict:
@@ -60,7 +62,7 @@ def save_runtime_tokens(tokens: dict) -> None:
     variables.update({k: v for k, v in tokens.items() if v is not None})
     data["variables"] = variables
     RUNTIME_TOKENS_FILE.write_text(
-        yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+        cast(str, yaml.safe_dump(data, allow_unicode=True, sort_keys=False)),
         encoding="utf-8",
     )
 

@@ -185,8 +185,9 @@ def walk(node, path, rel_file, findings, exact, prefixes):
                         n = child_keys.get(k)
                         return n is None or str(n.value).strip() in ("", "0", "0.0")
                     if _unset("x") or _unset("y"):
+                        mark = v_node.start_mark
                         findings.append(Finding(
-                            "W201", rel_file, v_node.start_mark.line + 1,
+                            "W201", rel_file, (mark.line if mark else 0) + 1,
                             "move step '%s' has no centered x/y "
                             "(defaults to top-left, unstable on icons)" % key,
                             _path_str(path)))

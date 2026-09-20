@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""生成 CI 的「完整测试结果」汇总（GitHub Actions Job Summary + 运行页注解）。
+r"""生成 CI 的「完整测试结果」汇总（GitHub Actions Job Summary + 运行页注解）。
 
 设计目标（对应需求）：
   1. **一眼可见** —— 通过率与失败用例名放在 Job Summary 最顶部（H1 + 速览表），
@@ -247,6 +247,8 @@ def parse_pytest_summary(run_log: str) -> dict | None:
         return None
     counts: dict[str, int] = {}
     for num, word in _COUNT_RE.findall(last):
+        if not isinstance(word, str):
+            continue
         key = _COUNT_KEY.get(word, word)
         counts[key] = counts.get(key, 0) + int(num)
     return {"line": last, "counts": counts}

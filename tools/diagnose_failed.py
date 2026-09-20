@@ -727,6 +727,8 @@ def resolve_base_url(env: str) -> str:
     try:
         with open(config_path, encoding="utf-8") as f:
             cfg = yaml.safe_load(f)
+        if not isinstance(cfg, dict):
+            raise ValueError(f"env_config.yaml 结构异常: {type(cfg).__name__}")
         return cfg.get("envs", {}).get(env, {}).get("base", "https://release.pear.us")
     except Exception:
         return {"release": "https://release.pear.us", "staging": "https://staging.pear.us", "prod": "https://pear.us"}.get(env, "https://release.pear.us")
@@ -2872,6 +2874,14 @@ def _esc(text: str) -> str:
             .replace("'", "&#039;"))
 
 
+def _dump_yaml_str(obj) -> str:
+    """yaml.dump 的返回值按类型桩是 str | bytes | None，统一收敛成 str。"""
+    out = yaml.dump(obj, default_flow_style=False)
+    if isinstance(out, bytes):
+        return out.decode("utf-8", "replace")
+    return out or ""
+
+
 def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime | None = None, end_time: datetime.datetime | None = None) -> str:
     """Render the summary dashboard section."""
     total = len(results)
@@ -3351,7 +3361,7 @@ def _render_probing(probes: List[Dict]) -> str:
             </div>"""
         elif "heuristic_suggestion" in probe:
             sugg = probe["heuristic_suggestion"]
-            sugg_yaml = yaml.dump(sugg, default_flow_style=False).strip()
+            sugg_yaml = _dump_yaml_str(sugg).strip()
             score = round(probe.get("score", 0.0) * 100)
             m = probe["matches"][0] if probe["matches"] else {}
 
@@ -3739,7 +3749,7 @@ def _run_interactive_fix(fix_suggestions: list):
         print(f"\n  {source_tag} #{idx+1} (confidence: {fix.get('score', 0):.0%}) — {fix.get('probe', '')}")
         print(f"  Case: {fix['case_name']} | Step: {fix['step_name']}")
         print(f"  YAML: {fix['yaml_path']}")
-        print(f"  Suggested Locator Update:\n{yaml.dump(fix['suggestion'], default_flow_style=False).strip()}")
+        print(f"  Suggested Locator Update:\n{_dump_yaml_str(fix['suggestion']).strip()}")
 
         ans = input("\n  Apply this fix? [y/N/skip]: ").strip().lower()
         if ans == 'y':

@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import yaml
 
@@ -86,7 +86,7 @@ def load_yaml(path: Path) -> dict:
 def save_yaml(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        yaml.safe_dump(data, allow_unicode=True, sort_keys=False),
+        cast(str, yaml.safe_dump(data, allow_unicode=True, sort_keys=False)),
         encoding="utf-8",
     )
 
