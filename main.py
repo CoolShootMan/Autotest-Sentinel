@@ -66,7 +66,8 @@ def start_autotest():
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
-        '--step-capture=on-failure'
+        '--step-capture=on-failure',
+        '--maxfail=0',  # 失败不中断：单个 UI 用例失败也要跑完整个测试套（下游用例照常执行）
     ]
     # --headed 不能写死：GitHub 托管 runner 没有显示器，headed 会让所有用例在
     # setup 阶段直接 ERROR（Missing X server or $DISPLAY，见 run #8 的日志）。
