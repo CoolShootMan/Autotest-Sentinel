@@ -119,14 +119,14 @@ def open_until_ready(page: Page, v: dict):
         open_until_ready:
             url: "{BASE_URL}/autotestshop/post/test1234"
             ready: 'text="General Admission"'   # selector that only exists on the real page
-            retries: 6                          # optional, default 5
+            retries: 6                          # optional, default 3（降低默认重试，失败用例更快失败、缩短单用例耗时）
             timeout: 8000                       # optional, per-attempt wait for `ready`
             retry_delay: 3000                   # optional, wait between attempts
             settle: 1000                        # optional, wait after `ready` is found
     """
     url = v.get("url") or v.get("open")
     ready = v.get("ready") or v.get("ready_selector")
-    retries = int(v.get("retries", 5))
+    retries = int(v.get("retries", 3))
     timeout = int(v.get("timeout", 8000))
     retry_delay = int(v.get("retry_delay", 3000))
     settle = int(v.get("settle", 1000))
@@ -1102,7 +1102,7 @@ def smart_wait(page: Page, v: dict):
     Usage in YAML:
         wait_customize_back: { role: 'button', name: 'Customize products', timeout: 15000, disable_ai: true }
     """
-    timeout = v.get("timeout", 10000)
+    timeout = v.get("timeout", 5000)
     role = v.get("role")
     name = v.get("name")
     locator = v.get("locator")

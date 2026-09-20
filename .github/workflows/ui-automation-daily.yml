@@ -32,7 +32,7 @@ jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
     runs-on: ubuntu-latest
-    timeout-minutes: 180   # run #7 实测 6 个 YAML 约 110 分钟，120 太贴边容易被误杀
+    timeout-minutes: 240   # 调大：单用例失败快速失败后仍需跑完整轮（--maxfail=0），给足预算避免被 GitHub 误杀截断后续用例
     steps:
       - name: Checkout
         uses: actions/checkout@v4
