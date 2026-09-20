@@ -92,6 +92,13 @@ def start_autotest():
         cwd=api_dir, capture_output=True, text=True
     )
     logger.info(f"Prefill stdout: {prefill_result.stdout}")
+    if prefill_result.stderr:
+        # 框架日志（core/logging_util.py 的 StreamHandler）走的是 stderr，而本步骤成功时
+        # 原先只记 stdout —— 于是「预制到底做了什么」的关键证据在 CI 里看不到，
+        # 例如 step 76 补回的别名写入：`[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' ...`
+        # （这也是 tools/ci_summary.py 的「预制内的 DB 步骤日志」折叠块的数据来源）。
+        # 只读日志、不含请求体（API_LOG_BODY 默认关闭），可安全落 run.log。
+        logger.info(f"Prefill stderr: {prefill_result.stderr}")
     if prefill_result.returncode != 0:
         # 预制失败 → UI 用例会因缺数据大面积假失败；直接中止，避免白跑一整轮（CI 一次约 110 分钟）。
         logger.error(
