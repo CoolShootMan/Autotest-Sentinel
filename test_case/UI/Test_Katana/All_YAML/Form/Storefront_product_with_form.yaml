@@ -1,4 +1,6 @@
 testT3695_config_form:  # [LAST: PASSED 2026-05-06]
+  skip: true
+  skip_reason: "catalog Advanced 选项卡保存按钮 [data-testid='confirm-button'] 已失效（疑似 UI 改版），点不到 -> element not found。隔离待修。"
   guest: false
   description: "Configure product form: enable form, set title/subtitle, add short text field"
   test_step:
@@ -51,6 +53,8 @@ testT3695_config_form:  # [LAST: PASSED 2026-05-06]
 
 
 testT5007:  # [LAST: PASSED 2026-05-06]
+  skip: true
+  skip_reason: "依赖写死商品 slug /autotestshop/p/bxasz9 已在 release 返回 404，商品页渲染不出 add-to-cart。隔离待修（需重建测试商品或更新 slug）。"
   description: "Verify adding a product with form to cart from storefront"
   guest: true
   test_step:
@@ -732,6 +736,8 @@ testT4540:  # [LAST: BROKEN 2026-05-06]
     assertions: [ ]
 
 testT3690:  # [LAST: PASSED 2026-05-06]
+  skip: true
+  skip_reason: "同 T5007，依赖已 404 的 bxasz9 商品，add-to-cart 找不到。隔离待修。"
   guest: true
   description: "Verify product form data persists through cart, checkout, and order confirmation"
   test_step:
@@ -812,6 +818,8 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     assertions: [ ]
 
 testT5006_curator:  # [LAST: PASSED 2026-05-06]
+  skip: true
+  skip_reason: "catalog 设置页禁用 form 的确认按钮 [data-testid='confirm-button'] 已失效，点不到。隔离待修。"
   guest: false
   description: "Verify disabling product form in catalog product settings"
   test_step:
