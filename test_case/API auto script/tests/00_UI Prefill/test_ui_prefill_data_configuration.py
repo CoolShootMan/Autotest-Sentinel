@@ -19,6 +19,7 @@ CASE_ID = None  # manually migrated, no Apifox Case ID
 ENV_NAME = "Release"
 
 import datetime as _dt  # step 106/116 需要动态生成事件起止日期
+import time  # step 107/117 重试 relate-products 的空窗抖动用
 from typing import TYPE_CHECKING
 
 from core.assertions import expect
@@ -6766,11 +6767,26 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     #       未命中时写入 None，渲染器跳过 None（占位符保持字面量），与迁移前行为一致。
     # ⚠️ 该接口只在 admin 域存在：实测 base 域 → 404（Cannot GET），
     #    admin 域 + {{token}}(999) → 401，admin 域 + {{admin_token}} → 200。
-    _resp107 = ctx.api.admin.post_v2_relate_products(
-        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-        token="admin_token", app_headers=True)
-    expect(_resp107).json('$.code').equals('200')
-    expect(_resp107).json('$.message').equals('success')
+    # 🔁 重试：relate-products 的 relatedProducts 由「事件 → 帖子」产品关联异步落地
+    #    （eventually-consistent）。CI 多次 run 实测 09-18 为空、09-19 非空，属时序抖动，
+    #    不是数据真缺失。这里最多重试 5 次、每次间隔 3s，仍为空才视为真实失败。
+    #    （code/message != 200 是真实失败，不重试，直接抛出。）
+    _resp107 = None
+    for _rp_try in range(5):
+        _resp107 = ctx.api.admin.post_v2_relate_products(
+            path_vars={"post0_id": vars.get("venue_map_post_id", "")},
+            token="admin_token", app_headers=True)
+        expect(_resp107).json('$.code').equals('200')
+        expect(_resp107).json('$.message').equals('success')
+        try:
+            expect(_resp107).json('$.data.relatedProducts').is_not_empty()
+        except Exception:
+            if _rp_try < 4:
+                time.sleep(3)
+                continue
+            raise
+        else:
+            break
     for _vm_title, _vm_sfx in (
         ("General Admission 02", "_General_Admission_02"),
         ("General Admission 01", "_General_Admission_01"),
@@ -9990,11 +10006,23 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # --- step 117: Catch the ProductId promoterProductId merchantProductVariantId (GET post/v2/{{venue_map_post_id}}/relate-products) ---
     # NOTE: Same per-product JS-loop extraction as step 109 (second venue-map flow).
     # 同 step 107：接口仅在 admin 域存在，需 admin_token（base 域 404）。
-    _resp117 = ctx.api.admin.post_v2_relate_products(
-        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-        token="admin_token", app_headers=True)
-    expect(_resp117).json('$.code').equals('200')
-    expect(_resp117).json('$.message').equals('success')
+    # 🔁 重试：同 step 107（relate-products 异步落地，偶发为空）。最多 5 次、间隔 3s。
+    _resp117 = None
+    for _rp_try in range(5):
+        _resp117 = ctx.api.admin.post_v2_relate_products(
+            path_vars={"post0_id": vars.get("venue_map_post_id", "")},
+            token="admin_token", app_headers=True)
+        expect(_resp117).json('$.code').equals('200')
+        expect(_resp117).json('$.message').equals('success')
+        try:
+            expect(_resp117).json('$.data.relatedProducts').is_not_empty()
+        except Exception:
+            if _rp_try < 4:
+                time.sleep(3)
+                continue
+            raise
+        else:
+            break
     # NOTE: 迁移时本段漏了提取（只有断言），导致 step 122 的 productId 仍沿用上一段
     #       （属于另一个 event）的 merchantProductId，后端报
     #       "Product <id> is not a ticket of this event"。此处按 step 107 的同一
