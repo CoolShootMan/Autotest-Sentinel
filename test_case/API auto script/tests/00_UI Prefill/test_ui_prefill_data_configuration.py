@@ -19,10 +19,13 @@ CASE_ID = None  # manually migrated, no Apifox Case ID
 ENV_NAME = "Release"
 
 import datetime as _dt  # step 106/116 需要动态生成事件起止日期
+import logging
 import time  # step 107/117 重试 relate-products 的空窗抖动用
 from typing import TYPE_CHECKING
 
 from core.assertions import expect
+
+_logger = logging.getLogger("api.framework")  # 与 core/context.py 同一日志通道
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 IDE 能把 ctx.api.<域>.<方法>() 跳到 api/ 定义
     from core.context import Context
@@ -4762,6 +4765,45 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # 原始集合 node「create product and update alias」把响应 $.data.id 存为 productId1
     # （下游 POST /posts/curator 的 relatedProducts[1].merchantProductId 依赖它，缺失会 400）
     ctx.extract("productId1", _resp76, "$.data.id")
+
+    # --- step 76 附带的 database 处理器：update alias ---
+    # 原 Apifox 集合 node「create product and update alias」除 POST /v2/products 外，
+    # 还挂了一个 type="database" 处理器（connectionId=112809 = Release_new）：
+    #   UPDATE "PromoterProduct" SET alias = 'bxasz9' WHERE merchant_product_id = '{{productId1}}'
+    # 作用是把这个商品在 promoter 侧登记为 alias=bxasz9，使店铺短链
+    # /{{partner_vanityUrl}}/p/bxasz9 可解析 —— UI 用例 T5007 / T3690 打开的正是该短链
+    # （迁移时整个 database 处理器被丢弃，用例名也因此带 "no SQL"，于是短链 404、
+    #  商品页渲染不出 [data-cta-action="add-to-cart"]）。
+    # 必须用 run_db_write：run_db / db.query 只读，事务在连接关闭时会被回滚，
+    # UPDATE 会「看似成功、库里没改」。
+    _sql76 = "UPDATE \"PromoterProduct\" SET alias = 'bxasz9' WHERE merchant_product_id = '{{productId1}}'"
+    _affected76 = 0
+    try:
+        # PromoterProduct 行由建商品时的后端逻辑写入，理论上紧随 Product，但可能异步
+        # 落地（实测两者相差 ~15ms）。这里最多重试 5 次、每次间隔 2s，避免「行还没建
+        # 好 -> UPDATE 影响 0 行 -> alias 没落库 -> 短链 404」这种时序性假失败。
+        for _try76 in range(1, 6):
+            _affected76 = ctx.run_db_write(112809, _sql76)
+            if _affected76:
+                break
+            time.sleep(2)
+        _logger.info(
+            "[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' "
+            "WHERE merchant_product_id=%s -> affected_rows=%s (尝试 %s 次)",
+            vars.get("productId1"), _affected76, _try76,
+        )
+        if _affected76 == 0:
+            # 如实记录、不阻断：0 行说明该商品在 PromoterProduct 里没有对应记录，
+            # alias 未落库，短链 bxasz9 会 404（T5007 / T3690 将如实报失败）。
+            _logger.warning(
+                "[step 76][db] 重试后仍 0 行：productId1=%s 在 PromoterProduct 中无对应行，"
+                "alias 未设置 -> 短链 bxasz9 会 404",
+                vars.get("productId1"),
+            )
+    except Exception as _exc76:  # noqa: BLE001
+        # DB 不可达（如 CI 网络/安全组限制）不应让整轮预制中断，但必须如实记录，
+        # 以便区分「SQL 没跑成」与「UI 用例真失败」。
+        _logger.warning("[step 76][db] SQL 执行失败（未阻断执行）-> %s", _exc76)
 
 
 

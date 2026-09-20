@@ -152,6 +152,18 @@ class Context(MutableMapping[str, Any]):
                 "[db_query_one] SQL 执行失败 (var=%s): %s", var_name, exc)
             return None
 
+    def run_db_write(self, connection_id: int, sql: str) -> int:
+        """执行 DML（UPDATE / INSERT / DELETE）并提交，返回受影响行数。
+
+        与 ``run_db`` 的区别：``run_db`` 面向查询（返回结果行），写入语句必须用本
+        方法，否则事务在连接关闭时被回滚、SQL 静默不生效。
+
+        SQL 里同样支持 ``{{变量}}``，与 Apifox 的 database 处理器一致。
+        """
+        from core import db as _db
+
+        return _db.execute(connection_id, self.render_text(sql), self._vars)
+
     def set(self, name: str, value: Any) -> None:
         self._vars[name] = value
 
