@@ -82,9 +82,9 @@ def test_staging_lury_testing_0812(ctx: "Context"):
         ],
     }, app_headers=True, token='access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp2, 'orderNumber')
+    ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp2, 'orderId')
+    ctx.extract('orderId', _resp2, '$.data.orderId')
     # step 3: create Order
     _resp3 = ctx.api.orders.create(body={
         "id": "{{orderId}}",

@@ -120,10 +120,17 @@ class OrdersApi(BaseApi):
         self, *,
         body: Any = None, token: str | None = None,
         params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
-        app_headers: bool = False, skip_notifications: bool = True,
+        app_headers: bool = True, skip_notifications: bool = True,
         path_vars: dict[str, Any] | None = None,
     ) -> "ApiResponse":
-        """POST /order  （用例中出现 77 次）"""
+        """POST /order  （用例中出现 77 次）
+
+        注意：``app_headers`` 的签名默认值由迁移器按「多数派」推断，此处**已人工修正**
+        为 ``True``。不带 Pear-AutoTesting / Pear-Client-Id / Pear-Client-Secret 时
+        服务端返回 422 ``Billing address verification level is not sufficient for this
+        checkout.``（实测：不带 422 / 带 201）。manifest（``tools/migration/
+        api_manifest.json`` → ``orders.create``）已同步，重新生成不会再被推断回 False。
+        """
         return self._call(
             "POST", '/order',
             path_vars=path_vars,

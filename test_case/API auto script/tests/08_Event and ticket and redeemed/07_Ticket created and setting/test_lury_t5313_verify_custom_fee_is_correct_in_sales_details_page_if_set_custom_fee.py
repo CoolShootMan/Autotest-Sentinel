@@ -92,8 +92,16 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
     """Apifox case #8662436: Lury_T5313_Verify_custom_fee_is_correct_in_sales_details_page_if_set_custom_fee"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
+    # 补：原 Apifox 依赖 collection 环境预置的 consumer token（用例内无登录步骤），
+    # 而 pytest 每条用例独立运行、env 里的 consumer_access_token 为空串，故按同目录
+    # t2229 的约定显式登录一次并提取 token（$.data.token 与 $.data.refreshToken 均可鉴权）。
+    _resp0 = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{consumer_email}}",
+    })
+    ctx.extract('consumer_access_token', _resp0, '$.data.token')
     # step 1: delete cart
-    _resp1 = ctx.api.cart.delete()
+    _resp1 = ctx.api.cart.delete(token='consumer_access_token')
     # step 2: buy now ticket with custom fee
     _resp2 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "885eaa07-e64b-4eff-90aa-d5b1582034e9",
@@ -125,11 +133,11 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp2, 'orderNumber')
+    ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp2, 'orderId')
+    ctx.extract('orderId', _resp2, '$.data.orderId')
     # step 3: create Order
     _resp3 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -150,9 +158,9 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 4: get consumer order detail
-    _resp4 = ctx.api.orders.consumer_detail_by_order_number()
+    _resp4 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
     # step 5: Login-M1
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -160,4 +168,4 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
     })
     ctx.extract('M1_access_token', _resp5, '$.data.token')
     # step 6: get M1 order detail v2
-    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')

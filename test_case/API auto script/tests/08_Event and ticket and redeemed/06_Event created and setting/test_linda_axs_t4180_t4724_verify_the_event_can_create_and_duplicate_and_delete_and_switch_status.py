@@ -564,25 +564,91 @@ ENV_NAME = "Release"
 
 import json
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 from core.assertions import expect
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
 
+_T = TypeVar("_T")
+
+def _pick_first(items: list[_T], predicate: Callable[[_T], bool]) -> _T | None:
+    """返回 items 中第一个满足 predicate 的元素；未命中返回 None。"""
+    return next((i for i in items if predicate(i)), None)
+
+
+def _product_has_stock(product: dict) -> bool:
+    """原 post-script 的库存判定：优先 ``variants[0].inventoryQuantity``，
+    回退 ``product.inventoryQuantity``，> 0 视为有货。"""
+    variants = product.get('variants') or []
+    inv = variants[0].get('inventoryQuantity') if variants else None
+    if inv is None:
+        inv = product.get('inventoryQuantity')
+    try:
+        return float(inv or 0) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _apply_related_product(ctx: "Context", product: dict) -> None:
+    """把「库存 > 0 的关联产品」的字段写入上下文。
+
+    Apifox case #8709247 的 step4 / step9 两处 post-script 是同一段 JS，共用本函数。
+    一律写空串/0 而非 None —— ``templating.render_text`` 会**跳过 None** 的值，
+    占位符就不会被替换而原样残留进 request body。
+    """
+    variants = product.get('variants') or []
+    variant0 = variants[0] if variants else {}
+    assert isinstance(variant0, dict), "variants 元素应为 dict"
+    hub = (product.get('extraInfo') or {}).get('ticketHubInfo') or {}
+    sections = hub.get('sectionOptions') or []
+    section0 = sections[0] if sections else {}
+    assert isinstance(section0, dict), "sectionOptions 元素应为 dict"
+    try:
+        quantity = int(float(section0.get('availableQuantity') or 0))
+    except (TypeError, ValueError):
+        quantity = 0
+    ctx.set('ticket_title', (product.get('title') or '').strip())
+    ctx.set('productId', product.get('merchantProductId')
+            or (product.get('shippingView') or {}).get('productId') or '')
+    ctx.set('promoterProductId', product.get('promoterProductId') or '')
+    ctx.set('merchantProductVariantId', variant0.get('merchantProductVariantId') or '')
+    ctx.set('displayVariantId', variant0.get('displayVariantId')
+            or product.get('displayVariantId') or '')
+    ctx.set('ticketHubInfo_id', hub.get('ticketHandle') or '')
+    ctx.set('ticketHandle', section0.get('ticketHandle') or '')
+    ctx.set('availableQuantity', quantity)
+    ctx.set('sectionIds', section0.get('label') or '')
+    # 源 section 自带 isGeneralAdmission（GA 票为 True、有座区如 BALCRT 为 False）。
+    # 迁移时下游 step7 的复制 body 把它写死成 True，与源数据不一致，故按源值透传。
+    ctx.set('isGeneralAdmission', bool(section0.get('isGeneralAdmission', True)))
+
 
 def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplicate_and_delete_and_switch_status(ctx: "Context"):
-    from core.compat import get_path as _get_path
     """Apifox case #8709247: Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplicate_and_delete_and_s"""
+    from core.compat import get_path as _get_path
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: 79fd31fa-6a2e-4ec3-b070-60ac93210027
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'axsEvent.id'
-    vars['event_title'] = 'axsEvent.title'
-    vars['copyFromId'] = 'copyFromId'
+    # 原 Apifox post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
+    # 取 id/title 写入 event_id/event_title，并取 tickets[0].id 写入 copyFromId。
+    # 注意：/product-event/list 按时间倒序，本用例自己复制出来的事件（标题以 "Duplicate "
+    # 开头、票已 0 库存）会排在真正源事件前面，直接取首个 AXS 会选中上一轮跑出的副本，
+    # 导致 step4 取不到可售产品。故先排除自身副本，再取首个 AXS 事件。
+    _items1 = (_resp1.json().get('data') or {}).get('items') or []
+    _candidates1 = [i for i in _items1
+                    if i.get('platform') == 'AXS'
+                    and not str(i.get('title') or '').startswith('Duplicate ')]
+    assert _candidates1, (f"step1 事件列表中未找到可用的 platform=AXS 源事件"
+                          f"（items={len(_items1)}，已排除 title 以 'Duplicate ' 开头的副本）")
+    _axs_event = _candidates1[0]
+    vars['event_id'] = _axs_event.get('id') or ''
+    vars['event_title'] = _axs_event.get('title') or ''
+    _tickets1 = _axs_event.get('tickets') or []
+    vars['copyFromId'] = (_tickets1[0].get('id') or '') if _tickets1 else ''
     # step 2: cb92454b-5c3f-41bc-a204-17c47db601f0
     _resp2 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
@@ -593,18 +659,24 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 3d38a45e-afec-4e75-8ad7-6338b5b7f6fc
     _resp4 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
-    vars['ticket_title'] = 'ticketTitle'
-    vars['productId'] = 'productId'
-    vars['promoterProductId'] = 'promoterProductId'
-    vars['merchantProductVariantId'] = 'merchantProductVariantId'
-    vars['displayVariantId'] = 'displayVariantId'
-    vars['ticketHubInfo_id'] = 'ticketHubInfo_id'
-    vars['ticketHandle'] = 'ticketHandle'
-    vars['availableQuantity'] = 'availableQuantity'
-    vars['sectionIds'] = 'sectionIds'
+    # 原 Apifox post-script: 取 data.relatedProducts 中首个库存 > 0 的产品并提取字段。
+    _rels4: list[dict] = (_resp4.json().get('data') or {}).get('relatedProducts') or []
+    _prod4 = _pick_first(_rels4, _product_has_stock)
+    assert _prod4, f"step4 未找到库存 > 0 的关联产品（relatedProducts={len(_rels4)}）"
+    _apply_related_product(ctx, _prod4)
     # step 5: 5df31978-26c0-47bb-b668-d909ba23f7ed
     _resp5 = ctx.api.products.by_product_id_2(body=None, token='yuxiao999_token')
-    vars['productForm'] = 'JSON.stringify(productForm'
+    # 原 Apifox post-script: data.product.productForm（缺失时回退 data.productForm）。
+    # 实测该接口（GET /merchant/product/{id}）响应里并没有 productForm 字段
+    # （relatedProducts 响应同样没有），Apifox 侧取到的是跨用例残留的环境变量值，
+    # 源头不可复现 → 取不到就为 None。
+    # 下游只有 step7 复制事件的 body 消费它，而服务端要求 isProductFormEnabled=True 时
+    # productForm 必须是 object/array（字符串/null 均 400：
+    # `tickets.0.nested property productForm must be either object or array`），
+    # 故该 body 用 `isProductFormEnabled = bool(productForm)` 保持自洽；
+    # 与同目录同场景的 test_linda_t4180_t4724_*.py（已完整迁移版，值为 False/None）一致。
+    vars['productForm'] = (_get_path(_resp5.json(), ['data', 'product', 'productForm'])
+                           or _get_path(_resp5.json(), ['data', 'productForm']))
     # step 6: 96a11731-2fab-4457-8fc6-5b9912ed7f25
     _resp6 = ctx.api.admin.users_search(body={
         "query": "{{UIauto_partner_email}}",
@@ -618,8 +690,9 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         "pageSize": 100,
         "pageNumber": 1,
     }, token='admin_token')
-    vars['user_id'] = 'userId'
-    vars['user_id'] = ''
+    # 原 Apifox post-script: code==200 且 data.items 非空 → 取 items[0].id，否则置空串。
+    _items6 = (_resp6.json().get('data') or {}).get('items') or []
+    vars['user_id'] = (_items6[0].get('id') or '') if _items6 else ''
     vars['dul_event_title'] = 'Duplicate Verify the AXS Event can create and duplicate and delete success'
     # step 7: 46f46103-0698-46bb-8a31-851caf142fb6
     # === pre-script（由 Apifox customScript 翻译）===
@@ -820,7 +893,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
                         },
                         'ticketHandle': '{{ticketHandle}}',
                         'availableQuantity': '{{availableQuantity}}',
-                        'isGeneralAdmission': True,
+                        'isGeneralAdmission': vars['isGeneralAdmission'],
                     },
                 ],
             },
@@ -846,7 +919,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
             'expirationTime': None,
             'expirationTimeDisplay': None,
             'allowAtDoorSales': False,
-            'isProductFormEnabled': True,
+            'isProductFormEnabled': bool(vars['productForm']),
             'isVariantPriceDisplayEnabled': False,
             'isTipEnabled': False,
             'hideFees': False,
@@ -901,7 +974,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
             ],
             'variants': [
                 {
-                    'id': '3{{merchantProductVariantId}}',
+                    'id': '{{merchantProductVariantId}}',
                     'remote_id': None,
                     'createdAt': '2026-09-03T09:44:42.518Z',
                     'updatedAt': '2026-09-03T09:44:42.518Z',
@@ -960,7 +1033,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
                 },
             ],
             'inclusions': [],
-            'productForm': '{{productForm}}',
+            'productForm': vars['productForm'],
         },
     ],
     'lineup': [],
@@ -1058,25 +1131,35 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, token='yuxiao999_token')
+    # 复制失败会让 dup_event_id 落空 → 下游 URL 变成 /posts/curator/event//posts (404)，
+    # 报错信息完全指不到真正原因，故在此显式断言并带出服务端错误体。
+    assert _resp7.status_code in (200, 201), f"step7 复制事件失败：{_resp7.describe()}"
     _dupeventid_val = _get_path(_resp7.json(), ['data', 'id'])
     vars['dup_event_id'] = _dupeventid_val if _dupeventid_val is not None else ''
     _lineupid_val = _get_path(_resp7.json(), ['data', 'lineup', 0, 'id'])
     vars['lineup_id'] = _lineupid_val if _lineupid_val is not None else ''
     # step 8: 49b770d0-3b1c-46eb-95ef-3bf4753fe5b1
     _resp8 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    _items8: list[dict] = (_resp8.json().get('data') or {}).get('items') or []
     _post0id_val = _get_path(_resp8.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
+    # post0_id 是 step4/9/11 的**路径变量**（GET /post/v2/{{post0_id}}/relate-products）。
+    # 而下游 buy-now / checkout-express 的 body 消费 {{postId}}，原迁移漏赋值 → 空串 →
+    # 400 `id must be a UUID`。复刻事件自动生成的 post 有时把新标题只落在 headline 上，
+    # 故先按 dul_event_title 匹配 title，再退 headline，最后退「列表唯一项」，并显式断言。
+    _target8 = (_pick_first(_items8, lambda i: i.get('title') == vars.get('dul_event_title'))
+                or _pick_first(_items8, lambda i: i.get('headline') == vars.get('dul_event_title'))
+                or (_items8[0] if len(_items8) == 1 else None))
+    assert _target8, (f"step8 未能在事件 {vars.get('dup_event_id')} 的 posts 中找到目标 post"
+                      f"（items={len(_items8)}）")
+    vars['postId'] = _target8.get('id') or ''
     # step 9: 9775d52a-d543-4ead-8304-d92610b7ef8a
     _resp9 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
-    vars['ticket_title'] = 'ticketTitle'
-    vars['productId'] = 'productId'
-    vars['promoterProductId'] = 'promoterProductId'
-    vars['merchantProductVariantId'] = 'merchantProductVariantId'
-    vars['displayVariantId'] = 'displayVariantId'
-    vars['ticketHubInfo_id'] = 'ticketHubInfo_id'
-    vars['ticketHandle'] = 'ticketHandle'
-    vars['availableQuantity'] = 'availableQuantity'
-    vars['sectionIds'] = 'sectionIds'
+    # 原 Apifox post-script: 取 data.relatedProducts 中首个库存 > 0 的产品并提取字段。
+    _rels9: list[dict] = (_resp9.json().get('data') or {}).get('relatedProducts') or []
+    _prod9 = _pick_first(_rels9, _product_has_stock)
+    assert _prod9, f"step9 未找到库存 > 0 的关联产品（relatedProducts={len(_rels9)}）"
+    _apply_related_product(ctx, _prod9)
     # step 10: 103a0db8-3d7f-4727-bb53-8a1ce5bf2abf
     _resp10 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
@@ -1555,10 +1638,161 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    # === 补建：原 Apifox 记录依赖同 collection 另一条用例（8620470，
+    # test_linda_t4180_t4724_*.py）留下的 {{promoterProductId}} / {{postId}} 环境变量。
+    # 那条用例会 products.create 一张名为 "ticket on hold" 的普通票（PEAR / QR_CODE）
+    # 并 show-in-post 到复制出的 post 上，下游 buy-now 买的就是它 —— 这也是 Apifox 里
+    # step15/18 期望报 "The product(ticket on hold)is not available." 的来源。
+    # 单独跑本用例时这两个变量为空，buy-now 会落到复制出来的 AXS 外链票上，被 ticket hub
+    # 以 "These tickets are not on sale right now." 拒掉（外部票无法在本环境转售），
+    # 于是 orderId 取不到 → step24 的 body 残留 "{{orderId}}" → 400 id must be a UUID。
+    # 故这里把那张票补建出来，让用例自洽。
+    _resp10b = ctx.api.products.create(body={
+    'merchantId': '{{catalog_id}}',
+    'shippingType': 'NO_SHIPPING_REQUIRED',
+    'isFeatured': False,
+    'commissionRate': 0,
+    'priceSyncImported': False,
+    'additionalShippingFee': 0,
+    'returnPolicyApplied': True,
+    'title': 'ticket on hold',
+    'bodyHtml': '<p class="katana__paragraph katana__paragraph--align-left" dir="ltr"><br></p>',
+    'status': 'ACTIVE',
+    'isUsed': 'NWT',
+    'taxJarCategory': '',
+    'platform': 'PEAR',
+    'autoFulfill': True,
+    'options': [
+        {
+            'name': 'Title',
+            'values': [
+                'Default Title',
+            ],
+            'images': [],
+        },
+    ],
+    'variants': [
+        {
+            'inventoryQuantity': 10,
+            'price': 0,
+            'priceAnchor': 0,
+            'option': {
+                'option1': 'Default Title',
+            },
+            'fees': 0,
+            'ticketPrice': 0,
+            'transactionFee': {
+                'platformFee': 0,
+                'customFee': 0,
+                'customFeeBreakdown': {},
+                'transactionItemFee': 0,
+            },
+            'minPriceForCheckFees': 0,
+            'weightUnit': 'lb',
+        },
+    ],
+    'listingType': 'TICKET',
+    'ticketType': 'TICKET_TYPE_STANDARD',
+    'soldQuantity': 0,
+    'excludeFromPostSync': False,
+    'isTipEnabled': False,
+    'useEventPosterAsCover': True,
+    'catalogCommissionRate': 0,
+    'deliveryMethod': 'QR_CODE',
+    'thirdPartyDeliveryMessage': '',
+    'taxEnable': True,
+    'customTaxRate': None,
+    'earliestTime': '2026-08-12T09:32:07.963Z',
+    'styleSettings': {
+        'recentUsedColors': [
+            '#110921',
+            '#ECA416',
+            '#FFEEBE',
+            '#0000',
+            '#0D0D14',
+            '#2D2108',
+            '#5D5D5D',
+            '#CBBE9C',
+            '#000000',
+            '#EDA415',
+            '#FFFFFF',
+            '#CFCFCF',
+            '#ABABAB',
+            '#C1C1C3',
+            '#858585',
+            '#F6CA7C',
+            '#E0E0E0',
+        ],
+    },
+    'isInclusionsEnabled': False,
+    'inclusions': [],
+    'isVariantPriceDisplayEnabled': False,
+    'stopSellingAfterDisplay': '',
+    'extraInfo': {
+        'businessTimezone': 'America/Los_Angeles',
+    },
+    'overrideEventTax': False,
+    'overrideEventCustomFee': False,
+    'hideFees': False,
+    'transactionCustomFeeConfig': None,
+    'bodyJson': '{"root":{"children":[{"children":[],"direction":"ltr","format":"","indent":0,"type":"katana-paragraph","version":1,"textFormat":0,"textStyle":"","style":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}',
+    'images': [
+        {
+            'height': 2048,
+            'mediaDuration': 0,
+            'mediaType': 'IMAGE',
+            'position': 0,
+            'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
+            'width': 3072,
+        },
+    ],
+    'eventId': '{{dup_event_id}}',
+    'isExpirationEnabled': False,
+}, token='yuxiao999_token')
+    assert _resp10b.status_code in (200, 201), f"补建 ticket on hold 票失败：{_resp10b.describe()}"
+    _d_hold = _resp10b.json().get('data') or {}
+    vars['on_hold_productId'] = _d_hold.get('id') or ''
+    _hold_variants = _d_hold.get('variants') or []
+    vars['on_hold_displayVariantId'] = ((_hold_variants[0].get('displayVariantId')
+                                     or _hold_variants[0].get('id')) or '') if _hold_variants else ''
+    vars['on_hold_merchantVariantId'] = ((_hold_variants[0].get('merchantProductVariantId')
+                                      or _hold_variants[0].get('id')) or '') if _hold_variants else ''
+    # show-in-post：把新票挂到复制出来的 post 上（与兄弟用例 step12 一致），
+    # 这样 step11 的 post/v2/{{postId}}/relate-products 能查到它。
+    _resp10c = ctx.api.events.v2_show_in_post(body={
+        "productIds": [
+            "{{on_hold_productId}}",
+        ],
+        "posts": [
+            {
+                "postId": "{{postId}}",
+                "isVisible": True,
+            },
+        ],
+    }, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    assert _resp10c.status_code in (200, 201), f"补建票 show-in-post 失败：{_resp10c.describe()}"
     # step 11: 08306796-68a5-4c06-a064-41c855cb0242
-    _resp11 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
-    vars['promoterProductId'] = 'targetVariantId'
-    vars['merchantProductVariantId'] = 'merchantProductVariantId'
+    _resp11 = ctx.api.admin.post_v2_relate_products(
+        body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
+    # 原 Apifox post-script: 在 data.relatedProducts 中找 title === "ticket on hold" 的产品，
+    # 其 displayVariantId → promoterProductId，variants[0].merchantProductVariantId → 同名变量。
+    # 实测本用例数据里并没有该标题的产品：源事件 DANNA 的票是 GA Standing Floor /
+    # Reserved Balcony / GA Standing Balcony，复制后只剩一张 "General Admission — Pear.US"。
+    # 原 Apifox 环境下命中的 "ticket on hold" 来自同一 collection 另一条用例
+    # （test_linda_t4180_t4724_*.py，其 step11 显式 products.create 建这张票）残留的环境变量。
+    # 本用例下游（step14 buy-now、step15/18 checkout-express）只把该变量当作
+    # 「复制事件那张票的变体 id」用，且 step15/18 迁移后并未保留标题相关断言，
+    # 故按标题优先命中、否则取首个带 displayVariantId 的关联产品。
+    _rels11: list[dict] = (_resp11.json().get('data') or {}).get('relatedProducts') or []
+    _tp11 = (_pick_first(_rels11, lambda p: p.get('title') == 'ticket on hold')
+             or _pick_first(_rels11, lambda p: p.get('id') == vars.get('on_hold_productId')))
+    vars['promoterProductId'] = ((_tp11 or {}).get('displayVariantId')
+                                 or vars.get('on_hold_displayVariantId') or '')
+    assert vars['promoterProductId'], (f"step11 未取到可买变体"
+                                      f"（relatedProducts={len(_rels11)}）")
+    # 原 post-script 还会把 merchantProductVariantId 覆盖成该产品的变体 id，但那个值在
+    # Apifox 里来自别条用例的残留变量；本用例 step7/10/17/19 的事件 body 需要它保持
+    # 「复制票自己的变体」，故这里不再覆盖（保持 step9 提取到的值）。
     # step 12: 5e4763c0-213e-44d1-8ee0-15b388f36e32
     _resp12 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
@@ -1595,14 +1829,16 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         "currentUpdateCartItems": [
             {
                 "quantity": 1,
-                "id": "{{productId}}",
+                "id": "{{promoterProductId}}",
                 "postId": "{{postId}}",
                 "price": 2,
                 "customFields": [],
             },
         ],
-    }, token='access_token')
+    }, app_headers=True, token='access_token')
     # extractor: orderId = $.data.orderId
+    # 注意：此处 buy-now 预期失败（step10 已把事件置为 ON_HOLD，票不可售），
+    # orderId 取不到是正常的；真正的 orderId 由 step23 提供（那时事件已回到 UPCOMING）。
     ctx.extract('orderId', _resp14, '$.data.orderId')
     # step 15: 33e4ab76-4fed-456c-85a4-6b1dd506eee7
     _resp15 = ctx.api.orders.checkout_express(body={
@@ -1629,7 +1865,10 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     }, app_headers=True, token='access_token')
     # step 16: 173d3229-281b-4285-bb4e-e8bcd5130909
     _resp16 = ctx.api.merchants.shipping_options(body=None, token='yuxiao999_token')
-    vars['shipping_option_id'] = 'shippingId'
+    # 原 Apifox post-script: data.items[0].id → shipping_option_id（下游多个 body 消费）。
+    _items16 = (_resp16.json().get('data') or {}).get('items') or []
+    assert _items16, 'step16 未取到 shipping options，下游 body 需要 {{shipping_option_id}}'
+    vars['shipping_option_id'] = _items16[0].get('id') or ''
     # step 17: 02bc9b66-ffbb-48ad-8d30-5b3b3764e578
     _resp17 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
@@ -1701,9 +1940,16 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     'ticketHubInfo': None,
     'readOnlyFields': [],
     'medias': [],
+    # 原 Apifox 记录此处为 '{{productId}}'，但在本用例里 productId 已被 step4/9 的
+    # post-script 覆盖成**复制出来的 AXS 外链票** id。PUT /product-event 的 tickets
+    # 是整体替换语义：用它会把事件票列表替换成那张外部票，我们在上一步补建的 PEAR
+    # 票会被挤出事件（同时掉落 post 的 relatedProducts），step23 的 buy-now 随即
+    # 落到外部票上被 ticket hub 拒绝（These tickets are not on sale right now.）。
+    # 本 body 的标题是 'ticket on hold' + deliveryMethod QR_CODE，语义上指向的正是
+    # 补建的那张 PEAR 票，故改为 '{{on_hold_productId}}'。
     'tickets': [
         {
-            'id': '{{productId}}',
+            'id': '{{on_hold_productId}}',
             'title': 'ticket on hold',
             'listingType': 'TICKET',
             'status': 'ACTIVE',
@@ -2261,9 +2507,16 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     'ticketHubInfo': None,
     'readOnlyFields': [],
     'medias': [],
+    # 原 Apifox 记录此处为 '{{productId}}'，但在本用例里 productId 已被 step4/9 的
+    # post-script 覆盖成**复制出来的 AXS 外链票** id。PUT /product-event 的 tickets
+    # 是整体替换语义：用它会把事件票列表替换成那张外部票，我们在上一步补建的 PEAR
+    # 票会被挤出事件（同时掉落 post 的 relatedProducts），step23 的 buy-now 随即
+    # 落到外部票上被 ticket hub 拒绝（These tickets are not on sale right now.）。
+    # 本 body 的标题是 'ticket on hold' + deliveryMethod QR_CODE，语义上指向的正是
+    # 补建的那张 PEAR 票，故改为 '{{on_hold_productId}}'。
     'tickets': [
         {
-            'id': '{{productId}}',
+            'id': '{{on_hold_productId}}',
             'title': 'ticket on hold',
             'listingType': 'TICKET',
             'status': 'ACTIVE',
@@ -2741,6 +2994,20 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     expect(_resp22).json('$.code').equals('200')
     # assertion 22.assertion: responseJson equal success
     expect(_resp22).json('$.message').equals('success')
+    # step11 取到的 displayVariantId 在 step17/19 的 PUT 之后已失效（PUT 会重排事件票），
+    # 直接拿来 buy-now 会 400 `relatedProduct Not Found`。故买之前重新取一次关联产品，
+    # 按**变体 id** 精确匹配上一步补建的那张 PEAR 票，避免命中同名的其它票。
+    _rels23 = ctx.api.admin.post_v2_relate_products(
+        body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
+    _list23: list[dict] = (_rels23.json().get('data') or {}).get('relatedProducts') or []
+    _tp23 = _pick_first(
+        _list23,
+        lambda p: any(v.get('merchantProductVariantId') == vars.get('on_hold_merchantVariantId')
+                      for v in (p.get('variants') or [])))
+    assert _tp23, (f"step23 关联产品中未找到补建的 ticket on hold 票"
+                   f"（on_hold_merchantVariantId={vars.get('on_hold_merchantVariantId')}，"
+                   f"relatedProducts={len(_list23)}）")
+    vars['promoterProductId'] = _tp23.get('displayVariantId') or ''
     # step 23: buy now
     _resp23 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "{{postId}}",
@@ -2766,14 +3033,19 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         "currentUpdateCartItems": [
             {
                 "quantity": 1,
-                "id": "{{productId}}",
+                "id": "{{promoterProductId}}",
                 "postId": "{{postId}}",
                 "price": 2,
                 "customFields": [],
             },
         ],
-    }, token='access_token')
+    }, app_headers=True, token='access_token')
     # extractor: orderId = $.data.orderId
+    # orderId 是 step24 下单（POST /order）的 body 入参。这一步 buy-now 必须成功：
+    # 失败时 ctx.extract 会把 orderId 写成 None，而 render_text 跳过 None 值，
+    # 下游 body 就会带着未渲染的 "{{orderId}}" 发出去 → 400 `id must be a UUID`，
+    # 报错完全指不到真正原因，故在此断言并带出服务端错误体。
+    assert _resp23.status_code in (200, 201), f"step23 buy-now 失败：{_resp23.describe()}"
     ctx.extract('orderId', _resp23, '$.data.orderId')
     # step 24: place order
     _resp24 = ctx.api.orders.create(body={

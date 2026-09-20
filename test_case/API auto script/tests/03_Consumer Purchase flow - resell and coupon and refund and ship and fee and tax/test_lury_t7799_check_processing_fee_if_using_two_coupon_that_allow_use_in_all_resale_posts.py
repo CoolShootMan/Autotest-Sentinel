@@ -468,7 +468,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "updateCartItems": [
@@ -499,11 +499,11 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: apply promotion
     _resp4 = ctx.api.orders.update_promotions(body={
         "shippingAddress": {
@@ -514,7 +514,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
         },
         "applicableCode": "manual5",
         "orderId": "{{orderId}}",
-    })
+    }, token='consumer_access_token')
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
@@ -539,7 +539,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -547,7 +547,7 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantId8}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantId8}}'}, token='M1_access_token')
     # step 8: Login - P1
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
@@ -555,10 +555,18 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('P1_access_token', _resp8, '$.data.token')
     # step 9: get P1 orders
-    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P1_OrderId'] = 'curatorOrderId'
+    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P1_access_token')
+    _j = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
+    _arr = _get_path(_j, ['data', 'items']) or []
+    # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
+    for _order in _arr:
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['P1_OrderId'] = _order.get('id')
+    assert vars.get('P1_OrderId'), (
+        f"test_lury_t7799_check_processing_fee_if_ L559: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 10: get P1 order detail v2
-    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'})
+    _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'}, token='P1_access_token')
     # step 11: Login - merchant
     _resp11 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -566,10 +574,10 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('merchant_access_token', _resp11, '$.data.token')
     # step 12: get merchant orders
-    _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
     vars['merchantOrderId'] = 'curatorOrderId'
     # step 13: get merhcant order detail v2
-    _resp13 = ctx.api.orders.promoter_detail_v2()
+    _resp13 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 14: Login - curator
     _resp14 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -577,14 +585,14 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('curator_access_token', _resp14, '$.data.token')
     # step 15: get curator orders
-    _resp15 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp15 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='curator_access_token')
     _j = _resp15.json() if _resp15.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['curatorOrderId'] = _order.get('id')
     # step 16: get curator order detail v2
-    _resp16 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{curatorOrderId}}'})
+    _resp16 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{curatorOrderId}}'}, token='curator_access_token')
     # step 17: Login - promoter
     _resp17 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -592,14 +600,14 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('promoter_access_token', _resp17, '$.data.token')
     # step 18: get promoter orders
-    _resp18 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp18 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='promoter_access_token')
     _j: dict[str, Any] = _resp18.json() if _resp18.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['promoterOrderId'] = _order.get('id')
     # step 19: get promoter order detail v2
-    _resp19 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'})
+    _resp19 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='promoter_access_token')
     # step 20: Login -P5
     _resp20 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -607,7 +615,15 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
     })
     ctx.extract('P5_access_token', _resp20, '$.data.token')
     # step 21: get P5 orders
-    _resp21 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P5_OrderId'] = 'curatorOrderId'
+    _resp21 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P5_access_token')
+    _j = _resp21.json() if _resp21.headers.get('content-type','').startswith('application/json') else {}
+    _arr = _get_path(_j, ['data', 'items']) or []
+    # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
+    for _order in _arr:
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['P5_OrderId'] = _order.get('id')
+    assert vars.get('P5_OrderId'), (
+        f"test_lury_t7799_check_processing_fee_if_ L611: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 22: get P5 order detail v2
-    _resp22 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'})
+    _resp22 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'}, token='P5_access_token')
