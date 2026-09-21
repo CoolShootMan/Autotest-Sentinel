@@ -182,7 +182,16 @@ def push_one(remote: str, branch: str, args) -> int:
         return 0
 
     url = f"https://{user}:{token}@{host}/{slug}.git"
-    r = git("push", url, branch)
+    push_args = ["push"]
+    if getattr(args, "force", False):
+        # 改写历史用。优先 force-with-lease：远端若已被他人推进则拒绝，避免覆盖别人的提交。
+        lease = (git("rev-parse", f"refs/remotes/{remote}/{branch}").stdout or "").strip()
+        if lease:
+            push_args.append(f"--force-with-lease={branch}:{lease}")
+        else:
+            push_args.append("--force")
+    push_args += [url, branch]
+    r = git(*push_args)
     print(f"[{remote}] " + ((r.stdout or "") + (r.stderr or "")).replace(token, "***").strip())
     if r.returncode != 0:
         return r.returncode
@@ -232,6 +241,7 @@ def main() -> int:
     ap.add_argument("--slug", default=None, help="覆盖从 remote 推导的 org/repo")
     ap.add_argument("--cred-target", default=None, help="覆盖凭据 target（默认按 remote 推导）")
     ap.add_argument("--fetch", action="store_true", help="只拉取（不推），更新本地 tracking")
+    ap.add_argument("--force", action="store_true", help="强制推送（改写历史用；默认优先 force-with-lease）")
     ap.add_argument("--dry-run", action="store_true", help="只打印将执行的动作（脱敏）")
     args = ap.parse_args()
 
