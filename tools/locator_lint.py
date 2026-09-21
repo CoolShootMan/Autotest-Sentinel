@@ -50,9 +50,9 @@ except ImportError:
     sys.exit(2)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_ROOTS = [os.path.join(PROJECT_ROOT, "test_case", "UI", "Test_Katana")]
+DEFAULT_ROOTS = [os.path.join(PROJECT_ROOT, "test_case", "UI", "UI")]
 DEFAULT_EXCLUDES = [os.path.join("actions", "example")]
-ACTIONS_FILE = os.path.join(PROJECT_ROOT, "test_case", "UI", "Test_Katana",
+ACTIONS_FILE = os.path.join(PROJECT_ROOT, "test_case", "UI",
                             "actions", "__init__.py")
 
 RULE_HELP = OrderedDict([

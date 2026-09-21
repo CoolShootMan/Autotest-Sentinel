@@ -27,7 +27,7 @@ from playwright.sync_api import sync_playwright
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 PROJECT_ROOT = Path(__file__).parent.parent
-COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
+COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" 
 
 # Read from BASE_URL environment variable, default to release environment
 ENV_BASE = os.environ.get("BASE_URL", "https://release.pear.us")

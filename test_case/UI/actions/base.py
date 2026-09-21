@@ -486,7 +486,7 @@ def smart_add_cookies(page: Page, v: dict):
     """
     import json
     state_path = v.get("storage_state") or os.path.join(
-        BASE_DIR, "test_case", "UI", "Test_Katana", "cookie_release.json"
+        BASE_DIR, "test_case", "UI", "cookie_release.json"
     )
     if not os.path.exists(state_path):
         raise FileNotFoundError(f"Cookie storage state file not found: {state_path}")
@@ -518,7 +518,7 @@ def clear_cookies(page: Page, v: dict):
 
     if v.get("inject_guest"):
         state_path = v.get("storage_state") or os.path.join(
-            BASE_DIR, "test_case", "UI", "Test_Katana", "cookie_release.json"
+            BASE_DIR, "test_case", "UI", "cookie_release.json"
         )
         try:
             state = json.load(open(state_path, encoding="utf-8"))
@@ -1403,7 +1403,7 @@ def run_workflow_script(page: Page, v):
     if not script_name.endswith(".py"):
         script_name += ".py"
 
-    script_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", "api", "ui_workflow", script_name)
+    script_path = os.path.join(BASE_DIR, "test_case", "UI", "ui_workflow", script_name)
 
     if not os.path.exists(script_path):
         raise FileNotFoundError(f"run_workflow_script: script not found: {script_path}")
@@ -1461,11 +1461,11 @@ def duplicate_post(page: Page, v):
 
     script_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "..", "api", "ui_workflow", "duplicate_post.py"
+        "..", "ui_workflow", "duplicate_post.py"
     )
     result_file = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
-        "..", "api", "ui_workflow", ".duplicate_result.json"
+        "..", "ui_workflow", ".duplicate_result.json"
     )
 
     logger.info(f"[duplicate_post] Running script for post_id={post_id}")

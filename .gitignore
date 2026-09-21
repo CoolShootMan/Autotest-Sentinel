@@ -26,10 +26,10 @@ env/
 
 # === Sensitive / Auth ===
 # Cookie files contain real auth tokens - NEVER commit
-test_case/UI/Test_Katana/cookie_*.json
+test_case/UI/cookie_*.json
 # API token for ui_workflow scripts
-test_case/UI/Test_Katana/api/ui_workflow/api_token.txt
-test_case/UI/Test_Katana/staging_cookie.json
+test_case/UI/api/ui_workflow/api_token.txt
+test_case/UI/staging_cookie.json
 tools/get_cookie.py
 tools/check_chinese.py
 tools/translate_yaml_comments.py
@@ -148,9 +148,9 @@ Thumbs.db
 # ignore test error screenshots (generated at runtime)
 /*.png
 /requirements.txt
-/test_case/UI/Test_Katana/cookie_release.json
+/test_case/UI/cookie_release.json
 # 登录态 cookie 一律不入库（含真 token）
-/test_case/UI/Test_Katana/*cookie*.json
+/test_case/UI/*cookie*.json
 **/__pycache__/*
 
 venv/pyvenv.cfg
@@ -166,7 +166,7 @@ data/*.xlsx
 debug_*.html
 
 # === Performance Test (local pressure test only, do not commit) ===
-test_case/UI/Test_Katana/All_YAML/Performance/
+test_case/UI/All_YAML/Performance/
 
 # === DOM Knowledge Base (generated index, not source data) ===
 dom_kb/
@@ -212,23 +212,23 @@ tools/_inject_cookie.js
 /qa_workflow_requirements.md
 
 # === prefill_runner debug/temp artifacts (Apifox export residue, do not commit) ===
-test_case/UI/Test_Katana/api/tmp*.js
+test_case/UI/api/tmp*.js
 # === local AI temp scripts at repo root (do not commit) ===
 /_*.py
 # === KAT case verification + draft artifacts (one-off, do not commit) ===
 data/*_step_verification.json
 data/*_test_cases_draft.md
 # === prefill runtime state (written by manual_event.py at runtime, do not commit) ===
-test_case/UI/Test_Katana/api/prefill_vars.json
+test_case/UI/api/prefill_vars.json
 
 # === QA performance test debug
 test_case/output
 test_case/performance testing/cache-regression/output
 
 # === Failure screenshots written into case dirs (generated at runtime) ===
-test_case/UI/Test_Katana/fail_*.png
-test_case/UI/Test_Katana/warn_*.png
-test_case/UI/Test_Katana/crash_*.png
+test_case/UI/fail_*.png
+test_case/UI/warn_*.png
+test_case/UI/crash_*.png
 
 # === Browser CLI runtime state (local only) ===
 .playwright-cli/

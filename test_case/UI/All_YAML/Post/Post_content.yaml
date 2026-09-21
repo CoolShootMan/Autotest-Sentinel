@@ -125,7 +125,7 @@ VerifyGuest_testT5442:
 
     teardown_step:
         #description: "Delete newly added ticket and merch to restore original state"
-        open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}.json" }
+        open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
         sleep_step: 5000
 
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }

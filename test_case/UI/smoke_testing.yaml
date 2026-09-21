@@ -159,7 +159,7 @@ testT2705_VerifyGuest:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         R_click_enhance_button_cta: { test_id: "enhance-button-cta" }

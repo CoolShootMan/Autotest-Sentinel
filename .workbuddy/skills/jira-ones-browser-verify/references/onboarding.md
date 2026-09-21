@@ -69,7 +69,7 @@ py -3.9 tools/switch_env.py                    # 确认/切换环境（staging /
 py -3.9 tools/get_all_cookies.py               # 约 40s，登录 3 个账号并落盘
 ```
 
-产出 `test_case/UI/Test_Katana/` 下三个 Playwright `storage_state`：
+产出 `test_case/UI/` 下三个 Playwright `storage_state`：
 
 | 文件 | 账号 | 视角 |
 |------|------|------|

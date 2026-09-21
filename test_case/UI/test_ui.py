@@ -27,7 +27,7 @@ from tools import allure_title, allure_step_no
 from page.home import *
 
 # Import the new Action Registry
-from test_case.UI.Test_Katana.actions import get_action
+from test_case.UI.actions import get_action
 from .actions import get_action, create_session
 
 # Step Capture — in-test data collection (replaces replay engine)

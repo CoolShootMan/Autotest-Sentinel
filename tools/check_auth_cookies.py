@@ -22,7 +22,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
+COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" 
 
 # 与 tools/get_all_cookies.py 保持一致的域名 → 环境映射（cookie 文件名与 cookie 前缀都按它生成）
 _ENV_MAP = {

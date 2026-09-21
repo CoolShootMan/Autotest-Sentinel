@@ -167,13 +167,13 @@ python runner.py testT4718 --headless --env release
 **使用原生 `pytest` 命令：**
 ```bash
 # 测试特定用例
-pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
+pytest test_case/UI/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
 
 # 测试多个用例
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
+pytest test_case/UI/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
 
 # 生成 Allure 报告
-pytest --alluredir=allure-results test_case/UI/Test_Katana/test_ui.py
+pytest --alluredir=allure-results test_case/UI/test_ui.py
 allure serve allure-results
 ```
 
@@ -264,7 +264,7 @@ actions/ (Action Registry 动作注册表)
 ├─recordings              # playwright codegen 录制脚本
 ├─test_case
 │  └─UI
-│    └─Test_Katana
+│    └─UI
 │       ├─actions/         # Action Registry (动作注册表)
 │       │  ├─__init__.py   # 注册表入口
 │       │  ├─base.py       # 基础动作 (smart_click, smart_fill, AI Fallback)

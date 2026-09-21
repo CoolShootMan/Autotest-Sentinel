@@ -102,7 +102,7 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
     Return format: { "Scanner.yaml": ["T3981", "T3981_Already", ...], ... }
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    yaml_dir = os.path.join(base_dir, "test_case", "UI", "Test_Katana")
+    yaml_dir = os.path.join(base_dir, "test_case", "UI", "UI")
     test_cases = {}
 
     for yaml_file in yaml_files:

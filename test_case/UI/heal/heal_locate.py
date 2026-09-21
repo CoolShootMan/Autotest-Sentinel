@@ -27,7 +27,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
 if REPO_ROOT not in sys.path:
     sys.path.append(REPO_ROOT)
 
-from test_case.UI.Test_Katana.heal.heal_probe import (  # noqa: E402
+from test_case.UI.heal.heal_probe import (  # noqa: E402
     ProbeResult, ProbeRequest, probe, load_case,
 )
 
@@ -263,7 +263,7 @@ def main():
         result = _result_from_json(args.case_id)
     else:
         yaml_path = args.yaml or os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Test_Katana
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # UI
             "All_YAML", "Section", "Section.yaml")
         req = ProbeRequest(case_id=args.case_id, step_index=args.step, mode="capture",
                            yaml_path=yaml_path)
