@@ -15,6 +15,7 @@
     py -3.9 tools/gh_push.py --remote origin company   # 一次推多个远端（双推）
     py -3.9 tools/gh_push.py --remote company --dry-run
     py -3.9 tools/gh_push.py --host github.1m.app --slug 1m-qa/Autotest-Sentinel
+    py -3.9 tools/gh_push.py --fetch                     # 只拉取当前分支（更新本地 tracking，不推）
 
 凭据 target 解析优先级：
     --cred-target  >  git config --local credTarget.<remote>  >  git:https://<host>
@@ -178,6 +179,32 @@ def push_one(remote: str, branch: str, args) -> int:
     return 0
 
 
+def fetch_one(remote: str, branch: str, args) -> int:
+    """把 remote 的 branch 拉到本地 refs/remotes/<remote>/<branch>（不碰工作区）。"""
+    host, slug, user_hint = resolve_target(remote, args.host, args.slug)
+    cred_target = resolve_cred_target(remote, host, args.cred_target)
+
+    user, token = read_credential(cred_target, user_hint)
+    if not token:
+        print(f"[FAIL] ({remote}) 凭据管理器里读不到 {cred_target}", file=sys.stderr)
+        return 1
+
+    refspec = f"{branch}:refs/remotes/{remote}/{branch}"
+    if args.dry_run:
+        print(f"[DRY] ({remote}) git fetch {host}/{slug} {refspec}   (身份: {user})")
+        return 0
+
+    url = f"https://{user}:{token}@{host}/{slug}.git"
+    r = git("fetch", url, refspec)
+    print(f"[{remote}] " + ((r.stdout or "") + (r.stderr or "")).replace(token, "***").strip())
+    if r.returncode != 0:
+        return r.returncode
+    tip = (git("rev-parse", f"refs/remotes/{remote}/{branch}").stdout or "").strip()
+    if tip:
+        print(f"[{remote}] [OK] fetched {remote}/{branch} -> {tip[:12]}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="经凭据管理器推送（host/slug 自动从 remote 推导）")
     ap.add_argument("--remote", nargs="+", default=["origin"], help="远端名，可多个（默认 origin）")
@@ -185,6 +212,7 @@ def main() -> int:
     ap.add_argument("--host", default=None, help="覆盖从 remote 推导的 host")
     ap.add_argument("--slug", default=None, help="覆盖从 remote 推导的 org/repo")
     ap.add_argument("--cred-target", default=None, help="覆盖凭据 target（默认按 remote 推导）")
+    ap.add_argument("--fetch", action="store_true", help="只拉取（不推），更新本地 tracking")
     ap.add_argument("--dry-run", action="store_true", help="只打印将执行的动作（脱敏）")
     args = ap.parse_args()
 
@@ -198,7 +226,10 @@ def main() -> int:
 
     rc = 0
     for remote in args.remote:
-        rc |= push_one(remote, branch, args)
+        if args.fetch:
+            rc |= fetch_one(remote, branch, args)
+        else:
+            rc |= push_one(remote, branch, args)
     return rc
 
 
