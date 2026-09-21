@@ -20,6 +20,10 @@ ENV_NAME = "Release"
 
 from core.assertions import expect
 
+# UI 自动化共用的三个账号（+999/+997/+998）口令统一为明文 Happy123，全仓库多处硬编码它的 md5。
+# 见 tools/get_all_cookies.py、tests/01_Login flow/test_linda_t2302_*.py 等。
+MD5_HAPPY123 = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
+
 
 def test_ui_prefill_data_configuration(ctx):
     """UI automation data pre-configuration: create/cleanup users, events, products, stores."""
@@ -4772,7 +4776,9 @@ def test_ui_prefill_data_configuration(ctx):
   "email": "{{UIauto_coseller_email}}",
   "partnerId": "{{user_id}}"
 }""", app_headers=True, token="admin_token")
-    ctx.extract("password", _resp92, "$.data.password")
+    # promoter import 返回的 $.data.password 是当场生成的随机口令，step 94 会把它写成 +998 的新口令；
+    # 这里覆盖成与 +999/+997 一致的统一口令，否则 get_all_cookies.py 等处会 403。
+    vars["password"] = MD5_HAPPY123
 
     # --- step 93: Admin search coseller 998 (POST /users/search) ---
     _resp93 = ctx.api.users.search(body="""{
