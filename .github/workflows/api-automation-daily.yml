@@ -86,6 +86,18 @@ jobs:
           set -o pipefail
           python run_suite.py suites/lury.yaml 2>&1 | tee lury.log
 
+      - name: Publish report to job summary
+        # 把各套件 results/runs/<run_id>/summary.md 汇总进运行页 Summary：
+        # 顶部为「计数总览 + 失败用例清单」，下方为各套件完整报告（折叠，含 traceback）。
+        # 数据来自 conftest 的 run_archive 落盘的 meta.json / summary.md / failures.json。
+        # 同时落盘 results/summary.md（合并报告），供下方 artifact 一起归档。
+        # 必须排在 Upload 之前——否则合并报告赶不上打包。
+        if: always()
+        working-directory: test_case/API auto script
+        env:
+          API_ENV: Release
+        run: python tools/ci_report.py --step-summary
+
       - name: Upload logs & results (artifact)
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,16 +109,6 @@ jobs:
             test_case/API auto script/results/
           retention-days: 14
           if-no-files-found: ignore
-
-      - name: Publish report to job summary
-        # 把各套件 results/runs/<run_id>/summary.md 汇总进运行页 Summary：
-        # 顶部为「计数总览 + 失败用例清单」，下方为各套件完整报告（折叠，含 traceback）。
-        # 数据来自 conftest 的 run_archive 落盘的 meta.json / summary.md / failures.json。
-        if: always()
-        working-directory: test_case/API auto script
-        env:
-          API_ENV: Release
-        run: python tools/ci_report.py --step-summary
 
       - name: Send Slack notification (#qae-team)
         # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再是干巴巴的 failure）。
