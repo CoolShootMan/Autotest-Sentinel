@@ -34,6 +34,25 @@ HEADER_PRI_RE = re.compile(r"^#\s*Priority:\s*P?(\d+)", re.M)
 HEADER_ID_RE = re.compile(r"^#\s*Apifox Case ID:\s*(\d+)", re.M)
 
 
+def _parse_t_id(src: str, module: str) -> str | None:
+    """Extract the canonical ``T####`` case id.
+
+    Prefer the ``# Case:`` header (e.g. ``(Linda)T1353 ...`` or ``& T3277 ...``);
+    fall back to the last ``t<digits>`` token in the module filename
+    (``test__6080068__Linda_T1353_...`` / ``test_linda_t1291_...``).
+    Returns e.g. ``'T1353'`` or ``None`` when no id is present.
+    """
+    m = HEADER_CASE_RE.search(src or "")
+    if m:
+        tm = re.search(r"T\d+", m.group(1), re.I)
+        if tm:
+            return tm.group(0).upper()
+    fm = re.findall(r"t(\d+)", module or "", re.I)
+    if fm:
+        return "T" + fm[-1]
+    return None
+
+
 def slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", (name or "").lower()).strip("_")
 
@@ -95,6 +114,7 @@ def _module_entry(path: Path) -> dict:
     hdr = _parse_headers(src)
     name = assigns.get("NAME") or hdr.get("name") or module
     case_id = assigns.get("CASE_ID") or hdr.get("case_id")
+    t_id = _parse_t_id(src, module)
     priority = assigns.get("PRIORITY")
     if priority is None:
         priority = hdr.get("priority")
@@ -122,6 +142,7 @@ def _module_entry(path: Path) -> dict:
         "func": func,
         "name": name,
         "case_id": case_id,
+        "t_id": t_id,
         "priority": priority,
         "tags": derived,
         "explicit_tags": tags,
