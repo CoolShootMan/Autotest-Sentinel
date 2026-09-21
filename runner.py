@@ -18,6 +18,9 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
 # Define constant paths
+# NOTE: intentionally kept cwd-relative (runner.py runs from the repo root and
+# pytest node IDs must stay relative). When the UI line moves (U2), update this
+# together with tools/paths.py (UI_ROOT) and pytest.ini's testpaths.
 BASE_DIR = Path("test_case/UI/Test_Katana")
 YAML_DIR = BASE_DIR / "All_YAML"
 TEST_FILE = BASE_DIR / "test_ui.py"
