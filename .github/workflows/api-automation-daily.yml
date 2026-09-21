@@ -125,7 +125,7 @@ jobs:
 
       - name: Send Slack notification (#qae-team)
         # 总开关打开 + 已配置 #qae-team webhook + 非空才发送
-        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && secrets.SLACK_WEBHOOK_URL_QAE_TEAM != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
           LINDA_OUTCOME: ${{ steps.linda.outcome }}
