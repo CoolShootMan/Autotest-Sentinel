@@ -168,7 +168,10 @@ def push_one(remote: str, branch: str, args) -> int:
         return r.returncode
 
     # 修 tracking，避免 status 误报 ahead/behind
-    head = (git("rev-parse", "HEAD").stdout or "").strip()
+    # 注意：要解析**被推的分支**（branch）而非 HEAD —— 推非当前分支时两者不同
+    head = (git("rev-parse", f"refs/heads/{branch}").stdout or "").strip()
+    if not head:
+        head = (git("rev-parse", "HEAD").stdout or "").strip()
     if head:
         git("update-ref", f"refs/remotes/{remote}/{branch}", head)
         print(f"[{remote}] [OK] {remote}/{branch} -> {head[:12]}")
