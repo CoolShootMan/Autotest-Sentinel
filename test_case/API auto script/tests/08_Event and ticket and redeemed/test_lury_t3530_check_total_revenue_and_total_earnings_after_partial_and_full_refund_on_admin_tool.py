@@ -558,6 +558,15 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 10: get Cart
     _resp10 = ctx.api.cart.list(token='consumer_access_token')
     vars['clearCartParams'] = 'JSON.stringify(clearCartParams'
+    # step 10.5: 下单前重新读取 M1 lifetimeEarning 作为本次断言基线（缩小共享账户并行污染窗口；
+    # lifetimeEarning 是 M1 共享累计值，linda/lury 并行跑时其他用例会改动它，导致"基线+本单 payout"漂移）
+    _resp10b = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
+    try:
+        _j10b: dict[str, Any] = _resp10b.json() if _resp10b.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_m1_pre_order'] = _get_path(_j10b, ['data', 'lifetimeEarning'])
+    except Exception:
+        pass
+
     # step 11: buy now
     _resp11 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
@@ -629,8 +638,9 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
+    # 基线改用「下单前紧邻重读」的 le_m1_pre_order（见 step10.5），缩小并行污染窗口
     try:
-        _le = float(vars.get('lifetimeEarning') or 0)
+        _le = float(vars.get('le_m1_pre_order') or 0)
         _pm1 = float(vars.get('payout_m1') or 0)
         vars['lifetimeEarning_placed'] = round(_le + _pm1, 2)
     except Exception:
@@ -705,6 +715,20 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     expect(_resp21).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
     _iul = list(vars.get('item_unit_id_list') or [])
     vars['first_item_unit_id'] = _iul[0] if len(_iul) > 0 else None
+    # step 21.5: 部分退款前重读 M1 / merchant lifetimeEarning 基线（缩小并行污染窗口）
+    _resp21b = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
+    try:
+        _j21b: dict[str, Any] = _resp21b.json() if _resp21b.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_m1_pre_partial'] = _get_path(_j21b, ['data', 'lifetimeEarning'])
+    except Exception:
+        pass
+    _resp21c = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
+    try:
+        _j21c: dict[str, Any] = _resp21c.json() if _resp21c.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_merchant_pre_partial'] = _get_path(_j21c, ['data', 'lifetimeEarning'])
+    except Exception:
+        pass
+
     # step 22: Partner partial refund 1 ticket after placing
     _resp22 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -746,8 +770,9 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
+    # 基线改用部分退款前紧邻重读的 le_m1_pre_partial
     try:
-        vars['lifetimeEarning_partial_refund'] = round(float(vars.get('lifetimeEarning') or 0) + float(vars.get('payout_m1') or 0), 2)
+        vars['lifetimeEarning_partial_refund'] = round(float(vars.get('le_m1_pre_partial') or 0) + float(vars.get('payout_m1') or 0), 2)
     except Exception:
         vars['lifetimeEarning_partial_refund'] = None
     # step 24: M1 earning summary after partial refund
@@ -786,8 +811,9 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
+    # 基线改用部分退款前紧邻重读的 le_merchant_pre_partial
     try:
-        vars['lifetimeEarning_merchant_partial_refund'] = round(float(vars.get('lifetimeEarning_merchant') or 0) + float(vars.get('payout_merchant') or 0), 2)
+        vars['lifetimeEarning_merchant_partial_refund'] = round(float(vars.get('le_merchant_pre_partial') or 0) + float(vars.get('payout_merchant') or 0), 2)
         vars['commissionEarning_merchant_partial_refund'] = round(float(vars.get('commissionEarning_merchant') or 0) + float(vars.get('payout_merchant') or 0), 2)
     except Exception:
         vars['lifetimeEarning_merchant_partial_refund'] = None
@@ -811,6 +837,22 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # assertion 30.Verify fulfilled total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_fulfilled_merchant}}
     expect(_resp30).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
     vars['second_item_unit_id'] = _iul[1] if len(_iul) > 1 else None
+    # step 30.5: 全额退款前重读 M1 / merchant lifetimeEarning 基线（缩小并行污染窗口）
+    _resp30b = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
+    try:
+        _j30b: dict[str, Any] = _resp30b.json() if _resp30b.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_m1_pre_full'] = _get_path(_j30b, ['data', 'lifetimeEarning'])
+        vars['commissionEarning_pre_full'] = _get_path(_j30b, ['data', 'commissionEarning'])
+    except Exception:
+        pass
+    _resp30c = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
+    try:
+        _j30c: dict[str, Any] = _resp30c.json() if _resp30c.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_merchant_pre_full'] = _get_path(_j30c, ['data', 'lifetimeEarning'])
+        vars['commissionEarning_merchant_pre_full'] = _get_path(_j30c, ['data', 'commissionEarning'])
+    except Exception:
+        pass
+
     # step 31: Partner full refund order on sale details page after placing
     _resp31 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -844,9 +886,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
+    # 基线改用全额退款前紧邻重读的 le_m1_pre_full
     try:
         vars['lifetimeEarning_full_refund'] = round(
-            float(vars.get('lifetimeEarning') or 0)
+            float(vars.get('le_m1_pre_full') or 0)
             + float(vars.get('m1_rebate') or 0)
             - float(vars.get('m1_transaction_fee') or 0)
             - float(vars.get('merchant_transaction_fee') or 0), 2
@@ -894,10 +937,10 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         pass
     # step 37: promoter earning summary after full refund
     _resp37 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
-    # assertion 37.Verify the total net earnings is changed for co-seller after partial refund: responseJson equal {{lifetimeEarning_merchant}}
-    expect(_resp37).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_merchant}}'))
-    # assertion 37.Verify commission earnings is changed for co-seller after partial refund: responseJson equal {{commissionEarning_merchant}}
-    expect(_resp37).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning_merchant}}'))
+    # 基线改用全额退款前紧邻重读的 le_merchant_pre_full（断言本次全额退款未改变 merchant 累计收益）
+    expect(_resp37).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{le_merchant_pre_full}}'))
+    # assertion 37.Verify commission earnings is changed for co-seller after partial refund: responseJson equal {{commissionEarning_merchant_pre_full}}
+    expect(_resp37).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning_merchant_pre_full}}'))
     # step 38: get merchant orders-To fulfill after full refund
     _resp38 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'TO_FULFILL'})
     # assertion 38.Verify to fulfill total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_tofulfill_merchant}}

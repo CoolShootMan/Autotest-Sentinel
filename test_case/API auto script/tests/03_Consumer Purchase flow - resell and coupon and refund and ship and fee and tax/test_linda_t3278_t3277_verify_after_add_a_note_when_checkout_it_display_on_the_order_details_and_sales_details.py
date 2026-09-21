@@ -76,6 +76,7 @@ ENV_NAME = "Release"
 from typing import Any, TYPE_CHECKING
 
 from core.compat import get_path as _get_path
+import time
 from core.assertions import expect
 from core.compat import legacy_render
 
@@ -174,7 +175,18 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     merchant_token = vars.get('merchant_token')
     orderNumber = vars.get('orderNumber')
 
-    _resp7 = ctx.api.orders.merchant_detail_v2(merchantId='{{merchantId}}', orderNumber='{{orderNumber}}', app_headers=True, token='linda00_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp7 = None
+    for _att in range(8):
+        _resp7 = ctx.api.orders.merchant_detail_v2(merchantId='{{merchantId}}', orderNumber='{{orderNumber}}', app_headers=True, token='linda00_token')
+        try:
+            if str(_resp7.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
     # assertion 7.assertion: responseJson equal {{instructions}}
