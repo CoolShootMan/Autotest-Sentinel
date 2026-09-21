@@ -215,7 +215,7 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     # extractor: linda01_token = $.data.token
     ctx.extract('linda01_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
-    # step 2: 587d6edf-679c-4242-93ce-a71785a615cb
+    # step 2: POST Setting tax on the event advanced tab, check the ticket fee display correct
     _resp2 = ctx.api.products.calculate_ticket_batch(body={
         "listingType": "TICKET",
         "customTaxRate": 10,
@@ -248,7 +248,7 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert abs(_pf2 - (_tf2 - _cf2)) <= 0.01, f"step2 platformFee计算错误: platformFee={_pf2}, transactionItemFee-customFee={_tf2-_cf2}"
     assert abs(_p2 - (_t2 + _tf2)) <= 0.01, f"step2 最终价格错误: price={_p2}, ticketPrice+transactionItemFee={_t2+_tf2}"
     assert abs(_tf2 - (_pf2 + _cf2)) <= 0.01, f"step2 总手续费错误: transactionItemFee={_tf2}, platformFee+customFee={_pf2+_cf2}"
-    # step 3: 5c5ebff3-c289-4600-b24b-a6f953ced00f
+    # step 3: POST Update the tax is 20%, and check the ticket fee display correct
     _resp3 = ctx.api.products.calculate_ticket_batch(body={
         "listingType": "TICKET",
         "customTaxRate": 20,
@@ -283,7 +283,7 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     assert abs(_pf3 - (_tf3 - _cf3)) <= 0.01, f"step3 platformFee计算错误: platformFee={_pf3}, transactionItemFee-customFee={_tf3-_cf3}"
     assert abs(_p3 - (_t3 + _tf3)) <= 0.01, f"step3 最终价格错误: price={_p3}, ticketPrice+transactionItemFee={_t3+_tf3}"
     assert abs(_tf3 - (_pf3 + _cf3)) <= 0.01, f"step3 总手续费错误: transactionItemFee={_tf3}, platformFee+customFee={_pf3+_cf3}"
-    # step 4: 56005cad-c875-4053-beb9-e541c2b029ca
+    # step 4: POST disable the event tax on the advanced tab
     _resp4 = ctx.api.products.calculate_ticket_batch(body={
         "listingType": "TICKET",
         "customTaxRate": 0,

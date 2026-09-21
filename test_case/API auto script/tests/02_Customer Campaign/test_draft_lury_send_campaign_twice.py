@@ -25,7 +25,7 @@ def test_draft_lury_send_campaign_twice(ctx: "Context"):
     """Apifox case #8620168: Draft_Lury_send_campaign_twice"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 34ac0960-4452-4fcd-b24c-c71e94d78ff0
+    # step 1: POST Send campaign
     _resp1 = ctx.api.campaigns.send_campaign(
     body={
         "campaignId": "{{campaignId}}",

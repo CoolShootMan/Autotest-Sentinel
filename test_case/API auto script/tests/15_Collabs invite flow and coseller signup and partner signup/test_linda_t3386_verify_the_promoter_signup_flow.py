@@ -74,12 +74,12 @@ def test_linda_t3386_verify_the_promoter_signup_flow(ctx: "Context"):
     """Apifox case #7693353: Linda_T3386_Verify_the_promoter_signup_flow"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 9ad7c5db-bb46-4e4e-af07-352fb39da5e5
+    # step 1: POST co-seller signup and send code
     _resp1 = ctx.api.auth.code(body={
         "email": "{{CosellerEmail}}",
     })
     vars['otp_request_ts'] = 'Date.now('
-    # step 2: c040e9fd-b3aa-4e6b-9b4a-2cce550c433d
+    # step 2: POST co-seller-login
     _resp2 = ctx.api.auth.promoter_login(body={
         "inviterCampaign": {},
         "code": "{{gmail_code}}",
@@ -88,7 +88,7 @@ def test_linda_t3386_verify_the_promoter_signup_flow(ctx: "Context"):
     ctx.extract('auth_token', _resp2, '$.data.token')
     ctx.extract('auth_refresh_token', _resp2, '$.data.refreshToken')
     ctx.extract('user_id', _resp2, '$.data.id')
-    # step 3: b227bccf-82b6-44c8-a73c-d1f6611d3fe6
+    # step 3: POST co-seller-signup and input name
     _resp3 = ctx.api.auth.promoter_signup(body={
         "firstName": "linda",
         "lastName": "zhou31",
@@ -97,15 +97,15 @@ def test_linda_t3386_verify_the_promoter_signup_flow(ctx: "Context"):
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
     expect(_resp3).json('$.message').equals('success')
-    # step 4: 99541d3e-4fc5-49c6-be69-72cff6fd4d46
+    # step 4: POST isFirst=1&signup=promoter
     _resp4 = ctx.api.misc.invitation_profile(body=[
         "katana_visitor_id",
     ], params={'isFirst': '1', 'signup': 'promoter'}, token='auth_token')
-    # step 5: 6451e86a-f42c-4849-9961-1ab55889323d
+    # step 5: GET get the promoter post list
     _resp5 = ctx.api.posts.promoter_simplify_list(body=None, params={'sortBy': 'publishedAt', 'pageSize': '30', 'pageNumber': '1'}, token='auth_token')
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
-    # step 6: 454fbf7a-685d-4bda-b2e6-df24b54fe31d
+    # step 6: GET get the post data, make sure page no crash
     _resp6 = ctx.api.posts.curator_shop(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='auth_token')
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')

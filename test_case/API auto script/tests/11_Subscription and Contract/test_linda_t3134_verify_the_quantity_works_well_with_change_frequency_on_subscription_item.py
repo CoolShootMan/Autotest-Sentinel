@@ -129,7 +129,7 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     _items: list[Any] = _get_path(_resp1.json(), ['data', 'items']) or []
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
-    # step 2: e244c926-4f50-4f92-b236-25e7340c0057
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

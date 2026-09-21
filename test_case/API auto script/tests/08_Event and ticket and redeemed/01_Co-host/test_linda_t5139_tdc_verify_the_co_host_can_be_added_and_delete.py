@@ -133,7 +133,7 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     """Apifox case #8709229: Linda_T5139_TDC_Verify_the_Co_host_can_be_added_and_delete"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: d6baddd1-de37-49e5-ae36-f042683f841b
+    # step 1: GET Partner Get the Event id
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
@@ -152,7 +152,7 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     for _c in ((_existing.json().get('data') or {}).get('items') or []):
         if _c.get('identifier') == ctx.get('UIauto_coseller_email'):
             ctx.api.events.by_co_hostid(path_vars={'co-hostid': _c['id']}, token='yuxiao999_token')
-    # step 2: 13bbae7b-1f91-4497-942f-22e0ead5c8b6
+    # step 2: POST Partner add co-host
     _resp2 = ctx.api.events.create(body={
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
@@ -178,9 +178,9 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert isinstance(_d2.get('createdAt'), str) and _d2.get('createdAt'), "createdAt 应为非空字符串"
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"
-    # step 3: 55f823f2-ff85-412c-9569-35557162ed94
+    # step 3: GET Co-seller check the Event exist
     _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
-    # step 4: 1486948f-0ed0-480f-8d39-a74e44b25e0a
+    # step 4: DELETE Partner delete the Co-seller
     _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id/event_title 一致 ----

@@ -38,7 +38,7 @@ def test_linda_t4283_verify_multiple_submissions_and_data_consistency(ctx: "Cont
     }, app_headers=False)
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
-    # step 2: 3a69c561-1d5c-4895-8bc0-f411db340189
+    # step 2: POST Form submit
     _resp2 = ctx.api.misc.submit(body={
         "contactId": "3084fc10-adfb-4dfd-bc22-e72d94e75848",
         "emailMessage": [

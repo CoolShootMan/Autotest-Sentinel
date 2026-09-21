@@ -208,6 +208,17 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
         "email": "{{consumer_email}}",
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
+    # 复算 pre-script（unit_price=9, qty=1, commission_rate=0.25）
+    import math as _m
+    def _js_round(x): return _m.floor(x * 100 + 0.5) / 100
+    def _js_floor(x): return _m.floor(x * 100) / 100
+    _up, _q, _cr = 9, 1, 0.25
+    vars['aff_earnings'] = _js_round(_up * _q * _cr)            # 2.25
+    vars['m1_earnings'] = round(_up * _q - vars['aff_earnings'], 2)  # 6.75
+    vars['m1_rebate'] = _js_floor((0.6 + _up * 0.065) * _q)     # 1.18
+    _tf_item = _js_floor((1 + _up * 0.1) * _q)                  # 1.9
+    vars['aff_transaction_fee'] = _js_round(_cr * _tf_item)     # 0.48
+    vars['m1_transaction_fee'] = round(_tf_item - vars['aff_transaction_fee'], 2)  # 1.42
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now 
@@ -284,6 +295,9 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion step5: create order status 201 + totalTopay=9
+    expect(_resp5).status().is_(201)
+    expect(_resp5).json('$.data.totalTopay').close_to(9)
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -292,6 +306,23 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
+    # assertion step7: M1 earnings & processing fee
+    expect(_resp7).status().is_(200)
+    expect(_resp7).json('$.data.transactionFee').close_to(vars['m1_transaction_fee'])
+    expect(_resp7).json('$.data.totalCommissionSubtotal').close_to(6.75)
+    expect(_resp7).json('$.data.totalCommissionRefunded').close_to(0)
+    expect(_resp7).json('$.data.totalCommissionNet').close_to(6.75)
+    expect(_resp7).json('$.data.transactionFeeRebate').close_to(1.18)
+    expect(_resp7).json('$.data.totalPaymentProcessingFee').close_to(0)
+    expect(_resp7).json('$.data.totalShippingSubtotal').close_to(0)
+    expect(_resp7).json('$.data.totalShippingRefunded').close_to(0)
+    expect(_resp7).json('$.data.totalTaxAmount').close_to(0)
+    expect(_resp7).json('$.data.totalTaxAmountRefunded').close_to(0)
+    expect(_resp7).json('$.data.totalShippingNet').close_to(0)
+    expect(_resp7).json('$.data.totalTaxAmountNet').close_to(0)
+    # totalPayoutToPay = m1_earnings - m1_tf + m1_rebate（动态复算）
+    _exp_payout7 = round(vars['m1_earnings'] - vars['m1_transaction_fee'] + vars['m1_rebate'], 2)
+    expect(_resp7).json('$.data.totalPayoutToPay').close_to(_exp_payout7)
     # step 8: Login -affiliate
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -317,3 +348,39 @@ def test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_dire
         f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr9)}）")
     # step 10: get affiliate order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'}, token='affiliate_access_token')
+    # assertion step10: affiliate earnings & processing fee + line item
+    expect(_resp10).status().is_(200)
+    _j10: dict[str, Any] = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
+    _d10: dict[str, Any] = _j10.get('data') or {}
+    expect(_resp10).json('$.data.transactionFee').close_to(vars['aff_transaction_fee'])
+    expect(_resp10).json('$.data.totalCommissionSubtotal').close_to(vars['aff_earnings'])
+    expect(_resp10).json('$.data.totalCommissionRefunded').close_to(0)
+    expect(_resp10).json('$.data.totalCommissionNet').close_to(vars['aff_earnings'])
+    expect(_resp10).json('$.data.totalPaymentProcessingFee').close_to(0)
+    expect(_resp10).json('$.data.transactionFeeRebate').close_to(0)
+    _exp_payout10 = round(vars['aff_earnings'] - vars['aff_transaction_fee'], 2)
+    expect(_resp10).json('$.data.totalPayoutToPay').close_to(_exp_payout10)
+    for _li in _d10.get('lineItems') or []:
+        if (_li.get('variantInfo') or {}).get('id') == '35811870-0f2f-43e7-955a-887fb052f2dd':
+            assert abs((_li.get('lineItemPrice') or 0) - 9) < 0.01
+            assert abs((_li.get('retailPrice') or 0) - 10) < 0.01
+            assert abs((_li.get('upstreamLineItemDiscount') or 0) - 1) < 0.01
+            assert abs((_li.get('couponDiscount') or 0) - 0) < 0.01
+            assert abs((_li.get('subscriptionDiscount') or 0) - 0) < 0.01
+            assert abs((_li.get('lineItemDiscount') or 0) - 0) < 0.01
+            assert abs((_li.get('commissionRate') or 0) - 25) < 0.01
+            assert abs((_li.get('commissionGross') or 0) - 2.25) < 0.01
+            assert abs((_li.get('commissionDeduction') or 0) - 0) < 0.01
+            assert abs((_li.get('costPrice') or 0) - 6.75) < 0.01
+            assert abs((_li.get('lineItemSubtotal') or 0) - 9) < 0.01
+            assert abs((_li.get('downlineCommissionRate') or 0) - 0) < 0.01
+            assert abs((_li.get('commissionSubtotal') or 0) - 2.25) < 0.01
+            assert abs((_li.get('commissionRefunded') or 0) - 0) < 0.01
+            assert abs((_li.get('commissionNet') or 0) - 2.25) < 0.01
+            assert _li.get('quantity') == 1
+            assert _li.get('quantityFulfilled') == 1
+            assert _li.get('quantityRefunded') == 0
+            assert abs((_li.get('lineItemRefunded') or 0) - 0) < 0.01
+            assert _li.get('fulfillmentStatus') == 'FULFILLED'
+            assert _li.get('saleType') == 'POST_COMMISSION'
+            assert _li.get('uplineSaleType') == 'POST_COMMISSION'

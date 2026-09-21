@@ -26,7 +26,7 @@ def test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_s
     """Apifox case #5530131: YuXiao_T2668_After_verifying_that_promoter_has_two_subdomains_you_can_switch_bet"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 35a8e6ec-64ae-4978-ba8f-e4b614df64bf
+    # step 1: GET https://release.notip.com.cn/1129
     _resp1 = ctx.api.external.v_1129_2(body=None)
-    # step 2: b3509af3-afbc-43a7-87ea-8531bfaeebc3
+    # step 2: GET https://demi0214.notip.com.cn/1129
     _resp2 = ctx.api.external.v_1129(body=None)

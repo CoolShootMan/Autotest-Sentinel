@@ -130,7 +130,7 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
     _render = legacy_render(ctx)
     _url = legacy_url(ctx)
     # === Steps ===
-    # step 1: 20e3754a-3578-4b57-90b9-60d5e67b8853
+    # step 1: POST Select a product and create post
     # === pre-script（由 Apifox customScript 翻译）：生成 posttitle 和 urlAlias ===
     import time as _time
     import random as _random
@@ -402,7 +402,7 @@ def test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_
     assert _d1, "接口返回data字段不存在"
     assert _d1.get('status') == 'ACTIVE', f"data.status错误，预期ACTIVE，实际={_d1.get('status')!r}"
     vars['post_id'] = _d1.get('id')
-    # step 2: db3ae71c-5ae8-4737-b52a-d305261dc6cc
+    # step 2: DELETE recover the data - delete the post
     _resp2 = ctx.api.posts.curator_by_post_id_2(body=None, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}

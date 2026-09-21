@@ -105,7 +105,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     """Apifox case #8008209: Linda_T3879_Verify_that_the_Post_commission_rate_can_be_Batch_setting_Current_X"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: c00988c0-aa6d-43df-a32a-bc4e5f335d77
+    # step 1: PUT Batch setting the commission rate to current * 2
     _resp1 = ctx.api.posts.curator_update(post_id='{{T3879_x_post_id}}', body={
         "id": "{{T3879_x_post_id}}",
         "announcements": [],
@@ -493,7 +493,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     expect(_resp1).json('$.message').equals('success')
     # assertion 1.assertion: responseJson equal ACTIVE
     expect(_resp1).json('$.data.status').equals('ACTIVE')
-    # step 2: 00164776-19b0-4877-a7f0-24a3f8b4cb55
+    # step 2: GET Checking the post commission rate is 20%
     _resp2 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
     # step 3: Get Co-seller linda06 token
     _resp3 = ctx.api.auth.sign_in(body={
@@ -502,5 +502,5 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     }, app_headers=True)
     # extractor: linda06_token = $.data.token
     ctx.extract('linda06_token', _resp3, '$.data.token')
-    # step 4: 2f36ee54-6f19-4f3b-8039-fad4ca8f808a
+    # step 4: GET Co-seller checking the product commission all are 20%
     _resp4 = ctx.api.posts.promoter_detail(body=None, params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t3879-commission-multiply'}, token='linda06_token')

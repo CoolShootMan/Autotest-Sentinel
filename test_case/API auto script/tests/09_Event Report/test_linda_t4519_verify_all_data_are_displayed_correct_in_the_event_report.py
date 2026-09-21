@@ -133,7 +133,7 @@ def test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report(c
     """Apifox case #7976339: Linda_T4519_Verify_all_data_are_displayed_correct_in_the_Event_report"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 01a255a7-7e95-419d-8f0c-82c84bc44069
+    # step 1: GET Check the event report data correct
     _resp1 = ctx.api.events.bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_summary(body=None, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
@@ -159,7 +159,7 @@ def test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report(c
     assert _s1.get('totalItemsSoldByPromoter') == 76, f"totalItemsSoldByPromoter期望76，实际={_s1.get('totalItemsSoldByPromoter')!r}"
     assert _s1.get('totalItemsSoldPercentage') == 26.03, f"totalItemsSoldPercentage期望26.03，实际={_s1.get('totalItemsSoldPercentage')!r}"
     assert _s1.get('promoterTotalItemsRedeemed') == 62, f"promoterTotalItemsRedeemed期望62，实际={_s1.get('promoterTotalItemsRedeemed')!r}"
-    # step 2: b8de82bb-c8f9-45c2-873f-60a3b16c9d2f
+    # step 2: GET Check the co-seller sales details is correct
     _resp2 = ctx.api.events.bea4cfb9_a9a6_4a1f_a1a8_96f7e9418d03_metrics_promoters(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}

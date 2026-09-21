@@ -135,7 +135,7 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx: 
     """Apifox case #5526402: Yuxiao_T1993_Verify_the_function_of_generating_invitation_link_yx"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 972a59a0-a5ce-41ed-8831-40870e5a99b8
+    # step 1: POST create invite link
     _resp1 = ctx.api.promoters.invitation_link_2(body={
         "description": "automation test by linda",
         "oneTimeUse": False,
@@ -175,7 +175,7 @@ def test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx(ctx: 
         f"（description='automation test by linda' 共 {len(_cands2)} 条）"
     )
     assert _target2.get('description') == "automation test by linda", f"目标项 description 不符：{_target2.get('description')!r}"
-    # step 3: edeb40ed-c93a-4b1e-91c9-7caada7631ec
+    # step 3: DELETE delete the invite link
     _resp3 = ctx.api.promoters.invitation_link_by_new_invitation_link(body=None, token='linda05_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}

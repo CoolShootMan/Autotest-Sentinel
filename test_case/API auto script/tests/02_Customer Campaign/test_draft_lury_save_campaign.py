@@ -47,7 +47,7 @@ def test_draft_lury_save_campaign(ctx: "Context"):
     # === Steps ===
     vars['account_email_curator'] = 'linda.zhou.ext+01@1m.app'
     vars['password'] = '7EbE8F4BdE4A38768AcF9C2833aF2Db5'
-    # step 1: 9a75640c-d265-4ab9-9720-b744223feca8
+    # step 1: POST Partner login
     # === pre-script（由 Apifox customScript 翻译）===
     vars['account_email_curator'] = "linda.zhou.ext+01@1m.app"
     vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
@@ -59,7 +59,7 @@ def test_draft_lury_save_campaign(ctx: "Context"):
     ctx.extract('token', _resp1, '$.data.token')
     # assertion 1.message: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
-    # step 2: 34598a15-1010-4b0a-b0c4-39a213a310d6
+    # step 2: POST Create campaign SMS
     _resp2 = ctx.api.campaigns.create(body={
         "channel": "SMS",
         "name": "Automation by Lury SMS",
@@ -71,7 +71,7 @@ def test_draft_lury_save_campaign(ctx: "Context"):
     expect(_resp2).json('$.message').equals('success')
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp2, '$.data.id')
-    # step 3: 21e3b97e-07cf-4c8e-a0ed-7b8419fd4c24
+    # step 3: POST Save-recipients
     _resp3 = ctx.api.campaigns.save_recipients(
     body={
         "campaignId": "{{campaignId}}",

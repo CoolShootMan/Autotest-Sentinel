@@ -430,14 +430,14 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # case-specific test data (externalized in <slug>.vars.yaml)
     vars.setdefault('event_title', 'event-for-api-auto-venue-map')
     vars.setdefault('target_ticket_title', 'General Admission 01')
-    # step 1: 91c574f3-fdab-47be-bf60-472750a263b8  (POST /auth/sign-in)
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     vars['yuxiao999_token'] = _get_path(_json(_resp1), ['data', 'token'])
-    # step 2: e9985ede-c59f-4723-bad2-ed9a86c642f2  (GET /product-event/list)
+    # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     _j2 = _json(_resp2)
     _items2: list[Any] = (_j2.get('data') or {}).get('items') or []
@@ -450,7 +450,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert _matched is not None, "目标事件下未查找到任何 tickets / 未匹配到 Ticket"
     assert isinstance(_matched.get('id'), str) and _matched['id'], "提取的 ticket id 格式不正确"
     vars['copyFromId'] = _matched['id']
-    # step 3: 4760ca1d-561e-48c2-94ce-e17af75a0809  (GET /posts/curator/event/{{event_id}}/posts)
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(token='yuxiao999_token')
     _j3 = _json(_resp3)
     _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
@@ -458,13 +458,13 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     _post0 = _items3[0].get('id')
     assert isinstance(_post0, str) and _post0, "提取的 post0_id 格式不正确"
     vars['post0_id'] = _post0
-    # step 4: 3e0bddb6-1e9e-49f5-9fba-2847e4d6c290  (GET /product-event/default-catalog)
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(token='yuxiao999_token')
     _j4 = _json(_resp4)
     _data4 = _j4.get('data')
     assert isinstance(_data4, dict) and isinstance(_data4.get('id'), str) and _data4.get('id'), "data.id 为空或不存在"
     vars['catalog_id'] = _data4['id']
-    # step 5: 2a013c4d-46d5-4977-a422-b98dad043210  (GET {{adminurl}}/post/v2/{{post0_id}}/relate-products)
+    # step 5: GET Catch the ProductId and promoterProductId
     _resp5 = ctx.api.admin.post_v2_relate_products(post0_id='{{post0_id}}', token='admin_token')
     _j5 = _json(_resp5)
     _products: list[Any] = (_j5.get('data') or {}).get('relatedProducts') or []
@@ -484,7 +484,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
         vars[f'promoterProductId_{_fmt}'] = _promo
         vars[f'merchantProductVariantId_{_fmt}'] = _mvid
         vars[f'displayVariantId_{_fmt}'] = _dvid
-    # step 6: 3e9b843d-988b-42d1-8b61-a2b00674881f  (GET /product-event/tickets/{{productId_General_Admission_01}}/venue-units)
+    # step 6: GET get ticket General_Admission_01 one unitId
     _resp6 = ctx.api.events.tickets_venue_units(params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_01}}'}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     _j6 = _json(_resp6)
     _items6: list[Any] = (_j6.get('data') or {}).get('items') or []
@@ -498,7 +498,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars['seatNumber'] = str(_sel['number'])
     assert isinstance(_sel.get('categoryId'), str) and _sel['categoryId'], "提取的 categoryId 格式不正确或为空"
     vars['venueUnitCategoryId'] = _sel['categoryId']
-    # step 7: 22636666-ccc5-49cb-b69a-99c8d7968a4f  (PUT /v2/products/{{productId_General_Admission_01}})
+    # step 7: PUT Edit ticket with turn on Enable multi-day pass
     # pre-script: compute the multi-day pass window (8 days; enabled for the first 4 days)
     _today = datetime.date.today()
     _end = _today + datetime.timedelta(days=3)
@@ -777,12 +777,12 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     })
     # extractor: linda10_token = $.data.token
     vars['linda10_token'] = _get_path(_json(_resp9), ['data', 'token'])
-    # step 10: aaf8fee2-2d4c-4302-aaae-c1d41577fb10  (DELETE /cart)
+    # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertions: $.code == 200 ; $.message == success
     assert str(_get_path(_json(_resp10), ['code'])) == '200', f"step10 code != 200, got {_get_path(_json(_resp10), ['code'])}"
     assert str(_get_path(_json(_resp10), ['message'])) == 'success', "step10 message != success"
-    # step 11: bf3716bc-8788-4f3f-a07e-d88ba2c334a8  (POST /order/checkout/express)
+    # step 11: POST checkout express venue map
     _resp11 = ctx.api.orders.checkout_express(body={
         "fbAdParams": {
             "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",

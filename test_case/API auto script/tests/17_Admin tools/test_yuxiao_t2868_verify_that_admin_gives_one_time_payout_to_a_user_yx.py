@@ -56,7 +56,7 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
             break
     if _pre_balance is None and _pre_items:
         _pre_balance = _pre_items[0].get('payoutBalance')
-    # step 1: 48d86b1b-5482-4a04-98c5-650b9e4af40f
+    # step 1: POST Reward
     _resp1 = ctx.api.admin.promoters_reward(body={
         "amount": 10,
         "holdTime": 0,
@@ -70,7 +70,7 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     expect(_resp1).json('$.code').equals('200')
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
-    # step 2: e9509f91-78ff-42ae-b43b-a4326237cf32
+    # step 2: GET Check the bonus give success
     _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
     # assertion 2.检查rewarddata_rewardBalance: 一次性贷款不应改变 payoutBalance（与基线一致，兼容历史残留余额）
     expect(_resp2).json('$.data.items[0].payoutBalance').equals(_pre_balance if _pre_balance is not None else '0')

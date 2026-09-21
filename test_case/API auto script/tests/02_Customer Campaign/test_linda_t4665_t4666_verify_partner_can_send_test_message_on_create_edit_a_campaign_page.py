@@ -229,7 +229,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     """Apifox case #7627466: Linda_T4665_T4666_Verify_partner_can_send_test_message_on_create_edit_a_campaign"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 7ca979c8-3cf3-43ba-8d7c-e05e7376ca3e
+    # step 1: POST Create campaign SMS
     _resp1 = ctx.api.campaigns.create(
         body={
             "channel": "SMS",
@@ -244,7 +244,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     expect(_resp1).json('$.message').equals('success')
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp1, '$.data.id')
-    # step 2: 44eb5382-8097-4e06-8560-ebd2977dfa90
+    # step 2: POST send test sms
     _resp2 = ctx.api.campaigns.test_sms(
         body={
             "phones": ["+16502396646"],
@@ -256,7 +256,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j2.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j2.get('data') or {}).get('success')!r}"
     assert (_j2.get('data') or {}).get('message') == "Test SMS sent to 1 recipients", f"data.message不匹配：{(_j2.get('data') or {}).get('message')!r}"
-    # step 3: b92f242b-bdde-4990-a60b-dd28927d565f
+    # step 3: POST Save-recipients
     _resp3 = ctx.api.campaigns.save_recipients(
         body={
             "campaignId": "{{campaignId}}",
@@ -275,7 +275,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     expect(_resp3).json('$.data.status').equals('DRAFT')
     # assertion 3.assertion: responseJson equal UNPAID
     expect(_resp3).json('$.data.paymentStatus').equals('UNPAID')
-    # step 4: 23b926f2-e38a-4bd3-8e50-a62f6056dd5a
+    # step 4: PUT Pay campaign
     _resp4 = ctx.api.campaigns.by_campaign_id(
             body={
                 "name": "automation by linda SMS",
@@ -327,7 +327,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     _iso_re = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$')
     assert _iso_re.match(str(_d4.get('createdAt') or '')), f"createdAt格式不正确：{_d4.get('createdAt')!r}"
     assert _iso_re.match(str(_d4.get('updatedAt') or '')), f"updatedAt格式不正确：{_d4.get('updatedAt')!r}"
-    # step 5: 22cb6be9-87bc-4d2e-9b12-9f7ea3893fde
+    # step 5: POST Create campaign Email
     _resp5 = ctx.api.campaigns.create(
             body={
                 "channel": "EMAIL",
@@ -345,7 +345,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     ctx.extract('campaignEmailId', _resp5, '$.data.id')
     # assertion 5.assertion: responseJson equal 0
     expect(_resp5).json('$.data.totalSelectedCount').equals('0')
-    # step 6: 61601488-2af7-4ca6-a02b-41ae83c1ea84
+    # step 6: POST send test email
     _resp6 = ctx.api.campaigns.test_email(
             body={
                 "emails": ["linda.zhou.ext@1m.app"],
@@ -358,7 +358,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type', '').startswith('application/json') else {}
     assert (_j6.get('data') or {}).get('success') is True, f"data.success应为true，实际={(_j6.get('data') or {}).get('success')!r}"
     assert (_j6.get('data') or {}).get('message') == "Test email sent to 1 recipients", f"data.message不匹配：{(_j6.get('data') or {}).get('message')!r}"
-    # step 7: 54e129b3-db56-40e8-ba4b-d571e363b0af
+    # step 7: POST Save-recipients
     _resp7 = ctx.api.campaigns.save_recipients(
         body={
             "campaignId": "{{campaignEmailId}}",
@@ -377,7 +377,7 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     expect(_resp7).json('$.data.status').equals('DRAFT')
     # assertion 7.assertion: responseJson equal UNPAID
     expect(_resp7).json('$.data.paymentStatus').equals('UNPAID')
-    # step 8: 01fafcc9-e6df-40c3-be23-b67ff3d052e3
+    # step 8: PUT Pay campaign
     _resp8 = ctx.api.campaigns.by_campaign_id(
             body={
                 "name": "automation by linda Email",

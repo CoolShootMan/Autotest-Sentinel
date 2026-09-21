@@ -366,13 +366,13 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
     _resp13 = ctx.api.earnings.summary_2(token='merchant_access_token')
     # assertion 13.Verify the lineup balance is not change before payment: responseJson equal {{balance_amount_p}}
     expect(_resp13).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount_p}}'))
-    # step 14: 41d2912f-f3d1-47f0-a02b-6ddd7992872b
+    # step 14: POST login-admin
     _resp14 = ctx.api.admin.auth_login(body={
         "email": "dian.yuhong.ext@1m.app",
         "password": "Lastd!y8",
     })
     ctx.extract('admin_access_token', _resp14, '$.data.token')
-    # step 15: 724552f3-338c-48df-bdcf-fe8ffa356e12
+    # step 15: POST search event on admin
     _resp15 = ctx.api.admin.events_search(body={
         "query": "{{event_id}}",
         "testing": True,
@@ -381,7 +381,7 @@ def test_lury_t5108_t5110_t5111_verify_partner_can_pay_to_lineup_as_settings_man
         "pageSize": 50,
         "pageNumber": 1,
     }, token='admin_access_token')
-    # step 16: 664ef608-9495-4b30-b303-85889cade164
+    # step 16: PATCH Mark the event as completed
     _resp16 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "COMPLETED",
     }, token='admin_access_token', path_vars={'dup_event_id': '{{event_id}}'})

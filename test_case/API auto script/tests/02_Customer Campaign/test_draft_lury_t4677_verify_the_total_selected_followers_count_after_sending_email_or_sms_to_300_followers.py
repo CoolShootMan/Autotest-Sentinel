@@ -120,7 +120,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     # === Steps ===
     vars['account_email_curator'] = 'linda.zhou.ext+01@1m.app'
     vars['password'] = '7EbE8F4BdE4A38768AcF9C2833aF2Db5'
-    # step 1: 0bf1899f-fbd7-4a27-ad68-ebe75c2d0c79
+    # step 1: POST Partner login
     # === pre-script（由 Apifox customScript 翻译）===
     vars['account_email_curator'] = "linda.zhou.ext+01@1m.app"
     vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
@@ -132,7 +132,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     ctx.extract('token', _resp1, '$.data.token')
     # assertion 1.message: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
-    # step 2: d87b06a3-e82b-49ee-859e-30d58148eb79
+    # step 2: POST Create campaign SMS
     _resp2 = ctx.api.campaigns.create(
         body={
             "channel": "SMS",
@@ -147,7 +147,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     expect(_resp2).json('$.message').equals('success')
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp2, '$.data.id')
-    # step 3: 6061b2f6-2b19-4667-a6ed-844f3154f402
+    # step 3: POST Save-recipients
     _resp3 = ctx.api.campaigns.save_recipients(
         body={
             "campaignId": "{{campaignId}}",
@@ -173,7 +173,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     expect(_resp3).json('$.data.fixedFee').equals('2')
     # extractor: total_fee = $.data.totalToPay
     ctx.extract('total_fee', _resp3, '$.data.totalToPay')
-    # step 4: c9f3fecb-29c5-466b-9879-249f7e32c68c
+    # step 4: POST Send campaign
     _resp4 = ctx.api.campaigns.send_campaign(
         body={
             "campaignId": "{{campaignId}}",
@@ -186,7 +186,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     _resp5 = ctx.api.campaigns.by_campaign_id_2(token='token')
     # assertion 5.Verify total selected count: responseJson equal {{selected_count_sms}}
     expect(_resp5).json('$.data.totalSelectedCount').equals(ctx.render_text('{{selected_count_sms}}'))
-    # step 6: ffee0cf5-e86d-46da-931d-5ea9b96efb0c
+    # step 6: POST Create campaign Email
     _resp6 = ctx.api.campaigns.create(
             body={
                 "channel": "EMAIL",
@@ -204,7 +204,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     ctx.extract('campaignEmailId', _resp6, '$.data.id')
     # assertion 6.assertion: responseJson equal 0
     expect(_resp6).json('$.data.totalSelectedCount').equals('0')
-    # step 7: 2bf1f632-5d0d-4846-95e8-1caeb80d37bc
+    # step 7: POST Save-recipients
     _resp7 = ctx.api.campaigns.save_recipients(
         body={
             "campaignId": "{{campaignEmailId}}",
@@ -223,7 +223,7 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     expect(_resp7).json('$.data.deleted').equals('0')
     # extractor: selected_count_email = $.data.created
     ctx.extract('selected_count_email', _resp7, '$.data.created')
-    # step 8: 781af5bc-bc11-4ea5-9bae-91042713f252
+    # step 8: POST Send campaign
     _resp8 = ctx.api.campaigns.send_campaign(body={"campaignId": "{{campaignEmailId}}", "channel": "EMAIL"}, token='token')
     # assertion 8.assertion: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')

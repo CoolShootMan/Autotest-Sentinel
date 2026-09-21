@@ -64,7 +64,7 @@ def test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_
     #   pm.environment.set("CompareAtPrice", CompareAtPrice);
     # 缺失时 {{CompareAtPrice}} 渲染为空 -> priceAnchor 为空，断言比对失败。
     vars['CompareAtPrice'] = _random.randint(100, 999)
-    # step 2: 1df491e4-654f-4bca-9fed-758dbdaf74da
+    # step 2: PATCH Admin set the product's "compate at price"
     _resp2 = ctx.api.admin.merchant_product_by_product_id(body={
         "variants": [
             {

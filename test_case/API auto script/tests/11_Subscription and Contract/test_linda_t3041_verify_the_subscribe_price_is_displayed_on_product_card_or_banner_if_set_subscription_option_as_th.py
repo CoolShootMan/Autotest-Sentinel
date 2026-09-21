@@ -122,7 +122,7 @@ def test_linda_t3041_verify_the_subscribe_price_is_displayed_on_product_card_or_
     _items: list[Any] = _get_path(_resp1.json(), ['data', 'items']) or []
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
-    # step 2: ad955c67-d7e3-408d-9144-d81c0f03b595
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

@@ -358,14 +358,14 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     """Apifox case #8677597: Linda_TDC_T5379Verify_the_Additional_QR_codes_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 5bbc6a1c-120f-404a-ae14-7079b17af1c3
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: f9fdbfd2-b2cd-4ba6-9bf3-c74dff73da29
+    # step 2: GET Partner Get the Event id
     # 原 step2 post-script: 在 data.items 中找首个 platform === "TDC" 的事件，
     # 取其 id/title 写入 event_id/event_title；并断言两者非空。
     # 该列表接口是分页接口（默认 pageSize=10，新事件在前、种子事件沉底），返回条数
@@ -382,15 +382,15 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     assert _ev2, f"step2 未找到 platform=TDC 的事件（items={len(_items2)}）"
     ctx.set('event_id', _ev2.get('id') or '')
     ctx.set('event_title', _ev2.get('title') or '')
-    # step 3: d149d601-1c91-44e4-a1e1-e6e5c8b43d86
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
-    # step 4: 67d34753-d40c-4576-9ac1-01ad291cc1b2
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
-    # step 5: 122b2d2a-2827-4d8c-b162-de9276af7a0c
+    # step 5: GET Catch the ProductId and promoterProductId
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 step5 post-script: 遍历 data.relatedProducts，以 title（空白→下划线）为后缀，
     # 逐个写入 productId_/promoterProductId_/merchantProductVariantId_/displayVariantId_
@@ -449,7 +449,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     _sec5 = _opts5[0]
     ctx.set('sectionIds', _sec5.get('label') or '')
     ctx.set('ticketHandle', _sec5.get('ticketHandle') or '')
-    # step 6: 61e71fa6-c51d-495c-ae2a-e5ce68457d94
+    # step 6: GET get ticket General_Admission_02 one unitId
     # variantId 原写作单花括号 '{...}'，不会被框架渲染。
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
     # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
@@ -473,7 +473,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
         ctx.set('unitid', '')
         ctx.set('seatNumber', '')
         ctx.set('venueUnitCategoryId', '')
-    # step 7: 309acb6a-6b12-42b4-8689-4d51c67430f6
+    # step 7: PUT setting product exist addtional code
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId_General_Admission_02}}',
     'remote_id': None,
@@ -736,13 +736,13 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp9, '$.data.token')
-    # step 10: e101d932-3e88-47ee-8dc0-76fdb2f88c85
+    # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: responseJson equal success
     expect(_resp10).json('$.message').equals('success')
-    # step 11: dfada68f-a95b-43f8-934c-e452baf76dd7
+    # step 11: POST checkout express venue map
     _resp11 = ctx.api.orders.checkout_express(body={
         "fbAdParams": {
             "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",

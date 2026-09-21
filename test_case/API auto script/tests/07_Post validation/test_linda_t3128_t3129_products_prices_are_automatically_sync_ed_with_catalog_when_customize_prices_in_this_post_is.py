@@ -110,7 +110,7 @@ def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalo
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
-    # step 2: ef97c015-e8da-4d6e-b6fe-810743047a51
+    # step 2: PUT Set the "customize price" is "unchecked"
     _resp2 = ctx.api.posts.curator_update(post_id='{{T3128_post_id}}', body={
         "id": "{{T3128_post_id}}",
         "announcements": [],
@@ -368,7 +368,7 @@ def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalo
     expect(_resp2).json('$.message').equals('success')
     # assertion 2.assertion: responseJson equal ACTIVE
     expect(_resp2).json('$.data.status').equals('ACTIVE')
-    # step 3: ddca356f-5135-44c3-843d-8874ecd9084c
+    # step 3: PUT Update the catalog price is "500"
     _resp3 = ctx.api.products.v_2efee169_7e73_4d20_8d56_d99d7f4ab699(body={
     'id': '2efee169-7e73-4d20-8d56-d99d7f4ab699',
     'remote_id': None,
@@ -750,9 +750,9 @@ def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalo
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
     })
     vars['access_token'] = (_resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
-    # step 5: 571d96f4-9159-4150-92e2-6b1021dcc907
+    # step 5: GET Guest visit the post and check the price is the same as the catalog price
     _resp5 = ctx.api.posts.consumer_detail(body=None, params={'vanityUrl': 'resident', 'urlAlias': 'c77lcn'}, token='access_token')
-    # step 6: 08cc6f65-5bae-4aab-91f7-ba4883ab6cbb
+    # step 6: PUT Recover the catalog price to "100"
     _resp6 = ctx.api.products.v_2efee169_7e73_4d20_8d56_d99d7f4ab699(body={
     'id': '2efee169-7e73-4d20-8d56-d99d7f4ab699',
     'remote_id': None,

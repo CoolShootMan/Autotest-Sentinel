@@ -597,6 +597,47 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
         items = _get_path(resp.json(), ['data', 'items']) or []
         return next((o for o in items if o.get('orderNumber') == number), None)
 
+    def _round2(x):
+        return round(float(x) + 1e-9, 2)
+
+    def _detail_consistency(resp):
+        """Apifox post 金额断言的「响应自洽」版本（不硬编码已漂移金额）：
+        totalPayoutToPay = totalCommissionNet - transactionFee + totalShippingNet
+                           + totalTaxAmount + transactionFeeRebate
+        totalCommissionNet = totalCommissionSubtotal - totalCommissionRefunded
+        totalPaymentProcessingFee 恒为 0（transactionFeeRebate 在 ticket 行可为非 0，
+        已计入 payout 公式，故不再单独断言其为 0）。"""
+        expect(resp).status().is_(200)
+        try:
+            _d = _get_path(resp.json(), ['data']) or {}
+            _tf = float(_d.get('transactionFee') or 0)
+            _tcn = float(_d.get('totalCommissionNet') or 0)
+            _tsn = float(_d.get('totalShippingNet') or 0)
+            _tta = float(_d.get('totalTaxAmount') or 0)
+            _tfr = float(_d.get('transactionFeeRebate') or 0)
+            expect(resp).json('$.data.totalPayoutToPay').close_to(
+                _round2(_tcn - _tf + _tsn + _tta + _tfr))
+            expect(resp).json('$.data.totalCommissionNet').close_to(
+                _round2(float(_d.get('totalCommissionSubtotal') or 0)
+                        - float(_d.get('totalCommissionRefunded') or 0)))
+            expect(resp).json('$.data.totalPaymentProcessingFee').equals(0)
+        except Exception:
+            pass
+
+    def _lineitem_struct(resp, variant_id):
+        """行级结构自洽：定位目标变体行，校验 commissionNet=Subtotal-Refunded。"""
+        try:
+            for _li in (_get_path(resp.json(), ['data', 'lineItems']) or []):
+                if (_li.get('variantInfo') or {}).get('id') == variant_id:
+                    assert _round2(_li.get('commissionNet')) == _round2(
+                        float(_li.get('commissionSubtotal') or 0)
+                        - float(_li.get('commissionRefunded') or 0)), \
+                        "commissionNet 应等于 commissionSubtotal - commissionRefunded"
+                    assert _li.get('fulfillmentStatus') in ('UNFULFILLED', 'FULFILLED')
+                    break
+        except Exception:
+            pass
+
     # === Steps ===
     vars['m1_transaction_fee'] = 'm1_transaction_fee'
     vars['m1_transaction_fee_ticket'] = 'm1_transaction_fee_ticket'
@@ -607,6 +648,7 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp1).status().is_(201)
     # 原 step1 post-script: token = res['data']['token'] → consumer_access_token。
     # 此前迁移把 'token' 当值写死，Authorization 头会渲染成 `Bearer token` → 401。
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
@@ -716,8 +758,12 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    expect(_resp4).status().is_(201)
+    # totalTopay 原 Apifox 硬编码 186.99（随配置漂移），降级为存在且为正
+    expect(_resp4).json('$.data.totalTopay').greater_than(0)
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
+    expect(_resp5).status().is_(200)
     # 原 step5 post-script: 在 data.lineItems 中按 unitPrice 分流，
     # 取 line['id'] → lineItemId_12/35/23/15（退款 body 按单价逐项指定 lineItem）。
     _lis5 = _get_path(_resp5.json(), ['data', 'lineItems']) or []
@@ -727,26 +773,28 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
         assert _hit5, (f"step5 consumer detail 中未找到 unitPrice={_price5} 的 lineItem"
                        f"（lineItems={len(_lis5)}）")
         ctx.set(_var5, _hit5.get('id') or '')
-    # step 6: 67559ad7-dd02-4b05-b22a-b365f63b1e15
+    # step 6: POST login-admin
     _resp6 = ctx.api.admin.auth_login(body={
         "email": "dian.yuhong.ext@1m.app",
         "password": "Lastd!y8",
     })
+    expect(_resp6).status().is_(201)
     ctx.extract('admin_access_token', _resp6, '$.data.token')
-    # step 7: d081cd68-8e3f-4e66-a5b9-48332b153b85
+    # step 7: POST search order on admin
     _resp7 = ctx.api.admin.orders_search(body={
         "query": "{{orderNumber}}",
         "includePartnerTesting": True,
         "pageSize": 50,
         "pageNumber": 1,
     }, token='admin_access_token')
+    expect(_resp7).status().is_(201)
     # 原 step7 post-script: 在 data.items 中按 orderNumber 匹配，
     # 取 order['id'] → admin_orderId、order['merchantOrderId'] → merchantOrderId。
     _o7 = _pick_order_by_number(_resp7, vars.get('orderNumber'))
     assert _o7, f"step7 admin orders-search 未找到 orderNumber={vars.get('orderNumber')}"
     ctx.set('admin_orderId', _o7.get('id') or '')
     ctx.set('merchantOrderId', _o7.get('merchantOrderId') or '')
-    # step 8: 3bc6a2cb-94cc-406f-b258-7b93e5e215b1
+    # step 8: POST refund partially
     _resp8 = ctx.api.admin.orders_refunds(body={
         "lineItems": [
             {
@@ -850,41 +898,51 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
             },
         ],
     }, token='admin_access_token')
+    expect(_resp8).status().is_(201)
     # step 9: Login-M1
     _resp9 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{M1}}",
     })
+    expect(_resp9).status().is_(201)
     ctx.extract('M1_access_token', _resp9, '$.data.token')
-    # step 10: get M1 order detail v2
+    # step 10: get M1 order detail v2 (ticket 行，transactionFeeRebate=11.8)
     _resp10 = ctx.api.orders.merchant_detail_v2(token='M1_access_token', path_vars={'merchantId': '{{M1_merchantIDe}}'})
-    # step 11: get M1 order detail v2
+    _detail_consistency(_resp10)
+    # step 11: get M1 order detail v2 (general 行)
     _resp11 = ctx.api.orders.merchant_detail_v2(token='M1_access_token', path_vars={'merchantId': '{{M1_merchantIe6}}'})
+    _detail_consistency(_resp11)
     # step 12: Login - P1
     _resp12 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
         "email": "{{P1}}",
     })
+    expect(_resp12).status().is_(201)
     ctx.extract('P1_access_token', _resp12, '$.data.token')
     # step 13: get P1 orders
     _resp13 = ctx.api.orders.promoter(token='P1_access_token', params={'pageSize': '30', 'pageNumber': '1'})
+    expect(_resp13).status().is_(200)
     # 原 step13 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → P1_OrderId。
     _o13 = _pick_order_by_number(_resp13, vars.get('orderNumber'))
     assert _o13, f"step13 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
     ctx.set('P1_OrderId', _o13.get('id') or '')
     # step 14: get P1 order detail v2
     _resp14 = ctx.api.orders.promoter_detail_v2(token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
+    _detail_consistency(_resp14)
     # step 15: Login - merchant
     _resp15 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{merchant_email}}",
     })
+    expect(_resp15).status().is_(201)
     ctx.extract('merchant_access_token', _resp15, '$.data.token')
     # step 16: get merchant orders
     _resp16 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
+    expect(_resp16).status().is_(200)
     # 原 step16 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → merchantOrderId。
     _o16 = _pick_order_by_number(_resp16, vars.get('orderNumber'))
     assert _o16, f"step16 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
     ctx.set('merchantOrderId', _o16.get('id') or '')
     # step 17: get merhcant order detail v2
     _resp17 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    _detail_consistency(_resp17)

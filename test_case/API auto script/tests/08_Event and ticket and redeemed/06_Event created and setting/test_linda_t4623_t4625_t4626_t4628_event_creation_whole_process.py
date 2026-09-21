@@ -356,7 +356,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
     _resp2 = ctx.api.events.list(token='linda05_token', params={'pageNumber': '1', 'pageSize': '50', 'statuses': ['undefined']})
     _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     vars['created_event_id'] = _get_path(_j, ['data', 'items', 0, 'id'])
-    # step 3: d0ae0406-88bc-4919-80d6-4ff5d19ead0e
+    # step 3: POST Import Media
     _resp3 = ctx.api.events.v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_media_batch_operate(body={
         "contentType": "image/jpeg",
     }, token='linda05_token')
@@ -368,7 +368,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
     expect(_resp3).json('$.data.title').equals('API Test T4623 ')
     # extractor: newMediaId = $.data.id
     ctx.extract('newMediaId', _resp3, '$.data.id')
-    # step 4: 9a52ee2d-8472-44c2-b327-718b762d46dd
+    # step 4: POST ticket-create
     _resp4 = ctx.api.products.create(body={
     'id': 'dbda7839-bf02-4902-abb0-3f60885cc26d',
     'remote_id': None,
@@ -578,7 +578,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
     expect(_resp4).json('$.data.title').equals('API TEST T4623')
     # extractor: newticketid = $.data.id
     ctx.extract('newticketid', _resp4, '$.data.id')
-    # step 5: 7b1e33e6-33a8-46df-a36e-a5d89449f117
+    # step 5: POST lineup imported
     _resp5 = ctx.api.events.v2_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_batch(body={
         "lineup": [
             {
@@ -608,7 +608,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
         vars['lineup_id'] = _lineup[0]['id'] if _lineup else None
     except Exception:
         pass
-    # step 6: db28cc54-a7e6-40fa-8abc-69e4a9030aa0
+    # step 6: POST import merch products
     _resp6 = ctx.api.products.batch(body={
     'products': [
         {
@@ -739,7 +739,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
         vars['item_id'] = _items6[0]['id'] if _items6 else None
     except Exception:
         pass
-    # step 7: ee56085f-b700-422e-8107-92a552641ce0
+    # step 7: POST Create a Merch product
     _resp7 = ctx.api.products.create(body={
     'merchantId': '2ff36ba8-8a95-4b65-ae4b-39045e4fe28b',
     'shippingType': 'NO_SHIPPING_REQUIRED',
@@ -853,7 +853,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
         vars['merch_id'] = (_j7.get('data') or {}).get('id')
     except Exception:
         pass
-    # step 8: b17ed723-c593-4126-a859-b26344a554b4
+    # step 8: POST create event post
     _resp8 = ctx.api.posts.curator_from_event(body={
         "styleSettings": {
             "template": "ClearSky",
@@ -1130,28 +1130,28 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
         "isPaymentRestrictionEnabled": False,
     }, token='linda05_token')
     ctx.extract('post_id', _resp8, '$.id')
-    # step 9: 1fe4714e-a605-4c72-bc40-23ec3ebb9032
+    # step 9: DELETE delete the ticket and recover the data
     _resp9 = ctx.api.products.by_newticketid(body=None, token='linda05_token')
     # assertion 9.assertion: responseJson equal Product deleted successfully
     expect(_resp9).json('$.data.message').equals('Product deleted successfully')
-    # step 10: 98b537e6-a10c-43ef-9dde-4d2def64ed8a
+    # step 10: POST delete the Media data and recover the data
     _resp10 = ctx.api.events.v2_media_batch_operate(body={
         "medias": [],
     }, token='linda05_token')
-    # step 11: 2de9333e-192e-4582-b7dd-e1c9993b8fb6
+    # step 11: DELETE delete the lineup data and recover the data
     _resp11 = ctx.api.events.v_1a2e22e6_076a_4176_949b_7ab63a149b3f_lineup_by_lineup_id(body={
         "eventId": "1a2e22e6-076a-4176-949b-7ab63a149b3f",
         "id": "463be28d-fc24-40ae-97f3-4f827c7f819a",
     }, token='linda05_token')
     ctx.extract('current_record_id', _resp11, '$.data.id')
-    # step 12: feeba47f-92aa-41cb-9bd3-113716ee458c
+    # step 12: DELETE delete the event post and recover the post
     _resp12 = ctx.api.posts.curator_by_post_id_2(body=None, token='linda05_token')
     ctx.extract('event_id', _resp12, '$.data.id')
-    # step 13: 8b6ba4f8-538c-402b-930e-f5caaf201f67
+    # step 13: DELETE delete the merch product and recover the data
     _resp13 = ctx.api.products.by_newticketid(body=None, token='linda05_token', path_vars={'newticketid': '{{item_id}}'})
     # assertion 13.assertion: responseJson equal Product deleted successfully
     expect(_resp13).json('$.data.message').equals('Product deleted successfully')
-    # step 14: ca7fde97-a17d-446d-a5ce-21cd38a5aaba
+    # step 14: DELETE delete the created merch product and recover the data
     _resp14 = ctx.api.products.by_newticketid(body=None, token='linda05_token', path_vars={'newticketid': '{{merch_id}}'})
     # assertion 14.assertion: responseJson equal Product deleted successfully
     expect(_resp14).json('$.data.message').equals('Product deleted successfully')

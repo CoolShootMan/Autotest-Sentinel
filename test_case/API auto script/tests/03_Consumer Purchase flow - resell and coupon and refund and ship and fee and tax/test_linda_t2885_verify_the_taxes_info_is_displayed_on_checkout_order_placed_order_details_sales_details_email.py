@@ -101,7 +101,7 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     _addr_items: list[Any] = ((_j1 or {}).get('data') or {}).get('items') or []
     _default_addr = next((a for a in _addr_items if a.get('isDefault') is True), None)
     vars['addressId'] = (_default_addr or _addr_items[0]).get('id') if _addr_items else ''
-    # step 2: 2165a45d-d601-417c-8b81-d0ee0919d8b2
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

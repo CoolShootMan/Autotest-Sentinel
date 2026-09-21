@@ -244,11 +244,19 @@ def test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail(ctx: "Contex
     """Apifox case #7542720: Lury_T2231_Consumer_2_2_Others_items_enabled_resell_retail"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
+    # 复算 Apifox step1 pre-script（unit_price=120, qty=1, shipping=4.99, tax=0）
+    import math as _m
+    _ord_lv_tf = _m.floor(4.99 * 0.085 * 100) / 100            # 0.42
+    _item_lv_tf = _m.floor(120 * 0.085 * 100) / 100             # 10.2
+    vars['merchant_transaction_fee'] = round(0.225 * _item_lv_tf + 1e-9, 2)  # 2.30
+    vars['promoter_transaction_fee'] = round(0.15 * _item_lv_tf + 1e-9, 2)   # 1.53
+    vars['p1_transaction_fee'] = round(_item_lv_tf - vars['merchant_transaction_fee'] - vars['promoter_transaction_fee'] + _ord_lv_tf, 2)  # 6.79
     # step 1: Consumer-login
     _resp1 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp1).status().is_(201)
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
@@ -308,33 +316,79 @@ def test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail(ctx: "Contex
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').close_to(120 + 4.99 + 0)
     # step 5: Login - P1
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
         "email": "{{P1}}",
     })
+    expect(_resp5).status().is_(201)
     ctx.extract('P1_access_token', _resp5, '$.data.token')
     # step 6: get P1 order detail v2
     _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDb}}'}, token='P1_access_token')
+    expect(_resp6).status().is_(200)
+    expect(_resp6).json('$.data.transactionFee').close_to(vars['p1_transaction_fee'])
+    expect(_resp6).json('$.data.totalCommissionSubtotal').equals(75)
+    expect(_resp6).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp6).json('$.data.totalCommissionNet').equals(75)
+    expect(_resp6).json('$.data.transactionFeeRebate').equals(0)
+    expect(_resp6).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp6).json('$.data.totalShippingSubtotal').equals(4.99)
+    expect(_resp6).json('$.data.totalShippingRefunded').equals(0)
+    expect(_resp6).json('$.data.totalTaxAmount').equals(0)
+    expect(_resp6).json('$.data.totalTaxAmountRefunded').equals(0)
+    expect(_resp6).json('$.data.totalShippingNet').equals(4.99)
+    expect(_resp6).json('$.data.totalTaxAmountNet').equals(0)
+    _p1_net = float(_get_path(_resp6.json(), ['data', 'totalCommissionNet']) or 0)
+    _p1_ship = float(_get_path(_resp6.json(), ['data', 'totalShippingNet']) or 0)
+    _p1_tax = float(_get_path(_resp6.json(), ['data', 'totalTaxAmount']) or 0)
+    expect(_resp6).json('$.data.totalPayoutToPay').close_to(round(_p1_net - vars['p1_transaction_fee'] + _p1_ship + _p1_tax, 2))
     # step 7: Login - merchant
     _resp7 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{merchant_email}}",
     })
+    expect(_resp7).status().is_(201)
     ctx.extract('merchant_access_token', _resp7, '$.data.token')
     # step 8: get merchant orders
     _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
-    vars['merchantOrderId'] = 'curatorOrderId'
+    expect(_resp8).status().is_(200)
+    _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    for _order in (_get_path(_j8, ["data", "items"]) or []):
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['merchantOrderId'] = _order.get('id')
     # step 9: get merhcant order detail v2
-    _resp9 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    _resp9 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{merchantOrderId}}'}, token='merchant_access_token')
+    expect(_resp9).status().is_(200)
+    expect(_resp9).json('$.data.transactionFee').close_to(vars['merchant_transaction_fee'])
+    expect(_resp9).json('$.data.totalCommissionSubtotal').equals(27)
+    expect(_resp9).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp9).json('$.data.totalCommissionNet').equals(27)
+    expect(_resp9).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp9).json('$.data.transactionFeeRebate').equals(0)
+    _m_net = float(_get_path(_resp9.json(), ['data', 'totalCommissionNet']) or 0)
+    expect(_resp9).json('$.data.totalPayoutToPay').close_to(round(_m_net - vars['merchant_transaction_fee'], 2))
+    _j9 = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
+    for _li in (_get_path(_j9, ['data', 'lineItems']) or []):
+        if (_li.get('variantInfo') or {}).get('id') == 'e3a58292-0a2e-41ac-9d65-27cc6ea3ad27':
+            assert float(_li.get('commissionSubtotal') or 0) == 27
+            assert float(_li.get('commissionNet') or 0) == 27
+            assert float(_li.get('commissionGross') or 0) == 45
+            assert float(_li.get('costPrice') or 0) == 75
+            assert _li.get('fulfillmentStatus') == 'UNFULFILLED'
+            assert _li.get('saleType') == 'POST_COMMISSION'
+            assert _li.get('uplineSaleType') == 'POST_WHOLESALE'
     # step 10: Login - promoter
     _resp10 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{promoter_email}}",
     })
+    expect(_resp10).status().is_(201)
     ctx.extract('promoter_access_token', _resp10, '$.data.token')
     # step 11: get promoter orders
     _resp11 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='promoter_access_token')
+    expect(_resp11).status().is_(200)
     _j: dict[str, Any] = _resp11.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
@@ -342,3 +396,22 @@ def test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail(ctx: "Contex
             vars['promoterOrderId'] = _order.get('id')
     # step 12: get promoter order detail v2
     _resp12 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='promoter_access_token')
+    expect(_resp12).status().is_(200)
+    expect(_resp12).json('$.data.transactionFee').close_to(vars['promoter_transaction_fee'])
+    expect(_resp12).json('$.data.totalCommissionSubtotal').equals(18)
+    expect(_resp12).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp12).json('$.data.totalCommissionNet').equals(18)
+    expect(_resp12).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp12).json('$.data.transactionFeeRebate').equals(0)
+    _pr_net = float(_get_path(_resp12.json(), ['data', 'totalCommissionNet']) or 0)
+    expect(_resp12).json('$.data.totalPayoutToPay').close_to(round(_pr_net - vars['promoter_transaction_fee'], 2))
+    _j12 = _resp12.json() if _resp12.headers.get('content-type','').startswith('application/json') else {}
+    for _li in (_get_path(_j12, ['data', 'lineItems']) or []):
+        if (_li.get('variantInfo') or {}).get('id') == 'e3a58292-0a2e-41ac-9d65-27cc6ea3ad27':
+            assert float(_li.get('commissionSubtotal') or 0) == 18
+            assert float(_li.get('commissionNet') or 0) == 18
+            assert float(_li.get('commissionGross') or 0) == 18
+            assert float(_li.get('costPrice') or 0) == 102
+            assert _li.get('fulfillmentStatus') == 'UNFULFILLED'
+            assert _li.get('saleType') == 'POST_COMMISSION'
+            assert _li.get('uplineSaleType') == 'POST_COMMISSION'

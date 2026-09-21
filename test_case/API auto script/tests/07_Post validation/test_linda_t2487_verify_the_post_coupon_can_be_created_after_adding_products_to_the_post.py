@@ -176,7 +176,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     }, app_headers=True)
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
-    # step 2: bd8f74c7-a340-487a-92c7-b47ac97fe7d7
+    # step 2: PUT Set the post coupon
     _resp2 = ctx.api.posts.curator_update(post_id='{{T2487_post_id}}', body={
         "id": "{{T2487_post_id}}",
         "announcements": [],
@@ -618,7 +618,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     # 两行都算进去 → totalToPay=113.34 而非期望的 56.67。
     # 套件里其余 81 个用例都会先 DELETE /cart，唯独这条漏了；补上以保证可重复执行。
     ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
-    # step 4: 5a7c7672-3428-4e58-9521-f17a335f20bf
+    # step 4: POST Buy now and meet the minimum required amount to qualify for this promotion.
     _resp4 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "{{T2487_post_id}}",
         "updateCartItems": [
@@ -652,7 +652,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     }, app_headers=True, token='access_token')
     ctx.extract('orderId', _resp4, '$.data.orderId')
     ctx.extract('orderNumber', _resp4, '$.data.orderNumber')
-    # step 5: dc8ea801-3fd0-4d34-86bd-59b5f0b311eb
+    # step 5: POST Guest visit and apply the post coupon success
     _resp5 = ctx.api.orders.update_promotions(body={
         "postIdForFilter": "{{T2487_post_id}}",
         "orderId": "{{orderId}}",
@@ -665,7 +665,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
         "applicableCode": "ygzaz9jm",
     }, app_headers=True, token='access_token')
     ctx.extract('currentOrderId', _resp5, '$.data.orderId')
-    # step 6: c2514d17-9d6e-47e8-8ff6-47ad80335e43
+    # step 6: PUT clean cart and let the item reduce to 1
     _resp6 = ctx.api.cart.update(body={
         "items": [
             {
@@ -687,13 +687,13 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     expect(_resp6).json('$.data.items[0].quantity').equals('1')
     # assertion 6.assertion: responseJson equal 56.67
     expect(_resp6).json('$.data.items[0].subtotal').equals('56.67')
-    # step 7: b4248f82-3498-44d0-9218-9cef1b7eb0c3
+    # step 7: POST Buy now and hasn't meet the minimum required amount to qualify for this promotion.
     _resp7 = ctx.api.orders.checkout(body={}, app_headers=True, token='access_token')
     # assertion 7.assertion: responseJson equal 56.67
     expect(_resp7).json('$.data.totalToPay').equals('56.67')
     # extractor: neworderId = $.data.orderId
     ctx.extract('neworderId', _resp7, '$.data.orderId')
-    # step 8: 80bfe5e9-3436-4ffb-b5a4-0f2ca5b8e1ba
+    # step 8: POST Guest visit and apply the post coupon failed
     _resp8 = ctx.api.orders.update_promotions(body={
         "orderId": "{{neworderId}}",
         "shippingAddress": {

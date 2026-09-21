@@ -50,11 +50,11 @@ def test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event(ctx: "Cont
     # the same eventId used in the request body so the path resolves.
     vars['event_id'] = '79ec6803-9f10-4937-9fde-823468e0e543'
     # === Steps ===
-    # step 1: 0b81a3c3-02fc-48b3-822d-d9eaf49b2a3a
+    # step 1: POST upload image on the lineup
     _resp1 = ctx.api.promoters.product_image_url(body={
         "contentType": "image/jpeg",
     }, token='linda01_token')
-    # step 2: a288f139-84e6-463e-a20d-7aa171f9b7cb
+    # step 2: POST create lineup on the event landing page
     _resp2 = ctx.api.events.lineup(body={
         "eventId": "79ec6803-9f10-4937-9fde-823468e0e543",
         "poster": {

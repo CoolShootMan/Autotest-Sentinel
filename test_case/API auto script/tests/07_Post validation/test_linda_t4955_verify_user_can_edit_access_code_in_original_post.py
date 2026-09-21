@@ -79,7 +79,7 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
-    # step 1: d916bc6e-0d14-4a34-b4bb-515119343dbd
+    # step 1: PUT Set checkout restrictions was true
     # === pre-script（由 Apifox customScript 翻译）===
     # post url:  https://release.pear.us/lindanewcurator/post/t4955bylinda
     vars['postId'] = "e6aa0dd3-3d87-4d64-bb8c-78be838908f7"
@@ -306,13 +306,13 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     expect(_resp1).json('$.message').equals('success')
     # Apifox: var standardUuid = pm.variables.replaceIn('{{$guid}}')
     vars['guest_session_id'] = str(_uuid.uuid4())
-    # step 2: 36bb23eb-ac93-4856-abb6-33c32b362795
+    # step 2: POST guest login
     _resp2 = ctx.api.auth.guest_login(body={
         "consumerId": "{{guest_session_id}}",
     })
     # extractor: guest_token = $.data
     ctx.extract('guest_token', _resp2, '$.data')
-    # step 3: 83a2f2e6-81a0-42a0-ad6a-1630ef59bb6b
+    # step 3: POST Guest checkout with input access code
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "{{postId}}",
         "updateCartItems": [
@@ -355,7 +355,7 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     expect(_resp3).json('$.data.orderNumber').exists()
     # extractor: orderId = $.data.orderId
     ctx.extract('orderId', _resp3, '$.data.orderId')
-    # step 4: 58b469eb-74d3-4a63-8cde-5f08e36dced4
+    # step 4: POST place order with access code
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
         "contact": {
@@ -380,7 +380,7 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     expect(_resp4).json('$.message').equals('success')
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
     vars['postId'] = 'e6aa0dd3-3d87-4d64-bb8c-78be838908f7'
-    # step 5: d59ea706-fb0b-41a8-bc18-97ba17c0e4fa
+    # step 5: PUT Set checkout restrictions was false
     # === pre-script（由 Apifox customScript 翻译）===
     # post url:  https://release.pear.us/lindanewcurator/post/t4955bylinda
     vars['postId'] = "e6aa0dd3-3d87-4d64-bb8c-78be838908f7"
@@ -606,7 +606,7 @@ def test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson equal success
     expect(_resp5).json('$.message').equals('success')
-    # step 6: 4f75abe3-9434-447c-aa35-f27e1d70d0a4
+    # step 6: POST Guest checkout without input access code
     _resp6 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "{{postId}}",
         "updateCartItems": [

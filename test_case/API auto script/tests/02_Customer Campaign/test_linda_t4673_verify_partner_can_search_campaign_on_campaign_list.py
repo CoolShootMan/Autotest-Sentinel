@@ -137,7 +137,7 @@ def test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list(ctx: "C
     """Apifox case #7631212: Linda_T4673_Verify_partner_can_search_campaign_on_campaign_list"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 625a24c5-4f07-433d-87de-a920142dd9ff
+    # step 1: GET Search the campaign and check the search result is correct
     _resp1 = ctx.api.campaigns.list(body=None, params={'search': 'automation', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}

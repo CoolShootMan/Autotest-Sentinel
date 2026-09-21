@@ -1,4 +1,5 @@
-#!usr/bin/env python3
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import sys, os
 
 # main.py lives inside the UI line now (test_case/UI/Test_Katana); repo root is 3 levels up.
@@ -6,7 +7,6 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__f
 _VENV_PYTHON = os.path.join(_REPO_ROOT, "venv", "bin", "python3")
 if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
     os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
-# -*- encoding: utf-8 -*-
 '''
 Filename         : main.py
 Description      : 

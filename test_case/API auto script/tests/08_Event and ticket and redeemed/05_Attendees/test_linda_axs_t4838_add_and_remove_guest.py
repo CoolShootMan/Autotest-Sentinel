@@ -79,7 +79,7 @@ def test_linda_axs_t4838_add_and_remove_guest(ctx: "Context"):
     """Apifox case #8709199: Linda_AXS_T4838_Add_and_Remove_guest"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: cf2e1886-68cf-47e0-94d7-b2c2b33da7aa
+    # step 1: GET Get the Event id
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # --- post 脚本: 从响应 data.items 中提取 event_id ---
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
@@ -93,7 +93,7 @@ def test_linda_axs_t4838_add_and_remove_guest(ctx: "Context"):
     _areaCodes = ["202","312","415","650","212","310","408","213","707"]
     vars['usPhoneNumber'] = '+1' + random.choice(_areaCodes) + str(random.randint(200, 999)) + str(random.randint(1000, 9999))
     vars['randomEmail'] = 'qa_guests_' + str(random.randint(100000, 999999)) + '@test.com'
-    # step 2: 0396addf-c425-4c88-a42a-00a6e1a1e5b5
+    # step 2: POST Add new guest
     _resp2 = ctx.api.events.guests(body={
         "phoneNumber": "{{usPhoneNumber}}",
         "email": "{{randomEmail}}",
@@ -108,7 +108,7 @@ def test_linda_axs_t4838_add_and_remove_guest(ctx: "Context"):
     _gid2 = _j2['data'].get('id')
     assert isinstance(_gid2, str) and _gid2, f"guest_id 为空: {_j2.get('data')!r}"
     vars['guest_id'] = _gid2
-    # step 3: a858fb40-ec56-43c2-94f5-38cb70174f2c
+    # step 3: DELETE delete guest
     _resp3 = ctx.api.events.guests_batch(body={
         "guestIds": [
             "{{guest_id}}",

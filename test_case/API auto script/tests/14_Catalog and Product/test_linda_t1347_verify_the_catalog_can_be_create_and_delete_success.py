@@ -44,7 +44,7 @@ def test_linda_t1347_verify_the_catalog_can_be_create_and_delete_success(ctx: "C
     _resp1 = ctx.api.merchants.list(token='merchant_token', params={'platform': 'PEAR'})
     # assertion 1.assertion: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')
-    # step 2: d9305e7c-e723-439d-b435-99f084ee810b
+    # step 2: POST Create a Catalog
     # === pre-script（由 Apifox customScript 翻译）：设置创建 merchant 所需的参数 ===
     vars['commissionRate'] = "25"
     vars['storeName'] = "API test by linda T1347"

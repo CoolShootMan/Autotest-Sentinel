@@ -134,7 +134,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
         _addr_items: list[Any] = (_j2.get('data') or {}).get('items') or []
         vars['addressId'] = next((x['id'] for x in _addr_items if x.get('isDefault')), (_addr_items[0]['id'] if _addr_items else ''))
     except Exception: pass
-    # step 3: b774ddef-e7b8-4cac-9acd-54bebe6f7b4a
+    # step 3: DELETE Clean Cart
     _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

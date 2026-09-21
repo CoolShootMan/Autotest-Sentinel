@@ -284,7 +284,7 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     }, app_headers=True)
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
-    # step 2: 39c21944-7359-485c-9c3d-5c9d033ef018
+    # step 2: PUT Set the post coupon auto apply
     _resp2 = ctx.api.posts.curator_update(post_id='{{T2895_post_id}}', body={
         "id": "{{T2895_post_id}}",
         "announcements": [],
@@ -698,7 +698,7 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     vars['access_token'] = (_resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 4: Guest visit and check the auto coupon banner response
     _resp4 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t2895'})
-    # step 5: edeed7a3-ef3f-400a-9ab1-11699ed19d3a
+    # step 5: POST Buy now and hasn't meet the coupon minimum required amount
     _resp5 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
         "updateCartItems": [
@@ -734,7 +734,7 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     ctx.extract('orderId', _resp5, '$.data.orderId')
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp5, '$.data.orderNumber')
-    # step 6: 90703ec6-7eb4-4e02-8a1c-6ac5cd9f1299
+    # step 6: POST Buy now and meet the minimum required amount to auto apply coupon
     _resp6 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
         "updateCartItems": [
@@ -777,13 +777,13 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp7, '$.data.token')
-    # step 8: 14495694-f158-4275-861d-91faf01549b5
+    # step 8: DELETE Clean Cart
     _resp8 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 8.assertion: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
     # assertion 8.assertion: responseJson equal success
     expect(_resp8).json('$.message').equals('success')
-    # step 9: 3e59ea11-8837-471e-938e-7151823ca597
+    # step 9: POST Buy now and hasn't meet the coupon minimum required amount
     _resp9 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
         "updateCartItems": [
@@ -819,7 +819,7 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "C
     ctx.extract('orderId', _resp9, '$.data.orderId')
     # extractor: orderNumber = orderNumber
     ctx.extract('orderNumber', _resp9, '$.data.orderNumber')
-    # step 10: 948e658d-e739-4485-8f70-e1c15096f756
+    # step 10: POST Buy now and meet the minimum required amount to auto apply coupon
     _resp10 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
         "updateCartItems": [

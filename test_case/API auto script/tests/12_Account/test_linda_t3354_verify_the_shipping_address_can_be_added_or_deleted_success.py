@@ -56,7 +56,7 @@ def test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success
     # === Steps ===
     # step 1: get address list
     _resp1 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
-    # step 2: c3467ada-0ce8-4680-a3a1-83d3a356557f
+    # step 2: POST Add address
     _resp2 = ctx.api.address.create(body={
         "isDefault": False,
         "phoneNumber": "17484538034",
@@ -73,7 +73,7 @@ def test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success
     ctx.extract('address_id', _resp2, '$.data.id')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
-    # step 3: 672d4660-7657-4d0b-a10a-ebd7361919a2
+    # step 3: DELETE Delete address
     _resp3 = ctx.api.address.by_address_id(body=None, token='linda10_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

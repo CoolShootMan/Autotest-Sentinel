@@ -67,7 +67,7 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     })
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
-    # step 2: 56727729-8340-4343-83b7-edcdd51cff5d
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
@@ -146,7 +146,7 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     ctx.extract('lineItems_id', _resp5, '$.data.lineItems[0].orderLineItemId')
     # assertion 5.assertion: responseJson equal UNFULFILLED
     expect(_resp5).json('$.data.lineItems[0].fulfillmentStatus').equals('UNFULFILLED')
-    # step 6: 5a7c0d38-f109-4b10-807b-942f77dc0ad9
+    # step 6: POST Make Partial fulfillment
     _resp6 = ctx.api.orders.fulfillment_merchant_by_order_number(body={
         "trackingNumber": "{{$number.bigInt}}",
         "makeShippingLineItems": [

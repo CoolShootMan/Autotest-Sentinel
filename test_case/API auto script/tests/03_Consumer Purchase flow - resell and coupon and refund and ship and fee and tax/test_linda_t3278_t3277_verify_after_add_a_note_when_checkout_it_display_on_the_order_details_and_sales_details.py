@@ -95,7 +95,7 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     _items: list[Any] = _get_path(_resp1.json(), ['data', 'items']) or []
     _dft = next((_i for _i in _items if _i.get('isDefault') is True), None)
     vars['addressId'] = ((_dft or _items[0]).get('id', '') if _items else '')
-    # step 2: 32ece22e-a265-40fe-9dff-15be514034ec
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

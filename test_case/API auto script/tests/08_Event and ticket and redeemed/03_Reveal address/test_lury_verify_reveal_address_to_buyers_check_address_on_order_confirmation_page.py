@@ -168,3 +168,12 @@ def test_lury_verify_reveal_address_to_buyers_check_address_on_order_confirmatio
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion 4: create Order and check address (status 201 / totalTopay=0 / lineItem extraInfo)
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').equals(0)
+    _mpid4 = "70990c9a-f53a-4887-b7a1-9e4881d769cd"
+    _ei4 = '$.data.confirmation.lineItems[?(@.merchantProductId=="' + _mpid4 + '")].extraInfo'
+    expect(_resp4).json(_ei4 + '.isAddressHidden').equals(False)
+    expect(_resp4).json(_ei4 + '.location').equals("111 South Grant Avenue, Columbus, OH")
+    expect(_resp4).json(_ei4 + '.event').equals("Lury event reveal address to buyer automation testing 0806")
+    expect(_resp4).json(_ei4 + '.venue').equals("reveal address to buyers")

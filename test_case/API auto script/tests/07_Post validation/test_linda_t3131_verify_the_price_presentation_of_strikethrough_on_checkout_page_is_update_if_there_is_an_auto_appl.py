@@ -186,7 +186,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     ctx.extract('subscriptionPlanOptionid', _resp2, '$.data.relatedProducts[0].variants[0].subscriptionPlanOptionPrices[0].optionId')
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp2, '$.data.id')
-    # step 3: 018aeb5f-dd54-47a7-925a-fb45eb46c768
+    # step 3: DELETE Clean Cart
     _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
@@ -276,7 +276,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
 
     # assertion 7.assertion: responseJson equal 64
     expect(_resp7).json('$.data.totalCommissionSubtotal').equals('64')
-    # step 8: e6ce196f-d132-4904-b8c8-684476534673
+    # step 8: DELETE Clean Cart
     _resp8 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 8.assertion: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
@@ -359,7 +359,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
 
     # assertion 11.assertion: responseJson equal 64
     expect(_resp11).json('$.data.totalCommissionSubtotal').equals('64')
-    # step 12: f7ba3778-8cdf-46ae-b63d-d96fdafff9ec
+    # step 12: DELETE Clean Cart
     _resp12 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 12.assertion: responseJson equal 200
     expect(_resp12).json('$.code').equals('200')
@@ -442,7 +442,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
 
     # assertion 15.assertion: responseJson equal 128
     expect(_resp15).json('$.data.totalCommissionSubtotal').equals('128')
-    # step 16: 8f98cc17-9730-4b56-a926-19d870b543aa
+    # step 16: DELETE Clean Cart
     _resp16 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 16.assertion: responseJson equal 200
     expect(_resp16).json('$.code').equals('200')
@@ -525,7 +525,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
 
     # assertion 19.assertion: responseJson equal 192
     expect(_resp19).json('$.data.totalCommissionSubtotal').equals('192')
-    # step 20: f3797de9-6dc0-4a41-bde0-077bc656a06b
+    # step 20: DELETE Clean Cart
     _resp20 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 20.assertion: responseJson equal 200
     expect(_resp20).json('$.code').equals('200')
@@ -608,7 +608,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
 
     # assertion 23.assertion: responseJson equal 128
     expect(_resp23).json('$.data.totalCommissionSubtotal').equals('128')
-    # step 24: b221e3c2-95a7-497a-bf67-b7f26ad5fdf1
+    # step 24: DELETE Clean Cart
     _resp24 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 24.assertion: responseJson equal 200
     expect(_resp24).json('$.code').equals('200')

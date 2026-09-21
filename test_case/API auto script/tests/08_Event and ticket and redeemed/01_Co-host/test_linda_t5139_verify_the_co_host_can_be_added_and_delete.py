@@ -126,7 +126,7 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx: "Context"):
     """Apifox case #8607884: Linda_T5139_Verify_the_Co_host_can_be_added_and_delete"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: a460e4d7-1877-4965-a029-94f3dc89a5e5
+    # step 1: GET Partner Get the Event id
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
@@ -134,7 +134,7 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx: "Context"):
     assert _t1 is not None, "未找到 title 为 'event-for-API-testing' 的事件"
     assert isinstance(_t1.get('id'), str) and _t1.get('id'), f"提取的 id 为空，实际={_t1.get('id')!r}"
     vars['event_id'] = _t1.get('id')
-    # step 2: 9d49f954-3250-44a2-aaf7-36a03af013ce
+    # step 2: POST Partner add co-host
     _resp2 = ctx.api.events.create(body={
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
@@ -160,9 +160,9 @@ def test_linda_t5139_verify_the_co_host_can_be_added_and_delete(ctx: "Context"):
     assert isinstance(_d2.get('createdAt'), str) and _d2.get('createdAt'), "createdAt 应为非空字符串"
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"
-    # step 3: ab2bca35-78b5-48bd-81b0-8ce3eda4e482
+    # step 3: GET Co-seller check the Event exist
     _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
-    # step 4: 84447ab5-4e1c-4bb4-b330-e95e57529c55
+    # step 4: DELETE Partner delete the Co-seller
     _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id 一致 ----

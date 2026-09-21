@@ -76,6 +76,7 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Conte
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
     }, app_headers=False)
+    expect(_resp1).status().is_(201)
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: buy now
     _resp2 = ctx.api.orders.buy_now(body={
@@ -113,6 +114,8 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Conte
     ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp2, '$.data.orderId')
+    # assertion: totalToPay before coupon = 6.99 (product 2 + shipping 4.99)
+    expect(_resp2).json('$.data.totalToPay').close_to(6.99)
     # step 3: get Checkout
     _resp3 = ctx.api.orders.checkout_2(token='access_token')
     _j: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
@@ -132,3 +135,13 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Conte
         },
         "applicableCode": "autocoupon10",
     }, token='access_token')
+    # assertion: apply promotion — verify discount/coupon breakdown (autocoupon10 = 10% off $2)
+    expect(_resp4).json('$.data.productSubtotal').close_to(2)
+    expect(_resp4).json('$.data.totalLineItemCouponDiscount').close_to(0.2)
+    expect(_resp4).json('$.data.totalLineItemSampleDiscount').close_to(0)
+    expect(_resp4).json('$.data.totalLineItemSubtotal').close_to(1.8)
+    expect(_resp4).json('$.data.totalShippingPrice').close_to(4.99)
+    expect(_resp4).json('$.data.totalShippingDiscount').close_to(0)
+    expect(_resp4).json('$.data.totalShippingSubtotal').close_to(4.99)
+    expect(_resp4).json('$.data.totalToPay').close_to(6.79)
+    expect(_resp4).json('$.data.totalDiscount').close_to(0.2)

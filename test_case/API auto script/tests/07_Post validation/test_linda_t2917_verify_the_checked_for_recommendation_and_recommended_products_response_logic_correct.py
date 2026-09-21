@@ -167,7 +167,7 @@ def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_produ
     """Apifox case #8038584: Linda_T2917_Verify_the_checked_For_recommendation_and_Recommended_products_respo"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 1ed004ca-9615-47c9-9d46-6e774aa66402
+    # step 1: PUT Set the post product recommendation
     _resp1 = ctx.api.posts.curator_update(post_id='{{T2917_post_id}}', body={
     'id': '{{T2917_post_id}}',
     'announcements': [],

@@ -435,9 +435,9 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
     """Apifox case #7897302: Linda_T4131_Verify_after_created_affiliate_link_can_send_Email_or_SMS"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 3ce00ab3-55cd-42dd-9f62-784b7e74f4d9
+    # step 1: GET get Affiliate invite link
     _resp1 = ctx.api.promoters.affiliate_promoters(body=None, params={'keyword': ''}, token='linda05_token')
-    # step 2: a4fe9fa0-de87-4851-a141-ca5bff2edf6f
+    # step 2: POST generate affiliate link by Email
     _resp2 = ctx.api.promoters.curator_affiliate_link(body={
         "phoneNumberOrEmail": "linda.zhou.ext+27@1m.app",
         "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",
@@ -445,13 +445,13 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
     }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
     ctx.extract('affiliateCode', _resp2, '$.data.affiliateCode')
-    # step 3: 434c9c06-a6be-4b3f-9321-abf48c83afb5
+    # step 3: POST /short-link/internal
     _resp3 = ctx.api.links.internal(body={
         "originalUrl": "https://release.pear.us/lindanewcurator/post/t4131automation?aff={{affiliateCode}}",
     }, token='linda05_token')
     # extractor: shortCode = $.data.code
     ctx.extract('shortCode', _resp3, '$.data.code')
-    # step 4: 02bb2e88-ffe7-4442-aeff-8d361d57d7b2
+    # step 4: POST Check the send email function is work
     _resp4 = ctx.api.promoters.affiliate_link_notification_batch(body={
     'postAlias': 't4131automation',
     'notifications': [
@@ -464,7 +464,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
         },
     ],
 }, token='linda05_token')
-    # step 5: f6472fdb-498d-44c4-a185-42700851291c
+    # step 5: POST generate affiliate link by SMS
     _resp5 = ctx.api.promoters.curator_affiliate_link(body={
         "phoneNumberOrEmail": "+16502396646",
         "curatorId": "84a0de44-47e4-4a38-883e-d99ed194d7d7",
@@ -474,7 +474,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
     ctx.extract('affiliateCode', _resp5, '$.data.affiliateCode')
     # extractor: smsshortcode = $.data.code
     ctx.extract('smsshortcode', _resp5, '$.data.code')
-    # step 6: 07187509-b359-4981-82a1-c9c135a9062e
+    # step 6: POST Check the send sms function is work
     _resp6 = ctx.api.promoters.affiliate_link_notification_batch(body={
         "postAlias": "t4131automation",
         "notifications": [
