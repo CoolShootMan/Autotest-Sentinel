@@ -1,3 +1,8 @@
+# PEP 604 annotations (`dict | None`) evaluate eagerly on Python 3.9; the
+# future import makes them lazy so the suite stays collectable on 3.9.
+# CI runs 3.11 where this is a no-op. Mirrors heal/*.py which already do this.
+from __future__ import annotations
+
 import re as _re
 from typing import Any, cast
 

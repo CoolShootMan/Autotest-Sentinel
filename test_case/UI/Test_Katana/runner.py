@@ -15,10 +15,12 @@ from typing import List, Dict, Tuple, Set
 from dotenv import load_dotenv
 
 # Load .env file from project root (does not override existing environment variables)
-load_dotenv(Path(__file__).resolve().parent / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 # Define constant paths
-BASE_DIR = Path("test_case/UI/Test_Katana")
+# This file lives inside the UI line itself, so the UI root is simply this
+# script's directory. Mirrors tools/paths.py:UI_ROOT.
+BASE_DIR = Path(__file__).resolve().parent
 YAML_DIR = BASE_DIR / "All_YAML"
 TEST_FILE = BASE_DIR / "test_ui.py"
 

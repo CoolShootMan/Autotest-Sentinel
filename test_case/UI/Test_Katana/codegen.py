@@ -74,10 +74,10 @@ def main():
         # Build cookie filename from role and environment
         # e.g.: cookie_release.json or cookie_coseller_release.json
         if role == "partner":
-            cookie_file = f"./test_case/UI/Test_Katana/cookie_{env}.json"
+            cookie_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"cookie_{env}.json")
         else:
             # For co-seller and other roles
-            cookie_file = f"./test_case/UI/Test_Katana/cookie_coseller_{env}.json"
+            cookie_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"cookie_coseller_{env}.json")
             
         # Warn if cookie file is missing (non-blocking)
         if not os.path.exists(cookie_file):

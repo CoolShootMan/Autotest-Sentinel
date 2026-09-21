@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys, os
-_VENV_PYTHON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "venv", "bin", "python3")
+
+# main.py lives inside the UI line now (test_case/UI/Test_Katana); repo root is 3 levels up.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_VENV_PYTHON = os.path.join(_REPO_ROOT, "venv", "bin", "python3")
 if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
     os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
 '''
@@ -15,7 +18,11 @@ Version          : 2.0
 
 import os
 import pytest
+
+# Repo root must be importable for tools/*
+sys.path.insert(0, _REPO_ROOT)
 from tools import logger, BASE_DIR
+from tools.paths import UI_ROOT, UI_TEST_DIR, API_PREFILL_DIR
 import time
 import subprocess # Import subprocess
 import shutil
@@ -24,7 +31,7 @@ import socket
 from dotenv import load_dotenv
 
 # Load .env file from project root (does not override existing environment variables)
-load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+load_dotenv(os.path.join(_REPO_ROOT, ".env"))
 
 def start_autotest():
     # Ensure subprocess can also access BASE_URL (.env already loaded at module level)
@@ -62,7 +69,7 @@ def start_autotest():
         sys.executable,
         "-m",
         "pytest",
-        os.path.join(BASE_DIR, 'test_case', 'UI'),
+        str(UI_TEST_DIR),
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
@@ -83,7 +90,7 @@ def start_autotest():
     # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
     # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
     # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
-    api_dir = os.path.join(BASE_DIR, 'test_case', 'API auto script')
+    api_dir = str(API_PREFILL_DIR)
     prefill_runner = os.path.join(api_dir, 'run_suite.py')
     prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
     logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
@@ -247,7 +254,7 @@ def start_autotest():
     open_cmd = [allure_bat, "open", allure_report_dir]
     logger.info(f"Running command: {' '.join(open_cmd)}")
     # Start HTTP server immediately (in separate window, not blocked by allure open)
-    http_server_script = os.path.join(BASE_DIR, "http_server.py")
+    http_server_script = os.path.join(UI_ROOT, "http_server.py")
     http_cmd = [sys.executable, http_server_script, allure_report_dir, str(http_port)]
     if os.environ.get("CI"):
         # CI (GitHub Actions ubuntu, headless): skip the LAN HTTP server.

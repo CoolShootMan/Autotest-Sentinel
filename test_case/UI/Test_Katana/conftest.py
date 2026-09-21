@@ -9,10 +9,16 @@ Version          : 2.0
 '''
 import os
 import json
+import sys
 os.environ["AI_DISABLED"] = "True"
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = _THIS_DIR
 while not os.path.exists(os.path.join(BASE_DIR, "test_case")) and BASE_DIR != os.path.dirname(BASE_DIR):
     BASE_DIR = os.path.dirname(BASE_DIR)
+
+# Make this directory importable: page/ lives here and both test_ui.py and
+# actions/base.py do `from page.home import ...`.
+sys.path.insert(0, _THIS_DIR)
 
 import shutil
 from loguru import logger
@@ -45,6 +51,63 @@ _ENV_MAP = {
     "https://pear.us": "prod",
 }
 CURRENT_ENV = _ENV_MAP.get(_BASE_URL, "release")
+
+
+def _replace_placeholders(obj, base_url, env_name):
+    """Recursively replace {BASE_URL} and {ENV} placeholders in dicts, lists, and strings"""
+    if isinstance(obj, str):
+        return obj.replace("{BASE_URL}", base_url).replace("{ENV}", env_name)
+    elif isinstance(obj, dict):
+        return {k: _replace_placeholders(v, base_url, env_name) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_replace_placeholders(item, base_url, env_name) for item in obj]
+    return obj
+
+
+# --- THE DYNAMIC YAML ENGINE ---
+# (merged verbatim from the former repo-root conftest; yaml paths are anchored
+# to this directory so they survive future moves)
+def pytest_generate_tests(metafunc):
+    if "smokecases1" in metafunc.fixturenames:
+        yaml_files = metafunc.config.getoption("--yaml")
+        if not yaml_files:
+            yaml_files = "Storefront_module.yaml"
+
+        # Support comma-separated multiple yaml files
+        yaml_file_list = [f.strip() for f in yaml_files.split(",") if f.strip()]
+
+        all_argvalues = []
+        all_ids = []
+
+        for yaml_file in yaml_file_list:
+            # pathlib-style join handles both / and \ separators inside yaml_file
+            yaml_path = os.path.join(_THIS_DIR, yaml_file.replace('/', os.sep).replace('\\', os.sep))
+
+            if os.path.exists(yaml_path):
+                with open(yaml_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
+                if data:
+                    # Replace {BASE_URL} placeholder at runtime
+                    data = _replace_placeholders(data, _BASE_URL, CURRENT_ENV)
+                    if not isinstance(data, dict):
+                        logger.error(f"YAML root must be a mapping: {yaml_path}")
+                        continue
+                    for k, v in data.items():
+                        if isinstance(v, dict):
+                            v["__yaml_path__"] = yaml_path
+                            all_argvalues.append({k: v})
+                            # Add yaml prefix + short description slug to test ID for readability
+                            desc = v.get("description", "")
+                            if desc:
+                                slug = slugify(desc, max_length=40, word_boundary=True, separator="_")
+                                all_ids.append(f"{yaml_file}::{k}_{slug}")
+                            else:
+                                all_ids.append(f"{yaml_file}::{k}")
+            else:
+                logger.error(f"YAML file not found at: {yaml_path}")
+
+        if all_argvalues:
+            metafunc.parametrize("smokecases1", all_argvalues, ids=all_ids)
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
@@ -103,15 +166,15 @@ def pytest_configure(config):
     """
     Local debugging should launch a real (headed) browser so the engineer can
     watch the UI. CI (GitHub Actions) sets CI=true and MUST stay headless
-    (the hosted runner has no display). We force headed ONLY when CI is unset,
-    so a bare `pytest` locally shows the browser with no extra flag, while the
-    headless config in pytest.ini is left untouched for the daily CI run.
+    (the hosted runner has no display). Opt out locally with HEADLESS=1.
     """
-    if not os.environ.get("CI"):
-        try:
-            config.option.headed = True
-        except Exception:
-            pass
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        return
+    if os.environ.get("HEADLESS", "").strip().lower() in ("1", "true", "yes", "on"):
+        return
+    # Only flip the flag when pytest-playwright actually registered it
+    if getattr(config.option, "headed", None) is False:
+        config.option.headed = True
 
 @pytest.fixture()
 def browser_context_args(browser_context_args, playwright, request):
@@ -390,3 +453,60 @@ def context(
                 logger.warning(f"Video file not found after context close: {video_path}")
         except Exception as e:
             logger.warning(f"Failed to attach video {i} to Allure: {e}")
+
+
+# --- Fake webcam video for camera-permission flows ---
+# (merged from the former repo-root conftest; BASE_DIR below already resolves
+# to the repo root via the walk-up above, where data/*.y4m lives)
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    # Default to the trimmed small video to prevent OOM
+    y4m_name = "Ticket_Small.y4m"
+
+    # Fallback to Ticket_C.y4m if small one doesn't exist
+    if not os.path.exists(os.path.join(BASE_DIR, "data", y4m_name)):
+        y4m_name = "Ticket_C.y4m"
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
+    if worker_id != "master":
+        # Extract index from 'gw0', 'gw1' etc.
+        try:
+            worker_idx = int(re.sub(r'\D', '', worker_id)) + 1
+            worker_y4m = f"Ticket_{worker_idx}.y4m"
+            if os.path.exists(os.path.join(BASE_DIR, "data", worker_y4m)):
+                y4m_name = worker_y4m
+                logger.info(f"WORKER_ISOLATION: Worker {worker_id} using dedicated video: {y4m_name}")
+        except Exception as e:
+            logger.warning(f"Failed to determine worker-specific video: {e}")
+
+    y4m_path = os.path.join(BASE_DIR, "data", y4m_name).replace("\\", "/")
+    logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
+
+    return {
+        **browser_type_launch_args,
+        "args": [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            "--window-size=600,1100",
+            "--start-maximized",
+            "--disable-translate",
+            "--disable-features=Translate",
+            "--disable-gpu",
+            "--no-sandbox"
+        ],
+    }
+
+
+# --- WorkBuddy safe-delete sandbox: override pytest-playwright's delete_output_dir ---
+# (merged from the former repo-root conftest; no-op outside the sandbox)
+# pytest-playwright ships a session-scoped autouse fixture `delete_output_dir`
+# that runs shutil.rmtree("test-results") before any test executes. Under the
+# WorkBuddy sandbox, shutil.rmtree is patched to move files to the recycle bin;
+# with no recycle bin available it raises OSError, which is NOT caught by the
+# fixture's `except FileNotFoundError`, so the fixture errors during session
+# setup and every test is marked broken without ever running.
+_sitecustomize = sys.modules.get("sitecustomize")
+if _sitecustomize is not None and getattr(_sitecustomize, "_safe_shutil_rmtree", None) is not None:
+    @pytest.fixture(scope="session", autouse=True)
+    def delete_output_dir(pytestconfig):
+        """no-op: skip test-results cleanup under WorkBuddy safe-delete sandbox."""
+        return None
