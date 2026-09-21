@@ -20,6 +20,8 @@ from loguru import logger
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+# Make this directory importable too (page/ lives here)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from tools import allure_title, allure_step_no
 from page.home import *
