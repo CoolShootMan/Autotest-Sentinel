@@ -7,6 +7,10 @@ ensuring different environments never overwrite each other's cookie files.
 
 Robustness notes:
 - Each account is isolated: one failure does NOT abort the remaining accounts.
+- The sign-in API response is logged. The login page shows NO error text when
+  credentials are rejected, so without this a bad password looks like a UI
+  problem ("still on login page"). On a 4xx from /auth/sign-in we fail fast
+  instead of retrying, to avoid tripping account lockout.
 - browser/context/page are always closed via try/finally, so a timeout on one
   account cannot leak a browser process that interferes with the next account.
 - page.goto uses wait_until="domcontentloaded" + retry, because the login page's
@@ -82,6 +86,25 @@ def login_and_save(playwright, account: dict):
         context = browser.new_context()
         page = context.new_page()
 
+        # Capture the sign-in API response: the login page renders NO error text
+        # when credentials are rejected (verified 2026-09-17: HTTP 403
+        # {"code":403,"message":"Invalid account or password"} while the form
+        # just sits there), which made failures look like a selector/UI problem.
+        auth_errors = []
+
+        def _on_response(resp):
+            if "/auth/sign-in" not in resp.url or resp.status < 400:
+                return
+            body = ""
+            try:
+                body = resp.text()[:200].replace("\n", " ")
+            except Exception:
+                pass
+            auth_errors.append((resp.status, body))
+            print(f"  [{name}] sign-in API -> {resp.status} {body}")
+
+        page.on("response", _on_response)
+
         # Retry navigation: default goto waits for "load", which hangs if any
         # 3rd-party resource stalls; the release env may also rate-limit rapid
         # sequential logins. Use domcontentloaded + retries to absorb both.
@@ -145,13 +168,29 @@ def login_and_save(playwright, account: dict):
                 page.wait_for_url(lambda url: "/login" not in url, timeout=25000)
                 break
             except Exception:
+                server_msg = f" | server said: {auth_errors[-1][1]}" if auth_errors else ""
                 print(f"  [{name}] submit attempt {attempt}/{SUBMIT_RETRIES} "
-                      f"stayed on {page.url}")
+                      f"stayed on {page.url}{server_msg}")
+                # A 4xx from sign-in means the credentials themselves were
+                # rejected - retrying cannot succeed and risks locking the
+                # account, so fail fast with the real reason.
+                if auth_errors and auth_errors[-1][0] in (400, 401, 403, 422):
+                    page.screenshot(path=f"login_error_{name}.png")
+                    raise RuntimeError(
+                        f"[{name}] login rejected by server: "
+                        f"HTTP {auth_errors[-1][0]} {auth_errors[-1][1]} "
+                        f"(check the password for {account['email']}). "
+                        f"NOTE: if only the co-seller (+998) fails while the others "
+                        f"log in fine, its password was most likely rewritten by the "
+                        f"API suite '00_UI Prefill' (it sets that account's password "
+                        f"from the import response) - re-provision/reset the account "
+                        f"instead of hunting for a UI/selector bug."
+                    )
                 if attempt == SUBMIT_RETRIES:
                     page.screenshot(path=f"login_error_{name}.png")
                     raise RuntimeError(
                         f"[{name}] still on login page after {SUBMIT_RETRIES} "
-                        f"submit attempts (fields: {values})"
+                        f"submit attempts (fields: {values}){server_msg}"
                     )
                 # re-blur to re-trigger validation, then try again
                 page.keyboard.press("Tab")

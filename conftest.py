@@ -134,6 +134,29 @@ def pytest_addoption(parser):
     except ValueError:
         pass
 
+
+# ---------------------------------------------------------------------------
+# Local runs default to HEADED so the browser window is visible.
+#
+# pytest.ini intentionally no longer hardcodes `--headed` (removed in 14b7c9b,
+# "ci: run UI automation daily on GitHub-hosted ubuntu runner") because the CI
+# runner has no display. main.py re-adds the flag for its own pytest call, but a
+# bare `pytest ...` (IDE "Run test", hand-typed command) was silently headless --
+# which looks exactly like "the browser window stopped popping up".
+#
+# Opt out with HEADLESS=1. CI (CI/GITHUB_ACTIONS set by the runner) is skipped.
+# A repo-root conftest, so this applies to every pytest invocation from the repo.
+# ---------------------------------------------------------------------------
+def pytest_configure(config):
+    if os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"):
+        return
+    if os.environ.get("HEADLESS", "").strip().lower() in ("1", "true", "yes", "on"):
+        return
+    # Only flip the flag when pytest-playwright actually registered it
+    # (--headed defaults to False via action="store_true").
+    if getattr(config.option, "headed", None) is False:
+        config.option.headed = True
+
 @pytest.fixture()
 def browser_context_args(browser_context_args, playwright, request):
     """

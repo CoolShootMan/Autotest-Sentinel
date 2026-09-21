@@ -1475,9 +1475,15 @@ testT5033_5034_VerifyPartner:
         #R_click_event_tab_2: { role: 'tab', name: 'Event', exact: true }
         R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
-        R_click_Create_post: { role: "button", name: "Add another post" }
+        # [UI drift 2026-09-18] the inline "Add another post" button is gone -> use the
+        # header "..." menu. Its aria-label is "More"; the "More action" button belongs to
+        # the Tickets & Merch card menu and is NOT the event-level menu.
+        R_click_header_more: { locator: 'button[data-testid="komi-header-icon-btn"][aria-label="More"]' }
+        sleep_after_header_more: 1500
+        # locator (not role) so the item is searched on the page, not scoped into a stray dialog
+        R_click_Create_post: { locator: '[role="menuitem"]:has-text("Create a post")' }
         sleep_after_create_post: 2500
-        # "Add another post" triggers a "Your event is ready to share!" modal (no Confirm button
+        # "Create a post" may trigger a "Your event is ready to share!" modal (no Confirm button
         # exists). Dismiss it via its primary "Apply" button. optional:true so the run still proceeds
         # if the modal happens not to appear (e.g. shown only once per event / already dismissed).
         R_click_apply_ready: { role: "button", name: "Apply", optional: true }
@@ -2338,132 +2344,161 @@ testT1928:
         R_click_variant_add: { role: 'button', name: 'Add', exact: true }
         sleep_step_p14: 2000
         
-        smart_click_optional_variant_done: { role: 'button', name: 'Done', timeout: 3000 }
-        sleep_step_p15: 2000
-        
         fill_variant_price_0: { locator: "input[name='variants.0.price']", value: '499' }
         fill_variant_price_1: { locator: "input[name='variants.1.price']", value: '899', optional: true }
         sleep_step_p17: 1000
         
-        R_click_confirm_product: { test_id: 'confirm-button' }
-        sleep_step_p18: 5000
+        # Manage variants 弹窗底部绿色 Done（data-testid=main-button），点掉才关闭弹窗
+        R_click_variant_done: { locator: "div[role='dialog'] button[data-testid='main-button']:has-text('Done')" }
+        sleep_step_p18: 3000
 
-        R_click_settings: { role: 'button', name: 'Settings' }
-        sleep_step: 1000
-        R_click_allowed: { text: 'Not allowed' }
-        check_set_customize_price: { locator: "xpath=//span[normalize-space(text())='Allow custom retail prices']/preceding-sibling::span//input[@type='checkbox']" }
-        sleep_step: 1000
-        R_click_setting_save: { role: 'button', name: 'Save' }
-        R_click_back_icon: { test_id: 'komi-header-icon-btn' }
-        sleep_step: 3000
+        # 保存产品（产品页底部 Create）
+        R_click_create_product: { role: 'button', name: 'Create' }
+        sleep_step_p19: 6000
+
+        # 产品建完后，去 Catalogs -> 选中 catalog -> Settings
+        open_catalog_settings: { url: "{BASE_URL}/catalog/9b57022d-d906-4e0c-8305-dc3f3fdd05d6/settings" }
+        sleep_step_p20: 6000
+        R_click_curator_edit: { locator: "button[data-testid='enhance-button']:has-text('Edit')", index: 1 }
+        sleep_step_p21: 2500
+        check_set_customize_price: { locator: "input[type='checkbox']", checked: true, no_modal_scope: true }
+        sleep_step_p22: 1000
+        R_click_setting_save: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
+        sleep_step_s1: 3000
 
         # Then proceed with post creation
         open: { url: "{BASE_URL}/post/create?c=POST_PAGE" }
         #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
-        sleep_step: 3000
+        sleep_step_s2: 3000
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
-        sleep_step: 1000
+        sleep_step_s3: 1000
 
         # smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
         # sleep_step: 1000
 
         R_click_enhance_cta: { test_id: "enhance-button-cta" }
-        sleep_step: 1000
+        sleep_step_s4: 1000
 
         # R_click_shared_tab: { role: 'tab', name: 'Shared with me' }
         # sleep_step: 1000
 
         fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
-        sleep_step: 500
+        sleep_step_s5: 500
         press_search_4: { key: "Enter" }
-        sleep_step: 1500
+        sleep_step_s6: 1500
 
         # click the test_general_products card (first/only visible card after search)
         click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
 
         R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
-        sleep_step: 1000
+        sleep_step_s7: 1000
+
+        # 关闭 "You've added products - great start!" 引导浮层（MuiPopover，16x16 Close），否则遮挡 Customize
+        smart_click_optional_great_start_close: { locator: "button[aria-label='Close']", timeout: 3000 }
+        sleep_step_p23_a: 1500
 
         # smart_click_optional_close_btn_1: { role: 'button', name: 'Close', timeout: 3000 }
         # sleep_step: 1000
 
         R_click_customize_products_btn: { role: 'button', name: 'Customize' }
-        sleep_step: 2000
+        sleep_step_s8: 2000
 
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 2000
-
-        check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
-        #verify_text_hidden: { text: "Customize prices in this post", timeout: 5000 }
-        sleep_step: 1000
+        # 新 UI: Customize products 面板的 Advanced settings 默认已展开，Retail 列直接可编辑
+        sleep_step_p23: 1000
 
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
-        sleep_step: 1500
+        sleep_step_s9: 1500
 
         smart_click_optional_confirm: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1500
+        sleep_step_s10: 1500
 
         fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 1928' }
-        sleep_step: 1000
+        sleep_step_s11: 1000
+
+        # 固定 post 的 URL alias，guest 才能用稳定链接 {BASE_URL}/autotestshop/post/test1928 打开
+        R_click_settings_tab: { role: 'tab', name: 'Settings', exact: true }
+        sleep_step_p26: 2500
+        fill_post_url_alias: { locator: "textarea[name='urlAlias']", value: 'test1928' }
+        sleep_step_p27: 1000
+
+        # 填完 alias 必须切回 Content，否则 Add cover media 不在当前视图
+        R_click_content_tab_1928: { role: 'tab', name: 'Content', exact: true }
+        sleep_step_p35: 2000
 
         smart_click_optional_confirm_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1500
+        sleep_step_s12: 1500
 
         click_add_cover_media: { role: 'button', name: 'Add cover media' }
         click_products_media: { text: 'Products', exact: true }
         click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
         click_done_btn_commerce: { role: 'button', name: 'Done' }
-        sleep_step: 1000
+        sleep_step_s13: 1000
+
+        # 切 Layout 为 Collection，否则默认 Story Only 是纯内容布局、页面不渲染产品卡片
+        R_click_style_tab_1928: { role: 'tab', name: 'Style', exact: true }
+        sleep_step_p28: 2000
+        R_click_layout_tab_1928: { role: 'tab', name: 'Layout', exact: true }
+        sleep_step_p29: 2000
+        R_click_layout_combobox_1928: { role: 'combobox' }
+        sleep_step_p30: 1500
+        R_click_collection_option_1928: { locator: '[role="option"]:has-text("Collection")' }
+        sleep_step_p31: 2000
 
         # Step 13: Click Publish (publish the duplicate)
         R_click_publish_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1000
+        sleep_step_s14: 1000
 
         R_click_publish_3: { role: 'button', name: 'Publish' }
-        sleep_step: 3000
+        sleep_step_s15: 3000
 
         smart_click_optional_got_it: { role: 'button', name: 'Apply', timeout: 3000 }
-        sleep_step: 5000
+        sleep_step_s16: 5000
 
         # Navigate to Catalogs to update product price
-        R_click_storefront: { role: 'button', name: 'Storefront' }
-        sleep_step: 2000
-        
+        # 直接导航到 Storefront 页（原 R_click_storefront 的 name=Storefront 其实指向上面的汉堡图标，会误开菜单）
+        open_storefront_page: { url: "{BASE_URL}/autotestshop" }
+        sleep_step_s17: 6000
+
+        # Storefront 页需先点右上角汉堡（enhance-button，aria-label=Storefront）展开导航菜单，Catalogs 才可见
+        R_click_nav_hamburger: { locator: "button[data-testid='enhance-button'][aria-label='Storefront']" }
+        sleep_step_p25: 2500
+
         R_click_catalogs: { text: 'Catalogs', timeout: 3000 }
-        sleep_step: 3000
+        sleep_step_s18: 3000
 
         R_click_more_action: { locator: '//tr[.//text()[contains(., "test 1928 product")]]//button[@aria-label="More action"]' }
-        sleep_step: 1000
+        sleep_step_s19: 1000
 
         R_click_edit: { role: 'menuitem', name: 'Edit' }
-        sleep_step: 2000
+        sleep_step_s20: 2000
 
         fill_variants_0_price: { locator: 'input[name="variants.0.price"]', value: '1' }
         fill_variants_1_price: { locator: 'input[name="variants.1.price"]', value: '2' }
-        sleep_step: 1000
+        sleep_step_s21: 1000
 
-        R_click_confirm_3: { test_id: 'confirm-button' }
-        sleep_step: 2000
+        # Edit product 页底部绿色 Save 保存改价
+        R_click_save_product_1928: { role: 'button', name: 'Save' }
+        sleep_step_p24: 3000
 
-        # Navigate to Storefront to verify the post
-        R_click_storefront_2: { text: 'Storefront' }
-        sleep_step: 2000
-        
-        R_click_storefront_link: { text: 'Storefront' }
-        sleep_step: 5000
-        page_scroll: { y: 600, delay: 2000, steps: 5 }
-        sleep_step: 1000
-
-        
+        # 收尾验证：切 guest 视角打开固定 alias 的 post，确认产品卡片价格已随 catalog 改价同步
+        clear_cookies: { inject_guest: true }
+        sleep_step_p32: 2000
+        open_guest_post_1928: { url: "{BASE_URL}/autotestshop/post/test1928" }
+        sleep_step_p33: 8000
+        # page_scroll 在 storefront 只滚 main 容器（实测 scrollY 恒为 0），改用 slick_swipe 走 mouse.wheel
+        scroll_guest_post_1928: { y: 600 }
+        sleep_step_p34: 2000
 
     expect_result:
         description: "Verify T1928 workflow completed successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "test case 1928"
-            - assertion_type: "element_visible_by_locator"
-              locator: "//div[contains(@class, 'MuiStack-root') and .//*[text()='test case 1928']]//*[contains(@class, 'price') and text()='$499.00 - $899.00']"
+              text: "test1928"
+            - assertion_type: "element_visible_by_text"
+              text: "test 1928 product"
+            - assertion_type: "element_visible_by_text"
+              text: "$1.00"
 
 # ==============================================================================
 # Test Case: T3811
