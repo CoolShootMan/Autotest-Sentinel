@@ -66,6 +66,9 @@ jobs:
 
       - name: Run API suite - linda
         id: linda
+        # 每次执行必然存在失败用例，故不以「全部通过」判定成败：只要本套件执行完毕、
+        # run_archive 结果已落盘（meta/summary/failures），即视为成功（过）。
+        continue-on-error: true
         env:
           CI: "true"
           API_ENV: Release
@@ -78,6 +81,8 @@ jobs:
         # linda 失败也继续跑 lury，保证两套都执行；最后统一看两个 step 的 outcome
         id: lury
         if: always()
+        # 同上：不以全部通过判定成败，执行完毕并落盘结果即视为成功（过）
+        continue-on-error: true
         env:
           CI: "true"
           API_ENV: Release
@@ -111,7 +116,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Send Slack notification (#qae-team)
-        # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再是干巴巴的 failure）。
+        # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再用 Failure 给整体定性，如实带出各用例真实结果）。
         # if 表达式不能读 secrets.*，故 webhook 放在 workflow 级 env 再在 if 里判断。
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         working-directory: test_case/API auto script

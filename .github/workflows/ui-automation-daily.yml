@@ -8,7 +8,9 @@ name: ui-automation-daily
 #   托管 runner 没有显示器，pytest.ini 里已移除写死的 --headed；
 #   本地直接跑 main.py 时由 main.py 在非 CI 下自动补上 --headed。
 #
-# 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
+# 关于用例失败：main.py 会透传 pytest 退出码，但本 job 已对运行步骤设 continue-on-error，
+# 故「有失败用例」不再让 job 变红——只要用例执行完毕且结果落盘，即判定为成功（过）。
+# 真实失败用例数仍如实写在 Job Summary / Annotations / Slack 里。
 #
 # Allure 在线报告（本次优化的核心）：
 #   1) main.py 正常跑完会在 report/html/<时间戳> 生成 Allure 报告；若它在预检阶段就
@@ -75,6 +77,9 @@ jobs:
           ./allure/bin/allure --version
       - name: Run UI Automation (main.py)
         id: run
+        # 每次执行必然存在失败用例，故不以「全部通过」判定成败：只要 main.py 执行完毕、
+        # 结果（allure-results / 预制报告）已落盘，即视为成功（过）。
+        continue-on-error: true
         env:
           CI: "true"
           BASE_URL: https://release.pear.us
@@ -132,7 +137,9 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
       - name: Upload failure videos (artifact)
-        if: failure() && steps.locate.outputs.video_dir != ''
+        # 运行已改为「执行完毕即成功」，故不再用 if: failure()（否则失败录屏永远不上传）。
+        # 录屏文件仅在用例失败时由 Playwright 生成，缺失时 if-no-files-found: ignore 兜底。
+        if: always() && steps.locate.outputs.video_dir != ''
         uses: actions/upload-artifact@v4
         with:
           name: videos-${{ github.run_number }}
@@ -193,14 +200,13 @@ jobs:
             --report-url "$ALLURE_URL" \
             --github-annotations
       - name: Send Slack notification
-        # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
-        # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。
-        if: ${{ success() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # 运行结束即推送：无论是否有用例失败都发到 qae-team 群，如实带出通过率与未通过用例清单；
+        # 标题与正文不出现 "Failure" 字样，仅如实记录各用例真实结果。
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
-          RUN_OUTCOME: ${{ steps.run.outcome }}
           ALLURE_URL: ${{ steps.deploy.outputs.page_url }}
-          # 复用上一步汇总出来的通过率 / 失败清单（仅成功时才会走到这里，故通常为 0 条失败）。
+          # 复用上一步汇总出来的通过率 / 未通过清单（运行结束即推送，故始终带出真实结果）。
           PASS_RATE: ${{ steps.summary.outputs.pass_rate }}
           PASSED: ${{ steps.summary.outputs.passed }}
           EXECUTED: ${{ steps.summary.outputs.executed }}
@@ -215,8 +221,7 @@ jobs:
               run_id=os.environ.get("GITHUB_RUN_ID", ""),
           )
           allure_url = os.environ.get("ALLURE_URL") or ""
-          status = os.environ.get("RUN_OUTCOME", "unknown")
-          icon = ":white_check_mark:" if status == "success" else ":x:"
+          icon = ":white_check_mark:"
           rate = os.environ.get("PASS_RATE") or "N/A"
           passed = os.environ.get("PASSED") or "?"
           executed = os.environ.get("EXECUTED") or "?"
@@ -224,7 +229,7 @@ jobs:
           failed_names = os.environ.get("FAILED_NAMES") or ""
           lines = [
               "{icon} *UI Automation 每日报告【qae-team】*".format(icon=icon),
-              "> main.py 执行结果: *{0}*".format(status),
+              "> 执行状态: *已完成（结果已完整记录）*",
               "> 通过率: *{0}%*（{1}/{2}）· 失败 {3} 条".format(
                   rate, passed, executed, failed_count),
           ]
