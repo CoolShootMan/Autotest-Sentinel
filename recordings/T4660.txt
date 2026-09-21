@@ -1,0 +1,49 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright: Playwright) -> None:
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state="/Users/yujiaqi/Documents/GitHub/Autotest-monster/test_case/UI/Test_Katana/cookie_release.json")
+    page.get_by_role("button", name="Module").click()
+    page.locator(".MuiInputBase-root.MuiOutlinedInput-root.MuiInputBase-colorPrimary.MuiInputBase-formControl.katana-1hozh5i").click()
+    page.get_by_role("textbox", name="Enter title of the module").fill("Test-Module-Music")
+    page.get_by_role("button", name="Continue").click()
+    page.get_by_role("dialog").locator("div").filter(has_text=re.compile(r"^Music$")).click()
+    page.get_by_role("button", name="Add").click()
+    page.locator("#a2ef9dae-58fd-4b4d-a516-ee167e670318 > .MuiStack-root.katana-1g3r82v > .MuiStack-root.katana-15ou9qk > .MuiButtonBase-root.MuiButton-root.MuiButton-outlined.MuiButton-outlinedPrimary.MuiButton-sizeMedium.MuiButton-outlinedSizeMedium.MuiButton-colorPrimary.katana-tbgla8").click()
+    page.get_by_role("textbox", name="Enter title, e.g. \"Acoustic").click()
+    page.get_by_role("textbox", name="Enter title, e.g. \"Acoustic").fill("TestMusic")
+    page.get_by_role("textbox", name="Enter artist, e.g. \"Marco").click()
+    page.get_by_role("textbox", name="Enter artist, e.g. \"Marco").fill("one")
+    page.get_by_text("Square image").click()
+    page.get_by_text("Square image").click()
+    page.get_by_role("button", name="Spotify").get_by_placeholder("Please enter link").click()
+    page.get_by_role("button", name="Spotify").get_by_placeholder("Please enter link").click()
+    page.get_by_role("button", name="Spotify").get_by_placeholder("Please enter link").fill("https://open.spotify.com/episode/2tu23nk5IA85ZERqtV9yhJ?si=qXWPBakCTmKp6WUmPRAOPA&nd=1&dlsi=03780e5ded85490a")
+    page.get_by_text("ServicesAdd serviceSpotifyApple music To pick up a draggable item, press the").click()
+    page.get_by_role("button", name="Apple music").get_by_placeholder("Please enter link").click()
+    page.get_by_role("button", name="Apple music").get_by_placeholder("Please enter link").click()
+    page.get_by_role("button", name="Apple music").get_by_placeholder("Please enter link").fill("https://music.apple.com/cn/album/%E5%B9%B3%E5%BA%B8-live/1851707677?i=1851707683")
+    page.get_by_role("button", name="Add", exact=True).click()
+    page.get_by_role("button", name="Replace").click()
+    page.get_by_role("button", name="Replace").set_input_files("wechat_2025-07-30_160044_844.png")
+    page.get_by_test_id("cropper").click()
+    page.get_by_role("button", name="Done").click()
+    page.get_by_role("button", name="Add service").click()
+    page.get_by_role("button", name="Amazon", exact=True).click()
+    page.get_by_role("button", name="Amazon").get_by_placeholder("Please enter link").click()
+    page.get_by_role("button", name="Amazon").get_by_placeholder("Please enter link").fill("https://www.amazon.com/music")
+    page.get_by_text("SpotifyApple musicAmazon To").click()
+    page.get_by_role("button", name="Add", exact=True).click()
+    page.locator("#a2ef9dae-58fd-4b4d-a516-ee167e670318 > .MuiStack-root.katana-1g3r82v > .MuiStack-root.katana-15ou9qk > .MuiButtonBase-root.MuiButton-root.MuiButton-outlined.MuiButton-outlinedPrimary.MuiButton-sizeMedium.MuiButton-outlinedSizeMedium.MuiButton-colorPrimary.katana-1sl611f").click()
+    page.get_by_role("button", name="Delete module").click()
+    page.get_by_role("button", name="Delete").click()
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright:
+    run(playwright)

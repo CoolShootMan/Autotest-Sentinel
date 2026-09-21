@@ -1,0 +1,28 @@
+{
+  "name": "post_contact_email",
+  "url_template": "{BASE_URL}/post/<post_id>/settings",
+  "_note": "KAT-12117「每帖自定义联系邮箱」：Post settings 面板 + 邮箱弹窗 + 前台底部联系邮箱。三个 stage 共用同一个浏览器会话。",
+  "stages": [
+    {
+      "label": "post_settings_panel",
+      "url": "{BASE_URL}/post/0916aead-3496-4773-90fb-1f04adcdaba0/settings",
+      "wait_for": "input[name=\"contactEmail\"]",
+      "url_template": "{BASE_URL}/post/<post_id>/settings",
+      "actions": [{ "wait": 2500 }]
+    },
+    {
+      "label": "contact_email_dialog",
+      "url_template": "{BASE_URL}/post/<post_id>/settings",
+      "actions": [
+        { "click": "button[data-testid=\"manage-button\"]" },
+        { "wait": 1500 }
+      ]
+    },
+    {
+      "label": "post_public_bottom",
+      "url": "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742",
+      "url_template": "{BASE_URL}/<shop>/post/<alias>",
+      "actions": [{ "wait": 3000 }]
+    }
+  ]
+}

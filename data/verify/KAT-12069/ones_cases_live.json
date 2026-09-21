@@ -1,0 +1,469 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "plan": "3XhGxsKq",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/plan/3XhGxsKq/library"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-09-18 11:56:43",
+  "count": 12,
+  "cases": [
+    {
+      "id": "T5735",
+      "uuid": "C2WVmVUe",
+      "name": "Verify the footnote is visible to visitors as well as the owner, not only to the owner",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the configured footnote is displayed across viewer perspectives: the owner sees the content plus an edit control, while a logged-out visitor sees the same content without any edit control.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "As the owner, view the storefront bottom",
+          "result": "The footnote content is shown together with an \"Edit footer\" CTA",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "As a logged-out visitor (private window), view the storefront bottom",
+          "result": "The same footnote content is shown with no edit control",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5734",
+      "uuid": "5CRKg37w",
+      "name": "Verify editing an existing footnote updates it everywhere and clearing all content removes the footer section",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "A footnote is already configured on the storefront.",
+      "desc": "Confirms existing footnote content is loaded for editing, updates propagate to the storefront across desktop and mobile, and saving an empty footer removes the footnote section entirely.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click \"Edit footer\"",
+          "result": "The editor opens pre-filled with the existing footnote content",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Modify the content (e.g. add a word) and click \"Save\"",
+          "result": "Both desktop and mobile storefronts show the updated footnote",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Open the editor again, clear all content, and click \"Save\"",
+          "result": "Save succeeds and the footnote section is no longer rendered on the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Reload the storefront",
+          "result": "No footnote is shown and the owner bottom entry is back to \"Add footer\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5733",
+      "uuid": "PMkmD88F",
+      "name": "Verify the footnote does not conflict with the cookie preferences / Powered by Pear block",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "functional",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the configured footnote and the default Powered by Pear / cookie preferences area coexist without overlap and are visually tasteful on desktop and mobile.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "View the storefront bottom on desktop",
+          "result": "The footnote renders above the \"POWERED BY Pear\" and \"Cookie preferences\" area with a divider and tasteful spacing; there is no overlap or clipping",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "View the storefront bottom on mobile",
+          "result": "Same correct, non-conflicting layout on mobile",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Open the cookie preferences entry",
+          "result": "The cookie preferences entry remains accessible and is not obscured by the footnote",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5732",
+      "uuid": "7TJjrvwm",
+      "name": "Verify the footnote always stays at the very bottom and is excluded from Rearrange section",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "functional",
+      "condition": "A footnote is configured; the storefront has multiple sections/modules.",
+      "desc": "Confirms the footnote is pinned to the bottom of the storefront, has a divider above it consistent with existing storefront dividers, and is not part of the Rearrange section list.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open \"Rearrange section\" on the storefront",
+          "result": "The footnote is NOT listed among the rearrangeable sections",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Reorder the available sections and save",
+          "result": "Other sections change order while the footnote remains at the very bottom",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Verify the divider above the footnote",
+          "result": "A divider is shown above the footnote, consistent with existing storefront dividers",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5731",
+      "uuid": "DxtYysg3",
+      "name": "Verify the footnote text color and font follow the Storefront Style settings",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the footnote inherits its text color from style > color > text and its font from style > fonts, and cannot be overridden per footnote.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open Customize shop / Style and change the text color (style > color > text)",
+          "result": "The footnote text color on the storefront updates accordingly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Change the font (style > fonts)",
+          "result": "The footnote font updates accordingly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Re-open the footnote editor and check the available controls",
+          "result": "The footnote still cannot override color, font size, or spacing in the RTE",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5730",
+      "uuid": "3B1fnc1b",
+      "name": "Verify the Insert link dialog requires link text and a URL and rejects an invalid URL",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "The footnote editor is open and the Insert link dialog is open.",
+      "desc": "Confirms required-field validation in the Insert link dialog: the Add button stays disabled until link text and a URL are provided, and an invalid URL is rejected.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Leave \"Link text\" and the URL empty and observe the \"Add\" button",
+          "result": "\"Add\" is disabled until the required fields are provided",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Enter link text but leave the URL empty",
+          "result": "\"Add\" stays disabled or a validation message is shown",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter an invalid URL (e.g. \"abc\" with no valid domain) and click \"Add\"",
+          "result": "The invalid URL is rejected; the link is not inserted and an error is shown",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Enter a valid URL and click \"Add\"",
+          "result": "The link is inserted successfully",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5729",
+      "uuid": "6XMdxcTk",
+      "name": "Verify inserting an external link in the footnote renders it underlined and not blue",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "The footnote editor is open with text available to link.",
+      "desc": "Confirms the Insert link dialog defaults to \"External link\" and that a link inserted into the footnote is displayed underlined but never blue on the storefront.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Select text and click the link icon in the RTE toolbar",
+          "result": "The \"Insert link\" dialog opens",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Check the default value of the \"Action\" dropdown",
+          "result": "\"External link\" is selected by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter link text and a URL (e.g. https://example.com) and click \"Add\"",
+          "result": "The link is inserted into the footnote text",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save and view the footnote on the storefront",
+          "result": "The link is displayed with an underline but is not blue",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5728",
+      "uuid": "84u4Gooi",
+      "name": "Verify the footnote RTE editor exposes the required quick actions with centered default alignment and no style-override controls",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "functional",
+      "condition": "The footnote editor is open.",
+      "desc": "Confirms the footnote RTE editor supports undo, redo, bold, underline, link and alignment (centered by default), and does not offer color, font size or spacing controls.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Inspect the RTE toolbar",
+          "result": "The toolbar shows undo, redo, bold, underline, link and alignment controls",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Type sample text and verify the default alignment",
+          "result": "Text is centered by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Apply bold to one word and underline to another word",
+          "result": "Bold and underline are applied and visible in the editor",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Look for color, font size, or spacing controls",
+          "result": "No color, font size, or spacing controls are available in the RTE",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5727",
+      "uuid": "VeWxrSsG",
+      "name": "Verify \"Insert copyright template\" auto-fills the default copyright template text and centers it",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "The footnote editor is open with empty content.",
+      "desc": "Confirms that clicking \"Insert copyright template\" auto-fills the default template copy (privacy/terms links plus a copyright line) centered by default. Per the design this capability is low priority and may land in a later cycle.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click the \"Insert copyright template\" link in the footnote editor",
+          "result": "The template copy is auto-filled into the editor: \"(c) 2026 Your legal entity name. All rights reserved.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Check the alignment of the inserted template",
+          "result": "The inserted template is centered by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Click \"Save\" and view the storefront",
+          "result": "The template copy renders centered at the bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5726",
+      "uuid": "4WBTxGGR",
+      "name": "Verify the footnote change takes effect on the storefront immediately after saving, without a refresh",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "functional",
+      "condition": "A footnote is configured on the storefront and the partner is viewing their own storefront.",
+      "desc": "Confirms that after the partner edits and saves the footnote, the storefront bottom reflects the updated content immediately, without the user having to reload the page.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the footnote editor, modify the existing footnote text (including applying bold to part of it), and click Save",
+          "result": "The editor closes with a success confirmation and the change is saved",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Without refreshing the storefront page, scroll to the bottom of the storefront",
+          "result": "The storefront bottom immediately shows the updated footnote content, including the bold formatting, with no page refresh required",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Reload the storefront page and re-check the footnote",
+          "result": "The updated footnote persists at the bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5725",
+      "uuid": "V7byhv7p",
+      "name": "Verify the footnote section is hidden when no footnote is configured and only an \"Add footer\" entry is shown to the owner",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "functional",
+      "condition": "Partner owns a published storefront; the footnote is empty / not configured.",
+      "desc": "Confirms that when no footnote content is configured, no footnote section is rendered for visitors on the storefront, and the owner only sees an \"Add footer\" call to action.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "As a visitor (private window), open the storefront and scroll to the very bottom",
+          "result": "No footnote section is rendered; the page ends with the default Powered by / cookie area",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "As the owner, open the storefront and check the bottom",
+          "result": "An \"Add footer\" CTA is displayed instead of an \"Edit footer\" CTA",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Click \"Add footer\" and close the editor (X) without saving any content",
+          "result": "The editor closes; the storefront still shows no footnote section",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5724",
+      "uuid": "WGbefTCA",
+      "name": "Verify a partner can add a storefront footnote via the RTE editor and it renders at the bottom for visitors on desktop and mobile",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "functional",
+      "condition": "Partner is logged in and owns a published storefront; no footnote is configured yet.",
+      "desc": "End-to-end happy path: a partner with no footnote configured opens the footnote editor from the storefront, enters content with the RTE editor, saves, and the footnote renders at the very bottom of the storefront with a divider above it for both the owner and visitors on desktop and mobile.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the partner's storefront (Shop view) and scroll to the bottom",
+          "result": "The bottom shows an \"Add footer\" CTA and no footnote section is rendered",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click \"Add footer\"",
+          "result": "The \"Storefront footer\" editor opens with the RTE toolbar visible and the content area empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter footnote text in the RTE editor (e.g. \"Contact Us | Privacy Policy | Terms & Conditions\")",
+          "result": "The typed content appears in the editor",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click \"Save\"",
+          "result": "The editor closes with a success confirmation; the storefront now shows the footnote content at the bottom with a divider above it",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Reload the storefront page and re-check the footnote position",
+          "result": "The footnote persists and stays at the very bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Open the same storefront URL in a private window as a visitor and scroll to the bottom",
+          "result": "Visitors also see the footnote; no edit control is shown to visitors",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Repeat the check on a mobile viewport",
+          "result": "The footnote renders correctly on mobile as well",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}
