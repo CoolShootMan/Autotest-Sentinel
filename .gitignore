@@ -149,6 +149,8 @@ Thumbs.db
 /*.png
 /requirements.txt
 /test_case/UI/Test_Katana/cookie_release.json
+# 登录态 cookie 一律不入库（含真 token）
+/test_case/UI/Test_Katana/*cookie*.json
 **/__pycache__/*
 
 venv/pyvenv.cfg
