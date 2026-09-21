@@ -2,7 +2,8 @@ name: api-automation-daily
 
 # 每天 09:00 北京时间（= 01:00 UTC）自动跑 API 自动化，环境 = Release。
 # 顺序执行两条 suite：先 linda.yaml，再 lury.yaml（linda 失败也继续跑 lury，保证两套都跑）。
-# 结果发到 Slack #qae-team（通过仓库 Secret SLACK_WEBHOOK_URL_QAE_TEAM）。
+# 结果发到 Slack #qae-team（Secret SLACK_WEBHOOK_URL_QAE_TEAM），消息含各套件通过/失败计数；
+# 运行页 Summary 内嵌各套件完整报告（计数总览 + 失败用例清单 + traceback）。
 #
 # 运行环境：GitHub 托管 runner（ubuntu-latest），不需要 self-hosted runner，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
@@ -97,76 +98,22 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Write job summary
+      - name: Publish report to job summary
+        # 把各套件 results/runs/<run_id>/summary.md 汇总进运行页 Summary：
+        # 顶部为「计数总览 + 失败用例清单」，下方为各套件完整报告（折叠，含 traceback）。
+        # 数据来自 conftest 的 run_archive 落盘的 meta.json / summary.md / failures.json。
         if: always()
-        shell: bash
-        run: |
-          {
-            echo "# API Automation 每日执行结果 (Release)"
-            echo ""
-            echo "| 项目 | 值 |"
-            echo "| --- | --- |"
-            echo "| 触发方式 | \`${{ github.event_name }}\` |"
-            echo "| 运行环境 | ubuntu-latest |"
-            echo "| API_ENV | \`${{ env.API_ENV }}\` |"
-            echo "| linda 套结果 | \`${{ steps.linda.outcome }}\` |"
-            echo "| lury 套结果 | \`${{ steps.lury.outcome }}\` |"
-            echo ""
-            echo "日志与结果见本次 run 的 Artifacts：\`api-run-logs-${{ github.run_number }}\`。"
-            echo ""
-            echo "## linda.log 尾部"
-            echo '```'
-            tail -n 40 "test_case/API auto script/linda.log" 2>/dev/null || echo '(无 linda.log)'
-            echo '```'
-            echo ""
-            echo "## lury.log 尾部"
-            echo '```'
-            tail -n 40 "test_case/API auto script/lury.log" 2>/dev/null || echo '(无 lury.log)'
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+        working-directory: test_case/API auto script
+        env:
+          API_ENV: Release
+        run: python tools/ci_report.py --step-summary
 
       - name: Send Slack notification (#qae-team)
-        # 总开关打开 + 已配置 #qae-team webhook + 非空才发送
+        # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再是干巴巴的 failure）。
+        # if 表达式不能读 secrets.*，故 webhook 放在 workflow 级 env 再在 if 里判断。
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        working-directory: test_case/API auto script
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
-          LINDA_OUTCOME: ${{ steps.linda.outcome }}
-          LURY_OUTCOME: ${{ steps.lury.outcome }}
-        run: |
-          python3 - <<'PY'
-          import json, os, urllib.request
-
-          run_url = "{server}/{repo}/actions/runs/{run_id}".format(
-              server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
-              repo=os.environ.get("GITHUB_REPOSITORY", ""),
-              run_id=os.environ.get("GITHUB_RUN_ID", ""),
-          )
-          linda = os.environ.get("LINDA_OUTCOME", "unknown")
-          lury = os.environ.get("LURY_OUTCOME", "unknown")
-          icon = ":white_check_mark:" if (linda == "success" and lury == "success") else ":warning:"
-          text = (
-              "{icon} *API Automation 每日报告 (Release)*\n"
-              "> linda 套: *{linda}*\n"
-              "> lury 套: *{lury}*\n"
-              "> 运行详情与日志: {run}\n"
-              "> 结果 Artifacts: api-run-logs-{run_id}"
-          ).format(
-              icon=icon,
-              linda=linda,
-              lury=lury,
-              run=run_url,
-              run_id=os.environ.get("GITHUB_RUN_ID", ""),
-          )
-
-          req = urllib.request.Request(
-              os.environ["SLACK_WEBHOOK_URL"],
-              data=json.dumps({"text": text}).encode("utf-8"),
-              headers={"Content-Type": "application/json"},
-              method="POST",
-          )
-          try:
-              urllib.request.urlopen(req)
-              print("Slack 已发送 (#qae-team)")
-          except Exception as e:
-              print("Slack 发送失败:", e)
-          PY
+          API_ENV: Release
+        run: python tools/ci_report.py --slack

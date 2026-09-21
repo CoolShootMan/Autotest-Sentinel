@@ -27,11 +27,15 @@
     - git 的输出是 **GBK**；不指定 encoding 会 UnicodeDecodeError。
     - `git rebase` 会损坏中途态 → 合并请用 `git merge`。
     - 推完记得修 tracking，否则 `git status` 会误报 ahead/behind（本脚本已自动做）。
+    - ⚠️ 无头 shell 里 GCM 会弹 `git-credential-helper-selector` GUI，**把 push/fetch 卡到永不返回**。
+      **本脚本已内置**防挂起环境（`GIT_TERMINAL_PROMPT=0` / `GCM_INTERACTIVE=never` / 清空 `credential.helper`）
+      → 调用方**无需**再手动 export 那串变量。裸 git 命令才需要（见 `tools/gh_env.sh`）。
 """
 from __future__ import annotations
 
 import argparse
 import ctypes
+import os
 import subprocess
 import sys
 from ctypes import wintypes
@@ -91,13 +95,28 @@ def read_credential(target: str, user_fallback: str = DEFAULT_USER):
     return user, token
 
 
-def git(*args: str):
+def git(*args: str, no_prompt: bool = True):
+    """跑 git，**默认注入"防 GCM 挂起"环境**（本机无头 shell 实测）。
+
+    背景：无头 shell 里跑 git 网络操作时，Git Credential Manager 会弹出
+    `git-credential-helper-selector` 的 GUI 选择框等输入 → **push/fetch 永久阻塞、日志 0 字节**。
+    这里统一：清空 `credential.helper`（token 已在 URL 里，本就不需要助手）+ 关掉一切交互提示。
+    调用方无需再手动 export 那串环境变量。
+    """
+    env = dict(os.environ)
+    if no_prompt:
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        env["GCM_INTERACTIVE"] = "never"
+        env["GIT_CONFIG_COUNT"] = "1"
+        env["GIT_CONFIG_KEY_0"] = "credential.helper"
+        env["GIT_CONFIG_VALUE_0"] = ""
     return subprocess.run(
         ["git", *args],
         capture_output=True,
         text=True,
         encoding="gbk",
         errors="replace",
+        env=env,
     )
 
 
