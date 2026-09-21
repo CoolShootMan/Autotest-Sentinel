@@ -104,6 +104,7 @@ import json
 
 from typing import Any, TYPE_CHECKING
 
+import time
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
@@ -223,7 +224,18 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     orderNumber = vars.get('orderNumber')
     vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
 
-    _resp10 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp10 = None
+    for _att in range(8):
+        _resp10 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
+        try:
+            if str(_resp10.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: responseJson equal 90

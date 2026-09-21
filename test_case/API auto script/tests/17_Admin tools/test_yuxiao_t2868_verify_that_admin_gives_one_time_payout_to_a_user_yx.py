@@ -42,6 +42,20 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
         if not vars.get('promoterId') or len(str(vars.get('promoterId'))) < 10:
             vars['promoterId'] = '2e7c410d-3aeb-429c-bdcf-b0c769a1e11e'
     # === Steps ===
+    # 读取目标 promoter 当前的 payoutBalance 作为基线。
+    # 该用例每次从 Release DB 随机取一个 PROMOTER，历史运行可能在其上留下非 0 余额，
+    # 导致断言 "期望 0 实际 10" 误判。改为「贷款前后余额不变」的 delta 断言，兼容残留数据。
+    _resp_pre = ctx.api.admin.promoters_reward_by_promoter_id(
+        body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
+    _pre_items = (_resp_pre.json().get('data') or {}).get('items') or []
+    _target_pid = str(ctx.render_text('{{promoterId}}'))
+    _pre_balance = None
+    for _it in _pre_items:
+        if str(_it.get('promoterId')) == _target_pid:
+            _pre_balance = _it.get('payoutBalance')
+            break
+    if _pre_balance is None and _pre_items:
+        _pre_balance = _pre_items[0].get('payoutBalance')
     # step 1: 48d86b1b-5482-4a04-98c5-650b9e4af40f
     _resp1 = ctx.api.admin.promoters_reward(body={
         "amount": 10,
@@ -58,7 +72,7 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     expect(_resp1).json('$.message').equals('success')
     # step 2: e9509f91-78ff-42ae-b43b-a4326237cf32
     _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
-    # assertion 2.检查rewarddata_rewardBalance: responseJson equal 0
-    expect(_resp2).json('$.data.items[0].payoutBalance').equals('0')
+    # assertion 2.检查rewarddata_rewardBalance: 一次性贷款不应改变 payoutBalance（与基线一致，兼容历史残留余额）
+    expect(_resp2).json('$.data.items[0].payoutBalance').equals(_pre_balance if _pre_balance is not None else '0')
     # assertion 2.assertion: responseJson equal {{promoterId}}
     expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))

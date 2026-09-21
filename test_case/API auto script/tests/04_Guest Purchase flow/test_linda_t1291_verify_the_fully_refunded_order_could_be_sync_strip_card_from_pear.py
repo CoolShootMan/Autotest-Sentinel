@@ -62,6 +62,7 @@ import json
 
 from typing import TYPE_CHECKING
 
+import time
 from core.assertions import expect
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
@@ -158,7 +159,18 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
 
     vars['merchantId'] = 'd1fdc475-8b15-49f0-8718-67c9efa988bf'
-    _resp5 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda01_token', params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{orderNumber}}'})
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp5 = None
+    for _att in range(8):
+        _resp5 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda01_token', params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{orderNumber}}'})
+        try:
+            if str(_resp5.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson equal 587.61
@@ -202,7 +214,18 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     # assertion 6.assertion: responseJson equal success
     expect(_resp6).json('$.message').equals('success')
     # step 7: After Full Refunds, Get sale detail for order 
-    _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda01_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp7 = None
+    for _att in range(8):
+        _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda01_token')
+        try:
+            if str(_resp7.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
     # assertion 7.assertion: responseJson equal REFUNDED

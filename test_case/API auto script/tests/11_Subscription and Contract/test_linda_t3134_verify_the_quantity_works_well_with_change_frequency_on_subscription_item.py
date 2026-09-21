@@ -220,14 +220,14 @@ def test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_sub
     # 条件轮询：merchant 侧销售记录由下单后异步生成，首次查询可能 404（实测 1~5s 内就绪）。
     # 轮询替代固定 sleep：最多等 10s，命中 code=200 即继续（2026-09-20 修复订阅类 merchant 详情 404 竞态）。
     _resp9 = None
-    for _attempt in range(10):
+    for _attempt in range(8):
         _resp9 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
         try:
             if str(_resp9.json().get('code')) == '200':  # code 为 number 200 或 string '200'，统一转字符串比较
                 break
         except Exception:
             pass
-        time.sleep(1)
+        time.sleep(3)
     assert _resp9 is not None, "step9 merchant_detail_v2 轮询后仍无响应"
     # assertion 9.assertion: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
