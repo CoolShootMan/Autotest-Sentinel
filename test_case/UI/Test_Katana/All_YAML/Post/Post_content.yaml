@@ -26,7 +26,7 @@ testT5442:
             R_click_my_event:               { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
             sleep_step:                     4000
 
-            R_click_posts_tab:              { role: "tab", name: "Post" }
+            R_click_post_tab:              { role: "tab", name: "Post" }
             sleep_step:                     2000
 
             verify_post_alias:
@@ -84,7 +84,7 @@ testT5442:
         # ----------------------------------------------------------------------
         # Step 3: ticket/merch appear with a "Hidden" label.
         # ----------------------------------------------------------------------
-        R_click_posts_tab:      { role: "tab", name: "Post" }
+        R_click_post_tab:      { role: "tab", name: "Post" }
         sleep_step:             2000
         R_click_edit_content:   {locator: "button[aria-label='Content']"}
         sleep_step:             4000
@@ -173,8 +173,8 @@ testT5332:
             R_click_event: { locator: "text=Test event post variant settings", exact: true }
             sleep_step: 4000
 
-            # Step 3: Click Posts tab
-            R_click_posts_tab: { role: "tab", name: "Post" }
+            # Step 3: Click Post tab
+            R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
             # Step 4: Click edit button to enter RTE
@@ -287,7 +287,7 @@ testT5332_VerifyGuest:
         sleep_step: 4000
 
         # Step 4: Switch to Post tab
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 5: Click edit button to enter RTE
@@ -343,7 +343,7 @@ testT5443:
             sleep_step: 3000
 
             # Step 3: Click Post tab
-            R_click_posts_tab: { role: "tab", name: "Post" }
+            R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
             # Step 4: Click RTE "Content" icon button via its unique aria-label
@@ -398,10 +398,10 @@ testT5443:
         sleep_step: 2000
 
         # ----------------------------------------------------------------------
-        # Part C: Go back to Posts tab and verify ticket shows up in post
+        # Part C: Go back to Post tab and verify ticket shows up in post
         # ----------------------------------------------------------------------
-        # Step 11: Switch back to Posts tab
-        R_click_posts_tab_verify: { role: "tab", name: "Post" }
+        # Step 11: Switch back to Post tab
+        R_click_post_tab_verify: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 12: Scroll down then verify ticket 001 is hidden (default status for new tickets)
@@ -553,8 +553,8 @@ testT5390:
     sleep_after_save: 3000
 
     # Step 3: Go to Post tab (overview page directly shows storefront card — no post_card click needed)
-    R_click_posts_tab: { role: "tab", name: "Post" }
-    sleep_after_posts: 2000
+    R_click_post_tab: { role: "tab", name: "Post" }
+    sleep_after_post: 2000
 
     # === ASSERTION: Post title synced with event title "T5390" ===
     verify_post_title_synced: { text: "T5390" }
@@ -637,8 +637,8 @@ testT5440:
     sleep_after_event: 2000
 
     # Step 2: Go to Post tab 
-    R_click_posts_tab: { role: "tab", name: "Post" }
-    sleep_after_posts: 2000
+    R_click_post_tab: { role: "tab", name: "Post" }
+    sleep_after_post: 2000
 
     # Step 3: Edit content — delete all 5 event widgets from RTE
     R_click_edit_content:

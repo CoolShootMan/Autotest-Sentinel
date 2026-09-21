@@ -29,7 +29,7 @@ testT1742:
             sleep_step: 4000
 
             # Step 1.1: Click Post tab to show post cards
-            R_click_posts_tab: { role: "tab", name: "Post" }
+            R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
             # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -104,7 +104,7 @@ testT1742:
         open_again: "{BASE_URL}/events"
         R_click_product: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
-        R_click_posts_tab:      { role: "tab", name: "Post" }
+        R_click_post_tab:      { role: "tab", name: "Post" }
         sleep_end: 3000
 
     expect_result:
@@ -262,7 +262,7 @@ testT3683_T3684:
         sleep_step: 4000
 
         # Step 1.1: Click Post tab to show post cards
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -560,7 +560,7 @@ testT3686_teardown:
         sleep_step: 4000
 
         # Step 1.1: Click Post tab to show post cards
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
@@ -859,14 +859,22 @@ testT2830_VerifyGuest:
         # Step 2: Scroll down so the "More" button of the Upcoming Events section is rendered
         scroll_to_bottom: { iterations: 12, delay: 500 }
 
-        # Step 3: Click "More" to open the full Upcoming Events list
-        R_click_section_more: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
-        sleep_after_more: 5000
+        # Step 3: Only with a "More" button in Upcoming Events, expand the full list.
+        #         When the whole section already fits on the page there is no "More",
+        #         nothing to click — Step 2's rendered cards are what we verify against.
+        if_upcoming_events_more:
+            condition:
+                locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]'
+                state: visible
+                timeout: 5000
+            then:
+                R_click_section_more: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
+                sleep_after_more: 5000
 
-        # Step 4: Scroll down the full list
-        execute_js_scroll_full_list:
-            script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
-        sleep_after_full_list: 2000
+                # Step 4: Scroll down the full list
+                execute_js_scroll_full_list:
+                    script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+                sleep_after_full_list: 2000
 
         # Step 5: The post should be hidden from guest view
         verify_text_hidden: { text: "test-event-post-variant-settings", timeout: 5000 }
@@ -906,14 +914,21 @@ testT2830_VerifyGuest:
         # Step 7: Scroll down so the "More" button of the Upcoming Events section is rendered
         scroll_to_bottom: { iterations: 12, delay: 500 }
 
-        # Step 8: Click "More" to open the full Upcoming Events list
-        R_click_section_more_teardown: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
-        sleep_after_more_teardown: 5000
+        # Step 8: Only with a "More" button in Upcoming Events, expand the full list
+        #         (no "More" = the section already shows everything, nothing to click)
+        if_upcoming_events_more_teardown:
+            condition:
+                locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]'
+                state: visible
+                timeout: 5000
+            then:
+                R_click_section_more_teardown: { locator: 'div.list-container:has-text("Upcoming Events") button[data-testid="more-card-button"]' }
+                sleep_after_more_teardown: 5000
 
-        # Step 9: Scroll down the full list
-        execute_js_scroll_full_list_teardown:
-            script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
-        sleep_after_full_list_teardown: 2000
+                # Step 9: Scroll down the full list
+                execute_js_scroll_full_list_teardown:
+                    script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+                sleep_after_full_list_teardown: 2000
 
         screenshot_guest_view_restored: { name: "debug_guest_view_restored" }
         save_html_guest_restored: { name: "debug_guest_source_restored" }
@@ -929,7 +944,7 @@ testT2834_VerifyPartner:
         # sleep_step: 500
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
         # Step 1.1: Verify the post alias verify-post-shipping-fee is visible
         verify_post_alias: { text: "verify-post-shipping-fee" }
@@ -1094,8 +1109,8 @@ testT2834_VerifyGuest:
         sleep_after_open_teardown: 3000
         R_click_event: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_after_event_teardown: 3000
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_after_posts_tab_teardown: 2000
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_after_post_tab_teardown: 2000
         
         # Step 3: Revert Selling tab Free Shipping
         R_click_selling_tab_teardown: { role: "tab", name: "Selling", exact: true }
@@ -1132,8 +1147,8 @@ testT4735_VerifyPartner:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
         # Step 3: Verify the post alias test-event-post-variant-settings is visible
@@ -1243,9 +1258,9 @@ testT4735_VerifyGuest_YesPlease:
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
         sleep_after_event_td: 4000
 
-        # Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_after_posts_tab_td: 2500
+        # Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_after_post_tab_td: 2500
 
         # Verify the post alias is visible on the Post tab
         verify_post_alias_teardown: { text: "test-event-post-variant-settings" }
@@ -1276,30 +1291,29 @@ testT2515_SetLimit_WithVariant:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 3: Verify the post alias test-event-post-variant-settings is visible
+        verify_post_alias: { text: "test-event-post-variant-settings" }
         sleep_step: 3000
 
-        # Step 4: Click Seting tab
-        R_click_setting_tab: { role: "tab", name: "Settings" }
-        sleep_step: 2000
+        # Step 4: Click the "Settings" icon card to open post settings
+        R_click_settings_icon: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]' }
+        sleep_after_settings_icon: 3000
 
-
-        # Step 3: Enable "Purchase quantity limit" toggle
+        # Step 5: Enable "Purchase quantity limit" toggle
         check_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']" }
         sleep_step: 1000
 
-        # Step 4: Set limit value to 5
+        # Step 6: Set limit value to 5
         R_click_spinbutton: { role: "spinbutton" }
         sleep_step: 500
         fill_limit_value: { role: "spinbutton", value: "5" }
         sleep_step: 1000
 
-        # Step 5: Save
+        # Step 7: Save
         R_click_save: { role: "button", name: "Save" }
         sleep_step: 3000
         wait_toast_save: { message: "Post settings updated", timeout: 15000 }
@@ -1404,26 +1418,25 @@ testT2515_VerifyDisabled_WithVariant:
         open: "{BASE_URL}/events"
         sleep_step: 3000
 
-        # Step 2.1: Click event card first to enter event detail page (Posts tab lives inside event detail now)
+        # Step 2.1: Click event card first to enter event detail page (Post tab lives inside event detail now)
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab (now inside event detail)
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab (now inside event detail)
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Scroll down to reveal post card
+        # Step 3: Scroll down to reveal the post cards
         scroll_to_bottom: { iterations: 3, delay: 500 }
         sleep_step: 1000
 
-        # Step 4: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 4: Verify the post alias test-event-post-variant-settings is visible
+        verify_post_alias_teardown: { text: "test-event-post-variant-settings" }
         sleep_step: 3000
 
-        # Step 5: Click Settings tab
-        R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
-        sleep_step: 2000
-
+        # Step 5: Click the "Settings" icon card to open post settings
+        R_click_settings_icon_teardown: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]' }
+        sleep_after_settings_icon_teardown: 3000
 
         # Step 6: Disable "Purchase quantity limit" toggle
         uncheck_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']", checked: false }
@@ -1440,68 +1453,57 @@ testT2874_EnableDependentProducts:
     test_step:
         # Step 1: Navigate to the post
         open: "{BASE_URL}/events"
-        sleep_step: 5000
+        sleep_after_open: 5000
 
         # Step 2: Find and click "Test event post variant settings" event
         R_click_event: { locator: "text=Test event with two tickets", exact: true }
-        sleep_step: 4000
+        sleep_after_event: 4000
 
         # Step 2.1: Scroll down to reveal post card (legacy: swipe_avoid_plus, "+" FAB removed)
         # swipe_avoid_plus: { x: 0, y: 500 }
         # sleep_step: 1000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_after_post_tab: 2000
 
-        # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test event with two tickets", index: 0 }
-        sleep_step: 3000
+        # Step 3: Verify the post alias "test event with two tickets" is visible
+        verify_post_alias: { text: "test event with two tickets" }
+        sleep_after_alias: 3000
 
         # Step 4: Click Selling tab
         R_click_selling_tab: { role: "tab", name: "Selling" }
-        sleep_step: 2000
+        sleep_after_selling_tab: 2000
 
-        # Step 5: Click Select products (enhance-button-cta) - the dependent-products checkbox lives in THIS dialog,
-        # NOT in the "Customize products" commission dialog (which only has commission/retail fields).
-        R_click_select_products: { test_id: "enhance-button-cta" }
-        sleep_step: 5000
+        # Step 5: Open "Customize product settings" (2 DOM copies exist, only the 2nd is visible)
+        R_click_customize: { locator: 'button[data-testid="enhance-button"]:has-text("Customize") >> nth=1' }
+        sleep_after_customize: 4500
 
-        # Step 5.1: Add test_general_products (catalog product - has dependent-products / CTA fields).
-        # GA 001/002 are tickets and do NOT expose dependent-products.
-        fill_product_search: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_step: 500
-        press_search: { key: "Enter" }
-        sleep_step: 1500
-        click_product_card: { test_id: 'SquareLineIcon', index: 0 }
-        click_add_product_btn: { role: 'button', name: 'Add 3/20 product(s)' }
-        sleep_step: 1500
+        # Step 6: Expand General Admission 001's "Advanced settings" (GA 001 is products.0)
+        R_click_advanced_settings: { locator: 'div[role="dialog"] >> text=Advanced settings' }
+        sleep_after_advanced_settings: 2500
 
-        # Step 5.2: Expand the newly-added product's Advanced settings (added product sorts to index 0).
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 1000
+        # Step 7: Tick "Must be bought with other items" for General Admission 001 (idempotent check)
+        check_dependent_products: { locator: 'input[name="products.0.hasDependentProducts"]', checked: true }
+        sleep_after_dependent_checkbox: 2500
 
-        # Step 6: Click the checkbox for "Must be bought with other items"
-        R_click_dependent_checkbox: { locator: "//span[contains(text(),'Must be bought with other items')]/preceding::input[@type='checkbox'][1]" }
-        sleep_step: 2000
+        # Step 8: In "Select required products", pick General Admission 002
+        R_click_select_required_product: { locator: 'div[role="dialog"] >> nth=-1 >> [data-testid="SquareLineIcon"]' }
+        sleep_after_required_product: 2000
 
-        # Step 7: In popup, click the product image (user confirmed: clicking image works)
-        R_click_select_required_product: { test_id: 'SquareLineIcon', index: 1 }
-        sleep_step: 2000
-
-        # Step 8: Click Confirm in popup
+        # Step 9: Confirm the required product
         R_click_confirm_popup: { role: "button", name: "Confirm" }
-        sleep_step: 2000
+        sleep_after_confirm_popup: 2500
 
-        # Step 9: Click Save inside the Customize products dialog (bottom right)
-        R_click_save_dialog: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
+        # Step 10: Save inside the Customize dialog (closes it, does not commit yet)
+        R_click_save_dialog: { role: "button", name: "Save" }
+        sleep_after_save_dialog: 3000
 
-        # Step 10: Click the outer Save button (outside the dialog, at page bottom)
-        R_click_save_outer: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
+        # Step 11: Save on the Selling tab - this is what commits the change
+        R_click_save_outer: { role: "button", name: "Save" }
+        sleep_after_save_outer: 2500
 
-        # Step 11: Wait for success toast to appear
+        # Step 12: Wait for success toast to appear
         wait_toast_save: { message: "Post products updated", timeout: 15000 }
         sleep_end: 3000
 
@@ -1527,44 +1529,45 @@ testT2874_VerifyGuestCheckoutTwo:
 
         # Step 3: Click General Admission 001 product name to open detail drawer
         R_click_product_name_first: { role: "button", name: "Buy Ticket", exact: true }
-        sleep_step: 3000
+        sleep_after_buy_ticket: 3000
 
-        # Step 4: Click Add to cart - triggers popup showing test_general_products
+        # Step 4: Click Add to cart - triggers popup showing General Admission 002
         # R_click_add_to_cart_first: { role: "button", name: "Add to cart" }
         # sleep_step: 3000
 
-        # Step 5: Verify popup shows test_general_products
-        verify_text_visible: { text: "test_general_products" }
-        sleep_step: 1000
+        # Step 5: Verify popup shows General Admission 002
+        verify_text_visible: { text: "General Admission 002" }
+        sleep_after_verify_products: 1000
+        # Step 5.1: Bump GA 002 quantity 0 -> 1 (the +/- stepper inside the "must be bought together" popup)
         R_click_increase_quantity: { role: "button", name: "Increase quantity" }
-        sleep_step: 1000
+        sleep_after_increase_qty: 1000
 
-        # Step 6: Click "Yes, add both!" to add both products to cart
+        # Step 6: Click Continue in the "must be bought together" popup -> drawer switches to the cart view
         R_click_yes_add_both: { role: "button", name: "Continue" }
-        sleep_step: 3000
+        sleep_after_yes_add_both: 3000
 
-        # Step 7: Click Checkout (if products not added, button will be disabled and test fails)
-        # R_click_checkout: { role: "button", name: "RSVP" }
-        # sleep_step: 3000
+        # Step 7: Click Continue in the cart view -> renders the Contact form
+        R_click_checkout_continue: { test_id: "checkout-in-post-continue-cta" }
+        sleep_after_checkout_continue: 3000
 
-        # Step 8: Click Continue to enter Contact info page
-        R_click_continue: { role: "button", name: "Continue" }
-        sleep_step: 3000
+        # Step 8: Verify the Contact form is rendered
+        wait_for_selector: { selector: 'input[name="contact.firstName"]', timeout: 15000 }
+        sleep_after_contact_form: 1000
 
         # Step 9: Fill Contact info
-        # fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
-        # sleep_step: 500
-        # fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
-        # sleep_step: 500
-        # fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
-        # sleep_step: 500
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Test' }
+        sleep_after_first_name: 500
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
+        sleep_after_last_name: 500
+        fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 (650) 900-6646' }
+        sleep_after_phone: 500
         fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
-        sleep_step: 500
+        sleep_after_email: 500
 
-        # Step 10: Place order
-        R_click_place_order: { role: "button", name: "Place order" }
+        # Step 10: Submit the order via RSVP
+        R_click_rsvp: { role: "button", name: "RSVP" }
         wait_for_url: { url: "*order*", timeout: 15000 }
-        sleep_step: 2000
+        sleep_after_rsvp: 2000
 
         sleep_end: 2000
 
@@ -1575,8 +1578,6 @@ testT2874_VerifyGuestCheckoutTwo:
               text: "order"
             - assertion_type: "element_visible_by_text"
               text: "General Admission 001"
-            - assertion_type: "element_visible_by_text"
-              text: "test_general_products"
 
     teardown_step:
         # Step 1: Inject partner cookies to switch to partner context
@@ -1585,45 +1586,45 @@ testT2874_VerifyGuestCheckoutTwo:
 
         # Step 2: Open Events list page
         open_teardown: "{BASE_URL}/events"
-        sleep_step: 5000
+        sleep_after_open_td: 5000
 
         # Step 3: Find and click "Test event post variant settings" event
         R_click_event_teardown: { locator: "text=Test event with two tickets", exact: true }
-        sleep_step: 4000
+        sleep_after_event_td: 4000
 
         # Step 3.1: Scroll down to reveal post card
         swipe_teardown: { x: 0, y: 500 }
-        sleep_step: 1000
+        sleep_after_swipe_td: 1000
 
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        # Step 3.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_after_post_tab_td: 2000
 
-        # Step 4: Click post card to enter post landing page
-        R_click_post_card_teardown: { role: "button", name: "test-event-with-two-tickets", index: 0 }
-        sleep_step: 3000
+        # Step 4: Verify the post alias "test event with two tickets" is visible
+        verify_post_alias_teardown: { text: "test event with two tickets" }
+        sleep_after_alias_teardown: 3000
 
         # Step 5: Click Selling tab
         R_click_selling_tab_teardown: { role: "tab", name: "Selling" }
         sleep_step: 2000
 
-        # Step 6: Click Customize
-        R_click_customize_products_teardown: { role: "button", name: "Customize" }
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 3000
+        # Step 6: Open "Customize product settings" (2 DOM copies exist, only the 2nd is visible)
+        R_click_customize_products_teardown: { locator: 'button[data-testid="enhance-button"]:has-text("Customize") >> nth=1' }
+        sleep_after_customize_td: 4500
 
-        # Step 7: Uncheck "Must be bought with another item" checkbox (click to uncheck)
-        #R_click_uncheck_dependent: { locator: "//span[contains(text(),'Must be bought with another item')]/preceding::input[@type='checkbox'][1]" }
-        R_click_uncheck_dependent: { locator: 'input[name="products.0.hasDependentProducts"]', checked: false }
-        sleep_step: 2000
+        # Step 7: Expand General Admission 001's "Advanced settings" and untick the dependency
+        R_click_advanced_settings_teardown: { locator: 'div[role="dialog"] >> text=Advanced settings' }
+        sleep_after_advanced_td: 2500
+        uncheck_dependent_products: { locator: 'input[name="products.0.hasDependentProducts"]', checked: false }
+        sleep_after_uncheck_dependent_td: 2000
 
-        # Step 8: Click Save inside the Customize dialog (bottom right)
-        R_click_save_dialog_teardown: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
+        # Step 8: Save inside the Customize dialog (closes it, does not commit yet)
+        R_click_save_dialog_teardown: { role: "button", name: "Save" }
+        sleep_after_save_dialog_td: 3000
 
-        # Step 9: Click the outer Save button (outside the dialog, at page bottom)
-        R_click_save_outer_teardown: { role: "button", name: "Save", index: 0 }
-        sleep_step: 3000
+        # Step 9: Save on the Selling tab - this commits and restores the original state
+        R_click_save_outer_teardown: { role: "button", name: "Save" }
+        sleep_after_save_outer_td: 3000
 
 
 
@@ -1666,20 +1667,16 @@ testT4038:
         R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
-        R_click_post_card: { role: "button", name: "Auto-Test-post-setting-t1742", index: 0 }
+        # Step 3: Confirm post with alias auto-test-post-setting-t1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-t1742" }
         sleep_step: 3000
 
-        # Step 4: Switch to Selling tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
-        # Step 5: Click "Promotion" sub-tab
-        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
+        # Step 4: Switch to Coupons tab
+        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
         # Step 6: Click "+ Add promotional announcements" button to open dialog
@@ -1785,24 +1782,20 @@ testT2069:
         open: "{BASE_URL}/events"
         sleep_step: 5000
 
-        # Step 2: Click "Auto-Test-post-setting" event card
+        # Step 3: Click "Auto-Test-post-setting" event card
         R_click_my_event_ann: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 3.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Click "Auto-Test-post-setting-t1742" to enter Post edit page
-        R_click_post_card: { role: "button", name: "Auto-Test-post-setting-t1742", index: 0 }
+        # Step 4: Confirm post with alias auto-test-post-setting-t1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-t1742" }
         sleep_step: 3000
 
-        # Step 4: Switch to Selling tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
-        # Step 5: Click "Promotion" sub-tab
-        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
+        # Step 5: Switch to Coupons tab
+        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
         # Step 6: Click trash icon button to delete all announcements
@@ -1875,15 +1868,6 @@ testT5033_5034_VerifyPartner:
         sleep_step: 3000
         R_click_event_1: { role: "cell", name: "verify-post-shipping_fee", optional: false }
         sleep_step: 2000
-        # R_click_tickets_tab_1: { role: 'tab', name: 'Tickets', exact: true }
-        # sleep_after_tickets_tab: 1500
-        # Step 1: Duplicate 2 tickets via each ticket card's "Tools" -> "Duplicate" (IN-PLACE)
-        # (verified 2026-08-10 on release): the ticket card has a "Tools" button whose menu
-        # contains an in-place "Duplicate" menuitem. It opens a pre-filled
-        # /events/{id}/products/{pid}/duplicate?mode=TICKET form; clicking the "Duplicate"
-        # submit button at the bottom creates the copy and returns to the event (ticket count 1->2).
-        # NOTE: the event's three-dot "More action" menu only has the CROSS-EVENT
-        # "Duplicate ticket from…" — that is NOT what we want here.
         R_click_tools_1: { role: "button", name: "Tools" }
         sleep_step: 800
         R_click_duplicate_menuitem_1: { role: "menuitem", name: "Duplicate", exact: true }
@@ -1912,22 +1896,21 @@ testT5033_5034_VerifyPartner:
 
         # Step 2: Create a post
         #R_click_event_tab_2: { role: 'tab', name: 'Event', exact: true }
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
-        R_click_Create_post: { role: "button", name: "Add another post" }
+        # New event UI: no inline "Add another post" button -> create via the top-right "..." menu.
+        # NOTE: the header "..." has aria-label "More" (the "More action" one belongs to the Tickets & Merch card menu)
+        R_click_header_more: { locator: 'button[data-testid="komi-header-icon-btn"][aria-label="More"]' }
+        sleep_after_more_action: 1500
+        # locator (not role) so the item is searched on the page, not scoped into a stray dialog
+        R_click_create_a_post: { locator: '[role="menuitem"]:has-text("Create a post")' }
         sleep_after_create_post: 2500
-        # "Add another post" triggers a "Your event is ready to share!" modal (no Confirm button
-        # exists). Dismiss it via its primary "Apply" button. optional:true so the run still proceeds
-        # if the modal happens not to appear (e.g. shown only once per event / already dismissed).
+        # "Your event is ready to share!" modal may still appear; dismiss it via "Apply" (optional)
         R_click_apply_ready: { role: "button", name: "Apply", optional: true }
         sleep_step: 1500
-        # After "Apply" we are already on the event detail Posts tab with the post cards
-        # rendered. Open the (first) post directly — no need to round-trip back to the
-        # /events listing and re-enter (that path required a now-missing open_events_4 nav
-        # and was fragile). Clicking the post card action area opens the post editor
-        # (Content tab, with a Selling tab available).
-        R_click_post: { test_id: "mui-card-action-area" }
-        sleep_step: 2000
+        # "Create a post" + "Apply" land us directly inside the post editor (tabs:
+        # Content/Selling/Co-selling/Coupons) -> no post card exists here, do NOT click one.
+        # The old R_click_post: {test_id: "mui-card-action-area"} step was removed (count=0).
 
         # Step 3: Switch to Selling tab and customize products
         click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1}
@@ -2038,18 +2021,17 @@ testT4955_Partner_SetPaymentRestriction:
         R_click_event: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 2.2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 3: Confirm post with alias test-event-post-variant-settings is visible
+        verify_post_alias: { text: "test-event-post-variant-settings" }
         sleep_step: 3000
 
-        # Step 4: Click Seting tab
+        # Step 4: Click Setting tab
         R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
-
 
         # Step 5: Check enablePaymentRestriction checkbox
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
@@ -2164,22 +2146,17 @@ testT4955_Guest_VerifyAccessCode:
         R_click_event_teardown: { locator: "text=Test event post variant settings", exact: true }
         sleep_step: 4000
 
-        # Step 3.1: Scroll down to reveal post card
-        swipe_teardown: { x: 0, y: 500 }
-        sleep_step: 1000
-
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
+        # Step 3.1: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 4: Click post card to enter post landing page
-        R_click_post_card: { role: "button", name: "test-event-post-variant-settings", index: 0 }
+        # Step 4: Confirm post with alias test-event-post-variant-settings is visible
+        verify_post_alias: { text: "test-event-post-variant-settings" }
         sleep_step: 3000
 
-        # Step 5: Click Seting tab
+        # Step 5: Click Setting tab
         R_click_setting_tab_teardown: { role: "tab", name: "Settings" }
         sleep_step: 2000
-
 
         # Step 6: Uncheck enablePaymentRestriction checkbox to disable
         uncheck_payment_restriction: { locator: "input[name='enablePaymentRestriction']", checked: false }
@@ -2222,58 +2199,51 @@ testT3779:
         R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Scroll down to reveal post card
-        scroll_to_bottom: { iterations: 5, delay: 500 }
+        # Step 2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        # Step 3: Confirm post with alias verify auto coupon apply is visible
+        verify_post_alias: { text: "verify auto coupon apply" }
+        sleep_step: 3000
 
-        # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
-        R_click_post_card: { locator: "text=verify auto coupon apply", exact: true, index: 1 }
-        sleep_step: 4000
-
-        # Step 3: Switch to Selling tab → Promotion tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
+        # Step 4: Switch to Coupons tab
+        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
-        R_click_promotion_tab: { role: 'tab', name: 'Promotion' }
-        sleep_step: 1500
-
-
-        # Step 3.5: Enable "Hide Coupon Box at Checkout"
+        # Step 5: Enable "Hide Coupon Box at Checkout"
         check_hide_coupon_box: { locator: 'input[name="hideCouponBox"]', skip_if_checked: true }
         sleep_step: 500
-        # Step 4: Click "Create a coupon" button
+
+        # Step 6: Click "Create a coupon" button
         R_click_create_coupon_btn: { role: 'button', name: 'Create' }
         sleep_step: 1500
 
-        # Step 5: Enable "Automatically applied at checkout" toggle
+        # Step 7: Enable "Automatically applied at checkout" toggle
         check_auto_apply: { locator: 'input[name="autoApplied"]', skip_if_checked: true }
         sleep_step: 500
 
-        # Step 6: Fill in Coupon display title
+        # Step 8: Fill in Coupon display title
         fill_coupon_title: { locator: 'input[placeholder="Coupon display title"]', value: 'autotest3779' }
         sleep_step: 300
 
-        # Step 7: Fill in Coupon display description
+        # Step 9: Fill in Coupon display description
         fill_coupon_desc: { locator: 'input[placeholder="Coupon display description"]', value: 'autotest3779' }
         sleep_step: 300
 
-        # Step 8: Fill in Customer benefits value (100)
+        # Step 10: Fill in Customer benefits value (100)
         fill_coupon_value: { locator: 'input[name="betterDeals.0.value"]', value: '100' }
         sleep_step: 300
 
-        # Step 9: Click "Create" to submit
+        # Step 11: Click "Create" to submit
         R_click_create: { role: 'button', name: 'Create' }
         sleep_step: 2000
 
-        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
+        # Step 12: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
         smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
         sleep_step: 1000
 
-        # Step 11: Save and verify toast
+        # Step 13: Save and verify toast
         R_click_save: { role: 'button', name: 'Save' }
         wait_toast_saved: { message: "Post promotions updated", timeout: 15000 }
 
@@ -2356,37 +2326,35 @@ testT3767:
         add_cookies: {}
         sleep_step: 1000
 
+        # Step 1: Navigate to event "verify auto coupon apply"
         open: "{BASE_URL}/events"
         sleep_step: 5000
 
         R_click_my_event: { locator: "text=verify auto coupon apply", exact: true, index: 0 }
         sleep_step: 4000
 
-        # Step 2: Scroll down to reveal post card
-        scroll_to_bottom: { iterations: 5, delay: 500 }
+        # Step 2: Click Post tab to ensure post cards are visible
+        R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2.1: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        # Step 3: Confirm post with alias verify auto coupon apply is visible
+        verify_post_alias: { text: "verify auto coupon apply" }
+        sleep_step: 3000
 
-        # Step 3: Click into post "verify auto coupon apply" (index: 1 to skip event name)
-        R_click_post_card: { locator: "text=verify auto coupon apply", exact: true, index: 1 }
-        sleep_step: 4000
-
-        R_click_selling_tab_td: { role: 'tab', name: 'Selling' }
+        # Step 4: Switch to Coupons tab
+        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
-        R_click_promotion_tab_td: { role: 'tab', name: 'Promotion' }
+        # Step 1: Click the Edit (pencil) icon on the coupon card to open "Edit a coupon".
+        # The coupon card icons are enhance-buttons: Copy / Edit / Redemption Stats.
+        # Do NOT use an index - the first 6 enhance-buttons (Content/Style/Settings/Tools/
+        # Customize/Change cover) are hidden DOM copies, so index 1 resolves to "Style".
+        click_edit_coupon: { locator: '[data-testid="enhance-button"][aria-label="Edit"]' }
+        sleep_step: 2500
+
+        # Step 2: Click the Delete icon (only rendered once the edit panel is open)
+        R_click_delete_coupon: { locator: '[data-testid="enhance-button"][aria-label="Delete"]' }
         sleep_step: 1500
-
-        # Step 1: Click Edit icon to open coupon edit mode
-        click_edit_coupon: { locator: '[data-testid="enhance-button"]', index: 1 }
-        sleep_step: 1000
-
-        # Step 2: Click Delete icon to delete the coupon
-        R_click_delete_coupon: { locator: '[data-testid="enhance-button"]', index: 7 }
-        sleep_step: 1000
 
         # Step 3: Confirm delete
         smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 3000 }
@@ -2419,100 +2387,142 @@ testT3767:
 testT2281:
     description: "Verify duplicate post copies Settings settings (allowExpire) and can be modified independently"
     test_step:
-        # Step 1: Open post creation page
+        # Step 1: Open the post editor and add a product.
         open: "{BASE_URL}/post/create"
-        sleep_after_open: 3000
+        sleep_after_open: 5000
 
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
-        sleep_step: 1000
+        sleep_step: 2500
 
+        # The Commerce CTA is an enhance-button-cta whose label is "Select" (not
+        # "Add products"); it opens the "Select products" dialog.
         click_add_product_cta: { test_id: 'enhance-button-cta' }
-        click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_click_product: 1000
-        click_add_product_btn: { role: 'button', name: 'product(s)' }
-        sleep_after_add_product: 1500
+        sleep_after_select_open: 3500
+
+        # The product must be picked by clicking its CARD, not the raw icon:
+        # SquareLineIcon matches 30 elements inside the dialog and clicking one does
+        # NOT toggle selection (the footer stays "Add 0/20 product(s)").
+        # [data-testid="content"] matches 31 nodes and index 0 is a hidden 0x0
+        # page-level container, so the first real product card is index 1.
+        click_product_card_2281: { locator: '[role="dialog"] [data-testid="content"]', index: 1 }
+        sleep_after_click_product: 1500
+        click_add_product_btn: { locator: '[role="dialog"] button:has-text("product(s)")' }
+        sleep_after_add_product: 2500
 
         # Step 2: Click Content tab and fill title
         R_click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_step: 1000
-        R_click_title_input: { role: 'tab', name: 'Content', timeout: 5000, optional: true }
+        sleep_step: 2000
         fill_title: { locator: 'input[name="title"]', value: 'test case 2281 post' }
-        sleep_step: 500
+        sleep_step: 1000
 
-        # Step 3: Click Setting tab and enable allowExpire
+        # Step 3: Click Settings tab and enable allowExpire
         R_click_setting_tab: { role: 'tab', name: 'Settings' }
-        sleep_step: 2000
-
-
+        sleep_step: 2500
         check_allow_expire: { locator: 'input[name="allowExpire"]' }
-        sleep_step: 2000
+        sleep_step: 2500
 
-        # Step 4: Click confirm button
-        R_click_confirm: { role: 'button', name: 'Confirm', timeout: 5000, optional: true }
-        sleep_step: 2000
+        # Step 4: Publish the post (footer button carries data-testid="confirm-button").
+        # Publishing is a THREE-stage flow that was not modelled before:
+        #   1) Publish            -> "Almost Ready! / This layout requires a cover media."
+        #   2) Add cover media... -> fills the cover, but the post is STILL A DRAFT
+        #   3) Publish again      -> "Ready to Publish Your Post?" -> confirm
+        #   4) "Your item is ready!" (storefront placement) -> Apply
+        R_click_publish: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
+        sleep_after_publish: 5000
 
-        # Step 5: Click Publish
-        R_click_publish: { role: 'button', name: 'Publish' }
-        #sleep_step: 1500
+        # Stage 1 dialog: only "Add cover media" / "Change layout" -- there is NO "Apply".
+        # The old R_click_got_it: Apply never matched, and because it carried optional:true
+        # it silently no-op'd and left the dialog open; the framework then scoped every
+        # later lookup into that dialog, which is what broke the following "More" click.
+        R_click_add_cover_media: { locator: '[role="dialog"] button:has-text("Add cover media")' }
+        sleep_after_add_cover: 4000
 
-        # Step 6: Click Save (success dialog)
-        R_click_got_it: { role: 'button', name: 'Apply', timeout: 3000, optional: true }
+        # "Manage cover media" lists its sources as mui-stack radio rows (NOT buttons or
+        # tabs), so a ':is(button,[role="tab"])' selector can never match them.
+        click_products_media: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")' }
+        sleep_after_products_media: 3000
+
+        # Product images render as img[data-testid="media-picture"] once "Products" is
+        # selected; clicking one attaches it as the cover.
+        click_media_img: { locator: '[role="dialog"] img[data-testid="media-picture"]', index: 0 }
+        sleep_after_media_img: 2500
+
+        # Done closes "Manage cover media". The post is still a draft at this point
+        # ("draft won't be visible to others"), so publishing must be re-triggered.
+        click_done_btn_commerce: { locator: '[role="dialog"] [data-testid="enhance-button"]:has-text("Done")' }
+        sleep_after_cover_done: 5000
+
+        # Stage 3: publish again -> "Ready to Publish Your Post?" confirmation dialog
+        R_click_publish_again_2281: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
+        sleep_after_publish_again: 4000
+        R_click_publish_confirm_dialog: { locator: '[role="dialog"] button:has-text("Publish")' }
+        sleep_after_publish_confirm: 5000
+
+        # Stage 4: "Your item is ready! / Choose where you'd like to feature on your
+        # storefront." -- dismissed with Apply. (The old R_click_got_it: Apply belonged
+        # HERE, not on the cover-media dialog.)
+        R_click_apply_ready: { locator: '[role="dialog"] button:has-text("Apply")', optional: true }
+        sleep_after_apply_ready: 4000
+
+        # Step 6: Duplicate the post from My content.
+        # Standalone posts are NOT events, so /events never lists them. The post list is
+        # /autotestshop/archive, sorted by recency, so the post just published is card 0.
+        # [UI drift] "Duplicate post" is NOT reachable from the post detail page
+        # (/post/<id>/view is the "Manage your post" editor, which only has Close/Edit/
+        # Copy/Content/Style/Settings/Tools/Visit -- no "..." and no komi-header-icon-btn).
+        # It lives in the archive CARD's own "..." menu (base-more-horiz-icon-cta).
+        open_archive_2281: "{BASE_URL}/autotestshop/archive"
+        sleep_after_open_archive: 9000
+
+        R_click_card_more_2281: { locator: 'div[data-testid="base-post-card"] button[data-testid="base-more-horiz-icon-cta"]', index: 0 }
+        sleep_after_card_more: 3000
+
+        # The item is "Duplicate post" (the old YAML said "Duplicate this post").
+        R_click_duplicate: { locator: '[role="menuitem"]:has-text("Duplicate post")' }
+        sleep_step: 6000
+
+        # Step 7: In the duplicate editor, click Content tab and change title
+        R_click_content_tab_2: { role: 'tab', name: 'Content' }
+        sleep_step: 2500
+        fill_title_duplicate: { locator: 'input[name="title"]', value: 'test case 2281 post duplicate' }
         sleep_step: 1500
 
-        # Step 7: Click on the created post card to open it
-        # R_click_post_card: { locator: "text=test case 2281 post", index: 0 }
-        # sleep_step: 1500
-
-        # Step 8: Click enhance-button (3rd) to open actions menu
-        R_click_enhance_button: { role: 'button', name: 'More' }
-        sleep_step: 2000
-
-        # Step 9: Click "Duplicate this post"
-        R_click_duplicate: { role: 'menuitem', name: 'Duplicate this post' }
-        sleep_step: 3000
-
-        # Step 10: In the duplicate, click Content tab and change title
-        R_click_content_tab_2: { role: 'tab', name: 'Content' }
-        sleep_step: 2000
-        #R_click_title_input_2: { role: 'tab', name: 'Content', timeout: 5000, optional: true }
-        fill_title_duplicate: { locator: 'input[name="title"]', value: 'test case 2281 post duplicate' }
-        sleep_step: 500
-
-        # Step 11: Click Seting tab and uncheck allowExpire
+        # Step 8: Click Settings tab and uncheck allowExpire (the copied setting)
         R_click_setting_tab_2: { role: 'tab', name: 'Settings' }
-        sleep_step: 2000
-
-
+        sleep_step: 2500
         uncheck_allow_expire_1: { locator: 'input[name="allowExpire"]', checked: false }
-        sleep_step: 1000
+        sleep_step: 2500
 
-        # Step 12: Click confirm button
-        R_click_confirm_2: { locator: '[data-testid="confirm-button"]' }
-        sleep_step: 1000
+        # Step 9: Publish the duplicate. The duplicate inherits the original's cover, so the
+        # "Almost Ready!" cover dialog normally does NOT reappear -- every cover step is
+        # optional. "Ready to Publish Your Post?" and "Your item is ready!" still appear.
+        R_click_publish_2: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
+        sleep_after_publish_2: 5000
+        R_click_add_cover_media_2: { locator: '[role="dialog"] button:has-text("Add cover media")', optional: true }
+        sleep_after_add_cover_2: 4000
+        click_products_media_2: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")', optional: true }
+        sleep_after_products_media_2: 3000
+        click_media_img_2: { locator: '[role="dialog"] img[data-testid="media-picture"]', index: 0, optional: true }
+        sleep_after_media_img_2: 2500
+        click_done_btn_commerce_2: { locator: '[role="dialog"] [data-testid="enhance-button"]:has-text("Done")', optional: true }
+        sleep_after_cover_done_2: 5000
+        R_click_publish_again_2: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")', optional: true }
+        sleep_after_publish_again_2: 4000
+        R_click_publish_confirm_dialog_2: { locator: '[role="dialog"] button:has-text("Publish")', optional: true }
+        sleep_after_publish_confirm_2: 5000
+        R_click_apply_ready_2: { locator: '[role="dialog"] button:has-text("Apply")', optional: true }
+        sleep_after_apply_ready_2: 4000
 
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-        uncheck_allow_expire_2: { locator: 'input[name="allowExpire"]', checked: false }
-        sleep_step: 1000
-
-        # Step 13: Click Publish (publish the duplicate)
-        R_click_publish_2: { role: 'button', name: 'Publish' }
-        sleep_step: 1000
-
-        # Step 14: Click Save (success dialog)
-        R_click_got_it_2: { role: 'button', name: 'Apply', timeout: 3000, optional: true }
+        # Step 10: Re-open the duplicate (newest, so archive card 0) and check its Settings
+        # tab. Clicking the card opens the "Manage your post" editor, where the Settings
+        # tab exposes input[name="allowExpire"] for the assertion.
+        open_archive_2281_b: "{BASE_URL}/autotestshop/archive"
+        sleep_after_open_archive_b: 9000
+        R_click_duplicate_post_card: { locator: 'div[data-testid="base-post-card"]', index: 0 }
+        sleep_after_open_dup: 7000
+        R_click_settings_tab_3: { role: 'tab', name: 'Settings' }
         sleep_step: 3000
-
-        # Step 15: Click on the duplicate post card (newest post, index: 0)
-        R_click_duplicate_post_card: { locator: "text=test case 2281 post", index: 0 }
-        sleep_step: 3000
-
-        # Step 16: Navigate through tabs to verify settings
-        R_click_selling_tab: { role: 'tab', name: 'Settings' }
-        sleep_step: 1000
 
         sleep_end: 2000
 
@@ -2773,132 +2783,161 @@ testT1928:
         R_click_variant_add: { role: 'button', name: 'Add', exact: true }
         sleep_step_p14: 2000
         
-        smart_click_optional_variant_done: { role: 'button', name: 'Done', timeout: 3000 }
-        sleep_step_p15: 2000
-        
         fill_variant_price_0: { locator: "input[name='variants.0.price']", value: '499' }
         fill_variant_price_1: { locator: "input[name='variants.1.price']", value: '899', optional: true }
         sleep_step_p17: 1000
         
-        R_click_confirm_product: { test_id: 'confirm-button' }
-        sleep_step_p18: 5000
+        # Manage variants 弹窗底部绿色 Done（data-testid=main-button），点掉才关闭弹窗
+        R_click_variant_done: { locator: "div[role='dialog'] button[data-testid='main-button']:has-text('Done')" }
+        sleep_step_p18: 3000
 
-        R_click_settings: { role: 'button', name: 'Settings' }
-        sleep_step: 1000
-        R_click_allowed: { text: 'Not allowed' }
-        check_set_customize_price: { locator: "xpath=//span[normalize-space(text())='Allow custom retail prices']/preceding-sibling::span//input[@type='checkbox']" }
-        sleep_step: 1000
-        R_click_setting_save: { role: 'button', name: 'Save' }
-        R_click_back_icon: { test_id: 'komi-header-icon-btn' }
-        sleep_step: 3000
+        # 保存产品（产品页底部 Create）
+        R_click_create_product: { role: 'button', name: 'Create' }
+        sleep_step_p19: 6000
+
+        # 产品建完后，去 Catalogs -> 选中 catalog -> Settings
+        open_catalog_settings: { url: "{BASE_URL}/catalog/9b57022d-d906-4e0c-8305-dc3f3fdd05d6/settings" }
+        sleep_step_p20: 6000
+        R_click_curator_edit: { locator: "button[data-testid='enhance-button']:has-text('Edit')", index: 1 }
+        sleep_step_p21: 2500
+        check_set_customize_price: { locator: "input[type='checkbox']", checked: true, no_modal_scope: true }
+        sleep_step_p22: 1000
+        R_click_setting_save: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
+        sleep_step_s1: 3000
 
         # Then proceed with post creation
         open: { url: "{BASE_URL}/post/create?c=POST_PAGE" }
         #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
-        sleep_step: 3000
+        sleep_step_s2: 3000
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
-        sleep_step: 1000
+        sleep_step_s3: 1000
 
         # smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
         # sleep_step: 1000
 
         R_click_enhance_cta: { test_id: "enhance-button-cta" }
-        sleep_step: 1000
+        sleep_step_s4: 1000
 
         # R_click_shared_tab: { role: 'tab', name: 'Shared with me' }
         # sleep_step: 1000
 
         fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
-        sleep_step: 500
+        sleep_step_s5: 500
         press_search_4: { key: "Enter" }
-        sleep_step: 1500
+        sleep_step_s6: 1500
 
         # click the test_general_products card (first/only visible card after search)
         click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
 
         R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
-        sleep_step: 1000
+        sleep_step_s7: 1000
+
+        # 关闭 "You've added products - great start!" 引导浮层（MuiPopover，16x16 Close），否则遮挡 Customize
+        smart_click_optional_great_start_close: { locator: "button[aria-label='Close']", timeout: 3000 }
+        sleep_step_p23_a: 1500
 
         # smart_click_optional_close_btn_1: { role: 'button', name: 'Close', timeout: 3000 }
         # sleep_step: 1000
 
         R_click_customize_products_btn: { role: 'button', name: 'Customize' }
-        sleep_step: 2000
+        sleep_step_s8: 2000
 
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_step: 2000
-
-        check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
-        #verify_text_hidden: { text: "Customize prices in this post", timeout: 5000 }
-        sleep_step: 1000
+        # 新 UI: Customize products 面板的 Advanced settings 默认已展开，Retail 列直接可编辑
+        sleep_step_p23: 1000
 
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
-        sleep_step: 1500
+        sleep_step_s9: 1500
 
         smart_click_optional_confirm: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1500
+        sleep_step_s10: 1500
 
         fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 1928' }
-        sleep_step: 1000
+        sleep_step_s11: 1000
+
+        # 固定 post 的 URL alias，guest 才能用稳定链接 {BASE_URL}/autotestshop/post/test1928 打开
+        R_click_settings_tab: { role: 'tab', name: 'Settings', exact: true }
+        sleep_step_p26: 2500
+        fill_post_url_alias: { locator: "textarea[name='urlAlias']", value: 'test1928' }
+        sleep_step_p27: 1000
+
+        # 填完 alias 必须切回 Content，否则 Add cover media 不在当前视图
+        R_click_content_tab_1928: { role: 'tab', name: 'Content', exact: true }
+        sleep_step_p35: 2000
 
         smart_click_optional_confirm_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1500
+        sleep_step_s12: 1500
 
         click_add_cover_media: { role: 'button', name: 'Add cover media' }
         click_products_media: { text: 'Products', exact: true }
         click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
         click_done_btn_commerce: { role: 'button', name: 'Done' }
-        sleep_step: 1000
+        sleep_step_s13: 1000
+
+        # 切 Layout 为 Collection，否则默认 Story Only 是纯内容布局、页面不渲染产品卡片
+        R_click_style_tab_1928: { role: 'tab', name: 'Style', exact: true }
+        sleep_step_p28: 2000
+        R_click_layout_tab_1928: { role: 'tab', name: 'Layout', exact: true }
+        sleep_step_p29: 2000
+        R_click_layout_combobox_1928: { role: 'combobox' }
+        sleep_step_p30: 1500
+        R_click_collection_option_1928: { locator: '[role="option"]:has-text("Collection")' }
+        sleep_step_p31: 2000
 
         # Step 13: Click Publish (publish the duplicate)
         R_click_publish_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step: 1000
+        sleep_step_s14: 1000
 
         R_click_publish_3: { role: 'button', name: 'Publish' }
-        sleep_step: 3000
+        sleep_step_s15: 3000
 
         smart_click_optional_got_it: { role: 'button', name: 'Apply', timeout: 3000 }
-        sleep_step: 5000
+        sleep_step_s16: 5000
 
         # Navigate to Catalogs to update product price
-        R_click_storefront: { role: 'button', name: 'Storefront' }
-        sleep_step: 2000
-        
+        # 直接导航到 Storefront 页（原 R_click_storefront 的 name=Storefront 其实指向上面的汉堡图标，会误开菜单）
+        open_storefront_page: { url: "{BASE_URL}/autotestshop" }
+        sleep_step_s17: 6000
+
+        # Storefront 页需先点右上角汉堡（enhance-button，aria-label=Storefront）展开导航菜单，Catalogs 才可见
+        R_click_nav_hamburger: { locator: "button[data-testid='enhance-button'][aria-label='Storefront']" }
+        sleep_step_p25: 2500
+
         R_click_catalogs: { text: 'Catalogs', timeout: 3000 }
-        sleep_step: 3000
+        sleep_step_s18: 3000
 
         R_click_more_action: { locator: '//tr[.//text()[contains(., "test 1928 product")]]//button[@aria-label="More action"]' }
-        sleep_step: 1000
+        sleep_step_s19: 1000
 
         R_click_edit: { role: 'menuitem', name: 'Edit' }
-        sleep_step: 2000
+        sleep_step_s20: 2000
 
         fill_variants_0_price: { locator: 'input[name="variants.0.price"]', value: '1' }
         fill_variants_1_price: { locator: 'input[name="variants.1.price"]', value: '2' }
-        sleep_step: 1000
+        sleep_step_s21: 1000
 
-        R_click_confirm_3: { test_id: 'confirm-button' }
-        sleep_step: 2000
+        # Edit product 页底部绿色 Save 保存改价
+        R_click_save_product_1928: { role: 'button', name: 'Save' }
+        sleep_step_p24: 3000
 
-        # Navigate to Storefront to verify the post
-        R_click_storefront_2: { text: 'Storefront' }
-        sleep_step: 2000
-        
-        R_click_storefront_link: { text: 'Storefront' }
-        sleep_step: 5000
-        page_scroll: { y: 600, delay: 2000, steps: 5 }
-        sleep_step: 1000
-
-        
+        # 收尾验证：切 guest 视角打开固定 alias 的 post，确认产品卡片价格已随 catalog 改价同步
+        clear_cookies: { inject_guest: true }
+        sleep_step_p32: 2000
+        open_guest_post_1928: { url: "{BASE_URL}/autotestshop/post/test1928" }
+        sleep_step_p33: 8000
+        # page_scroll 在 storefront 只滚 main 容器（实测 scrollY 恒为 0），改用 slick_swipe 走 mouse.wheel
+        scroll_guest_post_1928: { y: 600 }
+        sleep_step_p34: 2000
 
     expect_result:
         description: "Verify T1928 workflow completed successfully"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "test case 1928"
-            - assertion_type: "element_visible_by_locator"
-              locator: "//div[contains(@class, 'MuiStack-root') and .//*[text()='test case 1928']]//*[contains(@class, 'price') and text()='$499.00 - $899.00']"
+              text: "test1928"
+            - assertion_type: "element_visible_by_text"
+              text: "test 1928 product"
+            - assertion_type: "element_visible_by_text"
+              text: "$1.00"
 
 # ==============================================================================
 # Test Case: T3811
