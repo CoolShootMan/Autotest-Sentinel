@@ -374,6 +374,13 @@ def build_report(args: argparse.Namespace) -> str:
     counts_failed = ui_counts.get("failed", 0) + ui_counts.get("broken", 0)
     # 有逐条结果时以逐条为准（更权威）；拿不到逐条结果时退化用计数。
     fail_total = (len(ui_failed) if rows else counts_failed) + len(prefill_failed)
+    report_url = (getattr(args, "report_url", "") or "").strip()
+
+    # ── 0) 顶部 Allure 在线报告（最先看到，一键跳转详细结果）─────────────
+    if report_url:
+        out.append(f"📊 **Allure 详细测试报告**：[点击查看完整测试结果]({report_url})"
+                   "（每个用例的步骤 / 截图 / 失败日志）")
+        out.append("")
 
     # ── 1) 顶部结论：通过率 + 失败用例名（一眼可见）──────────────────────
     if ui_total or ui_counts:
@@ -498,7 +505,10 @@ def build_report(args: argparse.Namespace) -> str:
     run_no = os.environ.get("GITHUB_RUN_NUMBER", "")
     suffix = f"-{run_no}" if run_no else ""
     out.append(f"- 完整运行日志：Artifacts `run-logs{suffix}`（`run.log` + `log/` + 预制 run 目录）")
-    out.append(f"- Allure 报告：Artifacts `allure-report{suffix}`")
+    if report_url:
+        out.append(f"- Allure 报告：[在线查看]({report_url}) · 下载备用：Artifacts `allure-report{suffix}`")
+    else:
+        out.append(f"- Allure 报告：Artifacts `allure-report{suffix}`（Pages 未开启时仅可下载）")
     out.append(f"- 失败录屏：Artifacts `videos{suffix}`（仅失败时上传）")
     if pytest_sum:
         out.append("")
@@ -522,6 +532,7 @@ def build_annotations(args: argparse.Namespace) -> list[str]:
     """生成 workflow command 注解，让通过率与失败用例名出现在 run 页面顶部。
 
     通过率用一条汇总注解；失败用例各一条 error（上限 10 条，含汇总那条）。
+    Allure 在线报告作为第一条 notice 注解，运行页顶部即可点击跳转。
     """
     d = gather(args)
     ui_counts, ui_failed = d["ui_counts"], d["ui_failed"]
@@ -530,15 +541,22 @@ def build_annotations(args: argparse.Namespace) -> list[str]:
         f"预制/{n}" for n, _ in (_prefill_fail_row(x) for x in prefill_failed)
     ]
 
+    out: list[str] = []
+    report_url = (getattr(args, "report_url", "") or "").strip()
+    if report_url:
+        out.append(f"::notice title=📊 Allure 详细测试报告::点击查看完整测试结果：{report_url}")
+
     if not ui_counts and not failed_names:
         infra = d.get("infra_abort")
         if infra:
-            return [f"::error title=🚧 未跑用例（{_cmd_escape(infra, 60)}）::"
-                    f"main.py 在跑 UI 用例前中止 —— 环境/前置问题，非用例失败。"
-                    f"详见 Job Summary。"]
-        return ["::warning title=⚠️ UI Automation 未取到结果::"
-                "allure-results 与运行日志的 pytest 汇总行都不可用，"
-                "UI 阶段可能未执行。详见 Job Summary。"]
+            out.append(f"::error title=🚧 未跑用例（{_cmd_escape(infra, 60)}）::"
+                       f"main.py 在跑 UI 用例前中止 —— 环境/前置问题，非用例失败。"
+                       f"详见 Job Summary。")
+        else:
+            out.append("::warning title=⚠️ UI Automation 未取到结果::"
+                       "allure-results 与运行日志的 pytest 汇总行都不可用，"
+                       "UI 阶段可能未执行。详见 Job Summary。")
+        return out
 
     rate, executed = _pass_rate(ui_counts)
     rate_txt = f"{rate:.1f}%" if rate is not None else "N/A"
@@ -547,7 +565,6 @@ def build_annotations(args: argparse.Namespace) -> list[str]:
                     f"异常 {ui_counts.get('broken', 0)} · "
                     f"跳过 {ui_counts.get('skipped', 0)}")
 
-    out: list[str] = []
     if failed_names:
         out.append(f"::error title=❌ UI Automation 通过率 {rate_txt}"
                    f"（{len(failed_names)} 条失败）::{_cmd_escape(summary_line)}")
@@ -607,6 +624,8 @@ def _add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--sha", default="", help="提交号（写入元信息行）")
     parser.add_argument("--outcome", default="", help="main.py 步骤结果（写入元信息行）")
     parser.add_argument("--report-dir", default="", help="Allure 报告目录（写入元信息行）")
+    parser.add_argument("--report-url", default="",
+                        help="Allure 报告在线链接（GitHub Pages），写进 Summary/Annotations 顶部")
 
 
 def main(argv: list[str] | None = None) -> int:
