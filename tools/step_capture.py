@@ -33,6 +33,7 @@ Usage in conftest.py / test_ui.py:
 CLI option:
     --step-capture on|on-failure|off   (default: on-failure)
 """
+from __future__ import annotations
 
 import base64
 import json
@@ -63,11 +64,13 @@ JS_EXTRACT_INTERACTIVE = """
     ];
     const results = [];
     const isVisible = (el) => {
-        if (!el.offsetParent && el.tagName !== 'BODY') return false;
+        // 与 Playwright 可见性对齐（有尺寸即可见）。曾经的 `opacity===0` / `!offsetParent`
+        // 判据会把 MUI 开关的原生 input（opacity:0，但 Playwright 可点）整批漏掉。
         const style = getComputedStyle(el);
         if (style.display === 'none') return false;
         if (style.visibility === 'hidden') return false;
-        if (parseFloat(style.opacity) === 0) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return false;
         return true;
     };
     SELECTORS.forEach(sel => {
@@ -81,6 +84,7 @@ JS_EXTRACT_INTERACTIVE = """
                 testid:     el.getAttribute('data-testid') || '',
                 type:       el.getAttribute('type') || '',
                 placeholder: el.getAttribute('placeholder') || '',
+                nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 80),
                 href:       el.getAttribute('href') || '',
                 className:  (el.className || '').substring(0, 60),
@@ -103,7 +107,7 @@ SKIP_CAPTURE_KEYS = {"sleep", "wait", "smart_sleep", "smart_wait",
 class StepCapture:
     """Captures step-level data during test execution."""
 
-    def __init__(self, case_name: str, output_dir: str = None,
+    def __init__(self, case_name: str, output_dir: str | None = None,
                  capture_screenshot: bool = True,
                  capture_dom_raw: bool = False,
                  max_screenshot_kb: int = 200,
@@ -164,7 +168,7 @@ class StepCapture:
             "error_msg": None,
         }
 
-    def step_end(self, page, status: str = "passed", error_msg: str = None):
+    def step_end(self, page, status: str = "passed", error_msg: str | None = None):
         """Capture page state AFTER step execution. Call AFTER execution (success or failure).
 
         Args:
@@ -220,7 +224,7 @@ class StepCapture:
         self._steps.append(self._current_step)
         self._current_step = None
 
-    def finalize(self, test_passed: bool, case_metadata: Dict = None):
+    def finalize(self, test_passed: bool, case_metadata: Dict | None = None):
         """Write all captured data to disk. Call at test end.
 
         Args:
@@ -284,7 +288,7 @@ class StepCapture:
 # Standalone utilities for reading captured data
 # ---------------------------------------------------------------------------
 
-def load_capture(case_name: str, captures_dir: str = None) -> Optional[Dict]:
+def load_capture(case_name: str, captures_dir: str | None = None) -> Optional[Dict]:
     """Load a captured manifest by case name."""
     if captures_dir is None:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -296,7 +300,7 @@ def load_capture(case_name: str, captures_dir: str = None) -> Optional[Dict]:
         return json.load(f)
 
 
-def list_captures(captures_dir: str = None) -> List[Dict]:
+def list_captures(captures_dir: str | None = None) -> List[Dict]:
     """List all available captures with summary info."""
     if captures_dir is None:
         project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -177,15 +177,21 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_limit(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_limit(ctx: "Context"):
     """Apifox case #7898399: Linda_T2601_Verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_lim"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: c60da6cd-574c-4d28-a8f7-09ece9ae6907
-    _resp1 = ctx.api.posts.curator_504d5e2a_d2e9_4782_9333_536a696b9669(body={
-    'id': '504d5e2a-d2e9-4782-9333-536a696b9669',
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T2601_post_id}}', body={
+    'id': '{{T2601_post_id}}',
     'announcements': [],
     'createFromEventId': '0fe6623e-a3ba-40fb-815d-3d6f444775c3',
     'title': 'API Test T2601',
@@ -698,6 +704,6 @@ def test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_qua
     # step 3: Guest visit and check the product purchase exist limit
     _resp3 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t2601'})
     # step 4: 5bd8287b-5f33-4544-8b58-f350221a0d55
-    _resp4 = ctx.api.posts.curator_edit_ac273ab5_3f9a_4f89_8e07_72d19c463b18(body=None, token='linda06_token')
+    _resp4 = ctx.api.posts.curator_edit_by_post_id(post_id='{{T2601_edit_post_id}}', body=None, token='linda06_token')
     # step 5: Guest visit and check the product purchase exist limit
     _resp5 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'qvur6nnf7n', 'urlAlias': 'api-test-t2601'})

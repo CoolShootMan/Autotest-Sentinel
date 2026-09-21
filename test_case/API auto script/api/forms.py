@@ -5,6 +5,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -15,10 +20,11 @@ class FormsApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /form"""
         return self._call(
             "POST", '/form',

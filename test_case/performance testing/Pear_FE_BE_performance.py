@@ -18,6 +18,7 @@ Dependencies     : playwright (playwright install chromium required)
 import argparse
 import json
 import os
+import re
 import socket
 import statistics
 import subprocess

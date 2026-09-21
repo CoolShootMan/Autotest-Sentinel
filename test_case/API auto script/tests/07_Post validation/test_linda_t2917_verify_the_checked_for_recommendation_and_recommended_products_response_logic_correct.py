@@ -155,15 +155,21 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_products_response_logic_correct(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_products_response_logic_correct(ctx: "Context"):
     """Apifox case #8038584: Linda_T2917_Verify_the_checked_For_recommendation_and_Recommended_products_respo"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 1ed004ca-9615-47c9-9d46-6e774aa66402
-    _resp1 = ctx.api.posts.curator_ff9274b0_b4b1_442c_b9ea_afcaf67912ae(body={
-    'id': 'ff9274b0-b4b1-442c-b9ea-afcaf67912ae',
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T2917_post_id}}', body={
+    'id': '{{T2917_post_id}}',
     'announcements': [],
     'createFromEventId': '0fe6623e-a3ba-40fb-815d-3d6f444775c3',
     'title': 'API Test T2917',
@@ -566,17 +572,17 @@ def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_produ
     }, app_headers=False)
     # === 断言/提取（由Apifox customScript翻译）===
     assert _resp2.status_code == 201, f"step2 status != 201, got {_resp2.status_code}"
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _guestTok = _j2.get('data')
     assert _guestTok, "step2 guest-login 未返回 access_token (data)"
     vars['access_token'] = _guestTok
     # step 3: Guest visit and check the post product recommendation response
     _resp3 = ctx.api.posts.consumer_detail(app_headers=False, token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t2917'})
     # === 断言（由Apifox customScript翻译）===
-    _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
-    _d3 = _j3.get('data') or {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _d3: dict[str, Any] = _j3.get('data') or {}
     assert _d3.get('recommendationSectionTitle') == 'You may also like', f"step3 recommendationSectionTitle 不匹配: {_d3.get('recommendationSectionTitle')}"
-    _prods3 = _d3.get('relatedProducts') or []
+    _prods3: list[Any] = _d3.get('relatedProducts') or []
     _expected3 = {
         "e580e57e-7ca4-4f5a-ae3d-fd7f9b932a61": True,
         "64594457-03ca-4049-911f-3862ef9bc156": True,
@@ -590,10 +596,10 @@ def test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_produ
     # step 4: Consumer visit and check the post product recommendation response
     _resp4 = ctx.api.posts.consumer_detail(app_headers=False, token='linda05_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t2917'})
     # === 断言（由Apifox customScript翻译）===
-    _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
-    _d4 = _j4.get('data') or {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _d4: dict[str, Any] = _j4.get('data') or {}
     assert _d4.get('recommendationSectionTitle') == 'You may also like', f"step4 recommendationSectionTitle 不匹配: {_d4.get('recommendationSectionTitle')}"
-    _prods4 = _d4.get('relatedProducts') or []
+    _prods4: list[Any] = _d4.get('relatedProducts') or []
     _expected4 = {
         "e580e57e-7ca4-4f5a-ae3d-fd7f9b932a61": True,
         "64594457-03ca-4049-911f-3862ef9bc156": True,

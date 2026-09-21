@@ -201,9 +201,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_check_axs_event_fee_breakdown(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_check_axs_event_fee_breakdown(ctx: "Context"):
     """Apifox case #8712026: Check_AXS_event_fee_breakdown"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -214,9 +220,9 @@ def test_check_axs_event_fee_breakdown(ctx):
     })
     ctx.extract('yuxiao999_access_token', _resp1, '$.data.refreshToken')
     # step 2: List events
-    _resp2 = ctx.api.events.list(app_headers=False, params={'pageSize': '50', 'pageNumber': '1'})
+    _resp2 = ctx.api.events.list(app_headers=False, params={'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_access_token')
     # orig: for (line_item of res['data']['items']) if platform==='AXS' and ticket.inventoryQuantity -> set axs_event_id
-    _j_axs_event_id = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j_axs_event_id: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     for _li in ((_j_axs_event_id.get('data') or {}).get('items') or []):
         if _li.get('platform') != 'AXS':
             continue
@@ -224,7 +230,7 @@ def test_check_axs_event_fee_breakdown(ctx):
             vars['axs_event_id'] = _li.get('id')
             break
     # step 3: GET /posts/curator/event/{eventId}/posts
-    _resp3 = ctx.api.posts.curator_event_posts(app_headers=False, path_vars={'event_id': '{{axs_event_id}}'})
+    _resp3 = ctx.api.posts.curator_event_posts(app_headers=False, path_vars={'event_id': '{{axs_event_id}}'}, token='yuxiao999_access_token')
     ctx.extract('axs_post_id', _resp3, '$.data.items[0].id')
     # step 4: guest get token
     _resp4 = ctx.api.auth.guest_login(body={
@@ -232,7 +238,7 @@ def test_check_axs_event_fee_breakdown(ctx):
     }, app_headers=False)
     vars['access_token'] = (_resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 5: delete cart
-    _resp5 = ctx.api.cart.delete()
+    _resp5 = ctx.api.cart.delete(token='access_token')
     # step 6: update Cart
     _resp6 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -255,15 +261,15 @@ def test_check_axs_event_fee_breakdown(ctx):
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 7: get Cart
-    _resp7 = ctx.api.cart.list()
+    _resp7 = ctx.api.cart.list(token='access_token')
     # step 8: create Checkout
     _resp8 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp8, 'orderId')
+    ctx.extract('orderId', _resp8, '$.data.orderId')
     # step 9: update Cart
     _resp9 = ctx.api.cart.update(body={
         "items": [
@@ -277,9 +283,9 @@ def test_check_axs_event_fee_breakdown(ctx):
         ],
         "lite": False,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 10: delete cart
-    _resp10 = ctx.api.cart.delete()
+    _resp10 = ctx.api.cart.delete(token='access_token')
     # step 11: update Cart
     _resp11 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -302,7 +308,7 @@ def test_check_axs_event_fee_breakdown(ctx):
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 12: update Cart
     _resp12 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -325,13 +331,13 @@ def test_check_axs_event_fee_breakdown(ctx):
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 13: create Checkout
     _resp13 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 14: delete cart
-    _resp14 = ctx.api.cart.delete()
+    _resp14 = ctx.api.cart.delete(token='access_token')
     # step 15: express - resell post
     _resp15 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -353,9 +359,9 @@ def test_check_axs_event_fee_breakdown(ctx):
             "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-event-automation-fee-breakdown-0828",
         },
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp15, 'orderId')
+    ctx.extract('orderId', _resp15, '$.data.orderId')
     # step 16: update Cart
     _resp16 = ctx.api.cart.update(body={
         "items": [
@@ -379,9 +385,9 @@ def test_check_axs_event_fee_breakdown(ctx):
         },
         "lite": False,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 17: get Cart
-    _resp17 = ctx.api.cart.list()
+    _resp17 = ctx.api.cart.list(token='access_token')
     # step 18: apply promotion
     _resp18 = ctx.api.orders.update_promotions(body={
         "postIdForFilter": "11bdca5a-bdd4-409c-811b-5e2e2cfcf90f",
@@ -393,4 +399,4 @@ def test_check_axs_event_fee_breakdown(ctx):
             "zipcode": "78759",
         },
         "applicableCode": "autofee10",
-    })
+    }, token='access_token')

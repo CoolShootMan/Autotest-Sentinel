@@ -324,11 +324,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx: "Context"):
     """Apifox case #8000177: Lury_T5064_T4140_Verify_the_event_coupon_can_be_used_for_all_events"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -339,7 +345,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "c9110e39-abb6-41eb-b810-4faba53fd9c0",
@@ -371,11 +377,11 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: apply promotion
     _resp4 = ctx.api.orders.update_promotions(body={
         "orderId": "{{orderId}}",
@@ -386,7 +392,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "state": "",
         },
         "applicableCode": "eventcc",
-    })
+    }, token='consumer_access_token')
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
@@ -413,7 +419,7 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -421,9 +427,9 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
     })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 8: delete cart
-    _resp8 = ctx.api.cart.delete()
+    _resp8 = ctx.api.cart.delete(token='M1_access_token')
     # step 9: buy now
     _resp9 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "6968b611-abc3-4d5d-9f91-fe90d45f8540",
@@ -455,11 +461,12 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
                 "customFields": [],
             },
         ],
-    })
+    }, token='M1_access_token')
+    print('DIAG resp9 =', _resp9.status_code, _resp9.text[:600])
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp9, 'orderNumber')
+    ctx.extract('orderNumber', _resp9, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp9, 'orderId')
+    ctx.extract('orderId', _resp9, '$.data.orderId')
     # step 10: create Order
     _resp10 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -482,11 +489,11 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='M1_access_token')
     # step 11: get M1 order detail v2
-    _resp11 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp11 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 12: delete cart
-    _resp12 = ctx.api.cart.delete()
+    _resp12 = ctx.api.cart.delete(token='M1_access_token')
     # step 13: buy now
     _resp13 = ctx.api.orders.buy_now(body={
         "updateCartItems": [
@@ -517,11 +524,11 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             },
         ],
         "subdomainVanityUrl": "",
-    })
+    }, token='M1_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp13, 'orderNumber')
+    ctx.extract('orderNumber', _resp13, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp13, 'orderId')
+    ctx.extract('orderId', _resp13, '$.data.orderId')
     # step 14: apply promotion
     _resp14 = ctx.api.orders.update_promotions(body={
         "orderId": "{{orderId}}",
@@ -545,8 +552,8 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "email": None,
         },
         "applicableCode": "eventcc",
-    })
-    _j = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
+    }, token='M1_access_token')
+    _j: dict[str, Any] = _resp14.json() if _resp14.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
         vars['lineItemId'] = _arr[0].get('lineItemId')
@@ -572,11 +579,11 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='M1_access_token')
     # step 16: get M1 order detail v2
-    _resp16 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp16 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 17: delete cart
-    _resp17 = ctx.api.cart.delete()
+    _resp17 = ctx.api.cart.delete(token='M1_access_token')
     # step 18: buy now
     _resp18 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "229a5dfb-24b0-4c70-aefd-bdc2bb1b7c37",
@@ -611,11 +618,11 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
                 "customFields": [],
             },
         ],
-    })
+    }, token='M1_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp18, 'orderNumber')
+    ctx.extract('orderNumber', _resp18, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp18, 'orderId')
+    ctx.extract('orderId', _resp18, '$.data.orderId')
     # step 19: create Order - resell event product
     _resp19 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -638,9 +645,9 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='M1_access_token')
     # step 20: get M1 order detail v2
-    _resp20 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp20 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 21: Login - P1
     _resp21 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
@@ -648,7 +655,15 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
     })
     ctx.extract('P1_access_token', _resp21, '$.data.token')
     # step 22: get P1 orders
-    _resp22 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P1_OrderId'] = 'curatorOrderId'
+    _resp22 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P1_access_token')
+    _j = _resp22.json() if _resp22.headers.get('content-type','').startswith('application/json') else {}
+    _arr = _get_path(_j, ['data', 'items']) or []
+    # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
+    for _order in _arr:
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['P1_OrderId'] = _order.get('id')
+    assert vars.get('P1_OrderId'), (
+        f"test_lury_t5064_t4140_verify_the_event_c L658: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 23: get P1 order detail v2
-    _resp23 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'})
+    _resp23 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'}, token='P1_access_token')

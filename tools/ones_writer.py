@@ -40,6 +40,8 @@ Case JSON format:
     type: "functional" | "performance" | "api" | "install" | "config" | "safety" | "other"
     module_uuid: optional, defaults to env ONES_DEFAULT_MODULE_UUID or root module
 """
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -164,8 +166,8 @@ def refresh_token_via_playwright() -> str:
         # Extract token from cookie "ones-lt"
         token = None
         for cookie in context.cookies():
-            if cookie["name"] == "ones-lt" and len(cookie["value"]) > 20:
-                token = cookie["value"]
+            if cookie.get("name") == "ones-lt" and len(cookie.get("value", "")) > 20:
+                token = cookie.get("value")
                 break
 
         context.close()
@@ -204,7 +206,7 @@ def ensure_token(env: dict) -> str:
 # API layer
 # ---------------------------------------------------------------------------
 
-def api_call(method: str, path: str, body=None, env: dict = None):
+def api_call(method: str, path: str, body=None, env: dict | None = None):
     """Make an authenticated API call to ONES."""
     if env is None:
         env = load_env()
@@ -236,7 +238,7 @@ def api_call(method: str, path: str, body=None, env: dict = None):
         return 0, str(e)
 
 
-def graphql(query: str, variables: dict = None, env: dict = None):
+def graphql(query: str, variables: dict | None = None, env: dict | None = None):
     """Execute a GraphQL query."""
     if env is None:
         env = load_env()
@@ -259,7 +261,7 @@ def get_libraries(env: dict):
     return []
 
 
-def get_modules(env: dict, library_uuid: str = None):
+def get_modules(env: dict, library_uuid: str | None = None):
     """Get top-level modules in a library via GraphQL."""
     if library_uuid is None:
         library_uuid = env.get("ONES_LIBRARY_UUID", "XcAFFViB")
@@ -294,7 +296,7 @@ def get_modules(env: dict, library_uuid: str = None):
     return []
 
 
-def resolve_module_uuid(case_data: dict, env: dict, override_module: str = None) -> str:
+def resolve_module_uuid(case_data: dict, env: dict, override_module: str | None = None) -> str:
     """Resolve module UUID with clear precedence:
     1. Command-line override (--module <uuid>)
     2. module_uuid field inside the case JSON
@@ -321,7 +323,7 @@ def _short_uuid():
     return uuid.uuid4().hex[:8]
 
 
-def update_case_steps(case_uuid: str, case_data: dict, env: dict, override_module: str = None):
+def update_case_steps(case_uuid: str, case_data: dict, env: dict, override_module: str | None = None):
     """Write steps to a test case using the real ONES REST endpoint.
 
     The generic /items/add endpoint silently drops steps.  The only reliable
@@ -385,7 +387,7 @@ def update_case_steps(case_uuid: str, case_data: dict, env: dict, override_modul
     return False, f"{status}: {str(resp)[:300]}"
 
 
-def create_case(case_data: dict, env: dict, override_module: str = None):
+def create_case(case_data: dict, env: dict, override_module: str | None = None):
     """Create a single test case.
 
     case_data keys:

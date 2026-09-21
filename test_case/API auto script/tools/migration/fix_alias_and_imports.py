@@ -109,7 +109,7 @@ def analyse(path: pathlib.Path) -> dict:
     assigned = _assigned_names(tree)
     resp_seen = {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)}
     dangling: dict[str, str] = {}
-    offsets: list[tuple[int, int, str]] = []
+    offsets: list[tuple[int, int, int, str]] = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
             m = ALIAS_RE.match(node.id)

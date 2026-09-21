@@ -31,6 +31,8 @@ def apply_diff(yaml_path: str, case_id: str, step_key: str, new_value: dict,
         shutil.copy(yaml_path, yaml_path + ".heal_bak")
     with open(yaml_path, encoding="utf-8") as f:
         data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        return False, f"invalid yaml structure: {yaml_path}"
     case = data.get(case_id)
     if not case:
         return False, f"case '{case_id}' not found in {yaml_path}"

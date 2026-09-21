@@ -4,11 +4,14 @@
 Parse test case statuses from Allure report's behaviors.json,
 handle merged case numbers (e.g. T5033_5034), and generate a status map for ONES updates.
 """
+from __future__ import annotations
 
 import json
 import os
 import re
 from datetime import datetime
+
+import yaml
 
 
 def _extract_test_case_ids(name: str) -> list:
@@ -108,10 +111,10 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
             continue
 
         with open(yaml_path, "r", encoding="utf-8") as f:
-            data = yaml.safe_load(f) if 'yaml' in dir() else {}
+            data = yaml.safe_load(f)
 
         cases = []
-        if data:
+        if isinstance(data, dict):
             for key in data.keys():
                 matches = re.findall(r'T\d+', key)
                 cases.extend(matches)
@@ -122,7 +125,7 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
     return test_cases
 
 
-def get_latest_report_dir(base_dir: str = None) -> str:
+def get_latest_report_dir(base_dir: str | None = None) -> str | None:
     """Get the latest Allure HTML report directory"""
     if base_dir is None:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -146,7 +149,7 @@ def get_latest_report_dir(base_dir: str = None) -> str:
     return latest
 
 
-def generate_status_mapping(test_results: dict, yaml_cases: dict = None) -> dict:
+def generate_status_mapping(test_results: dict, yaml_cases: dict | None = None) -> dict:
     """
     Generate the final status mapping.
     If yaml_cases is provided, only retain statuses for those cases.

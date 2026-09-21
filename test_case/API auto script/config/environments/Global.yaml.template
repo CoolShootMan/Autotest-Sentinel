@@ -27,7 +27,7 @@ variables:
   UIauto_partner_email: yuxiao.zhu.ext+999@1m.app
   UIauto_coseller_email: yuxiao.zhu.ext+998@1m.app
   UIauto_partner997_email: yuxiao.zhu.ext+997@1m.app
-  UIauto_consumer_email: linda.zhou.ext+001@1m.app
+  UIauto_consumer_email: linda.zhou.ext+01@1m.app
   partner_vanityUrl: autotestshop
   partner_storeName: Auto_Test_shop
   coseller_storeName: autotest-coseller

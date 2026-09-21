@@ -269,6 +269,10 @@ def gen_extract(op: "cp.Op", src_lines: list[str], alias_map: dict) -> str | Non
             return None
     if mw:                                       # 手写补丁兜底：group(1) 即响应变量名
         resp = mw.group(1)
+    elif m is None:
+        # 不可达：上方已保证 m 与 mw 不同时为空。显式判空既收窄 Optional，
+        # 也让「m.re is RE_RESP_REF」（判断 match 由哪个 pattern 产生）的类型成立。
+        return None
     elif m.re is RE_RESP_REF:
         resp = m.group(1)
     else:                                        # _aN → 翻译
@@ -448,7 +452,7 @@ def rewrite_file(path: Path, idx: dict, case_vars_keys: set | None) -> dict:
 
     # --- 组装模块 ---
     out: list[str] = []
-    fn_range = (fn.lineno, fn.end_lineno)
+    fn_range = (fn.lineno, fn.end_lineno or fn.lineno)
     skip = set()
     for a, b in del_ranges:
         if (a, b) != fn_range:
@@ -474,7 +478,8 @@ def rewrite_file(path: Path, idx: dict, case_vars_keys: set | None) -> dict:
         ast.parse(text)
     except SyntaxError as e:
         ctx_lines = text.splitlines()
-        lo, hi = max(0, e.lineno - 6), min(len(ctx_lines), e.lineno + 4)
+        _e_lineno = e.lineno or 0            # SyntaxError.lineno 的类型是 int | None
+        lo, hi = max(0, _e_lineno - 6), min(len(ctx_lines), _e_lineno + 4)
         stats["warn"].append(
             f"生成代码语法错误: {e}\n" +
             "\n".join(f"{i+1:4d}| {ctx_lines[i]}" for i in range(lo, hi)))
@@ -486,7 +491,8 @@ def rewrite_file(path: Path, idx: dict, case_vars_keys: set | None) -> dict:
 def cp_source(lines: list[str], stmt) -> str:
     seg = ast.get_source_segment("\n".join(lines), stmt, padded=True) or ast.unparse(stmt)
     if seg and seg[0] not in " \t" and 0 < stmt.lineno <= len(lines):
-        indent = re.match(r"[ \t]*", lines[stmt.lineno - 1]).group(0)
+        _m = re.match(r"[ \t]*", lines[stmt.lineno - 1])
+        indent = _m.group(0) if _m else ""
         seg = indent + seg
     return seg.rstrip("\n")
 

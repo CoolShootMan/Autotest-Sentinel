@@ -24,8 +24,11 @@ def get_forms_button_coords():
             btn = forms_text.locator('xpath=../..').get_by_role("button", name="Add new").first
             if btn.is_visible():
                 box = btn.bounding_box()
-                print(f"FORMS_BUTTON_COORDS: x={box['x'] + box['width']/2}, y={box['y'] + box['height']/2}")
-                print(f"FORMS_BUTTON_BOX: {box}")
+                if box:
+                    print(f"FORMS_BUTTON_COORDS: x={box['x'] + box['width']/2}, y={box['y'] + box['height']/2}")
+                    print(f"FORMS_BUTTON_BOX: {box}")
+                else:
+                    print("Button visible but bounding box unavailable")
             else:
                 print("Button found but not visible")
                 

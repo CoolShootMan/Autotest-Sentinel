@@ -1,0 +1,42 @@
+{
+  "typeCheckingMode": "basic",
+  "autoSearchPaths": true,
+  "diagnosticMode": "workspace",
+  "extraPaths": [
+    ".",
+    "test_case/API auto script",
+    "test_case/performance testing/cache-regression",
+    "venv/lib/python3.11/site-packages",
+    "/Users/a123456/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "test_case/API auto script",
+      "pythonVersion": "3.13"
+    },
+    {
+      "root": "test_case/performance testing/cache-regression",
+      "pythonVersion": "3.11"
+    },
+    {
+      "root": ".",
+      "pythonVersion": "3.11"
+    }
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/allure",
+    "**/allure-results",
+    "**/allure-report",
+    "**/report",
+    "**/data",
+    "**/step_captures",
+    "**/test-results",
+    "**/ui_snapshots",
+    "**/recordings",
+    "**/log",
+    "**/*.__backup_*",
+    "**/venv"
+  ]
+}

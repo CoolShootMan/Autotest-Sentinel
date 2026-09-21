@@ -181,9 +181,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(ctx: "Context"):
     """Apifox case #8177728: Lury_T4701_T4697_Verify_partner_and_co_seller_release_schedule_ticket"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -194,7 +200,7 @@ def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(c
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "e5dc7238-c7c0-4abe-a3ce-6962cffc5579",
@@ -226,11 +232,11 @@ def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(c
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -251,7 +257,7 @@ def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(c
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: M1-login
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -259,7 +265,7 @@ def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(c
     })
     ctx.extract('P-21_access_token', _resp5, '$.data.refreshToken')
     # step 6: Check partner release schedule
-    _resp6 = ctx.api.misc.earnings_merchant_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'})
+    _resp6 = ctx.api.misc.earnings_merchant_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'}, token='P-21_access_token')
     # step 7: Login - merchant
     _resp7 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -267,4 +273,4 @@ def test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket(c
     })
     ctx.extract('merchant_access_token', _resp7, '$.data.refreshToken')
     # step 8: Check merchant release schedule
-    _resp8 = ctx.api.misc.earnings_promoter_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Commissions'})
+    _resp8 = ctx.api.misc.earnings_promoter_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Commissions'}, token='merchant_access_token')

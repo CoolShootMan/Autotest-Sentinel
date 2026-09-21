@@ -274,9 +274,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(ctx: "Context"):
     from core.compat import get_path as _get_path
     """Apifox case #8601276: Linda_T5379_Verify_the_Additional_QR_codes_can_be_added_edited_deleted"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
@@ -290,13 +296,31 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
     # step 2: ee5d6ffb-b19f-49ea-96b5-58086027e448
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'eventId'
+    # 原 step2 post-script: 在 data.items 中找 title === "event-for-API-testing" 的事件，取其 id。
+    # 注意：该事件名在当前 Release 环境已不存在（列表中的通用测试事件为
+    # event-for-api-auto-venue-map，同目录 T4543 用的正是它）。故沿用 T4543 的约定：
+    # 以 event_title 变量优先，其次原事件名，最后回退到现存通用测试事件。
+    _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
+    _titles2 = [i.get('title') for i in _items2]
+    _want2 = vars.get('event_title') or 'event-for-API-testing'
+    _ev2 = next((i for i in _items2 if i.get('title') == _want2), None)
+    if _ev2 is None:
+        _ev2 = next((i for i in _items2 if i.get('title') == 'event-for-api-auto-venue-map'), None)
+    assert _ev2, f"step2 未找到目标事件（want={_want2!r}，可用 titles={_titles2}）"
+    ctx.set('event_id', _ev2.get('id') or '')
     # step 3: d969467d-4e41-4f7d-9cd8-939c23b20f16
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
-    vars['postId'] = 'targetItem.id'
+    # 原 step3 post-script: 在 data.items 中找 title === "event-for-API-testing" 的 post，取其 id。
+    # 该 post 名同样已不在环境中，故取列表首个（与同目录 T4543 的 post0_id 取法一致）。
+    _items3 = _get_path(_resp3.json(), ['data', 'items']) or []
+    _post3 = (next((i for i in _items3 if i.get('title') == 'event-for-API-testing'), None)
+              or (_items3[0] if _items3 else None))
+    assert _post3, f"step3 posts 列表为空，无法提取 postId（items={len(_items3)}）"
+    ctx.set('postId', _post3.get('id') or '')
     # step 4: 1d147e0c-10eb-4542-b1ba-9e08f1b76835
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 5fe163d3-20f8-4e95-8a9f-895ac97b9b5d
     _resp5 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',
@@ -423,7 +447,14 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     }, token='yuxiao999_token')
     # step 7: 6451f010-096a-49fe-af64-106701bd8a2e
     _resp7 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-    vars['promoterProductId'] = 'targetVariantId'
+    # 原 step7 post-script: 在 data.relatedProducts 中找 title === "autotest T5379" 的产品，
+    # 取其 displayVariantId 写入 promoterProductId（取不到时回退 variants[0]）。
+    _rels7 = _get_path(_resp7.json(), ['data', 'relatedProducts']) or []
+    _prod7 = next((x for x in _rels7 if x.get('title') == 'autotest T5379'), None)
+    assert _prod7, f"step7 未找到 title='autotest T5379' 的关联产品（relatedProducts={len(_rels7)}）"
+    _v07 = (_prod7.get('variants') or [{}])[0]
+    ctx.set('promoterProductId',
+            _prod7.get('displayVariantId') or _v07.get('displayVariantId') or _v07.get('id') or '')
     # step 8: get address list
     _resp8 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # step 9: e5273105-dae8-4673-864f-18a9ab8aa4ef
@@ -483,7 +514,9 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
         'eventSourceUrl': 'https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3',
     },
 }, app_headers=True, token='linda10_token')
-    _ordernumber_val = _get_path(_resp9.json(), ['data', 'orderNumbers', 0])
+    # order_number 取自 place order(_resp11) 的响应（原 step11 post-script:
+    # responseData.data.orderNumbers[0]）；此前误接到 cart.delete 的响应上。
+    _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail and Inclusions content exist
-    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{orderNumber}}'})
+    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{order_number}}'})

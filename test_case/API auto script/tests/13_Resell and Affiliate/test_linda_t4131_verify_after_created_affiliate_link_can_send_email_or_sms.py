@@ -423,9 +423,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(ctx: "Context"):
     """Apifox case #7897302: Linda_T4131_Verify_after_created_affiliate_link_can_send_Email_or_SMS"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -438,7 +444,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
         "postAlias": "t4131automation",
     }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
-    ctx.extract('affiliateCode', _resp2, 'affiliateCode')
+    ctx.extract('affiliateCode', _resp2, '$.data.affiliateCode')
     # step 3: 434c9c06-a6be-4b3f-9321-abf48c83afb5
     _resp3 = ctx.api.links.internal(body={
         "originalUrl": "https://release.pear.us/lindanewcurator/post/t4131automation?aff={{affiliateCode}}",
@@ -465,7 +471,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
         "postAlias": "t4131automation",
     }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
-    ctx.extract('affiliateCode', _resp5, 'affiliateCode')
+    ctx.extract('affiliateCode', _resp5, '$.data.affiliateCode')
     # extractor: smsshortcode = $.data.code
     ctx.extract('smsshortcode', _resp5, '$.data.code')
     # step 6: 07187509-b359-4981-82a1-c9c135a9062e

@@ -14,9 +14,9 @@
 --------
 CLI::
 
-    python -m core.case_audit tests/01_Login\ flow
-    python -m core.case_audit tests/01_Login\ flow --json
-    python -m core.case_audit tests/01_Login\ flow --severity error --strict
+    python -m core.case_audit tests/01_Login\\ flow
+    python -m core.case_audit tests/01_Login\\ flow --json
+    python -m core.case_audit tests/01_Login\\ flow --severity error --strict
 
 库::
 
@@ -381,7 +381,10 @@ def rule_no_time_sleep(path: Path, tree: ast.Module, src: str) -> Iterator[Findi
 def rule_xfails_have_reason(path: Path, tree: ast.Module, src: str) -> Iterator[Finding]:
     """@pytest.mark.xfail 必须带 reason。"""
     for node in ast.walk(tree):
-        if isinstance(node, ast.Attribute) and node.attr == "xfail":
+        # 两种装饰器形态都要覆盖：@pytest.mark.xfail 是 Attribute 节点，
+        # @pytest.mark.xfail(reason=...) 是 Call 节点（其 func 才是 Attribute）。
+        target = node.func if isinstance(node, ast.Call) else node
+        if isinstance(target, ast.Attribute) and target.attr == "xfail":
             # 找到最近的装饰器
             for parent in ast.walk(tree):
                 if isinstance(parent, ast.FunctionDef):
@@ -389,7 +392,7 @@ def rule_xfails_have_reason(path: Path, tree: ast.Module, src: str) -> Iterator[
                         if dec is node:
                             has_reason = any(
                                 isinstance(kw, ast.keyword) and kw.arg == "reason"
-                                for kw in node.keywords
+                                for kw in (node.keywords if isinstance(node, ast.Call) else [])
                             )
                             if not has_reason:
                                 yield Finding(

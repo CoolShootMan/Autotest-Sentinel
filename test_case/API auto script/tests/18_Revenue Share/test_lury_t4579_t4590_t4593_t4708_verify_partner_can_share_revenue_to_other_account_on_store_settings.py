@@ -235,12 +235,18 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 from core.compat import LegacyClient, legacy_render, legacy_url
 
-def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings(ctx: "Context"):
     """Apifox case #8091284: Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_o"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     base_url = ctx.base_url
@@ -306,7 +312,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
                 headers={k:_render(v, vars) for k, v in [('Authorization', 'Bearer {{P-21_access_token}}')]},
                 data=None,
             )
-            _jl = _rl.json() if _rl.headers.get('content-type','').startswith('application/json') else {}
+            _jl: dict[str, Any] = _rl.json() if _rl.headers.get('content-type','').startswith('application/json') else {}
             _items = _get_path(_jl, ['data', 'items']) or []
             _rec = 'dian.yuhong.ext+34@1m.app'
             _match = [it for it in _items if isinstance(it, dict) and it.get('customRecipientIdentifier') == _rec]
@@ -362,7 +368,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     }, token='consumer_access_token')
     # extractor: orderNumber/orderId from step10 buy-now
     try:
-        _j10 = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
+        _j10: dict[str, Any] = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
         vars['orderNumber'] = _get_path(_j10, ["data", "orderNumber"])
         vars['orderId'] = _get_path(_j10, ["data", "orderId"])
     except Exception:
@@ -397,7 +403,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 12: Verify P-21 earning summary is not changed
     _resp12 = ctx.api.earnings.summary(app_headers=False, token='Bearer {{P-21_access_token}}')
     # assertion 12.earning is + 10.78: responseJson equal {{lifetimeEarning_order}}
-    expect(_resp12).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp12).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_order}}'))
     # step 13: Verify Partner getPayoutSummary is not changed
     _resp13 = ctx.api.earnings.summary_2(app_headers=False, token='Bearer {{P-21_access_token}}')
     # assertion 13.Balance is not changed: responseJson equal {{balance_amount}}
@@ -414,7 +420,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 15: Verify promoter earning summary is +10
     _resp15 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 15.Verify the lineup earnings +1.46: responseJson equal {{lifetimeEarning_share}}
-    expect(_resp15).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp15).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_share}}'))
     # step 16: Verify promoter getPayoutSummary is not changed
     _resp16 = ctx.api.earnings.summary_2(app_headers=False, token='merchant_access_token')
     # assertion 16.Verify the lineup balance is not change before payment: responseJson equal {{balance_amount_p}}
@@ -434,7 +440,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
         "email": "{{consumer_email}}",
     })
     try:
-        _j = _resp19.json() if _resp19.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp19.json() if _resp19.headers.get('content-type','').startswith('application/json') else {}
         vars['consumer_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
@@ -498,7 +504,7 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     # step 23: Verify promoter earning summary is not changed
     _resp23 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 23.Verify the lineup earnings is not changed: responseJson equal {{lifetimeEarning_share}}
-    expect(_resp23).json('$.data.lifetimeEarning').equals(0.01)
+    expect(_resp23).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_share}}'))
     # step 24: Verify promoter getPayoutSummary is not changed
     _resp24 = ctx.api.earnings.summary_2(app_headers=False, token='merchant_access_token')
     # assertion 24.Verify the lineup balance is not change before payment: responseJson equal {{balance_amount_p}}

@@ -19,7 +19,7 @@ from core import jsonpath, logging_util
 _MAX_BODY_PREVIEW = 600
 
 
-class CaseInsensitiveHeaders(dict):
+class CaseInsensitiveHeaders(dict[str, str]):
     """大小写无关的响应头映射。
 
     迁移前用例跑在 Apifox 里，``pm.response.headers.get('content-type')`` 是
@@ -39,22 +39,24 @@ class CaseInsensitiveHeaders(dict):
         super().__init__(data or {}, **kwargs)
         self._lower_map = {str(k).lower(): k for k in self.keys()}
 
-    def _real_key(self, key):
+    def _real_key(self, key: str) -> str:
         return self._lower_map.get(str(key).lower(), key)
 
-    def get(self, key, default=None):
+    def get(self, key: str, default: Any = None) -> Any:  # type: ignore[override]
         return super().get(self._real_key(key), default)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> str:
         return super().__getitem__(self._real_key(key))
 
-    def __contains__(self, key):
-        return super().__contains__(self._real_key(key))
+    def __contains__(self, key: object) -> bool:
+        # __contains__ 协议签名要求 key: object（不能收窄为 str），而 _real_key 内部
+        # 本就 str(key) 归一化；传任意对象都是既有语义，故此处按调用契约收窄。
+        return super().__contains__(self._real_key(key))  # type: ignore[arg-type]
 
-    def pop(self, key, *args):
+    def pop(self, key: str, *args: Any) -> Any:  # type: ignore[override]
         return super().pop(self._real_key(key), *args)
 
-    def setdefault(self, key, default=None):
+    def setdefault(self, key: str, default: Any = None) -> Any:  # type: ignore[override]
         return super().setdefault(self._real_key(key), default)
 
 
@@ -65,7 +67,7 @@ class ApiResponse:
                  "elapsed_ms", "_json_cache", "_json_parsed")
 
     def __init__(self, raw, *, method: str = "", url: str = "",
-                 request_headers: dict | None = None, request_body: Any = None,
+                 request_headers: dict[str, str] | None = None, request_body: Any = None,
                  elapsed_ms: float = 0.0):
         self._raw = raw
         self.method = method.upper()
@@ -152,7 +154,7 @@ class ApiResponse:
         hits = jsonpath.query(self.json_safe(), expr)
         return hits[0] if hits else default
 
-    def paths(self, expr: str) -> list:
+    def paths(self, expr: str) -> list[Any]:
         """按 JSONPath 取全部命中值（``..`` 递归语义）。"""
         return jsonpath.query(self.json_safe(), expr)
 

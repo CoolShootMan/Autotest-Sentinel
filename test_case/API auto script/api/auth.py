@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class AuthApi(BaseApi):
 
     def code(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/code  （用例中出现 2 次）"""
         return self._call(
             "POST", '/auth/code',
@@ -31,10 +37,11 @@ class AuthApi(BaseApi):
 
     def guest_login(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/guest-login  （用例中出现 28 次）"""
         return self._call(
             "POST", '/auth/guest-login',
@@ -46,10 +53,11 @@ class AuthApi(BaseApi):
 
     def merchant_login(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/merchant-login"""
         return self._call(
             "POST", '/auth/merchant-login',
@@ -61,10 +69,11 @@ class AuthApi(BaseApi):
 
     def promoter_login(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/promoter-login  （用例中出现 2 次）"""
         return self._call(
             "POST", '/auth/promoter-login',
@@ -76,10 +85,11 @@ class AuthApi(BaseApi):
 
     def promoter_signup(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/promoter-signup  （用例中出现 2 次）"""
         return self._call(
             "POST", '/auth/promoter-signup',
@@ -91,13 +101,32 @@ class AuthApi(BaseApi):
 
     def sign_in(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=False, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = False, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /auth/sign-in  （用例中出现 188 次）"""
         return self._call(
             "POST", '/auth/sign-in',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    # --- UI Automation Data Pre-configuration 专用接口 ---------------
+
+    def login(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /auth/login"""
+        return self._call(
+            "POST", '/auth/login',
             path_vars=path_vars,
             params=params,
             body=body, token=token, headers=headers,

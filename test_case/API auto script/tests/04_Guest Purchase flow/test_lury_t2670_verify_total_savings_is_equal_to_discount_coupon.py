@@ -58,11 +58,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx: "Context"):
     """Apifox case #5926824: Lury_T2670_Verify_total_savings_is_equal_to_discount_coupon"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -102,14 +108,14 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx):
                 "customFields": [],
             },
         ],
-    })
+    }, token='access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp2, 'orderNumber')
+    ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp2, 'orderId')
+    ctx.extract('orderId', _resp2, '$.data.orderId')
     # step 3: get Checkout
-    _resp3 = ctx.api.orders.checkout_2()
-    _j = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _resp3 = ctx.api.orders.checkout_2(token='access_token')
+    _j: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     for _item in _arr:
         if _item.get('productTitle') == "general + In-person":
@@ -125,4 +131,4 @@ def test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon(ctx):
             "zipcode": "78759",
         },
         "applicableCode": "autocoupon10",
-    })
+    }, token='access_token')

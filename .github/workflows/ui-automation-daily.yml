@@ -1,6 +1,5 @@
 name: ui-automation-daily
-
-# 每天 12:00 北京时间（= 04:00 UTC）自动跑 UI 自动化。
+# 每天 18:00 北京时间（= 10:00 UTC）自动跑 UI 自动化。
 #
 # 运行环境：GitHub 托管 runner（ubuntu-latest），**不需要注册 self-hosted runner**，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
@@ -11,53 +10,62 @@ name: ui-automation-daily
 #
 # 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
 #
-# Slack 通知：配置仓库 Secrets（SLACK_WEBHOOK_URL）后自动启用，未配置则跳过。
+# Allure 在线报告（本次优化的核心）：
+#   1) main.py 正常跑完会在 report/html/<时间戳> 生成 Allure 报告；若它在预检阶段就
+#      中止（cookie 失效 / 预制失败等），后续 fallback 步骤会用最新 allure-results
+#      补生成，保证「在线报告」与 artifact 两个通道至少有一个可用。
+#   2) 报告部署到 GitHub Pages，得到可直接点击的在线 URL；
+#   3) 该 URL 被写到 Job Summary 最顶部（第一个链接）和 run 页面 Annotations 顶部
+#      （第一条 notice），成员在 GitHub Actions 日志里直接点击即可跳转查看详细结果
+#      （每个用例的步骤 / 截图 / 失败日志）。
+#   前置条件（一次性配置）：仓库 Settings → Pages → Source 选择 "GitHub Actions"。
+#   Pages 未开启时部署步骤会失败，但被 continue-on-error 兜住，不影响测试与 Summary。
+#
+# Slack 通知：已开启，目标群 qae-team，Webhook 已配置在仓库secret SLACK_WEBHOOK_URL_UI_AUTOMATION
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
-
 on:
   schedule:
-    - cron: '0 4 * * *'       # 04:00 UTC = 12:00 北京时间（每天中午）
+    - cron: '0 10 * * *'       # 10:00 UTC = 18:00 北京时间（每天下午6点）
   workflow_dispatch:          # 允许手动触发，便于随时验证
-
 # 同一 workflow 只允许一个实例在跑，避免并发争抢
 concurrency:
   group: ui-automation-daily
   cancel-in-progress: false
-
 permissions:
   contents: read
-
+  pages: write        # 部署 Allure 报告到 GitHub Pages（在线报告链接）
+  id-token: write     # actions/deploy-pages 需要 OIDC token
+env:
+  # ── Slack 通知总开关 ──
+  # 'true' = 向 qae-team Slack 群发送结果
+  # Secrets: SLACK_WEBHOOK_URL_UI_AUTOMATION = qae-team incoming webhook url
+  SLACK_NOTIFY_ENABLED: 'true'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 240   # 调大：单用例失败快速失败后仍需跑完整轮（--maxfail=0），给足预算避免被 GitHub 误杀截断后续用例
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: venv_requirements.txt
-
       - name: Setup Java (bundled Allure CLI needs it)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r venv_requirements.txt
-
       - name: Install Playwright Chromium
         run: python -m playwright install --with-deps chromium
-
       - name: Print environment info (debug)
         run: |
           python -V
@@ -65,7 +73,6 @@ jobs:
           python -m pytest --version
           python -m playwright --version
           ./allure/bin/allure --version
-
       - name: Run UI Automation (main.py)
         id: run
         env:
@@ -74,7 +81,6 @@ jobs:
         run: |
           set -o pipefail
           python main.py 2>&1 | tee run.log
-
       - name: Locate result directories
         if: always()
         id: locate
@@ -86,16 +92,34 @@ jobs:
           echo "video_dir=${VIDEO_DIR}" >> "$GITHUB_OUTPUT"
           echo "report=$REPORT_DIR"
           echo "video=$VIDEO_DIR"
-
-      - name: Upload Allure report (artifact)
-        if: always() && steps.locate.outputs.report_dir != ''
+      - name: Ensure Allure report generated (fallback)
+        # main.py 正常跑完会生成 report/html/<时间戳>；若它在预检阶段就中止
+        # （cookie 失效 / 预制失败等），用最新 allure-results 补生成一次，
+        # 保证「在线报告」与 artifact 两个通道至少有一个可用。
+        if: always()
+        id: report
+        shell: bash
+        run: |
+          REPORT_DIR="${{ steps.locate.outputs.report_dir }}"
+          if [ -z "$REPORT_DIR" ]; then
+            LATEST_DATA="$(ls -1dt allure-results/*/ 2>/dev/null | head -1 || true)"
+            if [ -n "$LATEST_DATA" ]; then
+              TS="$(basename "$LATEST_DATA")"
+              ./allure/bin/allure generate "$LATEST_DATA" -o "report/html/$TS" -c
+              REPORT_DIR="report/html/$TS/"
+              echo "Generated Allure report from fallback data: ${LATEST_DATA}"
+            fi
+          fi
+          echo "report_dir=${REPORT_DIR}" >> "$GITHUB_OUTPUT"
+          echo "Allure report dir: ${REPORT_DIR}"
+      - name: Upload Allure report (artifact, download fallback)
+        if: always() && steps.report.outputs.report_dir != ''
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ github.run_number }}
-          path: ${{ steps.locate.outputs.report_dir }}
+          path: ${{ steps.report.outputs.report_dir }}
           retention-days: 30
           if-no-files-found: warn
-
       - name: Upload logs (artifact)
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,9 +128,9 @@ jobs:
           path: |
             run.log
             log/
+            test_case/API auto script/results/runs/
           retention-days: 14
           if-no-files-found: ignore
-
       - name: Upload failure videos (artifact)
         if: failure() && steps.locate.outputs.video_dir != ''
         uses: actions/upload-artifact@v4
@@ -115,61 +139,112 @@ jobs:
           path: ${{ steps.locate.outputs.video_dir }}
           retention-days: 14
           if-no-files-found: ignore
-
-      - name: Write job summary
+      - name: Upload Allure report to GitHub Pages
+        # 部署到 GitHub Pages，产出「可直接点击」的在线报告链接。
+        # 前置条件：仓库 Settings → Pages → Source 选 "GitHub Actions"。
+        if: always() && steps.report.outputs.report_dir != ''
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.report.outputs.report_dir }}
+      - name: Deploy Allure report to GitHub Pages
+        # 输出 page_url，供 Summary / Annotations / Slack 复用。
+        # Pages 未开启时这里失败，但 continue-on-error 只跳过在线链接，不改变 job 结论。
+        id: deploy
+        if: always() && steps.report.outputs.report_dir != ''
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+      - name: Publish result summary (pass rate & failing cases)
+        # 无论成功失败都写：把「Allure 在线报告 + 通过率 + 失败用例名」放在
+        # Job Summary 最顶部，成员点进 run 页面即可看到并一键跳转 Allure 报告，
+        # 不必去翻 main.py 日志尾部。
+        # 同时把 pass_rate / failed_names / pytest_summary 等写入步骤输出，供 Slack 复用。
         if: always()
+        id: summary
         shell: bash
-        run: |
-          {
-            echo "# UI Automation 每日执行结果"
-            echo ""
-            echo "| 项目 | 值 |"
-            echo "| --- | --- |"
-            echo "| 触发方式 | \`${{ github.event_name }}\` |"
-            echo "| 运行环境 | ubuntu-latest（headless） |"
-            echo "| main.py 结果 | \`${{ steps.run.outcome }}\` |"
-            echo ""
-            echo "Allure 报告见本次 run 页面底部的 Artifacts：\`allure-report-${{ github.run_number }}\`。"
-            echo ""
-            echo "## main.py 日志尾部"
-            echo '```'
-            tail -n 60 run.log 2>/dev/null || echo '(无 run.log)'
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Send Slack notification
-        # 仅当配置了 SLACK_WEBHOOK_URL 时才发送；未配置自动跳过。
-        if: ${{ always() && env.SLACK_WEBHOOK_URL != '' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ALLURE_URL: ${{ steps.deploy.outputs.page_url }}
+        run: |
+          python3 tools/ci_summary.py \
+            --prefill-root "test_case/API auto script/results/runs" \
+            --allure-root allure-results \
+            --run-log log \
+            --event-name "${{ github.event_name }}" \
+            --sha "${{ github.sha }}" \
+            --outcome "${{ steps.run.outcome }}" \
+            --report-dir "${{ steps.locate.outputs.report_dir }}" \
+            --report-url "$ALLURE_URL" \
+            --outputs "$GITHUB_OUTPUT" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Annotate result on the run page
+        # 让 run 页面顶部的 Annotations 区块直接列出「Allure 在线报告 + 通过率 +
+        # 失败用例名」——那是点进 run 之后第一眼就能看到的位置（Summary 区块之下），
+        # 比展开步骤日志快得多。脚本只读汇总，缺文件只降级、不会因此报错。
+        # continue-on-error：注解只是展示手段，绝不允许它反过来改变 job 结论。
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          ALLURE_URL: ${{ steps.deploy.outputs.page_url }}
+        run: |
+          python3 tools/ci_summary.py \
+            --prefill-root "test_case/API auto script/results/runs" \
+            --allure-root allure-results \
+            --run-log log \
+            --report-url "$ALLURE_URL" \
+            --github-annotations
+      - name: Send Slack notification
+        # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
+        # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。
+        if: ${{ success() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
           RUN_OUTCOME: ${{ steps.run.outcome }}
+          ALLURE_URL: ${{ steps.deploy.outputs.page_url }}
+          # 复用上一步汇总出来的通过率 / 失败清单（仅成功时才会走到这里，故通常为 0 条失败）。
+          PASS_RATE: ${{ steps.summary.outputs.pass_rate }}
+          PASSED: ${{ steps.summary.outputs.passed }}
+          EXECUTED: ${{ steps.summary.outputs.executed }}
+          FAILED_COUNT: ${{ steps.summary.outputs.failed_count }}
+          FAILED_NAMES: ${{ steps.summary.outputs.failed_names }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
-
           run_url = "{server}/{repo}/actions/runs/{run_id}".format(
               server=os.environ.get("GITHUB_SERVER_URL", "https://github.com"),
               repo=os.environ.get("GITHUB_REPOSITORY", ""),
               run_id=os.environ.get("GITHUB_RUN_ID", ""),
           )
+          allure_url = os.environ.get("ALLURE_URL") or ""
           status = os.environ.get("RUN_OUTCOME", "unknown")
-          icon = ":white_check_mark:" if status == "success" else ":warning:"
-          text = (
-              "{icon} *UI Automation 每日报告*\n"
-              "> main.py 结果: *{status}*\n"
-              "> 运行详情: {run}\n"
-              "> Allure 报告: 见该 run 的 Artifacts"
-          ).format(icon=icon, status=status, run=run_url)
-
+          icon = ":white_check_mark:" if status == "success" else ":x:"
+          rate = os.environ.get("PASS_RATE") or "N/A"
+          passed = os.environ.get("PASSED") or "?"
+          executed = os.environ.get("EXECUTED") or "?"
+          failed_count = os.environ.get("FAILED_COUNT") or "0"
+          failed_names = os.environ.get("FAILED_NAMES") or ""
+          lines = [
+              "{icon} *UI Automation 每日报告【qae-team】*".format(icon=icon),
+              "> main.py 执行结果: *{0}*".format(status),
+              "> 通过率: *{0}%*（{1}/{2}）· 失败 {3} 条".format(
+                  rate, passed, executed, failed_count),
+          ]
+          if failed_names and failed_count != "0":
+              lines.append("> 失败用例: " + failed_names.replace(",", ", "))
+          lines.append("> 运行详情: {0}".format(run_url))
+          if allure_url:
+              lines.append("> Allure 报告: {0}".format(allure_url))
+          else:
+              lines.append("> Allure 报告: 打开链接查看 Artifacts")
+          payload = json.dumps({"text": "\n".join(lines)}).encode("utf-8")
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
-              data=json.dumps({"text": text}).encode("utf-8"),
+              data=payload,
               headers={"Content-Type": "application/json"},
               method="POST",
           )
           try:
-              urllib.request.urlopen(req)
-              print("Slack 已发送")
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  print("Slack 消息发送成功, response:", resp.read().decode())
           except Exception as e:
               print("Slack 发送失败:", e)
           PY

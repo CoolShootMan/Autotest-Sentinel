@@ -135,9 +135,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_demi_t4167_verify_the_event_can_be_edited_successfully(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_demi_t4167_verify_the_event_can_be_edited_successfully(ctx: "Context"):
     """Apifox case #7570770: Demi_T4167_Verify_the_event_can_be_edited_successfully"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -151,9 +157,9 @@ def test_demi_t4167_verify_the_event_can_be_edited_successfully(ctx):
     # step 2: List events
     _resp2 = ctx.api.events.list(params={'pageNumber': 1, 'pageSize': 50}, app_headers=False, token='xuan22_token')
     # === 断言/提取（由Apifox customScript翻译）===
-    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _resp2.status_code == 200, f"step2 status != 200, got {_resp2.status_code}"
-    _items2 = (_j.get('data') or {}).get('items') or []
+    _items2: list[Any] = (_j.get('data') or {}).get('items') or []
     _target2 = next((it for it in _items2 if 'demi test event auto' in (it.get('title') or '') and it.get('status') == 'UPCOMING'), None)
     assert _target2 is not None, "未找到 title 包含 'demi test event auto' 且 status=UPCOMING 的事件"
     vars['targetEventId'] = _target2['id']
@@ -1355,7 +1361,7 @@ def test_demi_t4167_verify_the_event_can_be_edited_successfully(ctx):
     _resp4 = ctx.api.events.list(params={'pageNumber': 1, 'pageSize': 50}, app_headers=False, token='xuan22_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp4.status_code == 200, f"step4 status != 200, got {_resp4.status_code}"
-    _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     assert 'data' in _j4, "响应缺少 data"
     _items4 = (_j4.get('data') or {}).get('items')
     assert isinstance(_items4, list), "data.items 不是数组"

@@ -54,9 +54,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_discount_that_provided_by_post_owner(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_discount_that_provided_by_post_owner(ctx: "Context"):
     """Apifox case #5800997: Linda_T2731_Verify_the_total_saving_contains_the_shipping_discount_that_provided"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
@@ -112,4 +118,4 @@ def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_dis
     ctx.extract('order_id', _resp2, '$.data.orderId')
     # order_id 已由上方 extractor 提取
     # step 3: 2c078bbd-0029-462f-9f74-ef3cfb498c8e
-    _resp3 = ctx.api.orders.checkout(body={}, app_headers=True, params={'fbAdParams[eventID\\]': 'b960373e-2266-40ec-a22f-0831aef7593e'})
+    _resp3 = ctx.api.orders.checkout(body={}, app_headers=True, params={'fbAdParams[eventID\\]': 'b960373e-2266-40ec-a22f-0831aef7593e'}, token='access_token')

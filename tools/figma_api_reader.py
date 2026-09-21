@@ -14,6 +14,7 @@ Requires a Figma Personal Access Token with:
 
 Token can be passed via --token or the FIGMA_TOKEN environment variable.
 """
+from __future__ import annotations
 
 import argparse
 import json
@@ -21,6 +22,7 @@ import os
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path

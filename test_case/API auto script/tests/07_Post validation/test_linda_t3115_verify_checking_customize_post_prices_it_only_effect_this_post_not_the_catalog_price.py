@@ -65,15 +65,21 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_post_not_the_catalog_price(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_post_not_the_catalog_price(ctx: "Context"):
     """Apifox case #8003958: Linda_T3115_Verify_checking_Customize_post_prices_it_only_effect_this_post_not_t"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: e21e9f86-97f2-41a2-b8c3-8ddc653a00c4
-    _resp1 = ctx.api.posts.curator_397367e3_1140_4a14_9ba1_26f92bd7f24a(body={
-        "id": "397367e3-1140-4a14-9ba1-26f92bd7f24a",
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T3115_post_id}}', body={
+        "id": "{{T3115_post_id}}",
         "announcements": [],
         "createFromEventId": None,
         "title": "API Test T3115",

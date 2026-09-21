@@ -36,7 +36,7 @@ def start_autotest():
     logger.add(f'log/{create_date}.log', enqueue=True, encoding='utf-8', retention=30)
     logger.info(f"Python executable: {shutil.which('python')}")
     logger.info(f"sys.path: {sys.path}")
-    logger.info("""
+    logger.info(r"""
 
      _   _   _ _____ ___    _____ _____ ____ _____ 
     / \ | | | |_   _/ _ \  |_   _| ____/ ___|_   _|
@@ -62,27 +62,66 @@ def start_autotest():
         "-m",
         "pytest",
         os.path.join(BASE_DIR, 'test_case', 'UI'),
-        '--headed',
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
-        '--step-capture=on-failure'
+        '--step-capture=on-failure',
+        '--maxfail=0',  # 失败不中断：单个 UI 用例失败也要跑完整个测试套（下游用例照常执行）
     ]
+    # --headed 不能写死：GitHub 托管 runner 没有显示器，headed 会让所有用例在
+    # setup 阶段直接 ERROR（Missing X server or $DISPLAY，见 run #8 的日志）。
+    # CI 一律 headless；本地（非 CI）自动补上 --headed 便于肉眼调试。
+    if not os.environ.get('CI'):
+        pytest_args.append('--headed')
     logger.info(f"Running with YAMLs: {yaml_files}")
 
-    # ── 1. Fetch cookies for all 3 test accounts ──
-    # cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
-    # logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
-    # cookie_result = subprocess.run(
-    #     [sys.executable, cookie_script],
-    #     capture_output=True, text=True
-    # )
-    # logger.info(f"Cookie script done: {cookie_result.stdout}")
-    # if cookie_result.returncode != 0:
-    #     logger.error(f"Cookie script stderr: {cookie_result.stderr}")
+    # ── 1. API 预制脚本：UI Automation Data Pre-configuration ──
+    # UI 用例依赖这条 API 预制脚本先造好测试数据（用户 / event / ticket / product /
+    # post / coupon 等），所以每次跑 UI 用例【之前】必须先跑它。
+    # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
+    # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
+    # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
+    api_dir = os.path.join(BASE_DIR, 'test_case', 'API auto script')
+    prefill_runner = os.path.join(api_dir, 'run_suite.py')
+    prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
+    logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
+    logger.info(f"Running command: {prefill_runner} {prefill_suite}")
+    prefill_result = subprocess.run(
+        [sys.executable, prefill_runner, prefill_suite],
+        cwd=api_dir, capture_output=True, text=True
+    )
+    logger.info(f"Prefill stdout: {prefill_result.stdout}")
+    if prefill_result.stderr:
+        # 框架日志（core/logging_util.py 的 StreamHandler）走的是 stderr，而本步骤成功时
+        # 原先只记 stdout —— 于是「预制到底做了什么」的关键证据在 CI 里看不到，
+        # 例如 step 76 补回的别名写入：`[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' ...`
+        # （这也是 tools/ci_summary.py 的「预制内的 DB 步骤日志」折叠块的数据来源）。
+        # 只读日志、不含请求体（API_LOG_BODY 默认关闭），可安全落 run.log。
+        logger.info(f"Prefill stderr: {prefill_result.stderr}")
+    if prefill_result.returncode != 0:
+        # 预制失败 → UI 用例会因缺数据大面积假失败；直接中止，避免白跑一整轮（CI 一次约 110 分钟）。
+        logger.error(
+            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+            f"stderr: {prefill_result.stderr}"
+        )
+        raise SystemExit(prefill_result.returncode)
 
-    # ── 2. Login with latest cookies and dismiss EDU popups ──
+    # ── 2. Fetch cookies for all 3 test accounts ──
+    # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），
+    # 过期后所有需要登录态的用例会以 "locator not found" 假失败，极难察觉。
+    # 所以不要用 `if CI` 把本地排除掉——每次运行前统一重新登录 3 个账号拿最新 cookie。
+    cookie_script = os.path.join(BASE_DIR, 'tools', 'get_all_cookies.py')
+    logger.info(f"Fetching cookies for all 3 accounts via: {cookie_script}")
+    cookie_result = subprocess.run(
+        [sys.executable, cookie_script],
+        capture_output=True, text=True
+    )
+    logger.info(f"Cookie script done: {cookie_result.stdout}")
+    if cookie_result.returncode != 0:
+        logger.error(f"Cookie script stderr: {cookie_result.stderr}")
+
+    # ── 3. Login with latest cookies and dismiss EDU popups ──
     dismiss_script = os.path.join(BASE_DIR, 'tools', 'dismiss_edu.py')
     logger.info(f"Dismissing EDU popups for all 3 accounts via: {dismiss_script}")
     dismiss_result = subprocess.run(
@@ -91,9 +130,36 @@ def start_autotest():
     )
     logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
     if dismiss_result.returncode != 0:
-        logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+        # 这一步是「登录态预检」：它会用 cookie 登录并按账号逐个走一遍 EDU 弹窗流程，
+        # 走不通（如 ERR_TOO_MANY_REDIRECTS / 页面打不开）就说明会话已经不可用。
+        # 此时继续跑 UI 只会得到一整轮 element not found 假失败
+        # （2026-09-20 run 35487920412：20 条里 19 条假失败、白烧 16 分钟 runner），
+        # 所以直接中止 —— 报「预检失败」比报 19 条「用例失败」更接近真相。
+        logger.error(
+            f"Login/EDU preflight FAILED (exit {dismiss_result.returncode}) — aborting UI run.\n"
+            f"这意味着 3 个账号的登录态没建立好，UI 用例必然大面积假失败，故不再跑 pytest。\n"
+            f"stderr: {dismiss_result.stderr}"
+        )
+        raise SystemExit(dismiss_result.returncode or 4)
 
-    # ── 3. Run pytest ──
+    # ── 3.1 Cookie 预检：确认 3 个账号仍是「已登录」状态 ──
+    # 预制脚本会删除并重建测试账号；若 CI 跑 UI 的同时本机又跑了一次预制，
+    # 账号被重建 → 会话失效 → 整套 UI 用例退化成访客态假失败。
+    # 这里做一次廉价预检（只读 JSON、不起浏览器），不通过就中止。
+    check_script = os.path.join(BASE_DIR, 'tools', 'check_auth_cookies.py')
+    logger.info(f"Checking auth cookies via: {check_script}")
+    check_result = subprocess.run(
+        [sys.executable, check_script], capture_output=True, text=True
+    )
+    logger.info(f"Auth cookie preflight: {check_result.stdout}")
+    if check_result.returncode != 0:
+        logger.error(
+            f"Auth cookie preflight FAILED (exit {check_result.returncode}) — aborting UI run.\n"
+            f"stderr: {check_result.stderr}"
+        )
+        raise SystemExit(check_result.returncode or 5)
+
+    # ── 4. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)
     logger.info(f"Pytest stdout: {result.stdout}")
     logger.error(f"Pytest stderr: {result.stderr}")
@@ -132,15 +198,17 @@ def start_autotest():
         logger.info(f"v4 layout patched: {patch_result.stdout.strip()}")
 
     # ---------------------------------------------------------
-    # NEW: Analyze all failed cases from step captures
+    # AI step-capture analysis disabled: user no longer needs this flow.
+    # Leaving the block commented rather than deleted so it can be restored
+    # if the RAG+AI repair-plan pipeline is needed again.
     # ---------------------------------------------------------
-    logger.info(f"Analyzing failed cases from step captures...")
-    analyze_script = os.path.join(BASE_DIR, 'tools', 'step_analyzer.py')
-    analyze_cmd = [sys.executable, analyze_script, "analyze", "--all-failed"]
-    logger.info(f"Running command: {' '.join(analyze_cmd)}")
-    analyze_result = subprocess.run(analyze_cmd, text=True)
-    if analyze_result.returncode != 0:
-        logger.error(f"Analysis error: {analyze_result.stderr}")
+    # logger.info(f"Analyzing failed cases from step captures...")
+    # analyze_script = os.path.join(BASE_DIR, 'tools', 'step_analyzer.py')
+    # analyze_cmd = [sys.executable, analyze_script, "analyze", "--all-failed"]
+    # logger.info(f"Running command: {' '.join(analyze_cmd)}")
+    # analyze_result = subprocess.run(analyze_cmd, text=True)
+    # if analyze_result.returncode != 0:
+    #     logger.error(f"Analysis error: {analyze_result.stderr}")
     # ---------------------------------------------------------
 
     # Get LAN IP (192.168.x.x range, excluding virtual NICs/WSL)
@@ -148,7 +216,7 @@ def start_autotest():
         try:
             addrs = socket.getaddrinfo(socket.gethostname(), None)
             for addr in addrs:
-                ip = addr[4][0]
+                ip = str(addr[4][0])
                 # Exclude WSL/Hyper-V virtual subnets (172.16-31.x.x)
                 if ip.startswith("172."):
                     octet2 = int(ip.split(".")[1])
@@ -159,7 +227,7 @@ def start_autotest():
                     return ip
             # Fallback: any address that is not 127.x, 172.16-31.x, or IPv6
             for addr in addrs:
-                ip = addr[4][0]
+                ip = str(addr[4][0])
                 if ip.startswith("127.") or ":" in ip:
                     continue
                 if ip.startswith("172."):
@@ -205,10 +273,19 @@ def start_autotest():
     logger.info(f"LAN report URL: http://{lan_ip}:{http_port}")
     logger.info(f"Local Allure: auto-opened")
     logger.info(f"====================================")
-    try:
-        subprocess.run(open_cmd)
-    except Exception:
-        pass
+    # allure open 只能在本地跑：它会启动一个内嵌 jetty 服务器并永久阻塞，
+    # 在 CI 上会把 job 挂死直到 timeout（run #8 被 cancelled 的直接原因）。
+    # CI 的报告通过 workflow 的 upload-artifact 步骤上传。
+    if not os.environ.get("CI"):
+        try:
+            subprocess.run(open_cmd)
+        except Exception:
+            pass
+
+    # 透传 pytest 退出码：有失败用例时 CI job 显示失败，避免假绿。
+    if result.returncode != 0:
+        logger.error(f"pytest exited with code {result.returncode}")
+        sys.exit(result.returncode)
 
 
 

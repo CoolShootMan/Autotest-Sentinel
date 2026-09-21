@@ -54,7 +54,7 @@ testT5442:
         sleep_step:                2000
 
         R_click_add_ticket:     { role: "button", name: "Add ticket" }
-        wait_for:               { role: "heading", name: "Add a ticket", timeout: 5000 }
+        wait_for_add_ticket:    { role: "heading", name: "Add a ticket", timeout: 5000 }
         fill_ticket_title:      { role: "textbox", name: "Product title", value: "new ticket related to T5442" }
         sleep_step:             1000
         fill_ticket_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
@@ -71,7 +71,7 @@ testT5442:
         R_click_merch_subtab:   { locator: "text=Merch", exact: true }
         sleep_step:             2000
         R_click_add_merch:      { role: "button", name: "Add merch" }
-        wait_for:               { role: "heading", name: "Add merch", timeout: 10000 }
+        wait_for_add_merch:     { role: "heading", name: "Add merch", timeout: 10000 }
         fill_merch_title:       { role: "textbox", name: "Product title", value: "new merch related to T5442" }
         sleep_step:             1000
         fill_merch_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
@@ -150,7 +150,7 @@ VerifyGuest_testT5442:
         R_click_confirm_ticket: { role: 'button', name: 'Delete' }
         sleep_step: 3000
 
-    expect_result:
+    teardown_expect_result:
         description: "Newly added ticket and merch deleted successfully"
 
 

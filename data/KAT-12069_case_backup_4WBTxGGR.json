@@ -1,0 +1,38 @@
+{
+  "case": {
+    "assign": {
+      "uuid": "HKJxJn4E"
+    },
+    "condition": "The partner has the footnote editor open.",
+    "desc": "Confirms the storefront shows a live preview of the footnote as the partner types, before the change is saved.",
+    "name": "Verify the footnote content is previewed in real time on the storefront while editing",
+    "number": 5726,
+    "priority": {
+      "uuid": "VRXHXgbp"
+    },
+    "testcaseModule": {
+      "uuid": "3moKQuHE"
+    },
+    "type": {
+      "uuid": "7qLS7W5f"
+    },
+    "uuid": "4WBTxGGR"
+  },
+  "steps": [
+    {
+      "index": 0,
+      "desc": "Open the footnote editor with an empty footer",
+      "result": "The editor opens with an empty content area"
+    },
+    {
+      "index": 1,
+      "desc": "Type text into the RTE editor",
+      "result": "The text appears in the editor and the storefront preview reflects the typed content in real time before Save"
+    },
+    {
+      "index": 2,
+      "desc": "Apply bold to part of the text and keep typing",
+      "result": "The preview updates accordingly and stays in sync with the editor"
+    }
+  ]
+}

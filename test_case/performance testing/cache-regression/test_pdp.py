@@ -10,6 +10,7 @@ PDP 页无独立 promotion 计算接口（计算发生在 cart/checkout 阶段�
 import asyncio
 
 import pytest
+from typing import cast
 from urllib.parse import urlparse
 
 from api_params import PEAR_URL, PDP_URL
@@ -33,7 +34,7 @@ PDP_PATH = urlparse(PDP_URL).path
 
 # 3c 测试的 auto coupon 会话缓存（避免 import TestPromotionCache 导致 pytest
 # 在 test_pdp.py 模块下重复收集 test_promotion 的测试类）
-_PDP_AUTO = {"id": None, "tag": None}
+_PDP_AUTO: dict[str, str | None] = {"id": None, "tag": None}
 
 
 class TestPdpCache:
@@ -87,17 +88,18 @@ class TestPdpCache:
         """
         # 0. 兜底 apply coupon（会话级缓存，复用 test_promotion 工具链）
         if _PDP_AUTO["id"] is None:
-            _PDP_AUTO["tag"] = _now_tag()
+            auto_tag = _now_tag()
+            _PDP_AUTO["tag"] = auto_tag
             resp = await http_client.patch(
                 promo_path(),
                 headers=promo_auth_headers,
-                json=_build_promo_body(discount=10, auto_tag=_PDP_AUTO["tag"]),
+                json=_build_promo_body(discount=10, auto_tag=auto_tag),
             )
             assert resp.status_code == 200, (
                 f"Create auto coupon failed: {resp.status_code} {resp.text}"
             )
             _PDP_AUTO["id"] = await _read_auto_coupon_id(
-                http_client, _PDP_AUTO["tag"]
+                http_client, auto_tag
             )
 
         # 1. 加购：coupon 生效（购物车 item 带 totalCouponDiscount）
@@ -165,7 +167,7 @@ class TestPdpCache:
             headers=promo_auth_headers,
             json=_build_promo_body(
                 discount=20,
-                auto_tag=_PDP_AUTO["tag"],
+                auto_tag=cast(str, _PDP_AUTO["tag"]),
                 auto_id=_PDP_AUTO["id"],
             ),
         )
@@ -180,7 +182,7 @@ class TestPdpCache:
                 headers=promo_auth_headers,
                 json=_build_promo_body(
                     discount=10,
-                    auto_tag=_PDP_AUTO["tag"],
+                    auto_tag=cast(str, _PDP_AUTO["tag"]),
                     auto_id=_PDP_AUTO["id"],
                 ),
             )

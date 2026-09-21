@@ -5,14 +5,17 @@ Builds a FAISS vector index from UI snapshots so that failed test steps
 can query the latest page DOM for similar elements.
 
 Usage:
-    # Build index from latest snapshot
+    # ① Take a fresh DOM snapshot first (the index is built FROM a snapshot)
+    python tools/ui_snapshot.py snapshot --env release --account main --label baseline
+
+    # ② Build index from the latest snapshot
     python tools/dom_kb.py build --env release --account main
 
     # Query: find elements similar to a failed locator
-    python tools/dom_kb.py query --role button --name "Edit post"
+    python tools/dom_kb.py query --role button --name "Edit footer"
 
-    # Build + query in one shot (for debugging)
-    python tools/dom_kb.py search --role button --name "Edit post" --url "{BASE_URL}/autotestshop"
+Note: there is no `search` subcommand — it was documented but never implemented.
+      Use `build` then `query`.
 """
 
 import typing
@@ -68,10 +71,43 @@ def element_to_text(el: dict, url_template: str = "") -> str:
     placeholder = el.get("placeholder", "")
     if placeholder:
         parts.append(f"placeholder:{placeholder}")
+    # HTML `name` 属性（≠ 上面的 name 字段，那个是 aria-label/innerText）。
+    # 本套 App 的表单控件大量靠它定位（`input[name="contactEmail"]`、
+    # `span.MuiSwitch-switchBase:has(input[name=contactEmail])`），
+    # 不采集的话这类控件在 KB 里就是"无名"的，查不回来。
+    name_attr = el.get("nameAttr") or ""
+    if name_attr:
+        parts.append(f"nameattr:{name_attr}")
     elem_type = el.get("type", "")
     if elem_type and elem_type != tag:
         parts.append(f"type:{elem_type}")
     return " ".join(parts)
+
+
+def element_signature(el: dict, url_template: str = "") -> str:
+    """Stable identity of an element for dedup purposes.
+
+    ⚠️ Do NOT dedup by ``data-testid`` alone (the old behaviour). Testids in this
+    app are frequently **generic and reused** — e.g. ``enhance-button`` appeared
+    62x and ``mui-box`` covers every MUI box button on one page. Collapsing on the
+    testid threw away 402 -> 66 elements (2026-09-18) and made genuinely distinct
+    controls (``Add footer`` / ``Edit footer``) unretrievable.
+
+    Two elements are only interchangeable when they agree on every identifying
+    attribute, so the signature spans the whole tuple.
+    """
+    return "|".join([
+        url_template,
+        el.get("tag", ""),
+        el.get("role", ""),
+        el.get("testid", ""),
+        el.get("ariaLabel", ""),
+        el.get("name", ""),
+        el.get("text", ""),
+        el.get("placeholder", ""),
+        el.get("type", ""),
+        el.get("nameAttr") or "",
+    ])
 
 
 def locator_to_text(role: str = "", name: str = "", text: str = "",
@@ -108,7 +144,7 @@ def get_embedder():
     """Lazy-load sentence-transformers model. Uses a small fast model."""
     global _model
     if _model is None:
-        from sentence_transformers import SentenceTransformer
+        from sentence_transformers import SentenceTransformer  # pyright: ignore[reportMissingImports]
         model_name = "all-MiniLM-L6-v2"
         cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".models")
         if os.path.isdir(os.path.join(cache_dir, model_name)):
@@ -143,16 +179,16 @@ def build_index(elements: List[dict], url_map: Dict[str, str]) -> str:
         path to the saved index directory
     """
     import numpy as np
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
 
     os.makedirs(KB_DIR, exist_ok=True)
 
-    # Deduplicate by (url_template, key) - prefer elements with testid/role
+    # Deduplicate by full element signature (see element_signature for why the
+    # old "url||testid" key was destructive) - prefer elements with testid/role
     seen = {}
     for el in elements:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        dedup_key = f"{url_tpl}||{key}"
+        dedup_key = element_signature(el, url_tpl)
         existing = seen.get(dedup_key)
         if existing is None:
             seen[dedup_key] = el
@@ -204,7 +240,7 @@ def build_index(elements: List[dict], url_map: Dict[str, str]) -> str:
 
 def load_index() -> Optional[tuple]:
     """Load FAISS index and metadata. Returns (index, meta) or None."""
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
     index_path = os.path.join(KB_DIR, "faiss.index")
     meta_path = os.path.join(KB_DIR, "meta.pkl")
     if not os.path.exists(index_path) or not os.path.exists(meta_path):
@@ -284,7 +320,7 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
         True if successfully added, False otherwise
     """
     import numpy as np
-    import faiss
+    import faiss  # pyright: ignore[reportMissingImports]
 
     result = load_index()
     if result is None:
@@ -299,18 +335,16 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
             el_copy["_url_template"] = url_template
         elements.append(el_copy)
 
-    # Deduplicate against existing elements
+    # Deduplicate against existing elements (full signature, see element_signature)
     existing_keys = set()
     for el in meta["elements"]:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        existing_keys.add(f"{url_tpl}||{key}")
+        existing_keys.add(element_signature(el, url_tpl))
 
     new_unique = []
     for el in elements:
         url_tpl = el.get("_url_template", "")
-        key = el.get("key", "")
-        dedup_key = f"{url_tpl}||{key}"
+        dedup_key = element_signature(el, url_tpl)
         if dedup_key not in existing_keys:
             new_unique.append(el)
             existing_keys.add(dedup_key)
@@ -352,7 +386,14 @@ def add_elements(new_elements: List[dict], url_template: str = "") -> bool:
 
 def build_from_snapshot(env: str = "release", account: str = "main",
                         label: str = "baseline") -> str:
-    """Load latest snapshot and build FAISS index."""
+    """Load latest snapshot and build FAISS index.
+
+    Also merges every `ui_snapshots/flows__<env>__*.json` (produced by
+    tools/kb_capture_flow.py).  Why: build_index() REBUILDS the whole index from
+    scratch, so anything that only ever went through add_elements() would be
+    silently wiped by the next build.  Folding the flow snapshots in here makes
+    click-path knowledge survive rebuilds (= "越攒越多").
+    """
     result = load_latest_snapshot(label, env)
     if result is None:
         print(f"[dom_kb] No snapshot found for label='{label}', env='{env}'")
@@ -364,6 +405,27 @@ def build_from_snapshot(env: str = "release", account: str = "main",
 
     urls_data = data.get("urls", {})
     base_url = data.get("base_url", "")
+
+    # --- merge flow snapshots (click-path pages not reachable as static URLs) ---
+    import glob
+    flow_paths = sorted(glob.glob(os.path.join(SNAPSHOT_DIR, f"flows__{env}__*.json")))
+    for fp in flow_paths:
+        try:
+            with open(fp, encoding="utf-8") as f:
+                flow_data = json.load(f)
+        except Exception as e:
+            print(f"[dom_kb] WARN 跳过坏掉的 flow 快照 {fp}: {str(e)[:120]}")
+            continue
+        if not base_url and flow_data.get("base_url"):
+            base_url = flow_data["base_url"]
+        merged = 0
+        for url_tpl, elements in (flow_data.get("urls") or {}).items():
+            if url_tpl in urls_data:
+                urls_data[url_tpl] = urls_data[url_tpl] + elements
+            else:
+                urls_data[url_tpl] = elements
+            merged += len(elements)
+        print(f"[dom_kb] + flow snapshot {os.path.basename(fp)} ({merged} elements)")
 
     # Flatten all elements with URL context
     all_elements = []
@@ -454,6 +516,12 @@ def cmd_query(args):
         print(f"  Name:   {el.get('name', '')}")
         print(f"  Label:  {el.get('ariaLabel', '')}")
         print(f"  TestID: {el.get('testid', '')}")
+        # HTML `name` / `type` / `placeholder` 是本套 App 表单控件真正的定位锚点
+        # （如 input[name="contactEmail"]）；有值就显示，否则会看不出这是哪个控件。
+        for _key, _label in (("nameAttr", "NameAttr"), ("type", "Type"), ("placeholder", "Placeholder")):
+            _val = el.get(_key) or ""
+            if _val:
+                print(f"  {_label}: {_val}")
         print(f"  Text:   {el.get('text', '')}")
         print()
 

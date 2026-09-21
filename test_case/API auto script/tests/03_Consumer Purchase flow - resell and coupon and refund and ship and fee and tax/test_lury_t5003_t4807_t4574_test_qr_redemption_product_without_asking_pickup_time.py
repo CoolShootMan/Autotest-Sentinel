@@ -177,9 +177,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time(ctx: "Context"):
     """Apifox case #7969438: Lury_T5003_T4807_T4574_Test_QR_redemption_product_without_asking_pickup_time"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -190,7 +196,7 @@ def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "9deb8571-c23e-4b0e-b988-40a29a1d67dd",
@@ -222,11 +228,11 @@ def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -249,9 +255,9 @@ def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: get consumer order detail
-    _resp5 = ctx.api.orders.consumer_detail_by_order_number()
+    _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
     ctx.extract('numberCode', _resp5, '$.data.lineItems[0].orderLineItemUnits[0].numberCode')
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
@@ -260,4 +266,4 @@ def test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup
     })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID8c}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantID8c}}'}, token='M1_access_token')

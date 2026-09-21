@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,10 +21,11 @@ class PromotersApi(BaseApi):
 
     def affiliate_link_notification_batch(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /promoter-association/affiliate-link/notification/batch  （用例中出现 2 次）"""
         return self._call(
             "POST", '/promoter-association/affiliate-link/notification/batch',
@@ -31,10 +37,11 @@ class PromotersApi(BaseApi):
 
     def affiliate_promoters(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /promoter-association/affiliate-promoters"""
         return self._call(
             "GET", '/promoter-association/affiliate-promoters',
@@ -46,10 +53,11 @@ class PromotersApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /promoter-subscription  （用例中出现 2 次）"""
         return self._call(
             "POST", '/promoter-subscription',
@@ -61,10 +69,11 @@ class PromotersApi(BaseApi):
 
     def curator_affiliate_link(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /promoter-association/curator/affiliate-link  （用例中出现 2 次）"""
         return self._call(
             "POST", '/promoter-association/curator/affiliate-link',
@@ -76,10 +85,11 @@ class PromotersApi(BaseApi):
 
     def invitation_link(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /promoter-invitation-link/invitation-link  （用例中出现 2 次）"""
         return self._call(
             "GET", '/promoter-invitation-link/invitation-link',
@@ -91,10 +101,11 @@ class PromotersApi(BaseApi):
 
     def invitation_link_2(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /promoter-invitation-link/invitation-link"""
         return self._call(
             "POST", '/promoter-invitation-link/invitation-link',
@@ -106,11 +117,12 @@ class PromotersApi(BaseApi):
 
     def invitation_link_by_new_invitation_link(
         self, *,
-        new_invitation_link=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        new_invitation_link: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /promoter-invitation-link/invitation-link/{{new_invitation_link}}"""
         return self._call(
             "DELETE", '/promoter-invitation-link/invitation-link/{{new_invitation_link}}',
@@ -122,10 +134,11 @@ class PromotersApi(BaseApi):
 
     def product_image_url(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /promoter/product/image-url"""
         return self._call(
             "POST", '/promoter/product/image-url',
@@ -137,10 +150,11 @@ class PromotersApi(BaseApi):
 
     def promoter(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PATCH /promote-invitation/promoter"""
         return self._call(
             "PATCH", '/promote-invitation/promoter',
@@ -154,11 +168,12 @@ class PromotersApi(BaseApi):
 
     def authorize_product(
         self, *,
-        target_user_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        target_user_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /promote-invitation/{{target_user_id}}"""
         return self._call(
             "PUT", '/promote-invitation/{{target_user_id}}',
@@ -170,11 +185,12 @@ class PromotersApi(BaseApi):
 
     def product_public_detail(
         self, *,
-        alias=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        alias: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /promoter/product/public/{{alias}}/product-detail"""
         return self._call(
             "GET", '/promoter/product/public/{{alias}}/product-detail',
@@ -186,10 +202,11 @@ class PromotersApi(BaseApi):
 
     def product_public_list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /promoter/product/list"""
         return self._call(
             "GET", '/promoter/product/list',

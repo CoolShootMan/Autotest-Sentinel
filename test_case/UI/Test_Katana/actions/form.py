@@ -1,6 +1,8 @@
 import os
 import csv
 import re
+from typing import cast
+
 import pandas as pd
 from datetime import datetime
 from loguru import logger
@@ -31,7 +33,7 @@ def click_form_more_menu(page: Page, v: dict):
     form_name = v.get("form_name")
     logger.info(f"Clicking More menu for form: {form_name}")
     try:
-        container = page.locator("div").filter(has=page.get_by_text(form_name, exact=True)).filter(has=page.get_by_role("button")).last
+        container = page.locator("div").filter(has=page.get_by_text(cast(str, form_name), exact=True)).filter(has=page.get_by_role("button")).last
         more_btn = container.get_by_role("button").first
         more_btn.scroll_into_view_if_needed()
         more_btn.click()
@@ -40,7 +42,7 @@ def click_form_more_menu(page: Page, v: dict):
     except Exception as e:
         logger.warning(f"Failed to find More menu for {form_name}: {e}. Trying broad search...")
         try:
-            text_el = page.get_by_text(form_name, exact=True).first
+            text_el = page.get_by_text(cast(str, form_name), exact=True).first
             box = text_el.bounding_box()
             if box:
                 page.get_by_role("button").filter(has=page.locator(f"xpath=//ancestor::div[abs(number(@y)-{box['y']})<50]")).first.click()
@@ -299,7 +301,7 @@ def verify_date(page: Page, v: dict):
 
         if full_regex.search(modal_text):
             logger.info(f"verify_date: PASS — '{expected_text}' matched in modal.")
-        elif anchor_regex.search(modal_text) and day_s in anchor_regex.search(modal_text).group(0):
+        elif (anchor_match := anchor_regex.search(modal_text)) and day_s in anchor_match.group(0):
             logger.info(f"verify_date: PASS — day {day_s} confirmed in modal.")
         else:
             page.screenshot(path="fail_verify_date.png")

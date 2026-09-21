@@ -28,7 +28,7 @@
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 from core import templating
 
@@ -42,7 +42,7 @@ __all__ = [
 
 
 # --- JSONPath 取值（apifox_client 复刻 + 字符串路径语义修正）-------------
-def _split_str_path(path: str) -> list:
+def _split_str_path(path: str) -> list[str]:
     """把 ``"$.data.token"`` / ``"data.token"`` / ``"code"`` 拆成段列表。
 
     ``"data.items[0].id"`` → ``['data', 'items[0]', 'id']``：下标仍由段内的
@@ -56,7 +56,7 @@ def _split_str_path(path: str) -> list:
     return [seg for seg in p.split(".") if seg]
 
 
-def get_path(obj: Any, path) -> Any:
+def get_path(obj: Any, path: str | list[Any]) -> Any:
     """沿路径逐级取值，失败返回 ``None``。
 
     ``path`` 支持两种形态：
@@ -105,7 +105,7 @@ def get_path(obj: Any, path) -> Any:
     return cur
 
 
-def get_path_recursive(obj: Any, segments: list) -> list:
+def get_path_recursive(obj: Any, segments: list[Any]) -> list[Any]:
     """递归路径取值（``$.data..status`` 语义），返回全部命中值（保序）。
 
     ``segments`` 传字符串时按 ``"."`` 拆分（与 :func:`get_path` 一致），
@@ -137,13 +137,13 @@ def get_path_recursive(obj: Any, segments: list) -> list:
 
 
 # --- 旧辅助函数的等价实现 ----------------------------------------------
-def legacy_render(ctx):
+def legacy_render(ctx: Any) -> Callable[..., Any]:
     """返回等价于旧 ``_render(tmpl, vars)`` 的函数。
 
     旧签名的第二个参数 ``vars`` 在既有补丁里恒等于用例上下文，故此处忽略它，
     统一用 ``ctx`` 渲染，避免调用方把上下文传错。
     """
-    def _render(tmpl, vars=None):  # noqa: ARG001 - 保留旧签名
+    def _render(tmpl: Any, vars: Any = None) -> Any:  # noqa: ARG001 - 保留旧签名
         if not isinstance(tmpl, str):
             return tmpl
         return templating.render_text(tmpl, ctx)
@@ -151,7 +151,7 @@ def legacy_render(ctx):
     return _render
 
 
-def legacy_url(ctx):
+def legacy_url(ctx: Any) -> Callable[..., Any]:
     """返回等价于旧 ``_url(base, path, vars)`` 的函数。
 
     语义（与迁移前两版 ``_url`` 合并后的正确版本一致）：
@@ -159,7 +159,7 @@ def legacy_url(ctx):
     1. 路径渲染后已是绝对 URL（含 ``://``）→ 直接使用
     2. 其余 → ``base`` 渲染后拼接
     """
-    def _url(base, path, vars=None):  # noqa: ARG001 - 保留旧签名
+    def _url(base: Any, path: Any, vars: Any = None) -> str:  # noqa: ARG001 - 保留旧签名
         p = templating.render_text(path, ctx) if isinstance(path, str) else path
         if isinstance(p, str) and p.startswith(("http://", "https://")):
             return p

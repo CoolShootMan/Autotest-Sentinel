@@ -195,9 +195,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disabled(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disabled(ctx: "Context"):
     """Apifox case #7757330: Linda_T4288_T4299_On_the_event_advanced_tab_setting_tax_enable_and_disabled"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -225,16 +231,17 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp2.status_code == 201, f"step2 status != 201, got {_resp2.status_code}"
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     _v2 = ((_j2.get('data') or {}).get('items') or [{}])[0].get('variants') or [{}]
     _v2 = _v2[0]
-    _t2 = _v2.get('ticketPrice')
-    _p2 = _v2.get('price')
-    _f2 = _v2.get('fees') or {}
-    _pf2 = _f2.get('platformFee')
-    _cf2 = _f2.get('customFee')
-    _tf2 = _f2.get('transactionItemFee')
-    _tax2 = (_f2.get('customFeeBreakdown') or {}).get('TAX') or {}
+    # 数值字段统一 `or 0` 取值：dict.get 返回 Any|None，直接参与算术会触发 reportOptionalOperand
+    _t2 = _v2.get('ticketPrice') or 0
+    _p2 = _v2.get('price') or 0
+    _f2: dict[str, Any] = _v2.get('fees') or {}
+    _pf2 = _f2.get('platformFee') or 0
+    _cf2 = _f2.get('customFee') or 0
+    _tf2 = _f2.get('transactionItemFee') or 0
+    _tax2: dict[str, Any] = (_f2.get('customFeeBreakdown') or {}).get('TAX') or {}
     _taxPct2 = _tax2.get('unitPercentageFee')
     assert _taxPct2 == 0.1, f"step2 TAX费率 != 0.1, got {_taxPct2}"
     assert abs(_cf2 - _p2 * 0.1) <= 0.01, f"step2 TAX金额计算错误: customFee={_cf2}, price*0.1={_p2*0.1}"
@@ -257,20 +264,20 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp3.status_code == 201, f"step3 status != 201, got {_resp3.status_code}"
-    _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"step3 code != 200, got {_j3.get('code')}"
     assert _j3.get('message') == 'success', f"step3 message != success, got {_j3.get('message')}"
     _v3 = ((_j3.get('data') or {}).get('items') or [{}])[0].get('variants') or [{}]
     _v3 = _v3[0]
-    _t3 = _v3.get('ticketPrice')
-    _p3 = _v3.get('price')
-    _f3 = _v3.get('fees') or {}
-    _pf3 = _f3.get('platformFee')
-    _cf3 = _f3.get('customFee')
-    _tf3 = _f3.get('transactionItemFee')
-    _tax3 = (_f3.get('customFeeBreakdown') or {}).get('TAX') or {}
+    _t3 = _v3.get('ticketPrice') or 0
+    _p3 = _v3.get('price') or 0
+    _f3: dict[str, Any] = _v3.get('fees') or {}
+    _pf3 = _f3.get('platformFee') or 0
+    _cf3 = _f3.get('customFee') or 0
+    _tf3 = _f3.get('transactionItemFee') or 0
+    _tax3: dict[str, Any] = (_f3.get('customFeeBreakdown') or {}).get('TAX') or {}
     _taxPct3 = _tax3.get('unitPercentageFee')
-    _taxItem3 = _tax3.get('itemFee')
+    _taxItem3 = _tax3.get('itemFee') or 0
     assert _taxPct3 == 0.2, f"step3 TAX费率 != 0.2, got {_taxPct3}"
     assert abs(_taxItem3 - _cf3) <= 0.01, f"step3 TAX金额错误: itemFee={_taxItem3}, customFee={_cf3}"
     assert abs(_pf3 - (_tf3 - _cf3)) <= 0.01, f"step3 platformFee计算错误: platformFee={_pf3}, transactionItemFee-customFee={_tf3-_cf3}"
@@ -292,20 +299,22 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
     assert _resp4.status_code == 201, f"step4 status != 201, got {_resp4.status_code}"
-    _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     assert _j4.get('code') == 200, f"step4 code != 200, got {_j4.get('code')}"
     assert _j4.get('message') == 'success', f"step4 message != success, got {_j4.get('message')}"
     _d4 = _j4.get('data')
     assert isinstance(_d4, dict), "step4 data 非对象"
-    _items4 = _d4.get('items') or []
+    _items4: list[Any] = _d4.get('items') or []
     assert isinstance(_items4, list) and len(_items4) > 0, "step4 data.items 为空"
-    assert isinstance(_d4.get('totalCount'), (int, float)) and _d4.get('totalCount') > 0, f"step4 totalCount 非法: {_d4.get('totalCount')}"
+    # 必须先落到局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _tc4 = _d4.get('totalCount')
+    assert isinstance(_tc4, (int, float)) and _tc4 > 0, f"step4 totalCount 非法: {_tc4}"
     for _item4 in _items4:
-        _vs4 = _item4.get('variants') or []
+        _vs4: list[Any] = _item4.get('variants') or []
         assert isinstance(_vs4, list) and len(_vs4) > 0, "step4 variant 为空"
         for _v4 in _vs4:
-            _f4 = _v4.get('fees') or {}
-            _tb4 = (_f4.get('customFeeBreakdown') or {}).get('TAX') or {}
+            _f4: dict[str, Any] = _v4.get('fees') or {}
+            _tb4: dict[str, Any] = (_f4.get('customFeeBreakdown') or {}).get('TAX') or {}
             assert _tb4.get('unitFixedFee', 0) == 0, f"step4 TAX固定费率非0: {_tb4.get('unitFixedFee')}"
             assert _tb4.get('unitPercentageFee', 0) == 0, f"step4 TAX百分比费率非0: {_tb4.get('unitPercentageFee')}"
             assert _tb4.get('itemFee', 0) == 0, f"step4 TAX金额非0: {_tb4.get('itemFee')}"

@@ -1342,7 +1342,7 @@ testT2515_VerifyDisabled_WithVariant:
         R_click_product_name_first: { locator: "text=General Admission" }
         sleep_step: 1500
 
-        swipe: { x: 0, y: 500 }
+        swipe_after_open_drawer: { x: 0, y: 500 }
         sleep_step: 1000
 
         # Step 4: Select variant "5 people", set qty=2, Add to cart

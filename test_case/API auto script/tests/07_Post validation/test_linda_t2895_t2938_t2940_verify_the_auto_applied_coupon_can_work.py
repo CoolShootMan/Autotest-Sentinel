@@ -265,9 +265,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx: "Context"):
     """Apifox case #8037415: Linda_T2895_T2938_t2940_Verify_the_auto_applied_coupon_can_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -279,8 +285,8 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: 39c21944-7359-485c-9c3d-5c9d033ef018
-    _resp2 = ctx.api.posts.curator_907f5bec_0233_4778_8f46_7820e8b2eb7c(body={
-        "id": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T2895_post_id}}', body={
+        "id": "{{T2895_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T2895",
@@ -725,9 +731,9 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
         ],
     }, app_headers=True, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp5, 'orderId')
+    ctx.extract('orderId', _resp5, '$.data.orderId')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp5, 'orderNumber')
+    ctx.extract('orderNumber', _resp5, '$.data.orderNumber')
     # step 6: 90703ec6-7eb4-4e02-8a1c-6ac5cd9f1299
     _resp6 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
@@ -761,9 +767,9 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
         ],
     }, app_headers=True, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp6, 'orderId')
+    ctx.extract('orderId', _resp6, '$.data.orderId')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp6, 'orderNumber')
+    ctx.extract('orderNumber', _resp6, '$.data.orderNumber')
     # step 7: Get consumer linda10 token
     _resp7 = ctx.api.auth.sign_in(body={
         "email": "linda.zhou.ext+10@1m.app",
@@ -810,9 +816,9 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
         ],
     }, app_headers=True, token='linda10_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp9, 'orderId')
+    ctx.extract('orderId', _resp9, '$.data.orderId')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp9, 'orderNumber')
+    ctx.extract('orderNumber', _resp9, '$.data.orderNumber')
     # step 10: 948e658d-e739-4485-8f70-e1c15096f756
     _resp10 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "907f5bec-0233-4778-8f46-7820e8b2eb7c",
@@ -846,6 +852,6 @@ def test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work(ctx):
         ],
     }, app_headers=True, token='linda10_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp10, 'orderId')
+    ctx.extract('orderId', _resp10, '$.data.orderId')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp10, 'orderNumber')
+    ctx.extract('orderNumber', _resp10, '$.data.orderNumber')

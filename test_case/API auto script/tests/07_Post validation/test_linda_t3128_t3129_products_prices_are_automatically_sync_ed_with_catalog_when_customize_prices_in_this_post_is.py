@@ -90,9 +90,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalog_when_customize_prices_in_this_post_is(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalog_when_customize_prices_in_this_post_is(ctx: "Context"):
     """Apifox case #8002034: Linda_T3128_T3129_Products_prices_are_automatically_sync_ed_with_catalog_when_Cu"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -105,8 +111,8 @@ def test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalo
     ctx.extract('linda05_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: ef97c015-e8da-4d6e-b6fe-810743047a51
-    _resp2 = ctx.api.posts.curator_9fd62b45_6f4a_4bca_ac59_778e44c2813b(body={
-        "id": "9fd62b45-6f4a-4bca-ac59-778e44c2813b",
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T3128_post_id}}', body={
+        "id": "{{T3128_post_id}}",
         "announcements": [],
         "createFromEventId": None,
         "title": "API Test T3158 & t3129",

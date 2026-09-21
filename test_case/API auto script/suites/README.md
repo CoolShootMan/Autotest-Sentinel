@@ -12,7 +12,7 @@ pytest tests/ --folder "Event and ticket and redeemed"   # 含全部子目录
 
 # 按 tag（AND 语义，必须全部命中）—— 推荐
 pytest tests/ --tags p0,account                 # 优先级 P0 且属于 account 目录
-pytest tests/ --tags suite:linda               # Linda 日常回归集（82 条）
+pytest tests/ --tags suite:linda               # Linda 日常回归集（81 条；UI 预制脚本已排除）
 pytest tests/ --tags suite:lury                # Lury 日常回归集（47 条）
 
 # 按 func slug / 旧 Apifox id（兼容）
@@ -81,8 +81,9 @@ pytest_args:
 
 | 套 | 条数 | 说明 |
 |---|---|---|
-| `linda.yaml` | 82 | Linda 日常回归集，逐条列出用例名（`include.names`），便于查看/增删 |
+| `linda.yaml` | 81 | Linda 日常回归集，逐条列出用例名（`include.names`），便于查看/增删；已用 `exclude.case_ids` 排除 UI 预制脚本 |
 | `lury.yaml` | 47 | Lury 日常回归集，逐条列出用例名（`include.names`），便于查看/增删 |
+| `ui_automation_prefill.yaml` | 1 | UI 自动化的 API 预制脚本（`UI Automation Data Pre-configuration`）；由 `main.py` 在跑 UI 用例前调用，**不属于** API 日常回归 |
 | `readonly.yaml` | 17 | 只读安全集，不产生脏数据（按目录） |
 | `smoke.yaml` | 7 | 登录链路 + 只读查询，最快验证环境 |
 | `web_ui_test.yaml` | 2 | 从 Web UI 保存的临时套（旧 id 形式，待迁移） |

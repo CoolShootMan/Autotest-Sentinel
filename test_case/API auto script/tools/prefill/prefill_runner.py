@@ -840,7 +840,8 @@ def handle_req(it, ctx, ignore_status=None):
     is_post_curator = (method or "").upper() == "POST" and url.rstrip("/").endswith("/posts/curator")
     is_storefront_update = (method or "").upper() == "PUT" and url.rstrip("/").endswith("/store-front")
     should_retry_404 = is_promoter_detail or is_post_curator
-    base_url = req.get("baseUrl") or (re.match(r"(https?://[^/]+)", url).group(1) if re.match(r"https?://", url) else "")
+    _url_m = re.match(r"(https?://[^/]+)", url)
+    base_url = req.get("baseUrl") or (_url_m.group(1) if _url_m else "")
     # Curator posts reference merchant products that need a few minutes to
     # become "postable"; give them a much longer 404-retry window than the
     # product-detail lookups (which resolve faster).
@@ -903,7 +904,10 @@ def handle_req(it, ctx, ignore_status=None):
             # Store-front updates are also asynchronous; wait until the public
             # shop URL resolves before continuing.
             if is_storefront_update and ok and not ctx["dry_run"]:
-                vanity = (body or {}).get("userInfo", {}).get("vanityUrl") if isinstance(body, dict) else None
+                vanity = None
+                if isinstance(body, dict):
+                    _user_info = body.get("userInfo")
+                    vanity = _user_info.get("vanityUrl") if isinstance(_user_info, dict) else None
                 if vanity:
                     log("      [storefront] verifying /store-front/shop/%s is reachable" % vanity)
                     if not _ensure_storefront_ready(session, base_url, vanity, headers, log, ctx["dry_run"]):

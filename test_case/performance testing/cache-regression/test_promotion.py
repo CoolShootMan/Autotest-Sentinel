@@ -87,7 +87,7 @@ def _now_tag() -> str:
     return f"auto-coupon-{int(time.time())}"
 
 
-def _build_promo_body(discount: int, auto_tag: str, auto_id: str = None) -> dict:
+def _build_promo_body(discount: int, auto_tag: str, auto_id: str | None = None) -> dict:
     """构造 promotions 提交体：仅含 auto coupon（promotionId 全程动态）。
 
     - auto_id is None → 新建 auto coupon（不带 promotionId，服务端分配新 id）
@@ -242,7 +242,9 @@ class TestPromotionCache:
                 except httpx.TransportError as exc:
                     last_exc = exc
                     await asyncio.sleep(0.5 * (attempt + 1))
-            raise last_exc
+            if last_exc is not None:
+                raise last_exc
+            raise RuntimeError("promotion GET retry loop exhausted")
 
         # 预热
         resp_warm = await _get_retry()
@@ -271,6 +273,7 @@ class TestPromotionCache:
         # BE 瞬态抖动（预热恰逢缓存失效窗口 / 多实例竞态），放行并告警；
         # 重放轮仍超标才判为持续击穿（真实并发缓存缺陷）。
         replay_count = None
+        t2 = t3 = 0.0  # 重放轮时间戳（仅 penetration_count > 1 时被覆盖）
         if penetration_count > 1:
             t2 = time.monotonic()
             replay = await asyncio.gather(*[_get_retry() for _ in range(10)])

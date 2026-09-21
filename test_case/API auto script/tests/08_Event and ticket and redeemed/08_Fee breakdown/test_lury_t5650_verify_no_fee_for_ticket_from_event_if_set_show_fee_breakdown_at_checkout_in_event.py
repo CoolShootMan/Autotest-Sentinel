@@ -169,9 +169,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event(ctx: "Context"):
     """Apifox case #8677224: Lury_T5650_Verify_no_fee_for_ticket_from_event_if_set_Show_fee_breakdown_at_chec"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -181,7 +187,7 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     }, app_headers=False)
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='access_token')
     # step 3: update Cart
     _resp3 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -204,15 +210,15 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 4: get Cart
-    _resp4 = ctx.api.cart.list()
+    _resp4 = ctx.api.cart.list(token='access_token')
     # step 5: create Checkout
     _resp5 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp5, 'orderId')
+    ctx.extract('orderId', _resp5, '$.data.orderId')
     # step 6: update Cart
     _resp6 = ctx.api.cart.update(body={
         "items": [
@@ -226,9 +232,9 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         ],
         "lite": False,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 7: delete cart
-    _resp7 = ctx.api.cart.delete()
+    _resp7 = ctx.api.cart.delete(token='access_token')
     # step 8: update Cart
     _resp8 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -251,7 +257,7 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 9: update Cart
     _resp9 = ctx.api.cart.update(body={
         "fbAdParams": {
@@ -274,13 +280,13 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         ],
         "lite": True,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 10: create Checkout
     _resp10 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 11: delete cart
-    _resp11 = ctx.api.cart.delete()
+    _resp11 = ctx.api.cart.delete(token='access_token')
     # step 12: express - resell post
     _resp12 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -302,9 +308,9 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
             "eventSourceUrl": "https://release.pear.us/auto-merchant/post/lury-event-automation-fee-breakdown-0828",
         },
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp12, 'orderId')
+    ctx.extract('orderId', _resp12, '$.data.orderId')
     # step 13: update Cart
     _resp13 = ctx.api.cart.update(body={
         "items": [
@@ -328,9 +334,9 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         },
         "lite": False,
         "subdomainVanityUrl": "",
-    })
+    }, token='access_token')
     # step 14: get Cart
-    _resp14 = ctx.api.cart.list()
+    _resp14 = ctx.api.cart.list(token='access_token')
     # step 15: apply promotion
     _resp15 = ctx.api.orders.update_promotions(body={
         "postIdForFilter": "11bdca5a-bdd4-409c-811b-5e2e2cfcf90f",
@@ -342,4 +348,4 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
             "zipcode": "78759",
         },
         "applicableCode": "autofee10",
-    })
+    }, token='access_token')

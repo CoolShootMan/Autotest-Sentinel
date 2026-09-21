@@ -1,6 +1,6 @@
 ---
 name: self-heal
-description: Deterministic-first self-healing pipeline for the Katana UI automation suite. After `main` produces an Allure report, ingest the failures, run a diagnostic probe to the failing step, produce deterministic locator diffs (L1, zero AI), route by repair tier (T1 auto-apply / T2 review / T3 escalate), and emit a one-click manifest. Use when the user says "自愈", "self-heal", "用例自愈", "run main then heal", or wants to auto-fix locator-drift failures from a test run. Triggers include "修复失败用例", "heal the broken cases", "生成自愈报告".
+description: Deterministic-first self-healing pipeline for the Katana UI automation suite. After `main` produces an Allure report, ingest the failures, run a diagnostic probe to the failing step, produce deterministic locator diffs (L1, zero AI), route by repair tier (T1 auto-apply / T2 review / T3 escalate), and emit a one-click manifest. Use when the user says "自愈", "self-heal", "用例自愈", "run main then heal", or wants to auto-fix locator-drift failures from a test run. Triggers include "修复失败用例", "heal the broken cases", "生成自愈报告". ALSO covers **interactive single-case triage** (the manual Gate 0-4 runbook + the static linter `tools/locator_lint.py`) when one case is broken and there is no Allure run yet - triggers: "这个用例 broken", "调一下这个用例", "locator 找不到", "用例失败", "UI 定位维护", "排查用例".
 agent_created: true
 ---
 
@@ -20,6 +20,55 @@ Design core (see `.workbuddy/adr-self-healing.md`, ADR-001 Accepted):
 - After running `main` (or any pytest run that writes `allure-results/<timestamp>/`) and getting failures.
 - Triggers: "自愈", "self-heal", "用例自愈", "跑完 main 帮我修", "heal the broken cases", "生成自愈报告".
 - Do **not** use this for writing new cases — that is `jira-ones-testflow` (untouched by this skill).
+
+## Gate 0 — static lint (run this FIRST, seconds, no browser)
+
+```bash
+py -3.9 tools/locator_lint.py --errors-only     # exit 1 if any E* found
+```
+
+Catches what a runtime probe can never see, because it reads the YAML *before* a run:
+
+| Rule | Catches |
+|---|---|
+| `E101` | Duplicate key in one mapping — YAML folding keeps the LAST value at the FIRST position, so the action silently runs **early** (T3690). |
+| `W102` | `role: combobox` + `name=` on a MUI Select (accessible name usually empty → `count=0`, T4540). Skips `tag: button` (DatePicker triggers do carry an `aria-label`). |
+| `W201` | `move_*` / `hover` step with no centered `x`/`y` (defaults to top-left, unstable on icons). |
+| `W202` | Duplicate `sleep_*` key — known debt (~109 in the suite); reported separately so it never drowns a real error. Do **not** mass-rename. |
+| `W203` | Step key that resolves to no handler in `actions/__init__.py` (typo in the prefix → the step silently does nothing). |
+
+A red lint line is cheaper than a broken run. Other flags: `--rule E101,W102`, `--files Post_setting.yaml`, `--json`, `--top N`.
+
+## Interactive single-case triage (one case is broken, no Allure run yet)
+
+Batch healing starts from a report; this is the manual counterpart for
+*"this case is broken, figure it out now"*. **The entire point is attribution:**
+in recent tickets the failure was almost never a locator problem —
+T4866 was a post-publish redirect race (`net::ERR_ABORTED`), T3690 was a
+duplicate YAML key, T4540 was a MUI empty accessible name, and the most common
+of all is a same-day-expired access token masquerading as "locator not found".
+**Do NOT touch a locator until Gate 4.**
+
+| # | Gate | How | If it trips |
+|---|---|---|---|
+| 0 | **Static lint** | `py -3.9 tools/locator_lint.py --errors-only` | Fix the YAML structure first (dup key / dead step). |
+| 1 | **State** | `py -3.9 tools/get_all_cookies.py`; env + account correct; did the precondition case run? | Refresh the cookie and re-run. A stale access token → fake "locator not found". |
+| 2 | **Evidence** | Re-run just this case with `--step-capture on`; read `step_captures/<case>/manifest.json` (per-step URL + DOM). | Never conclude from a raw DOM dump alone — look at the captured step. |
+| 3 | **URL check** | Is the failing step's URL the *expected* page? | **No** → race / wrong-page cascade. `wait_for_*` and `wait_cta_button*` only WARN (they never fail). Fix with `open_until_ready` + a bigger timeout. **This is not a locator bug.** |
+| 4 | **Element check** | Is the element actually in the live DOM? | **Yes** → selector *shape* problem (MUI empty name → change the anchor). **No** → genuine drift → only now touch the locator. |
+
+**After a locator fix:** apply it with `locator_updater.py`, then verify with the
+single case **headedly** plus its dependency set — never the whole suite:
+
+```bash
+py -3.9 -m pytest test_ui.py --yaml=<yaml> -k Txxxx \
+  -o addopts="-v --tb=short --screenshot=only-on-failure" -p no:cacheprovider \
+  --output="C:/Users/tester/AppData/Local/Temp/pw_results"    # needs dangerouslyDisableSandbox
+```
+
+**Anchor ladder when you do reach Gate 4** (same priority as `heal_locate`):
+`data-testid` > structural CSS anchor (`div.MuiFormControl-root:has(#labelId) [role='combobox']`)
+> visible text / placeholder > `role`+`name` (last resort). Never `role: combobox` + `name=` on a MUI Select.
 
 ## Architecture (L0–L4 layers + T1–T3 triage)
 
@@ -68,6 +117,12 @@ All under `test_case/UI/Test_Katana/heal/`:
 | `heal_ai.py` | `heal_ai(ctx) -> {root_cause_hypothesis, yaml_patch?, confidence, needs_human_review}` | L4 long-tail. Deterministic fallback always runs (no key needed); LLM only if `HEAL_AI_KEY` set. `fetch_requirement(ticket)` reads Jira via `tools/jira_reader`. |
 | `heal_apply.py` | `apply_manifest(manifest, include_t2, dry_run) -> (applied, skipped)` | One-click apply. Writes `.heal_bak` backup before each edit. |
 | `self_heal.py` | orchestrator (see CLI below) | Ties it together; writes `heal_report.{json,md}` + `heal_manifest.json`. |
+
+Related tool that lives **outside** `heal/` (used by Gate 0, no browser needed):
+
+| Tool | I/O | Role |
+|---|---|---|
+| `tools/locator_lint.py` | static scan of `test_case/UI/Test_Katana/**/*.yaml` → findings; exit 1 on `E*` | Gate-0 linter: duplicate YAML keys, MUI `combobox`+`name`, `move_*` without centered x/y, step keys with no handler. Static-parses `actions/__init__.py` for the handler vocabulary (does not import Playwright), so it runs in any Python in well under a second. |
 
 ## The flow (step by step)
 

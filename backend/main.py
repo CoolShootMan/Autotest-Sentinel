@@ -35,7 +35,7 @@ from core.parser import EnterpriseTaskParser
 
 class ParseRequest(BaseModel):
     instruction: str
-    context_snapshot: str = None # Base64 image placeholder
+    context_snapshot: str | None = None  # Base64 image placeholder
 
 @app.post("/api/ai/parse")
 async def parse_instruction_endpoint(request: ParseRequest):

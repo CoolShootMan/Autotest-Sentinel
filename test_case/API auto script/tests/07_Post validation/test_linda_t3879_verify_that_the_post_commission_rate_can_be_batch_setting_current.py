@@ -119,9 +119,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current(ctx: "Context"):
     """Apifox case #8008202: Linda_T3879_Verify_that_the_Post_commission_rate_can_be_Batch_setting_Current"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -133,8 +139,8 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     # step 2: 4ac8cb7c-3f22-43fe-bae2-56f753138fe9
-    _resp2 = ctx.api.posts.curator_1a6bf2bd_f228_40f2_ba24_e0128b88bccd(body={
-        "id": "1a6bf2bd-f228-40f2-ba24-e0128b88bccd",
+    _resp2 = ctx.api.posts.curator_update(post_id='{{T3879_post_id}}', body={
+        "id": "{{T3879_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T3879",
@@ -521,6 +527,6 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     # assertion 2.assertion: responseJson equal ACTIVE
     expect(_resp2).json('$.data.status').equals('ACTIVE')
     # step 3: 72e3ee6a-b5d2-4f9c-88f8-6d39ef1ff13a
-    _resp3 = ctx.api.posts.curator_event_0fe6623e_a3ba_40fb_815d_3d6f444775c3_posts(body=None, token='linda05_token')
+    _resp3 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
     # step 4: 2b075276-5c14-4779-93e0-cc9133de7091
     _resp4 = ctx.api.posts.promoter_detail(body=None, params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t3879'}, token='linda06_token')

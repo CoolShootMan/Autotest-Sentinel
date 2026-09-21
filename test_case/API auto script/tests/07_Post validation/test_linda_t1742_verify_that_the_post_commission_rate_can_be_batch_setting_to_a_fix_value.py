@@ -93,15 +93,21 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_to_a_fix_value(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_to_a_fix_value(ctx: "Context"):
     """Apifox case #8007472: Linda_T1742_Verify_that_the_Post_commission_rate_can_be_Batch_setting_to_a_Fix_v"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 14c15850-b028-48c1-877e-0f4a788c182d
-    _resp1 = ctx.api.posts.curator_7dd8e66d_7d42_4715_ab73_3cf8d7c03632(body={
-        "id": "7dd8e66d-7d42-4715-ab73-3cf8d7c03632",
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T1742_post_id}}', body={
+        "id": "{{T1742_post_id}}",
         "announcements": [],
         "createFromEventId": "0fe6623e-a3ba-40fb-815d-3d6f444775c3",
         "title": "API Test T1742",
@@ -488,7 +494,7 @@ def test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_t
     # assertion 1.assertion: responseJson equal ACTIVE
     expect(_resp1).json('$.data.status').equals('ACTIVE')
     # step 2: b2d0f517-b875-4713-8b2f-b36e8241cd87
-    _resp2 = ctx.api.posts.curator_event_0fe6623e_a3ba_40fb_815d_3d6f444775c3_posts(body=None, token='linda05_token')
+    _resp2 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
     # step 3: Get Co-seller linda06 token
     _resp3 = ctx.api.auth.sign_in(body={
         "email": "linda.zhou.ext+06@1m.app",

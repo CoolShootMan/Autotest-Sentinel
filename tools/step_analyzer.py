@@ -51,6 +51,7 @@ Output format (repair-plan.json):
     }
 }
 """
+from __future__ import annotations
 
 import json
 import os
@@ -86,8 +87,8 @@ FAILURE_TYPES = {
 # ---------------------------------------------------------------------------
 # Gemini AI + DOM Knowledge Base (for AI RAG suggestions)
 # ---------------------------------------------------------------------------
-_gemini_client = None
-_gemini_model_name = None
+_gemini_client: Any = None
+_gemini_model_name: str = ""
 _gemini_api_keys = []
 _gemini_current_key_idx = 0
 _gemini_model_idx = 0
@@ -133,7 +134,7 @@ def _load_gemini_keys():
         return False
 
 
-def _load_gemini(force_model: str = None):
+def _load_gemini(force_model: str | None = None):
     """Lazy-load Gemini client. Falls back to HTTP if SDK not available."""
     global _gemini_client, _gemini_api_keys, _gemini_current_key_idx, _gemini_model_idx, _gemini_model_name
     if _gemini_client is not None and force_model is None:
@@ -185,7 +186,7 @@ def _downgrade_gemini_model():
         return False
 
 
-def _call_gemini_http(prompt_text: str, image_b64: bytes = None) -> str:
+def _call_gemini_http(prompt_text: str, image_b64: bytes | None = None) -> str:
     """Call Gemini via HTTP REST API (fallback when SDK not available)."""
     import urllib.request
     import urllib.error
@@ -197,7 +198,7 @@ def _call_gemini_http(prompt_text: str, image_b64: bytes = None) -> str:
     model = _gemini_model_name or _GEMINI_MODEL_CHAIN[0]
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
-    parts = [{"text": prompt_text}]
+    parts: list[Any] = [{"text": prompt_text}]
     if image_b64:
         import base64
         parts.append({
@@ -253,8 +254,8 @@ def _query_dom_kb(step_value: dict, url_hint: str = "", top_k: int = 5):
     return []
 
 
-def _read_screenshot_b64(screenshot_path: str) -> Optional[str]:
-    """Read a JPEG screenshot and return base64-encoded bytes."""
+def _read_screenshot_b64(screenshot_path: str) -> Optional[bytes]:
+    """Read a JPEG screenshot and return its raw bytes (base64 encoding happens at the call site)."""
     try:
         with open(screenshot_path, "rb") as f:
             return f.read()
@@ -265,9 +266,9 @@ def _read_screenshot_b64(screenshot_path: str) -> Optional[str]:
 def _probe_ai_rag_suggestion(
     step_value: dict,
     error_msg: str = "",
-    dom_snapshot: list = None,
-    screenshot_path: str = None,
-    preloaded_candidates: list = None,
+    dom_snapshot: list | None = None,
+    screenshot_path: str | None = None,
+    preloaded_candidates: list | None = None,
 ) -> Optional[dict]:
     """AI RAG Suggestion — multimodal with static screenshot file.
 
@@ -451,7 +452,7 @@ RESPOND WITH JSON ONLY (no markdown):
             if use_http:
                 raw = _call_gemini_http(prompt_text, image_b64=screenshot_b64 if has_visual else None)
             else:
-                if has_visual:
+                if has_visual and screenshot_b64 is not None:
                     from google.genai import types as genai_types
                     image_part = genai_types.Part.from_bytes(
                         data=screenshot_b64, mime_type="image/jpeg"
@@ -682,7 +683,7 @@ def _find_similar_elements(target_name: str, step_value: Dict, dom: List[Dict]) 
 
 
 def _build_repair_plan(step_data: Dict, failure_type: str, root_cause: str,
-                       screenshot_path: str = None) -> Dict:
+                       screenshot_path: str | None = None) -> Dict:
     """Build a structured repair plan for a failed step.
 
     Uses heuristic rules first, then calls AI RAG for enhancement if confidence
@@ -891,7 +892,7 @@ def _check_selector_health(manifest: Dict) -> Dict:
 # Main analysis function
 # ---------------------------------------------------------------------------
 
-def analyze_case(case_name: str, captures_dir: str = None) -> Optional[Dict]:
+def analyze_case(case_name: str, captures_dir: str | None = None) -> Optional[Dict]:
     """Analyze a captured case and produce a repair plan."""
     from tools.step_capture import load_capture
 
@@ -980,7 +981,7 @@ def find_latest_allure_dir() -> Optional[str]:
     return os.path.join(ALLURE_RESULTS_DIR, subdirs[0]) if subdirs else None
 
 
-def get_failed_cases_from_report(allure_dir: str = None) -> list[str]:
+def get_failed_cases_from_report(allure_dir: str | None = None) -> list[str]:
     """
     Parse *-result.json files from the given (or latest) Allure results dir.
     Returns a list of case names whose status is 'failed' or 'broken'.
@@ -1006,7 +1007,7 @@ def get_failed_cases_from_report(allure_dir: str = None) -> list[str]:
     return case_names
 
 
-def analyze_all_failed(captures_dir: str = None, from_report: bool = False) -> List[Dict]:
+def analyze_all_failed(captures_dir: str | None = None, from_report: bool = False) -> List[Dict]:
     """Analyze all failed cases in the captures directory.
 
     Args:
@@ -1065,7 +1066,7 @@ def analyze_all_failed(captures_dir: str = None, from_report: bool = False) -> L
 # HTML Report Generation
 # ---------------------------------------------------------------------------
 
-def generate_html_report(case_name: str, captures_dir: str = None) -> str:
+def generate_html_report(case_name: str, captures_dir: str | None = None) -> str:
     """Generate an HTML report for a case's analysis."""
     from tools.step_capture import load_capture
 
@@ -1240,7 +1241,7 @@ def generate_html_report(case_name: str, captures_dir: str = None) -> str:
     return "".join(html_parts)
 
 
-def generate_summary_report(results: List[Dict], captures_dir: str = None) -> str:
+def generate_summary_report(results: List[Dict], captures_dir: str | None = None) -> str:
     """Generate a summary HTML report for all analyzed failed cases."""
     if captures_dir is None:
         captures_dir = CAPTURES_DIR

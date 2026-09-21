@@ -4,8 +4,8 @@ import base64
 import json
 import itertools
 from time import sleep
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+import google.generativeai as genai  # pyright: ignore[reportMissingImports]  venv 内已安装，静态解析因 google 命名空间包不稳定
+from google.api_core.exceptions import ResourceExhausted  # pyright: ignore[reportMissingImports]
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -30,9 +30,9 @@ class AIVisionService:
         self._configure_client(self.current_key)
 
     def _configure_client(self, key):
-        genai.configure(api_key=key)
+        genai.configure(api_key=key)  # pyright: ignore[reportPrivateImportUsage]
         # Use Gemini 3 Flash Preview as requested by user
-        self.model = genai.GenerativeModel('gemini-3-flash-preview')
+        self.model = genai.GenerativeModel('gemini-3-flash-preview')  # pyright: ignore[reportPrivateImportUsage]
 
     def _rotate_key(self):
         old_key = self.current_key

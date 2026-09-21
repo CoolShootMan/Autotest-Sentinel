@@ -13,21 +13,39 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any, Iterator
 
 from config import env_loader
 from core import jsonpath, templating
 
+if TYPE_CHECKING:  # 仅类型检查期导入，避免与 api / http_client 形成运行期循环依赖
+    from api import Api
+    from core.http_client import ApiClient
+    from core.response import ApiResponse
 
-class Context(MutableMapping):
-    """分层变量上下文。"""
 
-    def __init__(self, base_url: str, variables: dict | None = None,
+class Context(MutableMapping[str, Any]):
+    """分层变量上下文。
+
+    Notes:
+        基类带 ``[str, Any]`` 参数不是可有可无的：写成裸 ``MutableMapping`` 时
+        ``vars.get("x")`` 的返回类型会退化为 unknown，并沿赋值链向下传染
+        （实测会让整个 tests/ 目录多出 ~1300 条「类型未知」，同时 IDE 悬停不显示
+        类型、补全也失效）。
+    """
+
+    # 运行期由 conftest 注入（见 conftest.py: context.client / context.api = ...）。
+    # 显式声明这两个属性，使 IDE / 类型检查器能解析
+    # ``ctx.api.<domain>.<method>()`` 的跳转与补全。
+    client: "ApiClient"
+    api: "Api"
+
+    def __init__(self, base_url: str, variables: dict[str, Any] | None = None,
                  *, env_name: str = "", case_vars_file: str = ""):
         self.base_url = base_url
         self.env_name = env_name
         self.case_vars_file = case_vars_file
-        self._vars: dict = dict(variables or {})
+        self._vars: dict[str, Any] = dict(variables or {})
         # 记录本用例新增/覆盖的键，便于报告与调试
         self._initial_keys = set(self._vars)
 
@@ -65,7 +83,8 @@ class Context(MutableMapping):
         """返回模板引用但上下文缺失的变量名。"""
         return templating.missing_variables(value, self._vars)
 
-    def extract(self, name: str, response, expr: str, default: Any = None) -> Any:
+    def extract(self, name: str, response: "ApiResponse", expr: str,
+                default: Any = None) -> Any:
         """从响应中提取变量并写回上下文。
 
         Args:
@@ -78,11 +97,13 @@ class Context(MutableMapping):
         self._vars[name] = value
         return value
 
-    def extract_many(self, mapping: dict, response) -> dict:
+    def extract_many(self, mapping: dict[str, str],
+                     response: "ApiResponse") -> dict[str, Any]:
         """批量提取：``{"token": "$.data.token", ...}``。"""
         return {k: self.extract(k, response, expr) for k, expr in mapping.items()}
 
-    def run_db(self, connection_id: int, sql: str, extractors=None) -> list:
+    def run_db(self, connection_id: int, sql: str,
+               extractors: list[tuple[str, str]] | None = None) -> list[dict[str, Any]]:
         """执行 Apifox ``database`` 步骤并把结果绑定回上下文。
 
         迁移器丢弃了 ``type="database"`` 处理器，导致断言基准（如
@@ -131,6 +152,18 @@ class Context(MutableMapping):
                 "[db_query_one] SQL 执行失败 (var=%s): %s", var_name, exc)
             return None
 
+    def run_db_write(self, connection_id: int, sql: str) -> int:
+        """执行 DML（UPDATE / INSERT / DELETE）并提交，返回受影响行数。
+
+        与 ``run_db`` 的区别：``run_db`` 面向查询（返回结果行），写入语句必须用本
+        方法，否则事务在连接关闭时被回滚、SQL 静默不生效。
+
+        SQL 里同样支持 ``{{变量}}``，与 Apifox 的 database 处理器一致。
+        """
+        from core import db as _db
+
+        return _db.execute(connection_id, self.render_text(sql), self._vars)
+
     def set(self, name: str, value: Any) -> None:
         self._vars[name] = value
 
@@ -141,7 +174,7 @@ class Context(MutableMapping):
         return self._vars.setdefault(key, default)
 
     # --- 运行期令牌 -----------------------------------------------------
-    def save_runtime(self, keys: list[str] | None = None) -> dict:
+    def save_runtime(self, keys: list[str] | None = None) -> dict[str, Any]:
         """把变量持久化到运行期令牌文件，供后续用例读取。
 
         Args:
@@ -155,7 +188,7 @@ class Context(MutableMapping):
         return payload
 
     # --- 调试 -----------------------------------------------------------
-    def snapshot(self) -> dict:
+    def snapshot(self) -> dict[str, Any]:
         return dict(self._vars)
 
     def new_keys(self) -> list[str]:

@@ -25,6 +25,7 @@ Usage:
     # Specify environment
     python tools/diagnose_failed.py --env release
 """
+from __future__ import annotations
 
 import ast
 import argparse
@@ -81,8 +82,8 @@ sys.modules.setdefault("test_case.UI.Test_Katana.utils.rag_knowledge", _mock_rag
 # ---------------------------------------------------------------------------
 # Gemini AI + DOM Knowledge Base (lazy-loaded for Probe 9)
 # ---------------------------------------------------------------------------
-_gemini_client = None  # google-genai Client instance
-_gemini_model_name = None  # current model name string
+_gemini_client: Any = None  # google-genai Client instance
+_gemini_model_name: str = ""  # current model name string
 _gemini_api_keys = []  # all available keys for fallback
 _gemini_current_key_idx = 0
 _gemini_model_idx = 0  # current model in fallback chain
@@ -98,7 +99,7 @@ _GEMINI_MODEL_CHAIN = [
 ]
 
 
-def _load_gemini(force_model: str = None):
+def _load_gemini(force_model: str | None = None):
     """Lazy-load Gemini client using keys from backend/.env.
 
     Supports model fallback chain + multiple API key rotation:
@@ -205,9 +206,9 @@ def _add_dom_to_kb(dom_elements: list, url_hint: str = ""):
 
 
 def probe_ai_rag_suggestion(step_value: dict, url_hint: str = "",
-                            dom_snapshot: list = None, error_msg: str = "",
-                            sub_image_b64: str = None,
-                            preloaded_candidates: list = None) -> Optional[dict]:
+                            dom_snapshot: list | None = None, error_msg: str = "",
+                            sub_image_b64: str | None = None,
+                            preloaded_candidates: list | None = None) -> Optional[dict]:
     """Probe 9: AI RAG Suggestion (multimodal when sub_image_b64 is provided).
 
     1. Query DOM KB for top-K similar elements via vector search
@@ -407,11 +408,11 @@ DEFAULT BEHAVIOR when role changes but it's the same element: ONLY change "role"
     while True:
         try:
             # Build multimodal content parts when sub-image is available
-            if has_visual:
+            if has_visual and sub_image_b64:
                 from google import genai as genai_mod
                 from google.genai import types as genai_types
                 image_part = genai_types.Part.from_bytes(
-                    data=sub_image_b64, mime_type="image/png"
+                    data=base64.b64decode(sub_image_b64), mime_type="image/png"
                 )
                 content_parts = [prompt_text, image_part]
                 response = model.models.generate_content(
@@ -560,11 +561,13 @@ JS_EXTRACT = """
     ];
     const results = [];
     const isVisible = (el) => {
-        if (!el.offsetParent && el.tagName !== 'BODY') return false;
+        // 与 Playwright 可见性对齐（有尺寸即可见）。曾经的 `opacity===0` / `!offsetParent`
+        // 判据会把 MUI 开关的原生 input（opacity:0，但 Playwright 可点）整批漏掉。
         const style = getComputedStyle(el);
         if (style.display === 'none') return false;
         if (style.visibility === 'hidden') return false;
-        if (parseFloat(style.opacity) === 0) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width <= 0 || r.height <= 0) return false;
         return true;
     };
     SELECTORS.forEach(sel => {
@@ -577,6 +580,7 @@ JS_EXTRACT = """
                 testid:     el.getAttribute('data-testid') || '',
                 type:       el.getAttribute('type') || '',
                 placeholder: el.getAttribute('placeholder') || '',
+                nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 100),
                 cls:        (el.getAttribute('class') || '').split(' ').filter(c => c).slice(0, 5).join(' '),
                 href:       el.getAttribute('href') || '',
@@ -723,6 +727,8 @@ def resolve_base_url(env: str) -> str:
     try:
         with open(config_path, encoding="utf-8") as f:
             cfg = yaml.safe_load(f)
+        if not isinstance(cfg, dict):
+            raise ValueError(f"env_config.yaml 结构异常: {type(cfg).__name__}")
         return cfg.get("envs", {}).get(env, {}).get("base", "https://release.pear.us")
     except Exception:
         return {"release": "https://release.pear.us", "staging": "https://staging.pear.us", "prod": "https://pear.us"}.get(env, "https://release.pear.us")
@@ -821,7 +827,7 @@ def capture_screenshot_b64(page) -> Optional[str]:
         return None
 
 
-def capture_sub_image_b64(page, candidates: list, step_value: dict = None, padding: int = 200) -> Optional[str]:
+def capture_sub_image_b64(page, candidates: list, step_value: dict | None = None, padding: int = 200) -> Optional[str]:
     """Capture a cropped sub-image focused on the candidate elements.
 
     Strategy (by priority):
@@ -1197,7 +1203,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool, continue_on_failur
                         _execute_step(page, pk, pv, actual_base_url)
                         print("OK")
                 except Exception as e:
-                    print(f"FAILED - {e[:80]}")
+                    print(f"FAILED - {str(e)[:80]}")
                     print(f"    [PRE-CONDITION] Step '{pk}' failed (non-blocking)")
                     # If open fails, stop pre-condition (nothing else will work)
                     if pk.startswith("open"):
@@ -1350,7 +1356,7 @@ def replay_case(case_info: dict, base_url: str, headed: bool, continue_on_failur
                     # ------------------------------------------------------------------
                     is_cascade = root_cause and "【前序步骤导致错误状态】" in root_cause
                     if is_cascade:
-                        cs_match = re.search(r"Step #(\d+)", root_cause)
+                        cs_match = re.search(r"Step #(\d+)", root_cause or "")
                         cs_step_num = int(cs_match.group(1)) if cs_match else None
 
                         if cs_step_num and page is not None:
@@ -1588,7 +1594,9 @@ def replay_case(case_info: dict, base_url: str, headed: bool, continue_on_failur
                             assert_fail_screenshot = capture_screenshot_b64(page)
                             assert_fail_dom = capture_dom_snapshot(page)
 
-                            probing_results = probe_assertion_failure(page, assertion, a_err, assertion_dom)
+                            probing_results = probe_failure(
+                                page, f"assertion_{a_idx+1}", assertion, str(a_err), assertion_dom
+                            )
 
                             step_records.append({
                                 "step_num": len(steps_order) + a_idx + 1,
@@ -1791,9 +1799,9 @@ def _predict_root_cause(
     modal_probe: Optional[Dict],
     previous_step_warning: Optional[str] = None,
     last_warning_step: Optional[tuple] = None,
-    anomalies: List[Dict] = None,
-    step_records: List[Dict] = None,
-    failed_step_num: int = None,
+    anomalies: List[Dict] | None = None,
+    step_records: List[Dict] | None = None,
+    failed_step_num: int | None = None,
 ) -> Tuple[Optional[str], List[str]]:
     """
     Rule Pyramid for root cause prediction (short-circuiting).
@@ -1838,7 +1846,7 @@ def _predict_root_cause(
         # Scan preceding steps for cascade_source anomaly
         cascade_source = None
         for sr in step_records:
-            if sr.get("step_num") >= failed_step_num:
+            if sr.get("step_num", 0) >= failed_step_num:
                 break
             anomaly = sr.get("post_step_anomaly")
             if anomaly and anomaly.get("anomaly_type") == "cascade_source":
@@ -2479,7 +2487,7 @@ def _detect_state_anomalies(step_records: List[Dict], failed_step_num: int) -> L
 # Phase 3: Multi-strategy failure probing
 # ===========================================================================
 
-def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_snapshot: list = None) -> List[Dict]:
+def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_snapshot: list | None = None) -> List[Dict]:
     """
     At the failure step, try multiple strategies to understand why the element was not found.
     Returns list of probe result dicts.
@@ -2832,7 +2840,7 @@ def probe_failure(page, step_name: str, step_value: dict, error_msg: str, dom_sn
 # Phase 4: HTML Report Generation
 # ===========================================================================
 
-def generate_html_report(diagnosis_results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime = None, end_time: datetime.datetime = None) -> str:
+def generate_html_report(diagnosis_results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime | None = None, end_time: datetime.datetime | None = None) -> str:
     """Generate a standalone HTML diagnosis report. Returns the file path."""
     REPORT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -2866,7 +2874,15 @@ def _esc(text: str) -> str:
             .replace("'", "&#039;"))
 
 
-def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime = None, end_time: datetime.datetime = None) -> str:
+def _dump_yaml_str(obj) -> str:
+    """yaml.dump 的返回值按类型桩是 str | bytes | None，统一收敛成 str。"""
+    out = yaml.dump(obj, default_flow_style=False)
+    if isinstance(out, bytes):
+        return out.decode("utf-8", "replace")
+    return out or ""
+
+
+def _render_summary(results: List[Dict], env: str, allure_dir: str, start_time: datetime.datetime | None = None, end_time: datetime.datetime | None = None) -> str:
     """Render the summary dashboard section."""
     total = len(results)
     ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -3142,7 +3158,7 @@ def _render_case(result: Dict) -> str:
     </div>"""
 
 
-def _render_step_record(sr: Dict, anomaly_steps: set = None) -> str:
+def _render_step_record(sr: Dict, anomaly_steps: set | None = None) -> str:
     """Render a single step record."""
     if anomaly_steps is None:
         anomaly_steps = set()
@@ -3345,7 +3361,7 @@ def _render_probing(probes: List[Dict]) -> str:
             </div>"""
         elif "heuristic_suggestion" in probe:
             sugg = probe["heuristic_suggestion"]
-            sugg_yaml = yaml.dump(sugg, default_flow_style=False).strip()
+            sugg_yaml = _dump_yaml_str(sugg).strip()
             score = round(probe.get("score", 0.0) * 100)
             m = probe["matches"][0] if probe["matches"] else {}
 
@@ -3733,7 +3749,7 @@ def _run_interactive_fix(fix_suggestions: list):
         print(f"\n  {source_tag} #{idx+1} (confidence: {fix.get('score', 0):.0%}) — {fix.get('probe', '')}")
         print(f"  Case: {fix['case_name']} | Step: {fix['step_name']}")
         print(f"  YAML: {fix['yaml_path']}")
-        print(f"  Suggested Locator Update:\n{yaml.dump(fix['suggestion'], default_flow_style=False).strip()}")
+        print(f"  Suggested Locator Update:\n{_dump_yaml_str(fix['suggestion']).strip()}")
 
         ans = input("\n  Apply this fix? [y/N/skip]: ").strip().lower()
         if ans == 'y':
@@ -3742,8 +3758,6 @@ def _run_interactive_fix(fix_suggestions: list):
                 print("  \033[92mFix applied successfully!\033[0m")
             else:
                 print("  \033[91mFix failed. Please check the error above.\033[0m")
-
-    return report_path
 
 
 def _apply_yaml_fix(fix: dict) -> bool:
@@ -3870,7 +3884,7 @@ def _apply_yaml_fix_text(fix: dict) -> bool:
             step_indent = indent
             break
 
-    if step_idx is None:
+    if step_idx is None or step_indent is None:
         print(f"  [ERROR] Step '{step_name}' not found in case '{case_name}'")
         return False
 

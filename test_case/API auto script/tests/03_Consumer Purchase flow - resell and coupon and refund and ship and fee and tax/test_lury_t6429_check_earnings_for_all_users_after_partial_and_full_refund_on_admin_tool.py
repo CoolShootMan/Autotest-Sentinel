@@ -776,11 +776,25 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool(ctx: "Context"):
     """Apifox case #7541878: Lury_T6429_Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_t"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
+    from core.compat import get_path as _get_path
+
+    def _pick_order_by_number(resp, number):
+        """原各 step post-script 的通用取法：在 ``data.items`` 中按 ``orderNumber``
+        匹配订单，返回该条目。匹配不到返回 None。"""
+        items = _get_path(resp.json(), ['data', 'items']) or []
+        return next((o for o in items if o.get('orderNumber') == number), None)
+
     # === Steps ===
     vars['m1_transaction_fee'] = 'm1_transaction_fee'
     vars['p1_transaction_fee'] = 'p1_transaction_fee'
@@ -827,8 +841,11 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
             },
         ],
     }, token='consumer_access_token')
-    vars['orderNumber'] = 'orderNumber'
-    vars['orderId'] = 'orderId'
+    # 原 step3 post-script: orderNumber/orderId 取自 buy-now 响应的
+    # data.orderNumber / data.orderId。此前迁移把变量名本身当值写死，
+    # 会被原样渲染进下游（POST /order 的 "id" 字段 → 400 id must be a UUID）。
+    ctx.set('orderNumber', _get_path(_resp3.json(), ['data', 'orderNumber']) or '')
+    ctx.set('orderId', _get_path(_resp3.json(), ['data', 'orderId']) or '')
     # step 4: apply promotion
     _resp4 = ctx.api.orders.update_promotions(body={
         "shippingAddress": {
@@ -840,7 +857,11 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
         "applicableCode": "manual5",
         "orderId": "{{orderId}}",
     }, token='consumer_access_token')
-    vars['lineItemId'] = 'lineItemId'
+    # 原 step4 post-script: 在 data.lineItems 中取 line['lineItemId'] → lineItemId
+    # （本用例购物车只有 1 个 item）。
+    _lis4 = _get_path(_resp4.json(), ['data', 'lineItems']) or []
+    assert _lis4, "step4 apply promotion 未返回 lineItems"
+    ctx.set('lineItemId', _lis4[0].get('lineItemId') or '')
     # step 5: create Order
     _resp5 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -880,8 +901,12 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
         "pageSize": 50,
         "pageNumber": 1,
     }, token='admin_access_token')
-    vars['admin_orderId'] = 'admin_orderId'
-    vars['merchantOrderId'] = 'merchantOrderId'
+    # 原 step7 post-script: 在 data.items 中按 orderNumber 匹配，
+    # 取 order['id'] → admin_orderId、order['merchantOrderId'] → merchantOrderId。
+    _o7 = _pick_order_by_number(_resp7, vars.get('orderNumber'))
+    assert _o7, f"step7 admin orders-search 未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('admin_orderId', _o7.get('id') or '')
+    ctx.set('merchantOrderId', _o7.get('merchantOrderId') or '')
     # step 8: 9eb3d1e9-e022-4250-9496-1b7dbdf3f3ed
     _resp8 = ctx.api.admin.orders_refunds(body={
         "lineItems": [
@@ -951,7 +976,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     ctx.extract('P1_access_token', _resp11, '$.data.token')
     # step 12: get P1 orders
     _resp12 = ctx.api.orders.promoter(token='P1_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P1_OrderId'] = 'curatorOrderId'
+    # 原 step12 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → P1_OrderId。
+    _o12 = _pick_order_by_number(_resp12, vars.get('orderNumber'))
+    assert _o12, f"step12 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('P1_OrderId', _o12.get('id') or '')
     # step 13: get P1 order detail v2
     _resp13 = ctx.api.orders.promoter_detail_v2(token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 14: Login - merchant
@@ -962,7 +990,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     ctx.extract('merchant_access_token', _resp14, '$.data.token')
     # step 15: get merchant orders
     _resp15 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['merchantOrderId'] = 'curatorOrderId'
+    # 原 step15 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → merchantOrderId。
+    _o15 = _pick_order_by_number(_resp15, vars.get('orderNumber'))
+    assert _o15, f"step15 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('merchantOrderId', _o15.get('id') or '')
     # step 16: get merhcant order detail v2
     _resp16 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 17: Login - curator
@@ -973,7 +1004,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     ctx.extract('curator_access_token', _resp17, '$.data.token')
     # step 18: get curator orders
     _resp18 = ctx.api.orders.promoter(token='curator_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['curatorOrderId'] = 'curatorOrderId'
+    # 原 step18 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → curatorOrderId。
+    _o18 = _pick_order_by_number(_resp18, vars.get('orderNumber'))
+    assert _o18, f"step18 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('curatorOrderId', _o18.get('id') or '')
     # step 19: get curator order detail v2
     _resp19 = ctx.api.orders.promoter_detail_v2(token='curator_access_token', path_vars={'merchantOrderId': '{{curatorOrderId}}'})
     # step 20: Login - promoter
@@ -984,7 +1018,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     ctx.extract('promoter_access_token', _resp20, '$.data.token')
     # step 21: get promoter orders
     _resp21 = ctx.api.orders.promoter(token='promoter_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['promoterOrderId'] = 'promoterOrderId'
+    # 原 step21 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → promoterOrderId。
+    _o21 = _pick_order_by_number(_resp21, vars.get('orderNumber'))
+    assert _o21, f"step21 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('promoterOrderId', _o21.get('id') or '')
     # step 22: get promoter order detail v2
     _resp22 = ctx.api.orders.promoter_detail_v2(token='promoter_access_token', path_vars={'merchantOrderId': '{{promoterOrderId}}'})
     # step 23: Login -P5
@@ -995,7 +1032,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     ctx.extract('P5_access_token', _resp23, '$.data.token')
     # step 24: get P5 orders
     _resp24 = ctx.api.orders.promoter(token='P5_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P5_OrderId'] = 'curatorOrderId'
+    # 原 step24 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → P5_OrderId。
+    _o24 = _pick_order_by_number(_resp24, vars.get('orderNumber'))
+    assert _o24, f"step24 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('P5_OrderId', _o24.get('id') or '')
     # step 25: get P5 order detail v2
     _resp25 = ctx.api.orders.promoter_detail_v2(token='P5_access_token', path_vars={'merchantOrderId': '{{P5_OrderId}}'})
     # step 26: d11758be-1d97-4ae9-82ea-48a845d71972
@@ -1008,8 +1048,12 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
         "pageSize": 50,
         "pageNumber": 1,
     }, token='admin_access_token')
-    vars['admin_orderId'] = 'admin_orderId'
-    vars['merchantOrderId'] = 'merchantOrderId'
+    # 原 step26 post-script: 在 data.items 中按 orderNumber 匹配，
+    # 取 order['id'] → admin_orderId、order['merchantOrderId'] → merchantOrderId。
+    _o26 = _pick_order_by_number(_resp26, vars.get('orderNumber'))
+    assert _o26, f"step26 admin orders-search 未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('admin_orderId', _o26.get('id') or '')
+    ctx.set('merchantOrderId', _o26.get('merchantOrderId') or '')
     # step 27: bbcd3ea5-a4ec-4226-b1cd-acf5cbb44d10
     _resp27 = ctx.api.admin.orders_refunds(body={
         "lineItems": [
@@ -1126,7 +1170,10 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
     _resp30 = ctx.api.orders.promoter_detail_v2(token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 31: get merchant orders
     _resp31 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['merchantOrderId'] = 'curatorOrderId'
+    # 原 step31 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → merchantOrderId。
+    _o31 = _pick_order_by_number(_resp31, vars.get('orderNumber'))
+    assert _o31, f"step31 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('merchantOrderId', _o31.get('id') or '')
     # step 32: get merhcant order detail v2
     _resp32 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 33: get curator order detail v2

@@ -186,9 +186,15 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx: "Context"):
     """Apifox case #7676278: Linda_T4424_Verify_the_search_function_of_the_QR_scanner_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -203,23 +209,26 @@ def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx):
     _resp3 = ctx.api.orders.verification_search(body=None, params={'search': 'PR79024', 'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiJmNGE2YjNmMS1kOWU4LTQ1N2MtODFjYi1hODg1MWViN2VlNGUiLCJldmVudElkIjoiNzllYzY4MDMtOWYxMC00OTM3LTlmZGUtODIzNDY4ZTBlNTQzIn0.KqN5axrnb-eU_Zhbkrp9RjcAQpYaauuewImSbdv5vmk', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step1: 核销统计 ----
-    _j1 = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     assert _resp1.status_code == 200, f"HTTP状态码应为200，实际={_resp1.status_code}"
     assert _j1.get('code') == 200, f"业务码应为200，实际={_j1.get('code')!r}"
     assert _j1.get('message') == 'success', f"message应为success，实际={_j1.get('message')!r}"
     assert _j1.get('request_id'), f"request_id应为非空，实际={_j1.get('request_id')!r}"
-    _d1 = _j1.get('data') or {}
+    _d1: dict[str, Any] = _j1.get('data') or {}
     assert isinstance(_d1, dict) and len(_d1) > 0, "data 应为非空对象"
-    assert _d1.get('totalSold') is not None and isinstance(_d1.get('totalSold'), (int, float)), f"totalSold 应为有效数值，实际={_d1.get('totalSold')!r}"
-    assert _d1.get('totalRedeemed') is not None and isinstance(_d1.get('totalRedeemed'), (int, float)), f"totalRedeemed 应为有效数值，实际={_d1.get('totalRedeemed')!r}"
-    assert _d1.get('totalSold') >= _d1.get('totalRedeemed'), f"totalSold({_d1.get('totalSold')}) 应 >= totalRedeemed({_d1.get('totalRedeemed')})"
+    # 先落局部变量，isinstance 收窄才对后续比较生效（重复 .get() 会丢失收窄）
+    _ts1 = _d1.get('totalSold')
+    assert _ts1 is not None and isinstance(_ts1, (int, float)), f"totalSold 应为有效数值，实际={_ts1!r}"
+    _tr1 = _d1.get('totalRedeemed')
+    assert _tr1 is not None and isinstance(_tr1, (int, float)), f"totalRedeemed 应为有效数值，实际={_tr1!r}"
+    assert _ts1 >= _tr1, f"totalSold({_ts1}) 应 >= totalRedeemed({_tr1})"
     # ---- step2: search=linda 搜索结果匹配 ----
-    _j2 = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"code预期200，实际={_j2.get('code')!r}"
     assert _j2.get('message') == 'success', f"message预期success，实际={_j2.get('message')!r}"
     _d2 = _j2.get('data')
     assert _d2 is not None, "data 缺失"
-    _items2 = _d2.get('items') or []
+    _items2: list[Any] = _d2.get('items') or []
     assert len(_items2) > 0, "data.items 应为非空数组"
     _fail2 = []
     for _oi, _outer in enumerate(_items2):
@@ -234,7 +243,7 @@ def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx):
                 _fail2.append({'outerIndex': _oi + 1, 'innerIndex': _ii + 1, 'orderNumber': _outer.get('orderNumber'), 'firstName': _inner.get('firstName'), 'email': _inner.get('email'), 'itemId': _inner.get('id')})
     assert not _fail2, f"发现{len(_fail2)}条结果的firstName/email未包含关键字「linda」，示例：{_fail2[0] if _fail2 else ''}"
     # ---- step3: search=PR79024 精确匹配 ----
-    _j3 = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"code预期200，实际={_j3.get('code')!r}"
     assert _j3.get('message') == 'success', f"message预期success，实际={_j3.get('message')!r}"
     _d3 = _j3.get('data')
@@ -243,7 +252,7 @@ def test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page(ctx):
     assert isinstance(_d3.get('totalCount'), (int, float)), "data.totalCount 字段缺失或非数字"
     assert isinstance(_d3.get('pageNumber'), (int, float)), "data.pageNumber 字段缺失或非数字"
     assert isinstance(_d3.get('pageSize'), (int, float)), "data.pageSize 字段缺失或非数字"
-    _data3 = _d3.get('items') or []
+    _data3: list[Any] = _d3.get('items') or []
     _matched = [it for it in _data3 if it.get('orderNumber') == 'PR79024']
     assert len(_matched) > 0, "未找到 orderNumber=PR79024 的条目"
     assert len(_data3) == 1, f"预期返回1条结果，实际返回{len(_data3)}条"

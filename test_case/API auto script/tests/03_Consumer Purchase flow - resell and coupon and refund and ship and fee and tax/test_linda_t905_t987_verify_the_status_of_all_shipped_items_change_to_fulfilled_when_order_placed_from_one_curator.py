@@ -81,9 +81,15 @@ ENV_NAME = "Release"
 
 
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t905_t987_verify_the_status_of_all_shipped_items_change_to_fulfilled_when_order_placed_from_one_curator(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t905_t987_verify_the_status_of_all_shipped_items_change_to_fulfilled_when_order_placed_from_one_curator(ctx: "Context"):
     """Apifox case #5801342: Linda_T905_T987_Verify_the_status_of_all_shipped_items_change_to_fulfilled_when_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===

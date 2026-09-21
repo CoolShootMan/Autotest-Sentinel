@@ -6,6 +6,11 @@
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # 仅类型检查期导入：避免 api ↔ core 运行期循环依赖
+    from core.response import ApiResponse
+
 from api.base import BaseApi, _pv
 
 
@@ -16,11 +21,12 @@ class MerchantsApi(BaseApi):
 
     def by_merchant_id(
         self, *,
-        merchantId=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchantId: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """DELETE /merchant/{{merchantId}}"""
         return self._call(
             "DELETE", '/merchant/{{merchantId}}',
@@ -32,10 +38,11 @@ class MerchantsApi(BaseApi):
 
     def create(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /merchant"""
         return self._call(
             "POST", '/merchant',
@@ -47,10 +54,11 @@ class MerchantsApi(BaseApi):
 
     def list(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /merchant/list"""
         return self._call(
             "GET", '/merchant/list',
@@ -62,11 +70,12 @@ class MerchantsApi(BaseApi):
 
     def shipping_options(
         self, *,
-        catalog_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        catalog_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /merchants/{{catalog_id}}/shipping-options  （用例中出现 2 次）"""
         return self._call(
             "GET", '/merchants/{{catalog_id}}/shipping-options',
@@ -78,10 +87,11 @@ class MerchantsApi(BaseApi):
 
     def v_7c2db5d2_92f0_4090_a1ef_55a811b12a6f_subscription_plan_693b2288_c958_4312_92a9_910b948bb6c3(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """PUT /merchants/7c2db5d2-92f0-4090-a1ef-55a811b12a6f/subscription-plan/693b2288-c958-4312-92a9-910b948bb6c3"""
         return self._call(
             "PUT", '/merchants/7c2db5d2-92f0-4090-a1ef-55a811b12a6f/subscription-plan/693b2288-c958-4312-92a9-910b948bb6c3',
@@ -93,10 +103,11 @@ class MerchantsApi(BaseApi):
 
     def v_822a3e59_fdf3_4d9b_be57_f8f0b3af1023_sync_shopify_shipping(
         self, *,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """POST /merchant/822a3e59-fdf3-4d9b-be57-f8f0b3af1023/sync-shopify-shipping"""
         return self._call(
             "POST", '/merchant/822a3e59-fdf3-4d9b-be57-f8f0b3af1023/sync-shopify-shipping',
@@ -110,15 +121,34 @@ class MerchantsApi(BaseApi):
 
     def shipping_options_by_merchant_id(
         self, *,
-        merchant_id=None,
-        body=None, token=None, params=None, headers=None,
-        app_headers=True, skip_notifications=False,
-        path_vars=None,
-    ):
+        merchant_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
         """GET /merchants/{{merchant_id}}/shipping-options"""
         return self._call(
             "GET", '/merchants/{{merchant_id}}/shipping-options',
             path_vars=_pv(("merchant_id", merchant_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def shipping_options_update(
+        self, *,
+        merchant_id: str | None = None,
+        shipping_option_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """PUT /merchants/{{merchant_id}}/shipping-options/{{shipping_option_id}}"""
+        return self._call(
+            "PUT", '/merchants/{{merchant_id}}/shipping-options/{{shipping_option_id}}',
+            path_vars=_pv(("merchant_id", merchant_id), ("shipping_option_id", shipping_option_id), extra=path_vars),
             params=params,
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,

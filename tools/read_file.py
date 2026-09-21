@@ -9,15 +9,17 @@ Version          :1.0
 '''
 
 import yaml
-import xlrd
+import xlrd  # pyright: ignore[reportMissingModuleSource]  # legacy Excel 用例读取用，未在本项目 venv 中安装
 from tools import extractor
 import pymysql
+import pymysql.cursors  # noqa: F401  显式导入子模块（pymysql 1.2 惰性加载，静态检查解析不到）
 from pathlib import Path
+from typing import Any, Optional
 from tools import logger
 
 
 class ReadFile:
-    config_dict = None
+    config_dict: "Optional[dict]" = None
     config_path = f"{str(Path(__file__).parent.parent)}/config/config.yaml"
 
     @classmethod
@@ -27,12 +29,12 @@ class ReadFile:
         """
         if cls.config_dict is None:
             with open(cls.config_path, "r", encoding="utf-8") as file:
-                cls.config_dict = yaml.load(
-                    file.read(), Loader=yaml.FullLoader)
+                data = yaml.load(file.read(), Loader=yaml.FullLoader)
+            cls.config_dict = data if isinstance(data, dict) else {}
         return cls.config_dict
 
     @classmethod
-    def read_config(cls, expr: str = ".") -> dict:
+    def read_config(cls, expr: str = ".") -> Any:
         """get the config from config.yaml
         :param expr: using the jsonpath to get the config object
         return
@@ -52,7 +54,7 @@ class ReadFile:
             # Determine whether a case needs to be executed
             # IF the IsExecute  is N it will ot be executed
             if table.cell_value(norw, 5) != "N":
-                value = table.row_values(norw)
+                value = list(table.row_values(norw))
                 value.pop(5)
                 yield value
                 logger.info(f'value-{value}')

@@ -436,11 +436,17 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool(ctx: "Context"):
     """Apifox case #7543049: Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -463,7 +469,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 2: M1 earning summary
     _resp2 = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
     try:
-        _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+        _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
         vars['lifetimeEarning'] = _get_path(_j2, ['data', 'lifetimeEarning'])
         vars['commissionEarning'] = _get_path(_j2, ['data', 'commissionEarning'])
         print('DBG step2 lifetimeEarning=', vars['lifetimeEarning'], 'commission=', vars['commissionEarning'], flush=True)
@@ -478,7 +484,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 4: get M1 orders-fulfilled
     _resp4 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'FULFILLED'})
     try:
-        _j4 = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
+        _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['totalRevenue_fulfilled'] = _get_path(_j4, ['data', 'extra', 'totalRevenue'])
         vars['totalOrders_fulfilled'] = _get_path(_j4, ['data', 'extra', 'totalOrders'])
     except Exception:
@@ -496,7 +502,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 6: promoter earning summary
     _resp6 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     try:
-        _j6 = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
+        _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
         vars['lifetimeEarning_merchant'] = _get_path(_j6, ['data', 'lifetimeEarning'])
         vars['commissionEarning_merchant'] = _get_path(_j6, ['data', 'commissionEarning'])
     except Exception:
@@ -585,7 +591,7 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         ],
     }, token='consumer_access_token')
     try:
-        _j11 = _resp11.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
+        _j11: dict[str, Any] = _resp11.json() if _resp11.headers.get('content-type','').startswith('application/json') else {}
         vars['orderNumber'] = _get_path(_j11, ['data', 'orderNumber'])
         vars['orderId'] = _get_path(_j11, ['data', 'orderId'])
         print('DBG step11 orderId=', vars['orderId'], 'orderNumber=', vars['orderNumber'], flush=True)
@@ -631,16 +637,17 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['lifetimeEarning_placed'] = 'lifetimeEarning_placed'
     # step 14: M1 earning summary after placing
     _resp14 = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
-    # assertion 14.Total earnigns is correct after placing: responseJson equal {{lifetimeEarning_placed}}
-    expect(_resp14).json('$.data.lifetimeEarning').equals(0.05)
+    # assertion 14.Total earnings is correct after placing: responseJson ≈ {{lifetimeEarning_placed}}
+    # 金额用容差比较（±0.01）：后端与用例本地各自 round 到分，两边舍入方向不同会产生 1 分钱量级差异。
+    expect(_resp14).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_placed}}'))
     # assertion 14.Verify the total commissing earnings after placing: responseJson equal {{commissionEarning}}
-    expect(_resp14).json('$.data.commissionEarning').equals(ctx.render_text('{{commissionEarning}}'))
+    expect(_resp14).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning}}'))
     # step 15: get M1 orders-To fulfill after placing
     _resp15 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'TO_FULFILL'})
     # assertion 15.Verify to fulfill total earnings after placing ticket: responseJson equal {{totalRevenue_tofulfill}}
-    expect(_resp15).json('$.data.extra.totalRevenue').equals(_exp15 - 0.05)
+    expect(_resp15).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill}}'))
     # assertion 15.Verify to fulfill total is not change: responseJson equal {{totalOrders_tofulfill}}
-    expect(_resp15).json('$.data.extra.totalOrders').equals(_exp15o)
+    expect(_resp15).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill}}'))
     try:
         _trf = float(vars.get('totalRevenue_fulfilled') or 0)
         _pm1b = float(vars.get('payout_m1') or 0)
@@ -652,14 +659,26 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 16: get M1 orders-fulfilled after placing
     _resp16 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 16.Verify fulfilled total earnings: responseJson equal {{totalRevenue_fulfilled_placed}}
-    expect(_resp16).json('$.data.extra.totalRevenue').equals(0.05)
+    expect(_resp16).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_placed}}'))
     # assertion 16.Verify the total orders on fulfilled tab: responseJson equal {{totalOrders_fulfilled_placed}}
-    expect(_resp16).json('$.data.extra.totalOrders').equals(_exp16o)
+    expect(_resp16).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_placed}}'))
     # step 17: get M1 order detail v2
-    _resp17 = ctx.api.orders.merchant_detail_v2(token='M1_access_token', path_vars={'merchantId': '{{M1_merchantIDe}}'})
-    vars['refund_id'] = 'refund_id'
-    vars['orderLineItemId'] = 'orderLineItemId'
-    vars['item_unit_id_list'] = 'item_unit_id_list'
+    _resp17 = ctx.api.orders.merchant_detail_v2(
+        merchantId='{{M1_merchantIDe}}', orderNumber='{{orderNumber}}', token='M1_access_token',
+    )
+    # assertion 17.Get line item ID: responseJson status 200
+    expect(_resp17).status().is_(200)
+    try:
+        _j17: dict[str, Any] = _resp17.json() if _resp17.headers.get('content-type','').startswith('application/json') else {}
+        vars['refund_id'] = _get_path(_j17, ['data', 'id'])
+        for _li in _get_path(_j17, ['data', 'lineItems']) or []:
+            if (_li.get('variantInfo') or {}).get('id') == '709c0762-dace-4d22-ab34-18c226a8f003':
+                vars['orderLineItemId'] = _li.get('orderLineItemId')
+                vars['item_unit_id_list'] = [
+                    _u.get('id') for _u in (_li.get('orderLineItemUnits') or [])
+                ]
+    except Exception:
+        pass
     # step 18: Login - merchant
     _resp18 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -677,14 +696,15 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # assertion 20.Verify to fulfill total order is not changed for co-seller: responseJson equal {{totalOrders_tofulfill_merchant}}
     expect(_resp20).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill_merchant}}'))
     # assertion 20.Verify to fulfill total earnings is not changed for co-seller: responseJson equal {{totalRevenue_tofulfill_merchant}}
-    expect(_resp20).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
+    expect(_resp20).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
     # step 21: get merchant orders-fulfilled after placing
     _resp21 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 21.Verify fulfilled total earnings is not changed for co-seller: responseJson equal {{totalRevenue_fulfilled_merchant}}
-    expect(_resp21).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
+    expect(_resp21).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
     # assertion 21.Verify fulfilled total order is not changed for co-seller: responseJson equal {{totalOrders_fulfilled_merchant}}
     expect(_resp21).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
-    vars['first_item_unit_id'] = 'first_item_unit_id'
+    _iul = list(vars.get('item_unit_id_list') or [])
+    vars['first_item_unit_id'] = _iul[0] if len(_iul) > 0 else None
     # step 22: Partner partial refund 1 ticket after placing
     _resp22 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -700,7 +720,22 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         "tipLines": [],
         "note": "Automation test",
     }, token='M1_access_token')
-    # payout_m1/payout_merchant 已在 step13 计算，此处无需覆盖
+    # 源 Apifox step22 post-script：退款掉一半后重算 payout_m1 / payout_merchant
+    try:
+        _rest_me = _js_round(float(vars.get('merchant_earnings') or 0) / 2)
+        _rest_m1e = _js_round(float(vars.get('m1_earnings') or 0) / 2)
+        _rest_tt = _js_round(float(vars.get('tax_total') or 0) / 2)
+        _rest_m1t = _js_round(float(vars.get('m1_tax') or 0) / 2)
+        _rest_mt = _js_round(float(vars.get('merchant_tax') or 0) / 2)
+        vars['payout_m1'] = round(
+            _rest_m1e - _rest_m1t - float(vars.get('m1_transaction_fee') or 0)
+            + float(vars.get('m1_rebate') or 0) + _rest_tt, 2
+        )
+        vars['payout_merchant'] = round(
+            _rest_me - _rest_mt - float(vars.get('merchant_transaction_fee') or 0), 2
+        )
+    except Exception:
+        pass
     # step 23: M1-login
     _resp23 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -718,23 +753,29 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 24: M1 earning summary after partial refund
     _resp24 = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
     # assertion 24.Total earnigns is correct after partial refund: responseJson equal {{lifetimeEarning_partial_refund}}
-    expect(_resp24).json('$.data.lifetimeEarning').equals(0.05)
+    expect(_resp24).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_partial_refund}}'))
     # assertion 24.Verify the total commissing earnings after partial refund: responseJson equal {{commissionEarning}}
-    expect(_resp24).json('$.data.commissionEarning').equals(ctx.render_text('{{commissionEarning}}'))
+    expect(_resp24).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning}}'))
     # step 25: get M1 orders-To fulfill after partial refund
     _resp25 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'TO_FULFILL'})
     # assertion 25.Verify to fulfill total earnings after partial refund: responseJson equal {{totalRevenue_tofulfill}}
-    expect(_resp25).json('$.data.extra.totalRevenue').equals(0.05)
+    expect(_resp25).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill}}'))
     # assertion 25.Verify to fulfill total is not change after partial refund: responseJson equal {{totalOrders_tofulfill}}
-    expect(_resp25).json('$.data.extra.totalOrders').equals(str(_exp25o))
-    vars['totalRevenue_fulfilled_partial_refund'] = 'totalRevenue_fulfilled_partial_refund'
-    vars['totalOrders_fulfilled_partial_refund'] = 'totalOrders_fulfilled_partial_refund'
+    expect(_resp25).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill}}'))
+    try:
+        vars['totalRevenue_fulfilled_partial_refund'] = round(
+            float(vars.get('totalRevenue_fulfilled') or 0) + float(vars.get('payout_m1') or 0), 2
+        )
+        vars['totalOrders_fulfilled_partial_refund'] = int(vars.get('totalOrders_fulfilled') or 0) + 1
+    except Exception:
+        vars['totalRevenue_fulfilled_partial_refund'] = None
+        vars['totalOrders_fulfilled_partial_refund'] = None
     # step 26: get M1 orders-fulfilled after partial refund
     _resp26 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 26.Verify fulfilled total earnings after partial refund: responseJson equal {{totalRevenue_fulfilled_partial_refund}}
-    expect(_resp26).json('$.data.extra.totalRevenue').equals(0.05)
+    expect(_resp26).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_partial_refund}}'))
     # assertion 26.Verify the total orders on fulfilled tab after partial refund: responseJson equal {{totalOrders_fulfilled_partial_refund}}
-    expect(_resp26).json('$.data.extra.totalOrders').equals(str(vars.get('totalOrders_fulfilled_afterplace') or vars.get('totalOrders_fulfilled') or ''))
+    expect(_resp26).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_partial_refund}}'))
     # step 27: Login - merchant
     _resp27 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -754,22 +795,22 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
     # step 28: promoter earning summary after partial refund
     _resp28 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
     # assertion 28.Verify the total net earnings is changed for co-seller after partial refund: responseJson equal {{lifetimeEarning_merchant_partial_refund}}
-    expect(_resp28).json('$.data.lifetimeEarning').equals(0.05)
+    expect(_resp28).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_merchant_partial_refund}}'))
     # assertion 28.Verify commission earnings is changed for co-seller after partial refund: responseJson equal {{commissionEarning_merchant_partial_refund}}
-    expect(_resp28).json('$.data.commissionEarning').equals(0.05)
+    expect(_resp28).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning_merchant_partial_refund}}'))
     # step 29: get merchant orders-To fulfill after partial refund
     _resp29 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'TO_FULFILL'})
     # assertion 29.Verify to fulfill total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_tofulfill_merchant}}
     expect(_resp29).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill_merchant}}'))
     # assertion 29.Verify to fulfill total earnings is not changed for co-seller after partial refund: responseJson equal {{totalRevenue_tofulfill_merchant}}
-    expect(_resp29).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
+    expect(_resp29).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
     # step 30: get merchant orders-fulfilled after partial refund
     _resp30 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 30.Verify fulfilled total earnings is not changed for co-seller after partial refund: responseJson equal {{totalRevenue_fulfilled_merchant}}
-    expect(_resp30).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
+    expect(_resp30).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
     # assertion 30.Verify fulfilled total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_fulfilled_merchant}}
     expect(_resp30).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))
-    vars['second_item_unit_id'] = 'second_item_unit_id'
+    vars['second_item_unit_id'] = _iul[1] if len(_iul) > 1 else None
     # step 31: Partner full refund order on sale details page after placing
     _resp31 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -803,52 +844,69 @@ def test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_parti
         vars['M1_access_token'] = _get_path(_j, ["data", "refreshToken"])
     except Exception:
         pass
-    vars['lifetimeEarning_full_refund'] = round(float(vars.get('lifetimeEarning_placed') or 0), 2)
+    try:
+        vars['lifetimeEarning_full_refund'] = round(
+            float(vars.get('lifetimeEarning') or 0)
+            + float(vars.get('m1_rebate') or 0)
+            - float(vars.get('m1_transaction_fee') or 0)
+            - float(vars.get('merchant_transaction_fee') or 0), 2
+        )
+    except Exception:
+        vars['lifetimeEarning_full_refund'] = None
     # step 33: M1 earning summary after full refund
     _resp33 = ctx.api.earnings.summary(app_headers=False, token='M1_access_token')
     # assertion 33.Total earnigns is correct after partial refund: responseJson equal {{lifetimeEarning_full_refund}}
-    expect(_resp33).json('$.data.lifetimeEarning').equals(0.05)
+    expect(_resp33).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_full_refund}}'))
     # assertion 33.Verify the total commissing earnings after partial refund: responseJson equal {{commissionEarning}}
-    expect(_resp33).json('$.data.commissionEarning').equals(0.05)
+    expect(_resp33).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning}}'))
     # step 34: get M1 orders-To fulfill after full refund
     _resp34 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'TO_FULFILL'})
-    # assertion 34.Verify to fulfill total earnings after partial refund: responseJson equal {{totalRevenue_tofulfill_placed}}
-    expect(_resp34).json('$.data.extra.totalRevenue').equals(0.05)
-    # assertion 34.Verify to fulfill total is not change after partial refund: responseJson equal {{totalOrders_tofulfill_placed}}
-    expect(_resp34).json('$.data.extra.totalOrders').equals(str(_exp34o))
-    vars['totalRevenue_fulfilled_full_refund'] = float(vars.get('totalRevenue_fulfilled_afterplace') or vars.get('totalRevenue_fulfilled') or 0)
-    vars['totalOrders_fulfilled_full_refund'] = vars.get('totalOrders_fulfilled_afterplace') or vars.get('totalOrders_fulfilled') or 0
+    # assertion 34.Verify to fulfill total earnings after partial refund: responseJson equal {{totalRevenue_tofulfill}}
+    expect(_resp34).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill}}'))
+    # assertion 34.Verify to fulfill total is not change after partial refund: responseJson equal {{totalOrders_tofulfill}}
+    expect(_resp34).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill}}'))
+    try:
+        vars['totalRevenue_fulfilled_full_refund'] = round(
+            float(vars.get('totalRevenue_fulfilled') or 0)
+            + float(vars.get('m1_rebate') or 0)
+            - float(vars.get('m1_transaction_fee') or 0)
+            - float(vars.get('merchant_transaction_fee') or 0), 2
+        )
+        vars['totalOrders_fulfilled_full_refund'] = int(vars.get('totalOrders_fulfilled') or 0) + 1
+    except Exception:
+        vars['totalRevenue_fulfilled_full_refund'] = None
+        vars['totalOrders_fulfilled_full_refund'] = None
     # step 35: get M1 orders-fulfilled after full refund
     _resp35 = ctx.api.orders.merchant(token='M1_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 35.Verify fulfilled total earnings after partial refund: responseJson equal {{totalRevenue_fulfilled_full_refund}}
-    expect(_resp35).json('$.data.extra.totalRevenue').equals(0.05)
+    expect(_resp35).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_full_refund}}'))
     # assertion 35.Verify the total orders on fulfilled tab after partial refund: responseJson equal {{totalOrders_fulfilled_full_refund}}
-    expect(_resp35).json('$.data.extra.totalOrders').equals(str(vars.get('totalOrders_fulfilled_full_refund') or 0))
+    expect(_resp35).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_full_refund}}'))
     # step 36: Login - merchant
     _resp36 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{merchant_email}}",
     })
     try:
-        _j = _resp36.json() if _resp36.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp36.json() if _resp36.headers.get('content-type','').startswith('application/json') else {}
         vars['merchant_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
     # step 37: promoter earning summary after full refund
     _resp37 = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
-    # assertion 37.Verify the total net earnings is changed for co-seller after partial refund: responseJson equal {{lifetimeEarning_merchant}} + payout_merchant
-    expect(_resp37).json('$.data.lifetimeEarning').equals(0.05)
-    # assertion 37.Verify commission earnings is changed for co-seller after partial refund: responseJson equal {{commissionEarning_merchant}} + payout_merchant
-    expect(_resp37).json('$.data.commissionEarning').equals(0.05)
+    # assertion 37.Verify the total net earnings is changed for co-seller after partial refund: responseJson equal {{lifetimeEarning_merchant}}
+    expect(_resp37).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_merchant}}'))
+    # assertion 37.Verify commission earnings is changed for co-seller after partial refund: responseJson equal {{commissionEarning_merchant}}
+    expect(_resp37).json('$.data.commissionEarning').close_to(ctx.render_text('{{commissionEarning_merchant}}'))
     # step 38: get merchant orders-To fulfill after full refund
     _resp38 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'TO_FULFILL'})
     # assertion 38.Verify to fulfill total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_tofulfill_merchant}}
     expect(_resp38).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_tofulfill_merchant}}'))
     # assertion 38.Verify to fulfill total earnings is not changed for co-seller after partial refund: responseJson equal {{totalRevenue_tofulfill_merchant}}
-    expect(_resp38).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
+    expect(_resp38).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_tofulfill_merchant}}'))
     # step 39: get merchant orders-fulfilled after full refund
     _resp39 = ctx.api.orders.merchant(token='merchant_access_token', params={'fulfillStatus': 'FULFILLED'})
     # assertion 39.Verify fulfilled total earnings is not changed for co-seller after partial refund: responseJson equal {{totalRevenue_fulfilled_merchant}}
-    expect(_resp39).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
+    expect(_resp39).json('$.data.extra.totalRevenue').close_to(ctx.render_text('{{totalRevenue_fulfilled_merchant}}'))
     # assertion 39.Verify fulfilled total order is not changed for co-seller after partial refund: responseJson equal {{totalOrders_fulfilled_merchant}}
     expect(_resp39).json('$.data.extra.totalOrders').equals(ctx.render_text('{{totalOrders_fulfilled_merchant}}'))

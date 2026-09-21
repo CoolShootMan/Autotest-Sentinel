@@ -128,15 +128,21 @@ ENV_NAME = "Release"
 
 import json
 
+from typing import TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_correct(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_correct(ctx: "Context"):
     """Apifox case #8038375: Linda_T2705_Verify_the_Exclude_and_Include_variant_logic_response_correct"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: 7bac97ce-2d5b-4b26-9ea3-b6c2303e1ab7
-    _resp1 = ctx.api.posts.curator_de6f0abd_c8f8_41e5_b2d1_1eb2ba05f839(body={
-    'id': 'de6f0abd-c8f8-41e5-b2d1-1eb2ba05f839',
+    _resp1 = ctx.api.posts.curator_update(post_id='{{T2705_post_id}}', body={
+    'id': '{{T2705_post_id}}',
     'announcements': None,
     'createFromEventId': '8c911bb6-78ec-4af4-a78c-479a0416349d',
     'title': 'API TEST T2705',

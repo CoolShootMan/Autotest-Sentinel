@@ -399,12 +399,19 @@ ENV_NAME = "Release"
 
 
 import json
+import time
+
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
 from core.compat import get_path as _get_path
 
-def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx: "Context"):
     """Apifox case #7557017: Lury_T3781_and_T3687_wholesale_commission_and_affiliate_link"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
@@ -456,9 +463,9 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         ],
     }, app_headers=True, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -503,8 +510,22 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
     except Exception:
         pass
     # step 8: get P1 orders
-    _resp8 = ctx.api.orders.promoter(app_headers=True, token='P1_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P1_OrderId'] = 'curatorOrderId'
+    # 2026-09-20 修复：promoter 订单列表为异步聚合（新单最多延迟数十秒才出现在首页），
+    # 直接断言首页命中会偶发失败（admin 侧可查、detail 接口 200 但列表未同步）。
+    # 改为条件轮询：最多 6 次 × 3s，命中即 break（与订阅用例同款模式）。
+    vars['P1_OrderId'] = ''
+    for _attempt in range(6):
+        _resp8 = ctx.api.orders.promoter(app_headers=True, token='P1_access_token', params={'pageSize': '30', 'pageNumber': '1'})
+        _j8 = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+        _arr8 = _get_path(_j8, ['data', 'items']) or []
+        _hit8 = next((o for o in _arr8 if o.get('orderNumber') == vars.get('orderNumber')), None)
+        if _hit8:
+            vars['P1_OrderId'] = _hit8.get('id')
+            break
+        time.sleep(3)
+    assert vars.get('P1_OrderId'), (
+        f"test_lury_t3781_and_t3687_wholesale_comm L513: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr8)}）")
     # step 9: get P1 order detail v2
     _resp9 = ctx.api.orders.promoter_detail_v2(app_headers=True, token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 10: Login - merchant
@@ -547,12 +568,20 @@ def test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link(ctx):
         "email": "{{affiliate_promoter}}",
     }, app_headers=True)
     try:
-        _j = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
+        _j: dict[str, Any] = _resp16.json() if _resp16.headers.get('content-type','').startswith('application/json') else {}
         vars['affiliate_access_token'] = _get_path(_j, ["data", "token"])
     except Exception:
         pass
     # step 17: get affiliate promoter orders
     _resp17 = ctx.api.orders.promoter(app_headers=True, token='affiliate_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P5_OrderId'] = 'curatorOrderId'
+    _j = _resp17.json() if _resp17.headers.get('content-type','').startswith('application/json') else {}
+    _arr = _get_path(_j, ['data', 'items']) or []
+    # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
+    for _order in _arr:
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['P5_OrderId'] = _order.get('id')
+    assert vars.get('P5_OrderId'), (
+        f"test_lury_t3781_and_t3687_wholesale_comm L562: promoter orders 中未找到 "
+        f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 18: get affiliate order detail v2
     _resp18 = ctx.api.orders.promoter_detail_v2(app_headers=True, token='affiliate_access_token', path_vars={'merchantOrderId': '{{P5_OrderId}}'})

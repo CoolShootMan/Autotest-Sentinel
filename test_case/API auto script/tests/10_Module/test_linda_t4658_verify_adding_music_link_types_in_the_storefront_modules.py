@@ -382,9 +382,15 @@ import random
 import json
 import re
 
+from typing import Any, TYPE_CHECKING
+
 from core.assertions import expect
 
-def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ctx):
+if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
+    from core.context import Context
+
+
+def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ctx: "Context"):
     """Apifox case #7635562: Linda_T4658_Verify_adding_music_link_types_in_the_storefront_modules"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # 动态生成 music title（对应原 Apifox pre-script: Automation music + 5位随机数）
@@ -399,10 +405,10 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
         "visible": True,
     }, token='linda01_token')
     # === 断言/提取（由Apifox customScript翻译）===
-    _j1 = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
+    _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     assert _j1.get('code') == 200, f"step1 code != 200, got {_j1.get('code')}"
     assert _j1.get('message') == 'success', f"step1 message != success, got {_j1.get('message')}"
-    _d1 = _j1.get('data') or {}
+    _d1: dict[str, Any] = _j1.get('data') or {}
     assert _d1, "step1 data 为空"
     assert _d1.get('type') == 'LINK', f"step1 data.type != LINK, got {_d1.get('type')}"
     _title1 = _d1.get('title') or ''
@@ -438,16 +444,16 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     }
     _resp2 = ctx.api.links.create(body=_music_body, token='linda01_token')
     # === 断言/提取（由Apifox customScript翻译）===
-    _j2 = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
     assert _j2.get('message') == 'success', f"step2 message != success, got {_j2.get('message')}"
-    _d2 = _j2.get('data') or {}
+    _d2: dict[str, Any] = _j2.get('data') or {}
     _title2 = _d2.get('title') or ''
     assert re.match(r'^music_\d+$', _title2), f"step2 title 格式错误: {_title2}"
     assert _d2.get('type') == 'MUSIC', f"step2 data.type != MUSIC, got {_d2.get('type')}"
     assert _d2.get('showBelowTitle') is False, f"step2 showBelowTitle != False, got {_d2.get('showBelowTitle')}"
     assert _d2.get('position') == 0, f"step2 position != 0, got {_d2.get('position')}"
-    _services2 = (_d2.get('additionalInfo') or {}).get('services') or []
+    _services2: list[Any] = (_d2.get('additionalInfo') or {}).get('services') or []
     assert isinstance(_services2, list) and len(_services2) >= 14, f"step2 services 数量不足, got {len(_services2)}"
     assert _d2.get('id'), "step2 data.id 为空"
     vars['moduleContentId'] = _d2.get('id')
@@ -462,21 +468,21 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
         ],
     }, token='linda01_token')
     # === 断言（由Apifox customScript翻译）===
-    _j3 = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
     assert _j3.get('code') == 200, f"step3 code != 200, got {_j3.get('code')}"
     assert _j3.get('message') == 'success', f"step3 message != success, got {_j3.get('message')}"
-    _d3 = _j3.get('data') or {}
+    _d3: dict[str, Any] = _j3.get('data') or {}
     _title3 = _d3.get('title') or ''
     assert re.match(r'^Automation music \d+$', _title3), f"step3 title 格式错误: {_title3}"
     assert _d3.get('direction') == 'VERTICAL', f"step3 direction != VERTICAL, got {_d3.get('direction')}"
     assert _d3.get('visible') is True, f"step3 visible != true, got {_d3.get('visible')}"
-    _items3 = _d3.get('items') or []
+    _items3: list[Any] = _d3.get('items') or []
     assert isinstance(_items3, list) and len(_items3) >= 1, f"step3 items 为空"
     _inner3 = _items3[0] or {}
-    _add3 = _inner3.get('additionalInfo') or {}
+    _add3: dict[str, Any] = _inner3.get('additionalInfo') or {}
     assert _add3, "step3 additionalInfo 为空"
     assert _add3.get('artist') == 'Leanna Firestone', f"step3 artist != Leanna Firestone, got {_add3.get('artist')}"
-    _svc3 = _add3.get('services') or []
+    _svc3: list[Any] = _add3.get('services') or []
     assert isinstance(_svc3, list) and len(_svc3) > 0, "step3 services 为空"
     for _s in _svc3:
         assert _s.get('platform'), "step3 service 缺少 platform"
