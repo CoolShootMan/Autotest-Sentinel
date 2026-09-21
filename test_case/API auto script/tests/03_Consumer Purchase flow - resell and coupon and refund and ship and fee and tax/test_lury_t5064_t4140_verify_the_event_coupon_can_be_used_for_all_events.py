@@ -323,6 +323,7 @@ ENV_NAME = "Release"
 
 
 import json
+import time
 
 from typing import Any, TYPE_CHECKING
 
@@ -655,13 +656,23 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
     })
     ctx.extract('P1_access_token', _resp21, '$.data.token')
     # step 22: get P1 orders
-    _resp22 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P1_access_token')
-    _j = _resp22.json() if _resp22.headers.get('content-type','').startswith('application/json') else {}
-    _arr = _get_path(_j, ['data', 'items']) or []
-    # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
-    for _order in _arr:
-        if _order.get('orderNumber') == vars.get('orderNumber'):
-            vars['P1_OrderId'] = _order.get('id')
+    # 刚下单的订单异步写入 promoter 订单列表（eventually-consistent），立即查询可能拿不到。
+    # 参考 D 类既有修复模式（test_lury_t5543 等）加等待；此处用重试更稳：最多 6 次、
+    # 每次间隔 3s，直到在 promoter orders 中找到本单 orderNumber。
+    _p1_order_id = None
+    for _att22 in range(6):
+        _resp22 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P1_access_token')
+        _j = _resp22.json() if _resp22.headers.get('content-type','').startswith('application/json') else {}
+        _arr = _get_path(_j, ['data', 'items']) or []
+        # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
+        for _order in _arr:
+            if _order.get('orderNumber') == vars.get('orderNumber'):
+                _p1_order_id = _order.get('id')
+                break
+        if _p1_order_id is not None:
+            break
+        time.sleep(3)
+    vars['P1_OrderId'] = _p1_order_id
     assert vars.get('P1_OrderId'), (
         f"test_lury_t5064_t4140_verify_the_event_c L658: promoter orders 中未找到 "
         f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")

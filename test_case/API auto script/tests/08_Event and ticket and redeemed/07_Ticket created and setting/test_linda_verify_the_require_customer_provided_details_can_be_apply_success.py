@@ -258,6 +258,7 @@ ENV_NAME = "Release"
 
 
 import random
+import time
 from typing import TYPE_CHECKING
 
 from core.assertions import expect
@@ -425,14 +426,21 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
         ],
     }, token='yuxiao999_token')
     # step 6: 707dd083-2b7c-45d3-aa91-58cbe0def93e
-    _resp6 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-    # 原 step6 post-script: 在 data.relatedProducts 中找 title 为目标产品的那一项，
-    # 取其 displayVariantId 写入 promoterProductId（取不到时回退到 variants[0]）。
-    _rels6 = _get_path(_resp6.json(), ['data', 'relatedProducts']) or []
-    _prod6 = next((x for x in _rels6
-                   if x.get('title') == 'auto-test Verify the Require customer-provided details can be apply success'),
-                  None)
-    assert _prod6, f"step6 未找到目标关联产品（relatedProducts={len(_rels6)}）"
+    # 关联产品异步落地（eventually-consistent）：step4 新建商品、step5 v2_show_in_post 后
+    # 立即查 relate-products，可能拿不到刚建的目标商品。重试直到目标商品出现（最多 6 次、3s）。
+    _prod6 = None
+    for _att6 in range(6):
+        _resp6 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
+        expect(_resp6).json('$.code').equals('200')
+        expect(_resp6).json('$.message').equals('success')
+        _rels6 = _get_path(_resp6.json(), ['data', 'relatedProducts']) or []
+        _prod6 = next((x for x in _rels6
+                       if x.get('title') == 'auto-test Verify the Require customer-provided details can be apply success'),
+                      None)
+        if _prod6 is not None:
+            break
+        time.sleep(3)
+    assert _prod6, f"step6 重试后仍找不到目标关联产品（relatedProducts={len(_rels6)}）"
     _v06 = (_prod6.get('variants') or [{}])[0]
     ctx.set('promoterProductId',
             _prod6.get('displayVariantId') or _v06.get('displayVariantId') or _v06.get('id') or '')
@@ -567,7 +575,10 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
         'eventSourceUrl': 'https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3',
     },
 }, app_headers=True, token='linda10_token')
-    _ordernumber_val = _get_path(_resp8.json(), ['data', 'orderNumbers', 0])
+    # order_number 取自 place order(_resp11) 的响应（原 Apifox step11 post-script：
+    # responseData.data.orderNumbers[0]）；此前误接到 cart.delete(_resp8) 的响应上，导致
+    # order_number 为空、step12 merchant_detail_v2 404。此处与同目录 T5379 的修复保持一致。
+    _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail exist customer filed contents
     # === pre-script（由 Apifox customScript 翻译）===

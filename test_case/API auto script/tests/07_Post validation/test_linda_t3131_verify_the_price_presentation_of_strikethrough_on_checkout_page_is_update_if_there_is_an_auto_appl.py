@@ -160,6 +160,7 @@ ENV_NAME = "Release"
 
 from typing import TYPE_CHECKING
 
+import time
 from core.assertions import expect
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
@@ -261,7 +262,18 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp7 = None
+    for _att in range(8):
+        _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp7.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 7.assertion: responseJson equal 64
     expect(_resp7).json('$.data.totalCommissionSubtotal').equals('64')
     # step 8: e6ce196f-d132-4904-b8c8-684476534673
@@ -333,7 +345,18 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp11 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp11 = None
+    for _att in range(8):
+        _resp11 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp11.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 11.assertion: responseJson equal 64
     expect(_resp11).json('$.data.totalCommissionSubtotal').equals('64')
     # step 12: f7ba3778-8cdf-46ae-b63d-d96fdafff9ec
@@ -405,7 +428,18 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp15 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp15 = None
+    for _att in range(8):
+        _resp15 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp15.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 15.assertion: responseJson equal 128
     expect(_resp15).json('$.data.totalCommissionSubtotal').equals('128')
     # step 16: 8f98cc17-9730-4b56-a926-19d870b543aa
@@ -477,7 +511,18 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp19 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp19 = None
+    for _att in range(8):
+        _resp19 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp19.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 19.assertion: responseJson equal 192
     expect(_resp19).json('$.data.totalCommissionSubtotal').equals('192')
     # step 20: f3797de9-6dc0-4a41-bde0-077bc656a06b
@@ -549,7 +594,18 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp23 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp23 = None
+    for _att in range(8):
+        _resp23 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp23.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 23.assertion: responseJson equal 128
     expect(_resp23).json('$.data.totalCommissionSubtotal').equals('128')
     # step 24: b221e3c2-95a7-497a-bf67-b7f26ad5fdf1
@@ -621,6 +677,17 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = "17c3a9b5-3382-4d02-a0c4-071f50cfa525"
 
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
-    _resp27 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+    # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
+    # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
+    _resp27 = None
+    for _att in range(8):
+        _resp27 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
+        try:
+            if str(_resp27.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(3)
+
     # assertion 27.assertion: responseJson equal 192
     expect(_resp27).json('$.data.totalCommissionSubtotal').equals('192')

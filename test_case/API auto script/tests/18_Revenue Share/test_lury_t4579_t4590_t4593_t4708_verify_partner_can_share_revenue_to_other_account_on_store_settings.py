@@ -334,6 +334,21 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
         pass
     # step 9: delete cart
     _resp9 = ctx.api.cart.delete(token='consumer_access_token')
+    # step 9.5: 下单前重新读取 P-21 / promoter lifetimeEarning 基线（缩小共享账户并行污染窗口；
+    # lifetimeEarning 是共享累计值，linda/lury 并行跑时其他用例会改动它，导致"基线+本单 payout"漂移）
+    _resp9b = ctx.api.earnings.summary(app_headers=False, token='Bearer {{P-21_access_token}}')
+    try:
+        _j9b: dict[str, Any] = _resp9b.json() if _resp9b.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_p21_pre_order'] = _get_path(_j9b, ['data', 'lifetimeEarning'])
+    except Exception:
+        pass
+    _resp9c = ctx.api.earnings.summary(app_headers=False, token='merchant_access_token')
+    try:
+        _j9c: dict[str, Any] = _resp9c.json() if _resp9c.headers.get('content-type','').startswith('application/json') else {}
+        vars['le_promoter_pre_order'] = _get_path(_j9c, ['data', 'lifetimeEarning'])
+    except Exception:
+        pass
+
     # step 10: buy now
     _resp10 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "baab0db1-857e-49e0-9510-3e176d02d996",
@@ -394,9 +409,9 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
-    # 期望值 = 下单前 P-21 lifetimeEarning + 10.78 (round 2位)
+    # 基线改用「下单前紧邻重读」的 le_p21_pre_order（见 step9.5），缩小并行污染窗口
     try:
-        _le = float(vars.get('lifetimeEarning', 0) or 0)
+        _le = float(vars.get('le_p21_pre_order', 0) or 0)
         vars['lifetimeEarning_order'] = round((_le + 10.78) + 1e-9, 2)
     except Exception:
         vars['lifetimeEarning_order'] = None
@@ -412,8 +427,9 @@ def test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue
     _resp14 = ctx.api.misc.earnings_merchant_orders(token='Bearer {{P-21_access_token}}', params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'})
     vars['second_date'] = 'second_date'
     vars['third_date'] = 'third_date'
+    # 基线改用「下单前紧邻重读」的 le_promoter_pre_order（见 step9.5），缩小并行污染窗口
     try:
-        _p = float(vars.get('lifetimeEarning_p', 0) or 0)
+        _p = float(vars.get('le_promoter_pre_order', 0) or 0)
         vars['lifetimeEarning_share'] = round((_p + 1.46) + 1e-9, 2)
     except Exception:
         vars['lifetimeEarning_share'] = None
