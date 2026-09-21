@@ -34,7 +34,7 @@ def test_linda_t2302_verify_user_can_login_with_email_and_password(ctx: "Context
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # account_email_curator comes from this case's .vars.yaml; password from env/Release.yaml
-    # step 1: d6fe9112-d218-4155-98f0-634820480833
+    # step 1: POST /auth/sign-in
     # === pre-script（由 Apifox customScript 翻译）===
     vars['account_email_curator'] = "linda.zhou.ext+00@1m.app"
     vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"

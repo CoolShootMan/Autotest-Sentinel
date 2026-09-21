@@ -41,7 +41,7 @@ def test_t0000_verify_that_the_shipping_status_can_sync_to_pear(ctx: "Context"):
     # extractor: linda00_token = $.data.token
     ctx.extract('linda00_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
-    # step 2: 785e35bb-0db7-41e4-adce-b39b0f3a08ba
+    # step 2: POST sync from your shopify
     # === pre-script（由 Apifox customScript 翻译）===
     vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
 

@@ -288,14 +288,14 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     """Apifox case #8601276: Linda_T5379_Verify_the_Additional_QR_codes_can_be_added_edited_deleted"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 0103bf67-b8eb-4911-987e-f6529dccff3a
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: ee5d6ffb-b19f-49ea-96b5-58086027e448
+    # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # 原 step2 post-script: 在 data.items 中找 title === "event-for-API-testing" 的事件，取其 id。
     # 注意：该事件名在当前 Release 环境已不存在（列表中的通用测试事件为
@@ -309,7 +309,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
         _ev2 = next((i for i in _items2 if i.get('title') == 'event-for-api-auto-venue-map'), None)
     assert _ev2, f"step2 未找到目标事件（want={_want2!r}，可用 titles={_titles2}）"
     ctx.set('event_id', _ev2.get('id') or '')
-    # step 3: d969467d-4e41-4f7d-9cd8-939c23b20f16
+    # step 3: GET Partner Get the Event Post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     # 原 step3 post-script: 在 data.items 中找 title === "event-for-API-testing" 的 post，取其 id。
     # 该 post 名同样已不在环境中，故取列表首个（与同目录 T4543 的 post0_id 取法一致）。
@@ -318,11 +318,11 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
               or (_items3[0] if _items3 else None))
     assert _post3, f"step3 posts 列表为空，无法提取 postId（items={len(_items3)}）"
     ctx.set('postId', _post3.get('id') or '')
-    # step 4: 1d147e0c-10eb-4542-b1ba-9e08f1b76835
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
-    # step 5: 5fe163d3-20f8-4e95-8a9f-895ac97b9b5d
+    # step 5: POST create a ticket with 5 Additional QR codes
     _resp5 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',
     'shippingType': 'NO_SHIPPING_REQUIRED',
@@ -434,7 +434,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
 }, token='yuxiao999_token')
     ctx.extract('productId', _resp5, '$.data.id')
     vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
-    # step 6: 4e2f6aa1-7162-41a8-a8f4-c70a4a555480
+    # step 6: POST new ticket show in post
     _resp6 = ctx.api.events.v2_show_in_post(body={
         "productIds": [
             "{{productId}}",
@@ -446,7 +446,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
             },
         ],
     }, token='yuxiao999_token')
-    # step 7: 6451f010-096a-49fe-af64-106701bd8a2e
+    # step 7: GET Catch the promoterProductvariantId
     # 关联产品由「事件 → 帖子」异步落地（eventually-consistent）：step5 新建商品、step6
     # v2_show_in_post 后立刻查 relate-products，有时拿不到刚创建的目标商品（CI 实测
     # relatedProducts=2 但缺 'autotest T5379'）。故重试直到目标商品出现（最多 6 次、3s）。
@@ -466,7 +466,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
             _prod7.get('displayVariantId') or _v07.get('displayVariantId') or _v07.get('id') or '')
     # step 8: get address list
     _resp8 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
-    # step 9: e5273105-dae8-4673-864f-18a9ab8aa4ef
+    # step 9: DELETE Clean Cart
     _resp9 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 9.assertion: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')

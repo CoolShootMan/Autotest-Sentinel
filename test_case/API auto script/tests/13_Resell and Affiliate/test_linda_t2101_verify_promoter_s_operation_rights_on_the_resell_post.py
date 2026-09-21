@@ -42,7 +42,7 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx: 
     """Apifox case #7898307: Linda_T2101_Verify_Promoter_s_operation_rights_on_the_resell_post"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 4498daf7-3269-4208-817a-6463c7cff775
+    # step 1: POST resale the post and save draft
     _resp1 = ctx.api.posts.promoter_resale(body={
         "postId": "84b3d58a-964a-49ef-961e-62e885463410",
         "status": "DRAFT",
@@ -55,7 +55,7 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx: 
     _rid = _get_path(_j1, ["data", "id"])
     assert _rid, "step1 resell_post_id 提取失败"
     vars['resell_post_id'] = _rid
-    # step 2: 0389ebb4-f10a-4c5f-b075-f7f55c495f25
+    # step 2: PUT Publish the resell post
     # --- 人工补丁：名称唯一化 ---
     # Apifox 原文 PUT 的 urlAlias/title 与它「复制来源」的 post 同名，而服务端对同一商户
     # 做名称唯一校验 → 重复执行必然 400（Release 已累积 14 篇同名遗留 DRAFT，
@@ -76,7 +76,7 @@ def test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post(ctx: 
     assert _j2.get('code') == 200, f"step2 code != 200, got {_j2.get('code')}"
     assert _j2.get('message') == 'success', f"step2 message != success, got {_j2.get('message')}"
     assert (_j2.get('data') or {}).get('status') == 'ACTIVE', f"step2 data.status != ACTIVE, got {(_j2.get('data') or {}).get('status')}"
-    # step 3: 4da12903-d431-4211-895b-4d2c3f383bff
+    # step 3: DELETE delete the resell post
     _resp3 = ctx.api.posts.curator_by_post_id_2(body=None, token='linda05_token', path_vars={'post_id': '{{resell_post_id}}'})
     # === 断言（由Apifox assertion翻译）===
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}

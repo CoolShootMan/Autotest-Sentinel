@@ -407,7 +407,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     })
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
-    # step 2: 44837e99-63db-4850-898c-6b8c6cf5e12f
+    # step 2: POST manual unredeemd the ticket P142542-01
     _resp2 = ctx.api.orders.ticket_status(body={
         "orderLineItemId": "4043096b-7df1-4c2b-880a-9c7b7baec411",
         "orderLineItemUnitIds": [
@@ -421,7 +421,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     _units2: dict[str, Any] = (_j2.get('data') or {}).get('units') or {}
     assert _units2.get('count') == 1, f"step2 data.units.count != 1, got {_units2.get('count')}"
     assert isinstance(_units2.get('count'), (int, float)), f"step2 count 非数字: {_units2.get('count')}"
-    # step 3: 3af00c65-523b-4e80-accb-5b6cf2cd9fc6
+    # step 3: GET get the Total tickets redeemed number
     _resp3 = ctx.api.events.fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary(body=None, token='linda05_token')
     # === 断言/提取（由Apifox customScript翻译）===
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
@@ -431,7 +431,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     _totalRedeemed = _get_path(_j3, ["data", "totalItemsRedeemed"])
     assert _totalRedeemed is not None, "step3 totalItemsRedeemed 缺失"
     vars['totalItemsRedeemed'] = _totalRedeemed
-    # step 4: 9740ec98-e46c-4e1e-9f04-732b196c2f05
+    # step 4: POST Scan Verify ticket/QR code for redemption
     # === pre-script（由 Apifox customScript 翻译）===
     vars['scan_token'] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU"
 
@@ -461,7 +461,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     assert _extra4.get('event') == 'Automation test T4131', f"step4 活动名不匹配: {_extra4.get('event')}"
     assert _d4.get('orderNumber') == _fi4.get('orderNumber'), f"step4 订单号不一致: 外层{_d4.get('orderNumber')} vs item{_fi4.get('orderNumber')}"
     assert isinstance(_fi4.get('quantity'), (int, float)) and _fi4.get('quantity') == 1, f"step4 quantity != 1, got {_fi4.get('quantity')}"
-    # step 6: 0c7a54ab-93db-4faf-bdc1-7ed00195d329
+    # step 6: GET check the Total tickets redeemed number add 1
     _resp6 = ctx.api.events.fb5df095_b68d_45f6_adc0_2211428d0a8c_metrics_summary(body=None, token='linda05_token')
     # === 断言（由Apifox customScript翻译）===
     _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
@@ -474,7 +474,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     _cur6 = _get_path(_j6, ["data", "totalItemsRedeemed"])
     assert _cur6 is not None, "step6 totalItemsRedeemed 缺失"
     assert _cur6 == _preNum6 + 1, f"step6 核销后数值错误: 预期{_preNum6 + 1}, 实际{_cur6}"
-    # step 7: 02705f5d-2197-49bd-a5fd-b84785940596
+    # step 7: POST Scan again and error message pop up
     # === pre-script（由 Apifox customScript 翻译）===
     vars['scan_token'] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU"
 

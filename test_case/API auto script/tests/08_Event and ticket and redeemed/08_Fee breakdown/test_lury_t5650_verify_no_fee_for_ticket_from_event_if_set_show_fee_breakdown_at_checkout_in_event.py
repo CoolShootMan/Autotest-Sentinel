@@ -185,6 +185,7 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
     }, app_headers=False)
+    expect(_resp1).status().is_(201)
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='access_token')
@@ -213,12 +214,33 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     }, token='access_token')
     # step 4: get Cart
     _resp4 = ctx.api.cart.list(token='access_token')
+    # assertion: cart item shows fee breakdown — faceValue 5, ticketFees 3.04, subtotal 8.04
+    expect(_resp4).json('$.data.items[0].merchantId').equals('02e0c1e6-89b1-4b36-9e57-daa112331d80')
+    expect(_resp4).json('$.data.items[0].showFeesBreakdown').equals(True)
+    expect(_resp4).json('$.data.items[0].faceValue').close_to(5)
+    expect(_resp4).json('$.data.items[0].ticketFees').close_to(3.04)
+    expect(_resp4).json('$.data.items[0].subtotal').close_to(8.04)
     # step 5: create Checkout
     _resp5 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
     }, token='access_token')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp5, '$.data.orderId')
+    # assertion: checkout lineItems carry fee breakdown
+    expect(_resp5).json('$.data.lineItems[0].promoterVariantId').equals('699c557f-bc3e-4e45-8d8d-85ec913f963f')
+    expect(_resp5).json('$.data.lineItems[0].showFeesBreakdown').equals(True)
+    expect(_resp5).json('$.data.lineItems[0].faceValue').close_to(5)
+    expect(_resp5).json('$.data.lineItems[0].ticketFees').close_to(3.04)
+    expect(_resp5).json('$.data.lineItems[0].subtotalTicketFees').close_to(3.04)
+    expect(_resp5).json('$.data.lineItems[0].lineItemPrice').close_to(8.04)
+    expect(_resp5).json('$.data.lineItems[0].lineItemSubtotal').close_to(8.04)
+    # assertion: feesBreakdown amounts (Transaction fees/Taxes/fee1/fee2)
+    _j5f = _resp5.json() if _resp5.headers.get('content-type','').startswith('application/json') else {}
+    _fb5 = {_f.get('title'): _f.get('amount') for _f in (_j5f.get('data',{}).get('feesBreakdown') or [])}
+    assert abs((_fb5.get('Transaction fees') or 0) - 1.8) <= 0.01, f"step5 Transaction fees: {_fb5.get('Transaction fees')}"
+    assert abs((_fb5.get('Taxes') or 0) - 0.16) <= 0.01, f"step5 Taxes: {_fb5.get('Taxes')}"
+    assert abs((_fb5.get('fee1') or 0) - 0.08) <= 0.01, f"step5 fee1: {_fb5.get('fee1')}"
+    assert abs((_fb5.get('fee2') or 0) - 1) <= 0.01, f"step5 fee2: {_fb5.get('fee2')}"
     # step 6: update Cart
     _resp6 = ctx.api.cart.update(body={
         "items": [
@@ -285,6 +307,14 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     _resp10 = ctx.api.orders.checkout(body={
         "subdomainVanityUrl": "",
     }, token='access_token')
+    # assertion: second event checkout — showFeesBreakdown=true, different fee amounts
+    expect(_resp10).json('$.data.showFeesBreakdown').equals(True)
+    _j10f = _resp10.json() if _resp10.headers.get('content-type','').startswith('application/json') else {}
+    _fb10 = {_f.get('title'): _f.get('amount') for _f in (_j10f.get('data',{}).get('feesBreakdown') or [])}
+    assert abs((_fb10.get('Transaction fees') or 0) - 3.49) <= 0.01, f"step10 Transaction fees: {_fb10.get('Transaction fees')}"
+    assert abs((_fb10.get('Taxes') or 0) - 0.3) <= 0.01, f"step10 Taxes: {_fb10.get('Taxes')}"
+    assert abs((_fb10.get('fee1') or 0) - 0.22) <= 0.01, f"step10 fee1: {_fb10.get('fee1')}"
+    assert abs((_fb10.get('fee2') or 0) - 1) <= 0.01, f"step10 fee2: {_fb10.get('fee2')}"
     # step 11: delete cart
     _resp11 = ctx.api.cart.delete(token='access_token')
     # step 12: express - resell post
@@ -311,6 +341,21 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     }, token='access_token')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp12, '$.data.orderId')
+    # assertion: express resell lineItems carry fee breakdown
+    expect(_resp12).json('$.data.lineItems[0].promoterProductId').equals('5fea319b-a3bf-4c4e-80c0-388cc8f83c97')
+    expect(_resp12).json('$.data.lineItems[0].showFeesBreakdown').equals(True)
+    expect(_resp12).json('$.data.lineItems[0].faceValue').close_to(5)
+    expect(_resp12).json('$.data.lineItems[0].ticketFees').close_to(3.04)
+    expect(_resp12).json('$.data.lineItems[0].subtotalTicketFees').close_to(3.04)
+    expect(_resp12).json('$.data.lineItems[0].lineItemPrice').close_to(8.04)
+    expect(_resp12).json('$.data.lineItems[0].lineItemSubtotal').close_to(8.04)
+    # assertion: express resell feesBreakdown amounts
+    _j12f = _resp12.json() if _resp12.headers.get('content-type','').startswith('application/json') else {}
+    _fb12 = {_f.get('title'): _f.get('amount') for _f in (_j12f.get('data',{}).get('feesBreakdown') or [])}
+    assert abs((_fb12.get('Transaction fees') or 0) - 1.8) <= 0.01, f"step12 Transaction fees: {_fb12.get('Transaction fees')}"
+    assert abs((_fb12.get('Taxes') or 0) - 0.16) <= 0.01, f"step12 Taxes: {_fb12.get('Taxes')}"
+    assert abs((_fb12.get('fee1') or 0) - 0.08) <= 0.01, f"step12 fee1: {_fb12.get('fee1')}"
+    assert abs((_fb12.get('fee2') or 0) - 1) <= 0.01, f"step12 fee2: {_fb12.get('fee2')}"
     # step 13: update Cart
     _resp13 = ctx.api.cart.update(body={
         "items": [
@@ -337,6 +382,12 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
     }, token='access_token')
     # step 14: get Cart
     _resp14 = ctx.api.cart.list(token='access_token')
+    # assertion: cart item shows fee breakdown after express resell
+    expect(_resp14).json('$.data.items[0].merchantId').equals('02e0c1e6-89b1-4b36-9e57-daa112331d80')
+    expect(_resp14).json('$.data.items[0].showFeesBreakdown').equals(True)
+    expect(_resp14).json('$.data.items[0].faceValue').close_to(5)
+    expect(_resp14).json('$.data.items[0].ticketFees').close_to(3.04)
+    expect(_resp14).json('$.data.items[0].subtotal').close_to(8.04)
     # step 15: apply promotion
     _resp15 = ctx.api.orders.update_promotions(body={
         "postIdForFilter": "11bdca5a-bdd4-409c-811b-5e2e2cfcf90f",
@@ -349,3 +400,20 @@ def test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdow
         },
         "applicableCode": "autofee10",
     }, token='access_token')
+    # assertion: apply promotion lineItems — coupon discount applied (autofee10 = 10% off)
+    expect(_resp15).json('$.data.lineItems[0].promoterProductId').equals('5fea319b-a3bf-4c4e-80c0-388cc8f83c97')
+    expect(_resp15).json('$.data.lineItems[0].showFeesBreakdown').equals(True)
+    expect(_resp15).json('$.data.lineItems[0].faceValue').close_to(5)
+    expect(_resp15).json('$.data.lineItems[0].ticketFees').close_to(3.04)
+    expect(_resp15).json('$.data.lineItems[0].subtotalTicketFees').close_to(2.93)
+    expect(_resp15).json('$.data.lineItems[0].lineItemPrice').close_to(8.04)
+    expect(_resp15).json('$.data.lineItems[0].lineItemSubtotal').close_to(7.24)
+    expect(_resp15).json('$.data.lineItems[0].couponDiscount').close_to(0.8)
+    expect(_resp15).json('$.data.lineItems[0].unitDiscount').close_to(0.8)
+    # assertion: apply promotion feesBreakdown amounts
+    _j15f = _resp15.json() if _resp15.headers.get('content-type','').startswith('application/json') else {}
+    _fb15 = {_f.get('title'): _f.get('amount') for _f in (_j15f.get('data',{}).get('feesBreakdown') or [])}
+    assert abs((_fb15.get('Transaction fees') or 0) - 1.8) <= 0.01, f"step15 Transaction fees: {_fb15.get('Transaction fees')}"
+    assert abs((_fb15.get('Taxes') or 0) - 0.16) <= 0.01, f"step15 Taxes: {_fb15.get('Taxes')}"
+    assert abs((_fb15.get('fee1') or 0) - 0.08) <= 0.01, f"step15 fee1: {_fb15.get('fee1')}"
+    assert abs((_fb15.get('fee2') or 0) - 1) <= 0.01, f"step15 fee2: {_fb15.get('fee2')}"

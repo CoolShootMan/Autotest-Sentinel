@@ -86,7 +86,7 @@ def test__5942267__Linda_T3100_Verify_the_order_is_group_by_date_on_sales_page(c
     vars['timeZoneAsia'] = 'Asia/Shanghai'
     vars['merchant_id'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['consumer_id'] = '7bc6ed8d-51de-446b-8c64-fd321cf1a45d'
-    # step 1: c0054035-df18-4100-a877-b2a95ec9952c
+    # step 1: PUT Set timezone as "Asia/Shanghai"
     # === pre-script（由 Apifox customScript 翻译）===
     vars['timeZoneAsia'] = "Asia/Shanghai"
     vars['merchant_id'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
@@ -155,7 +155,7 @@ ORDER BY
     # assertion 2.assertion: responseJson equal {{sales}}
     expect(_resp2).json('$.data.totalCount').equals(ctx.render_text('{{sales}}'))
     vars['timeZoneAsiaAmerica'] = 'America/Los_Angeles'
-    # step 3: 1a52d6ee-7ed2-4f81-8048-4acbb8211a10
+    # step 3: PUT Set timezone as "America/Los_Angeles"
     # === pre-script（由 Apifox customScript 翻译）===
     vars['timeZoneAsiaAmerica'] = "America/Los_Angeles"
 

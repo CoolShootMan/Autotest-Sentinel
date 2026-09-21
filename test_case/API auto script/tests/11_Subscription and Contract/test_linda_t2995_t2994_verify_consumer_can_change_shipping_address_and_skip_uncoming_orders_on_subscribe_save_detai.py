@@ -144,7 +144,7 @@ def test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_
     _arr = _get_path(_j, ["data", "items"]) or []
     if _arr:
         vars['newAddressId'] = random.choice(_arr).get('id')
-    # step 2: 08c30916-bf6e-4f92-b77f-dd836d485c78
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

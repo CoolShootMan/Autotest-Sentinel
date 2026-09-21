@@ -67,7 +67,7 @@ def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_dis
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: 34e3dfd9-5db3-48bf-b01e-d440c8be34a6
+    # step 1: POST /auth/guest-login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
     })
@@ -117,5 +117,5 @@ def test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_dis
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp2, '$.data.orderId')
     # order_id 已由上方 extractor 提取
-    # step 3: 2c078bbd-0029-462f-9f74-ef3cfb498c8e
+    # step 3: POST Check the free shipping
     _resp3 = ctx.api.orders.checkout(body={}, app_headers=True, params={'fbAdParams[eventID\\]': 'b960373e-2266-40ec-a22f-0831aef7593e'}, token='access_token')

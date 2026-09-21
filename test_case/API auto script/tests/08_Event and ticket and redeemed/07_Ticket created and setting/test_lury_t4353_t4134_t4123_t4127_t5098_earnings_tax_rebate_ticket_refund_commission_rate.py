@@ -543,6 +543,24 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     """Apifox case #7581016: Lury_T4353_T4134_T4123_T4127_T5098_Earnings_tax_Rebate_Ticket_refund_commission_"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
+    # pre-script step1: 复算金额（unit_price=13.1, quantity=2, commission_rate=0.25）
+    import math as _m
+    def _js_round(x): return _m.floor(x*100 + 0.5 + 1e-9) / 100
+    def _js_floor(x): return _m.floor(x*100) / 100
+    _up = 13.1
+    _q = 2
+    _cr = 0.25
+    vars['unit_price'] = _up
+    vars['order_total'] = round(_up * _q, 2)
+    vars['merchant_earnings'] = _js_round(_up * _q * _cr)
+    vars['m1_earnings'] = round(_up * _q - vars['merchant_earnings'], 2)
+    vars['m1_rebate'] = _js_floor((0.6 + _up * 0.065) * _q)
+    vars['tax_total'] = _js_floor(_up * _q * 0.06)
+    vars['tf_item'] = _js_floor((1 + _up * 0.1) * _q)
+    vars['merchant_transaction_fee'] = _js_round(_cr * vars['tf_item'])
+    vars['merchant_tax'] = _js_round(_cr * vars['tax_total'])
+    vars['m1_transaction_fee'] = round(vars['tf_item'] - vars['merchant_transaction_fee'], 2)
+    vars['m1_tax'] = round(vars['tax_total'] - vars['merchant_tax'], 2)
     # step 1: Consumer-login
     _resp1 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -608,8 +626,42 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion 4: create Order — status 201, totalTopay = order_total
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').close_to(vars['order_total'])
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
+    # assertion 5: consumer order detail — totals + lineItem 'ticket - automation'
+    expect(_resp5).status().is_(200)
+    expect(_resp5).json('$.data.totalLineItemPrice').close_to(vars['order_total'])
+    expect(_resp5).json('$.data.totalToPay').close_to(vars['order_total'])
+    expect(_resp5).json('$.data.totalPaid').close_to(vars['order_total'])
+    expect(_resp5).json('$.data.totalTax').equals(0)
+    expect(_resp5).json('$.data.totalLineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp5).json('$.data.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp5).json('$.data.totalTicketFees').close_to(6.19)
+    _li5 = '$.data.lineItems[?(@.title=="ticket - automation")]'
+    expect(_resp5).json(_li5 + '.quantity').equals(2)
+    expect(_resp5).json(_li5 + '.unitPrice').close_to(vars['unit_price'])
+    expect(_resp5).json(_li5 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp5).json(_li5 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp5).json(_li5 + '.fulfillmentCount').equals(2)
+    expect(_resp5).json(_li5 + '.couponDiscount').equals(0)
+    expect(_resp5).json(_li5 + '.listingType').equals("TICKET")
+    expect(_resp5).json(_li5 + '.shippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.additionalShippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.lineItemRefunded').equals(0)
+    expect(_resp5).json(_li5 + '.lineItemDiscount').equals(0)
+    expect(_resp5).json(_li5 + '.discount').equals(0)
+    expect(_resp5).json(_li5 + '.realShippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.autoFulfill').equals(True)
+    expect(_resp5).json(_li5 + '.productTaxEnable').equals(True)
+    expect(_resp5).json(_li5 + '.ticketFees').close_to(6.19)
+    expect(_resp5).json(_li5 + '.ticketFeesAfterRefund').close_to(6.19)
+    expect(_resp5).json(_li5 + '.deliveryMethod').equals("QR_CODE")
+    expect(_resp5).json(_li5 + '.thirdPartyDeliveryMessage').equals(None)
+    expect(_resp5).json(_li5 + '.isMultipleDaysPassEnabled').equals(False)
+    expect(_resp5).json(_li5 + '.multipleDaysPass').equals(None)
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -628,6 +680,54 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     _j: dict[str, Any] = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     vars['item_unit_id_list'] = [_u.get('id') for _p in _arr for _u in _p.get('orderLineItemUnits') or []]
+    _iul = list(vars.get('item_unit_id_list') or [])
+    vars['first_item_unit_id'] = _iul[0] if len(_iul) > 0 else None
+    vars['second_item_unit_id'] = _iul[1] if len(_iul) > 1 else None
+    # assertion 7: M1 order detail v2 — initial earnings/rebate/tax
+    expect(_resp7).status().is_(200)
+    try:
+        vars['m1_total_payout'] = round(
+            float(vars['m1_earnings']) + float(vars['tax_total'])
+            - float(vars['m1_transaction_fee']) - float(vars['m1_tax'])
+            + float(vars['m1_rebate']), 2)
+    except Exception:
+        vars['m1_total_payout'] = None
+    expect(_resp7).json('$.data.totalCommissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp7).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp7).json('$.data.totalCommissionNet').close_to(vars['m1_earnings'])
+    expect(_resp7).json('$.data.transactionFee').close_to(round(float(vars['m1_transaction_fee']) + float(vars['m1_tax']), 2))
+    expect(_resp7).json('$.data.transactionFeeRebate').close_to(vars['m1_rebate'])
+    expect(_resp7).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp7).json('$.data.totalPayoutToPay').close_to(vars['m1_total_payout'])
+    expect(_resp7).json('$.data.totalShippingSubtotal').equals(0)
+    expect(_resp7).json('$.data.totalShippingRefunded').equals(0)
+    expect(_resp7).json('$.data.totalTaxAmount').close_to(vars['tax_total'])
+    expect(_resp7).json('$.data.totalTaxAmountRefunded').equals(0)
+    expect(_resp7).json('$.data.totalShippingNet').equals(0)
+    expect(_resp7).json('$.data.totalTaxAmountNet').close_to(vars['tax_total'])
+    _li7 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp7).json(_li7 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp7).json(_li7 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp7).json(_li7 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.couponDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.subscriptionDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.commissionRate').equals(0)
+    expect(_resp7).json(_li7 + '.commissionGross').close_to(vars['order_total'])
+    expect(_resp7).json(_li7 + '.commissionDeduction').close_to(vars['merchant_earnings'])
+    expect(_resp7).json(_li7 + '.costPrice').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp7).json(_li7 + '.downlineCommissionRate').equals(25)
+    expect(_resp7).json(_li7 + '.commissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp7).json(_li7 + '.commissionRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.commissionNet').close_to(vars['m1_earnings'])
+    expect(_resp7).json(_li7 + '.quantity').equals(2)
+    expect(_resp7).json(_li7 + '.quantityFulfilled').equals(2)
+    expect(_resp7).json(_li7 + '.quantityRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp7).json(_li7 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp7).json(_li7 + '.uplineSaleType').equals("POST_WHOLESALE")
     # step 8: Login - merchant
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -639,6 +739,46 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     vars['merchantOrderId'] = 'curatorOrderId'
     # step 10: get merhcant order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    # assertion 10: merchant order detail v2 — initial earnings
+    expect(_resp10).status().is_(200)
+    try:
+        vars['mch_total_payout'] = round(
+            float(vars['merchant_earnings']) - float(vars['merchant_tax'])
+            - float(vars['merchant_transaction_fee']), 2)
+        vars['mch_total_tf'] = round(float(vars['merchant_tax']) + float(vars['merchant_transaction_fee']), 2)
+    except Exception:
+        vars['mch_total_payout'] = None
+        vars['mch_total_tf'] = None
+    expect(_resp10).json('$.data.totalCommissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp10).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp10).json('$.data.totalCommissionNet').close_to(vars['merchant_earnings'])
+    expect(_resp10).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp10).json('$.data.totalPayoutToPay').close_to(vars['mch_total_payout'])
+    expect(_resp10).json('$.data.transactionFee').close_to(vars['mch_total_tf'])
+    expect(_resp10).json('$.data.transactionFeeRebate').equals(0)
+    _li10 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp10).json(_li10 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp10).json(_li10 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp10).json(_li10 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.couponDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.subscriptionDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.lineItemDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.commissionRate').equals(25)
+    expect(_resp10).json(_li10 + '.commissionGross').close_to(vars['merchant_earnings'])
+    expect(_resp10).json(_li10 + '.commissionDeduction').equals(0)
+    expect(_resp10).json(_li10 + '.costPrice').close_to(vars['m1_earnings'])
+    expect(_resp10).json(_li10 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp10).json(_li10 + '.downlineCommissionRate').equals(0)
+    expect(_resp10).json(_li10 + '.commissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp10).json(_li10 + '.commissionRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.commissionNet').close_to(vars['merchant_earnings'])
+    expect(_resp10).json(_li10 + '.quantity').equals(2)
+    expect(_resp10).json(_li10 + '.quantityFulfilled').equals(2)
+    expect(_resp10).json(_li10 + '.quantityRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.lineItemRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp10).json(_li10 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp10).json(_li10 + '.uplineSaleType').equals("POST_COMMISSION")
     # step 11: Partner partial refund 1 ticket
     _resp11 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -654,6 +794,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
         "tipLines": [],
         "note": "Automation test",
     }, token='merchant_access_token')
+    expect(_resp11).status().is_(201)
     # step 12: Login-M1
     _resp12 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -662,6 +803,57 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     ctx.extract('M1_access_token', _resp12, '$.data.token')
     # step 13: get M1 order detail v2
     _resp13 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
+    # assertion 13: M1 order detail v2 — after partial refund (1 of 2)
+    expect(_resp13).status().is_(200)
+    try:
+        _half_m1 = float(vars['m1_earnings']) / 2
+        vars['m1_tax_refunded'] = round(float(vars['tax_total']) / 2, 2)
+        vars['m1_tf_partial'] = round(float(vars['m1_transaction_fee']) + float(vars['m1_tax']) / 2, 2)
+        vars['m1_payout_partial'] = round(
+            float(vars['m1_earnings']) - _half_m1 + float(vars['tax_total'])
+            - float(vars['m1_tax_refunded']) - float(vars['m1_transaction_fee'])
+            - float(vars['m1_tax']) / 2 + float(vars['m1_rebate']), 2)
+        vars['m1_net_partial'] = round(float(vars['m1_earnings']) - _half_m1, 2)
+    except Exception:
+        _half_m1 = None
+        vars['m1_payout_partial'] = None
+        vars['m1_net_partial'] = None
+    expect(_resp13).json('$.data.totalCommissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp13).json('$.data.totalCommissionRefunded').close_to(_half_m1, tol=0.02)
+    expect(_resp13).json('$.data.totalCommissionNet').close_to(vars['m1_net_partial'])
+    expect(_resp13).json('$.data.transactionFee').close_to(vars['m1_tf_partial'])
+    expect(_resp13).json('$.data.transactionFeeRebate').close_to(vars['m1_rebate'])
+    expect(_resp13).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp13).json('$.data.totalPayoutToPay').close_to(vars['m1_payout_partial'])
+    expect(_resp13).json('$.data.totalShippingSubtotal').equals(0)
+    expect(_resp13).json('$.data.totalShippingRefunded').equals(0)
+    expect(_resp13).json('$.data.totalTaxAmount').close_to(vars['tax_total'])
+    expect(_resp13).json('$.data.totalTaxAmountRefunded').close_to(vars['m1_tax_refunded'])
+    expect(_resp13).json('$.data.totalShippingNet').equals(0)
+    expect(_resp13).json('$.data.totalTaxAmountNet').close_to(round(float(vars['tax_total']) - float(vars['m1_tax_refunded']), 2))
+    _li13 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp13).json(_li13 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp13).json(_li13 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp13).json(_li13 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp13).json(_li13 + '.couponDiscount').equals(0)
+    expect(_resp13).json(_li13 + '.subscriptionDiscount').equals(0)
+    expect(_resp13).json(_li13 + '.lineItemDiscount').equals(0)
+    expect(_resp13).json(_li13 + '.commissionRate').equals(0)
+    expect(_resp13).json(_li13 + '.commissionGross').close_to(vars['order_total'])
+    expect(_resp13).json(_li13 + '.commissionDeduction').close_to(vars['merchant_earnings'])
+    expect(_resp13).json(_li13 + '.costPrice').equals(0)
+    expect(_resp13).json(_li13 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp13).json(_li13 + '.downlineCommissionRate').equals(25)
+    expect(_resp13).json(_li13 + '.commissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp13).json(_li13 + '.commissionRefunded').close_to(_half_m1, tol=0.02)
+    expect(_resp13).json(_li13 + '.commissionNet').close_to(vars['m1_net_partial'])
+    expect(_resp13).json(_li13 + '.quantity').equals(2)
+    expect(_resp13).json(_li13 + '.quantityFulfilled').equals(2)
+    expect(_resp13).json(_li13 + '.quantityRefunded').equals(1)
+    expect(_resp13).json(_li13 + '.lineItemRefunded').close_to(vars['unit_price'])
+    expect(_resp13).json(_li13 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp13).json(_li13 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp13).json(_li13 + '.uplineSaleType').equals("POST_WHOLESALE")
     # step 14: Login - merchant
     _resp14 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -670,6 +862,50 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     ctx.extract('merchant_access_token', _resp14, '$.data.token')
     # step 15: get merhcant order detail v2
     _resp15 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    # assertion 15: merchant order detail v2 — after partial refund
+    expect(_resp15).status().is_(200)
+    try:
+        _half_mch = float(vars['merchant_earnings']) / 2
+        vars['mch_refunded_tax'] = round(float(vars['merchant_tax']) / 2, 2)
+        vars['mch_tf_partial'] = round(float(vars['merchant_tax']) + float(vars['merchant_transaction_fee']) - float(vars['mch_refunded_tax']), 2)
+        vars['mch_payout_partial'] = round(
+            float(vars['merchant_earnings']) - _half_mch - float(vars['merchant_tax'])
+            - float(vars['merchant_transaction_fee']) + float(vars['mch_refunded_tax']), 2)
+        vars['mch_net_partial'] = round(float(vars['merchant_earnings']) - _half_mch, 2)
+    except Exception:
+        _half_mch = None
+        vars['mch_payout_partial'] = None
+        vars['mch_net_partial'] = None
+    expect(_resp15).json('$.data.totalCommissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp15).json('$.data.totalCommissionRefunded').close_to(_half_mch, tol=0.02)
+    expect(_resp15).json('$.data.totalCommissionNet').close_to(vars['mch_net_partial'])
+    expect(_resp15).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp15).json('$.data.totalPayoutToPay').close_to(vars['mch_payout_partial'])
+    expect(_resp15).json('$.data.transactionFee').close_to(vars['mch_tf_partial'])
+    expect(_resp15).json('$.data.transactionFeeRebate').equals(0)
+    _li15 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp15).json(_li15 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp15).json(_li15 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp15).json(_li15 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp15).json(_li15 + '.couponDiscount').equals(0)
+    expect(_resp15).json(_li15 + '.subscriptionDiscount').equals(0)
+    expect(_resp15).json(_li15 + '.lineItemDiscount').equals(0)
+    expect(_resp15).json(_li15 + '.commissionRate').equals(25)
+    expect(_resp15).json(_li15 + '.commissionGross').close_to(vars['merchant_earnings'])
+    expect(_resp15).json(_li15 + '.commissionDeduction').equals(0)
+    expect(_resp15).json(_li15 + '.costPrice').close_to(vars['m1_earnings'])
+    expect(_resp15).json(_li15 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp15).json(_li15 + '.downlineCommissionRate').equals(0)
+    expect(_resp15).json(_li15 + '.commissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp15).json(_li15 + '.commissionRefunded').close_to(_half_mch, tol=0.02)
+    expect(_resp15).json(_li15 + '.commissionNet').close_to(vars['mch_net_partial'])
+    expect(_resp15).json(_li15 + '.quantity').equals(2)
+    expect(_resp15).json(_li15 + '.quantityFulfilled').equals(2)
+    expect(_resp15).json(_li15 + '.quantityRefunded').equals(1)
+    expect(_resp15).json(_li15 + '.lineItemRefunded').close_to(vars['unit_price'])
+    expect(_resp15).json(_li15 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp15).json(_li15 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp15).json(_li15 + '.uplineSaleType').equals("POST_COMMISSION")
     # step 16: Partner full refund order on sale details page
     _resp16 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -693,6 +929,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
         ],
         "note": "Automation full refund",
     }, token='merchant_access_token')
+    expect(_resp16).status().is_(201)
     # step 17: Login-M1
     _resp17 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -701,6 +938,50 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     ctx.extract('M1_access_token', _resp17, '$.data.token')
     # step 18: get M1 order detail v2
     _resp18 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
+    # assertion 18: M1 order detail v2 — after full refund
+    expect(_resp18).status().is_(200)
+    try:
+        vars['m1_payout_full'] = round(
+            0 - float(vars['m1_transaction_fee']) + float(vars['m1_rebate'])
+            - float(vars['merchant_transaction_fee']), 2)
+    except Exception:
+        vars['m1_payout_full'] = None
+    expect(_resp18).json('$.data.totalCommissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp18).json('$.data.totalCommissionRefunded').close_to(vars['m1_earnings'])
+    expect(_resp18).json('$.data.totalCommissionNet').equals(0)
+    expect(_resp18).json('$.data.transactionFee').close_to(round(float(vars['m1_transaction_fee']) + float(vars['merchant_transaction_fee']), 2))
+    expect(_resp18).json('$.data.transactionFeeRebate').close_to(vars['m1_rebate'])
+    expect(_resp18).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp18).json('$.data.totalPayoutToPay').close_to(vars['m1_payout_full'])
+    expect(_resp18).json('$.data.totalShippingSubtotal').equals(0)
+    expect(_resp18).json('$.data.totalShippingRefunded').equals(0)
+    expect(_resp18).json('$.data.totalTaxAmount').close_to(vars['tax_total'])
+    expect(_resp18).json('$.data.totalTaxAmountRefunded').close_to(vars['tax_total'])
+    expect(_resp18).json('$.data.totalShippingNet').equals(0)
+    expect(_resp18).json('$.data.totalTaxAmountNet').equals(0)
+    _li18 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp18).json(_li18 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp18).json(_li18 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp18).json(_li18 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp18).json(_li18 + '.couponDiscount').equals(0)
+    expect(_resp18).json(_li18 + '.subscriptionDiscount').equals(0)
+    expect(_resp18).json(_li18 + '.lineItemDiscount').equals(0)
+    expect(_resp18).json(_li18 + '.commissionRate').equals(0)
+    expect(_resp18).json(_li18 + '.commissionGross').close_to(vars['order_total'])
+    expect(_resp18).json(_li18 + '.commissionDeduction').close_to(vars['merchant_earnings'])
+    expect(_resp18).json(_li18 + '.costPrice').equals(0)
+    expect(_resp18).json(_li18 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp18).json(_li18 + '.downlineCommissionRate').equals(25)
+    expect(_resp18).json(_li18 + '.commissionSubtotal').close_to(vars['m1_earnings'])
+    expect(_resp18).json(_li18 + '.commissionRefunded').close_to(vars['m1_earnings'])
+    expect(_resp18).json(_li18 + '.commissionNet').equals(0)
+    expect(_resp18).json(_li18 + '.quantity').equals(2)
+    expect(_resp18).json(_li18 + '.quantityFulfilled').equals(2)
+    expect(_resp18).json(_li18 + '.quantityRefunded').equals(2)
+    expect(_resp18).json(_li18 + '.lineItemRefunded').close_to(vars['order_total'])
+    expect(_resp18).json(_li18 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp18).json(_li18 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp18).json(_li18 + '.uplineSaleType').equals("POST_WHOLESALE")
     # step 19: Login - merchant
     _resp19 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -709,3 +990,35 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     ctx.extract('merchant_access_token', _resp19, '$.data.token')
     # step 20: get merhcant order detail v2
     _resp20 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    # assertion 20: merchant order detail v2 — after full refund
+    expect(_resp20).status().is_(200)
+    expect(_resp20).json('$.data.totalCommissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp20).json('$.data.totalCommissionRefunded').close_to(vars['merchant_earnings'])
+    expect(_resp20).json('$.data.totalCommissionNet').equals(0)
+    expect(_resp20).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp20).json('$.data.totalPayoutToPay').equals(0)
+    expect(_resp20).json('$.data.transactionFee').equals(0)
+    expect(_resp20).json('$.data.transactionFeeRebate').equals(0)
+    _li20 = '$.data.lineItems[?(@.variantInfo.id=="709c0762-dace-4d22-ab34-18c226a8f003")]'
+    expect(_resp20).json(_li20 + '.lineItemPrice').close_to(vars['order_total'])
+    expect(_resp20).json(_li20 + '.retailPrice').close_to(vars['order_total'])
+    expect(_resp20).json(_li20 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp20).json(_li20 + '.couponDiscount').equals(0)
+    expect(_resp20).json(_li20 + '.subscriptionDiscount').equals(0)
+    expect(_resp20).json(_li20 + '.lineItemDiscount').equals(0)
+    expect(_resp20).json(_li20 + '.commissionRate').equals(25)
+    expect(_resp20).json(_li20 + '.commissionGross').close_to(vars['merchant_earnings'])
+    expect(_resp20).json(_li20 + '.commissionDeduction').equals(0)
+    expect(_resp20).json(_li20 + '.costPrice').close_to(vars['m1_earnings'])
+    expect(_resp20).json(_li20 + '.lineItemSubtotal').close_to(vars['order_total'])
+    expect(_resp20).json(_li20 + '.downlineCommissionRate').equals(0)
+    expect(_resp20).json(_li20 + '.commissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp20).json(_li20 + '.commissionRefunded').close_to(vars['merchant_earnings'])
+    expect(_resp20).json(_li20 + '.commissionNet').equals(0)
+    expect(_resp20).json(_li20 + '.quantity').equals(2)
+    expect(_resp20).json(_li20 + '.quantityFulfilled').equals(2)
+    expect(_resp20).json(_li20 + '.quantityRefunded').equals(2)
+    expect(_resp20).json(_li20 + '.lineItemRefunded').close_to(vars['order_total'])
+    expect(_resp20).json(_li20 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp20).json(_li20 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp20).json(_li20 + '.uplineSaleType').equals("POST_COMMISSION")

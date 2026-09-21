@@ -316,14 +316,14 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     """Apifox case #7802190: Linda_T4543_Verify_the_settings_Enable_multi_day_pass_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: dece4880-ddc9-4ca0-8561-c369469fb798
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: d5306c79-bc8c-4be8-bcec-9b3d520ced47
+    # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # extract event by title "event-for-API-testing" (mirrors Apifox customScript)
     try:
@@ -348,7 +348,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         vars['multipleDaysPass_days'] = json.dumps(_days)
     except Exception as e:
         pytest.fail(f"step2 extract event: {e}")
-    # step 3: a162f41c-de75-439f-ba5f-5022f8dbb567
+    # step 3: GET Partner Get the Event Post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     try:
         _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
@@ -358,14 +358,14 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         vars['postId'] = _post['id']
     except Exception as e:
         pytest.fail(f"step3 extract post: {e}")
-    # step 4: 806f3d0e-23bc-4980-933f-70d2cb989003
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     try:
         _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['catalog_id'] = (_j4.get('data') or {}).get('id')
     except Exception:
         pass
-    # step 5: 3259d9bd-b11c-4e6c-b6e2-7d46b9409108
+    # step 5: POST create ticket with turn on Enable multi-day pass
     _resp5 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',
     'shippingType': 'NO_SHIPPING_REQUIRED',
@@ -458,7 +458,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     'isExpirationEnabled': False,
 }, token='yuxiao999_token')
     ctx.extract('productId', _resp5, '$.data.id')
-    # step 7: 978083e9-c8fa-43a6-98fb-69cdf3d1b8f5
+    # step 7: POST new ticket show in post
     _resp7 = ctx.api.events.v2_show_in_post(event_id='{{event_id}}', body={
         "productIds": [
             "{{productId}}",
@@ -472,7 +472,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     }, token='yuxiao999_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
-    # step 8: cb7226e4-64d6-4967-8caf-10aacfcfbbaa
+    # step 8: GET Catch the promoterProductvariantId
     _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
     # extract promoterProductId (displayVariantId) by product title (mirrors Apifox customScript)
     try:
@@ -490,7 +490,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp9, '$.data.token')
-    # step 10: 75f96309-d89c-4691-90ca-f0b52e3df23b
+    # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')

@@ -142,6 +142,7 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp1).status().is_(201)
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
@@ -168,6 +169,9 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
             "eventSourceUrl": "https://release.pear.us/mcc/post/lury-automation-test-check-in-expiration",
         },
     }, token='consumer_access_token')
+    # assertion: expired ticket buy now returns 400 with expiration message
+    expect(_resp3).status().is_(400)
+    expect(_resp3).json('$.message').contains("This ticket has expired")
     # step 4: buy now before check-in expiration
     _resp4 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "885eaa07-e64b-4eff-90aa-d5b1582034e9",
@@ -204,6 +208,11 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
     ctx.extract('orderNumber', _resp4, '$.data.orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp4, '$.data.orderId')
+    # assertion: buy now before expiration — line item has correct variant and expiration
+    expect(_resp4).json('$.data.lineItems[0].promoterVariantId').equals('7cfecd2e-4bda-43e9-a048-1d66f45bc9bd')
+    expect(_resp4).json('$.data.lineItems[0].expirationTime').equals('2048-08-25T05:00:00.000Z')
+    expect(_resp4).json('$.data.lineItems[0].expirationTimeDisplay').equals('2048-08-25 01:00')
+    expect(_resp4).json('$.data.lineItems[0].variant.isAvailable').equals(True)
     # step 5: create Order
     _resp5 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -225,5 +234,17 @@ def test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_o
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion: create order — status 201, totalTopay, confirmation lineItems carry expiration
+    expect(_resp5).status().is_(201)
+    expect(_resp5).json('$.data.totalTopay').close_to(8.23)
+    expect(_resp5).json('$.data.confirmation.lineItems[0].merchantProductId').equals('f136d88b-2c36-43d5-af1e-79b18bbde88e')
+    expect(_resp5).json('$.data.confirmation.lineItems[0].expirationTime').equals('2048-08-25T05:00:00.000Z')
+    expect(_resp5).json('$.data.confirmation.lineItems[0].expirationTimeDisplay').equals('2048-08-25 01:00')
     # step 6: get consumer order detail
     _resp6 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
+    # assertion: consumer order detail — status 200, totalLineItemPrice, lineItems carry expiration
+    expect(_resp6).status().is_(200)
+    expect(_resp6).json('$.data.totalLineItemPrice').close_to(8.23)
+    expect(_resp6).json('$.data.lineItems[0].merchantProductId').equals('f136d88b-2c36-43d5-af1e-79b18bbde88e')
+    expect(_resp6).json('$.data.lineItems[0].expirationTime').equals('2048-08-25T05:00:00.000Z')
+    expect(_resp6).json('$.data.lineItems[0].expirationTimeDisplay').equals('2048-08-25 01:00')

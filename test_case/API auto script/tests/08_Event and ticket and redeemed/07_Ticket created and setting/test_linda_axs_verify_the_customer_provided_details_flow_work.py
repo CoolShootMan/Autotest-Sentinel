@@ -335,14 +335,14 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     """Apifox case #8706050: Linda_AXS_Verify_the_Customer_provided_details_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: f25b1efc-89d7-45ce-970f-da05a0ac3925
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: 66d5d716-3a02-4b8c-a925-0485796bcb40
+    # step 2: GET Partner Get the Event id and Event title
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # 原 step2 post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
     # 取其 id/title 写入 event_id/event_title。
@@ -351,15 +351,15 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     assert _axs_event, f"step2 事件列表中未找到 platform=AXS 的项目（items={len(_items2)}）"
     ctx.set('event_id', _axs_event.get('id') or '')
     ctx.set('event_title', _axs_event.get('title') or '')
-    # step 3: c10ed67d-5174-4977-9f37-b1a977fddbb2
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
-    # step 4: 3a42a638-1733-468e-8343-378e4a35997f
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
-    # step 5: 335db91f-b619-4cb9-9bf3-799455463f16
+    # step 5: GET Catch the ProductId and promoterProductId
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 step5 post-script: 在 data.relatedProducts 中取首个库存 > 0 的产品，提取
     # title/merchantProductId/promoterProductId/variants[0].*/ticketHubInfo.* 共 9 个变量。
@@ -367,7 +367,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     _prod5 = _pick_first(_rels5, _product_has_stock)
     assert _prod5, f"step5 未找到库存 > 0 的关联产品（relatedProducts={len(_rels5)}）"
     _apply_related_product(ctx, _prod5)
-    # step 6: 7a6d4176-bb6b-499b-9cc7-b7e7ba3ce08b
+    # step 6: PUT Edit ticket with setting the Require customer-provided
     _resp6 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId}}',
     'remote_id': None,
@@ -674,7 +674,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     })
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp8, '$.data.token')
-    # step 9: f76d84f0-f008-4e1d-9681-cb886143e8fc
+    # step 9: DELETE Clean Cart
     _resp9 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 9.assertion: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
@@ -686,7 +686,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     ctx.set('usPhoneNumber',
             '+1' + _random.choice(['202', '312', '415', '650', '212', '310'])
             + str(_random.randint(1000000, 9999999)))
-    # step 10: 25bd242e-da1a-4a23-8754-10ad95bb3bef
+    # step 10: POST checkout express venue map
     _resp10 = ctx.api.orders.checkout_express(body={
         "items": [
             {

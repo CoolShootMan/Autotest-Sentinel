@@ -189,7 +189,7 @@ def test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_qua
     """Apifox case #7898399: Linda_T2601_Verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_lim"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: c60da6cd-574c-4d28-a8f7-09ece9ae6907
+    # step 1: PUT Settting the original post product limit
     _resp1 = ctx.api.posts.curator_update(post_id='{{T2601_post_id}}', body={
     'id': '{{T2601_post_id}}',
     'announcements': [],
@@ -703,7 +703,7 @@ def test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_qua
     vars['access_token'] = (_resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 3: Guest visit and check the product purchase exist limit
     _resp3 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t2601'})
-    # step 4: 5bd8287b-5f33-4544-8b58-f350221a0d55
+    # step 4: GET Check the resale posts has inherit the parent post quantity limit
     _resp4 = ctx.api.posts.curator_edit_by_post_id(post_id='{{T2601_edit_post_id}}', body=None, token='linda06_token')
     # step 5: Guest visit and check the product purchase exist limit
     _resp5 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'qvur6nnf7n', 'urlAlias': 'api-test-t2601'})

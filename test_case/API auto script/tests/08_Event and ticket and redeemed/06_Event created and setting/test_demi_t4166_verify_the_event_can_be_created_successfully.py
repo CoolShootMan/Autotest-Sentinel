@@ -106,7 +106,7 @@ def test_demi_t4166_verify_the_event_can_be_created_successfully(ctx: "Context")
     expect(_resp1).json('$.message').equals('success')
     # extract created event id (orig: pm.environment.set("created_event_id", resJson.data.id))
     ctx.extract('created_event_id', _resp1, '$.data.id')
-    # step 2: 9d87a6e4-0a90-42ed-a88b-7831049d3fdb
+    # step 2: POST Create event next step
     _resp2 = ctx.api.events.v2_ticket_batch_v2(body={
     'poster': {
         'src': 'https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png',
@@ -169,7 +169,7 @@ def test_demi_t4166_verify_the_event_can_be_created_successfully(ctx: "Context")
     expect(_resp2).json('$.message').equals('success')
     # step 3: Check event details
     _resp3 = ctx.api.events.v2_config(token='xuan22_token', params={'pageSize': '30', 'pageNumber': '1'})
-    # step 4: e4581991-2e26-4034-999f-7f05de16bdfd
+    # step 4: DELETE delete the event and recover the data
     _resp4 = ctx.api.events.by_event_id(body=None, token='xuan22_token', path_vars={'event_id': '{{created_event_id}}'})
     # assertion 4.assertion: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')

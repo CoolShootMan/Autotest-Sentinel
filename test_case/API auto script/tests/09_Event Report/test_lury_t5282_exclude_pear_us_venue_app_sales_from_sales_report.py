@@ -70,7 +70,7 @@ ENV_NAME = "Release"
 
 
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
@@ -89,8 +89,53 @@ def test_lury_t5282_exclude_pear_us_venue_app_sales_from_sales_report(ctx: "Cont
     })
     # extractor: M1_access_token = $.data.token
     ctx.extract('M1_access_token', _resp1, '$.data.token')
-    # step 2: 481ed3af-9c3a-454a-81fd-617b35b1102d
+    # step 2: GET Check the event report data correct
     _resp2 = ctx.api.events.v_39014a10_14e7_4cfa_993b_485f5c5485ac_metrics_summary(body=None, token='M1_access_token')
-    # --- assertions: no fake-green (non-4xx/5xx) ---
-    assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
-    assert _resp2.status_code < 400, f"step2 got HTTP {_resp2.status_code}: {_resp2.text[:200]}"
+    # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
+    # step 1: Login-M1
+    expect(_resp1).status().is_(201)
+    # step 2: metrics summary (exclude Pear.Us venue app sales)
+    expect(_resp2).status().is_(200)
+    expect(_resp2).json('$.data.totalNumberOfOrders').equals(1)
+    expect(_resp2).json('$.data.totalPromoterOrders').equals(0)
+    expect(_resp2).json('$.data.totalPromoterOrdersPercentage').equals(0)
+    expect(_resp2).json('$.data.totalItemsSold').equals(2)
+    expect(_resp2).json('$.data.totalTicketSold').equals(2)
+    expect(_resp2).json('$.data.totalMerchSold').equals(0)
+    expect(_resp2).json('$.data.totalItemsRedeemed').equals(2)
+    expect(_resp2).json('$.data.totalRedeemableItems').equals(2)
+    expect(_resp2).json('$.data.promoterTotalItemsRedeemed').equals(0)
+    expect(_resp2).json('$.data.grossSales').close_to(14.77)
+    expect(_resp2).json('$.data.grossSalesBeforeDiscount').close_to(14.77)
+    expect(_resp2).json('$.data.totalDiscount').close_to(0)
+    expect(_resp2).json('$.data.totalRefund').close_to(0)
+    expect(_resp2).json('$.data.totalDisputeFees').close_to(0)
+    expect(_resp2).json('$.data.totalTip').close_to(0)
+    expect(_resp2).json('$.data.totalEarnedTips').close_to(0)
+    expect(_resp2).json('$.data.totalTipTransactionFee').close_to(0)
+    expect(_resp2).json('$.data.promoterGrossSales').close_to(0)
+    expect(_resp2).json('$.data.totalItemsSoldByPromoter').equals(0)
+    expect(_resp2).json('$.data.hasPromoterSales').equals(False)
+    expect(_resp2).json('$.data.totalItemsSoldByStaff').equals(3)
+    expect(_resp2).json('$.data.staffGrossSales').close_to(171.67)
+    expect(_resp2).json('$.data.hasStaffSales').equals(True)
+    expect(_resp2).json('$.data.totalItemsSoldPercentage').equals(0)
+    expect(_resp2).json('$.data.averageOrderValue').close_to(14.77)
+    expect(_resp2).json('$.data.netRevenue').close_to(14.77)
+    expect(_resp2).json('$.data.netTicketRevenue').close_to(14.77)
+    expect(_resp2).json('$.data.netMerchRevenue').close_to(0)
+    expect(_resp2).json('$.data.totalTransactionFee').close_to(4.37)
+    expect(_resp2).json('$.data.totalLineupFee').close_to(0)
+    expect(_resp2).json('$.data.totalRebate').close_to(2.16)
+    expect(_resp2).json('$.data.totalTransactionRebate').close_to(2.16)
+    expect(_resp2).json('$.data.totalAppRebate').close_to(0)
+    expect(_resp2).json('$.data.totalCommissionPaid').close_to(0)
+    expect(_resp2).json('$.data.totalEarningShared').close_to(0)
+    expect(_resp2).json('$.data.totalTax').close_to(0)
+    expect(_resp2).json('$.data.totalTicketTax').close_to(0.89)
+    expect(_resp2).json('$.data.shippingCostReimbursement').close_to(0)
+    expect(_resp2).json('$.data.netEarnings').close_to(13.45)
+    expect(_resp2).json('$.data.netEarningsBeforeEarningsShare').close_to(13.45)
+    expect(_resp2).json('$.data.remainingNetEarnings').close_to(13.45)
+    expect(_resp2).json('$.data.earningsShared').is_empty()
+    expect(_resp2).json('$.data.excludeOnsiteSales').equals(True)

@@ -71,6 +71,7 @@ def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp0).status().is_(201)
     ctx.extract('consumer_access_token', _resp0, '$.data.token')
     # step 1: delete cart
     _resp1 = ctx.api.cart.delete(token='consumer_access_token')
@@ -97,6 +98,9 @@ def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket
             "eventSourceUrl": "https://release.pear.us/mcc/post/lury-automation-test-check-in-expiration",
         },
     }, token='consumer_access_token')
+    # assertion: buy after stop selling — 400 and variant not available
+    expect(_resp2).status().is_(400)
+    expect(_resp2).json('$.message').contains("is not available")
     # step 3: buy now before stop selling
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "885eaa07-e64b-4eff-90aa-d5b1582034e9",
@@ -133,6 +137,9 @@ def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket
     ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp3, '$.data.orderId')
+    # assertion: buy before stop selling — correct variant, isAvailable=true
+    expect(_resp3).json('$.data.lineItems[0].promoterVariantId').equals('9cc2d6b5-fc07-48f0-b3b3-c40e3367f630')
+    expect(_resp3).json('$.data.lineItems[0].variant.isAvailable').equals(True)
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -154,5 +161,13 @@ def test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion: create order — status 201, totalTopay, confirmation merchantProductId
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').close_to(3.53)
+    expect(_resp4).json('$.data.confirmation.lineItems[0].merchantProductId').equals('4b7631fe-6a2a-4f39-b82d-eea9d207e994')
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
+    # assertion: consumer order detail — status 200, totalLineItemPrice, lineItems merchantProductId
+    expect(_resp5).status().is_(200)
+    expect(_resp5).json('$.data.totalLineItemPrice').close_to(3.53)
+    expect(_resp5).json('$.data.lineItems[0].merchantProductId').equals('4b7631fe-6a2a-4f39-b82d-eea9d207e994')

@@ -368,7 +368,7 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     _render = legacy_render(ctx)
     _url = legacy_url(ctx)
     # === Steps ===
-    # step 1: 7ae9cb2b-f41b-4cf6-b709-acd79df3c009
+    # step 1: GET Get the campaign sms and email id
     # Fix: 原逻辑限定 COMPLETED 状态 + 固定第 8 页，环境无 COMPLETED 数据导致空 id。
     # 改为多页拉取合并，按 updatedAt 取最新 Email/SMS 任务（任意状态均可被 duplicate）。
     _emailAll, _smsAll = [], []
@@ -388,14 +388,14 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     _smsAll.sort(key=lambda t: t.get('updatedAt', '') or '', reverse=True)
     vars['emailCompletedId'] = _emailAll[0].get('id', '') if _emailAll else ''
     vars['smsCompletedId'] = _smsAll[0].get('id', '') if _smsAll else ''
-    # step 2: 1f2f2d03-7a5d-4928-ae48-d2e46c39c3a0
+    # step 2: POST duplicate Email ecampagin
     _resp2 = ctx.api.campaigns.duplicate(body={"fromId": "{{emailCompletedId}}"}, token='linda01_token')
     vars['newEmailCampaignId'] = (_resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}).get('data', {}).get('id', '')
     # assertion 2.assertion: responseJson equal DRAFT
     expect(_resp2).json('$.data.status').equals('DRAFT')
     # assertion 2.assertion: responseJson equal NOT_STARTED
     expect(_resp2).json('$.data.sentStatus').equals('NOT_STARTED')
-    # step 3: 517f54f9-ea14-4a2e-b1b7-00e61a200064
+    # step 3: POST Save-recipients
     _resp3 = ctx.api.campaigns.save_recipients(
             body={
                 "campaignId": "{{newEmailCampaignId}}",
@@ -414,7 +414,7 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     expect(_resp3).json('$.data.status').equals('DRAFT')
     # assertion 3.assertion: responseJson equal UNPAID
     expect(_resp3).json('$.data.paymentStatus').equals('UNPAID')
-    # step 4: 489b71c1-7235-454f-89ac-257c3e20bf91
+    # step 4: PUT Pay campaign
     _resp4 = ctx.api.campaigns.by_campaign_id(
             body={
                 "name": "automation by linda Email",
@@ -437,14 +437,14 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
             token='linda01_token',
             path_vars={'campaignId': '{{newEmailCampaignId}}'},
         )
-    # step 5: 199018d2-d106-427d-844b-1e955ec5da56
+    # step 5: POST duplicate SMS campagin
     _resp5 = ctx.api.campaigns.duplicate(body={"fromId": "{{smsCompletedId}}"}, token='linda01_token')
     vars['newSMSCampaignId'] = (_resp5.json() if _resp5.headers.get('content-type', '').startswith('application/json') else {}).get('data', {}).get('id', '')
     # assertion 5.assertion: responseJson equal DRAFT
     expect(_resp5).json('$.data.status').equals('DRAFT')
     # assertion 5.assertion: responseJson equal NOT_STARTED
     expect(_resp5).json('$.data.sentStatus').equals('NOT_STARTED')
-    # step 6: 0a76cd94-607d-4f1f-92af-238924d2f660
+    # step 6: POST Save-recipients
     _resp6 = ctx.api.campaigns.save_recipients(
             body={
                 "campaignId": "{{newSMSCampaignId}}",
@@ -463,7 +463,7 @@ def test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campai
     expect(_resp6).json('$.data.status').equals('DRAFT')
     # assertion 6.assertion: responseJson equal UNPAID
     expect(_resp6).json('$.data.paymentStatus').equals('UNPAID')
-    # step 7: bfe008d5-9baa-48c3-ab74-bb1be46524e7
+    # step 7: PUT Pay campaign
     _resp7 = ctx.api.campaigns.by_campaign_id(
             body={
                 "name": "automation by linda SMS",

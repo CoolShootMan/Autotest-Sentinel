@@ -1,9 +1,9 @@
-#!usr/bin/env python3
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import sys, os
 _VENV_PYTHON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "venv", "bin", "python3")
 if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
     os.execv(_VENV_PYTHON, [_VENV_PYTHON] + sys.argv)
-# -*- encoding: utf-8 -*-
 '''
 Filename         : main.py
 Description      : 

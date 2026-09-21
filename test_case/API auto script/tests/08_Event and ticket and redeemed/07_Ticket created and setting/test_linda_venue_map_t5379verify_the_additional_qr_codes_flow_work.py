@@ -367,14 +367,14 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     """Apifox case #8628565: Linda_Venue_map_T5379Verify_the_Additional_QR_codes_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 3563fc4b-af4c-4484-b728-537830cc03f4
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: e3040033-bc3c-4867-bb12-e3bc01f366a2
+    # step 2: GET Partner Get the Event id
     # === pre-script（由 Apifox customScript 翻译）===
     vars['event_title'] = "event-for-api-auto-venue-map"
 
@@ -401,15 +401,15 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
             or (_tks2[0] if _tks2 else None))
     assert _tk2, f"step2 事件 [{_target2.get('id')}] 下没有 tickets"
     ctx.set('copyFromId', _tk2.get('id') or '')
-    # step 3: 59d406ff-a7ae-4c10-a904-6d2460d650b0
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
-    # step 4: 530b88c6-e2f0-45f6-ad2a-c42e9400b14c
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
-    # step 5: 50f1455b-62cc-4bac-81a1-a846635ccf16
+    # step 5: GET Catch the ProductId and promoterProductId
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 step5 post-script: 遍历 data.relatedProducts，以 title（空白→下划线）为后缀，
     # 逐个写入 productId_/promoterProductId_/merchantProductVariantId_/displayVariantId_
@@ -428,7 +428,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
                 _v05.get('merchantProductVariantId') or '')
         ctx.set(f'displayVariantId_{_sfx5}',
                 _v05.get('displayVariantId') or _p5.get('displayVariantId') or '')
-    # step 6: eb71fcde-3b2f-4f65-b404-38e3b58b2433
+    # step 6: GET get ticket General_Admission_02 one unitId
     # variantId 原写作单花括号 '{...}'，不会被框架渲染。
     _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
     # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
@@ -444,7 +444,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     ctx.set('unitid', _sel6.get('id') or '')
     ctx.set('seatNumber', str(_sel6.get('number')))
     ctx.set('venueUnitCategoryId', _sel6.get('categoryId') or '')
-    # step 7: bcb7043d-ecc7-4063-bb97-17c3e3409863
+    # step 7: PUT setting product exist addtional code
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId_General_Admission_02}}',
     'remote_id': None,
@@ -707,13 +707,13 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp9, '$.data.token')
-    # step 10: e02cff0d-13ba-4ab2-9e43-e83fa7a2283f
+    # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: responseJson equal success
     expect(_resp10).json('$.message').equals('success')
-    # step 11: 8a7b4674-ee9f-4181-ac43-b693037b1721
+    # step 11: POST checkout express venue map
     _resp11 = ctx.api.orders.checkout_express(body={
         "fbAdParams": {
             "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",

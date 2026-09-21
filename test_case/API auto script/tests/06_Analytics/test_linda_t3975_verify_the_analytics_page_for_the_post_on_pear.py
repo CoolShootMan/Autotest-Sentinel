@@ -295,7 +295,7 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx: "Contex
     vars['dayBeforeYesterday'] = _fmt(_today - datetime.timedelta(days=2))
     vars['threeDaysAgo'] = _fmt(_today - datetime.timedelta(days=3))
     # === Steps ===
-    # step 1: da5cc6c6-6328-4a17-8cd8-1c73513bee2c
+    # step 1: POST Check the purchase analytics data display correct on Pear
     _resp1 = ctx.api.analytics.post_summary(body={
         "postId": [
             "5972f262-ba27-44fc-91cd-cf1054d632a9",
@@ -307,7 +307,7 @@ def test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear(ctx: "Contex
             },
         ],
     }, token='linda01_token')
-    # step 2: 1fc2ed76-622b-49a4-8e4f-60951912f284
+    # step 2: POST compare for post Analytics on Pear
     _resp2 = ctx.api.analytics.post_summary(body={
         "postString": [
             "https://release.pear.us/lindazhoucurator/post/automation-test-event-with-in-person-delivery-t4251",

@@ -141,7 +141,7 @@ ENV_NAME = "Release"
 
 
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
@@ -219,6 +219,9 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion step4: create order status 201 + totalTopay=14.99
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').close_to(14.99)
     # step 5: M1-login
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -227,6 +230,27 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
     ctx.extract('P-21_access_token', _resp5, '$.data.refreshToken')
     # step 6: Check partner release schedule
     _resp6 = ctx.api.misc.earnings_merchant_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Revenue'}, token='P-21_access_token')
+    # assertion step6: 普通商品 releaseAt 为 null（0天/1天未到释放日）；金额按 net 动态拆分 95%/剩余
+    import math as _m
+    expect(_resp6).status().is_(200)
+    _j6: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type', '').startswith('application/json') else {}
+    _oe6 = None
+    for _o in (_j6.get('data') or {}).get('items') or []:
+        if _o.get('orderNumber') == vars.get('orderNumber'):
+            _oe6 = _o
+            break
+    assert _oe6 is not None, f"step6 未找到 orderNumber={vars.get('orderNumber')!r} 的订单"
+    _net6 = float(_oe6.get('totalMerchantPayoutToPay') or 0)
+    _rd6 = [_s.get('releaseAt') for _s in (_oe6.get('settlements') or [])]
+    _ra6 = [_s.get('releaseAmount') for _s in (_oe6.get('settlements') or [])]
+    assert len(_rd6) >= 2, f"step6 未取到两段结算: {_rd6}"
+    assert _rd6[0] is None, f"step6 第一段releaseAt应为null，实际={_rd6[0]!r}"
+    assert _rd6[1] is None, f"step6 第二段releaseAt应为null，实际={_rd6[1]!r}"
+    _amt0 = _m.floor(_net6 * 0.95 * 100 + 0.5) / 100
+    _amt1 = _m.floor((_net6 - _amt0) * 100 + 0.5) / 100
+    assert len(_ra6) >= 2, f"step6 未取到两段金额: {_ra6}"
+    assert abs((_ra6[0] or 0) - _amt0) < 0.01, f"step6 第一段金额={_ra6[0]!r} 期望{_amt0}"
+    assert abs((_ra6[1] or 0) - _amt1) < 0.01, f"step6 第二段金额={_ra6[1]!r} 期望{_amt1}"
     # step 7: Login - merchant
     _resp7 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -235,3 +259,23 @@ def test_lury_t4697_t4700_verify_partner_release_schedule_general_product(ctx: "
     ctx.extract('merchant_access_token', _resp7, '$.data.refreshToken')
     # step 8: Check merchant release schedule
     _resp8 = ctx.api.misc.earnings_promoter_orders(params={'pageNumber': '1', 'pageSize': '30', 'q': 'Commissions'}, token='merchant_access_token')
+    # assertion step8: 普通商品 releaseAt 为 null；金额按 totalPayoutToPay 动态拆分 95%/剩余
+    expect(_resp8).status().is_(200)
+    _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type', '').startswith('application/json') else {}
+    _oe8 = None
+    for _o in (_j8.get('data') or {}).get('items') or []:
+        if _o.get('orderNumber') == vars.get('orderNumber'):
+            _oe8 = _o
+            break
+    assert _oe8 is not None, f"step8 未找到 orderNumber={vars.get('orderNumber')!r} 的订单"
+    _net8 = float(_oe8.get('totalPayoutToPay') or 0)
+    _rd8 = [_s.get('releaseAt') for _s in (_oe8.get('settlements') or [])]
+    _ra8 = [_s.get('releaseAmount') for _s in (_oe8.get('settlements') or [])]
+    assert len(_rd8) >= 2, f"step8 未取到两段结算: {_rd8}"
+    assert _rd8[0] is None, f"step8 第一段releaseAt应为null，实际={_rd8[0]!r}"
+    assert _rd8[1] is None, f"step8 第二段releaseAt应为null，实际={_rd8[1]!r}"
+    _amt0b = _m.floor(_net8 * 0.95 * 100 + 0.5) / 100
+    _amt1b = _m.floor((_net8 - _amt0b) * 100 + 0.5) / 100
+    assert len(_ra8) >= 2, f"step8 未取到两段金额: {_ra8}"
+    assert abs((_ra8[0] or 0) - _amt0b) < 0.01, f"step8 第一段金额={_ra8[0]!r} 期望{_amt0b}"
+    assert abs((_ra8[1] or 0) - _amt1b) < 0.01, f"step8 第二段金额={_ra8[1]!r} 期望{_amt1b}"

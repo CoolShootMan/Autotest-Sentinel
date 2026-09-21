@@ -77,7 +77,7 @@ def test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_p
     """Apifox case #8003958: Linda_T3115_Verify_checking_Customize_post_prices_it_only_effect_this_post_not_t"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: e21e9f86-97f2-41a2-b8c3-8ddc653a00c4
+    # step 1: PUT Set the "customize price" is "checked" and update the retail and compare price
     _resp1 = ctx.api.posts.curator_update(post_id='{{T3115_post_id}}', body={
         "id": "{{T3115_post_id}}",
         "announcements": [],
@@ -315,7 +315,7 @@ def test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_p
     expect(_resp1).json('$.message').equals('success')
     # assertion 1.assertion: responseJson equal ACTIVE
     expect(_resp1).json('$.data.status').equals('ACTIVE')
-    # step 2: f2156443-185c-4ff8-bdf2-4603370d1c98
+    # step 2: PUT Update the catalog price is "150"
     _resp2 = ctx.api.products.v_50cfb015_c43d_463e_8357_4556d592bf26(body={
     'id': '50cfb015-c43d-463e-8357-4556d592bf26',
     'remote_id': None,

@@ -27,7 +27,7 @@ def test_linda_draft_t2622_verify_that_the_default_invite_link_of_my_collabs_can
     """Apifox case #8371959: Linda_Draft_T2622_Verify_that_the_default_invite_link_of_My_Collabs_can_be_edite"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 0ff3698e-2b07-42d3-a885-282ab23ad2e8
+    # step 1: GET Get the invitation link
     _resp1 = ctx.api.promoters.invitation_link(body=None, token='linda05_token')
     # === 断言（源头无断言，按接口通用格式设计）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}

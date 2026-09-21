@@ -32,7 +32,7 @@ def test_linda_t1569_verify_the_consumer_can_follow_a_shop(ctx: "Context"):
     """Apifox case #5815402: Linda_T1569_Verify_the_consumer_can_follow_a_shop"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: cf2d2348-42de-4581-a164-f1b242383c21
+    # step 1: POST Following the Shop
     _resp1 = ctx.api.promoters.create(body={
         "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
         "smsSubscribe": True,
@@ -44,7 +44,7 @@ def test_linda_t1569_verify_the_consumer_can_follow_a_shop(ctx: "Context"):
     expect(_resp1).json('$.data').equals('subscribe done')
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
-    # step 2: d1b034f7-0547-4480-ad5f-ccdf00833e22
+    # step 2: POST Unfollow the Shop
     _resp2 = ctx.api.promoters.create(body={
         "promoterId": "7bc6ed8d-51de-446b-8c64-fd321cf1a45d",
         "smsSubscribe": False,

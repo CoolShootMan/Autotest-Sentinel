@@ -355,7 +355,7 @@ def test_linda_t3078_verify_the_analytics_page_on_admin_tool(ctx: "Context"):
     vars['dayBeforeYesterday'] = _fmt(_today - datetime.timedelta(days=2))
     vars['threeDaysAgo'] = _fmt(_today - datetime.timedelta(days=3))
     # === Steps ===
-    # step 1: 23820f4a-f544-410c-a14e-43a6ef2482f0
+    # step 1: POST Check the purchase analytics data display correct fom admin
     _resp1 = ctx.api.admin.tracking_post_activities(body={
         "postId": [
             "5972f262-ba27-44fc-91cd-cf1054d632a9",
@@ -367,7 +367,7 @@ def test_linda_t3078_verify_the_analytics_page_on_admin_tool(ctx: "Context"):
             },
         ],
     }, token='admin_token')
-    # step 2: cd56c5f5-0e3d-48b5-8dd7-bd8e5595d9b0
+    # step 2: POST compare for post Analytics on Admin
     _resp2 = ctx.api.admin.tracking_post_activities(body={
         "postString": [
             "https://release.pear.us/lindazhoucurator/post/automation-test-event-with-in-person-delivery-t4251",

@@ -62,7 +62,7 @@ def test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_
     ctx.extract('subscriptionPlanOptionid', _resp2, '$.data.relatedProducts[0].variants[0].subscriptionPlanOptionPrices[0].optionId')
     # extractor: postid = $.data.id
     ctx.extract('postid', _resp2, '$.data.id')
-    # step 3: 0b0509d4-e797-4f2f-8144-98066a2cb5bf
+    # step 3: DELETE Clean Cart
     _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

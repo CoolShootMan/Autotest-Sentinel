@@ -396,7 +396,7 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     # 动态生成 music title（对应原 Apifox pre-script: Automation music + 5位随机数）
     vars['dynamicTitle'] = 'Automation music ' + str(random.randint(10000, 99999))
     # === Steps ===
-    # step 1: 7f06967e-944b-45ca-a527-386b2b8319fa
+    # step 1: POST Add music link module
     _resp1 = ctx.api.storefront.module(body={
         "type": "LINK",
         "direction": "VERTICAL",
@@ -415,7 +415,7 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     assert re.match(r'^Automation music \d+$', _title1), f"step1 title 格式错误: {_title1}"
     assert _d1.get('id'), "step1 data.id 为空"
     vars['dynamicMusicLinkId'] = _d1.get('id')
-    # step 2: 4ad69ccd-e26c-42a6-b635-ee54c1498ef5
+    # step 2: POST add music link
     # === pre-script（由Apifox customScript翻译）：动态生成 music 链接请求体 ===
     _dynamicTimeKey = int(__import__('time').time() * 1000)
     vars['musicTitle'] = 'music_' + str(random.randint(10000, 99999))
@@ -457,7 +457,7 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
     assert isinstance(_services2, list) and len(_services2) >= 14, f"step2 services 数量不足, got {len(_services2)}"
     assert _d2.get('id'), "step2 data.id 为空"
     vars['moduleContentId'] = _d2.get('id')
-    # step 3: 02b3432c-17c6-4bce-8fc9-01d250e4c238
+    # step 3: PUT create music link and check
     _resp3 = ctx.api.storefront.module_item_by_dynamic_music_link_id(body={
         "id": "{{dynamicMusicLinkId}}",
         "items": [
@@ -488,5 +488,5 @@ def test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules(ct
         assert _s.get('platform'), "step3 service 缺少 platform"
         assert _s.get('src'), "step3 service 缺少 src"
         assert isinstance(_s.get('position'), (int, float)), f"step3 service position 非数字: {_s.get('position')}"
-    # step 4: 73a7f755-a3eb-400c-bb7a-15ad1eb9d79a
+    # step 4: DELETE delete the music module
     _resp4 = ctx.api.storefront.module_by_dynamic_music_link_id(body=None, token='linda01_token')

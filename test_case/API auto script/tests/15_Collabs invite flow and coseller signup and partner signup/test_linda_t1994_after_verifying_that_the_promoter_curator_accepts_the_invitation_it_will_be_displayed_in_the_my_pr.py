@@ -80,7 +80,7 @@ def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invit
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     vars['dynamic_email'] = 'dynamicEmail'
-    # step 1: edd8f0c2-5016-4c4d-958c-6bd0a2e3cc64
+    # step 1: POST promoter-login
     _resp1 = ctx.api.auth.promoter_login(body={
         "inviterCampaign": {},
         "code": "0000",
@@ -94,7 +94,7 @@ def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invit
         "lead": "SELF_LISTING",
         "promoterInvitationCode": "u1balj",
     }, token='auth_token')
-    # step 3: 01a670e4-daf9-412b-aa97-a22db28795ef
+    # step 3: POST co-seller-signup and input name
     _resp3 = ctx.api.auth.promoter_signup(body={
         "firstName": "linda",
         "lastName": "zhou32",
@@ -103,7 +103,7 @@ def test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invit
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
     expect(_resp3).json('$.message').equals('success')
-    # step 4: 9a6f7c7f-0026-4639-9c49-d7535e8755db
+    # step 4: GET get the post data, make sure page no crash
     _resp4 = ctx.api.posts.curator_shop(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='auth_token')
     # assertion 4.assertion: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')

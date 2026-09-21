@@ -54,13 +54,13 @@ def test_test(ctx: "Context"):
     # 生成 Apifox 动态变量 {{__uuid_0}}（原 Apifox 内置，迁移后需显式生成）
     vars['$string.uuid'] = str(uuid.uuid4())
     # === Steps ===
-    # step 1: 22b39deb-e976-49a4-a94b-246d0015eae9
+    # step 1: POST /auth/guest-login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_1}}",
     })
     # extractor: access_token = $.data
     ctx.extract('access_token', _resp1, '$.data')
-    # step 2: c2c7d898-eb0e-4f49-9f2f-e364b14259b3
+    # step 2: PUT update cart
     _resp2 = ctx.api.cart.update(body={
         "fbAdParams": {
             "eventID": "0bc21151-180e-47cc-877b-4e65e98f3818",
@@ -89,7 +89,7 @@ def test_test(ctx: "Context"):
     vars['randomLastName'] = random.choice(_lastNames)
     vars['randomNumber'] = str(random.randint(1, 999))
     vars['randomEmail'] = f"linda.zhou.ext+{vars['randomNumber']}@1m.app"
-    # step 3: 9a94d50a-3c6e-4b36-9795-d0c9a4094c7b
+    # step 3: POST purchase-approvals
     _resp3 = ctx.api.approvals.create(body={
         "postId": "250c6120-735e-4c13-8afb-736d56e9cb25",
         "firstName": "{{randomFirstName}}",

@@ -74,12 +74,12 @@ def test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_fr
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: 2194cf7a-ddac-4fcb-aa6a-73ad81100e8b
+    # step 1: POST /auth/guest-login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
     })
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
-    # step 2: 6ffbf71c-7422-4b1b-8ae9-26dd2e030b50
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')

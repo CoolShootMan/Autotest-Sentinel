@@ -167,7 +167,7 @@ def test_demi_t4167_verify_the_event_can_be_edited_successfully(ctx: "Context"):
     import random as _rnd
     _rand_num = str(_rnd.randint(0, 9999)).zfill(4)
     vars['updatedEventTitle'] = 'demi test event auto update ' + _rand_num
-    # step 3: 4d1e7107-3451-4dda-9f87-39a9782188e2
+    # step 3: PUT Update event title
     _resp3 = ctx.api.events.by_dup_event_id(body={
     'id': '{{targetEventId}}',
     'title': '{{updatedEventTitle}}',

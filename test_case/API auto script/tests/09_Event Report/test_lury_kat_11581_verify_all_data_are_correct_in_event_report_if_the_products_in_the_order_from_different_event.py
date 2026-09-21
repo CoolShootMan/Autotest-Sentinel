@@ -174,7 +174,7 @@ ENV_NAME = "Release"
 
 
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
@@ -193,14 +193,106 @@ def test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_the_produ
     })
     # extractor: M1_access_token = $.data.token
     ctx.extract('M1_access_token', _resp1, '$.data.token')
-    # step 2: 173b63b5-165b-4824-b797-9834d8b6c5f8
+    # step 2: GET Check the event report data correct
     _resp2 = ctx.api.events.dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_summary(body=None, token='M1_access_token')
-    # step 3: c9b059aa-7ace-47a0-85ce-a420ca35db9e
+    # step 3: GET Check the event report - promotion view details
     _resp3 = ctx.api.events.dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_discount_orders(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='M1_access_token')
-    # step 4: 8ca7d390-9a3c-424f-9ce3-5ffdbde1b249
+    # step 4: GET Check the sales > orders page date is correct
     _resp4 = ctx.api.events.dad4b563_4eaf_47cd_a825_e63d61e48de1_metrics_orders_summary(body=None, params={'dateText': 'Custom', 'productIds': 'af42a47a-1b65-4563-9f16-680f9d7eae22,64d232ec-370c-4b08-8ed1-02f8ab56baf9'}, token='M1_access_token')
-    # --- assertions: no fake-green (non-4xx/5xx) ---
-    assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
-    assert _resp2.status_code < 400, f"step2 got HTTP {_resp2.status_code}: {_resp2.text[:200]}"
-    assert _resp3.status_code < 400, f"step3 got HTTP {_resp3.status_code}: {_resp3.text[:200]}"
-    assert _resp4.status_code < 400, f"step4 got HTTP {_resp4.status_code}: {_resp4.text[:200]}"
+    # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
+    # step 1: Login-M1
+    expect(_resp1).status().is_(201)
+    # step 2: metrics summary - gross sales / net revenue / earnings / sold / co-selling / sold details
+    expect(_resp2).status().is_(200)
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _d2: dict[str, Any] = _j2.get('data') or {}
+    # gross sales
+    expect(_resp2).json('$.data.grossSalesBeforeDiscount').close_to(74.04)
+    expect(_resp2).json('$.data.totalDiscount').close_to(7.39)
+    expect(_resp2).json('$.data.grossSales').close_to(66.65)
+    expect(_resp2).json('$.data.totalRefund').close_to(22)
+    # net revenue
+    expect(_resp2).json('$.data.netRevenue').close_to(44.65)
+    expect(_resp2).json('$.data.netTicketRevenue').close_to(44.65)
+    expect(_resp2).json('$.data.netMerchRevenue').close_to(0)
+    expect(_resp2).json('$.data.totalCommissionPaid').close_to(5.5)
+    expect(_resp2).json('$.data.totalTransactionFee').close_to(12.18)
+    # tax / custom fee / rebate
+    expect(_resp2).json('$.data.totalCustomFeeBreakdown.TAX.net').close_to(0.23)
+    expect(_resp2).json('$.data.totalCustomFeeBreakdown.custom_fee1.net').close_to(0.12)
+    expect(_resp2).json('$.data.totalCustomFeeBreakdown.custom_fee2.net').close_to(0.23)
+    expect(_resp2).json('$.data.totalRebate').close_to(7.9)
+    expect(_resp2).json('$.data.totalTransactionRebate').close_to(7.9)
+    expect(_resp2).json('$.data.totalAppRebate').close_to(0)
+    # total revenue share
+    expect(_resp2).json('$.data.totalEarningShared').close_to(12.6)
+    # each account revenue share
+    for _sa in _d2.get('earningsShared') or []:
+        if _sa.get('url') == 'https://release.pear.us/auto-merchant':
+            assert abs((_sa.get('revenueSharePercent') or 0) - 11.11) < 0.01, f"earningsShared(auto-merchant).percent={_sa.get('revenueSharePercent')!r}"
+            assert abs((_sa.get('amount') or 0) - 4.84) < 0.01, f"earningsShared(auto-merchant).amount={_sa.get('amount')!r}"
+        else:
+            assert abs((_sa.get('revenueSharePercent') or 0) - 10) < 0.01, f"earningsShared.other.percent={_sa.get('revenueSharePercent')!r}"
+            assert abs((_sa.get('amount') or 0) - 7.76) < 0.01, f"earningsShared.other.amount={_sa.get('amount')!r}"
+    # net earnings and tip
+    expect(_resp2).json('$.data.netEarnings').close_to(22.85)
+    expect(_resp2).json('$.data.remainingNetEarnings').close_to(22.85)
+    expect(_resp2).json('$.data.totalEarnedTips').close_to(0)
+    expect(_resp2).json('$.data.totalTip').close_to(0)
+    expect(_resp2).json('$.data.totalTipTransactionFee').close_to(0)
+    expect(_resp2).json('$.data.averageOrderValue').close_to(11.11)
+    # number of sold
+    expect(_resp2).json('$.data.totalNumberOfOrders').equals(6)
+    expect(_resp2).json('$.data.totalItemsSold').equals(4)
+    expect(_resp2).json('$.data.totalTicketSold').equals(4)
+    expect(_resp2).json('$.data.totalMerchSold').equals(0)
+    expect(_resp2).json('$.data.totalItemsRedeemed').equals(0)
+    expect(_resp2).json('$.data.totalRedeemableItems').equals(4)
+    # co-selling commission sales
+    expect(_resp2).json('$.data.promoterGrossSales').close_to(22)
+    expect(_resp2).json('$.data.totalItemsSoldByPromoter').equals(2)
+    expect(_resp2).json('$.data.totalItemsSoldByStaff').equals(0)
+    expect(_resp2).json('$.data.totalItemsSoldPercentage').equals(50)
+    expect(_resp2).json('$.data.promoterTotalItemsRedeemed').equals(0)
+    # total sold view details (by productId)
+    for _td in _d2.get('totalItemsSoldDetail') or []:
+        if _td.get('productId') == '64d232ec-370c-4b08-8ed1-02f8ab56baf9':
+            assert _td.get('totalItemsRedeemed') == 0
+            assert _td.get('productTitle') == 'General Admission'
+            assert _td.get('quantity') == 3
+            assert _td.get('event') == 'Lury event report testing 0703 - other items'
+            assert _td.get('redeemableCount') == 3
+        elif _td.get('productId') == 'af42a47a-1b65-4563-9f16-680f9d7eae22':
+            assert _td.get('totalItemsRedeemed') == 0
+            assert _td.get('productTitle') == 'ticket with custom fee'
+            assert _td.get('quantity') == 1
+            assert _td.get('event') == 'Lury event report testing 0703 - other items'
+            assert _td.get('redeemableCount') == 1
+    for _vd in _d2.get('promoterTotalItemsSoldDetail') or []:
+        if _vd.get('productId') == '64d232ec-370c-4b08-8ed1-02f8ab56baf9':
+            assert _vd.get('totalItemsRedeemed') == 0
+            assert _vd.get('productTitle') == 'General Admission'
+            assert _vd.get('quantity') == 2
+            assert _vd.get('event') == 'Lury event report testing 0703 - other items'
+            assert _vd.get('redeemableCount') == 2
+    # step 3: promotion view details - each order orderDiscount
+    expect(_resp3).status().is_(200)
+    _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
+    _disc = {
+        'P159990': 1.29, 'P159987': 1.22, 'P159986': 1.22,
+        'P159985': 1.22, 'P159981': 1.22, 'P159979': 1.22,
+    }
+    for _it in (_j3.get('data') or {}).get('items') or []:
+        _on = _it.get('iorderNumberd') or _it.get('orderNumber')
+        if _on in _disc:
+            assert abs((_it.get('orderDiscount') or 0) - _disc[_on]) < 0.01, f"{_on}.orderDiscount={_it.get('orderDiscount')!r} 期望{_disc[_on]}"
+    # step 4: sales - orders page total net earnings
+    expect(_resp4).status().is_(200)
+    expect(_resp4).json('$.data.totalNetEarnings').close_to(37.75)
+    expect(_resp4).json('$.data.totalCurrentEventNetEarnings').close_to(22.85)
+    expect(_resp4).json('$.data.totalCurrentEventFilteredNetEarnings').close_to(22.85)
+    expect(_resp4).json('$.data.totalOtherEventNetEarnings').close_to(14.9)
+    expect(_resp4).json('$.data.totalOrders').equals(6)
+    expect(_resp4).json('$.data.totalItems').equals(4)
+    expect(_resp4).json('$.data.totalRedeemableItems').equals(4)
+    expect(_resp4).json('$.data.totalItemsRedeemed').equals(0)

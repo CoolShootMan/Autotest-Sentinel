@@ -102,7 +102,7 @@ def test_linda_t905_t987_verify_the_status_of_all_shipped_items_change_to_fulfil
     ctx.extract('consumer_token', _resp1, '$.data.token')
     # step 2: get address list
     _resp2 = ctx.api.address.list(token='consumer_token', params={'pageSize': '30', 'pageNumber': '1'})
-    # step 3: 47b31b19-fc65-4604-8518-52c8cb0bbf16
+    # step 3: DELETE Clean Cart
     _resp3 = ctx.api.cart.delete(body={}, app_headers=True, token='consumer_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

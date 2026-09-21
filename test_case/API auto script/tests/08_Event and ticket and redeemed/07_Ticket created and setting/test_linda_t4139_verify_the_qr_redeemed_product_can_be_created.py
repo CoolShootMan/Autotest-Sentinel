@@ -133,7 +133,7 @@ def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx: "Context
     # extractor: merchant_token = $.data.token
     ctx.extract('merchant_token', _resp_m, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
-    # step 2: 1cf6d8c8-7d1f-4230-8166-6ae9170139d2
+    # step 2: POST Create QR redeemed product
     # === pre-script（由 Apifox customScript 翻译）===
     vars['merchantId'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
 
@@ -367,7 +367,7 @@ def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx: "Context
 }, token='linda01_token')
     # extractor: productId = productId
     ctx.extract('productId', _resp2, '$.data.id')
-    # step 3: ae33ea1d-f9bd-443c-8fac-57745d9862fe
+    # step 3: DELETE recover the data - delete the product
     _resp3 = ctx.api.products.by_product_id(productId='{{productId}}', body=None, token='linda01_token')
     vars['deletedProductId'] = vars.get('productId')
     # --- assertions: no fake-green (non-4xx/5xx) ---

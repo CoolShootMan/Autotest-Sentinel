@@ -314,14 +314,14 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     """Apifox case #8660684: Linda_Venue_map_Verify_the_Customer_provided_details_flow_work"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: c9f8abe8-fc31-4afc-a02f-ed291aa77517
+    # step 1: POST Partner 999 login
     _resp1 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp1, '$.data.token')
-    # step 2: 1d0047fb-2151-45bb-9764-9ad95a222266
+    # step 2: GET Partner Get the Event id
     # === pre-script（由 Apifox customScript 翻译）===
     vars['event_title'] = "event-for-api-auto-venue-map"
 
@@ -341,15 +341,15 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
             or (_tks2[0] if _tks2 else None))
     assert _tk2, f"step2 事件 [{_target2.get('id')}] 下没有 tickets"
     ctx.set('copyFromId', _tk2.get('id') or '')
-    # step 3: 93f8576a-3627-40da-9e8c-da769061db88
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
-    # step 4: 9e4780d8-8424-4058-b104-74921554cf20
+    # step 4: GET get the event catalog id
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
-    # step 5: 9ae76895-28f0-42c4-881a-00ee02925703
+    # step 5: GET Catch the ProductId and promoterProductId
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 step5 post-script: 遍历 data.relatedProducts，以 title（空白→下划线）为后缀，
     # 逐个写入 productId_/promoterProductId_/merchantProductVariantId_/displayVariantId_
@@ -368,7 +368,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
                 _v05.get('merchantProductVariantId') or '')
         ctx.set(f'displayVariantId_{_sfx5}',
                 _v05.get('displayVariantId') or _p5.get('displayVariantId') or '')
-    # step 6: 2c877493-cea9-4398-b82d-6f44d1eb26ae
+    # step 6: PUT Edit ticket with setting the Require customer-provided
     _resp6 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId_General_Admission}}',
     'remote_id': None,
@@ -639,7 +639,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
 }, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission}}'})
-    # step 7: 4eb88c11-4f3a-413b-b776-5f3a7f7f38d7
+    # step 7: GET get ticket General_Admission one unitId
     # variantId 原写作单花括号 '{merchantProductVariantId_...}'，不会被框架渲染。
     _resp7 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission}}'}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission}}'})
     # 原 step7 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
@@ -663,7 +663,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     }, app_headers=True)
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp9, '$.data.token')
-    # step 10: 7260d74e-6573-4b5c-89a3-ff30aead383a
+    # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
@@ -671,7 +671,7 @@ def test_linda_venue_map_verify_the_customer_provided_details_flow_work(ctx: "Co
     expect(_resp10).json('$.message').equals('success')
     _areaCodes = ["202","312","415","650","212","310","408","213","707"]
     vars['usPhoneNumber'] = '+1' + random.choice(_areaCodes) + str(random.randint(200, 999)) + str(random.randint(1000, 9999))
-    # step 11: bdeb5f48-4627-4476-b58e-b2424f1ce56d
+    # step 11: POST checkout express venue map
     _resp11 = ctx.api.orders.checkout_express(body={
         "fbAdParams": {
             "eventID": "0e23d7da-dab0-4dc8-a27c-96ea822f38ad",

@@ -67,7 +67,7 @@ def test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_p
     }, app_headers=False)
     # extractor: access_data = $.data
     ctx.extract('access_data', _resp1, '$.data')
-    # step 2: ad56dea1-f890-4a1b-9dc1-b30ef9925f4c
+    # step 2: GET check post card price detail
     _resp2 = ctx.api.posts.simplify_shop_linda(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='access_data')
     # --- assertions: no fake-green (non-4xx/5xx) ---
     assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"

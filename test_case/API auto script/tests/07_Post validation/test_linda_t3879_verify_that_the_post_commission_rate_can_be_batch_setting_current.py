@@ -138,7 +138,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     }, app_headers=True)
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
-    # step 2: 4ac8cb7c-3f22-43fe-bae2-56f753138fe9
+    # step 2: PUT Batch setting the commission rate to current+5
     _resp2 = ctx.api.posts.curator_update(post_id='{{T3879_post_id}}', body={
         "id": "{{T3879_post_id}}",
         "announcements": [],
@@ -526,7 +526,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     expect(_resp2).json('$.message').equals('success')
     # assertion 2.assertion: responseJson equal ACTIVE
     expect(_resp2).json('$.data.status').equals('ACTIVE')
-    # step 3: 72e3ee6a-b5d2-4f9c-88f8-6d39ef1ff13a
+    # step 3: GET Checking the post commission rate Max is 16%
     _resp3 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
-    # step 4: 2b075276-5c14-4779-93e0-cc9133de7091
+    # step 4: GET Co-seller checking the product commission are correct
     _resp4 = ctx.api.posts.promoter_detail(body=None, params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t3879'}, token='linda06_token')

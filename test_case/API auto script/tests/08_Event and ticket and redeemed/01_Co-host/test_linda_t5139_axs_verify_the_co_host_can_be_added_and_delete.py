@@ -133,7 +133,7 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     """Apifox case #8709242: Linda_T5139_AXS_Verify_the_Co_host_can_be_added_and_delete"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 8267b0e0-c9c0-42ad-ba59-ed4da50cdf81
+    # step 1: GET Partner Get the Event id
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
@@ -141,7 +141,7 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert _t1 is not None, "未找到 platform 为 AXS 的项目"
     vars['event_id'] = _t1.get('id')
     vars['event_title'] = _t1.get('title')
-    # step 2: 5f545808-d616-42d8-a257-3d633040c77f
+    # step 2: POST Partner add co-host
     _resp2 = ctx.api.events.create(body={
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
@@ -167,9 +167,9 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert isinstance(_d2.get('createdAt'), str) and _d2.get('createdAt'), "createdAt 应为非空字符串"
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"
-    # step 3: e6f5ac94-1723-4f62-b5fb-8f75d31552a8
+    # step 3: GET Co-seller check the Event exist
     _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
-    # step 4: fd8c8613-31ec-4a30-9a43-e67700f9b1c4
+    # step 4: DELETE Partner delete the Co-seller
     _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id/event_title 一致 ----

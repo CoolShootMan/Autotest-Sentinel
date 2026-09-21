@@ -559,7 +559,7 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     vars['randomName'] = _gen_random_sms_name()
     vars['randomContent'] = _gen_random_sms_content()
     # === Steps ===
-    # step 1: 1d5d324e-c81f-419e-915a-3989ff0f93b3
+    # step 1: POST Create campaign SMS
     _resp1 = ctx.api.campaigns.create(
         body={
             "channel": "SMS",
@@ -574,7 +574,7 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     expect(_resp1).json('$.message').equals('success')
     # extractor: campaignId = $.data.id
     ctx.extract('campaignId', _resp1, '$.data.id')
-    # step 2: 35f6bb01-93b5-455e-9f2c-20f79dfec233
+    # step 2: PUT Edit and update the campaign
     _resp2 = ctx.api.campaigns.by_campaign_id(
         body={
             "name": "{{randomName}}",
@@ -591,7 +591,7 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     )
     vars['smsCampaignGenerateVerifyResult'] = 'verifyPass ? "success" : "failed"'
     vars['smsCampaignGenerateVerifyLogs'] = 'JSON.stringify(verifyLogs'
-    # step 3: 947cf34c-0ca4-469a-9321-fbd634fa45b6
+    # step 3: POST Create campaign Email
     _resp3 = ctx.api.campaigns.create(
             body={
                 "channel": "EMAIL",
@@ -609,7 +609,7 @@ def test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list(c
     ctx.extract('campaignEmailId', _resp3, '$.data.id')
     # assertion 3.assertion: responseJson equal 0
     expect(_resp3).json('$.data.totalSelectedCount').equals('0')
-    # step 4: 51805720-b267-4085-827f-4e8463e6cbf2
+    # step 4: PUT Edit and update the campaign
     _resp4 = ctx.api.campaigns.by_campaign_id(
             body={
                 "name": "{{randomName}}",

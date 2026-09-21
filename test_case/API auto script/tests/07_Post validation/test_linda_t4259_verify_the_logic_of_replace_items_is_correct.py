@@ -295,7 +295,7 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     # extractor: linda05_token = $.data.token
     ctx.extract('linda05_token', _resp1, '$.data.token')
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
-    # step 2: d20be068-d238-4265-9700-84b9d485cd5f
+    # step 2: PUT Setting the post replace items
     _resp2 = ctx.api.posts.curator_update(post_id='{{T4259_post_id}}', body={
     'id': '{{T4259_post_id}}',
     'announcements': [],
@@ -715,7 +715,7 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     vars['access_token'] = (_resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
     # step 4: Guest visit and check the product display the "Main ticket"
     _resp4 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t4259'})
-    # step 5: 2e6d8144-f07c-42c1-88cc-e89ec0c94a3b
+    # step 5: PUT update the "Main ticket" inventory is 0 on the catalog
     _resp5 = ctx.api.products.v_5589beae_d2ca_40fc_b361_03122952beb2(body={
     'id': '5589beae-d2ca-40fc-b361-03122952beb2',
     'remote_id': None,
@@ -922,7 +922,7 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     expect(_resp5).json('$.message').equals('success')
     # step 6: Guest visit and check the product display the "ticket replace1"
     _resp6 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t4259'})
-    # step 7: 009021f6-938f-47c9-985b-e40c016d236a
+    # step 7: PUT update the "ticket replace1" inventory is 0 on the catalog
     _resp7 = ctx.api.products.f0a91cf5_c585_45d9_8b08_f59a6941e6d8(body={
     'id': 'f0a91cf5-c585-45d9-8b08-f59a6941e6d8',
     'remote_id': None,
@@ -1130,7 +1130,7 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     expect(_resp7).json('$.message').equals('success')
     # step 8: Guest visit and check the product display the "ticket replace2"
     _resp8 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t4259'})
-    # step 9: 7c9139f2-c158-4601-98df-529b7a4f4fcd
+    # step 9: PUT Recover the "ticket replace1" inventory is 1000 on the catalog
     _resp9 = ctx.api.products.f0a91cf5_c585_45d9_8b08_f59a6941e6d8(body={
     'id': 'f0a91cf5-c585-45d9-8b08-f59a6941e6d8',
     'remote_id': None,
@@ -1338,7 +1338,7 @@ def test_linda_t4259_verify_the_logic_of_replace_items_is_correct(ctx: "Context"
     expect(_resp9).json('$.message').equals('success')
     # step 10: Guest visit and check the product display the "ticket replace1"
     _resp10 = ctx.api.posts.consumer_detail(token='access_token', params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t4259'})
-    # step 11: d784d9cc-c945-4be6-9d7e-dd0e86299f0d
+    # step 11: PUT Recover the "Main ticket" inventory is 1000 on the catalog
     _resp11 = ctx.api.products.v_5589beae_d2ca_40fc_b361_03122952beb2(body={
     'id': '5589beae-d2ca-40fc-b361-03122952beb2',
     'remote_id': None,

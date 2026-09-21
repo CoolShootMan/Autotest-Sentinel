@@ -264,6 +264,18 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     """Apifox case #7687520: Lury_T4251_Verify_In_person_delivery_method_product_should_be_marked_as_redeemed"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
+    # pre-script step1: 复算金额（unit_price=12.22, quantity=1, commission_rate=0.25）
+    import math as _m
+    def _js_round(x): return _m.floor(x*100 + 0.5 + 1e-9) / 100
+    def _js_floor(x): return _m.floor(x*100) / 100
+    _up = 12.22
+    _q = 1
+    vars['unit_price'] = _up
+    vars['promoter_earnings'] = _js_round(_up * _q * 0.25)
+    vars['merchant_earnings'] = round(_up * _q - vars['promoter_earnings'], 2)
+    _tf_item = _js_floor((1 + _up * 0.1) * _q)
+    vars['promoter_transaction_fee'] = _js_round(vars['promoter_earnings'] / (_up * _q) * _tf_item)
+    vars['merchant_transaction_fee'] = round(_tf_item - vars['promoter_transaction_fee'], 2)
     # step 1: Consumer-login
     _resp1 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -327,9 +339,43 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion 4: create Order — status 201, totalTopay = unit_price
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').close_to(vars['unit_price'])
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
     ctx.extract('numberCode', _resp5, '$.data.lineItems[0].orderLineItemUnits[0].numberCode')
+    # assertion 5: consumer order detail — totals + lineItem "ticket-in person" auto-redeemed
+    expect(_resp5).status().is_(200)
+    expect(_resp5).json('$.data.totalLineItemPrice').close_to(vars['unit_price'])
+    expect(_resp5).json('$.data.totalToPay').close_to(vars['unit_price'])
+    expect(_resp5).json('$.data.totalPaid').close_to(vars['unit_price'])
+    expect(_resp5).json('$.data.totalTax').equals(0)
+    expect(_resp5).json('$.data.totalLineItemSubtotal').close_to(vars['unit_price'])
+    expect(_resp5).json('$.data.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp5).json('$.data.totalTicketFees').close_to(2.22)
+    _li5 = '$.data.lineItems[?(@.title=="ticket-in person")]'
+    expect(_resp5).json(_li5 + '.quantity').equals(1)
+    expect(_resp5).json(_li5 + '.unitPrice').close_to(vars['unit_price'])
+    expect(_resp5).json(_li5 + '.lineItemPrice').close_to(vars['unit_price'])
+    expect(_resp5).json(_li5 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp5).json(_li5 + '.fulfillmentCount').equals(1)
+    expect(_resp5).json(_li5 + '.listingType').equals("TICKET")
+    expect(_resp5).json(_li5 + '.shippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.additionalShippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.lineItemRefunded').equals(0)
+    expect(_resp5).json(_li5 + '.lineItemDiscount').equals(0)
+    expect(_resp5).json(_li5 + '.discount').equals(0)
+    expect(_resp5).json(_li5 + '.realShippingFee').equals(0)
+    expect(_resp5).json(_li5 + '.autoFulfill').equals(True)
+    expect(_resp5).json(_li5 + '.productTaxEnable').equals(False)
+    expect(_resp5).json(_li5 + '.ticketFees').close_to(2.22)
+    expect(_resp5).json(_li5 + '.ticketFeesAfterRefund').close_to(2.22)
+    expect(_resp5).json(_li5 + '.deliveryMethod').equals("IN_PERSON")
+    expect(_resp5).json(_li5 + '.thirdPartyDeliveryMessage').equals(None)
+    expect(_resp5).json(_li5 + '.isMultipleDaysPassEnabled').equals(False)
+    expect(_resp5).json(_li5 + '.multipleDaysPass').equals(None)
+    expect(_resp5).json(_li5 + '.orderLineItemUnits[0].status').equals("COMPLETED")
     # step 6: Login - merchant
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -338,6 +384,47 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     ctx.extract('merchant_access_token', _resp6, '$.data.refreshToken')
     # step 7: get merchant commission charge
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantIDf}}'}, token='merchant_access_token')
+    # assertion 7: merchant commission charge — 从响应动态取 rebate 计算 totalPayoutToPay
+    expect(_resp7).status().is_(200)
+    _reb7 = _resp7.path('$.data.transactionFeeRebate') or 0
+    try:
+        vars['total_payout_7'] = round(
+            float(vars.get('merchant_earnings') or 0)
+            - float(vars.get('merchant_transaction_fee') or 0)
+            + float(_reb7), 2)
+    except Exception:
+        vars['total_payout_7'] = None
+    expect(_resp7).json('$.data.totalCommissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp7).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp7).json('$.data.totalCommissionNet').close_to(vars['merchant_earnings'])
+    expect(_resp7).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp7).json('$.data.totalPayoutToPay').close_to(vars['total_payout_7'])
+    expect(_resp7).json('$.data.transactionFee').close_to(vars['merchant_transaction_fee'])
+    _li7 = '$.data.lineItems[?(@.variantInfo.id=="e377dc0b-0b01-4f7a-ad67-02dbfd849745")]'
+    expect(_resp7).json(_li7 + '.lineItemPrice').close_to(vars['unit_price'])
+    expect(_resp7).json(_li7 + '.retailPrice').close_to(vars['unit_price'])
+    expect(_resp7).json(_li7 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.couponDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.subscriptionDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemDiscount').equals(0)
+    expect(_resp7).json(_li7 + '.commissionRate').equals(0)
+    expect(_resp7).json(_li7 + '.commissionGross').close_to(vars['unit_price'])
+    expect(_resp7).json(_li7 + '.commissionDeduction').close_to(vars['promoter_earnings'])
+    expect(_resp7).json(_li7 + '.costPrice').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemSubtotal').close_to(vars['unit_price'])
+    expect(_resp7).json(_li7 + '.downlineCommissionRate').equals(25)
+    expect(_resp7).json(_li7 + '.commissionSubtotal').close_to(vars['merchant_earnings'])
+    expect(_resp7).json(_li7 + '.commissionRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.commissionNet').close_to(vars['merchant_earnings'])
+    expect(_resp7).json(_li7 + '.quantity').equals(1)
+    expect(_resp7).json(_li7 + '.quantityFulfilled').equals(1)
+    expect(_resp7).json(_li7 + '.quantityRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.lineItemRefunded').equals(0)
+    expect(_resp7).json(_li7 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp7).json(_li7 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp7).json(_li7 + '.uplineSaleType').equals("POST_WHOLESALE")
+    expect(_resp7).json(_li7 + '.orderLineItemUnits[0].status').equals("COMPLETED")
+    expect(_resp7).json(_li7 + '.orderLineItemUnits[0].numberCode').equals(ctx.render_text('{{numberCode}}'))
     # step 8: Login - curator
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -353,3 +440,45 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
             vars['promoterOrderId'] = _order.get('id')
     # step 10: get curator order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='curator_access_token')
+    # assertion 10: curator order detail v2 — promoter earnings
+    expect(_resp10).status().is_(200)
+    try:
+        vars['total_payout_10'] = round(
+            float(vars.get('promoter_earnings') or 0)
+            - float(vars.get('promoter_transaction_fee') or 0), 2)
+    except Exception:
+        vars['total_payout_10'] = None
+    expect(_resp10).json('$.data.totalPayoutToPay').close_to(vars['total_payout_10'])
+    expect(_resp10).json('$.data.transactionFee').close_to(vars['promoter_transaction_fee'])
+    expect(_resp10).json('$.data.totalCommissionSubtotal').close_to(vars['promoter_earnings'])
+    expect(_resp10).json('$.data.totalCommissionRefunded').equals(0)
+    expect(_resp10).json('$.data.totalCommissionNet').close_to(vars['promoter_earnings'])
+    expect(_resp10).json('$.data.totalPaymentProcessingFee').equals(0)
+    expect(_resp10).json('$.data.transactionFeeRebate').equals(0)
+    expect(_resp10).json('$.data.fulfillmentStatus').equals("FULFILLED")
+    _li10 = '$.data.lineItems[?(@.variantInfo.id=="e377dc0b-0b01-4f7a-ad67-02dbfd849745")]'
+    expect(_resp10).json(_li10 + '.lineItemPrice').close_to(vars['unit_price'])
+    expect(_resp10).json(_li10 + '.retailPrice').close_to(vars['unit_price'])
+    expect(_resp10).json(_li10 + '.upstreamLineItemDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.couponDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.subscriptionDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.lineItemDiscount').equals(0)
+    expect(_resp10).json(_li10 + '.commissionRate').equals(25)
+    expect(_resp10).json(_li10 + '.commissionGross').close_to(vars['promoter_earnings'])
+    expect(_resp10).json(_li10 + '.commissionDeduction').equals(0)
+    expect(_resp10).json(_li10 + '.costPrice').close_to(vars['merchant_earnings'])
+    expect(_resp10).json(_li10 + '.lineItemSubtotal').close_to(vars['unit_price'])
+    expect(_resp10).json(_li10 + '.downlineCommissionRate').equals(0)
+    expect(_resp10).json(_li10 + '.commissionSubtotal').close_to(vars['promoter_earnings'])
+    expect(_resp10).json(_li10 + '.commissionRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.commissionNet').close_to(vars['promoter_earnings'])
+    expect(_resp10).json(_li10 + '.quantity').equals(1)
+    expect(_resp10).json(_li10 + '.quantityFulfilled').equals(1)
+    expect(_resp10).json(_li10 + '.quantityRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.lineItemRefunded').equals(0)
+    expect(_resp10).json(_li10 + '.fulfillmentStatus').equals("FULFILLED")
+    expect(_resp10).json(_li10 + '.saleType').equals("POST_COMMISSION")
+    expect(_resp10).json(_li10 + '.uplineSaleType').equals("POST_COMMISSION")
+    expect(_resp10).json(_li10 + '.variantInfo.listingType').equals("TICKET")
+    expect(_resp10).json(_li10 + '.variantInfo.autoFulfill').equals(True)
+    expect(_resp10).json(_li10 + '.variantInfo.deliveryMethod').equals("IN_PERSON")

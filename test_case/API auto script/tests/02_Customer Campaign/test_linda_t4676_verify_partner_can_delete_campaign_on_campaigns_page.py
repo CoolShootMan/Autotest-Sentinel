@@ -112,7 +112,7 @@ def test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page(ctx: "
     """Apifox case #7627714: Linda_T4676_Verify_partner_can_delete_campaign_on_campaigns_page"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: baf038c4-2513-47dc-a2b3-d3483e839bf4
+    # step 1: GET Get compaign list and select one campaign to delete
     _resp1 = ctx.api.campaigns.list(body=None, params={'search': '', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     # customScript: 从 campaigns 列表筛选 name 含 "automation by linda" 且 status 为 DRAFT/COMPLETED 的任务，随机取一个 id
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
@@ -123,13 +123,13 @@ def test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page(ctx: "
                 and t.get('status') in ('DRAFT', 'COMPLETED')]
     import random as _random
     vars['randomLindaAutomationId'] = _random.choice(_targets) if _targets else ''
-    # step 2: 7fda4001-c1fe-4cf1-99f5-70714c1f51d8
+    # step 2: DELETE delete the campaign
     _resp2 = ctx.api.campaigns.by_random_linda_automation_id(body=None, token='linda01_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
-    # step 3: a42d8fc3-6065-4fc4-abae-3795299a8f64
+    # step 3: GET Check the deleted campaign id is not in the list
     _resp3 = ctx.api.campaigns.list(body=None, params={'search': '', 'pageSize': '30', 'pageNumber': '1'}, token='linda01_token')
     vars['deleteVerifyResult'] = 'failed'
     vars['deleteVerifyResult'] = 'failed'

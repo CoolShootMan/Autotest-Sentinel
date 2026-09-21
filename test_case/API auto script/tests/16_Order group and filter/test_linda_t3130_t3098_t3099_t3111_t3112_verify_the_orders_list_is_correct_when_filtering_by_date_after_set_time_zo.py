@@ -210,7 +210,7 @@ def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is
     vars['timeZoneAsia'] = 'Asia/Shanghai'
     vars['merchant_id'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['consumer_id'] = '7bc6ed8d-51de-446b-8c64-fd321cf1a45d'
-    # step 2: 214c5e81-1da1-4814-9f18-ee95bad4b279
+    # step 2: PUT Set timezone as "Asia/Shanghai"
     # === pre-script（由 Apifox customScript 翻译）===
     vars['timeZoneAsia'] = "Asia/Shanghai"
     vars['merchant_id'] = "822a3e59-fdf3-4d9b-be57-f8f0b3af1023"
@@ -469,7 +469,7 @@ order by
     # assertion 5.assertion: responseJson equal {{order_date1}}
     expect(_resp5).json('$.data.extra[1].createdDay').equals(ctx.render_text('{{order_date1}}'))
     vars['timeZoneAsiaAmerica'] = 'America/Los_Angeles'
-    # step 6: 9faaec4b-543d-466d-9c8c-efcd846aa988
+    # step 6: PUT Set timezone as "America/Los_Angeles"
     # === pre-script（由 Apifox customScript 翻译）===
     vars['timeZoneAsiaAmerica'] = "America/Los_Angeles"
 

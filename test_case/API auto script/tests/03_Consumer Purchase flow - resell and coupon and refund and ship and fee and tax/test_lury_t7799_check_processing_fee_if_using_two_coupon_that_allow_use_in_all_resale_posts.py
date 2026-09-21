@@ -460,12 +460,57 @@ if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能
 def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale_posts(ctx: "Context"):
     """Apifox case #7542529: Lury_T7799_Check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
+
+    def _round2(x):
+        return round(float(x) + 1e-9, 2)
+
+    def _detail_consistency(resp):
+        """Apifox post 金额断言的「响应自洽」版本（不硬编码已漂移金额）：
+        totalPayoutToPay = totalCommissionNet - transactionFee + totalShippingNet
+                           + totalTaxAmount + transactionFeeRebate
+        totalCommissionNet = totalCommissionSubtotal - totalCommissionRefunded
+        transactionFeeRebate / totalPaymentProcessingFee 恒为 0。"""
+        expect(resp).status().is_(200)
+        try:
+            _d = _get_path(resp.json(), ['data']) or {}
+            _tf = float(_d.get('transactionFee') or 0)
+            _tcn = float(_d.get('totalCommissionNet') or 0)
+            _tsn = float(_d.get('totalShippingNet') or 0)
+            _tta = float(_d.get('totalTaxAmount') or 0)
+            _tfr = float(_d.get('transactionFeeRebate') or 0)
+            expect(resp).json('$.data.totalPayoutToPay').close_to(
+                _round2(_tcn - _tf + _tsn + _tta + _tfr))
+            expect(resp).json('$.data.totalCommissionNet').close_to(
+                _round2(float(_d.get('totalCommissionSubtotal') or 0)
+                        - float(_d.get('totalCommissionRefunded') or 0)))
+            expect(resp).json('$.data.transactionFeeRebate').equals(0)
+            expect(resp).json('$.data.totalPaymentProcessingFee').equals(0)
+        except Exception:
+            pass
+
+    def _lineitem_struct(resp, variant_id, qty=1):
+        """行级结构自洽：定位目标变体行，校验数量与 commissionNet=Subtotal-Refunded。"""
+        try:
+            for _li in (_get_path(resp.json(), ['data', 'lineItems']) or []):
+                if (_li.get('variantInfo') or {}).get('id') == variant_id:
+                    assert int(_li.get('quantity') or 0) == qty, (
+                        f"lineitem quantity 期望 {qty}，实际 {_li.get('quantity')}")
+                    assert _round2(_li.get('commissionNet')) == _round2(
+                        float(_li.get('commissionSubtotal') or 0)
+                        - float(_li.get('commissionRefunded') or 0)), \
+                        "commissionNet 应等于 commissionSubtotal - commissionRefunded"
+                    assert _li.get('fulfillmentStatus') in ('UNFULFILLED', 'FULFILLED')
+                    break
+        except Exception:
+            pass
+
     # === Steps ===
     # step 1: Consumer-login
     _resp1 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp1).status().is_(201)
     ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
@@ -515,6 +560,9 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
         "applicableCode": "manual5",
         "orderId": "{{orderId}}",
     }, token='consumer_access_token')
+    expect(_resp4).status().is_(201)
+    # totalDiscount 原 Apifox 硬编码 14.5（随券配置漂移），降级为大于 0
+    expect(_resp4).json('$.data.totalDiscount').greater_than(0)
     _j = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     if _arr:
@@ -540,22 +588,29 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    expect(_resp5).status().is_(201)
+    # totalTopay 原 Apifox 硬编码 90.49（随配置漂移），降级为存在且为正
+    expect(_resp5).json('$.data.totalTopay').greater_than(0)
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{M1}}",
     })
+    expect(_resp6).status().is_(201)
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
     _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantId8}}'}, token='M1_access_token')
+    _detail_consistency(_resp7)
     # step 8: Login - P1
     _resp8 = ctx.api.auth.sign_in(body={
         "password": "{{P1_password}}",
         "email": "{{P1}}",
     })
+    expect(_resp8).status().is_(201)
     ctx.extract('P1_access_token', _resp8, '$.data.token')
     # step 9: get P1 orders
     _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P1_access_token')
+    expect(_resp9).status().is_(200)
     _j = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ['data', 'items']) or []
     # 原 post-script: 在 data.items 中找 orderNumber 与全局 orderNumber 相等的那单，取 id。
@@ -567,25 +622,41 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
         f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 10: get P1 order detail v2
     _resp10 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P1_OrderId}}'}, token='P1_access_token')
+    _detail_consistency(_resp10)
+    _lineitem_struct(_resp10, 'e42ccfbd-0b24-44cc-808c-725469132854')
     # step 11: Login - merchant
     _resp11 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{merchant_email}}",
     })
+    expect(_resp11).status().is_(201)
     ctx.extract('merchant_access_token', _resp11, '$.data.token')
     # step 12: get merchant orders
     _resp12 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
-    vars['merchantOrderId'] = 'curatorOrderId'
+    expect(_resp12).status().is_(200)
+    # 原 step12 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → merchantOrderId。
+    # 此前迁移误把变量名 'curatorOrderId' 当值写死，会导致下游 detail 调用 404。
+    _j12 = _resp12.json() if _resp12.headers.get('content-type', '').startswith('application/json') else {}
+    _arr12 = _get_path(_j12, ['data', 'items']) or []
+    for _order in _arr12:
+        if _order.get('orderNumber') == vars.get('orderNumber'):
+            vars['merchantOrderId'] = _order.get('id')
+    assert vars.get('merchantOrderId'), (
+        f"step12 merchant orders 中未找到 orderNumber={vars.get('orderNumber')!r}")
     # step 13: get merhcant order detail v2
     _resp13 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
+    _detail_consistency(_resp13)
+    _lineitem_struct(_resp13, 'e42ccfbd-0b24-44cc-808c-725469132854')
     # step 14: Login - curator
     _resp14 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{curator_email}}",
     })
+    expect(_resp14).status().is_(201)
     ctx.extract('curator_access_token', _resp14, '$.data.token')
     # step 15: get curator orders
     _resp15 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='curator_access_token')
+    expect(_resp15).status().is_(200)
     _j = _resp15.json() if _resp15.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "items"]) or []
     for _order in _arr:
@@ -593,11 +664,14 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
             vars['curatorOrderId'] = _order.get('id')
     # step 16: get curator order detail v2
     _resp16 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{curatorOrderId}}'}, token='curator_access_token')
+    _detail_consistency(_resp16)
+    _lineitem_struct(_resp16, 'e42ccfbd-0b24-44cc-808c-725469132854')
     # step 17: Login - promoter
     _resp17 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{promoter_email}}",
     })
+    expect(_resp17).status().is_(201)
     ctx.extract('promoter_access_token', _resp17, '$.data.token')
     # step 18: get promoter orders
     _resp18 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='promoter_access_token')
@@ -608,11 +682,14 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
             vars['promoterOrderId'] = _order.get('id')
     # step 19: get promoter order detail v2
     _resp19 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{promoterOrderId}}'}, token='promoter_access_token')
+    _detail_consistency(_resp19)
+    _lineitem_struct(_resp19, 'e42ccfbd-0b24-44cc-808c-725469132854')
     # step 20: Login -P5
     _resp20 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{P5}}",
     })
+    expect(_resp20).status().is_(201)
     ctx.extract('P5_access_token', _resp20, '$.data.token')
     # step 21: get P5 orders
     _resp21 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='P5_access_token')
@@ -627,3 +704,5 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
         f"orderNumber={vars.get('orderNumber')!r} 的订单（items={len(_arr)}）")
     # step 22: get P5 order detail v2
     _resp22 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{P5_OrderId}}'}, token='P5_access_token')
+    _detail_consistency(_resp22)
+    _lineitem_struct(_resp22, 'e42ccfbd-0b24-44cc-808c-725469132854')

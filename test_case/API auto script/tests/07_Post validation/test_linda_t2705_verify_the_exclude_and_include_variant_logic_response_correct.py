@@ -140,7 +140,7 @@ def test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_corre
     """Apifox case #8038375: Linda_T2705_Verify_the_Exclude_and_Include_variant_logic_response_correct"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: 7bac97ce-2d5b-4b26-9ea3-b6c2303e1ab7
+    # step 1: PUT settting the varaint exclude and include
     _resp1 = ctx.api.posts.curator_update(post_id='{{T2705_post_id}}', body={
     'id': '{{T2705_post_id}}',
     'announcements': None,

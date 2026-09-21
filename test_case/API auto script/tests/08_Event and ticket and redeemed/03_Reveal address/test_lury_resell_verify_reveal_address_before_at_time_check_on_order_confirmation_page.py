@@ -168,3 +168,12 @@ def test_lury_resell_verify_reveal_address_before_at_time_check_on_order_confirm
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion 4: create Order and check address (status 201 / totalTopay=0 / lineItem extraInfo)
+    expect(_resp4).status().is_(201)
+    expect(_resp4).json('$.data.totalTopay').equals(0)
+    _mpid4 = "6708f6d2-d45f-41b9-a3c8-4e743bfcba2b"
+    _ei4 = '$.data.confirmation.lineItems[?(@.merchantProductId=="' + _mpid4 + '")].extraInfo'
+    expect(_resp4).json(_ei4 + '.isAddressHidden').equals(True)
+    expect(_resp4).json(_ei4 + '.location').equals("")
+    expect(_resp4).json(_ei4 + '.event').equals("Lury event reveal address before at automation testing 0806")
+    expect(_resp4).json(_ei4 + '.venue').equals("reveal address before at 2035-8-6")

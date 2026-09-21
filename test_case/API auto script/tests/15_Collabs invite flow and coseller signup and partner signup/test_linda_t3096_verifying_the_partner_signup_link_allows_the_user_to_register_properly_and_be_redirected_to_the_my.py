@@ -68,12 +68,12 @@ def test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_regist
     """Apifox case #7688715: Linda_T3096_Verifying_the_partner_signup_link_allows_the_user_to_register_proper"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: bc8e6063-e7c4-403d-8868-c778a8b58574
+    # step 1: POST partner-signup and send code
     _resp1 = ctx.api.auth.code(body={
         "email": "{{PartnerEmail}}",
     })
     vars['otp_request_ts'] = 'Date.now('
-    # step 2: c82e7033-66f9-4465-b1e6-a2650afc0fc5
+    # step 2: POST merchant-login success
     _resp2 = ctx.api.auth.merchant_login(body={
         "inviterCampaign": {},
         "code": "{{gmail_code}}",
@@ -82,7 +82,7 @@ def test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_regist
     ctx.extract('auth_token', _resp2, '$.data.token')
     ctx.extract('auth_refresh_token', _resp2, '$.data.refreshToken')
     ctx.extract('user_id', _resp2, '$.data.id')
-    # step 3: 4a6f81ee-6d37-4d7b-aafe-473e3a30eb6b
+    # step 3: GET get the post data, make sure page no crash
     _resp3 = ctx.api.posts.curator_shop(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='auth_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')

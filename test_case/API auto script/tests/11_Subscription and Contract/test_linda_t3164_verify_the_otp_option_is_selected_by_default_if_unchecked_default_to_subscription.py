@@ -36,7 +36,7 @@ def test__5961755__Linda_T3164_Verify_the_OTP_option_is_selected_by_default_if_u
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: aa94e0f7-e56f-4537-80f9-5d2fe76bec09
+    # step 1: PUT setting "Free shipping" on the product subscribtion plan
     _resp1 = ctx.api.merchants.v_7c2db5d2_92f0_4090_a1ef_55a811b12a6f_subscription_plan_693b2288_c958_4312_92a9_910b948bb6c3(body={
         "id": "693b2288-c958-4312-92a9-910b948bb6c3",
         "merchantId": "7c2db5d2-92f0-4090-a1ef-55a811b12a6f",

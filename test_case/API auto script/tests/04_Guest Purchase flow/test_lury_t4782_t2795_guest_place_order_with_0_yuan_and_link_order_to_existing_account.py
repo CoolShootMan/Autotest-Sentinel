@@ -51,6 +51,7 @@ def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "bc9a5b70-2b2a-40b7-81e1-4176e8ef4bda",
     }, app_headers=False)
+    expect(_resp1).status().is_(201)
     # customScript: extract access_token from step1 response data
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     vars['access_token'] = (_j1 or {}).get('data', '')
@@ -91,6 +92,8 @@ def test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order
     _d2: dict[str, Any] = _j2.get('data') or {}
     vars['orderNumber'] = _d2.get('orderNumber', '')
     vars['orderId'] = _d2.get('orderId', '')
+    # assertion: totalToPay is 0 for free ticket
+    expect(_resp2).json('$.data.totalToPay').close_to(0)
     # step 3: create Order
     _resp3 = ctx.api.orders.create(body={
         "id": "{{orderId}}",

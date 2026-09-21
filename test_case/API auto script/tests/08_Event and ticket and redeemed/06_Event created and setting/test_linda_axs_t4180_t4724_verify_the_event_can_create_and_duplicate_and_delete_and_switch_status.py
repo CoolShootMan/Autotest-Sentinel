@@ -631,7 +631,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: 79fd31fa-6a2e-4ec3-b070-60ac93210027
+    # step 1: GET Partner Get the Event id
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # 原 Apifox post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
     # 取 id/title 写入 event_id/event_title，并取 tickets[0].id 写入 copyFromId。
@@ -649,22 +649,22 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars['event_title'] = _axs_event.get('title') or ''
     _tickets1 = _axs_event.get('tickets') or []
     vars['copyFromId'] = (_tickets1[0].get('id') or '') if _tickets1 else ''
-    # step 2: cb92454b-5c3f-41bc-a204-17c47db601f0
+    # step 2: GET get the event catalog id
     _resp2 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp2, '$.data.id')
-    # step 3: 7722151d-7d59-4d5e-b875-a462da878e63
+    # step 3: GET get the event post id
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
-    # step 4: 3d38a45e-afec-4e75-8ad7-6338b5b7f6fc
+    # step 4: GET Catch the ProductId and promoterProductId
     _resp4 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 Apifox post-script: 取 data.relatedProducts 中首个库存 > 0 的产品并提取字段。
     _rels4: list[dict] = (_resp4.json().get('data') or {}).get('relatedProducts') or []
     _prod4 = _pick_first(_rels4, _product_has_stock)
     assert _prod4, f"step4 未找到库存 > 0 的关联产品（relatedProducts={len(_rels4)}）"
     _apply_related_product(ctx, _prod4)
-    # step 5: 5df31978-26c0-47bb-b668-d909ba23f7ed
+    # step 5: GET get the original ticket's form information
     _resp5 = ctx.api.products.by_product_id_2(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: data.product.productForm（缺失时回退 data.productForm）。
     # 实测该接口（GET /merchant/product/{id}）响应里并没有 productForm 字段
@@ -677,7 +677,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     # 与同目录同场景的 test_linda_t4180_t4724_*.py（已完整迁移版，值为 False/None）一致。
     vars['productForm'] = (_get_path(_resp5.json(), ['data', 'product', 'productForm'])
                            or _get_path(_resp5.json(), ['data', 'productForm']))
-    # step 6: 96a11731-2fab-4457-8fc6-5b9912ed7f25
+    # step 6: POST Admin search partner 999
     _resp6 = ctx.api.admin.users_search(body={
         "query": "{{UIauto_partner_email}}",
         "filter": {
@@ -694,7 +694,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     _items6 = (_resp6.json().get('data') or {}).get('items') or []
     vars['user_id'] = (_items6[0].get('id') or '') if _items6 else ''
     vars['dul_event_title'] = 'Duplicate Verify the AXS Event can create and duplicate and delete success'
-    # step 7: 46f46103-0698-46bb-8a31-851caf142fb6
+    # step 7: POST duplicate the event
     # === pre-script（由 Apifox customScript 翻译）===
     vars['dul_event_title'] = "Duplicate Verify the AXS Event can create and duplicate and delete success"
 
@@ -1138,7 +1138,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars['dup_event_id'] = _dupeventid_val if _dupeventid_val is not None else ''
     _lineupid_val = _get_path(_resp7.json(), ['data', 'lineup', 0, 'id'])
     vars['lineup_id'] = _lineupid_val if _lineupid_val is not None else ''
-    # step 8: 49b770d0-3b1c-46eb-95ef-3bf4753fe5b1
+    # step 8: GET get the event post id
     _resp8 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
     _items8: list[dict] = (_resp8.json().get('data') or {}).get('items') or []
     _post0id_val = _get_path(_resp8.json(), ['data', 'items', 0, 'id'])
@@ -1153,14 +1153,14 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     assert _target8, (f"step8 未能在事件 {vars.get('dup_event_id')} 的 posts 中找到目标 post"
                       f"（items={len(_items8)}）")
     vars['postId'] = _target8.get('id') or ''
-    # step 9: 9775d52a-d543-4ead-8304-d92610b7ef8a
+    # step 9: GET Catch the ProductId and promoterProductId
     _resp9 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
     # 原 Apifox post-script: 取 data.relatedProducts 中首个库存 > 0 的产品并提取字段。
     _rels9: list[dict] = (_resp9.json().get('data') or {}).get('relatedProducts') or []
     _prod9 = _pick_first(_rels9, _product_has_stock)
     assert _prod9, f"step9 未找到库存 > 0 的关联产品（relatedProducts={len(_rels9)}）"
     _apply_related_product(ctx, _prod9)
-    # step 10: 103a0db8-3d7f-4727-bb53-8a1ce5bf2abf
+    # step 10: PUT setting the event status as Hold
     _resp10 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
     'title': '{{dul_event_title}}',
@@ -1771,7 +1771,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     }, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
     assert _resp10c.status_code in (200, 201), f"补建票 show-in-post 失败：{_resp10c.describe()}"
-    # step 11: 08306796-68a5-4c06-a064-41c855cb0242
+    # step 11: GET Catch the promoterProductvariantId and merchantProductVariantId
     _resp11 = ctx.api.admin.post_v2_relate_products(
         body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
     # 原 Apifox post-script: 在 data.relatedProducts 中找 title === "ticket on hold" 的产品，
@@ -1793,12 +1793,12 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     # 原 post-script 还会把 merchantProductVariantId 覆盖成该产品的变体 id，但那个值在
     # Apifox 里来自别条用例的残留变量；本用例 step7/10/17/19 的事件 body 需要它保持
     # 「复制票自己的变体」，故这里不再覆盖（保持 step9 提取到的值）。
-    # step 12: 5e4763c0-213e-44d1-8ee0-15b388f36e32
+    # step 12: POST guest login
     _resp12 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
     })
     vars['access_token'] = (_resp12.json() if _resp12.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
-    # step 13: dd0455dd-1414-4f26-a71f-3cca80014da1
+    # step 13: DELETE Clean Cart
     _resp13 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 13.assertion: responseJson equal 200
     expect(_resp13).json('$.code').equals('200')
@@ -1840,7 +1840,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     # 注意：此处 buy-now 预期失败（step10 已把事件置为 ON_HOLD，票不可售），
     # orderId 取不到是正常的；真正的 orderId 由 step23 提供（那时事件已回到 UPCOMING）。
     ctx.extract('orderId', _resp14, '$.data.orderId')
-    # step 15: 33e4ab76-4fed-456c-85a4-6b1dd506eee7
+    # step 15: POST check the "Hold" post is unable to checkout
     _resp15 = ctx.api.orders.checkout_express(body={
         "items": [
             {
@@ -1863,13 +1863,13 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         },
         "subdomainVanityUrl": "",
     }, app_headers=True, token='access_token')
-    # step 16: 173d3229-281b-4285-bb4e-e8bcd5130909
+    # step 16: GET get shipping-options
     _resp16 = ctx.api.merchants.shipping_options(body=None, token='yuxiao999_token')
     # 原 Apifox post-script: data.items[0].id → shipping_option_id（下游多个 body 消费）。
     _items16 = (_resp16.json().get('data') or {}).get('items') or []
     assert _items16, 'step16 未取到 shipping options，下游 body 需要 {{shipping_option_id}}'
     vars['shipping_option_id'] = _items16[0].get('id') or ''
-    # step 17: 02bc9b66-ffbb-48ad-8d30-5b3b3764e578
+    # step 17: PUT setting the event status as Cancelled
     _resp17 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
     'title': '{{event_title}}',
@@ -2413,7 +2413,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
-    # step 18: 75dff304-6214-495f-bf52-0a136cbde768
+    # step 18: POST check the "cancelled" post is unable to checkout
     _resp18 = ctx.api.orders.checkout_express(body={
         "items": [
             {
@@ -2436,7 +2436,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         },
         "subdomainVanityUrl": "",
     }, app_headers=True, token='access_token')
-    # step 19: d5d0f651-78ac-463f-b146-4ce5144867a6
+    # step 19: PUT setting the event status as Completed
     _resp19 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
     'title': '{{event_title}}',
@@ -2980,7 +2980,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
-    # step 20: d46477ce-b6a0-431f-b0b4-877659fccc15
+    # step 20: PATCH admin update the event status from complete to upcoming
     _resp20 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "UPCOMING",
     }, token='admin_token')
@@ -2988,7 +2988,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     expect(_resp20).json('$.code').equals('200')
     # assertion 20.assertion: responseJson equal success
     expect(_resp20).json('$.message').equals('success')
-    # step 22: 50179345-fab4-45fb-a25d-70424adae873
+    # step 22: DELETE Clean Cart
     _resp22 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 22.assertion: responseJson equal 200
     expect(_resp22).json('$.code').equals('200')
@@ -3069,7 +3069,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     }, skip_notifications=False, token='access_token')
     # assertion 24.assertion: responseJson equal success
     expect(_resp24).json('$.message').equals('success')
-    # step 25: fdb455cc-78a7-4b08-91a7-1da4b9960204
+    # step 25: PUT setting the event status as Completed
     _resp25 = ctx.api.events.by_dup_event_id(body={
     'id': '{{dup_event_id}}',
     'title': '{{event_title}}',
@@ -3606,7 +3606,7 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
-    # step 26: 486e02b9-ce12-4f83-87f4-1013d87bd6f5
+    # step 26: PATCH admin update the event status from complete to upcoming failed if exist order
     _resp26 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "UPCOMING",
     }, token='admin_token')
@@ -3614,5 +3614,5 @@ def test__8709247__Linda_AXS_T4180_T4724_Verify_the_Event_can_create_and_duplica
     expect(_resp26).json('$.code').equals('400')
     # assertion 26.assertion: responseJson equal Cannot revert an event that has sales.
     expect(_resp26).json('$.message').equals('Cannot revert an event that has sales.')
-    # step 27: 67d12801-155f-4437-9c63-7142fc198c99
+    # step 27: DELETE delete the event
     _resp27 = ctx.api.events.by_event_id(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})

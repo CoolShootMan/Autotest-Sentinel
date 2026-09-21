@@ -81,12 +81,12 @@ def test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card
     _render = legacy_render(ctx)
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 1: 31b4cf7b-2ce1-442d-a64f-f9caf7896d13
+    # step 1: POST /auth/guest-login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
     })
     vars['access_token'] = (_resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}).get('data', '')
-    # step 2: 0503484f-b508-44cf-8ee3-3a83477fba43
+    # step 2: DELETE Clean Cart
     _resp2 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 2.assertion: responseJson equal 200
     expect(_resp2).json('$.code').equals('200')
@@ -178,7 +178,7 @@ def test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card
     ctx.extract('lineItems_id', _resp5, '$.data.lineItems[0].id')
     # extractor: merchantOrderId = $.data.lineItems[0].merchantOrderId
     ctx.extract('merchantOrderId', _resp5, '$.data.lineItems[0].merchantOrderId')
-    # step 6: adc5fa8a-c82d-4386-a483-e23fee773ead
+    # step 6: POST partial refund
     _resp6 = ctx.api.admin.orders_refunds(body={
         "lineItems": [
             {

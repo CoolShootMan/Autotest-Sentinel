@@ -343,7 +343,7 @@ ENV_NAME = "Release"
 
 
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
@@ -362,23 +362,148 @@ def test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_sold_by_v
     })
     # extractor: M1_access_token = $.data.token
     ctx.extract('M1_access_token', _resp1, '$.data.token')
-    # step 2: 2e243101-2328-4a76-8473-39dde92c6a5b
+    # step 2: GET Check the event report data correct
     _resp2 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_summary(body=None, token='M1_access_token')
-    # step 3: 27b4004b-4e5a-4905-8ff2-4dfdf571c44e
+    # step 3: GET Check the event report - staff gross sales data
     _resp3 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff_summary(body=None, token='M1_access_token')
-    # step 4: 3cbe8184-1909-483f-b1e0-43c87cbbca23
+    # step 4: GET Check the event report - staff details info
     _resp4 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_staff(body=None, params={'pageNumber': '1', 'pageSize': '30'}, token='M1_access_token')
-    # step 5: 4cdd7fbb-9c00-40f7-8a20-0d7883dfe4fe
+    # step 5: GET Check the event report - view total payable tips
     _resp5 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_tipped_orders(body=None, params={'pageSize': '30', 'pageNumber': '1'}, token='M1_access_token')
-    # step 6: 6e848201-ab1a-429c-88cd-3a0f1d780d9f
+    # step 6: GET Check the sales > orders page date is correct
     _resp6 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_orders_summary(body=None, params={'dateText': 'Custom', 'productIds': '84ca33f0-49f4-4565-82c3-d691cec864d8,a0b826d8-a96d-42e6-9da6-569fea72ee42,71e1a9de-cc72-42c7-a138-a68c306000b6,31dd45f0-5096-4b2f-9b7f-135dc5b8e581'}, token='M1_access_token')
-    # step 7: c6512f91-9d3e-42cd-a20f-9b40268803ba
+    # step 7: GET Check the sales > orders page date is correct after filtering by ticket2
     _resp7 = ctx.api.events.bdc4f6e7_8f5d_4dae_8c2b_d7ae1b43b320_metrics_orders_summary(body=None, params={'dateText': 'Custom', 'productIds': 'a0b826d8-a96d-42e6-9da6-569fea72ee42'}, token='M1_access_token')
-    # --- assertions: no fake-green (non-4xx/5xx) ---
-    assert _resp1.status_code < 400, f"step1 got HTTP {_resp1.status_code}: {_resp1.text[:200]}"
-    assert _resp2.status_code < 400, f"step2 got HTTP {_resp2.status_code}: {_resp2.text[:200]}"
-    assert _resp3.status_code < 400, f"step3 got HTTP {_resp3.status_code}: {_resp3.text[:200]}"
-    assert _resp4.status_code < 400, f"step4 got HTTP {_resp4.status_code}: {_resp4.text[:200]}"
-    assert _resp5.status_code < 400, f"step5 got HTTP {_resp5.status_code}: {_resp5.text[:200]}"
-    assert _resp6.status_code < 400, f"step6 got HTTP {_resp6.status_code}: {_resp6.text[:200]}"
-    assert _resp7.status_code < 400, f"step7 got HTTP {_resp7.status_code}: {_resp7.text[:200]}"
+    # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
+    # step 1: Login-M1
+    expect(_resp1).status().is_(201)
+    # step 2: metrics summary
+    expect(_resp2).status().is_(200)
+    _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
+    _d2: dict[str, Any] = _j2.get('data') or {}
+    # gross sales
+    expect(_resp2).json('$.data.grossSalesBeforeDiscount').close_to(1679.19)
+    expect(_resp2).json('$.data.totalDiscount').close_to(0)
+    expect(_resp2).json('$.data.grossSales').close_to(1679.19)
+    expect(_resp2).json('$.data.totalRefund').close_to(154.06)
+    # net revenue
+    expect(_resp2).json('$.data.netRevenue').close_to(1525.13)
+    expect(_resp2).json('$.data.netTicketRevenue').close_to(377.13)
+    expect(_resp2).json('$.data.netMerchRevenue').close_to(1148)
+    expect(_resp2).json('$.data.totalCommissionPaid').close_to(0)
+    expect(_resp2).json('$.data.totalTransactionFee').close_to(207.82)
+    # tax / rebate
+    expect(_resp2).json('$.data.totalCustomFeeBreakdown.TAX.net').close_to(9.67)
+    expect(_resp2).json('$.data.totalCustomFeeBreakdown.custom_fee1.net').close_to(6.45)
+    expect(_resp2).json('$.data.totalRebate').close_to(104.56)
+    expect(_resp2).json('$.data.totalTransactionRebate').close_to(33.7)
+    expect(_resp2).json('$.data.totalAppRebate').close_to(70.86)
+    expect(_resp2).json('$.data.totalEarningShared').close_to(0)
+    # net earnings and tip
+    expect(_resp2).json('$.data.netEarnings').close_to(1437.99)
+    expect(_resp2).json('$.data.remainingNetEarnings').close_to(1252.71)
+    expect(_resp2).json('$.data.totalEarnedTips').close_to(202.85)
+    expect(_resp2).json('$.data.totalTip').close_to(185.28)
+    expect(_resp2).json('$.data.totalTipTransactionFee').close_to(17.57)
+    expect(_resp2).json('$.data.averageOrderValue').close_to(88.38)
+    # number of sold
+    expect(_resp2).json('$.data.totalNumberOfOrders').equals(19)
+    expect(_resp2).json('$.data.totalItemsSold').equals(26)
+    expect(_resp2).json('$.data.totalTicketSold').equals(15)
+    expect(_resp2).json('$.data.totalMerchSold').equals(11)
+    expect(_resp2).json('$.data.totalItemsRedeemed').equals(24)
+    expect(_resp2).json('$.data.totalRedeemableItems').equals(24)
+    # co-selling commission sales
+    expect(_resp2).json('$.data.promoterGrossSales').close_to(0)
+    expect(_resp2).json('$.data.totalItemsSoldByPromoter').equals(0)
+    expect(_resp2).json('$.data.totalItemsSoldByStaff').equals(26)
+    expect(_resp2).json('$.data.totalItemsSoldPercentage').equals(0)
+    expect(_resp2).json('$.data.promoterTotalItemsRedeemed').equals(0)
+    # total sold view details (by productId)
+    _exp_details = {
+        '31dd45f0-5096-4b2f-9b7f-135dc5b8e581': (10, 'Merch - tip', 11, 'Lury event app tip testing', 10),
+        '71e1a9de-cc72-42c7-a138-a68c306000b6': (4, 'ticket 3', 4, 'Lury event app tip testing', 4),
+        '84ca33f0-49f4-4565-82c3-d691cec864d8': (6, 'ticket 1', 6, 'Lury event app tip testing', 6),
+        'a0b826d8-a96d-42e6-9da6-569fea72ee42': (4, 'ticket 2', 5, 'Lury event app tip testing', 4),
+    }
+    for _td in _d2.get('totalItemsSoldDetail') or []:
+        _pk = _td.get('productId')
+        if _pk in _exp_details:
+            _red, _title, _qty, _evt, _rc = _exp_details[_pk]
+            assert _td.get('totalItemsRedeemed') == _red, f"{_pk}.redeemed={_td.get('totalItemsRedeemed')!r}"
+            assert _td.get('productTitle') == _title, f"{_pk}.title={_td.get('productTitle')!r}"
+            assert _td.get('quantity') == _qty, f"{_pk}.qty={_td.get('quantity')!r}"
+            assert _td.get('event') == _evt, f"{_pk}.event={_td.get('event')!r}"
+            assert _td.get('redeemableCount') == _rc, f"{_pk}.redeemableCount={_td.get('redeemableCount')!r}"
+    # step 3: staff gross sales summary
+    expect(_resp3).status().is_(200)
+    expect(_resp3).json('$.data.staffGrossSales').close_to(1679.19)
+    expect(_resp3).json('$.data.staffTotalItemsRedeemed').equals(24)
+    expect(_resp3).json('$.data.totalItemsSoldByStaff').equals(26)
+    expect(_resp3).json('$.data.totalItemsSoldPercentageByStaff').equals(100)
+    expect(_resp3).json('$.data.totalOrdersByStaff').equals(19)
+    expect(_resp3).json('$.data.totalOrdersPercentageByStaff').equals(100)
+    # step 4: staff detail list (by staff id)
+    expect(_resp4).status().is_(200)
+    _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type', '').startswith('application/json') else {}
+    _staff_exp = {
+        'ow222': (3, 6, 4, 53.1, 413.69),
+        'ad222': (2, 3, 3, 6.09, 144.29),
+        'lury': (2, 3, 3, 25.62, 202.1),
+        'lury2': (2, 3, 3, 24.61, 176.29),
+        'op111': (3, 3, 3, 37.52, 253.94),
+        'ow111': (2, 3, 3, 14.6, 188.86),
+        'ad111': (2, 2, 2, 18.74, 156.93),
+        'op222': (2, 2, 2, 5, 130.15),
+        'test': (1, 1, 1, 0, 12.94),
+    }
+    for _it in (_j4.get('data') or {}).get('items') or []:
+        _sid = _it.get('id')
+        if _sid in _staff_exp:
+            _no, _is, _ir, _tip, _gs = _staff_exp[_sid]
+            assert _it.get('totalNumberOfOrders') == _no, f"{_sid}.orders={_it.get('totalNumberOfOrders')!r}"
+            assert _it.get('totalItemsSold') == _is, f"{_sid}.sold={_it.get('totalItemsSold')!r}"
+            assert _it.get('totalItemsRedeemed') == _ir, f"{_sid}.redeemed={_it.get('totalItemsRedeemed')!r}"
+            assert abs((_it.get('totalTipToPay') or 0) - _tip) < 0.01, f"{_sid}.tipToPay={_it.get('totalTipToPay')!r}"
+            assert abs((_it.get('grossSales') or 0) - _gs) < 0.01, f"{_sid}.grossSales={_it.get('grossSales')!r}"
+    # step 5: tipped orders list (by orderNumber)
+    expect(_resp5).status().is_(200)
+    _j5: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type', '').startswith('application/json') else {}
+    _tip_exp = {
+        'P158482': (36, 3.06, 32.94), 'P158504': (22.45, 1.9, 20.55),
+        'P158500': (18, 1.53, 16.47), 'P158488': (18, 1.53, 16.47),
+        'P158443': (18, 1.53, 16.47), 'P158441': (18, 1.53, 16.47),
+        'P158449': (15, 1.27, 13.73), 'P158473': (10.94, 0.92, 10.02),
+        'P158499': (10, 0.85, 9.15), 'P158487': (8.89, 0.75, 8.14),
+        'P158454': (5.65, 0.48, 5.17), 'P158448': (5.47, 0.46, 5.01),
+        'P158463': (5, 0.42, 4.58), 'P158438': (5, 0.42, 4.58),
+        'P158478': (0, 0.39, -0.39), 'P158445': (4.45, 0.37, 4.08),
+        'P158459': (1, 0.08, 0.92), 'P158446': (1, 0.08, 0.92),
+    }
+    for _it in (_j5.get('data') or {}).get('items') or []:
+        _on = _it.get('orderNumber')
+        if _on in _tip_exp:
+            _nt, _ttf, _ttp = _tip_exp[_on]
+            assert abs((_it.get('netTip') or 0) - _nt) < 0.01, f"{_on}.netTip={_it.get('netTip')!r}"
+            assert abs((_it.get('tipTransactionFee') or 0) - _ttf) < 0.01, f"{_on}.tipTxFee={_it.get('tipTransactionFee')!r}"
+            assert abs((_it.get('tipToPay') or 0) - _ttp) < 0.01, f"{_on}.tipToPay={_it.get('tipToPay')!r}"
+    # step 6: orders page total net earnings
+    expect(_resp6).status().is_(200)
+    expect(_resp6).json('$.data.totalNetEarnings').close_to(1437.99)
+    expect(_resp6).json('$.data.totalCurrentEventNetEarnings').close_to(1437.99)
+    expect(_resp6).json('$.data.totalCurrentEventFilteredNetEarnings').close_to(1437.99)
+    expect(_resp6).json('$.data.totalOtherEventNetEarnings').close_to(0)
+    expect(_resp6).json('$.data.totalOrders').equals(19)
+    expect(_resp6).json('$.data.totalItems').equals(26)
+    expect(_resp6).json('$.data.totalRedeemableItems').equals(24)
+    expect(_resp6).json('$.data.totalItemsRedeemed').equals(24)
+    # step 7: orders page total net earnings after filtering by ticket 2
+    expect(_resp7).status().is_(200)
+    expect(_resp7).json('$.data.totalNetEarnings').close_to(194.31)
+    expect(_resp7).json('$.data.totalCurrentEventNetEarnings').close_to(194.31)
+    expect(_resp7).json('$.data.totalCurrentEventFilteredNetEarnings').close_to(115.16)
+    expect(_resp7).json('$.data.totalOtherEventNetEarnings').close_to(0)
+    expect(_resp7).json('$.data.totalOrders').equals(5)
+    expect(_resp7).json('$.data.totalItems').equals(9)
+    expect(_resp7).json('$.data.totalRedeemableItems').equals(7)
+    expect(_resp7).json('$.data.totalItemsRedeemed').equals(7)

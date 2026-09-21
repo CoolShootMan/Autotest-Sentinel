@@ -99,6 +99,7 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
+    expect(_resp0).status().is_(201)
     ctx.extract('consumer_access_token', _resp0, '$.data.token')
     # step 1: delete cart
     _resp1 = ctx.api.cart.delete(token='consumer_access_token')
@@ -138,6 +139,11 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
     ctx.extract('orderNumber', _resp2, '$.data.orderNumber')
     # extractor: orderId = orderId
     ctx.extract('orderId', _resp2, '$.data.orderId')
+    # assertion: buy now — hideFees=true, ticketFees=0, subtotalTicketFees=0
+    expect(_resp2).json('$.data.lineItems[0].promoterVariantId').equals('d5e8d02e-6038-4603-90a0-769012f620d5')
+    expect(_resp2).json('$.data.lineItems[0].hideFees').equals(True)
+    expect(_resp2).json('$.data.lineItems[0].ticketFees').close_to(0)
+    expect(_resp2).json('$.data.lineItems[0].subtotalTicketFees').close_to(0)
     # step 3: create Order
     _resp3 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -159,13 +165,40 @@ def test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_cu
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
     }, token='consumer_access_token')
+    # assertion: create order — status 201, totalTopay, confirmation hideFees/ticketFees
+    expect(_resp3).status().is_(201)
+    expect(_resp3).json('$.data.totalTopay').close_to(14.28)
+    expect(_resp3).json('$.data.confirmation.lineItems[0].merchantProductId').equals('b0ce090f-1d6f-4962-bdce-3f2f1cbfa1d5')
+    expect(_resp3).json('$.data.confirmation.lineItems[0].hideFees').equals(True)
+    expect(_resp3).json('$.data.confirmation.lineItems[0].ticketFees').close_to(0)
     # step 4: get consumer order detail
     _resp4 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
+    # assertion: consumer order detail — status 200, totalLineItemPrice, lineItems hideFees/ticketFees
+    expect(_resp4).status().is_(200)
+    expect(_resp4).json('$.data.totalLineItemPrice').close_to(14.28)
+    expect(_resp4).json('$.data.lineItems[0].merchantProductId').equals('b0ce090f-1d6f-4962-bdce-3f2f1cbfa1d5')
+    expect(_resp4).json('$.data.lineItems[0].hideFees').equals(True)
+    expect(_resp4).json('$.data.lineItems[0].ticketFees').close_to(0)
     # step 5: Login-M1
     _resp5 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
         "email": "{{M1}}",
     })
+    expect(_resp5).status().is_(201)
     ctx.extract('M1_access_token', _resp5, '$.data.token')
     # step 6: get M1 order detail v2
     _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
+    # assertion: M1 order detail v2 — status 200, commission totals, transactionFeeRebate, custom fee breakdown
+    expect(_resp6).status().is_(200)
+    expect(_resp6).json('$.data.totalCommissionSubtotal').close_to(14.28)
+    expect(_resp6).json('$.data.totalCommissionNet').close_to(14.28)
+    expect(_resp6).json('$.data.transactionFeeRebate').close_to(1.52)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee11_1.net').close_to(0.29)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee11_1.title').equals('fee11')
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee11_1.amount').close_to(0.29)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee22_2.net').close_to(1)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee22_2.title').equals('fee22')
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee22_2.amount').close_to(1)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee33_3.net').close_to(0.57)
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee33_3.title').equals('fee33')
+    expect(_resp6).json('$.data.transactionItemCustomFeeBreakdown.custom_fee33_3.amount').close_to(0.57)

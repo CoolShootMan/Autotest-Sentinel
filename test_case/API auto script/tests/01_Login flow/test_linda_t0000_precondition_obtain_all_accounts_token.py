@@ -63,7 +63,7 @@ def test_linda_t0000_precondition_obtain_all_accounts_token(ctx: "Context"):
     """Apifox case #8604667: Linda_T0000_Precondition_obtain_all_accounts_token"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: c7f494a6-dffa-477a-bbe1-c97568f3181f
+    # step 1: POST admin login
     _resp1 = ctx.api.admin.auth_login(body={
         "email": "{{admin_email}}",
         "password": "{{adminpassword}}",
@@ -99,14 +99,14 @@ def test_linda_t0000_precondition_obtain_all_accounts_token(ctx: "Context"):
     _resp7 = ctx.api.auth.sign_in(body={"email": "{{p10_email}}", "password": "{{password}}"})
     # extractor: linda10_token = $.data.token
     ctx.extract('linda10_token', _resp7, '$.data.token')
-    # step 8: 8fe52a2b-549e-4b7c-b05f-e23267a11b20
+    # step 8: POST Partner 999 login
     _resp8 = ctx.api.auth.sign_in(body={
         "email": "{{UIauto_partner_email}}",
         "password": "{{password}}",
     }, app_headers=True)
     # extractor: yuxiao999_token = $.data.token
     ctx.extract('yuxiao999_token', _resp8, '$.data.token')
-    # step 9: 84f647aa-5119-4add-bd41-89431821320f
+    # step 9: POST Co-seller 998 login
     _resp9 = ctx.api.auth.sign_in(body={"email": "{{UIauto_coseller_email}}", "password": "{{password}}"}, app_headers=True)
     # extractor: yuxiao998_token = $.data.token
     ctx.extract('yuxiao998_token', _resp9, '$.data.token')
