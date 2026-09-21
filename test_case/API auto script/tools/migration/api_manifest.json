@@ -1439,7 +1439,7 @@
         "path": "/order",
         "calls": 77,
         "path_params": [],
-        "app_headers": false,
+        "app_headers": true,
         "skip_notifications": true,
         "query": "",
         "params": {}

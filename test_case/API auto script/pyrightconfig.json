@@ -1,0 +1,24 @@
+{
+  "pythonVersion": "3.13",
+  "venvPath": "/Users/a123456/.workbuddy/binaries/python/envs",
+  "venv": "default",
+  "include": [
+    "tests",
+    "core",
+    "tools",
+    "config",
+    "suites"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "results",
+    ".git",
+    ".pytest_cache",
+    "**/*.pyc"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "error",
+  "reportMissingModuleSource": "warning",
+  "reportAttributeAccessIssue": "error",
+  "reportArgumentType": "error"
+}

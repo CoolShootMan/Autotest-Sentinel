@@ -90,8 +90,14 @@ def attach(name: str, content: Any, content_type: str = "text/plain") -> None:
     try:
         text = content if isinstance(content, str) else json.dumps(
             content, ensure_ascii=False, indent=2, default=str)
-        allure.attach(text, name=name, attachment_type=getattr(
-            allure.attachment_type, "TEXT", "text/plain"))
+        # allure 的 attach / attachment_type 是运行期动态注入的属性，pyright 静态
+        # 解析不到（reportAttributeAccessIssue）。统一走 getattr 解析：
+        # 运行期行为与原先的 getattr 兜底完全一致，静态检查也不再报错。
+        _attach = getattr(allure, "attach", None)
+        if _attach is None:
+            return
+        _atype = getattr(getattr(allure, "attachment_type", None), "TEXT", "text/plain")
+        _attach(text, name=name, attachment_type=_atype)
     except Exception:
         pass
 

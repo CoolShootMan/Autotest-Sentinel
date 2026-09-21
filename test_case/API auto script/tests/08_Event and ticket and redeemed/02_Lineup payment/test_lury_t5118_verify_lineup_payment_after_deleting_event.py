@@ -128,11 +128,11 @@ def test_lury_t5118_verify_lineup_payment_after_deleting_event(ctx: "Context"):
     }, app_headers=True)
     ctx.extract('P-21_access_token', _resp1, '$.data.refreshToken')
     # step 2: P-21 earning summary
-    _resp2 = ctx.api.earnings.summary()
+    _resp2 = ctx.api.earnings.summary(token='P-21_access_token')
     # extractor: lifetimeEarning = $.data.lifetimeEarning
     ctx.extract('lifetimeEarning', _resp2, '$.data.lifetimeEarning')
     # step 3: Partner getPayoutSummary
-    _resp3 = ctx.api.earnings.summary_2()
+    _resp3 = ctx.api.earnings.summary_2(token='P-21_access_token')
     # extractor: balance_amount = $.data.balance.amount
     ctx.extract('balance_amount', _resp3, '$.data.balance.amount')
     # step 4: Login - merchant
@@ -173,11 +173,11 @@ def test_lury_t5118_verify_lineup_payment_after_deleting_event(ctx: "Context"):
             "mediaType": "IMAGE",
         },
         "startDateDisplay": "{{start_time}}",
-    })
+    }, token='merchant_access_token')
     # extractor: event_post_id = event_post_id
-    ctx.extract('event_post_id', _resp7, 'event_post_id')
+    ctx.extract('event_post_id', _resp7, '$.data.autoCreatedPostId')
     # extractor: event_id = event_id
-    ctx.extract('event_id', _resp7, 'event_id')
+    ctx.extract('event_id', _resp7, '$.data.id')
     # step 8: Create event ticket
     _resp8 = ctx.api.events.v2_ticket_batch_v2(body={
     'poster': {
@@ -244,7 +244,7 @@ def test_lury_t5118_verify_lineup_payment_after_deleting_event(ctx: "Context"):
         },
     ],
     'coSellingCommissionRate': 25,
-})
+}, token='merchant_access_token')
     # assertion 8.get_200_status: responseJson equal 200
     expect(_resp8).json('$.code').equals('200')
     # step 9: Add lineup and payment in event
@@ -275,19 +275,19 @@ def test_lury_t5118_verify_lineup_payment_after_deleting_event(ctx: "Context"):
                 "order": 0,
             },
         ],
-    })
+    }, token='merchant_access_token')
     # assertion 9.get_status_code: responseJson equal 200
     expect(_resp9).json('$.code').equals('200')
     # extractor: lineup_id = $.data.lineup[0].id
     ctx.extract('lineup_id', _resp9, '$.data.lineup[0].id')
     # step 10: Delete event
-    _resp10 = ctx.api.events.by_event_id()
+    _resp10 = ctx.api.events.by_event_id(token='merchant_access_token')
     # step 11: Verify P-21 earning summary is not changed
-    _resp11 = ctx.api.earnings.summary()
+    _resp11 = ctx.api.earnings.summary(token='merchant_access_token')
     # assertion 11.earning is not changed: responseJson equal {{lifetimeEarning}}
     expect(_resp11).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning}}'))
     # step 12: Verify Partner getPayoutSummary is not changed
-    _resp12 = ctx.api.earnings.summary_2()
+    _resp12 = ctx.api.earnings.summary_2(token='merchant_access_token')
     # assertion 12.Balance is not changed: responseJson equal {{balance_amount}}
     expect(_resp12).json('$.data.balance.amount').equals(ctx.render_text('{{balance_amount}}'))
     # step 13: Verify promoter earning summary is +10

@@ -589,6 +589,14 @@ if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能
 def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode(ctx: "Context"):
     """Apifox case #7551337: Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
+    from core.compat import get_path as _get_path
+
+    def _pick_order_by_number(resp, number):
+        """原各 step post-script 的通用取法：在 ``data.items`` 中按 ``orderNumber``
+        匹配订单，返回该条目。匹配不到返回 None。"""
+        items = _get_path(resp.json(), ['data', 'items']) or []
+        return next((o for o in items if o.get('orderNumber') == number), None)
+
     # === Steps ===
     vars['m1_transaction_fee'] = 'm1_transaction_fee'
     vars['m1_transaction_fee_ticket'] = 'm1_transaction_fee_ticket'
@@ -599,7 +607,9 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
         "password": "{{merchant_password}}",
         "email": "{{consumer_email}}",
     })
-    vars['consumer_access_token'] = 'token'
+    # 原 step1 post-script: token = res['data']['token'] → consumer_access_token。
+    # 此前迁移把 'token' 当值写死，Authorization 头会渲染成 `Bearer token` → 401。
+    ctx.extract('consumer_access_token', _resp1, '$.data.token')
     # step 2: delete cart
     _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
@@ -678,8 +688,11 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
             },
         ],
     }, token='consumer_access_token')
-    vars['orderNumber'] = 'orderNumber'
-    vars['orderId'] = 'orderId'
+    # 原 step3 post-script: orderNumber/orderId 取自 buy-now 响应的
+    # data.orderNumber / data.orderId。此前迁移把变量名本身当值写死，
+    # 会被原样渲染进下游（POST /order 的 "id" 字段 → 400 id must be a UUID）。
+    ctx.set('orderNumber', _get_path(_resp3.json(), ['data', 'orderNumber']) or '')
+    ctx.set('orderId', _get_path(_resp3.json(), ['data', 'orderId']) or '')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -705,10 +718,15 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
     }, token='consumer_access_token')
     # step 5: get consumer order detail
     _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
-    vars['lineItemId_12'] = 'lineItemId_12'
-    vars['lineItemId_35'] = 'lineItemId_35'
-    vars['lineItemId_23'] = 'lineItemId_23'
-    vars['lineItemId_15'] = 'lineItemId_15'
+    # 原 step5 post-script: 在 data.lineItems 中按 unitPrice 分流，
+    # 取 line['id'] → lineItemId_12/35/23/15（退款 body 按单价逐项指定 lineItem）。
+    _lis5 = _get_path(_resp5.json(), ['data', 'lineItems']) or []
+    for _price5, _var5 in ((12, 'lineItemId_12'), (35, 'lineItemId_35'),
+                           (23, 'lineItemId_23'), (15, 'lineItemId_15')):
+        _hit5 = next((li for li in _lis5 if li.get('unitPrice') == _price5), None)
+        assert _hit5, (f"step5 consumer detail 中未找到 unitPrice={_price5} 的 lineItem"
+                       f"（lineItems={len(_lis5)}）")
+        ctx.set(_var5, _hit5.get('id') or '')
     # step 6: 67559ad7-dd02-4b05-b22a-b365f63b1e15
     _resp6 = ctx.api.admin.auth_login(body={
         "email": "dian.yuhong.ext@1m.app",
@@ -722,8 +740,12 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
         "pageSize": 50,
         "pageNumber": 1,
     }, token='admin_access_token')
-    vars['admin_orderId'] = 'admin_orderId'
-    vars['merchantOrderId'] = 'merchantOrderId'
+    # 原 step7 post-script: 在 data.items 中按 orderNumber 匹配，
+    # 取 order['id'] → admin_orderId、order['merchantOrderId'] → merchantOrderId。
+    _o7 = _pick_order_by_number(_resp7, vars.get('orderNumber'))
+    assert _o7, f"step7 admin orders-search 未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('admin_orderId', _o7.get('id') or '')
+    ctx.set('merchantOrderId', _o7.get('merchantOrderId') or '')
     # step 8: 3bc6a2cb-94cc-406f-b258-7b93e5e215b1
     _resp8 = ctx.api.admin.orders_refunds(body={
         "lineItems": [
@@ -846,7 +868,10 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
     ctx.extract('P1_access_token', _resp12, '$.data.token')
     # step 13: get P1 orders
     _resp13 = ctx.api.orders.promoter(token='P1_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['P1_OrderId'] = 'curatorOrderId'
+    # 原 step13 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → P1_OrderId。
+    _o13 = _pick_order_by_number(_resp13, vars.get('orderNumber'))
+    assert _o13, f"step13 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('P1_OrderId', _o13.get('id') or '')
     # step 14: get P1 order detail v2
     _resp14 = ctx.api.orders.promoter_detail_v2(token='P1_access_token', path_vars={'merchantOrderId': '{{P1_OrderId}}'})
     # step 15: Login - merchant
@@ -857,6 +882,9 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
     ctx.extract('merchant_access_token', _resp15, '$.data.token')
     # step 16: get merchant orders
     _resp16 = ctx.api.orders.promoter(token='merchant_access_token', params={'pageSize': '30', 'pageNumber': '1'})
-    vars['merchantOrderId'] = 'curatorOrderId'
+    # 原 step16 post-script: 在 data.items 中按 orderNumber 匹配，取 order['id'] → merchantOrderId。
+    _o16 = _pick_order_by_number(_resp16, vars.get('orderNumber'))
+    assert _o16, f"step16 orders 列表中未找到 orderNumber={vars.get('orderNumber')}"
+    ctx.set('merchantOrderId', _o16.get('id') or '')
     # step 17: get merhcant order detail v2
     _resp17 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')

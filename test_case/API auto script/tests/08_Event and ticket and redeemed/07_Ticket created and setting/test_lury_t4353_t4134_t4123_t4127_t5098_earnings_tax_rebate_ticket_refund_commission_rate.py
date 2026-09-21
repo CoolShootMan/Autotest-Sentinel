@@ -550,7 +550,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "e09a9cdd-4527-4f54-93a5-1c9d15a64a17",
@@ -582,11 +582,11 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
                 "customFields": [],
             },
         ],
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -607,9 +607,9 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')
     # step 5: get consumer order detail
-    _resp5 = ctx.api.orders.consumer_detail_by_order_number()
+    _resp5 = ctx.api.orders.consumer_detail_by_order_number(token='consumer_access_token')
     # step 6: Login-M1
     _resp6 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -617,9 +617,9 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('M1_access_token', _resp6, '$.data.token')
     # step 7: get M1 order detail v2
-    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp7 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # extractor: refund_id = refund_id
-    ctx.extract('refund_id', _resp7, 'refund_id')
+    ctx.extract('refund_id', _resp7, '$.data.id')
     _j = _resp7.json() if _resp7.headers.get('content-type','').startswith('application/json') else {}
     _arr = _get_path(_j, ["data", "lineItems"]) or []
     for _line_item in _arr:
@@ -635,10 +635,10 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('merchant_access_token', _resp8, '$.data.token')
     # step 9: get merchant orders
-    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'})
+    _resp9 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
     vars['merchantOrderId'] = 'curatorOrderId'
     # step 10: get merhcant order detail v2
-    _resp10 = ctx.api.orders.promoter_detail_v2()
+    _resp10 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 11: Partner partial refund 1 ticket
     _resp11 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -653,7 +653,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
         "shippingLines": [],
         "tipLines": [],
         "note": "Automation test",
-    })
+    }, token='merchant_access_token')
     # step 12: Login-M1
     _resp12 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -661,7 +661,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('M1_access_token', _resp12, '$.data.token')
     # step 13: get M1 order detail v2
-    _resp13 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp13 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 14: Login - merchant
     _resp14 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -669,7 +669,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('merchant_access_token', _resp14, '$.data.token')
     # step 15: get merhcant order detail v2
-    _resp15 = ctx.api.orders.promoter_detail_v2()
+    _resp15 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')
     # step 16: Partner full refund order on sale details page
     _resp16 = ctx.api.orders.refunds(body={
         "lineItems": [
@@ -692,7 +692,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
             },
         ],
         "note": "Automation full refund",
-    })
+    }, token='merchant_access_token')
     # step 17: Login-M1
     _resp17 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -700,7 +700,7 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('M1_access_token', _resp17, '$.data.token')
     # step 18: get M1 order detail v2
-    _resp18 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'})
+    _resp18 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{M1_merchantIDe}}'}, token='M1_access_token')
     # step 19: Login - merchant
     _resp19 = ctx.api.auth.sign_in(body={
         "password": "{{merchant_password}}",
@@ -708,4 +708,4 @@ def test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_co
     })
     ctx.extract('merchant_access_token', _resp19, '$.data.token')
     # step 20: get merhcant order detail v2
-    _resp20 = ctx.api.orders.promoter_detail_v2()
+    _resp20 = ctx.api.orders.promoter_detail_v2(token='merchant_access_token')

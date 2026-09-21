@@ -378,28 +378,72 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     # === pre-script（由 Apifox customScript 翻译）===
     vars['event_title'] = "event-for-api-auto-venue-map"
 
-    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'eventId'
-    _j = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
-    _arr = _get_path(_j, ["data", "items", 0, "tickets"]) or []
-    _x = next((_z for _z in _arr if _z.get('title') == "General Admission 02"), None)
-    if _x: vars['copyFromId'] = _x.get('id')
+    # 原 step2 post-script: const targetEventTitle = event_title || "Auto-Test-post-setting";
+    # 在 data.items 中按 title 精确定位，取其 id → event_id；再从该事件 tickets 中取
+    # title === "General Admission 02" 的 id → copyFromId（找不到该标题则回退 tickets[0]）。
+    # 此前迁移成了写死的 'eventId'，且直接从 items[0].tickets 取，首个事件不是目标时取错。
+    # 该列表接口是分页接口（默认 pageSize=10，新事件在前、种子事件沉底），返回条数亦有
+    # 波动，故用 keyword 精确检索 + 大页；未命中时退化为全量页扫描再试一次。
+    _want2 = vars.get('event_title') or 'Auto-Test-post-setting'
+    _target2, _items2 = None, []
+    for _kw2 in (_want2, ''):
+        _resp2 = ctx.api.events.list(
+            body=None, params={'keyword': _kw2, 'pageSize': '200', 'pageNumber': '1'},
+            token='yuxiao999_token')
+        _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
+        _target2 = next((i for i in _items2 if i.get('title') == _want2), None)
+        if _target2:
+            break
+    assert _target2, f"step2 未找到 title=[{_want2}] 的事件（items={len(_items2)}）"
+    ctx.set('event_id', _target2.get('id') or '')
+    _tks2 = _target2.get('tickets') or []
+    _tk2 = (next((t for t in _tks2 if t.get('title') == 'General Admission 02'), None)
+            or (_tks2[0] if _tks2 else None))
+    assert _tk2, f"step2 事件 [{_target2.get('id')}] 下没有 tickets"
+    ctx.set('copyFromId', _tk2.get('id') or '')
     # step 3: 59d406ff-a7ae-4c10-a904-6d2460d650b0
     _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: 530b88c6-e2f0-45f6-ad2a-c42e9400b14c
     _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
+    ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: 50f1455b-62cc-4bac-81a1-a846635ccf16
     _resp5 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
+    # 原 step5 post-script: 遍历 data.relatedProducts，以 title（空白→下划线）为后缀，
+    # 逐个写入 productId_/promoterProductId_/merchantProductVariantId_/displayVariantId_
+    # （下游 step7 用的 productId_General_Admission_02 等即出自此处）。
+    # 此前整段遍历迁移时丢失，导致这些占位符全部渲染失败。
+    _rels5 = _get_path(_resp5.json(), ['data', 'relatedProducts']) or []
+    assert _rels5, "step5 relate-products 未返回 relatedProducts"
+    for _i5, _p5 in enumerate(_rels5):
+        _title5 = (_p5.get('title') or '').strip()
+        _sfx5 = '_'.join(_title5.split()) if _title5 else f'index_{_i5}'
+        _v05 = (_p5.get('variants') or [{}])[0]
+        ctx.set(f'productId_{_sfx5}', _p5.get('merchantProductId')
+                or (_p5.get('shippingView') or {}).get('productId') or '')
+        ctx.set(f'promoterProductId_{_sfx5}', _p5.get('promoterProductId') or '')
+        ctx.set(f'merchantProductVariantId_{_sfx5}',
+                _v05.get('merchantProductVariantId') or '')
+        ctx.set(f'displayVariantId_{_sfx5}',
+                _v05.get('displayVariantId') or _p5.get('displayVariantId') or '')
     # step 6: eb71fcde-3b2f-4f65-b404-38e3b58b2433
-    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{merchantProductVariantId_General_Admission_02}'}, token='yuxiao999_token')
-    vars['unitid'] = 'unitId'
-    _j = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
-    vars['seatNumber'] = str(_get_path(_j, ['data', 'items', 0, 'number']))
-    _j: dict[str, Any] = _resp6.json() if _resp6.headers.get('content-type','').startswith('application/json') else {}
-    vars['venueUnitCategoryId'] = _get_path(_j, ['data', 'items', 0, 'categoryId'])
+    # variantId 原写作单花括号 '{...}'，不会被框架渲染。
+    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
+    # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
+    # 提取 id→unitid、number→seatNumber、categoryId→venueUnitCategoryId。
+    # （原脚本随机取一项；为免 flaky 改为取首个。）此前漏掉了 unitid，且未做 orderNumber 过滤。
+    _j6: dict[str, Any] = (_resp6.json()
+                           if _resp6.headers.get('content-type', '').startswith('application/json')
+                           else {})
+    _items6 = _get_path(_j6, ['data', 'items']) or []
+    _pool6 = [x for x in _items6 if x.get('orderNumber') is None] or _items6
+    assert _pool6, "step6 tickets_venue_units 未返回可用的 unit"
+    _sel6 = _pool6[0]
+    ctx.set('unitid', _sel6.get('id') or '')
+    ctx.set('seatNumber', str(_sel6.get('number')))
+    ctx.set('venueUnitCategoryId', _sel6.get('categoryId') or '')
     # step 7: bcb7043d-ecc7-4063-bb97-17c3e3409863
     _resp7 = ctx.api.products.by_product_id_general_admission_02(body={
     'id': '{{productId_General_Admission_02}}',
@@ -715,7 +759,10 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
             "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
         },
     }, app_headers=True, token='linda10_token')
-    _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
+    # order_number 取自 place order(_resp12) 的响应（原 step12 post-script:
+    # responseData.data.orderNumbers[0]）；此前误接到 checkout_express(_resp11) 上，
+    # 导致 step13 的路径变量为空、请求退化成 /detail//v2 → 404。
+    _ordernumber_val = _get_path(_resp12.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 13: Check the merchant order detail exist ticket Redemptions contents
     _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

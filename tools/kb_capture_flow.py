@@ -233,6 +233,8 @@ def main():
     urls, labels = run_capture(flow, args.env, args.account, dry_run=args.dry_run)
     if args.dry_run:
         return
+    if urls is None or labels is None:
+        raise SystemExit("[FAIL] run_capture 未返回抓取结果（非 dry-run 却为空）")
 
     base_url = _load_base_url(args.env)
     total = sum(len(v) for v in urls.values())

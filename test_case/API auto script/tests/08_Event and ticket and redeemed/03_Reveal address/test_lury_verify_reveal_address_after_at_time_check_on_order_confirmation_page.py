@@ -121,7 +121,7 @@ def test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_pa
     })
     ctx.extract('consumer_access_token', _resp1, '$.data.refreshToken')
     # step 2: delete cart
-    _resp2 = ctx.api.cart.delete()
+    _resp2 = ctx.api.cart.delete(token='consumer_access_token')
     # step 3: buy now
     _resp3 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -144,11 +144,11 @@ def test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_pa
             "eventSourceUrl": "https://release.pear.us/mcc/post/lury-event-reveal-address-after-at-automation-testing-0806",
         },
         "subdomainVanityUrl": "",
-    })
+    }, token='consumer_access_token')
     # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp3, 'orderNumber')
+    ctx.extract('orderNumber', _resp3, '$.data.orderNumber')
     # extractor: orderId = orderId
-    ctx.extract('orderId', _resp3, 'orderId')
+    ctx.extract('orderId', _resp3, '$.data.orderId')
     # step 4: create Order and check address
     _resp4 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
@@ -167,4 +167,4 @@ def test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_pa
             "externalId": "986eb96d-be5a-4a52-8379-eeddddc6df56",
             "eventSourceUrl": "https://release.pear.us/checkout?postId=446662ad-cac4-4837-9b1f-3358eddf169a",
         },
-    })
+    }, token='consumer_access_token')

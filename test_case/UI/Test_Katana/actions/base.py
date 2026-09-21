@@ -119,14 +119,14 @@ def open_until_ready(page: Page, v: dict):
         open_until_ready:
             url: "{BASE_URL}/autotestshop/post/test1234"
             ready: 'text="General Admission"'   # selector that only exists on the real page
-            retries: 6                          # optional, default 5
+            retries: 6                          # optional, default 3（降低默认重试，失败用例更快失败、缩短单用例耗时）
             timeout: 8000                       # optional, per-attempt wait for `ready`
             retry_delay: 3000                   # optional, wait between attempts
             settle: 1000                        # optional, wait after `ready` is found
     """
     url = v.get("url") or v.get("open")
     ready = v.get("ready") or v.get("ready_selector")
-    retries = int(v.get("retries", 5))
+    retries = int(v.get("retries", 3))
     timeout = int(v.get("timeout", 8000))
     retry_delay = int(v.get("retry_delay", 3000))
     settle = int(v.get("settle", 1000))
@@ -599,6 +599,12 @@ def _smart_click_core(page: Page, v: dict):
     optional = v.get("optional", False)
     skip_if_disabled = v.get("skip_if_disabled", False)
     skip_if_checked = v.get("skip_if_checked", False)
+    # position: 在命中元素内部按偏移点击（Playwright 的 position 语义，{x, y}）。
+    # 用于「必须点到元素自身、而不是盖在它上面的子元素」的场景 —— 例如 RTE 里的
+    # CTA 装饰器：内部 button 铺满整块（四周只有圆角留白），点按钮中心会触发按钮
+    # 自身行为、装饰器不会被选中，随后带 Edit/Delete 的工具条就不出现；
+    # 点装饰器圆角处的留白才能选中它。默认 None = 维持原点中心点击，行为不变。
+    target_position = v.get("position")
 
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
@@ -714,7 +720,7 @@ def _smart_click_core(page: Page, v: dict):
         try:
             el = root.get_by_test_id(target_test_id).nth(target_index)
             if el.is_visible(timeout=5000):
-                el.click(force=force)
+                el.click(force=force, position=target_position)
                 return
         except: pass
 
@@ -733,7 +739,7 @@ def _smart_click_core(page: Page, v: dict):
 
             if target_name:
                 el = el.get_by_text(target_name, exact=target_exact)
-            el.click(force=force, timeout=5000)  # Click directly, no is_visible check first
+            el.click(force=force, timeout=5000, position=target_position)  # Click directly, no is_visible check first
             logger.info(f"Clicked via locator: {target_name or target_locator}")
             return
         except Exception as e:
@@ -746,7 +752,7 @@ def _smart_click_core(page: Page, v: dict):
     if target_name:
         try:
             el = root.locator(f'button[aria-label="{target_name}"], [aria-label*="{target_name}"]').nth(target_index)
-            el.click(force=force, timeout=3000)  # Click directly
+            el.click(force=force, timeout=3000, position=target_position)  # Click directly
             logger.info(f"Clicked via aria-label fallback: {target_name}")
             return
         except: pass
@@ -763,7 +769,7 @@ def _smart_click_core(page: Page, v: dict):
         if el:
             # Try normal click first (Playwright click has built-in scroll + visibility check)
             try:
-                el.click(timeout=5000)  # 5s timeout, no force
+                el.click(timeout=5000, position=target_position)  # 5s timeout, no force
                 logger.info(f"Clicked '{target_name}'")
                 if target_role == 'option':
                     page.keyboard.press("Escape")
@@ -774,7 +780,7 @@ def _smart_click_core(page: Page, v: dict):
 
             # Click failed, try force (bypass all checks)
             try:
-                el.click(force=True, timeout=3000)
+                el.click(force=True, timeout=3000, position=target_position)
                 logger.info(f"Force-clicked '{target_name}'")
                 if target_role == 'option':
                     page.keyboard.press("Escape")
@@ -791,6 +797,30 @@ def _smart_click_core(page: Page, v: dict):
                     raise
     except Exception as e:
             logger.debug(f"Standard click failed: {e}")
+
+    # 5. Page-wide retry for portal-rendered floating layers (menuitem / option).
+    #    These items live in menus appended to <body>, so they are NOT reliably "inside" the
+    #    newest visible dialog: active_modal = visible_modals[-1], and when several dialogs are
+    #    visible it can resolve to a dialog that does NOT contain the target -> every strategy
+    #    above fails even though the item is plainly on the page.
+    #    CI 2026-09-20 实证（同一次 run、同一份代码）：T4866 的 Form 点击成功，而 T4860 的
+    #    **同一步骤**被限死在 dialog#2 上报 element not found —— 纯 DOM 顺序抖动。
+    #    这里在已有策略全部失败后再放开到整页找一次。属**纯增量**：只有上面已经失败才会走到，
+    #    因此对当前能通过的用例零影响。
+    if root is not page and target_role in ("menuitem", "option") and target_name:
+        try:
+            _el = page.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
+            try:
+                _el.click(timeout=5000, position=target_position)
+            except Exception:
+                _el.click(force=True, timeout=3000, position=target_position)
+            logger.info(f"Clicked '{target_name}' via page-wide retry ({target_role} not in active modal scope)")
+            if target_role == "option":
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(300)
+            return
+        except Exception as e:
+            logger.debug(f"Page-wide retry failed for {target_role} '{target_name}': {e}")
 
     if optional:
         logger.info(f"Optional click: element '{target_name or target_locator}' not found after all standard strategies, skipping.")
@@ -1102,7 +1132,7 @@ def smart_wait(page: Page, v: dict):
     Usage in YAML:
         wait_customize_back: { role: 'button', name: 'Customize products', timeout: 15000, disable_ai: true }
     """
-    timeout = v.get("timeout", 10000)
+    timeout = v.get("timeout", 5000)
     role = v.get("role")
     name = v.get("name")
     locator = v.get("locator")

@@ -50,6 +50,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
         logger.info(f"Running {list(smokecases1.keys())[0]} in GUEST mode")
 
     page.set_default_timeout(30000)  # Reduced from 90s for faster AI failover
+    page.set_default_navigation_timeout(30000)  # 导航也 30s 快速失败，避免 goto 卡死拖垮整轮
     
     # Test Metadata extraction
     caseno = list(smokecases1.keys())[0]
@@ -266,7 +267,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 if text:
                     logger.info(f"Verifying visibility of text: '{text}'")
                     try:
-                        page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=10000)
+                        page.get_by_text(text, exact=False).first.wait_for(state="visible", timeout=5000)
                         logger.info(f"Assertion success: Text '{text}' is visible.")
                     except:
                         # Capture page content for debugging
@@ -282,7 +283,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 if role:
                     logger.info(f"Verifying visibility of element: {role} '{name}'")
                     try:
-                        page.get_by_role(role, name=name).first.wait_for(state="visible", timeout=10000)
+                        page.get_by_role(role, name=name).first.wait_for(state="visible", timeout=5000)
                         logger.info(f"Assertion success: Element {role} '{name}' is visible.")
                     except:
                         logger.error(f"Assertion failed: Element {role} '{name}' not found or visible.")
@@ -294,7 +295,7 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
                 if locator:
                     logger.info(f"Verifying visibility of locator: '{locator}'")
                     try:
-                        page.locator(locator).first.wait_for(state="visible", timeout=10000)
+                        page.locator(locator).first.wait_for(state="visible", timeout=5000)
                         logger.info(f"Assertion success: Locator '{locator}' is visible.")
                     except:
                         logger.error(f"Assertion failed: Locator '{locator}' not found or visible.")

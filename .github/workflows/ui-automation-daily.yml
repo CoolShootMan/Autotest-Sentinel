@@ -32,7 +32,7 @@ jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
     runs-on: ubuntu-latest
-    timeout-minutes: 180   # run #7 实测 6 个 YAML 约 110 分钟，120 太贴边容易被误杀
+    timeout-minutes: 240   # 调大：单用例失败快速失败后仍需跑完整轮（--maxfail=0），给足预算避免被 GitHub 误杀截断后续用例
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -95,6 +95,7 @@ jobs:
           path: |
             run.log
             log/
+            test_case/API auto script/results/runs/
           retention-days: 14
           if-no-files-found: ignore
       - name: Upload failure videos (artifact)
@@ -105,32 +106,51 @@ jobs:
           path: ${{ steps.locate.outputs.video_dir }}
           retention-days: 14
           if-no-files-found: ignore
-      - name: Write job summary
+      - name: Publish result summary (pass rate & failing cases)
+        # 无论成功失败都写：把「通过率 + 失败用例名」放在 Job Summary 最顶部（H1），
+        # 成员点进 run 页面即可看到，不必去翻 main.py 日志尾部。
+        # 同时把 pass_rate / failed_names / pytest_summary 等写入步骤输出，供 Slack 复用。
         if: always()
+        id: summary
         shell: bash
         run: |
-          {
-            echo "# UI Automation 每日执行结果"
-            echo ""
-            echo "| 项目 | 值 |"
-            echo "| --- | --- |"
-            echo "| 触发方式 | \`${{ github.event_name }}\` |"
-            echo "| 运行环境 | ubuntu-latest（headless） |"
-            echo "| main.py 结果 | \`${{ steps.run.outcome }}\` |"
-            echo ""
-            echo "Allure 报告见本次 run 页面底部的 Artifacts：\`allure-report-${{ github.run_number }}\`。"
-            echo ""
-            echo "## main.py 日志尾部"
-            echo '```'
-            tail -n 60 run.log 2>/dev/null || echo '(无 run.log)'
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          python3 tools/ci_summary.py \
+            --prefill-root "test_case/API auto script/results/runs" \
+            --allure-root allure-results \
+            --run-log log \
+            --event-name "${{ github.event_name }}" \
+            --sha "${{ github.sha }}" \
+            --outcome "${{ steps.run.outcome }}" \
+            --report-dir "${{ steps.locate.outputs.report_dir }}" \
+            --outputs "$GITHUB_OUTPUT" \
+            >> "$GITHUB_STEP_SUMMARY"
+      - name: Annotate result on the run page
+        # 让 run 页面顶部的 Annotations 区块直接列出「通过率 + 失败用例名」——
+        # 那是点进 run 之后第一眼就能看到的位置（Summary 区块之下），
+        # 比展开步骤日志快得多。脚本只读汇总，缺文件只降级、不会因此报错。
+        # continue-on-error：注解只是展示手段，绝不允许它反过来改变 job 结论。
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          python3 tools/ci_summary.py \
+            --prefill-root "test_case/API auto script/results/runs" \
+            --allure-root allure-results \
+            --run-log log \
+            --github-annotations
       - name: Send Slack notification
-        # 三重条件：总开关打开 + 已配置新群 webhook + 非空。
-        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
+        # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。
+        if: ${{ success() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
           RUN_OUTCOME: ${{ steps.run.outcome }}
+          # 复用上一步汇总出来的通过率 / 失败清单（仅成功时才会走到这里，故通常为 0 条失败）。
+          PASS_RATE: ${{ steps.summary.outputs.pass_rate }}
+          PASSED: ${{ steps.summary.outputs.passed }}
+          EXECUTED: ${{ steps.summary.outputs.executed }}
+          FAILED_COUNT: ${{ steps.summary.outputs.failed_count }}
+          FAILED_NAMES: ${{ steps.summary.outputs.failed_names }}
         run: |
           python3 - <<'PY'
           import json, os, urllib.request
@@ -141,13 +161,22 @@ jobs:
           )
           status = os.environ.get("RUN_OUTCOME", "unknown")
           icon = ":white_check_mark:" if status == "success" else ":x:"
-          text = (
-              "{icon} *UI Automation 每日报告【qae-team】*\n"
-              "> main.py 执行结果: *{status}*\n"
-              "> 运行详情: {run}\n"
-              "> Allure 报告: 打开链接查看 Artifacts"
-          ).format(icon=icon, status=status, run=run_url)
-          payload = json.dumps({"text": text}).encode("utf-8")
+          rate = os.environ.get("PASS_RATE") or "N/A"
+          passed = os.environ.get("PASSED") or "?"
+          executed = os.environ.get("EXECUTED") or "?"
+          failed_count = os.environ.get("FAILED_COUNT") or "0"
+          failed_names = os.environ.get("FAILED_NAMES") or ""
+          lines = [
+              "{icon} *UI Automation 每日报告【qae-team】*".format(icon=icon),
+              "> main.py 执行结果: *{0}*".format(status),
+              "> 通过率: *{0}%*（{1}/{2}）· 失败 {3} 条".format(
+                  rate, passed, executed, failed_count),
+          ]
+          if failed_names and failed_count != "0":
+              lines.append("> 失败用例: " + failed_names.replace(",", ", "))
+          lines.append("> 运行详情: {0}".format(run_url))
+          lines.append("> Allure 报告: 打开链接查看 Artifacts")
+          payload = json.dumps({"text": "\n".join(lines)}).encode("utf-8")
           req = urllib.request.Request(
               os.environ["SLACK_WEBHOOK_URL"],
               data=payload,

@@ -8,6 +8,7 @@
     expect(resp).json("$.data.token").exists()
     expect(resp).json("$.data..status").includes("REFUNDED")
     expect(resp).json("$.data.items").is_empty()
+    expect(resp).json("$.data.lifetimeEarning").close_to(129102.43, tol=0.01)
     expect(resp).status().is_(200)
     expect(resp).status().is_ok()
 
@@ -212,6 +213,31 @@ class _JsonAssertion:
                 self._fail(expected, "小于")
         except (TypeError, ValueError):
             self._fail(expected, "小于(不可比较)")
+        return self
+
+    def close_to(self, expected: Any, tol: float = 0.01) -> "_JsonAssertion":
+        """数值容差断言：``abs(实际 - 期望) <= tol``（默认 ±0.01）。
+
+        用于**金额**断言。后端与用例本地各自 ``round(x, 2)``，两边四舍五入方向
+        不同时会产生 1 分钱量级差异（实测 T3530：期望 129102.43 / 实际 129102.44），
+        而 ``equals`` 是字符串化比较，会把这种差异判成失败。
+
+        浮点自我保护：``abs(129444.21 - 129444.20)`` 实际算出
+        ``0.010000000009313226``，裸比较 ``> 0.01`` 会把「恰好差 1 分钱」误判为失败，
+        故容差额外吸收 ``1e-9``。
+
+        任一侧无法转成数值（``None`` / ``''`` / 布尔）时退化为 ``equals``，
+        保证失败信息与语义和普通相等断言一致。
+        """
+        actual, want = self.actual, expected
+        if isinstance(actual, bool) or isinstance(want, bool):
+            return self.equals(want)
+        try:
+            diff = abs(float(actual) - float(want))
+        except (TypeError, ValueError):
+            return self.equals(want)
+        if diff > tol + 1e-9:
+            self._fail(want, f"数值容差 ±{tol}（实际差 {diff}）")
         return self
 
     def contains(self, substring: Any) -> "_JsonAssertion":

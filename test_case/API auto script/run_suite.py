@@ -79,9 +79,11 @@ PYTEST = str(_MANAGED) if _MANAGED.exists() else sys.executable
 def _load_yaml(path: Path) -> dict:
     text = path.read_text(encoding="utf-8")
     if path.suffix.lower() in (".json",):
-        return json.loads(text)
-    import yaml  # noqa
-    return yaml.safe_load(text) or {}
+        data = json.loads(text)
+    else:
+        import yaml  # noqa
+        data = yaml.safe_load(text)
+    return data if isinstance(data, dict) else {}
 
 
 def select_cases(suite: dict, entries: list) -> list:

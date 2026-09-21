@@ -164,7 +164,7 @@ class OnesClient:
 
     # --- case collection ---
 
-    def cases_by_module(self, module_uuid: str) -> list:
+    def cases_by_module(self, module_uuid: str) -> list | None:
         """GraphQL 服务端按模块过滤（一次拿全元数据）。失败返回 None 由调用方回退 REST。"""
         q = """query ($f: Filter, $n: Int) {
           testcaseCases(filter: $f, limit: $n) {
@@ -203,7 +203,7 @@ class OnesClient:
             return None
         return resp
 
-    def steps_bulk(self, uuids: list) -> dict:
+    def steps_bulk(self, uuids: list) -> dict | None:
         """批量取步骤：{case_uuid: [ {index, desc, result, execute_result, actual_result} ]}。"""
         q = """query ($f: testcaseCaseStepsFilter) {
           testcaseCaseSteps(filter: $f) {

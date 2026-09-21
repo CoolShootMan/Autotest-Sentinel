@@ -273,13 +273,22 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     # === Steps ===
     # step 1: 1a2c0dc7-6dbd-43d5-b287-b7ca8d2cd3a3
     _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
-    vars['event_id'] = 'eventId'
+    # 原 step1 post-script: 在 data.items 中找 title === "event-for-API-testing" 的事件，取其 id。
+    _items1 = _get_path(_resp1.json(), ['data', 'items']) or []
+    _ev1 = next((i for i in _items1 if i.get('title') == 'event-for-API-testing'), None)
+    assert _ev1, f"step1 未找到 title='event-for-API-testing' 的事件（items={len(_items1)}）"
+    ctx.set('event_id', _ev1.get('id') or '')
     # step 2: be129430-0fcc-476b-a8a1-3024d026d3fa
     _resp2 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
-    vars['postId'] = 'targetItem.id'
+    # 原 step2 post-script: 在 data.items 中找 title === "event-for-API-testing" 的 post，取其 id。
+    _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
+    _post2 = next((i for i in _items2 if i.get('title') == 'event-for-API-testing'), None)
+    assert _post2, f"step2 未找到 title='event-for-API-testing' 的 post（items={len(_items2)}）"
+    ctx.set('postId', _post2.get('id') or '')
     # step 3: f8103b38-4568-4c92-b48c-0c7094e1b58a
     _resp3 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
-    vars['catalog_id'] = 'catalogId'
+    # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量（修复：此前误把 JS 变量名当字面量）
+    ctx.extract('catalog_id', _resp3, '$.data.id')
     # step 4: 4cbbf838-a62d-440a-9d77-634dffb20024
     _resp4 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',
@@ -417,7 +426,16 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     }, token='yuxiao999_token')
     # step 6: 707dd083-2b7c-45d3-aa91-58cbe0def93e
     _resp6 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-    vars['promoterProductId'] = 'targetVariantId'
+    # 原 step6 post-script: 在 data.relatedProducts 中找 title 为目标产品的那一项，
+    # 取其 displayVariantId 写入 promoterProductId（取不到时回退到 variants[0]）。
+    _rels6 = _get_path(_resp6.json(), ['data', 'relatedProducts']) or []
+    _prod6 = next((x for x in _rels6
+                   if x.get('title') == 'auto-test Verify the Require customer-provided details can be apply success'),
+                  None)
+    assert _prod6, f"step6 未找到目标关联产品（relatedProducts={len(_rels6)}）"
+    _v06 = (_prod6.get('variants') or [{}])[0]
+    ctx.set('promoterProductId',
+            _prod6.get('displayVariantId') or _v06.get('displayVariantId') or _v06.get('id') or '')
     # step 7: get address list
     _resp7 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # step 8: b73cbc93-9e57-4b4c-ad89-4b8efc36c53f

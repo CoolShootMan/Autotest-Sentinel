@@ -133,7 +133,8 @@ def _load_env_config() -> dict:
     try:
         import yaml
         with open(config_path, encoding="utf-8") as f:
-            return yaml.safe_load(f) or {}
+            data = yaml.safe_load(f)
+        return data if isinstance(data, dict) else {}
     except Exception:
         return {}
 

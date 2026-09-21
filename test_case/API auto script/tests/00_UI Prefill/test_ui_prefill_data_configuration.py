@@ -19,12 +19,59 @@ CASE_ID = None  # manually migrated, no Apifox Case ID
 ENV_NAME = "Release"
 
 import datetime as _dt  # step 106/116 需要动态生成事件起止日期
+import logging
+import time  # step 107/117 重试 relate-products 的空窗抖动用
 from typing import TYPE_CHECKING
 
 from core.assertions import expect
 
+_logger = logging.getLogger("api.framework")  # 与 core/context.py 同一日志通道
+
 if TYPE_CHECKING:  # 仅类型检查期导入：让 IDE 能把 ctx.api.<域>.<方法>() 跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
+
+
+def _relate_products_with_retry(
+    ctx: "Context",
+    post_id: str,
+    *,
+    attempts: int = 5,
+    delay: float = 3.0,
+) -> "ApiResponse":
+    """GET ``post/v2/<post_id>/relate-products``，并对「空数组」做重试。
+
+    step 107 / 117 共用。``relatedProducts`` 由「事件 → 帖子」的产品关联**异步**落地
+    （eventually-consistent）：刚建完帖子立即查，有时会拿到空数组。CI 实测同一份代码
+    09-18 为空、09-19 非空，属时序抖动，不是数据真缺失。下游 step 109 / 118 会从本次
+    结果提取 ``venue_map_promoterProductId_*`` / ``merchantProductVariantId_*``，
+    空数组会导致提取失败，故必须重试到非空再继续。
+
+    仅在「HTTP 200 但 ``relatedProducts`` 为空」时重试；``code`` / ``message`` 非 200
+    属真实失败，由 ``expect`` 直接抛出、不重试。
+
+    Note:
+        该接口只存在于 admin 域（base 域 404），且需 ``admin_token``
+        （实测 admin 域 + ``{{token}}``(999) → 401）。
+
+    Returns:
+        ApiResponse: 最后一次尝试的响应（已确认 ``relatedProducts`` 非空）。
+    """
+    for attempt in range(attempts):
+        resp = ctx.api.admin.post_v2_relate_products(
+            path_vars={"post0_id": post_id}, token="admin_token", app_headers=True)
+        expect(resp).json("$.code").equals("200")
+        expect(resp).json("$.message").equals("success")
+        try:
+            expect(resp).json("$.data.relatedProducts").is_not_empty()
+        except Exception:
+            if attempt < attempts - 1:
+                time.sleep(delay)
+                continue
+            raise
+        return resp
+    # attempts >= 1 时循环必然 return 或 raise，走到这里说明传入了非法的 attempts
+    raise AssertionError(f"relate-products 重试参数非法：attempts={attempts}（需 >= 1）")
 
 
 def test_ui_prefill_data_configuration(ctx: "Context"):
@@ -1458,6 +1505,434 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     ctx.extract("createFromEventId", _resp31, "$.data.id")
     ctx.extract("ticketsid", _resp31, "$.data.tickets[0].id")
     ctx.extract("variantsid", _resp31, "$.data.tickets[0].variants[0].id")
+
+
+
+    # --- pre-step 31b: 动态生成事件日期（原 Apifox 该请求的 prerequest 脚本） ---
+    # 原 JS 用 new Date() 计算：current_iso_date = toISOString()（UTC）、
+    # startDateDisplay = 本地今天（YYYY-MM-DD）、endDateDisplay = 本地今天 + 7 天、
+    # formattedDateReadable = 可读日期（如 "Thu, Sep 03, 2026 (CDT)"）。
+    _now31b = _dt.datetime.now()
+    _utc31b = _dt.datetime.now(_dt.timezone.utc)
+    vars["current_iso_date"] = _utc31b.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    vars["startDateDisplay"] = _now31b.strftime("%Y-%m-%d")
+    vars["endDateDisplay"] = (_now31b + _dt.timedelta(days=7)).strftime("%Y-%m-%d")
+    vars["formattedDateReadable"] = _now31b.strftime("%a, %b %d, %Y (CDT)")
+
+    # --- step 31b: duplicate event for API testing -- event-for-API-testing (POST /product-event/v2/duplicate) ---
+    # 从 step 23 创建的 verify-co-seller-auto-archive 事件复制出 title='event-for-API-testing' 的事件，
+    # 供 linda API 日常回归中依赖该前置事件的用例（co-host / attendees / multi-day pass /
+    # customer-provided details 等）使用。该步骤此前在迁移中丢失，2026-09-20 已补回。
+    # NOTE: 提取用独立变量名 api_testing_*，避免覆盖 step 31 已提取、step 32/33 仍在使用的
+    #       post_id / createFromEventId / ticketsid / variantsid。
+    _resp31b = ctx.api.events.v2_duplicate(body=r"""{
+    "title": "event-for-API-testing",
+    "curatorId": "{{user_id}}",
+    "description": "",
+    "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
+    "startDate": "{{current_iso_date}}",
+    "endDate": null,
+    "venue": "Instagram Live, Zoom, In-person",
+    "location": "789 River East Art Center Promenade, Chicago, Illinois, USA",
+    "status": "UPCOMING",
+    "isTaxEnabled": false,
+    "taxConfig": null,
+    "mediaTextConfig": {
+        "headline": "Missed our last event?",
+        "subtitle": "Here's a lil recap of our last event👇",
+        "align": "center"
+    },
+    "poster": {
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "width": 3072,
+        "height": 2048,
+        "position": 0,
+        "mediaType": "IMAGE",
+        "mediaDuration": 0
+    },
+    "allowAutoComplete": true,
+    "startDateDisplay": "{{startDateDisplay}}",
+    "endDateDisplay": "{{endDateDisplay}}",
+    "note": "linda note",
+    "timezone": {
+        "timeZoneId": "America/Chicago",
+        "timeZoneName": "Central Daylight Time",
+        "dstOffset": 3600,
+        "rawOffset": -21600
+    },
+    "isAddressRevealEnabled": false,
+    "messageInfo": {
+        "smsMaxLimit": 3,
+        "emailMaxLimit": 5,
+        "cooldownMinutes": 15
+    },
+    "platform": "PEAR",
+    "creationStep": "COMPLETED",
+    "extraInfo": null,
+    "locationDetails": {
+        "city": "Chicago",
+        "line1": "789 River East Art Center Promenade",
+        "line2": null,
+        "state": "IL",
+        "country": "US",
+        "placeId": null,
+        "zipcode": null,
+        "stateName": "Illinois",
+        "stripeLocationId": null
+    },
+    "country": "US",
+    "state": "IL",
+    "autoReplace": false,
+    "lineupTransactionId": null,
+    "lineupTransactionStatus": null,
+    "autoPayLineupStatus": "PENDING",
+    "medias": [],
+    "tickets": [
+        {
+            "id": "{{ticket_id}}",
+            "remote_id": null,
+            "platform": "PEAR",
+            "createdAt": "2026-04-22T07:08:00.363Z",
+            "updatedAt": "2026-04-22T08:09:37.162Z",
+            "merchantId": "{{eventcatalog_id}}",
+            "title": "General Admission",
+            "bodyHtml": "",
+            "originalBodyHtml": "",
+            "isBodyHtmlOverridden": false,
+            "bodyText": "",
+            "handle": null,
+            "productType": "",
+            "publishedAt": "2026-04-22T07:08:00.374Z",
+            "publishedScope": "",
+            "status": "ACTIVE",
+            "externalStatus": "ACTIVE",
+            "followExternalStatus": false,
+            "tags": [],
+            "templateSuffix": null,
+            "vendor": "Pear",
+            "syncAt": null,
+            "deletedAt": null,
+            "delisted": false,
+            "excludedByImportingTag": false,
+            "isFeatured": false,
+            "featuredScore": null,
+            "inventoryQuantity": 1000,
+            "inventoryQuantityOriginal": 1000,
+            "soldQuantity": 0,
+            "priceDisplay": 25.56,
+            "priceDisplayAnchor": 0,
+            "priceMin": 25.56,
+            "priceMinAnchor": 0,
+            "priceMax": 25.56,
+            "priceMaxAnchor": 0,
+            "priceImportedMin": 0,
+            "priceImportedMax": 0,
+            "imageCount": 1,
+            "isUsed": "NWT",
+            "shippingType": "NO_SHIPPING_REQUIRED",
+            "additionalShippingFee": 0,
+            "deliveryTime": [
+                0,
+                5
+            ],
+            "returnPolicyApplied": true,
+            "isAvailable": false,
+            "commissionRate": 10,
+            "textForShare": null,
+            "priceSyncImported": false,
+            "coverImage": {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
+                "width": 1000,
+                "height": 1000,
+                "mediaSrc": null,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0
+            },
+            "reviewCount": null,
+            "reviewOverallScore": null,
+            "reviewAggregate": null,
+            "displayReviews": true,
+            "links": null,
+            "taxEnable": false,
+            "taxJarCategory": null,
+            "overrideEventTax": false,
+            "customTaxRate": null,
+            "subscriptionPlanId": null,
+            "reviewRedirectProductId": null,
+            "reviewSummary": null,
+            "customFieldsInfo": null,
+            "listingType": "TICKET",
+            "extraInfo": {
+                "date": "{{formattedDateReadable}}",
+                "event": "verify-co-seller-auto-archive",
+                "venue": "Instagram Live, Zoom, In-person",
+                "lineup": [],
+                "poster": {
+                    "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+                    "width": 3072,
+                    "height": 2048,
+                    "position": 0,
+                    "mediaType": "IMAGE",
+                    "mediaDuration": 0
+                },
+                "status": "COMPLETED",
+                "location": "789 River East Art Center Promenade, Chicago, Illinois, USA",
+                "eventNote": "linda note",
+                "startDate": "{{current_iso_date}}",
+                "timeZoneId": "America/Chicago",
+                "isAddressHidden": false,
+                "addressRevealConfig": null
+            },
+            "bodyJson": null,
+            "shippingOptions": null,
+            "shippingNote": null,
+            "autoFulfill": true,
+            "eventId": "{{created_event_id}}",
+            "lifecycleStatus": "LIFECYCLE_STATUS_ARCHIVED",
+            "copyFromId": "{{ticket_id}}",
+            "stopSellingAfter": null,
+            "stopSellingAfterDisplay": null,
+            "deliveryMethod": "QR_CODE",
+            "thirdPartyDeliveryMessage": null,
+            "isMultipleDaysPassEnabled": false,
+            "multipleDaysPass": null,
+            "isPickupEtaEnabled": null,
+            "eventMatchingRules": null,
+            "excludeFromPostSync": false,
+            "isExpirationEnabled": false,
+            "expirationTime": null,
+            "expirationTimeDisplay": null,
+            "allowAtDoorSales": false,
+            "isProductFormEnabled": false,
+            "isVariantPriceDisplayEnabled": false,
+            "isTipEnabled": false,
+            "images": [
+                {
+                    "id": "b471bc6e-a872-4253-ab7a-41fa0cf51c2d",
+                    "remote_id": null,
+                    "createdAt": "2026-04-22T07:08:00.377Z",
+                    "updatedAt": "2026-04-22T07:08:00.377Z",
+                    "height": 1000,
+                    "width": 1000,
+                    "position": 1,
+                    "productId": "{{ticket_id}}",
+                    "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
+                    "variantIds": [],
+                    "mediaType": "IMAGE",
+                    "mediaSrc": null,
+                    "mediaDuration": 0,
+                    "contributedBy": 3,
+                    "contributorId": null,
+                    "productImageType": "PRODUCT",
+                    "source": null
+                }
+            ],
+            "options": [
+                {
+                    "name": "Title",
+                    "images": [
+                        {
+                            "value": "Default Title",
+                            "image": null
+                        }
+                    ]
+                }
+            ],
+            "variants": [
+                {
+                    "id": "{{variant_id}}",
+                    "remote_id": null,
+                    "createdAt": "2026-04-22T07:08:00.377Z",
+                    "updatedAt": "2026-04-22T07:08:00.377Z",
+                    "compareAtPrice": null,
+                    "fulfillmentService": "manual",
+                    "grams": 0,
+                    "imageId": null,
+                    "imageIds": [],
+                    "inventoryItemId": null,
+                    "inventoryManagement": "Pear",
+                    "inventoryPolicy": "DENY",
+                    "inventoryQuantity": 1000,
+                    "inventoryQuantityOriginal": 1000,
+                    "soldQuantity": 0,
+                    "option": {
+                        "option1": "Default Title"
+                    },
+                    "position": 1,
+                    "price": "25.56",
+                    "priceAnchor": "0",
+                    "priceImported": "0.00",
+                    "productId": "{{ticket_id}}",
+                    "sku": "",
+                    "taxCode": null,
+                    "taxable": true,
+                    "title": "Default Title",
+                    "weight": null,
+                    "weightUnit": null,
+                    "platform": null,
+                    "fees": 3.56,
+                    "transactionFee": {
+                        "customFee": 0,
+                        "platformFee": 3.56,
+                        "customFeeBreakdown": {
+                            "TAX": {
+                                "itemFee": 0,
+                                "unitFixedFee": 0,
+                                "unitPercentageFee": 0
+                            }
+                        },
+                        "transactionItemFee": 3.56
+                    },
+                    "ticketPrice": 22,
+                    "isMinPurchaseQuantityEnabled": false,
+                    "minPurchaseQuantity": 0,
+                    "isMaxPurchaseQuantityEnabled": false,
+                    "maxPurchaseQuantity": 0,
+                    "isPackSizeEnabled": false,
+                    "packSize": null,
+                    "image": null
+                }
+            ],
+            "productForm": null
+        }
+    ],
+    "lineup": [],
+    "eventProducts": [],
+    "ignoreStartTime": true,
+    "ignoreEndTime": true,
+    "duplicateEventId": "{{created_event_id}}",
+    "posterBackend": [
+        {
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+            "width": 3072,
+            "height": 2048,
+            "position": 0,
+            "mediaType": "IMAGE",
+            "mediaDuration": 0
+        }
+    ],
+    "styleSettings": {
+        "fontFamily": "Inter",
+        "color": "#FFFFFF",
+        "backgroundColor": "#000000",
+        "borderColor": "#000000",
+        "dividerColor": "#FFFFFF",
+        "secondaryTextColor": "#E0E0E0",
+        "announcementCarousel": {
+            "color": "#000000",
+            "backgroundColor": "#F6CA7C"
+        },
+        "title": {
+            "color": "#F6CA7C",
+            "fontFamily": "Inter",
+            "fontSize": 24,
+            "fontWeight": 700
+        },
+        "columnTitle": {
+            "fontFamily": "Inter",
+            "fontSize": 20,
+            "fontWeight": 700,
+            "color": "#FFFFFF"
+        },
+        "subtitle": {
+            "fontFamily": "Inter",
+            "fontSize": 20,
+            "fontWeight": 400,
+            "color": "#FFFFFF"
+        },
+        "button": {
+            "backgroundColor": "#F6CA7C",
+            "color": "#000000",
+            "borderColor": "#000000",
+            "borderRadius": 12,
+            "boxShadow": "none",
+            "fontSize": 16,
+            "fontWeight": 700
+        },
+        "secondaryButton": {
+            "fontSize": 16,
+            "fontWeight": 700,
+            "color": "#FFFFFF",
+            "borderColor": "#F6CA7C",
+            "borderRadius": 12,
+            "boxShadow": "none"
+        },
+        "textButton": {
+            "fontSize": 16,
+            "fontWeight": 700,
+            "color": "#FFFFFF"
+        },
+        "selectButton": {
+            "borderColor": "#000000"
+        },
+        "relatedLink": {
+            "borderRadius": 99,
+            "color": "#000000 ",
+            "borderColor": "#0000",
+            "backgroundColor": "#FAFAFA"
+        },
+        "featuredProducts": {
+            "borderRadius": 16,
+            "backgroundColor": "#000000",
+            "color": "#FFFFFF",
+            "secondaryTextColor": "#E0E0E0",
+            "title": {
+                "fontFamily": "Inter",
+                "fontSize": 14,
+                "fontWeight": 400,
+                "color": "#FFFFFF"
+            }
+        },
+        "product": {
+            "backgroundColor": "#000000",
+            "borderRadius": 8,
+            "color": "#FFFFFF",
+            "secondaryTextColor": "#E0E0E0"
+        },
+        "discount": {
+            "backgroundColor": "#D32A09",
+            "color": "#FFFFFF",
+            "priceColor": "#FFFFFF"
+        },
+        "freeShipping": {
+            "backgroundColor": "#EBF5EF",
+            "color": "#268E46"
+        },
+        "starRatingColor": "#FAAF03",
+        "layoutFeatureCard": {
+            "title": {
+                "fontFamily": "Inter",
+                "fontSize": 16,
+                "fontWeight": 700,
+                "color": "#FFFFFF"
+            },
+            "color": "#FFFFFF",
+            "secondaryTextColor": "#E0E0E0",
+            "button": {
+                "backgroundColor": "#F6CA7C",
+                "color": "#000000"
+            }
+        },
+        "lineupBanner": {
+            "titleText": "#FFFFFF",
+            "descriptionText": "#E0E0E0"
+        },
+        "eventInfoBanner": {
+            "text": "#FFFFFF",
+            "secondaryText": "#E0E0E0"
+        },
+        "eventDescription": {
+            "text": "#E0E0E0",
+            "title": "#FFFFFF"
+        }
+    }
+}""", app_headers=True, token="token")
+    expect(_resp31b).json('$.code').equals('200')
+    expect(_resp31b).json('$.message').equals('success')
+    ctx.extract("api_testing_post_id", _resp31b, "$.data.posts[0].id")
+    ctx.extract("api_testing_event_id", _resp31b, "$.data.id")
+    ctx.extract("api_testing_ticketsid", _resp31b, "$.data.tickets[0].id")
+    ctx.extract("api_testing_variantsid", _resp31b, "$.data.tickets[0].variants[0].id")
 
 
 
@@ -4762,6 +5237,45 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # （下游 POST /posts/curator 的 relatedProducts[1].merchantProductId 依赖它，缺失会 400）
     ctx.extract("productId1", _resp76, "$.data.id")
 
+    # --- step 76 附带的 database 处理器：update alias ---
+    # 原 Apifox 集合 node「create product and update alias」除 POST /v2/products 外，
+    # 还挂了一个 type="database" 处理器（connectionId=112809 = Release_new）：
+    #   UPDATE "PromoterProduct" SET alias = 'bxasz9' WHERE merchant_product_id = '{{productId1}}'
+    # 作用是把这个商品在 promoter 侧登记为 alias=bxasz9，使店铺短链
+    # /{{partner_vanityUrl}}/p/bxasz9 可解析 —— UI 用例 T5007 / T3690 打开的正是该短链
+    # （迁移时整个 database 处理器被丢弃，用例名也因此带 "no SQL"，于是短链 404、
+    #  商品页渲染不出 [data-cta-action="add-to-cart"]）。
+    # 必须用 run_db_write：run_db / db.query 只读，事务在连接关闭时会被回滚，
+    # UPDATE 会「看似成功、库里没改」。
+    _sql76 = "UPDATE \"PromoterProduct\" SET alias = 'bxasz9' WHERE merchant_product_id = '{{productId1}}'"
+    _affected76 = 0
+    try:
+        # PromoterProduct 行由建商品时的后端逻辑写入，理论上紧随 Product，但可能异步
+        # 落地（实测两者相差 ~15ms）。这里最多重试 5 次、每次间隔 2s，避免「行还没建
+        # 好 -> UPDATE 影响 0 行 -> alias 没落库 -> 短链 404」这种时序性假失败。
+        for _try76 in range(1, 6):
+            _affected76 = ctx.run_db_write(112809, _sql76)
+            if _affected76:
+                break
+            time.sleep(2)
+        _logger.info(
+            "[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' "
+            "WHERE merchant_product_id=%s -> affected_rows=%s (尝试 %s 次)",
+            vars.get("productId1"), _affected76, _try76,
+        )
+        if _affected76 == 0:
+            # 如实记录、不阻断：0 行说明该商品在 PromoterProduct 里没有对应记录，
+            # alias 未落库，短链 bxasz9 会 404（T5007 / T3690 将如实报失败）。
+            _logger.warning(
+                "[step 76][db] 重试后仍 0 行：productId1=%s 在 PromoterProduct 中无对应行，"
+                "alias 未设置 -> 短链 bxasz9 会 404",
+                vars.get("productId1"),
+            )
+    except Exception as _exc76:  # noqa: BLE001
+        # DB 不可达（如 CI 网络/安全组限制）不应让整轮预制中断，但必须如实记录，
+        # 以便区分「SQL 没跑成」与「UI 用例真失败」。
+        _logger.warning("[step 76][db] SQL 执行失败（未阻断执行）-> %s", _exc76)
+
 
 
     # --- step 77: get the two products url allias (GET /merchant/product/list) ---
@@ -6766,11 +7280,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     #       未命中时写入 None，渲染器跳过 None（占位符保持字面量），与迁移前行为一致。
     # ⚠️ 该接口只在 admin 域存在：实测 base 域 → 404（Cannot GET），
     #    admin 域 + {{token}}(999) → 401，admin 域 + {{admin_token}} → 200。
-    _resp107 = ctx.api.admin.post_v2_relate_products(
-        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-        token="admin_token", app_headers=True)
-    expect(_resp107).json('$.code').equals('200')
-    expect(_resp107).json('$.message').equals('success')
+    # 🔁 重试：relatedProducts 由「事件 → 帖子」产品关联异步落地，偶发空数组，
+    #    详见 _relate_products_with_retry 的 docstring（最多 5 次、间隔 3s）。
+    _resp107 = _relate_products_with_retry(ctx, vars.get("venue_map_post_id", ""))
     for _vm_title, _vm_sfx in (
         ("General Admission 02", "_General_Admission_02"),
         ("General Admission 01", "_General_Admission_01"),
@@ -9990,11 +10502,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # --- step 117: Catch the ProductId promoterProductId merchantProductVariantId (GET post/v2/{{venue_map_post_id}}/relate-products) ---
     # NOTE: Same per-product JS-loop extraction as step 109 (second venue-map flow).
     # 同 step 107：接口仅在 admin 域存在，需 admin_token（base 域 404）。
-    _resp117 = ctx.api.admin.post_v2_relate_products(
-        path_vars={"post0_id": vars.get("venue_map_post_id", "")},
-        token="admin_token", app_headers=True)
-    expect(_resp117).json('$.code').equals('200')
-    expect(_resp117).json('$.message').equals('success')
+    # 🔁 重试：同 step 107（relatedProducts 异步落地，偶发空数组），
+    #    共用 _relate_products_with_retry（最多 5 次、间隔 3s）。
+    _resp117 = _relate_products_with_retry(ctx, vars.get("venue_map_post_id", ""))
     # NOTE: 迁移时本段漏了提取（只有断言），导致 step 122 的 productId 仍沿用上一段
     #       （属于另一个 event）的 merchantProductId，后端报
     #       "Product <id> is not a ticket of this event"。此处按 step 107 的同一

@@ -66,7 +66,8 @@ def start_autotest():
         f'--yaml={yaml_files}',
         f'--output={test_results}',
         f'--alluredir={allure_data_dir}',
-        '--step-capture=on-failure'
+        '--step-capture=on-failure',
+        '--maxfail=0',  # 失败不中断：单个 UI 用例失败也要跑完整个测试套（下游用例照常执行）
     ]
     # --headed 不能写死：GitHub 托管 runner 没有显示器，headed 会让所有用例在
     # setup 阶段直接 ERROR（Missing X server or $DISPLAY，见 run #8 的日志）。
@@ -91,6 +92,13 @@ def start_autotest():
         cwd=api_dir, capture_output=True, text=True
     )
     logger.info(f"Prefill stdout: {prefill_result.stdout}")
+    if prefill_result.stderr:
+        # 框架日志（core/logging_util.py 的 StreamHandler）走的是 stderr，而本步骤成功时
+        # 原先只记 stdout —— 于是「预制到底做了什么」的关键证据在 CI 里看不到，
+        # 例如 step 76 补回的别名写入：`[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' ...`
+        # （这也是 tools/ci_summary.py 的「预制内的 DB 步骤日志」折叠块的数据来源）。
+        # 只读日志、不含请求体（API_LOG_BODY 默认关闭），可安全落 run.log。
+        logger.info(f"Prefill stderr: {prefill_result.stderr}")
     if prefill_result.returncode != 0:
         # 预制失败 → UI 用例会因缺数据大面积假失败；直接中止，避免白跑一整轮（CI 一次约 110 分钟）。
         logger.error(
@@ -122,7 +130,34 @@ def start_autotest():
     )
     logger.info(f"Dismiss EDU script done: {dismiss_result.stdout}")
     if dismiss_result.returncode != 0:
-        logger.error(f"Dismiss EDU script stderr: {dismiss_result.stderr}")
+        # 这一步是「登录态预检」：它会用 cookie 登录并按账号逐个走一遍 EDU 弹窗流程，
+        # 走不通（如 ERR_TOO_MANY_REDIRECTS / 页面打不开）就说明会话已经不可用。
+        # 此时继续跑 UI 只会得到一整轮 element not found 假失败
+        # （2026-09-20 run 35487920412：20 条里 19 条假失败、白烧 16 分钟 runner），
+        # 所以直接中止 —— 报「预检失败」比报 19 条「用例失败」更接近真相。
+        logger.error(
+            f"Login/EDU preflight FAILED (exit {dismiss_result.returncode}) — aborting UI run.\n"
+            f"这意味着 3 个账号的登录态没建立好，UI 用例必然大面积假失败，故不再跑 pytest。\n"
+            f"stderr: {dismiss_result.stderr}"
+        )
+        raise SystemExit(dismiss_result.returncode or 4)
+
+    # ── 3.1 Cookie 预检：确认 3 个账号仍是「已登录」状态 ──
+    # 预制脚本会删除并重建测试账号；若 CI 跑 UI 的同时本机又跑了一次预制，
+    # 账号被重建 → 会话失效 → 整套 UI 用例退化成访客态假失败。
+    # 这里做一次廉价预检（只读 JSON、不起浏览器），不通过就中止。
+    check_script = os.path.join(BASE_DIR, 'tools', 'check_auth_cookies.py')
+    logger.info(f"Checking auth cookies via: {check_script}")
+    check_result = subprocess.run(
+        [sys.executable, check_script], capture_output=True, text=True
+    )
+    logger.info(f"Auth cookie preflight: {check_result.stdout}")
+    if check_result.returncode != 0:
+        logger.error(
+            f"Auth cookie preflight FAILED (exit {check_result.returncode}) — aborting UI run.\n"
+            f"stderr: {check_result.stderr}"
+        )
+        raise SystemExit(check_result.returncode or 5)
 
     # ── 4. Run pytest ──
     result = subprocess.run(pytest_args, capture_output=True, text=True)

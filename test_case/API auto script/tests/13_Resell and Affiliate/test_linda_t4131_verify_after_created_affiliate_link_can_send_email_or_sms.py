@@ -444,7 +444,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
         "postAlias": "t4131automation",
     }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
-    ctx.extract('affiliateCode', _resp2, 'affiliateCode')
+    ctx.extract('affiliateCode', _resp2, '$.data.affiliateCode')
     # step 3: 434c9c06-a6be-4b3f-9321-abf48c83afb5
     _resp3 = ctx.api.links.internal(body={
         "originalUrl": "https://release.pear.us/lindanewcurator/post/t4131automation?aff={{affiliateCode}}",
@@ -471,7 +471,7 @@ def test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms(c
         "postAlias": "t4131automation",
     }, token='linda05_token')
     # extractor: affiliateCode = affiliateCode
-    ctx.extract('affiliateCode', _resp5, 'affiliateCode')
+    ctx.extract('affiliateCode', _resp5, '$.data.affiliateCode')
     # extractor: smsshortcode = $.data.code
     ctx.extract('smsshortcode', _resp5, '$.data.code')
     # step 6: 07187509-b359-4981-82a1-c9c135a9062e
