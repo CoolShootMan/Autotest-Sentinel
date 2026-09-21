@@ -106,10 +106,15 @@ def build_tree(source: str):
 
 
 def parent_commit():
-    r = git("rev-parse", "--verify", "-q", f"refs/heads/{LOCAL_BRANCH}")
+    """镜像分支的父提交 = 个人仓当前 tip（origin/main）。
+
+    始终以远端 tip 为父 → 每次生成的都是「origin/main + 1 个过滤提交」，
+    保证 push 是快进、不会出现分叉被拒。本地 personal 分支只作兜底。
+    """
+    r = git("rev-parse", "--verify", "-q", f"refs/remotes/{REMOTE}/{REMOTE_BRANCH}")
     if r.returncode == 0 and r.stdout.strip():
         return r.stdout.strip()
-    r = git("rev-parse", "--verify", "-q", f"refs/remotes/{REMOTE}/{REMOTE_BRANCH}")
+    r = git("rev-parse", "--verify", "-q", f"refs/heads/{LOCAL_BRANCH}")
     if r.returncode == 0 and r.stdout.strip():
         return r.stdout.strip()
     return None
