@@ -193,7 +193,7 @@ ONES 用例（尤其 AI 生成的）给的是**意图级**步骤，通常**没�
 
 **操作知识的来源优先级（按顺序找，别凭感觉）**
 
-1. **同模块已跑通的 YAML 用例** —— `test_case/UI/Test_Katana/All_YAML/`。里面有真实入口路径 + 已验证的定位器写法，是最值钱的参考。
+1. **同模块已跑通的 YAML 用例** —— `test_case/UI/All_YAML/`。里面有真实入口路径 + 已验证的定位器写法，是最值钱的参考。
 2. **Jira 票 + 评论 + Figma**（Phase 1 / 1.5）—— 入口在哪、按钮文案、显示/隐藏规则、边界行为。
 3. **DOM 知识库 `dom_kb/`**（**先查它，再开浏览器**）—— 已经从线上抓好的**真实控件清单**（含 `role`/`testid`/`aria-label`/可见文本 + 所属页面）。用它把"用例里写的按钮名"先翻译成"线上真实的控件名与所在页面"，能省掉大量试错：
    ```bash
@@ -256,10 +256,10 @@ ONES 用例（尤其 AI 生成的）给的是**意图级**步骤，通常**没�
 - **与设计的偏差（Phase 1.5 的产出）**：设计里有用例没覆盖的、用例写了设计里没有的、实现与设计不符的（附**设计图 vs 实测截图**对照）。
 - **未覆盖与风险**：票里有验收点但无用例覆盖的部分。
 
-需要自动化收口时，把稳定用例转成 YAML 方案用例（`test_case/UI/Test_Katana/All_YAML/`）用 pytest 复跑取证（pytest 才是最终收口证据）：
+需要自动化收口时，把稳定用例转成 YAML 方案用例（`test_case/UI/All_YAML/`）用 pytest 复跑取证（pytest 才是最终收口证据）：
 
 ```bash
-py -3.9 -m pytest test_case/UI/Test_Katana/test_ui.py -k testT<number> --alluredir=allure-results
+py -3.9 -m pytest test_case/UI/test_ui.py -k testT<number> --alluredir=allure-results
 ```
 
 **回写 ONES 计划执行结果（默认要做，否则计划看板全是「未执行」）**：

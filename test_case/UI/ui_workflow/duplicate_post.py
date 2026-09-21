@@ -22,10 +22,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========== Configuration ==========
-# Hardcoded absolute path to avoid dynamic path calculation errors
-COOKIE_FILE = "d:/monster_test/Autotest-monster/test_case/UI/Test_Katana/cookie_release.json"
-API_BASE = "https://release.katana-api.1m.app"
+# cookie_release.json lives in the UI line root (parent of this directory);
+# anchored to __file__ so the script works from any checkout location.
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+COOKIE_FILE = os.path.join(os.path.dirname(SCRIPT_DIR), "cookie_release.json")
+API_BASE = "https://release.katana-api.1m.app"
 RESULT_FILE = os.path.join(SCRIPT_DIR, ".duplicate_result.json")
 
 # Hardcoded valid old JWT token (used to refresh and get a new token)

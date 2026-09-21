@@ -168,13 +168,13 @@ python runner.py testT4718 --headless --env release
 **Using raw `pytest` commands:**
 ```bash
 # Test a specific case
-pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
+pytest test_case/UI/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
 
 # Test multiple cases
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
+pytest test_case/UI/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
 
 # Generate Allure report
-pytest --alluredir=allure-results test_case/UI/Test_Katana/test_ui.py
+pytest --alluredir=allure-results test_case/UI/test_ui.py
 allure serve allure-results
 ```
 
@@ -265,7 +265,7 @@ actions/ (Action Registry)
 ├─recordings              # Playwright codegen recorded scripts
 ├─test_case
 │  └─UI
-│    └─Test_Katana
+│    └─UI
 │       ├─actions/         # Action Registry
 │       │  ├─__init__.py   # Registry entry point
 │       │  ├─base.py       # Base actions (smart_click, smart_fill, AI Fallback)

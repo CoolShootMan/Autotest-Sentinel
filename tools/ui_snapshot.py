@@ -171,7 +171,7 @@ def _resolve_cookie_path(env: str, account: str = "main") -> Optional[str]:
     filename = prefix + suffix + ".json"
 
     cookie_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "test_case", "UI", "Test_Katana"
+        os.path.dirname(os.path.abspath(__file__)), "..", "test_case", "UI", "UI"
     )
     path = os.path.join(cookie_dir, filename)
     if os.path.exists(path):

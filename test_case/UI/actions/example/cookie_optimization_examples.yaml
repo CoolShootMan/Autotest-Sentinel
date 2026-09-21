@@ -21,7 +21,7 @@ testE1001_basic_cookie_optimization:
     # ✨ NEW: Open with cookies in ONE step (faster!)
     open:
       url: "{BASE_URL}/autotestshop"
-      cookie_file: "test_case/UI/Test_Katana/cookie_release.json"
+      cookie_file: "test_case/UI/cookie_release.json"
 
     # Page loads already authenticated - no reload needed!
     verify_logged_in:
@@ -41,7 +41,7 @@ testE1002_multi_user_session_isolation:
     # ✨ Cookies injected before page opens - Partner is already logged in
     partner__open:
       url: "{BASE_URL}/autotestshop"
-      cookie_file: "test_case/UI/Test_Katana/cookie_partner_release.json"
+      cookie_file: "test_case/UI/cookie_partner_release.json"
 
     # Auto-handle modals (multi-step tours handled automatically)
     # Cookie Banner → Welcome Tour (all steps) → Notifications
@@ -76,7 +76,7 @@ testE1002_multi_user_session_isolation:
     # ✨ Cookies injected before page opens - Co-seller is already logged in
     coseller__open:
       url: "{BASE_URL}/your-business-name-yuu7"
-      cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
+      cookie_file: "test_case/UI/cookie_partner_coseller_release.json"
 
     # Auto-handle modals specific to co-seller
     coseller__verify_dashboard_visible:
@@ -122,7 +122,7 @@ testE1003_coseller_auto_archive_best_practice:
     # ✨ Optimized: Cookies injected before opening page
     partner__open:
       url: "{BASE_URL}/autotestshop"
-      cookie_file: "test_case/UI/Test_Katana/cookie_partner_release.json"
+      cookie_file: "test_case/UI/cookie_partner_release.json"
 
     # Auto-handle modals (Cookie banner, Welcome tour, etc.)
     # All multi-step modals handled automatically!
@@ -164,7 +164,7 @@ testE1003_coseller_auto_archive_best_practice:
     # ✨ Optimized: Different cookie file for co-seller
     coseller__open:
       url: "{BASE_URL}/your-business-name-yuu7"
-      cookie_file: "test_case/UI/Test_Katana/cookie_partner_coseller_release.json"
+      cookie_file: "test_case/UI/cookie_partner_coseller_release.json"
 
     # Auto-handle modals for co-seller
 
@@ -322,7 +322,7 @@ testE1005_performance_comparison_old_way:
 
     # Step 2: Inject cookies
     inject_cookies:
-      cookie_file: "test_case/UI/Test_Katana/cookie_release.json"
+      cookie_file: "test_case/UI/cookie_release.json"
 
     # Step 3: Page reloads automatically (wasted time!)
     # ⚠️ Total: 2 page loads, ~4-6 seconds
@@ -338,7 +338,7 @@ testE1006_performance_comparison_new_way:
     # ✨ Single step: Cookies injected + Page opens (already authenticated)
     open:
       url: "{BASE_URL}/dashboard"
-      cookie_file: "test_case/UI/Test_Katana/cookie_release.json"
+      cookie_file: "test_case/UI/cookie_release.json"
 
     # ✅ Page loads once, already logged in!
     # ⚡ Total: 1 page load, ~2-3 seconds (50%+ faster!)

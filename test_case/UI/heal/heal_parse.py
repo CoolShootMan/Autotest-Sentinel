@@ -32,9 +32,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.p
 if REPO_ROOT not in sys.path:
     sys.path.append(REPO_ROOT)
 
-from test_case.UI.Test_Katana.heal.heal_probe import load_case, classify  # noqa: E402
+from test_case.UI.heal.heal_probe import load_case, classify  # noqa: E402
 
-KATANA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../Test_Katana
+KATANA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../UI
 
 
 def newest_run() -> str | None:

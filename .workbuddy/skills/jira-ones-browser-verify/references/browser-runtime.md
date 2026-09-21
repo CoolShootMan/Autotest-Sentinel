@@ -30,12 +30,12 @@
 ```bash
 # ① 刷新 cookie 文件（每次开跑前；约 40s，登录 3 个账号）
 py -3.9 tools/get_all_cookies.py
-#    → test_case/UI/Test_Katana/cookie_release.json            (owner / main)
-#      test_case/UI/Test_Katana/cookie_release_co_seller.json  (co-seller)
-#      test_case/UI/Test_Katana/cookie_release_partner_coseller.json (partner co-seller)
+#    → test_case/UI/cookie_release.json            (owner / main)
+#      test_case/UI/cookie_release_co_seller.json  (co-seller)
+#      test_case/UI/cookie_release_partner_coseller.json (partner co-seller)
 
 # ② 取出 cookies 数组（紧凑单行，便于内联）
-py -3.9 -c "import json;print(json.dumps(json.load(open('test_case/UI/Test_Katana/cookie_release.json',encoding='utf-8'))['cookies'],separators=(',',':')))"
+py -3.9 -c "import json;print(json.dumps(json.load(open('test_case/UI/cookie_release.json',encoding='utf-8'))['cookies'],separators=(',',':')))"
 ```
 
 把 ② 的输出粘进 `browser_run_code_unsafe`（**一次调用完成"注入 → 导航 → 断言"**）：
@@ -147,7 +147,7 @@ browser_click <Log in ref>
 
 ```bash
 agent-browser --session kat12069 --headed \
-  --state test_case/UI/Test_Katana/cookie_release.json \
+  --state test_case/UI/cookie_release.json \
   --screenshot-dir data/verify/KAT-12069 \
   open "https://release.pear.us/autotestshop"
 agent-browser --session kat12069 snapshot -i -c -d 4     # 拿 @eN ref，别猜 CSS

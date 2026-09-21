@@ -1,7 +1,7 @@
 # 测试用例统计报告
 
 **生成时间**: 2026-04-23
-**统计范围**: `test_case/UI/Test_Katana/All_YAML/`
+**统计范围**: `test_case/UI/All_YAML/`
 
 ---
 

@@ -28,7 +28,7 @@
 
 ```
 autotest-monster/
-├── test_case/UI/Test_Katana/
+├── test_case/UI/
 │   ├── actions/                # Action Registry (动作注册表)
 │   │   ├── __init__.py         # 注册表入口 + get_action()
 │   │   ├── base.py             # 基础动作 (smart_click, smart_fill)
@@ -42,8 +42,8 @@ autotest-monster/
 │   │   └── Knowledge_Base.md   # 领域知识库文档
 ├── conftest.py                         # 【根级】全局配置：YAML 加载、storage-state、
 │                                       #          browser_context_args、guest 模式 cookie 隔离
-│   └── test_case/UI/Test_Katana/
-│       ├── conftest.py                 # 【包级】Test_Katana 专属配置：video/screenshot
+│   └── test_case/UI/
+│       ├── conftest.py                 # 【包级】UI 专属配置：video/screenshot
 │       │                              #          自动附加到 Allure、摄像头伪装参数、
 │       │                              #          is_guest cookie 拦截（以包级为准覆盖根级）
 │   ├── test_ui.py              # 核心测试执行引擎
@@ -102,7 +102,7 @@ python main.py
 
 ```bash
 # 运行特定用例
-pytest test_case\UI\Test_Katana\test_ui.py -k "test_guest_submission_2" --storage-state "test_case\UI\Test_Katana\cookie_release_demi.json" --env release --yaml Partner_create_form.yaml --headed -v 
+pytest test_case\UI\UI\test_ui.py -k "test_guest_submission_2" --storage-state "test_case\UI\UI\cookie_release_demi.json" --env release --yaml Partner_create_form.yaml --headed -v 
 ```
 
 ### 2.3 多环境支持
@@ -257,7 +257,7 @@ assertions:
 ## 6. RAG 知识库维护
 
 ### 6.1 文件位置
-`test_case/UI/Test_Katana/utils/Knowledge_Base.md`
+`test_case/UI/utils/Knowledge_Base.md`
 
 ### 6.2 内容结构
 使用 `##` 二级标题分块，每个块是一个独立的知识条目：
@@ -304,7 +304,7 @@ AI 每次自愈都会在日志中输出：
 ### 7.2 Headed 模式运行
 
 ```bash
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT4777" --headed -v
+pytest test_case/UI/test_ui.py -k "testT4777" --headed -v
 ```
 
 ### 7.3 查看执行历史

@@ -28,7 +28,7 @@ from datetime import datetime
 # ─── Project structure constants ────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_ROOT = os.path.join(BASE_DIR, 'allure-results')
-YAML_BASE = os.path.join(BASE_DIR, 'test_case', 'UI', 'Test_Katana')
+YAML_BASE = os.path.join(BASE_DIR, 'test_case', 'UI', 'UI')
 
 # Regex for inline marker: matches old markers for easy replacement
 _MARKER_RE = re.compile(r'\s*#\s*\[LAST:.*?\]\s*$')
@@ -176,7 +176,7 @@ def main():
     parser.add_argument('--results-dir', default=None,
                         help='Specify allure-results subdirectory (default: auto-select latest)')
     parser.add_argument('--yaml', nargs='+', default=None,
-                        help='YAML files to annotate (relative to Test_Katana/, default: all)')
+                        help='YAML files to annotate (relative to , default: all)')
     parser.add_argument('--dry-run', action='store_true',
                         help='Print only, do not modify files')
     args = parser.parse_args()

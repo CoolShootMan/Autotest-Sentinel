@@ -28,17 +28,17 @@ import subprocess
 import argparse
 
 HERE = os.path.abspath(__file__)
-HEAL_DIR = os.path.dirname(HERE)                        # .../Test_Katana/heal
+HEAL_DIR = os.path.dirname(HERE)                        # .../heal
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HEAL_DIR))))  # .../Autotest-monster
 if REPO_ROOT not in sys.path:
     sys.path.append(REPO_ROOT)
 
-from test_case.UI.Test_Katana.heal.heal_parse import parse_run  # noqa: E402
-from test_case.UI.Test_Katana.heal.heal_probe import ProbeResult  # noqa: E402
-from test_case.UI.Test_Katana.heal.heal_locate import heal_locate  # noqa: E402
-from test_case.UI.Test_Katana.heal.heal_classify import route, classify_failure  # noqa: E402
-from test_case.UI.Test_Katana.heal.heal_apply import apply_manifest  # noqa: E402
-from test_case.UI.Test_Katana.heal.heal_ai import heal_ai, fetch_requirement  # noqa: E402
+from test_case.UI.heal.heal_parse import parse_run  # noqa: E402
+from test_case.UI.heal.heal_probe import ProbeResult  # noqa: E402
+from test_case.UI.heal.heal_locate import heal_locate  # noqa: E402
+from test_case.UI.heal.heal_classify import route, classify_failure  # noqa: E402
+from test_case.UI.heal.heal_apply import apply_manifest  # noqa: E402
+from test_case.UI.heal.heal_ai import heal_ai, fetch_requirement  # noqa: E402
 
 AI_BUDGET = 20  # max L4 AI calls per run
 PROBE_TIMEOUT = 150  # hard cap per-case browser probe (seconds); one bad case can't hang the pipeline
@@ -254,7 +254,7 @@ def main():
               f"(est. {len(failures) * 1.5:.0f}+ min) — this will slow your machine.")
         print("  Option A (instant):  python self_heal.py --run <ts> --fast --out <dir>")
         print("  Option B (heavy):    run in a STANDALONE terminal so the agent UI stays responsive:")
-        print(f'    D:/Program Files/python.exe test_case/UI/Test_Katana/heal/self_heal.py '
+        print(f'    D:/Program Files/python.exe test_case/UI/heal/self_heal.py '
               f'--run {args.run} --out {args.out} --heavy')
         print("  Progress is streamed to: " + os.path.join(args.out, "heal_progress.log"))
         return

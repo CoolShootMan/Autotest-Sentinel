@@ -397,7 +397,7 @@ testT3686_CosellerResell:
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
         open_post: 
           url: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-          # cookie_file: 'test_case/UI/Test_Katana/cookie_{ENV}_co_seller.json"'
+          # cookie_file: 'test_case/UI/cookie_{ENV}_co_seller.json"'
         sleep_step: 5000
 
         # Refresh page to ensure latest state
@@ -2172,7 +2172,7 @@ testT2537:
 testT3108:
     description: "Verify setCustomizePrice check"
     test_step:
-        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
@@ -2213,7 +2213,7 @@ testT3108:
 testT3110:
     description: "Verify setCustomizePrice check, uncheck and save flow"
     test_step:
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
+        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
@@ -2368,7 +2368,7 @@ testT1928:
 
         # Then proceed with post creation
         open: { url: "{BASE_URL}/post/create?c=POST_PAGE" }
-        #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
+        #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_step_s2: 3000
         # Discard unsaved-draft recovery dialog if present (editor shows it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
@@ -2508,7 +2508,7 @@ testT3811:
     description: "Verify customize price setting and unsetting in post creation and editing"
     test_step:
         # Step 1: Open create post page with specific partner/coseller cookies
-        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}_partner_coseller.json" }
+        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_step: 3000
 
         # Step 4: Discard draft if present
@@ -2740,7 +2740,7 @@ VerifyGuest_testT5442:
 
     teardown_step:
         #description: "Delete newly added ticket and merch to restore original state"
-        open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/Test_Katana/cookie_{ENV}.json" }
+        open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
         sleep_step: 5000
 
         R_click_my_event: { locator: "text=event-for-UI-auto-venue-map", exact: true, index: 0 }

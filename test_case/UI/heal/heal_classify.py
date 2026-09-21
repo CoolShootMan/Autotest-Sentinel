@@ -25,7 +25,7 @@ while not os.path.exists(os.path.join(REPO_ROOT, 'pytest.ini')) and REPO_ROOT !=
 if REPO_ROOT not in sys.path:
     sys.path.append(REPO_ROOT)
 
-from test_case.UI.Test_Katana.heal.heal_probe import classify  # noqa: E402
+from test_case.UI.heal.heal_probe import classify  # noqa: E402
 
 AUTO_CONF = 0.9  # confidence at/above which a T1 locator diff is auto-applied
 

@@ -1,7 +1,7 @@
 # Test Case Statistics Report
 
 **Generated:** 2026-04-23
-**Scope:** `test_case/UI/Test_Katana/All_YAML/`
+**Scope:** `test_case/UI/All_YAML/`
 
 ---
 

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys, os
 
-# main.py lives inside the UI line now (test_case/UI/Test_Katana); repo root is 3 levels up.
+# main.py lives inside the UI line now (test_case/UI); repo root is 3 levels up.
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 _VENV_PYTHON = os.path.join(_REPO_ROOT, "venv", "bin", "python3")
 if os.path.exists(_VENV_PYTHON) and sys.executable != _VENV_PYTHON:
@@ -61,7 +61,7 @@ def start_autotest():
 
     logger.info(f"Allure data directory: {allure_data_dir}")
     
-    # YAML file list to execute, comma-separated (paths relative to Test_Katana/All_YAML/)
+    # YAML file list to execute, comma-separated (paths relative to All_YAML/)
     yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml"
     # yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     # yaml_files = "All_YAML/Post/Post_setting.yaml, All_YAML/Post/Post_content.yaml"

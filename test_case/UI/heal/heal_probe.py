@@ -23,22 +23,22 @@ import yaml
 from playwright.sync_api import sync_playwright, Page, Browser
 
 # --- Add repo root to sys.path so we can reuse the case action engine ---
-# heal_probe.py lives at <repo>/test_case/UI/Test_Katana/heal/heal_probe.py
-#   parents[0]=heal  [1]=Test_Katana  [2]=UI  [3]=test_case  [4]=repo-root
+# heal_probe.py lives at <repo>/test_case/UI/heal/heal_probe.py
+#   parents[0]=heal  [1]=UI  [2]=UI  [3]=test_case  [4]=repo-root
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 if REPO_ROOT not in sys.path:
     sys.path.append(REPO_ROOT)
 
-from test_case.UI.Test_Katana.actions import get_action, create_session  # noqa: E402
+from test_case.UI.actions import get_action, create_session  # noqa: E402
 
 # Auth storage_state used by the cases (same as conftest page fixture)
 COOKIE_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # Test_Katana
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # UI
     "cookie_release.json",
 )
 BASE_URL = os.environ.get("BASE_URL", "https://release.pear.us")
-KATANA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../Test_Katana (heal/..)
+KATANA_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # .../UI (heal/..)
 DEFAULT_YAML = os.path.join(KATANA_DIR, "All_YAML", "Section", "Section.yaml")
 
 

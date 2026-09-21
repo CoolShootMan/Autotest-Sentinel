@@ -14,7 +14,7 @@ ready-to-run snippet to disk; the MCP tool is then invoked with
 Usage
 -----
     py -3.9 tools/inject_cookie.py \
-        --cookie-file test_case/UI/Test_Katana/cookie_release_co_seller.json \
+        --cookie-file test_case/UI/cookie_release_co_seller.json \
         --url https://release.pear.us/autotest-coseller
 
 Options

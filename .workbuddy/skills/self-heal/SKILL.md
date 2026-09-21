@@ -101,12 +101,12 @@ Use the **same Python interpreter that runs `main`**. Verified working interpret
 The managed venv (`C:\Users\tester\.workbuddy\binaries\python\envs\default`) is **NOT** suitable here — it has `playwright` but lacks `pytest` and `pandas` (required transitively by `actions/layout.py` / `actions/form.py`). Do not launch `self_heal.py` with it.
 
 Must have the Playwright Chromium browser installed and a valid storage-state cookie
-(`test_case/UI/Test_Katana/cookie_release.json`) for the target environment
+(`test_case/UI/cookie_release.json`) for the target environment
 (`https://release.pear.us`). Run commands **from the repo root** so relative imports resolve.
 
 ## Tools (contract — the skill orchestrates these; do not modify `jira-ones-testflow`)
 
-All under `test_case/UI/Test_Katana/heal/`:
+All under `test_case/UI/heal/`:
 
 | Tool | I/O | Role |
 |---|---|---|
@@ -122,7 +122,7 @@ Related tool that lives **outside** `heal/` (used by Gate 0, no browser needed):
 
 | Tool | I/O | Role |
 |---|---|---|
-| `tools/locator_lint.py` | static scan of `test_case/UI/Test_Katana/**/*.yaml` → findings; exit 1 on `E*` | Gate-0 linter: duplicate YAML keys, MUI `combobox`+`name`, `move_*` without centered x/y, step keys with no handler. Static-parses `actions/__init__.py` for the handler vocabulary (does not import Playwright), so it runs in any Python in well under a second. |
+| `tools/locator_lint.py` | static scan of `test_case/UI/**/*.yaml` → findings; exit 1 on `E*` | Gate-0 linter: duplicate YAML keys, MUI `combobox`+`name`, `move_*` without centered x/y, step keys with no handler. Static-parses `actions/__init__.py` for the handler vocabulary (does not import Playwright), so it runs in any Python in well under a second. |
 
 ## The flow (step by step)
 
@@ -130,7 +130,7 @@ Related tool that lives **outside** `heal/` (used by Gate 0, no browser needed):
    `allure-results/<timestamp>/`.
 2. **Heal.** From repo root:
    ```bash
-   python test_case/UI/Test_Katana/heal/self_heal.py --run allure-results/<timestamp> --out test_case/UI/Test_Katana/heal/report
+   python test_case/UI/heal/self_heal.py --run allure-results/<timestamp> --out test_case/UI/heal/report
    ```
    Useful flags: `--limit N` (first N failures, for testing), `--case <id>` (one case),
    `--no-ai` (deterministic only), `--dry-run` (don't write manifest).
@@ -141,8 +141,8 @@ Related tool that lives **outside** `heal/` (used by Gate 0, no browser needed):
    - `FLAKY_CANDIDATE` = probe reached the step fine → likely timing/flaky, not a real defect.
 4. **Apply.** (Make a git commit/backup first.)
    ```bash
-   python test_case/UI/Test_Katana/heal/self_heal.py --apply                 # T1 only
-   python test_case/UI/Test_Katana/heal/self_heal.py --apply --include-t2    # also T2
+   python test_case/UI/heal/self_heal.py --apply                 # T1 only
+   python test_case/UI/heal/self_heal.py --apply --include-t2    # also T2
    ```
    Add `--dry-run` to preview the YAML edits. Each applied file gets a `.heal_bak` backup.
 5. **Verify.** Re-run `main` on the touched cases to confirm the green is real (not false).
@@ -152,7 +152,7 @@ Related tool that lives **outside** `heal/` (used by Gate 0, no browser needed):
 - Ground truth: `.workbuddy/self-healing/heal_corpus.json` (real fixed cases from the storefront refactor). Each entry carries `failure_signature`, `real_root_cause`, `heal_layer`, `auto_healable`, and (after backfill) `repair_tier`.
 - Backfill the derived `repair_tier` field if the corpus changes:
   ```bash
-  python test_case/UI/Test_Katana/heal/heal_classify.py --corpus .workbuddy/self-healing/heal_corpus.json
+  python test_case/UI/heal/heal_classify.py --corpus .workbuddy/self-healing/heal_corpus.json
   ```
 - The probe (`heal_probe`) is designed to grow this corpus automatically at runtime (each run emits a structured `probe_result`), so the system gets more accurate over versions.
 

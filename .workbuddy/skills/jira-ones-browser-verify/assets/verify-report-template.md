@@ -68,6 +68,6 @@
 
 ## 8. 后续
 
-- [ ] 转 YAML 自动化（`test_case/UI/Test_Katana/All_YAML/`）：<用例清单>
+- [ ] 转 YAML 自动化（`test_case/UI/All_YAML/`）：<用例清单>
 - [ ] 清理测试数据：<创建物>
 - [ ] 回写 ONES 执行结果 / Jira 评论
