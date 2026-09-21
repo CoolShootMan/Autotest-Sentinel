@@ -17,10 +17,17 @@
     py -3.9 tools/backup_memory.py --restore latest # 从最新镜像还原
     py -3.9 tools/backup_memory.py --restore 2026-09-18_145600   # 从指定快照还原
     py -3.9 tools/backup_memory.py --dest D:/my_backup           # 自定义备份位置
+
+无人值守（Windows 计划任务，无窗口）：
+    pythonw.exe tools/backup_memory.py --log <备份区>/backup.log
+    —— pythonw 不分配控制台，屏幕上不会闪窗；--log 把完整输出落到文件，
+       所以静默执行也不会丢掉失败信息（退出码仍反映成败）。
 """
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import shutil
 import sys
 from datetime import datetime
@@ -141,13 +148,33 @@ def main() -> int:
     ap.add_argument("--list", action="store_true", help="列出所有快照")
     ap.add_argument("--restore", metavar="SNAPSHOT", help="从 latest 或指定快照还原")
     ap.add_argument("--quiet", action="store_true", help="静默模式（用于定时任务）")
+    ap.add_argument("--log", type=Path, help="把本次完整输出追加到该日志文件（供无窗口定时任务留痕）")
     args = ap.parse_args()
 
-    if args.list:
-        return cmd_list(args.dest)
-    if args.restore:
-        return cmd_restore(args.dest, args.restore)
-    return cmd_backup(args.dest, args.keep, args.quiet)
+    def run() -> int:
+        if args.list:
+            return cmd_list(args.dest)
+        if args.restore:
+            return cmd_restore(args.dest, args.restore)
+        return cmd_backup(args.dest, args.keep, args.quiet)
+
+    if args.log is None:
+        return run()
+
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+        rc = run()
+    body = buf.getvalue().rstrip() or "(quiet: 本轮无输出)"
+    stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        args.log.parent.mkdir(parents=True, exist_ok=True)
+        with args.log.open("a", encoding="utf-8") as fh:
+            fh.write(f"===== {stamp}  rc={rc} =====\n{body}\n")
+    except OSError as e:
+        # 日志写不进去不该让备份本身失败
+        sys.stderr.write(f"[WARN] 写日志失败: {e}\n")
+    sys.stdout.write(buf.getvalue())  # 仍回显，交互使用时行为不变
+    return rc
 
 
 if __name__ == "__main__":
