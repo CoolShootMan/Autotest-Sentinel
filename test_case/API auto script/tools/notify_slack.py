@@ -130,8 +130,8 @@ def build_message(run_dir: Path, channel: str | None, report_url: str | None) ->
         lines.append(f"*失败明细（前 {min(len(failures), MAX_FAILURES)} 条，共 {len(failures)} 条）*")
         for i, f in enumerate(failures[:MAX_FAILURES], 1):
             kind = "ERR " if f.get("kind") == "error" else "FAIL"
-            cid = f.get("case_id")
-            cid_s = f"T{cid} " if cid else ""
+            cid = f.get("t_id")
+            cid_s = f"{cid} " if cid else ""
             lines.append(f"{i}. `{kind}` {cid_s}{_short_name(f.get('name',''))}")
             detail = _first_error_line(f.get("message") or "")
             if detail:

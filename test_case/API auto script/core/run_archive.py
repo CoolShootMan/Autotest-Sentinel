@@ -252,7 +252,7 @@ def _label_of(report: Any, entry_lookup: Callable[[str], dict] | None) -> str:
     nodeid = getattr(report, "nodeid", "")
     entry = (entry_lookup(nodeid) if entry_lookup else None) or {}
     name = entry.get("name") or nodeid.split("::")[-1]
-    cid = entry.get("case_id")
+    cid = entry.get("t_id")
     return f"[{cid}] {name}" if cid else name
 
 
@@ -266,6 +266,7 @@ def _failure(report: Any, kind: str, entry_lookup: Callable[[str], dict] | None,
     return {
         "kind": kind,
         "case_id": entry.get("case_id"),
+        "t_id": entry.get("t_id"),
         "name": entry.get("name") or nodeid.split("::")[-1],
         "folder": entry.get("folder"),
         "tags": entry.get("tags", []),
@@ -400,7 +401,8 @@ def _summary_md(meta: dict, failures: list[dict], slowest: list[tuple[str, float
             icon = "⚠️" if f["kind"] == "error" else "❌"
             L.append(f"### {i}. {icon} {f['name']}")
             L.append("")
-            L.append(f"- **用例 ID**: {f['case_id'] or '-'}　**阶段**: "
+            cid = f.get("t_id") or f.get("name") or "-"
+            L.append(f"- **用例 ID**: {cid}　**阶段**: "
                      f"{f['phase']}　**耗时**: {f['duration_s']}s")
             L.append(f"- **目录**: {f['folder'] or '-'}")
             L.append(f"- **节点**: `{f['nodeid']}`")

@@ -183,7 +183,7 @@ def build_step_summary(suites: dict, env: str, run_url: str = "",
             L += [f"### {_title(suite)}（{len(failures)} 条）", ""]
             for i, f in enumerate(failures, 1):
                 kind = "ERR" if f.get("kind") == "error" else "FAIL"
-                cid = f.get("case_id")
+                cid = f.get("t_id")
                 cid_s = f"`[{cid}]` " if cid else ""
                 detail = _first_error_line(f.get("message") or "")
                 line = f"{i}. `{kind}` {cid_s}{_short_name(f.get('name') or '', 110)}"
@@ -250,8 +250,8 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
                       f"共 {len(all_failures)} 条）*"]
         for i, f in enumerate(all_failures[:MAX_SLACK_FAILURES], 1):
             kind = "ERR " if f.get("kind") == "error" else "FAIL"
-            cid = f.get("case_id")
-            cid_s = f"T{cid} " if cid else ""
+            cid = f.get("t_id")
+            cid_s = f"{cid} " if cid else ""
             lines.append(f"{i}. `{kind}` {cid_s}{_short_name(f.get('name') or '')}")
             detail = _first_error_line(f.get("message") or "")
             if detail:
