@@ -31,6 +31,8 @@ env:
   # 'true' = 跑完把结果发到 #qae-team。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_QAE_TEAM。
   # 若 Secret 未配置，下方 Send Slack 步骤的条件不满足，自动跳过（不会报错）。
   SLACK_NOTIFY_ENABLED: 'true'
+  # Slack webhook 放到 workflow 级 env，使得下方 Send Slack 步骤的 if: 能读到（if 表达式里不能用 secrets.*）
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
   # API 框架运行环境：对应 config/environments/Release.yaml -> https://release.katana-api.1m.app
   API_ENV: Release
 
