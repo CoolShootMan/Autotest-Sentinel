@@ -67,11 +67,12 @@ fi
 
 # 处理 Cookie 逻辑
 if [ "$ROLE" != "guest" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     if [ "$ROLE" = "partner" ]; then
-        COOKIE_FILE="./test_case/UI/Test_Katana/cookie_${ENV}.json"
+        COOKIE_FILE="$SCRIPT_DIR/cookie_${ENV}.json"
     else
         # 对于 co-seller 角色
-        COOKIE_FILE="./test_case/UI/Test_Katana/cookie_coseller_${ENV}.json"
+        COOKIE_FILE="$SCRIPT_DIR/cookie_coseller_${ENV}.json"
     fi
     
     if [ ! -f "$COOKIE_FILE" ]; then

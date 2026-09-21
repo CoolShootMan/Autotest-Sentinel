@@ -85,7 +85,7 @@ jobs:
           BASE_URL: https://release.pear.us
         run: |
           set -o pipefail
-          python main.py 2>&1 | tee run.log
+          python test_case/UI/Test_Katana/main.py 2>&1 | tee run.log
       - name: Locate result directories
         if: always()
         id: locate
