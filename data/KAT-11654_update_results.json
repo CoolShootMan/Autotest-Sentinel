@@ -1,0 +1,167 @@
+{
+  "results": [
+    {
+      "uuid": "CteDiqbr",
+      "name": "Verify \"Save as draft\" defers invitation acceptance",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "BV6WoNjh",
+      "name": "Verify \"Browse shop first\" allows viewing partner's shop before accepting",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "CT8fev4C",
+      "name": "Verify new user with no existing sections defaults to Add to New Section",
+      "ok": true,
+      "msg": "6 steps written"
+    },
+    {
+      "uuid": "8YAZ5r6z",
+      "name": "Verify already-co-seller redirect shows Toast notification with inviting shop name",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "5HxTeQFA",
+      "name": "Verify auto-add posts toggle is enabled by default during invite acceptance",
+      "ok": true,
+      "msg": "6 steps written"
+    },
+    {
+      "uuid": "Wd5bkTik",
+      "name": "Verify Choose where posts appear on storefront section selection",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "Kauyv5Fc",
+      "name": "Verify auto-add toggle setting syncs with partner Collabs settings",
+      "ok": true,
+      "msg": "6 steps written"
+    },
+    {
+      "uuid": "KzW8TAQp",
+      "name": "Verify redirect to Added section after posts are applied",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "YFQarNAj",
+      "name": "Verify Add Shoppable posts via Add menu entry point",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "PnmnCo7X",
+      "name": "Verify Add Shoppable posts via Storefront section entry point",
+      "ok": true,
+      "msg": "4 steps written"
+    },
+    {
+      "uuid": "7EBBV8Bu",
+      "name": "Verify Add Shoppable posts via Start selling after invite acceptance",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "LMzwcKpe",
+      "name": "Verify Partners Shoppable posts list with filter and sort",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "UNXyWFMC",
+      "name": "Verify Newest vs Recently Added sort semantics",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "CbFGxZiJ",
+      "name": "Verify adding individual posts to shop from Partners Shoppable posts",
+      "ok": true,
+      "msg": "6 steps written"
+    },
+    {
+      "uuid": "SnSReT3s",
+      "name": "Verify already a co-seller state on Partners Shoppable posts",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "SgjQYMft",
+      "name": "Verify partner manually adds post to co-seller storefront",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "5vYH66go",
+      "name": "Verify co-seller receives notification when partner adds posts",
+      "ok": true,
+      "msg": "4 steps written"
+    },
+    {
+      "uuid": "KiJGfiXM",
+      "name": "Verify post-based addition respects auto-add toggle setting",
+      "ok": true,
+      "msg": "5 steps written"
+    },
+    {
+      "uuid": "6fgQuEgE",
+      "name": "Verify public invitation link vs private invitation link",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "V8of7NTm",
+      "name": "Verify new co-seller registers via invite link and is redirected to own shop",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "8TQ1JwU5",
+      "name": "Verify already-connected co-seller clicking invite link redirects to My Shop with Toast",
+      "ok": true,
+      "msg": "6 steps written"
+    },
+    {
+      "uuid": "4t935FGh",
+      "name": "Verify co-seller accepts invitation with post preference selection and redirect to Added section",
+      "ok": true,
+      "msg": "9 steps written"
+    },
+    {
+      "uuid": "BxcrNWgC",
+      "name": "Verify logged-in user accepts invitation with post preference screen and redirect to Added section",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "QQZTGHFf",
+      "name": "Verify unlogged consumer logs in via invite link, creates shop, and completes post preference flow",
+      "ok": true,
+      "msg": "8 steps written"
+    },
+    {
+      "uuid": "GKX35khK",
+      "name": "Verify invitation link leads to landing page with post preference selection and Added section redirect",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "6mzmgWYT",
+      "name": "Verify generating public and private invitation links as a partner",
+      "ok": true,
+      "msg": "7 steps written"
+    },
+    {
+      "uuid": "BPWMu4zC",
+      "name": "Verify new shop profile card on collabs > partnered shops page and post preference settings",
+      "ok": true,
+      "msg": "9 steps written"
+    }
+  ],
+  "errors": []
+}

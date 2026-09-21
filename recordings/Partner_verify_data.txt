@@ -1,0 +1,26 @@
+import re
+from playwright.sync_api import Playwright, sync_playwright, expect
+
+
+def run(playwright Playwright) - None
+    browser = playwright.chromium.launch(headless=False)
+    context = browser.new_context(storage_state=Dnew testAutotest-monstertest_caseUITest_Katanacookie_release.json)
+    page = context.new_page()
+    page.goto(httpsrelease.pear.uscuratorsubmissionformId=0d95efc9-c0ad-441d-b901-dc3b9ee2084d)
+    page.locator(div).filter(has_text=re.compile(r^Apr 02, 2025Apr 02, 2026$)).first.click()
+    page.get_by_text(This monthApr 01 2026 -Apr 02 2026 Select).click()
+    page.locator(div).filter(has_text=re.compile(r^This monthApr 01 2026 -Apr 02 2026 Select$)).get_by_role(button).click()
+    page.get_by_role(textbox, name=Search).fill(Partner)
+    page.get_by_text(Pear Partner Cooperation).click()
+    page.get_by_role(button, name=Close).click()
+    with page.expect_download() as download_info
+        page.get_by_role(button, name=Export all data).click()
+    download = download_info.value
+
+    # ---------------------
+    context.close()
+    browser.close()
+
+
+with sync_playwright() as playwright
+    run(playwright)

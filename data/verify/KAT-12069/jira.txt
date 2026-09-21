@@ -1,0 +1,34 @@
+============================================================
+KAT-12069: Growth: allow partners to create their own storefront footnote
+============================================================
+Status:    QA Staging
+Priority:  Medium
+Type:      Subtask
+Assignee:  Yuxiao Zhu
+QA:        Yuxiao Zhu
+Reporter:  Hui Xu
+Parent:    KAT-11534 - Growth: build features to unlock growth opportunities (2026-Q3)
+
+--- Description ---
+Owner:   (due: Sep 14, 2026)
+Design:  Eng POC  
+Figma: to be provided by Qiao
+Business context: there are requirements from established celebrities and enterprise partners to put their own privacy policy, terms of service on pear storefront, etc, to align with their official website.
+To achieve: allow partners to create a custom footnote/footer at the bottom of their storefront, similar to the attached  http://dannadanna.com   example.
+
+Requirements:
+- Allow partners to create and edit the footnote content using our existing RTE editor.
+- Display the footnote at the bottom of the storefront across desktop and mobile.
+- If no footnote is configured, do not display the footnote section.
+- Make sure the cookie setting and the footnote don’t conflict with each other, and are tasteful
+
+--- Comments (1) ---
+[2026-09-10] Chow Xia:
+   https://www.figma.com/design/FrtQ2lDWnGkPnmxImFhH4d/Storefront?node-id=8935-21820&t=olGrOd5yW2DxMXq6-4    
+
+--- Linked Issues ---
+  relates to: KAT-12114 - UI issue for KAT-12069 (待办)
+
+--- Attachments ---
+  image-20260909-172225.png (image/png)
+
