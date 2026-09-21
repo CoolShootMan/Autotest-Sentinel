@@ -28,6 +28,9 @@ from slugify import slugify
 import re
 from dotenv import load_dotenv
 
+# UI line paths resolve here (single source of truth, see tools/paths.py)
+from tools.paths import UI_ROOT
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Load .env file from project root (does not override existing environment variables)
@@ -222,7 +225,7 @@ def context(
         context = browser.new_context(storage_state=storage_state, **browser_context_args)
     else:
         # Dynamically select cookie file based on CURRENT_ENV
-        local_cookie = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", f"cookie_{CURRENT_ENV}.json")
+        local_cookie = str(UI_ROOT / f"cookie_{CURRENT_ENV}.json")
         if os.path.exists(local_cookie):
             context = browser.new_context(storage_state=local_cookie, **browser_context_args)
         else:
@@ -247,8 +250,8 @@ def pytest_generate_tests(metafunc):
         all_ids = []
         
         for yaml_file in yaml_file_list:
-            # Use os.sep to ensure correct path separator
-            yaml_path = os.path.join(BASE_DIR, "test_case", "UI", "Test_Katana", yaml_file.replace('/', os.sep).replace('\\', os.sep))
+            # pathlib handles both / and \ separators inside yaml_file on Windows
+            yaml_path = str(UI_ROOT / yaml_file)
             
             if os.path.exists(yaml_path):
                 with open(yaml_path, "r", encoding="utf-8") as f:

@@ -1,3 +1,7 @@
+# Keep annotations lazy (PEP 604 `X | None` breaks import on Python 3.9);
+# harmless no-op on 3.11 (CI). See actions/module.py for the same fix.
+from __future__ import annotations
+
 import os
 import json
 import itertools

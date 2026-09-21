@@ -16,6 +16,7 @@ Version          : 2.0
 import os
 import pytest
 from tools import logger, BASE_DIR
+from tools.paths import UI_TEST_DIR, API_PREFILL_DIR
 import time
 import subprocess # Import subprocess
 import shutil
@@ -62,7 +63,7 @@ def start_autotest():
         sys.executable,
         "-m",
         "pytest",
-        os.path.join(BASE_DIR, 'test_case', 'UI'),
+        str(UI_TEST_DIR),
         '--tb=line',   # one line per failure, suppress long traceback/source dump
         f'--yaml={yaml_files}',
         f'--output={test_results}',
@@ -83,7 +84,7 @@ def start_autotest():
     # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
     # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
     # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
-    api_dir = os.path.join(BASE_DIR, 'test_case', 'API auto script')
+    api_dir = str(API_PREFILL_DIR)
     prefill_runner = os.path.join(api_dir, 'run_suite.py')
     prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
     logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
