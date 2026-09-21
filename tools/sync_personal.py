@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""把当前 main 的「通用件子集」同步到个人仓库（origin）。
+"""把当前 main 的「通用件子集」同步到个人仓库（remote `personal`）。
 
-背景：同一条工作树要服务两个远端 —— `company`（公司仓，全量）与 `origin`（个人仓，只留通用件）。
-`main` 全量推 `company`；本脚本按 DENY 名单过滤出 `personal` 分支（只含通用工具/skill/框架），
-再把 `personal` 推到 `origin` 的 `main`。
+背景：同一条工作树要服务两个远端 —— `origin`（公司仓，全量）与 `personal`（个人仓，只留通用件）。
+`main` 全量推 `origin`；本脚本按 DENY 名单过滤出 `personal` 分支（只含通用工具/skill/框架），
+再把 `personal` 推到 `personal` remote 的 `main`。
 
 原理（纯 plumbing，**不碰工作区、不切 HEAD**）：
   1. `git read-tree <source>` 到临时 index
@@ -16,7 +16,7 @@
 用法：
   py -3.9 tools/sync_personal.py --dry-run    # 只报告会保留/剔除多少文件（无副作用）
   py -3.9 tools/sync_personal.py --no-push    # 只更新本地 personal 分支
-  py -3.9 tools/sync_personal.py              # 生成 personal 并推 origin
+  py -3.9 tools/sync_personal.py              # 生成 personal 并推 personal remote
 
 DENY 名单在下方，按需增删；边界原则：**业务用例/业务数据/生成物 → 剔除；工具/框架/skill/文档 → 保留**。
 """
@@ -35,7 +35,7 @@ import gh_push  # noqa: E402  复用凭据读取与 remote 解析
 
 SOURCE = "main"            # 全量来源分支
 LOCAL_BRANCH = "personal"  # 本地过滤分支名
-REMOTE = "origin"          # 个人仓 remote 名
+REMOTE = "personal"        # 个人仓 remote 名（origin 已是公司仓）
 REMOTE_BRANCH = "main"     # 个人仓目标分支
 
 # 镜像提交使用的个人身份（与公司仓库的 local user.email 无关）
@@ -43,11 +43,11 @@ MIRROR_NAME = "CoolShootMan"
 MIRROR_EMAIL = "66861349+CoolShootMan@users.noreply.github.com"
 
 # —— 剔除名单：业务用例 / 业务数据 / 生成物 ——
+# 注意：test_case/UI/Test_Katana/{smoke_testing.yaml, Katana_curator_smoke_release.yaml}
+# 故意**保留** —— 让个人仓至少有一套能直接跑起来的冒烟用例。
 DENY = [
-    # UI 业务用例
+    # UI 业务用例（保留两个 smoke 文件，见上）
     "test_case/UI/Test_Katana/All_YAML",
-    "test_case/UI/Test_Katana/Katana_curator_smoke_release.yaml",
-    "test_case/UI/Test_Katana/smoke_testing.yaml",
     # API 业务用例
     "test_case/API auto script/tests",
     "test_case/API auto script/suites",
