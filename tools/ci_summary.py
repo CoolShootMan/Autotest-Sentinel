@@ -384,7 +384,7 @@ def build_report(args: argparse.Namespace) -> str:
 
     # ── 1) 顶部结论：通过率 + 失败用例名（一眼可见）──────────────────────
     if ui_total or ui_counts:
-        icon = "✅" if not fail_total else "❌"
+        icon = "✅" if not fail_total else "⚠️"
         if rate is not None:
             out.append(f"# {icon} UI Automation：通过率 {rate:.1f}%"
                        f"（{ui_counts.get('passed', 0)}/{executed} 通过）")
@@ -411,7 +411,7 @@ def build_report(args: argparse.Namespace) -> str:
 
     if ui_failed or prefill_failed:
         out.append("")
-        out.append("**失败清单：** " + "、".join(
+        out.append("**未通过清单：** " + "、".join(
             [f"`{r['name']}`" for r in ui_failed]
             + [f"`预制/{n}`" for n, _ in (_prefill_fail_row(x) for x in prefill_failed)]
         ))
@@ -430,11 +430,11 @@ def build_report(args: argparse.Namespace) -> str:
 
     # ── 2) 失败用例速览（最重要，紧跟结论）──────────────────────────────
     if ui_failed or prefill_failed or counts_failed:
-        out.append(f"## ❌ 失败用例（{fail_total}）")
+        out.append(f"## ⚠️ 未通过用例（{fail_total}）")
     elif rows or ui_counts:
-        out.append("## ✅ 失败用例（0）")
+        out.append("## ✅ 未通过用例（0）")
     else:
-        out.append("## ❓ 失败用例（未知）")
+        out.append("## ❓ 未通过用例（未知）")
     out.append("")
     if ui_failed or prefill_failed:
         out.append("| 阶段 | 用例 | 状态 | 耗时 | 失败原因 |")
@@ -476,7 +476,7 @@ def build_report(args: argparse.Namespace) -> str:
     out.append("## API 预制（UI Automation Data Pre-configuration）")
     out.append("")
     if prefill["meta"] is not None or prefill["md"]:
-        verdict = {True: "✅ 通过", False: "❌ 有失败", None: "⚠️ 结果未知"}[d["prefill_ok"]]
+        verdict = {True: "✅ 通过", False: "⚠️ 有未通过", None: "⚠️ 结果未知"}[d["prefill_ok"]]
         cnt = d["prefill_counts"]
         detail = f"（{_counts_phrase(cnt)}）" if cnt else ""
         out.append(f"报告目录：`{prefill['dir']}` · 结果：{verdict}{detail}")
@@ -566,20 +566,20 @@ def build_annotations(args: argparse.Namespace) -> list[str]:
                     f"跳过 {ui_counts.get('skipped', 0)}")
 
     if failed_names:
-        out.append(f"::error title=❌ UI Automation 通过率 {rate_txt}"
-                   f"（{len(failed_names)} 条失败）::{_cmd_escape(summary_line)}")
+        out.append(f"::warning title=⚠️ UI Automation 通过率 {rate_txt}"
+                   f"（{len(failed_names)} 条未通过）::{_cmd_escape(summary_line)}")
         for name in failed_names[:ANNOTATION_MAX - 1]:
             out.append(f"::error title=失败用例：{_cmd_escape(name, 120)}::"
-                       f"详情见 Job Summary 的「失败用例」表")
+                       f"详情见 Job Summary 的「未通过用例」表")
         hidden = len(failed_names) - (ANNOTATION_MAX - 1)
         if hidden > 0:
-            out.append(f"::warning title=另有 {hidden} 条失败用例未在注解中展开::"
+            out.append(f"::warning title=另有 {hidden} 条未通过用例未在注解中展开::"
                        f"完整清单见 Job Summary")
     elif ui_counts.get("failed") or ui_counts.get("broken"):
-        out.append(f"::error title=❌ UI Automation 通过率 {rate_txt}"
-                   f"（{ui_counts.get('failed', 0)} 条失败）::{_cmd_escape(summary_line)}")
+        out.append(f"::warning title=⚠️ UI Automation 通过率 {rate_txt}"
+                   f"（{ui_counts.get('failed', 0)} 条未通过）::{_cmd_escape(summary_line)}")
         out.append("::warning title=未拿到逐条用例名::"
-                   "allure-results 缺失，失败用例名见 Job Summary 的 run.log 末尾。")
+                   "allure-results 缺失，未通过用例名见 Job Summary 的 run.log 末尾。")
     else:
         out.append(f"::notice title=✅ UI Automation 通过率 {rate_txt}::"
                    f"{_cmd_escape(summary_line)}")

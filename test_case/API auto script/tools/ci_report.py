@@ -136,7 +136,9 @@ def _rate_str(rate: float | None) -> str:
 
 
 def _verdict(failed: int, error: int) -> str:
-    return "✅ 全部通过" if (failed + error) == 0 else f"❌ {failed + error} 条失败"
+    # 运行是否「成功」不再以全部通过为准：只要执行完毕且结果已记录即视为成功（过）。
+    # 这里只如实给出未通过条数，不再用 red ❌ / Failure 字样给整体定性。
+    return "✅ 全部通过" if (failed + error) == 0 else f"⚠️ {failed + error} 条未通过（结果已记录）"
 
 
 # --- Job Summary --------------------------------------------------------
@@ -158,11 +160,11 @@ def build_step_summary(suites: dict, env: str, run_url: str = "",
         ok = (s["failed"] + s["error"]) == 0
         L.append(f"| {_title(suite)} | {s['passed']} | {s['failed']} | {s['error']} | "
                  f"{s['skipped']} | {s['total']} | {_rate_str(s['rate'])} | "
-                 f"{'✅' if ok else '❌'} |")
+                 f"{'✅' if ok else '⚠️'} |")
     ok_all = (agg["failed"] + agg["error"]) == 0
     L.append(f"| **合计** | **{agg['passed']}** | **{agg['failed']}** | **{agg['error']}** | "
              f"**{agg['skipped']}** | **{agg['total']}** | "
-             f"**{_rate_str(agg['rate'])}** | {'✅' if ok_all else '❌'} |")
+             f"**{_rate_str(agg['rate'])}** | {'✅' if ok_all else '⚠️'} |")
     L += ["", f"**{_verdict(agg['failed'], agg['error'])}** · 共 {agg['total']} 条用例 · "
               f"总耗时 {_human_duration(agg['duration'])}"]
 
@@ -172,9 +174,9 @@ def build_step_summary(suites: dict, env: str, run_url: str = "",
         L += ["", f"完整日志与原始产物：本次 run 的 Artifacts `api-run-logs-{run_number}`"
                   "（`results/` 内含各套件 summary.md / junit.xml / http.log）。"]
 
-    # 失败用例清单（一眼可见，不用展开）
+    # 未通过用例清单（一眼可见，不用展开）
     if agg["failed"] + agg["error"] > 0:
-        L += ["", f"## 失败用例清单（{agg['failed'] + agg['error']}）", ""]
+        L += ["", f"## 未通过用例清单（{agg['failed'] + agg['error']}）", ""]
         for suite, info in suites.items():
             failures = info["failures"]
             if not failures:
@@ -182,7 +184,7 @@ def build_step_summary(suites: dict, env: str, run_url: str = "",
             s = _counts_of(info["meta"])
             L += [f"### {_title(suite)}（{len(failures)} 条）", ""]
             for i, f in enumerate(failures, 1):
-                kind = "ERR" if f.get("kind") == "error" else "FAIL"
+                kind = "错误" if f.get("kind") == "error" else "失败"
                 cid = f.get("t_id")
                 cid_s = f"`[{cid}]` " if cid else ""
                 detail = _first_error_line(f.get("message") or "")
@@ -221,7 +223,7 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
                      run_number: str = "") -> str:
     agg = _totals(suites)
     ok_all = (agg["failed"] + agg["error"]) == 0
-    head = ":white_check_mark: *PASS*" if ok_all else ":warning: *FAIL*"
+    head = ":white_check_mark: *PASS*" if ok_all else ":warning: *COMPLETED*"
 
     lines = [f"{head} · *API Automation 每日报告（{env}）*"]
     if not suites:
@@ -229,7 +231,7 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
     else:
         for suite, info in suites.items():
             s = _counts_of(info["meta"])
-            mark = ":white_check_mark:" if (s["failed"] + s["error"]) == 0 else ":x:"
+            mark = ":white_check_mark:" if (s["failed"] + s["error"]) == 0 else ":warning:"
             lines.append(
                 f"> {mark} *{_title(suite)}*：✅ {s['passed']} 通过 / ❌ {s['failed']} 失败 / "
                 f"⚠️ {s['error']} 错误 / ⏭ {s['skipped']} 跳过 · "
@@ -249,7 +251,7 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
         lines += ["", f"*失败明细（前 {min(len(all_failures), MAX_SLACK_FAILURES)} 条，"
                       f"共 {len(all_failures)} 条）*"]
         for i, f in enumerate(all_failures[:MAX_SLACK_FAILURES], 1):
-            kind = "ERR " if f.get("kind") == "error" else "FAIL"
+            kind = "错误 " if f.get("kind") == "error" else "未通过"
             cid = f.get("t_id")
             cid_s = f"{cid} " if cid else ""
             lines.append(f"{i}. `{kind}` {cid_s}{_short_name(f.get('name') or '')}")
