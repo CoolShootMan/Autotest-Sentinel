@@ -12930,3 +12930,44 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 136: delay (no-op, framework style) ---
     # NOTE: original Apifox collection had a delay here; removed per framework style (no time.sleep).
+
+
+
+    # --- step 137: yuxiao_999 enable feature flag: enableRefund (PATCH users/tool/feature-flags?userId={{user_id}}) ---
+    # ⚠️ 仅 admin 域 + admin_token；userId 取脚本内 admin 搜索 Partner 999（yuxiao_999）登录后提取的 user_id 变量，不硬编码。
+    _resp137 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("user_id", "")}, body="""{"name":"enableRefund","enabled":true}""", token="admin_token", app_headers=True)
+    expect(_resp137).json('$.code').equals('200')
+    expect(_resp137).json('$.message').equals('success')
+
+
+
+    # --- step 138: yuxiao_999 enable feature flag: enableAnalytics ---
+    _resp138 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("user_id", "")}, body="""{"name":"enableAnalytics","enabled":true}""", token="admin_token", app_headers=True)
+    expect(_resp138).json('$.code').equals('200')
+    expect(_resp138).json('$.message').equals('success')
+
+
+
+    # --- step 139: yuxiao_999 enable feature flag: enablePearVenueApp ---
+    _resp139 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("user_id", "")}, body="""{"name":"enablePearVenueApp","enabled":true}""", token="admin_token", app_headers=True)
+    expect(_resp139).json('$.code').equals('200')
+    expect(_resp139).json('$.message').equals('success')
+
+
+
+    # --- step 140: yuxiao_999 enable feature flag: enablePostABTesting ---
+    _resp140 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("user_id", "")}, body="""{"name":"enablePostABTesting","enabled":true}""", token="admin_token", app_headers=True)
+    expect(_resp140).json('$.code').equals('200')
+    expect(_resp140).json('$.message').equals('success')
+
+
+
+    # --- step 141: yuxiao_999 enable feature flag: enableEventLineupPayout ---
+    _resp141 = ctx.api.admin.users_tool_feature_flags(
+        params={"userId": vars.get("user_id", "")}, body="""{"name":"enableEventLineupPayout","enabled":true}""", token="admin_token", app_headers=True)
+    expect(_resp141).json('$.code').equals('200')
+    expect(_resp141).json('$.message').equals('success')
