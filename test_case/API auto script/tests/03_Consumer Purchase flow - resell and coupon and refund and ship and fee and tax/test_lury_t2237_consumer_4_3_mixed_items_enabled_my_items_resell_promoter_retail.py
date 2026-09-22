@@ -291,6 +291,30 @@ if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能
     from core.context import Context
 
 
+import time as _time
+
+
+def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3):
+    """商户侧订单详情 /order/merchant/{id}/detail/{orderNumber}/v2 为最终一致读：
+
+    刚下单后该读副本可能短暂返回 404（Requested resource not found），轮询直到 200。
+    若超过重试次数仍为 404，返回最后一次响应，由下游断言如实暴露真实失败。
+    """
+    _orders = ctx.api.orders
+    _last = None
+    for _i in range(max_attempts):
+        _resp = _orders.merchant_detail_v2(
+            path_vars={'merchantId': merchant_id_var},
+            token=token_var,
+        )
+        if getattr(_resp, 'status_code', 0) == 200:
+            return _resp
+        _last = _resp
+        if _i < max_attempts - 1:
+            _time.sleep(delay)
+    return _last
+
+
 def test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_retail(ctx: "Context"):
     """Apifox case #7542846: Lury_T2237_Consumer_4_3_Mixed_items_enabled_my_items_resell_promoter_retail"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
@@ -404,8 +428,8 @@ def test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_re
     })
     expect(_resp5).status().is_(201)
     ctx.extract('P1_access_token', _resp5, '$.data.token')
-    # step 6: get P1 order detail v2
-    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDb}}'}, token='P1_access_token')
+    # step 6: get P1 order detail v2（商户侧读最终一致，轮询避免刚下单时读副本 404）
+    _resp6 = _wait_merchant_detail_v2(ctx, '{{P1_merchantIDb}}', 'P1_access_token')
     expect(_resp6).status().is_(200)
     # transactionFee 自洽反推（覆盖 Apifox 硬编码；Release 税基已漂移）
     _dx = _resp6.json().get('data', {}) if _resp6.headers.get('content-type','').startswith('application/json') else {}
@@ -471,7 +495,7 @@ def test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_re
     _item_lv_tf2 = _m.floor(200 * 0.085 * 100) / 100                # 17.0
     vars['promoter_transaction_fee2'] = round(0.25 * _item_lv_tf2 + 1e-9, 2)  # 4.25
     vars['merchant_transaction_fee2'] = round(_item_lv_tf2 + _ord_lv_tf2 - vars['promoter_transaction_fee2'], 2)  # 13.17
-    _resp10 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{merchantID7}}'}, token='merchant_access_token')
+    _resp10 = _wait_merchant_detail_v2(ctx, '{{merchantID7}}', 'merchant_access_token')
     expect(_resp10).status().is_(200)
     # transactionFee 自洽反推（覆盖 Apifox 硬编码；Release 税基已漂移）
     _dx = _resp10.json().get('data', {}) if _resp10.headers.get('content-type','').startswith('application/json') else {}
