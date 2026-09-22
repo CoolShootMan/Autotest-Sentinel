@@ -1076,6 +1076,10 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    # assertion 10.assertion: responseJson equal 200
+    expect(_resp10).json('$.code').equals('200')
+    # assertion 10.assertion: event status is ON_HOLD
+    expect(_resp10).json('$.data.status').equals('ON_HOLD')
     # step15/18 期望报 "The product(ticket on hold)is not available." 的来源。
     # 单独跑本用例时这两个变量为空，buy-now 会落到复制出来的 TDC 外链票上，被 ticket hub
     # 以 "These tickets are not on sale right now." 拒掉（外部票无法在本环境转售），
@@ -1838,6 +1842,10 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    # assertion 17.assertion: responseJson equal 200
+    expect(_resp17).json('$.code').equals('200')
+    # assertion 17.assertion: event status is CANCELED
+    expect(_resp17).json('$.data.status').equals('CANCELED')
     # step 18: POST check the "cancelled" post is unable to checkout
     _resp18 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -2404,6 +2412,10 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    # assertion 19.assertion: responseJson equal 200
+    expect(_resp19).json('$.code').equals('200')
+    # assertion 19.assertion: event status is COMPLETED
+    expect(_resp19).json('$.data.status').equals('COMPLETED')
     # step 20: PATCH admin update the event status from complete to upcoming
     _resp20 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "UPCOMING",
@@ -2412,6 +2424,9 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     expect(_resp20).json('$.code').equals('200')
     # assertion 20.assertion: responseJson equal success
     expect(_resp20).json('$.message').equals('success')
+    # assertion 20.assertion: event status is UPCOMING (admin PATCH 不返回 event 对象，重新 GET 校验)
+    _resp20b = ctx.api.events._call("GET", '/product-event/{{dup_event_id}}', token='yuxiao999_token', app_headers=True)
+    expect(_resp20b).json('$.data.status').equals('UPCOMING')
     # step 22: DELETE Clean Cart
     _resp22 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
     # assertion 22.assertion: responseJson equal 200
