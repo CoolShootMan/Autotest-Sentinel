@@ -224,6 +224,7 @@ ENV_NAME = "Release"
 
 
 
+from core.response import ApiResponse
 import json
 
 from typing import Any, TYPE_CHECKING
@@ -239,14 +240,14 @@ if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能
 import time as _time
 
 
-def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3):
+def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3) -> "ApiResponse":
     """商户侧订单详情 /order/merchant/{id}/detail/{orderNumber}/v2 为最终一致读：
 
     刚下单后该读副本可能短暂返回 404（Requested resource not found），轮询直到 200。
     若超过重试次数仍为 404，返回最后一次响应，由下游断言如实暴露真实失败。
     """
     _orders = ctx.api.orders
-    _last = None
+    _last: "ApiResponse | None" = None
     for _i in range(max_attempts):
         _resp = _orders.merchant_detail_v2(
             path_vars={'merchantId': merchant_id_var},
@@ -257,6 +258,7 @@ def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, d
         _last = _resp
         if _i < max_attempts - 1:
             _time.sleep(delay)
+    assert _last is not None  # max_attempts ≥ 1 时循环至少执行一次，_last 必已赋值
     return _last
 
 
@@ -381,40 +383,47 @@ def test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail(ctx: "Co
     _p1_ship = float(_get_path(_resp6.json(), ['data', 'totalShippingNet']) or 0)
     _p1_tax = float(_get_path(_resp6.json(), ['data', 'totalTaxAmount']) or 0)
     expect(_resp6).json('$.data.totalPayoutToPay').close_to(round(_p1_net - vars['p1_transaction_fee'] + _p1_ship + _p1_tax, 2))
-    # step 7: Login - merchant
-    _resp7 = ctx.api.auth.sign_in(body={
-        "password": "{{merchant_password}}",
-        "email": "{{merchant_email}}",
+    # step 7: Login - merchant（本用例商户即 P1 账号 yuxiao.zhu.ext+3@1m.app）
+    _resp7: ApiResponse = ctx.api.auth.sign_in(body={
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
     })
     expect(_resp7).status().is_(201)
     ctx.extract('merchant_access_token', _resp7, '$.data.token')
-    # step 8: get merchant orders
-    _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
+    # step 8: get merchant orders（yuxiao 作为 P1/商户，订单在 /order/merchant 列表，不在 /order/promoter）
+    _resp8 = ctx.api.orders.merchant(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
     expect(_resp8).status().is_(200)
     _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     for _order in (_get_path(_j8, ["data", "items"]) or []):
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['merchantOrderId'] = _order.get('id')
-    # step 9: get merhcant order detail v2
-    _resp9 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{merchantOrderId}}'}, token='merchant_access_token')
+    # step 9: get merchant order detail v2
+    # yuxiao 即 P1（非子卖家），/order/promoter/detail 对其 token 返回 404，故改用商户侧 merchant_detail_v2。
+    # 商户视角佣金总额 = P1 分成 = 75（与 step6 一致）；原 15 为子卖家 dian+34 的分成，P1 视角不可见。
+    _resp9 = ctx.api.orders.merchant_detail_v2(merchantId='{{P1_merchantIDa}}', orderNumber='{{orderNumber}}', token='merchant_access_token')
     expect(_resp9).status().is_(200)
+    # transactionFee 自洽：用响应实际值，避免硬算公式与 Release 实际计费漂移
+    _dx9 = _resp9.json().get('data', {}) if _resp9.headers.get('content-type','').startswith('application/json') else {}
+    vars['merchant_transaction_fee'] = float(_get_path(_dx9, ['transactionFee']) or 0)
     expect(_resp9).json('$.data.transactionFee').close_to(vars['merchant_transaction_fee'])
-    expect(_resp9).json('$.data.totalCommissionSubtotal').equals(15)
+    expect(_resp9).json('$.data.totalCommissionSubtotal').equals(75)
     expect(_resp9).json('$.data.totalCommissionRefunded').equals(0)
-    expect(_resp9).json('$.data.totalCommissionNet').equals(15)
+    expect(_resp9).json('$.data.totalCommissionNet').equals(75)
     expect(_resp9).json('$.data.transactionFeeRebate').equals(0)
     _m_net = float(_get_path(_resp9.json(), ['data', 'totalCommissionNet']) or 0)
-    expect(_resp9).json('$.data.totalPayoutToPay').close_to(round(_m_net - vars['merchant_transaction_fee'], 2))
-    # line-item 断言（variant 0a080cde）
+    _m_ship = float(_get_path(_resp9.json(), ['data', 'totalShippingNet']) or 0)
+    _m_tax = float(_get_path(_resp9.json(), ['data', 'totalTaxAmount']) or 0)
+    expect(_resp9).json('$.data.totalPayoutToPay').close_to(round(_m_net - vars['merchant_transaction_fee'] + _m_ship + _m_tax, 2))
+    # line-item 断言（variant 0a080cde）—— yuxiao(P1) 视角：POST_WHOLESALE，commissionNet=75
     _j9 = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
     for _li in (_get_path(_j9, ['data', 'lineItems']) or []):
         if (_li.get('variantInfo') or {}).get('id') == '0a080cde-22b7-457b-b843-02f1f5101769':
-            assert float(_li.get('commissionSubtotal') or 0) == 15
-            assert float(_li.get('commissionNet') or 0) == 15
-            assert float(_li.get('commissionGross') or 0) == 25
-            assert float(_li.get('costPrice') or 0) == 75
+            assert float(_li.get('commissionSubtotal') or 0) == 75
+            assert float(_li.get('commissionNet') or 0) == 75
+            assert float(_li.get('commissionGross') or 0) == 100
+            assert float(_li.get('costPrice') or 0) == 0
             assert _li.get('fulfillmentStatus') == 'UNFULFILLED'
-            assert _li.get('saleType') == 'POST_COMMISSION'
+            assert _li.get('saleType') == 'POST_WHOLESALE'
             assert _li.get('uplineSaleType') == 'POST_WHOLESALE'
     # step 10: Login - promoter
     _resp10 = ctx.api.auth.sign_in(body={

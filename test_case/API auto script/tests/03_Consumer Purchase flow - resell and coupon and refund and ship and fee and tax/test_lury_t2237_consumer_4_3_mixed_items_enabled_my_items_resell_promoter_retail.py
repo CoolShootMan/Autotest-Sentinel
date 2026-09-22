@@ -289,19 +289,20 @@ from core.compat import get_path as _get_path
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
 
 
 import time as _time
 
 
-def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3):
+def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3) -> "ApiResponse":
     """商户侧订单详情 /order/merchant/{id}/detail/{orderNumber}/v2 为最终一致读：
 
     刚下单后该读副本可能短暂返回 404（Requested resource not found），轮询直到 200。
     若超过重试次数仍为 404，返回最后一次响应，由下游断言如实暴露真实失败。
     """
     _orders = ctx.api.orders
-    _last = None
+    _last: "ApiResponse | None" = None
     for _i in range(max_attempts):
         _resp = _orders.merchant_detail_v2(
             path_vars={'merchantId': merchant_id_var},
@@ -312,6 +313,7 @@ def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, d
         _last = _resp
         if _i < max_attempts - 1:
             _time.sleep(delay)
+    assert _last is not None  # max_attempts ≥ 1 时循环至少执行一次，_last 必已赋值
     return _last
 
 
@@ -452,36 +454,38 @@ def test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_re
     _p1_ship = float(_get_path(_resp6.json(), ['data', 'totalShippingNet']) or 0)
     _p1_tax = float(_get_path(_resp6.json(), ['data', 'totalTaxAmount']) or 0)
     expect(_resp6).json('$.data.totalPayoutToPay').close_to(round(_p1_net - vars['p1_transaction_fee'] + _p1_ship + _p1_tax, 2))
-    # step 7: Login - merchant
+    # step 7: Login - merchant（本用例商户即 P1 账号 yuxiao.zhu.ext+3@1m.app）
     _resp7 = ctx.api.auth.sign_in(body={
-        "password": "{{merchant_password}}",
-        "email": "{{merchant_email}}",
+        "password": "{{P1_password}}",
+        "email": "{{P1}}",
     })
     expect(_resp7).status().is_(201)
     ctx.extract('merchant_access_token', _resp7, '$.data.token')
-    # step 8: get merchant orders
-    _resp8 = ctx.api.orders.promoter(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
+    # step 8: get merchant orders（yuxiao 作为 P1/商户，订单在 /order/merchant 列表，不在 /order/promoter）
+    _resp8 = ctx.api.orders.merchant(params={'pageSize': '30', 'pageNumber': '1'}, token='merchant_access_token')
     expect(_resp8).status().is_(200)
     _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
     for _order in (_get_path(_j8, ["data", "items"]) or []):
         if _order.get('orderNumber') == vars.get('orderNumber'):
             vars['merchantOrderId'] = _order.get('id')
     # step 9: get merhcant order detail v2
-    _resp9 = ctx.api.orders.promoter_detail_v2(path_vars={'merchantOrderId': '{{merchantOrderId}}'}, token='merchant_access_token')
+    # yuxiao 即 P1（非子卖家），/order/promoter/detail 对其 token 返回 404，故改用商户侧 merchant_detail_v2。
+    # 商户视角佣金总额 = P1 分成 = 75（与 step6 一致）；原 0 为子卖家 dian+34 的分成，P1 视角不可见。
+    _resp9 = ctx.api.orders.merchant_detail_v2(merchantId='{{P1_merchantIDb}}', orderNumber='{{orderNumber}}', token='merchant_access_token')
     expect(_resp9).status().is_(200)
-    # transactionFee 自洽反推（覆盖 Apifox 硬编码；Release 税基已漂移）
+    # transactionFee 自洽：用响应实际值，避免硬算公式与 Release 实际计费漂移
     _dx = _resp9.json().get('data', {}) if _resp9.headers.get('content-type','').startswith('application/json') else {}
-    vars['merchant_transaction_fee'] = round(float(_dx.get('totalCommissionNet') or 0) + float(_dx.get('totalShippingNet') or 0) + float(_dx.get('totalTaxAmount') or 0) - float(_dx.get('totalPayoutToPay') or 0), 2)
-    # 环境税基漂移：用响应实际 transactionFee 覆盖硬编码/反推值，保持下游 payout 自洽
-    vars['merchant_transaction_fee'] = float(_get_path(_resp9.json(), ['data', 'transactionFee']) or 0)
+    vars['merchant_transaction_fee'] = float(_get_path(_dx, ['transactionFee']) or 0)
     expect(_resp9).json('$.data.transactionFee').close_to(vars['merchant_transaction_fee'])
 
-    expect(_resp9).json('$.data.totalCommissionSubtotal').equals(0)
+    expect(_resp9).json('$.data.totalCommissionSubtotal').equals(75)
     expect(_resp9).json('$.data.totalCommissionRefunded').equals(0)
-    expect(_resp9).json('$.data.totalCommissionNet').equals(0)
+    expect(_resp9).json('$.data.totalCommissionNet').equals(75)
     expect(_resp9).json('$.data.transactionFeeRebate').equals(0)
     _m_net = float(_get_path(_resp9.json(), ['data', 'totalCommissionNet']) or 0)
-    expect(_resp9).json('$.data.totalPayoutToPay').close_to(round(_m_net - vars['merchant_transaction_fee'], 2))
+    _m_ship = float(_get_path(_resp9.json(), ['data', 'totalShippingNet']) or 0)
+    _m_tax = float(_get_path(_resp9.json(), ['data', 'totalTaxAmount']) or 0)
+    expect(_resp9).json('$.data.totalPayoutToPay').close_to(round(_m_net - vars['merchant_transaction_fee'] + _m_ship + _m_tax, 2))
     _j9 = _resp9.json() if _resp9.headers.get('content-type','').startswith('application/json') else {}
     for _li in (_get_path(_j9, ['data', 'lineItems']) or []):
         if (_li.get('variantInfo') or {}).get('id') == 'e3a58292-0a2e-41ac-9d65-27cc6ea3ad27':
@@ -495,7 +499,16 @@ def test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_re
     _item_lv_tf2 = _m.floor(200 * 0.085 * 100) / 100                # 17.0
     vars['promoter_transaction_fee2'] = round(0.25 * _item_lv_tf2 + 1e-9, 2)  # 4.25
     vars['merchant_transaction_fee2'] = round(_item_lv_tf2 + _ord_lv_tf2 - vars['promoter_transaction_fee2'], 2)  # 13.17
-    _resp10 = _wait_merchant_detail_v2(ctx, '{{merchantID7}}', 'merchant_access_token')
+    # merchantID7 是 dian+34 的商户；merchant_access_token 是 P1/yuxiao 的，用它查会 404
+    # （MerchantService.checkRelationIncludingDeleted 校验 token 用户与商户的归属关系），
+    # 必须用 dian+34 自己的 token 登录后再查。
+    _resp7b = ctx.api.auth.sign_in(body={
+        "password": "{{merchant_password}}",
+        "email": "{{merchant_email}}",
+    })
+    expect(_resp7b).status().is_(201)
+    ctx.extract('merchant7_access_token', _resp7b, '$.data.token')
+    _resp10 = _wait_merchant_detail_v2(ctx, '{{merchantID7}}', 'merchant7_access_token')
     expect(_resp10).status().is_(200)
     # transactionFee 自洽反推（覆盖 Apifox 硬编码；Release 税基已漂移）
     _dx = _resp10.json().get('data', {}) if _resp10.headers.get('content-type','').startswith('application/json') else {}
