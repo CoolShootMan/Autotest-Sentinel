@@ -244,7 +244,11 @@ jobs:
                   rate, passed, executed, failed_count),
           ]
           if failed_names and failed_count != "0":
-              lines.append("> 失败用例: " + failed_names.replace(",", ", "))
+              lines.append("> 失败用例:")
+              for _name in failed_names.split(","):
+                  _name = _name.strip()
+                  if _name:
+                      lines.append("> • " + _name)
           lines.append("> 运行详情: {0}".format(run_url))
           if allure_url:
               lines.append("> Allure 报告: {0}".format(allure_url))
