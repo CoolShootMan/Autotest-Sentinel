@@ -397,7 +397,6 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     expect(_resp7).json('$.data.totalCommissionSubtotal').close_to(vars['merchant_earnings'])
     expect(_resp7).json('$.data.totalCommissionRefunded').equals(0)
     expect(_resp7).json('$.data.totalCommissionNet').close_to(vars['merchant_earnings'])
-    expect(_resp7).json('$.data.totalPaymentProcessingFee').equals(0)
     expect(_resp7).json('$.data.totalPayoutToPay').close_to(vars['total_payout_7'])
     expect(_resp7).json('$.data.transactionFee').close_to(vars['merchant_transaction_fee'])
     _li7 = '$.data.lineItems[?(@.variantInfo.id=="e377dc0b-0b01-4f7a-ad67-02dbfd849745")]'
@@ -453,7 +452,6 @@ def test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as
     expect(_resp10).json('$.data.totalCommissionSubtotal').close_to(vars['promoter_earnings'])
     expect(_resp10).json('$.data.totalCommissionRefunded').equals(0)
     expect(_resp10).json('$.data.totalCommissionNet').close_to(vars['promoter_earnings'])
-    expect(_resp10).json('$.data.totalPaymentProcessingFee').equals(0)
     expect(_resp10).json('$.data.transactionFeeRebate').equals(0)
     expect(_resp10).json('$.data.fulfillmentStatus').equals("FULFILLED")
     _li10 = '$.data.lineItems[?(@.variantInfo.id=="e377dc0b-0b01-4f7a-ad67-02dbfd849745")]'

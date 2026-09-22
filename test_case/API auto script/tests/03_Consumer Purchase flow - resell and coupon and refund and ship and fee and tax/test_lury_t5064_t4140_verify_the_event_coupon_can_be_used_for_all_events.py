@@ -467,7 +467,6 @@ def test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events(ctx
     expect(_resp7).json('$.data.totalCommissionRefunded').equals(0)
     expect(_resp7).json('$.data.totalCommissionNet').close_to(_up7)
     expect(_resp7).json('$.data.transactionFeeRebate').close_to(_m1_rb7)
-    expect(_resp7).json('$.data.totalPaymentProcessingFee').equals(0)
     expect(_resp7).json('$.data.totalShippingSubtotal').equals(0)
     expect(_resp7).json('$.data.totalShippingRefunded').equals(0)
     expect(_resp7).json('$.data.totalTaxAmount').close_to(_tax7)

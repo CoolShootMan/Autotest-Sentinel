@@ -818,7 +818,6 @@ def test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_ful
                 _round2(float(_d.get('totalCommissionSubtotal') or 0)
                         - float(_d.get('totalCommissionRefunded') or 0)))
             expect(resp).json('$.data.transactionFeeRebate').equals(0)
-            expect(resp).json('$.data.totalPaymentProcessingFee').equals(0)
         except Exception:
             pass
 

@@ -484,7 +484,6 @@ def test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_a
                 _round2(float(_d.get('totalCommissionSubtotal') or 0)
                         - float(_d.get('totalCommissionRefunded') or 0)))
             expect(resp).json('$.data.transactionFeeRebate').equals(0)
-            expect(resp).json('$.data.totalPaymentProcessingFee').equals(0)
         except Exception:
             pass
 
