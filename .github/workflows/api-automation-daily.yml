@@ -2,14 +2,14 @@ name: api-automation-daily
 
 # 每天 09:00 北京时间（= 01:00 UTC）自动跑 API 自动化，环境 = Release。
 # 顺序执行两条 suite：先 linda.yaml，再 lury.yaml（linda 失败也继续跑 lury，保证两套都跑）。
-# 结果发到 Slack #qae-team（Secret SLACK_WEBHOOK_URL_QAE_TEAM），消息含各套件通过/失败计数；
+# 结果发到 Slack #cache-regression-detection-report（Secret SLACK_WEBHOOK_URL_QAE_TEAM），消息含各套件通过/失败计数；
 # 运行页 Summary 内嵌各套件完整报告（计数总览 + 失败用例清单 + traceback）。
 #
 # 运行环境：GitHub 托管 runner（ubuntu-latest），不需要 self-hosted runner，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
 #
 # Slack 通知：默认开启（SLACK_NOTIFY_ENABLED='true'）。需要先在仓库
-# Secrets 新建 SLACK_WEBHOOK_URL_QAE_TEAM（值为 #qae-team 的 Incoming Webhook URL，
+# Secrets 新建 SLACK_WEBHOOK_URL_QAE_TEAM（值为 #cache-regression-detection-report 的 Incoming Webhook URL，
 # 即本地 config/slack.json 里 webhook_url 那串）。若 Secret 未配置，条件不满足不会发送、也不报错。
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
@@ -29,7 +29,7 @@ permissions:
 
 env:
   # ── Slack 通知总开关 ──
-  # 'true' = 跑完把结果发到 #qae-team。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_QAE_TEAM。
+  # 'true' = 跑完把结果发到 #cache-regression-detection-report。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_QAE_TEAM。
   # 若 Secret 未配置，下方 Send Slack 步骤的条件不满足，自动跳过（不会报错）。
   SLACK_NOTIFY_ENABLED: 'true'
   # Slack webhook 放到 workflow 级 env，使得下方 Send Slack 步骤的 if: 能读到（if 表达式里不能用 secrets.*）
@@ -115,10 +115,12 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Send Slack notification (#qae-team)
+      - name: Send Slack notification (#cache-regression-detection-report)
         # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再用 Failure 给整体定性，如实带出各用例真实结果）。
         # if 表达式不能读 secrets.*，故 webhook 放在 workflow 级 env 再在 if 里判断。
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # continue-on-error：通知只是展示手段，webhook 失效/404 不应把整 run 染红（执行完毕即成功）。
+        continue-on-error: true
         working-directory: test_case/API auto script
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
