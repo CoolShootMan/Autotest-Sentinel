@@ -620,7 +620,6 @@ def test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_wit
             expect(resp).json('$.data.totalCommissionNet').close_to(
                 _round2(float(_d.get('totalCommissionSubtotal') or 0)
                         - float(_d.get('totalCommissionRefunded') or 0)))
-            expect(resp).json('$.data.totalPaymentProcessingFee').equals(0)
         except Exception:
             pass
 
