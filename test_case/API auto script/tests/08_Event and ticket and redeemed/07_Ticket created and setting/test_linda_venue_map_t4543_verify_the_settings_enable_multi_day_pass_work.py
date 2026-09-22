@@ -416,6 +416,7 @@ from core.compat import legacy_render
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
 
 
 def test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Context"):
@@ -859,7 +860,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # step 13: Check merchant order detail ticket Redemptions  (GET /order/merchant/{{catalog_id}}/detail/{{orderNumber}}/v2)
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp13 = None
+    _resp13: "ApiResponse | None" = None
     for _att in range(8):
         _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', token='yuxiao999_token')
         try:
@@ -868,6 +869,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
         except Exception:
             pass
         time.sleep(3)
+    assert _resp13 is not None  # range(8) 至少执行一次循环体，_resp13 必已赋值
 
     _j13 = _json(_resp13)
     assert _resp13.status_code == 200, f"step13 status != 200, got {_resp13.status_code}"

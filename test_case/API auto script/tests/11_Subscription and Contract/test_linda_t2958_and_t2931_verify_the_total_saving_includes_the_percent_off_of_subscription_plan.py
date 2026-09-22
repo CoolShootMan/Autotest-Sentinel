@@ -111,6 +111,7 @@ from core.compat import get_path as _get_path
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
 
 
 def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan(ctx: "Context"):
@@ -226,7 +227,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
 
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp10 = None
+    _resp10: "ApiResponse | None" = None
     for _att in range(8):
         _resp10 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
         try:
@@ -235,6 +236,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp10 is not None  # range(8) 至少执行一次循环体，_resp10 必已赋值
 
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')

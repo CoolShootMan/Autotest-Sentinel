@@ -165,6 +165,7 @@ from core.assertions import expect
 
 if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能跳到 api/ 定义
     from core.context import Context
+    from core.response import ApiResponse
 
 
 def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl(ctx: "Context"):
@@ -264,7 +265,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp7 = None
+    _resp7: "ApiResponse | None" = None
     for _att in range(8):
         _resp7 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -273,6 +274,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp7 is not None  # range(8) 至少执行一次循环体，_resp7 必已赋值
 
     # assertion 7.assertion: responseJson equal 64
     expect(_resp7).json('$.data.totalCommissionSubtotal').equals('64')
@@ -347,7 +349,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp11 = None
+    _resp11: "ApiResponse | None" = None
     for _att in range(8):
         _resp11 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -356,6 +358,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp11 is not None  # range(8) 至少执行一次循环体，_resp11 必已赋值
 
     # assertion 11.assertion: responseJson equal 64
     expect(_resp11).json('$.data.totalCommissionSubtotal').equals('64')
@@ -430,7 +433,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp15 = None
+    _resp15: "ApiResponse | None" = None
     for _att in range(8):
         _resp15 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -439,6 +442,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp15 is not None  # range(8) 至少执行一次循环体，_resp15 必已赋值
 
     # assertion 15.assertion: responseJson equal 128
     expect(_resp15).json('$.data.totalCommissionSubtotal').equals('128')
@@ -513,7 +517,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp19 = None
+    _resp19: "ApiResponse | None" = None
     for _att in range(8):
         _resp19 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -522,6 +526,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp19 is not None  # range(8) 至少执行一次循环体，_resp19 必已赋值
 
     # assertion 19.assertion: responseJson equal 192
     expect(_resp19).json('$.data.totalCommissionSubtotal').equals('192')
@@ -596,7 +601,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp23 = None
+    _resp23: "ApiResponse | None" = None
     for _att in range(8):
         _resp23 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -605,6 +610,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp23 is not None  # range(8) 至少执行一次循环体，_resp23 必已赋值
 
     # assertion 23.assertion: responseJson equal 128
     expect(_resp23).json('$.data.totalCommissionSubtotal').equals('128')
@@ -679,7 +685,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     vars['merchantId'] = '17c3a9b5-3382-4d02-a0c4-071f50cfa525'
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
-    _resp27 = None
+    _resp27: "ApiResponse | None" = None
     for _att in range(8):
         _resp27 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='merchant_token')
         try:
@@ -688,6 +694,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
         except Exception:
             pass
         time.sleep(3)
+    assert _resp27 is not None  # range(8) 至少执行一次循环体，_resp27 必已赋值
 
     # assertion 27.assertion: responseJson equal 192
     expect(_resp27).json('$.data.totalCommissionSubtotal').equals('192')
