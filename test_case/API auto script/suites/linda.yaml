@@ -80,6 +80,7 @@ include:
   - '&T4625&T4626&T4628 Event creation whole process'
   - Verify the event can be created successfully
   - '&T4724 Verify the Event can create and duplicate and delete and switch status'
+  - '(TDC)&T4724 Verify the Event can create and duplicate and delete and switch status'
   - Verify the settings Enable multi-day pass work
   - Verify the QR redeemed product can be created
   - (Linda)(Venue map)T5379Verify the Additional QR codes flow work
