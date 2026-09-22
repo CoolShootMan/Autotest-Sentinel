@@ -131,6 +131,8 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     expect(_resp3).json('$.data.totalToPay').equals('20')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp3, '$.data.orderId')
+    # 动态 merchantId：取自 buy-now 响应的 lineItems[0].merchantId（订单归属 merchant 的权威来源）
+    ctx.extract('merchantId', _resp3, '$.data.lineItems[0].merchantId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "lineItemsDTO": [
@@ -158,12 +160,9 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     expect(_resp5).json('$.data.lineItems[0].fulfillmentStatus').equals('UNFULFILLED')
     # assertion 5.assertion: responseJson equal 20
     expect(_resp5).json('$.data.totalToPay').equals('20')
-    vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 6: Unfulfill - check merchant order detail
     # === pre-script（由 Apifox customScript 翻译）===
-    merchant_token = vars.get('merchant_token')
     orderNumber = vars.get('orderNumber')
-    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
 
     _resp6 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 6.assertion: responseJson equal 200
@@ -174,10 +173,8 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     ctx.extract('lineItems_id', _resp6, '$.data.lineItems[0].orderLineItemId')
     # assertion 6.assertion: responseJson equal UNFULFILLED
     expect(_resp6).json('$.data.lineItems[0].fulfillmentStatus').equals('UNFULFILLED')
-    vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 7: make shipping
     # === pre-script（由 Apifox customScript 翻译）===
-    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
 
     _resp7 = ctx.api.orders.fulfillment_merchant_by_order_number(body={
         "trackingNumber": "{{$number.bigInt}}",
@@ -191,12 +188,9 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     # assertion 7.assertion: responseJson equal 1
     expect(_resp7).json('$.data.items[0].lineItems[0].fulfilledQuantity').equals('1')
     # extractor:  = 
-    vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 8: Fulfillment - check merchant order detail
     # === pre-script（由 Apifox customScript 翻译）===
-    merchant_token = vars.get('merchant_token')
     orderNumber = vars.get('orderNumber')
-    vars['merchantId'] = "ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"
 
     _resp8 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 8.assertion: responseJson equal 200

@@ -135,6 +135,8 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     expect(_resp4).json('$.data.totalToPay').equals('144.99')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp4, '$.data.orderId')
+    # 动态 merchantId：取自 buy-now 响应的 lineItems[0].merchantId（订单归属 merchant 的权威来源）
+    ctx.extract('merchantId', _resp4, '$.data.lineItems[0].merchantId')
     # step 5: create Order
     vars['instructions'] = 'API test by add a note'
     _resp5 = ctx.api.orders.create(body={
@@ -170,10 +172,8 @@ def test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_t
     ctx.extract('contractId', _resp6, '$.data.lineItems[0].contractId')
     # assertion 6.assertion: responseJson equal {{instructions}}
     expect(_resp6).json('$.data.instructions').equals(str(_render('{{instructions}}', vars)))
-    vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 7: Check the "note" display on the merchant sales detail
     # === pre-script（由 Apifox customScript 翻译）===
-    merchant_token = vars.get('merchant_token')
     orderNumber = vars.get('orderNumber')
 
     # 商户订单详情异步落地（eventually-consistent）：刚建的订单在 merchant 视图下可能短暂 404，
