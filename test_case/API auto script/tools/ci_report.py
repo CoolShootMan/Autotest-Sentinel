@@ -137,8 +137,8 @@ def _rate_str(rate: float | None) -> str:
 
 def _verdict(failed: int, error: int) -> str:
     # 运行是否「成功」不再以全部通过为准：只要执行完毕且结果已记录即视为成功（过）。
-    # 这里只如实给出未通过条数，不再用 red ❌ / Failure 字样给整体定性。
-    return "✅ 全部通过" if (failed + error) == 0 else f"⚠️ {failed + error} 条未通过（结果已记录）"
+    # 这里只如实给出未通过条数，行首用 ❌（X）标记，提示有未通过用例需要关注。
+    return "✅ 全部通过" if (failed + error) == 0 else f"❌ {failed + error} 条未通过（结果已记录）"
 
 
 # --- Job Summary --------------------------------------------------------
@@ -152,19 +152,15 @@ def build_step_summary(suites: dict, env: str, run_url: str = "",
               "可能两套 suite 都在启动阶段就失败了。", ""]
         return "\n".join(L)
 
-    # 概览表
-    L += ["| 套件 | 通过 | 失败 | 错误 | 跳过 | 共 | 通过率 | 结果 |",
-          "|---|---:|---:|---:|---:|---:|---:|:--:|"]
+    # 概览表（最后一列为通过率；不再放「结果」列，避免与「跑通即绿」的结论产生歧义）
+    L += ["| 套件 | 通过 | 失败 | 错误 | 跳过 | 共 | 通过率 |",
+          "|---|---:|---:|---:|---:|---:|---:|"]
     for suite, info in suites.items():
         s = _counts_of(info["meta"])
-        ok = (s["failed"] + s["error"]) == 0
         L.append(f"| {_title(suite)} | {s['passed']} | {s['failed']} | {s['error']} | "
-                 f"{s['skipped']} | {s['total']} | {_rate_str(s['rate'])} | "
-                 f"{'✅' if ok else '⚠️'} |")
-    ok_all = (agg["failed"] + agg["error"]) == 0
+                 f"{s['skipped']} | {s['total']} | {_rate_str(s['rate'])} |")
     L.append(f"| **合计** | **{agg['passed']}** | **{agg['failed']}** | **{agg['error']}** | "
-             f"**{agg['skipped']}** | **{agg['total']}** | "
-             f"**{_rate_str(agg['rate'])}** | {'✅' if ok_all else '⚠️'} |")
+             f"**{agg['skipped']}** | **{agg['total']}** | **{_rate_str(agg['rate'])}** |")
     L += ["", f"**{_verdict(agg['failed'], agg['error'])}** · 共 {agg['total']} 条用例 · "
               f"总耗时 {_human_duration(agg['duration'])}"]
 
