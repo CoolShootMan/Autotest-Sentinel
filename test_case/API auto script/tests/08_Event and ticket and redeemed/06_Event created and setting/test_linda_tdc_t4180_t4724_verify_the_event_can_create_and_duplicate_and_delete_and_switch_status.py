@@ -5,6 +5,10 @@
 # Updated: 2026-09-21T07:42:12.000Z
 
 
+NAME = "(TDC)&T4724 Verify the Event can create and duplicate and delete and switch status"
+TAGS = ["p1", "event_and_ticket_and_redeemed_event_created_and_setting", "suite:linda"]
+PRIORITY = 1
+
 CASE_ID = 8709247
 ENV_NAME = "Release"
 
