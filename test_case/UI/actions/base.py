@@ -606,6 +606,21 @@ def _smart_click_core(page: Page, v: dict):
     # 点装饰器圆角处的留白才能选中它。默认 None = 维持原点中心点击，行为不变。
     target_position = v.get("position")
 
+    # Template {{var}} placeholders from the workflow context (populated by execute_js save_as),
+    # so a click can target a value discovered earlier, e.g. name: "{{ticket_axs}}".
+    _wc = getattr(page, "_workflow_context", None)
+    if _wc:
+        def _fill(s):
+            if not isinstance(s, str):
+                return s
+            for _k, _val in _wc.items():
+                if _k:
+                    s = s.replace("{{%s}}" % _k, str(_val))
+            return s
+        target_name = _fill(target_name)
+        target_locator = _fill(target_locator)
+        target_role = _fill(target_role)
+
     if not target_name and not target_locator and not target_role and not target_test_id:
         return
 
@@ -2794,6 +2809,12 @@ def create_session(page: Page, v: dict):
         # Create page in the new context
         new_page = new_context.new_page()
 
+        # Share workflow context with the new session so templated vars
+        # (saved via execute_js save_as in the parent session) are available here.
+        _wfc = getattr(page, "_workflow_context", None)
+        if _wfc is not None:
+            setattr(new_page, "_workflow_context", dict(_wfc))
+
         # Navigate to URL if provided
         url = v.get("url")
         if url:
@@ -3003,6 +3024,22 @@ def execute_js(page: Page, v):
     if not stripped.startswith("(") and not stripped.startswith("function"):
         # It's a raw expression, wrap it
         script = f"() => ({stripped})"
+
+    # Template {{var}} placeholders from the workflow context (populated by save_as).
+    # This makes variables saved by an earlier execute_js step usable in later steps,
+    # including inside a different session (create_session copies _workflow_context).
+    _wc = getattr(page, "_workflow_context", None)
+    if _wc:
+        def _tmpl(s):
+            if not isinstance(s, str):
+                return s
+            for _k, _v in _wc.items():
+                if _k:
+                    s = s.replace("{{%s}}" % _k, str(_v))
+            return s
+        script = _tmpl(script)
+        if isinstance(args, list):
+            args = [_tmpl(a) if isinstance(a, str) else a for a in args]
 
     logger.info(f"execute_js: executing script (length={len(script)})")
 
