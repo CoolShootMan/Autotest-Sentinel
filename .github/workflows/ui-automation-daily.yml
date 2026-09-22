@@ -1,16 +1,17 @@
 name: ui-automation-daily
 # 每天 18:00 北京时间（= 10:00 UTC）自动跑 UI 自动化。
 #
-# 运行环境：GitHub 托管 runner（ubuntu-latest），**不需要注册 self-hosted runner**，
+# 运行环境：GitHub 托管 runner（ubuntu-24.04，固定版本以避免 ubuntu-latest 自动迁移到 Ubuntu 26），**不需要注册 self-hosted runner**，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
 #
 # 为什么是无头（headless）运行：
 #   托管 runner 没有显示器，pytest.ini 里已移除写死的 --headed；
 #   本地直接跑 main.py 时由 main.py 在非 CI 下自动补上 --headed。
 #
-# 关于用例失败：main.py 会透传 pytest 退出码，但本 job 已对运行步骤设 continue-on-error，
-# 故「有失败用例」不再让 job 变红——只要用例执行完毕且结果落盘，即判定为成功（过）。
-# 真实失败用例数仍如实写在 Job Summary / Annotations / Slack 里。
+# 关于用例失败：main.py 会透传 pytest 退出码，但运行步骤在收尾显式 exit 0（另保留
+# continue-on-error 兜底），故「有失败用例」不再让 job 变红，也不会在运行页留下红色
+# "Process completed with exit code 1" 注解——只要用例执行完毕且结果落盘，即判成功（过）。
+# main.py 的真实退出码会打印在步骤日志里，真实失败用例数仍如实写在 Job Summary / Annotations / Slack 里。
 #
 # Allure 在线报告（本次优化的核心）：
 #   1) main.py 正常跑完会在 report/html/<时间戳> 生成 Allure 报告；若它在预检阶段就
@@ -46,19 +47,19 @@ env:
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 240   # 调大：单用例失败快速失败后仍需跑完整轮（--maxfail=0），给足预算避免被 GitHub 误杀截断后续用例
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: venv_requirements.txt
       - name: Setup Java (bundled Allure CLI needs it)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -86,6 +87,13 @@ jobs:
         run: |
           set -o pipefail
           python test_case/UI/main.py 2>&1 | tee run.log
+          _rc=${PIPESTATUS[0]}
+          # 失败用例不作为步骤失败：真实结果已完整落盘（allure-results / Job Summary /
+          # artifacts / Slack）。按项目规则「执行完毕且结果如实记录即成功」，这里显式以 0
+          # 退出，避免运行页 Annotations 出现红色 "Process completed with exit code 1"。
+          echo "[ci] main.py exit code = ${_rc}（已记录，不改变步骤结论）"
+          echo "suite_exit_code=${_rc}" >> "$GITHUB_OUTPUT"
+          exit 0
       - name: Locate result directories
         if: always()
         id: locate
@@ -119,7 +127,7 @@ jobs:
           echo "Allure report dir: ${REPORT_DIR}"
       - name: Upload Allure report (artifact, download fallback)
         if: always() && steps.report.outputs.report_dir != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: allure-report-${{ github.run_number }}
           path: ${{ steps.report.outputs.report_dir }}
@@ -127,7 +135,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload logs (artifact)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: run-logs-${{ github.run_number }}
           path: |
@@ -140,7 +148,7 @@ jobs:
         # 运行已改为「执行完毕即成功」，故不再用 if: failure()（否则失败录屏永远不上传）。
         # 录屏文件仅在用例失败时由 Playwright 生成，缺失时 if-no-files-found: ignore 兜底。
         if: always() && steps.locate.outputs.video_dir != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: videos-${{ github.run_number }}
           path: ${{ steps.locate.outputs.video_dir }}

@@ -236,6 +236,30 @@ if TYPE_CHECKING:  # 仅类型检查期导入：让 ctx.api.<域>.<方法>() 能
     from core.context import Context
 
 
+import time as _time
+
+
+def _wait_merchant_detail_v2(ctx, merchant_id_var, token_var, max_attempts=10, delay=3):
+    """商户侧订单详情 /order/merchant/{id}/detail/{orderNumber}/v2 为最终一致读：
+
+    刚下单后该读副本可能短暂返回 404（Requested resource not found），轮询直到 200。
+    若超过重试次数仍为 404，返回最后一次响应，由下游断言如实暴露真实失败。
+    """
+    _orders = ctx.api.orders
+    _last = None
+    for _i in range(max_attempts):
+        _resp = _orders.merchant_detail_v2(
+            path_vars={'merchantId': merchant_id_var},
+            token=token_var,
+        )
+        if getattr(_resp, 'status_code', 0) == 200:
+            return _resp
+        _last = _resp
+        if _i < max_attempts - 1:
+            _time.sleep(delay)
+    return _last
+
+
 def test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail(ctx: "Context"):
     """Apifox case #7542684: Lury_T2229_Consumer_1_2_Others_items_disabled_resell_no_retail"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
@@ -337,8 +361,8 @@ def test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail(ctx: "Co
     })
     expect(_resp5).status().is_(201)
     ctx.extract('P1_access_token', _resp5, '$.data.token')
-    # step 6: get P1 order detail v2
-    _resp6 = ctx.api.orders.merchant_detail_v2(path_vars={'merchantId': '{{P1_merchantIDa}}'}, token='P1_access_token')
+    # step 6: get P1 order detail v2（商户侧读最终一致，轮询避免刚下单时读副本 404）
+    _resp6 = _wait_merchant_detail_v2(ctx, '{{P1_merchantIDa}}', 'P1_access_token')
     expect(_resp6).status().is_(200)
     # P1 收益断言：transactionFee=7.53, totalCommissionNet=75, shipping=4.99, tax=8.66
     expect(_resp6).json('$.data.transactionFee').close_to(vars['p1_transaction_fee'])
