@@ -8,12 +8,10 @@ on:
 
 env:
   # ── Slack 通知总开关 ──
-  # 'false' = 不向任何 Slack 群发送结果（当前设定：旧群 cache-regression-detection-report 已停用）。
-  # 后续要发到新的 Slack 群时：
-  #   1) 在仓库 Secrets 新建 SLACK_WEBHOOK_URL_CACHE_REGRESSION（新群的 Incoming Webhook URL）
-  #   2) 把下面的值改成 'true'
-  # 旧的 SLACK_WEBHOOK_URL（指向 cache-regression-detection-report 群）已不再被引用。
-  SLACK_NOTIFY_ENABLED: 'false'
+  # 'true' = 测试跑完后向 Slack 群发送结果摘要。
+  # 目标群 Incoming Webhook URL 存于仓库 Secrets：SLACK_WEBHOOK_URL_CACHE_REGRESSION。
+  # 若该 secret 未配置，Slack 步骤会因 webhook 为空自动跳过（run 不受影响，仍为绿）。
+  SLACK_NOTIFY_ENABLED: 'true'
 
 jobs:
   cache-regression:
@@ -280,7 +278,7 @@ jobs:
           PY
 
       - name: Send Slack notification (success)
-        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome == 'success' }}
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome == 'success' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
         uses: slackapi/slack-github-action@v2
@@ -290,7 +288,7 @@ jobs:
           payload-file-path: test_case/performance testing/cache-regression/slack_payload_success.json
 
       - name: Send Slack notification (failure)
-        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && github.event_name == 'schedule' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome != 'success' }}
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome != 'success' }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
         uses: slackapi/slack-github-action@v2
