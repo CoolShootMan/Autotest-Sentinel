@@ -96,17 +96,25 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     _tdc_event = _candidates1[0]
     vars['event_id'] = _tdc_event.get('id') or ''
     vars['event_title'] = _tdc_event.get('title') or ''
+    print(f"DEBUG 原 event: id={vars['event_id']}, title={vars['event_title']}")
     _tickets1 = _tdc_event.get('tickets') or []
     vars['copyFromId'] = (_tickets1[0].get('id') or '') if _tickets1 else ''
     # step 2: GET get the event catalog id
     _resp2 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
     ctx.extract('catalog_id', _resp2, '$.data.id')
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
-    _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
-    vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', event_id='{{event_id}}')
+    _items3: list[dict] = (_resp3.json().get('data') or {}).get('items') or []
+    _target3 = (_pick_first(_items3, lambda i: i.get('title') == vars.get('event_title'))
+                or _pick_first(_items3, lambda i: i.get('headline') == vars.get('event_title'))
+                or (_items3[0] if len(_items3) == 1 else None))
+    assert _target3, f"step3 未能在事件 {vars.get('event_id')} 的 posts 中找到目标 post（items={len(_items3)}）"
+    print("DEBUG step3 posts count:", len(_items3))
+    for i, it in enumerate(_items3):
+        print(f"DEBUG step3 post[{i}]: id={it.get('id')}, title={it.get('title')}, headline={it.get('headline')}")
+    vars['post0_id'] = _target3.get('id') or ''
     # step 4: GET Catch the ProductId and promoterProductId
-    _resp4 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
+    _resp4 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', post0_id='{{post0_id}}')
     _rels4: list[dict] = (_resp4.json().get('data') or {}).get('relatedProducts') or []
     _prod4 = _pick_first(_rels4, _product_has_stock)
     assert _prod4, f"step4 未找到库存 > 0 的关联产品（relatedProducts={len(_rels4)}）"
@@ -579,6 +587,8 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     assert _resp7.status_code in (200, 201), f"step7 复制事件失败：{_resp7.describe()}"
     _dupeventid_val = _get_path(_resp7.json(), ['data', 'id'])
     vars['dup_event_id'] = _dupeventid_val if _dupeventid_val is not None else ''
+    import time as _t
+    _t.sleep(5)  # 等 duplicate 事件异步创建完成
     _lineupid_val = _get_path(_resp7.json(), ['data', 'lineup', 0, 'id'])
     vars['lineup_id'] = _lineupid_val if _lineupid_val is not None else ''
     # step 8: GET get the event post id
@@ -597,8 +607,18 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
                       f"（items={len(_items8)}）")
     vars['postId'] = _target8.get('id') or ''
     # step 9: GET Catch the ProductId and promoterProductId
-    _resp9 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token')
+    _resp9 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', post0_id='{{post0_id}}')
     _rels9: list[dict] = (_resp9.json().get('data') or {}).get('relatedProducts') or []
+    print("DEBUG step9 relatedProducts[0] keys:", list(_rels9[0].keys())[:20] if _rels9 else "empty")
+    print("DEBUG step9 inventoryQuantity:", _rels9[0].get('inventoryQuantity') if _rels9 else "empty")
+    print("DEBUG step9 variants[0].inventoryQuantity:", (_rels9[0].get('variants') or [{}])[0].get('inventoryQuantity') if _rels9 else "empty")
+    print("DEBUG step9 inStock:", _rels9[0].get('inStock') if _rels9 else "empty")
+    print("DEBUG step9 post0_id:", vars.get('post0_id'))
+    print("DEBUG step9 product title:", _rels9[0].get('title') if _rels9 else "empty")
+    print("DEBUG step9 availableQuantity:", (_rels9[0].get('extraInfo') or {}).get('ticketHubInfo', {}).get('sectionOptions', [{}])[0].get('availableQuantity') if _rels9 else "empty")
+    print("DEBUG step9 inStock:", _rels9[0].get('inStock') if _rels9 else "empty")
+    print("DEBUG step9 variants[0].inventoryQuantity:", (_rels9[0].get('variants') or [{}])[0].get('inventoryQuantity') if _rels9 else "empty")
+    print("DEBUG step9 product title:", _rels9[0].get('title') if _rels9 else "empty")
     _prod9 = _pick_first(_rels9, _product_has_stock)
     assert _prod9, f"step9 未找到库存 > 0 的关联产品（relatedProducts={len(_rels9)}）"
     _apply_related_product(ctx, _prod9)
