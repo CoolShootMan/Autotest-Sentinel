@@ -61,6 +61,13 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
+    # step 0: 获取 linda00_token 对应的 merchantId（TDC 事件所属 merchant）
+    _merchants_resp = ctx.api.merchants.list(token='linda00_token')
+    _merchants_items = (_merchants_resp.json().get('data') or {}).get('items') or []
+    _target_m = next((m for m in _merchants_items
+                      if m.get('id') == 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'), None)
+    assert _target_m, f"linda00 列表中未找到 TDC merchant ece8c85b（items={len(_merchants_items)}）"
+    vars['merchantId'] = _target_m['id']
     # step 1: Guest login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
@@ -97,8 +104,6 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     expect(_resp3).json('$.data.totalToPay').equals('60')
     # extractor: order_id = $.data.orderId
     ctx.extract('order_id', _resp3, '$.data.orderId')
-    # 动态 merchantId：取自 buy-now 响应的 lineItems[0].merchantId（订单归属 merchant 的权威来源）
-    ctx.extract('merchantId', _resp3, '$.data.lineItems[0].merchantId')
     # step 4: create Order
     _resp4 = ctx.api.orders.create(body={
         "lineItemsDTO": [
