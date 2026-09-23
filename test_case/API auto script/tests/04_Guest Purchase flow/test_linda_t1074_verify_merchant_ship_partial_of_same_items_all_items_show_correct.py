@@ -61,13 +61,8 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
-    # step 0: 获取 linda00_token 对应的 merchantId（TDC 事件所属 merchant）
-    _merchants_resp = ctx.api.merchants.list(token='linda00_token')
-    _merchants_items = (_merchants_resp.json().get('data') or {}).get('items') or []
-    _target_m = next((m for m in _merchants_items
-                      if m.get('id') == 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'), None)
-    assert _target_m, f"linda00 列表中未找到 TDC merchant ece8c85b（items={len(_merchants_items)}）"
-    vars['merchantId'] = _target_m['id']
+    # step 0: 设置 linda00 对应的 TDC merchantId（merchant 视角查订单需要）
+    vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 1: Guest login
     _resp1 = ctx.api.auth.guest_login(body={
         "consumerId": "{{__uuid_0}}",
@@ -140,6 +135,7 @@ def test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_c
     # step 5: Unfulfill - check merchant order detail
     # === pre-script（由 Apifox customScript 翻译）===
     orderNumber = vars.get('orderNumber')
+    import time; time.sleep(3)  # 等待订单同步到 merchant 视角
 
     _resp5 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
     # assertion 5.assertion: responseJson equal 200
