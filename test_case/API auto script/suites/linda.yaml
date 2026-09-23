@@ -73,6 +73,7 @@ include:
   - Add and Remove guest
   - (Linda) (AXS)T4838 Add and Remove guest
   - (Linda) (TDC)T4838 Add and Remove guest
+  - (Linda)(Venue map)T4838 Add and Remove guest
   - '& T4299 On the event advanced tab setting tax enable and disabled'
   - Verify the search function of the QR scanner page
   - Verify the event can be edited successfully
