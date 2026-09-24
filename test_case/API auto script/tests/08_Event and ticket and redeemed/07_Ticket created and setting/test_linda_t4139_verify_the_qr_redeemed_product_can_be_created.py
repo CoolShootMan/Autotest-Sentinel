@@ -119,19 +119,9 @@ def test_linda_t4139_verify_the_qr_redeemed_product_can_be_created(ctx: "Context
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda01 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+01@1m.app",
-    })
-    # extractor: linda01_token = $.data.token
-    ctx.extract('linda01_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda01_token)
     # step: Login-merchant -> merchant_token
-    _resp_m = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+00@1m.app",
-    })
-    # extractor: merchant_token = $.data.token
-    ctx.extract('merchant_token', _resp_m, '$.data.token')
+    # token auto-managed by framework (linda00_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: POST Create QR redeemed product
     # === pre-script（由 Apifox customScript 翻译）===

@@ -55,13 +55,7 @@ def test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_i
     vars['account_email_merchant'] = 'dian.yuhong.ext@1m.app'
     vars['password_merchant'] = '178Ad6e0aF0Ec22Ab948d8c0c69Ae072'
     # step 1: Get Partner linda01 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+01@1m.app",
-    })
-    ctx.extract('merchant_access_token', _resp1, '$.data.token')
-    # extractor: linda01_token = $.data.token
-    ctx.extract('linda01_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda01_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['postid'] = 'eb9c09da-7e3b-4c11-a735-00bc9d414275'
     import random as _random

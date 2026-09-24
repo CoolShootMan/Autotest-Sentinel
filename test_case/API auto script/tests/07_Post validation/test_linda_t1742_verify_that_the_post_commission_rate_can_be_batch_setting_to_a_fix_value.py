@@ -496,11 +496,6 @@ def test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_t
     # step 2: GET Checking the post commission rate is 12%
     _resp2 = ctx.api.posts.curator_event_posts(event_id='{{T4259_event_id}}', body=None, token='linda05_token')
     # step 3: Get Co-seller linda06 token
-    _resp3 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+06@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda06_token = $.data.token
-    ctx.extract('linda06_token', _resp3, '$.data.token')
+    # token auto-managed by framework (linda06_token)
     # step 4: GET Co-seller checking the product commission all are 12%
     _resp4 = ctx.api.posts.promoter_detail(body=None, params={'vanityUrl': 'resident', 'urlAlias': 'api-test-t1742'}, token='linda06_token')

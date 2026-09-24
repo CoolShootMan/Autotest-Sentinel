@@ -119,12 +119,9 @@ def test_draft_lury_t4677_verify_the_total_selected_followers_count_after_sendin
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     vars['account_email_curator'] = 'linda.zhou.ext+01@1m.app'
-    vars['password'] = '7EbE8F4BdE4A38768AcF9C2833aF2Db5'
     # step 1: POST Partner login
     # === pre-script（由 Apifox customScript 翻译）===
     vars['account_email_curator'] = "linda.zhou.ext+01@1m.app"
-    vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
-
     _resp1 = ctx.api.auth.sign_in(body={"email": "{{merchant_email}}", "password": "{{merchant_password}}"}, app_headers=True)
     # assertion 1.code: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')

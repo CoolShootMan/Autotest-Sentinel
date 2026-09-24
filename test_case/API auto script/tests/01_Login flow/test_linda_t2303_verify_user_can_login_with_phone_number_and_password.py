@@ -36,8 +36,6 @@ def test_linda_t2303_verify_user_can_login_with_phone_number_and_password(ctx: "
     # step 1: POST /auth/sign-in
     # === pre-script（由 Apifox customScript 翻译）===
     vars['phoneNumber'] = "+16502396646"
-    vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
-
     _resp1 = ctx.api.auth.sign_in(body={"phoneNumber": "{{phoneNumber}}", "password": "{{password}}"}, app_headers=True)
     # assertion 1.code: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')

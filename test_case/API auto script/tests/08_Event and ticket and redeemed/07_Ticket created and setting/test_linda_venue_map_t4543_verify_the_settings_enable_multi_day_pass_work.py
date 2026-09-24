@@ -432,11 +432,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars.setdefault('event_title', 'event-for-api-auto-venue-map')
     vars.setdefault('target_ticket_title', 'General Admission 01')
     # step 1: POST Partner 999 login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "{{UIauto_partner_email}}",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
+    # token auto-managed by framework (yuxiao999_token)
     vars['yuxiao999_token'] = _get_path(_json(_resp1), ['data', 'token'])
     # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
@@ -772,11 +768,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert isinstance(_p7.get('days'), list) and _p7.get('days'), "step7 multipleDaysPass.days 缺失或为空"
     assert any(_d.get('enabled') is True for _d in _p7['days']), "step7 multipleDaysPass.days 无 enabled=true 项"
     # step 9: Get consumer linda10 token  (POST /auth/sign-in)
-    _resp9 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    })
-    # extractor: linda10_token = $.data.token
+    # token auto-managed by framework (linda10_token)
     vars['linda10_token'] = _get_path(_json(_resp9), ['data', 'token'])
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')

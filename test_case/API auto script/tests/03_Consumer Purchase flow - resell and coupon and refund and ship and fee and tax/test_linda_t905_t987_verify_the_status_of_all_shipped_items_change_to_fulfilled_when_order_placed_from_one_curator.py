@@ -94,12 +94,7 @@ def test_linda_t905_t987_verify_the_status_of_all_shipped_items_change_to_fulfil
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Conumser login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+10@1m.app",
-    }, app_headers=True)
-    # extractor: consumer_token = $.data.token
-    ctx.extract('consumer_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 2: get address list
     _resp2 = ctx.api.address.list(token='consumer_token', params={'pageSize': '30', 'pageNumber': '1'})
     # step 3: DELETE Clean Cart
@@ -166,12 +161,7 @@ def test_linda_t905_t987_verify_the_status_of_all_shipped_items_change_to_fulfil
     # assertion 6.assertion: responseJson equal 20
     expect(_resp6).json('$.data.totalToPay').equals('20')
     # step 7: Login-merchant (成功)
-    _resp7 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+00@1m.app",
-    }, app_headers=True)
-    # extractor: merchant_token = $.data.token
-    ctx.extract('merchant_token', _resp7, '$.data.token')
+    # token auto-managed by framework (linda00_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 8: Unfulfill - check merchant order detail

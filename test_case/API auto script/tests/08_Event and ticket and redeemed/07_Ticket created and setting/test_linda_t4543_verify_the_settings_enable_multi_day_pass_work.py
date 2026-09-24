@@ -317,12 +317,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "{{UIauto_partner_email}}",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
-    ctx.extract('yuxiao999_token', _resp1, '$.data.token')
+    # token auto-managed by framework (yuxiao999_token)
     # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # extract event by title "event-for-API-testing" (mirrors Apifox customScript)
@@ -494,12 +489,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     assert _prod8, f"step8 重试后仍找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}）"
     vars['promoterProductId'] = _prod8.get('displayVariantId')
     # step 9: Get consumer linda10 token
-    _resp9 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda10_token = $.data.token
-    ctx.extract('linda10_token', _resp9, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
