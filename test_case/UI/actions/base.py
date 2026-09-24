@@ -14,6 +14,21 @@ while not os.path.exists(os.path.join(BASE_DIR, "test_case")) and BASE_DIR != os
 logger.info(f"ACTIONS_BASE_DIR: {BASE_DIR}")
 from page.home import page_element_role_click, page_element_label_click, page_open
 
+# Shared locator constants (single source of truth in test_case/UI/locators.py)
+sys.path.insert(0, os.path.join(BASE_DIR, "test_case", "UI"))
+try:
+    from locators import LOCATORS as _LOCATORS
+except Exception:
+    _LOCATORS = {}
+
+def _resolve_locator(s):
+    """Replace {{@key}} placeholders with values from locators.py."""
+    if not isinstance(s, str) or "{{@" not in s:
+        return s
+    for _k, _v in _LOCATORS.items():
+        s = s.replace("{{@%s}}" % _k, str(_v))
+    return s
+
 # Only import AI vision modules when explicitly enabled (avoids ~20s startup delay)
 # Set ENABLE_AI_VISION=true in .env or shell to enable
 if os.getenv("ENABLE_AI_VISION", "").lower() in ("1", "true", "yes"):
@@ -275,6 +290,7 @@ def smart_if(page: Page, v: dict):
     else_steps = v.get("else", {})
     
     locator_str = condition.get("locator")
+    locator_str = _resolve_locator(locator_str)
     role = condition.get("role")
     name = condition.get("name")
     text = condition.get("text")
@@ -327,6 +343,7 @@ def smart_fill(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     target_frame = v.get("frame") or v.get("frame_locator")
     target_role = v.get("role")
     target_index = v.get("index", 0)
@@ -371,6 +388,7 @@ def smart_fill(page: Page, v: dict):
 
 def fill_numeric(page: Page, v: dict):
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     target_value = str(v.get("value", ""))
     target_placeholder = v.get("placeholder", "Quantity")
     target_name = v.get("name") or v.get("label") or "Inventory"
@@ -400,6 +418,7 @@ def fill_numeric(page: Page, v: dict):
 def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     checked = v.get("checked", True)
     target_role = v.get("role")
     target_index = v.get("index", 0)
@@ -591,6 +610,7 @@ def _smart_click_core(page: Page, v: dict):
 
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     target_role = v.get("role")
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
@@ -1520,6 +1540,7 @@ def duplicate_post(page: Page, v):
 def verify_value(page: Page, v: dict):
     target_name = v.get("name")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     expected_value = str(v.get("value"))
     timeout = v.get("timeout", 10000)
     logger.info(f"Verifying value of '{target_name or target_locator}' matches '{expected_value}'")
@@ -2129,6 +2150,7 @@ def smart_click_optional(page: Page, v: dict):
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     target_role = v.get("role")
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
@@ -2238,6 +2260,7 @@ def smart_click_retry(page: Page, v: dict):
     """
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_locator = v.get("locator")
+    target_locator = _resolve_locator(target_locator)
     target_role = v.get("role")
     target_exact = v.get("exact", False)
     target_index = v.get("index", 0)
