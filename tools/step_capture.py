@@ -87,7 +87,13 @@ JS_EXTRACT_INTERACTIVE = """
                 nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 80),
                 href:       el.getAttribute('href') || '',
-                className:  (el.className || '').substring(0, 60),
+                // getAttribute('class'), NOT `el.className`: on SVG elements
+                // `className` is an SVGAnimatedString (not a string), so calling
+                // `.substring` on it throws "is not a function" -- and that single
+                // throw aborted the WHOLE extract, silently losing the DOM snapshot
+                // for the step (step_end logged it at DEBUG, so it looked harmless).
+                // Measured on the katana checkbox icon, which is an SVG.
+                className:  (el.getAttribute('class') || '').substring(0, 60),
             };
             const key = entry.testid || (entry.role + '|' + (entry.name || entry.text || ''));
             if (key) results.push({ key: key, ...entry });
