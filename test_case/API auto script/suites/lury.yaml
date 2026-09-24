@@ -29,7 +29,7 @@ include:
   - Exclude Pear.Us Venue app sales from sales report
   - _and_T3687_wholesale_commission_and_affiliate_link
   - '"Allow use in all co-sellers'' post" coupon code can use in direct affiliate post'
-  - '&T4590&T4593&T4708 Verify partner can share revenue to other account on store settings'
+  #- '&T4590&T4593&T4708 Verify partner can share revenue to other account on store settings'
   - '&T4697 Verify partner and co-seller release schedule - ticket'
   - '&T4700 Verify partner release schedule - general product'
   - (Lury)Verify reveal address to buyers check address on order confirmation page
