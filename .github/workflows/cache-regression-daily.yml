@@ -98,7 +98,7 @@ jobs:
       #       失败发失败用例列表 + run 链接，开发可直接点进详情定位。
       - name: Summarize results for Slack
         id: summarize
-        if: ${{ always() && github.event_name == 'schedule' }}
+        if: ${{ always() }}
         working-directory: test_case/performance testing/cache-regression
         shell: bash
         run: |
