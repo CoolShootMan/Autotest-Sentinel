@@ -275,7 +275,7 @@ ENV_NAME = "Release"
 
 
 import time
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from core.assertions import expect
 
@@ -432,8 +432,23 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
 }, token='yuxiao999_token')
-    ctx.extract('productId', _resp5, '$.data.id')
-    vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
+    # 断言：Ticket 创建成功
+    assert _resp5.status_code == 201, f"HTTP状态码应为201，实际={_resp5.status_code}"
+    _j5: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type', '').startswith('application/json') else {}
+    assert _j5.get('code') == 200, f"code预期200，实际={_j5.get('code')!r}"
+    assert _j5.get('message') == 'success', f"message预期success，实际={_j5.get('message')!r}"
+    _d5 = _j5.get('data')
+    assert isinstance(_d5, dict) and _d5 is not None, "data 应为非空对象"
+    assert isinstance(_d5.get('id'), str) and _d5.get('id'), "data.id 应为非空字符串"
+    vars['productId'] = _d5.get('id')
+
+    # 提取 inclusions 的 name 数组
+    _inclusions = _d5.get('inclusions') or []
+    assert len(_inclusions) == 5, f"inclusions 数量应为5，实际={len(_inclusions)}"
+    inclusion_names = [inc.get('name', '') for inc in _inclusions]
+    vars['inclusionNames'] = inclusion_names
+    for i, name in enumerate(inclusion_names):
+        vars[f'inclusion_{i}'] = name
     # step 6: POST new ticket show in post
     _resp6 = ctx.api.events.v2_show_in_post(body={
         "productIds": [
@@ -446,6 +461,12 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
             },
         ],
     }, token='yuxiao999_token')
+    # 断言：show in post 成功
+    assert _resp6.status_code == 201, f'step6 HTTP状态码应为201，实际={_resp6.status_code}'
+    _j6 = _resp6.json()
+    assert _j6.get('code') == 200, f"step6 code预期200，实际={_j6.get('code')!r}"
+    assert _j6.get('message') == 'success', f"step6 message预期success，实际={_j6.get('message')!r}"
+
     # step 7: GET Catch the promoterProductvariantId
     # 关联产品由「事件 → 帖子」异步落地（eventually-consistent）：step5 新建商品、step6
     # v2_show_in_post 后立刻查 relate-products，有时拿不到刚创建的目标商品（CI 实测
@@ -466,6 +487,14 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
             _prod7.get('displayVariantId') or _v07.get('displayVariantId') or _v07.get('id') or '')
     # step 8: get address list
     _resp8 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
+    # 提取 addressId：优先默认地址，无则取第一个
+    _j8 = _resp8.json()
+    _items8 = _get_path(_j8, ['data', 'items']) or []
+    assert len(_items8) > 0, 'step8 地址列表为空'
+    _default8 = next((a for a in _items8 if a.get('isDefault')), None)
+    vars['shippingAddressId'] = (_default8 or _items8[0]).get('id', '')
+    assert vars['shippingAddressId'], 'step8 未提取到有效 addressId'
+
     # step 9: DELETE Clean Cart
     _resp9 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 9.assertion: responseJson equal 200
@@ -528,4 +557,23 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail and Inclusions content exist
-    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'catalogId': '9bd92082-07cd-4af5-8407-710d5f352a93', 'orderNumber': '{{order_number}}'})
+    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'orderNumber': '{{order_number}}'})
+
+    # 断言：merchant order detail 查询成功
+    assert _resp12.status_code == 200, f'step12 HTTP状态码应为200，实际={_resp12.status_code}'
+    _j12 = _resp12.json()
+    assert _j12.get('code') == 200, f"step12 code预期200，实际={_j12.get('code')!r}"
+    assert _j12.get('message') == 'success', f"step12 message预期success，实际={_j12.get('message')!r}"
+
+    # 断言：orderInclusions 存在且匹配预期
+    _lineItems12 = _get_path(_j12, ['data', 'lineItems']) or [] or []
+    assert len(_lineItems12) > 0, 'step12 lineItems 为空'
+    _units12 = _lineItems12[0].get('orderLineItemUnits') or []
+    assert len(_units12) > 0, 'step12 orderLineItemUnits 为空'
+    _actual_incl12 = _units12[0].get('orderInclusions') or []
+    assert len(_actual_incl12) == 5, f'step12 orderInclusions 数量应为5，实际={len(_actual_incl12)}'
+    for item in _actual_incl12:
+        assert item.get('id'), 'step12 inclusion 缺少 id'
+        assert item.get('name'), 'step12 inclusion 缺少 name'
+        assert item.get('numberCode'), 'step12 inclusion 缺少 numberCode'
+        assert item.get('status') == 'IN_PROCESSING', f"step12 inclusion status 应为 IN_PROCESSING，实际={item.get('status')!r}"
