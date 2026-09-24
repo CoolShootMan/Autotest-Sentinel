@@ -37,8 +37,6 @@ def test_linda_t2302_verify_user_can_login_with_email_and_password(ctx: "Context
     # step 1: POST /auth/sign-in
     # === pre-script（由 Apifox customScript 翻译）===
     vars['account_email_curator'] = "linda.zhou.ext+00@1m.app"
-    vars['password'] = "7EbE8F4BdE4A38768AcF9C2833aF2Db5"
-
     _resp1 = ctx.api.auth.sign_in(body={"email": "{{account_email_curator}}", "password": "{{password}}"}, app_headers=True)
     # assertion 1.code: responseJson equal 200
     expect(_resp1).json('$.code').equals('200')

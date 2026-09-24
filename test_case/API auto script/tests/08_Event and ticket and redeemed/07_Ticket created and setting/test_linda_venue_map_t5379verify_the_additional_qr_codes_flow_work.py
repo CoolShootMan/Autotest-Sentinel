@@ -368,12 +368,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "{{UIauto_partner_email}}",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
-    ctx.extract('yuxiao999_token', _resp1, '$.data.token')
+    # token auto-managed by framework (yuxiao999_token)
     # step 2: GET Partner Get the Event id
     # === pre-script（由 Apifox customScript 翻译）===
     vars['event_title'] = "event-for-api-auto-venue-map"
@@ -701,12 +696,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
 }, token='yuxiao999_token')
     vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
     # step 9: Get consumer linda10 token
-    _resp9 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda10_token = $.data.token
-    ctx.extract('linda10_token', _resp9, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200

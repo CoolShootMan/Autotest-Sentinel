@@ -2795,8 +2795,8 @@ testT1928:
         R_click_create_product: { role: 'button', name: 'Create' }
         sleep_step_p19: 6000
 
-        # 产品建完后，去 Catalogs -> 选中 catalog -> Settings
-        open_catalog_settings: { url: "{BASE_URL}/catalog/9b57022d-d906-4e0c-8305-dc3f3fdd05d6/settings" }
+        # Creating the product already lands back on the catalog page, so open Settings from there (no catalog id needed)
+        R_click_catalog_settings: { locator: "button[data-testid='enhance-button']:has-text('Settings')" }
         sleep_step_p20: 6000
         R_click_curator_edit: { locator: "button[data-testid='enhance-button']:has-text('Edit')", index: 1 }
         sleep_step_p21: 2500

@@ -170,12 +170,7 @@ def test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda05 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+05@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda05_token = $.data.token
-    ctx.extract('linda05_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda05_token)
     # step 2: PUT Set the post coupon
     _resp2 = ctx.api.posts.curator_update(post_id='{{T2487_post_id}}', body={
         "id": "{{T2487_post_id}}",

@@ -401,12 +401,7 @@ def test_linda_t4293_verify_the_ticket_can_be_redeemd_success(ctx: "Context"):
     vars['scan_token'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjdXJhdG9ySWQiOiI4NGEwZGU0NC00N2U0LTRhMzgtODgzZS1kOTllZDE5NGQ3ZDciLCJldmVudElkIjoiZmI1ZGYwOTUtYjY4ZC00NWY2LWFkYzAtMjIxMTQyOGQwYThjIn0.mBczmfnf7zWhLvcX3gW0jRnxKWFpIbDyiz6_76N_xGU'
     # === Steps ===
     # step 1: Get Partner linda05 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+05@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    })
-    # extractor: linda05_token = $.data.token
-    ctx.extract('linda05_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda05_token)
     # step 2: POST manual unredeemd the ticket P142542-01
     _resp2 = ctx.api.orders.ticket_status(body={
         "orderLineItemId": "4043096b-7df1-4c2b-880a-9c7b7baec411",

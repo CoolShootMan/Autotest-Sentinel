@@ -199,13 +199,7 @@ def test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is
     vars['account_email_merchant'] = "dian.yuhong.ext@1m.app"
     vars['password_merchant'] = "178Ad6e0aF0Ec22Ab948d8c0c69Ae072"
 
-    _resp1 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+00@1m.app",
-    })
-    ctx.extract('merchant_access_token', _resp1, '$.data.token')
-    # extractor: linda00_token = $.data.token
-    ctx.extract('linda00_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda00_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['timeZoneAsia'] = 'Asia/Shanghai'
     vars['merchant_id'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'

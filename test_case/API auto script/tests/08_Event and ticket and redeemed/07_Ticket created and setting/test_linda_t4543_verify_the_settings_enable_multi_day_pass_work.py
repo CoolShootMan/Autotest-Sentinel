@@ -317,12 +317,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "{{UIauto_partner_email}}",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
-    ctx.extract('yuxiao999_token', _resp1, '$.data.token')
+    # token auto-managed by framework (yuxiao999_token)
     # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # extract event by title "event-for-API-testing" (mirrors Apifox customScript)
@@ -457,7 +452,14 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
 }, token='yuxiao999_token')
-    ctx.extract('productId', _resp5, '$.data.id')
+    # 断言：Ticket 创建成功
+    assert _resp5.status_code == 201, f"step5 HTTP状态码应为201，实际={_resp5.status_code}"
+    _j5 = _resp5.json()
+    assert _j5.get('code') == 200, f"step5 code预期200，实际={_j5.get('code')!r}"
+    assert _j5.get('message') == 'success', f"step5 message预期success，实际={_j5.get('message')!r}"
+    assert _j5.get('data', {}).get('id'), "step5 data.id 为空"
+    vars['productId'] = _j5['data']['id']
+
     # step 7: POST new ticket show in post
     _resp7 = ctx.api.events.v2_show_in_post(event_id='{{event_id}}', body={
         "productIds": [
@@ -472,30 +474,37 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     }, token='yuxiao999_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
-    # step 8: GET Catch the promoterProductvariantId
-    _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-    # extract promoterProductId (displayVariantId) by product title (mirrors Apifox customScript)
-    try:
+    # step 8: GET Catch the promoterProductvariantId（重试：related products 异步落地）
+    _prod8 = None
+    for _att8 in range(6):
+        _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
+        expect(_resp8).json('$.code').equals('200')
+        expect(_resp8).json('$.message').equals('success')
         _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
         _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
-        _prod = next((it for it in _prods if it.get('title') == 'auto testing with turn on multiple day pass'), None)
-        assert _prod, "related product 'auto testing with turn on multiple day pass' not found"
-        vars['promoterProductId'] = _prod.get('displayVariantId')
-    except Exception as e:
-        pytest.fail(f"step8 extract promoterProductId: {e}")
+        _prod8 = next((it for it in _prods if it.get('title') == 'auto testing with turn on multiple day pass'), None)
+        if _prod8 is not None:
+            break
+        time.sleep(3)
+    assert _prod8, f"step8 重试后仍找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}）"
+    vars['promoterProductId'] = _prod8.get('displayVariantId')
     # step 9: Get consumer linda10 token
-    _resp9 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda10_token = $.data.token
-    ctx.extract('linda10_token', _resp9, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: responseJson equal success
     expect(_resp10).json('$.message').equals('success')
+    # step 10.5: get address list，提取 shippingAddressId
+    _resp10b = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
+    from core.compat import get_path as _gp
+    _items10b = _gp(_resp10b.json(), ['data', 'items']) or []
+    assert len(_items10b) > 0, 'step10.5 地址列表为空'
+    _default10b = next((a for a in _items10b if a.get('isDefault')), None)
+    vars['shippingAddressId'] = (_default10b or _items10b[0]).get('id', '')
+    assert vars['shippingAddressId'], 'step10.5 未提取到有效 addressId'
+
     # step 11: buy now
     _resp11 = ctx.api.orders.buy_now(body={
         "postIdForFilter": "{{postId}}",
@@ -547,7 +556,51 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
             "eventSourceUrl": "https://release.pear.us/checkout?postId=ff6bbfb6-7146-44d9-985b-26eefbf740e3",
         },
     }, app_headers=True, token='linda10_token')
-    # extractor: orderNumber = orderNumber
-    ctx.extract('orderNumber', _resp12, '$.data.orderNumber')
+    # 断言：下单成功
+    assert _resp12.status_code == 201, f'step12 HTTP状态码应为201，实际={_resp12.status_code}'
+    _j12 = _resp12.json()
+    assert _j12.get('message') == 'success', f"step12 message预期success，实际={_j12.get('message')!r}"
+    _ordernum12 = _j12.get('data', {}).get('orderNumbers', [None])[0]
+    assert _ordernum12, 'step12 orderNumbers[0] 为空'
+    vars['orderNumber'] = _ordernum12
+
+    # 断言：isMultipleDaysPassEnabled 和 multipleDaysPass
+    from core.compat import get_path as _gp12
+    _lineItem12 = _gp12(_j12, ['data', 'confirmation', 'lineItems', 0]) or {}
+    assert _lineItem12, 'step12 confirmation.lineItems[0] 不存在'
+    assert _lineItem12.get('isMultipleDaysPassEnabled') is True, 'step12 isMultipleDaysPassEnabled 不为 true'
+    _mp12 = _lineItem12.get('multipleDaysPass') or {}
+    assert _mp12.get('startDate'), 'step12 multipleDaysPass.startDate 为空'
+    assert _mp12.get('endDate'), 'step12 multipleDaysPass.endDate 为空'
+    assert _mp12.get('startDateDisplay'), 'step12 multipleDaysPass.startDateDisplay 为空'
+    _days12 = _mp12.get('days') or []
+    assert len(_days12) > 0, 'step12 multipleDaysPass.days 为空'
+    for d in _days12:
+        assert d.get('date'), f"step12 days date 为空"
+        assert isinstance(d.get('enabled'), bool), f"step12 days enabled 不是布尔值"
+        assert d.get('checkInStart'), f"step12 days checkInStart 为空"
+        assert d.get('checkInEnd'), f"step12 days checkInEnd 为空"
+
     # step 13: Check the merchant order detail exist ticket Redemptions contents
     _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')
+
+    # 断言：merchant order detail 查询成功
+    assert _resp13.status_code == 200, f'step13 HTTP状态码应为200，实际={_resp13.status_code}'
+    _j13 = _resp13.json()
+    assert _j13.get('code') == 200, f"step13 code预期200，实际={_j13.get('code')!r}"
+    assert _j13.get('message') == 'success', f"step13 message预期success，实际={_j13.get('message')!r}"
+
+    # 断言：ticketRedemptions 存在且校验字段
+    from core.compat import get_path as _gp13
+    _lineItem13 = _gp13(_j13, ['data', 'lineItems', 0]) or {}
+    assert _lineItem13, 'step13 lineItems[0] 不存在'
+    assert _lineItem13.get('isMultipleDaysPassEnabled') is True, 'step13 isMultipleDaysPassEnabled 不为 true'
+    _unit13 = _lineItem13.get('orderLineItemUnits', [{}])[0]
+    _redemptions13 = _unit13.get('ticketRedemptions') or []
+    assert len(_redemptions13) > 0, 'step13 ticketRedemptions 为空'
+    for item in _redemptions13:
+        assert item.get('id'), 'step13 redemption 缺少 id'
+        assert item.get('status') == 'IN_PROCESSING', f"step13 redemption status 应为 IN_PROCESSING，实际={item.get('status')!r}"
+        assert item.get('validDateTimeStartDisplay'), 'step13 redemption 缺少 validDateTimeStartDisplay'
+        assert item.get('validDateTimeEndDisplay'), 'step13 redemption 缺少 validDateTimeEndDisplay'
+        assert isinstance(item.get('expired'), bool), 'step13 redemption expired 不是布尔值'

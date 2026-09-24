@@ -87,9 +87,6 @@ JS_EXTRACT_INTERACTIVE = """
                 nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 80),
                 href:       el.getAttribute('href') || '',
-                // NOTE: el.className is an SVGAnimatedString on SVG elements, so
-                // (el.className || '').substring(...) threw on every capture.
-                // getAttribute('class') is a plain string for both HTML and SVG.
                 className:  (el.getAttribute('class') || '').substring(0, 60),
             };
             const key = entry.testid || (entry.role + '|' + (entry.name || entry.text || ''));

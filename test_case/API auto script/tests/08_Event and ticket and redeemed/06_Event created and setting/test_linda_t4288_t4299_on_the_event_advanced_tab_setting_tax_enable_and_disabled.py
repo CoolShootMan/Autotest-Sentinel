@@ -208,12 +208,7 @@ def test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disa
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda01 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+01@1m.app",
-    })
-    # extractor: linda01_token = $.data.token
-    ctx.extract('linda01_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda01_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     # step 2: POST Setting tax on the event advanced tab, check the ticket fee display correct
     _resp2 = ctx.api.products.calculate_ticket_batch(body={

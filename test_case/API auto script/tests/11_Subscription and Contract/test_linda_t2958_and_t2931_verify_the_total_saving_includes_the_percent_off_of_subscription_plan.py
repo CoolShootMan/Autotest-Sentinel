@@ -121,12 +121,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     vars['promoterProductVariantId'] = vars.get('promoterProductVariantId') or '5ca78b54-d87f-4c14-aa74-88668900394c'
     # === Steps ===
     # step 1: Get consumer linda10 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda10_token = $.data.token
-    ctx.extract('linda10_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 2: get address list
     _resp2 = ctx.api.address.list(token='linda10_token', params={'pageSize': '30', 'pageNumber': '1'})
     # extract addressId (原始 Apifox step2 post-script: 取默认地址 id，无则取第一个)
@@ -211,12 +206,7 @@ def test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_
     print("DEBUG contractId=", vars.get('contractId'), "step8 url path ok", file=sys.stderr)
     expect(_resp8).json('$.data.contractNumber').equals(ctx.render_text('{{contractNumber}}'))
     # step 9: Get Partner linda00 token
-    _resp9 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+00@1m.app",
-    }, app_headers=True)
-    # extractor: linda00_token = $.data.token
-    ctx.extract('linda00_token', _resp9, '$.data.token')
+    # token auto-managed by framework (linda00_token)
     vars['merchantId'] = '822a3e59-fdf3-4d9b-be57-f8f0b3af1023'
     vars['merchantId'] = 'ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4'
     # step 10: Check The free shipping discount should be deducted from merchant payout

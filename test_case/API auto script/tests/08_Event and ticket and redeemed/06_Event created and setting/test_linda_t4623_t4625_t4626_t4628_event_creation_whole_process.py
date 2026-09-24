@@ -346,12 +346,7 @@ def test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda05 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+05@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda05_token = $.data.token
-    ctx.extract('linda05_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda05_token)
     # step 2: Get the target event id
     _resp2 = ctx.api.events.list(token='linda05_token', params={'pageNumber': '1', 'pageSize': '50', 'statuses': ['undefined']})
     _j: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}

@@ -336,12 +336,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "{{UIauto_partner_email}}",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
-    ctx.extract('yuxiao999_token', _resp1, '$.data.token')
+    # token auto-managed by framework (yuxiao999_token)
     # step 2: GET Partner Get the Event id and Event title
     _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     # 原 step2 post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
@@ -668,12 +663,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     'isExpirationEnabled': False,
 }, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId}}'})
     # step 8: Get consumer linda10 token
-    _resp8 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+10@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    })
-    # extractor: linda10_token = $.data.token
-    ctx.extract('linda10_token', _resp8, '$.data.token')
+    # token auto-managed by framework (linda10_token)
     # step 9: DELETE Clean Cart
     _resp9 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertion 9.assertion: responseJson equal 200

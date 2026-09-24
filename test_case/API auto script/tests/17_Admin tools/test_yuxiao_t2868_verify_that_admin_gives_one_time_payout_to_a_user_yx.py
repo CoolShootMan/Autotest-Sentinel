@@ -34,13 +34,10 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     """Apifox case #5767709: Yuxiao_T2868_Verify_that_admin_gives_one_time_payout_to_a_user_yx"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # 从 Release DB 随机取一个 PROMOTER 用户 id，避免硬编码 id 因 7 天 5 次限制而失败
-    if not vars.get('promoterId') or len(str(vars.get('promoterId'))) < 10:
-        ctx.db_query_one(
-            "SELECT id FROM \"User\" WHERE user_role = 'PROMOTER' ORDER BY random() LIMIT 1",
-            column="id", var_name="promoterId",
-        )
-        if not vars.get('promoterId') or len(str(vars.get('promoterId'))) < 10:
-            vars['promoterId'] = '2e7c410d-3aeb-429c-bdcf-b0c769a1e11e'
+    ctx.db_query_one(
+        "SELECT id FROM \"User\" WHERE user_role = 'PROMOTER' ORDER BY random() LIMIT 1",
+        column="id", var_name="promoterId",
+    )
     # === Steps ===
     # 读取目标 promoter 当前的 payoutBalance 作为基线。
     # 该用例每次从 Release DB 随机取一个 PROMOTER，历史运行可能在其上留下非 0 余额，
