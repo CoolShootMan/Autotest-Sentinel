@@ -250,12 +250,7 @@ def test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_
     # extractor: orderNumber = $.data.orderNumbers[0]
     ctx.extract('orderNumber', _resp5, '$.data.orderNumbers[0]')
     # step 6: Login-merchant
-    _resp6 = ctx.api.auth.sign_in(body={
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-        "email": "linda.zhou.ext+00@1m.app",
-    }, app_headers=True)
-    # extractor: merchant_token = $.data.token
-    ctx.extract('merchant_token', _resp6, '$.data.token')
+    # token auto-managed by framework (linda00_token)
     # step 7: Check merchant order detail
     # === pre-script（由 Apifox customScript 翻译）===
     merchant_token = vars.get('merchant_token')

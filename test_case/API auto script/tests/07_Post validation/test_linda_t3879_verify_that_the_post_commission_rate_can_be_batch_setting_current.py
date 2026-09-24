@@ -132,12 +132,7 @@ def test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_c
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: Get Partner linda05 token
-    _resp1 = ctx.api.auth.sign_in(body={
-        "email": "linda.zhou.ext+05@1m.app",
-        "password": "7EbE8F4BdE4A38768AcF9C2833aF2Db5",
-    }, app_headers=True)
-    # extractor: linda05_token = $.data.token
-    ctx.extract('linda05_token', _resp1, '$.data.token')
+    # token auto-managed by framework (linda05_token)
     # step 2: PUT Batch setting the commission rate to current+5
     _resp2 = ctx.api.posts.curator_update(post_id='{{T3879_post_id}}', body={
         "id": "{{T3879_post_id}}",
