@@ -9,7 +9,7 @@ on:
 env:
   # ── Slack 通知总开关 ──
   # 'true' = 测试跑完后向 Slack 群发送结果摘要。
-  # 目标群 Incoming Webhook URL 存于仓库 Secrets：SLACK_WEBHOOK_URL_CACHE_REGRESSION。
+  # 目标群 Incoming Webhook URL 存于仓库 Secrets：SLACK_WEBHOOK_URL。
   # 若该 secret 未配置，Slack 步骤会因 webhook 为空自动跳过（run 不受影响，仍为绿）。
   SLACK_NOTIFY_ENABLED: 'true'
 
@@ -91,7 +91,7 @@ jobs:
       # ===== Slack 通知（Incoming Webhook）=====
       # ⚠️ 当前 SLACK_NOTIFY_ENABLED = 'false'，以下两个发送步骤不会执行（不向任何群发消息）。
       # 旧群 cache-regression-detection-report 已停用，改为需要时指向新群：
-      #   在仓库 Secrets 新建 SLACK_WEBHOOK_URL_CACHE_REGRESSION，再把顶部开关改成 'true'。
+      #   在仓库 Secrets 新建 SLACK_WEBHOOK_URL，再把顶部开关改成 'true'。
       # 仅每天 10:00 的 scheduled run 发送；workflow_dispatch 手动调试只在 Actions 页面看结果。
       # 未配置 webhook 时发送步骤自动跳过，不影响测试本身。
       # 结果：成功只发摘要（含违规接口/BE 缺口数 + run 链接）；
@@ -280,7 +280,7 @@ jobs:
       - name: Send Slack notification (success)
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome == 'success' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         uses: slackapi/slack-github-action@v2
         with:
           webhook: ${{ env.SLACK_WEBHOOK_URL }}
@@ -290,7 +290,7 @@ jobs:
       - name: Send Slack notification (failure)
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' && steps.run_tests.outcome != 'success' }}
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_CACHE_REGRESSION }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         uses: slackapi/slack-github-action@v2
         with:
           webhook: ${{ env.SLACK_WEBHOOK_URL }}
