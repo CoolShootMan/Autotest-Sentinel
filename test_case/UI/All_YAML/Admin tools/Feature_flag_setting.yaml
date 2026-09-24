@@ -1,0 +1,100 @@
+# ==============================================================================
+# Test Case: T5387 Verify adding two feature flags to show/hide storefront header and cover image
+# Step description:
+# Precondition: On admin tool > Users > Profile > Account > Features
+# 1. Login as admin, open user profile Features tab
+# 2. Verify hideStorefrontHeader and hideStorefrontCover are OFF (disabled)
+# 3. Guest visit https://release.pear.us/linda -> header and cover are visible
+# 4. Back to admin Features tab, enable both flags
+# 5. Guest visit https://release.pear.us/linda -> header and cover are hidden
+# 6. Guest visit https://mehost.cn/ -> header and cover are hidden
+# 7. Co-seller login as linda.zhou.ext+01@1m.app, visit /linda -> hidden
+# Expected result:
+# - Default OFF: storefront shows header (shop icon, login, follow) and cover image
+# - Enable both flags: success toast "Feature flag ... updated successfully"
+# - After enabling: storefront hides header and cover image for all visitors
+# Maintainer: Demi Hu
+# Priority: P0
+# ==============================================================================
+
+# T5387: Feature flags hideStorefrontHeader / hideStorefrontCover
+#Auth: Linda Zhou
+
+#### because config subdomain is complex, so use the account which exist subdomain, the id will no changed.
+testT5387:
+    description: "Feature flags toggle storefront header and cover image"
+    pre_condition:
+        description: "Login as admin and open user profile Features tab"
+        expect_result: "Features tab loaded"
+        test_step:
+            open_admin:
+                open: "https://release.admin.pear.us/user/profile/7bc6ed8d-51de-446b-8c64-fd321cf1a45d?tab=info"
+                cookie_file: "test_case/UI/cookie_admin.json"
+            sleep_admin: 5000
+            R_click_features_tab: { locator: "{{@features_tab}}" }
+            sleep_tab: 3000
+
+    test_step:
+        # Step 2: Verify both flags are OFF
+        check_header_off: { locator: "{{@flag_header_checkbox}}", state: "unchecked" }
+        check_cover_off: { locator: "{{@flag_cover_checkbox}}", state: "unchecked" }
+
+        # Step 3: Guest visit shop -> header and cover VISIBLE
+        open_guest_shop:
+            open: "https://release.pear.us/linda"
+        sleep_guest1: 5000
+        check_login_visible: { locator: "{{@login_btn}}", state: "visible" }
+        check_cover_visible: { locator: "{{@cover_image}}", state: "visible" }
+
+        # Step 4: Back to admin, enable both flags
+        open_admin_back:
+            open: "https://release.admin.pear.us/user/profile/7bc6ed8d-51de-446b-8c64-fd321cf1a45d?tab=features"
+            cookie_file: "test_case/UI/cookie_admin.json"
+        sleep_admin_back: 8000
+
+        # Toggle header ON
+        R_click_toggle_header: { locator: "{{@flag_header_checkbox}}" }
+        sleep_after_header: 1500
+        wait_toast_header: { message: "Feature flag hideStorefrontHeader updated successfully", timeout: 10000 }
+
+        # Toggle cover ON
+        R_click_toggle_cover: { locator: "{{@flag_cover_checkbox}}" }
+        sleep_after_cover: 1500
+        wait_toast_cover: { message: "Feature flag hideStorefrontCover updated successfully", timeout: 10000 }
+
+        # Step 5: Guest visit shop -> header and cover HIDDEN
+        open_guest_shop2:
+            open: "https://release.pear.us/linda"
+        sleep_guest2: 5000
+        check_login_hidden: { locator: "{{@login_btn}}", state: "hidden" }
+        check_cover_hidden: { locator: "{{@cover_image}}", state: "hidden" }
+
+        # Step 6: Guest visit mehost.cn -> header and cover HIDDEN
+        open_guest_mehost:
+            open: "https://mehost.cn/"
+        sleep_guest3: 5000
+        check_mehost_login_hidden: { locator: "{{@login_btn}}", state: "hidden" }
+        check_mehost_cover_hidden: { locator: "{{@cover_image}}", state: "hidden" }
+
+        # Step 7: Co-seller login as linda.zhou.ext+01 and visit shop -> HIDDEN
+        open_shop_linda01:
+            open: "https://release.pear.us/linda"
+            cookie_file: "test_case/UI/cookie_release_linda01.json"
+        sleep_linda01: 5000
+        check_linda01_login_hidden: { locator: "{{@login_btn}}", state: "hidden" }
+        check_linda01_cover_hidden: { locator: "{{@cover_image}}", state: "hidden" }
+
+    expect_result:
+        assertions:
+          - assertion_type: "element_not_visible"
+            locator: "{{@login_btn}}"
+
+    teardown_step:
+        open_admin_reset:
+            open: "https://release.admin.pear.us/user/profile/7bc6ed8d-51de-446b-8c64-fd321cf1a45d?tab=features"
+            cookie_file: "test_case/UI/cookie_admin.json"
+        sleep_reset: 5000
+        R_click_header_off: { locator: "{{@flag_header_checkbox}}" }
+        sleep_after_reset1: 1000
+        R_click_cover_off: { locator: "{{@flag_cover_checkbox}}" }
+        sleep_after_reset2: 1000
