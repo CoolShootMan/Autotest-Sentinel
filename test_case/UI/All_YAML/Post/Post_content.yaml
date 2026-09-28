@@ -55,7 +55,7 @@ testT5442:
 
         R_click_add_ticket:     { role: "button", name: "Add ticket" }
         wait_for_add_ticket:    { role: "heading", name: "Add a ticket", timeout: 5000 }
-        fill_ticket_title:      { role: "textbox", name: "Product title", value: "new ticket related to T5442" }
+        fill_ticket_title:      { role: "textbox", name: "Title", value: "new ticket related to T5442" }
         sleep_step:             1000
         fill_ticket_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
         sleep_step:             1000
@@ -72,7 +72,7 @@ testT5442:
         sleep_step:             2000
         R_click_add_merch:      { role: "button", name: "Add merch" }
         wait_for_add_merch:     { role: "heading", name: "Add merch", timeout: 10000 }
-        fill_merch_title:       { role: "textbox", name: "Product title", value: "new merch related to T5442" }
+        fill_merch_title:       { role: "textbox", name: "Title", value: "new merch related to T5442" }
         sleep_step:             1000
         fill_merch_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
         sleep_step:             1000
@@ -386,7 +386,7 @@ testT5443:
         sleep_step: 2000
 
         # Step 8: Fill in ticket title
-        fill_ticket_title_t5443: { role: "textbox", name: "Product title", value: "ticket 001" }
+        fill_ticket_title_t5443: { role: "textbox", name: "Title", value: "ticket 001" }
         sleep_step: 1000
 
         # Step 9: Fill price field
