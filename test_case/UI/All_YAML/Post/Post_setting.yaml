@@ -2749,7 +2749,7 @@ testT1928:
         R_click_general_type: { text: 'General' }
         sleep_step_p3: 3000
         
-        fill_product_title: { role: 'textbox', name: 'Product title', value: 'test 1928 product' }
+        fill_product_title: { role: 'textbox', name: 'Title', value: 'test 1928 product' }
         sleep_step_p4: 1000
         
         R_click_add_media: { role: 'button', name: 'Add Media' }
