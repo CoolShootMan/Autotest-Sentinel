@@ -51,7 +51,7 @@ testT5649_axs:
         R_click_save: { name: "Save" }
         sleep_save: 3000
 
-        # 9. Extract the target ticket: the name of the first "0 sold" and non-"Sold out"
+        # 9. Extract the target ticket: the name of the first non-"Sold out"
         #    product on the Tickets tab -> temp var ticket-axs
         execute_js_extract_name:
             script: |
@@ -63,14 +63,12 @@ testT5649_axs:
                   for(const r of uniq){
                     const t=r.textContent.replace(/\s+/g,' ').trim();
                     const isSoldOut=/Sold out/i.test(t);
-                    const soldM=t.match(/([\d,]+)\s*sold/i);
-                    const sold=soldM?soldM[1]:null;
-                    if(sold==='0' && !isSoldOut){
+                    if(!isSoldOut){
                       const name=(t.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').replace(/\s+/g,' ').trim();
                       return name;
                     }
                   }
-                  throw new Error('No 0-sold non-Sold-out ticket found');
+                  throw new Error('No non-Sold-out ticket found');
                 }
             save_as: "ticket_axs"
         sleep_extract_name: 800
@@ -87,15 +85,13 @@ testT5649_axs:
                   for(const r of uniq){
                     const t=r.textContent.replace(/\s+/g,' ').trim();
                     const isSoldOut=/Sold out/i.test(t);
-                    const soldM=t.match(/([\d,]+)\s*sold/i);
-                    const sold=soldM?soldM[1]:null;
-                    if(sold==='0' && !isSoldOut){
+                    if(!isSoldOut){
                       const priceM=t.match(/\$([\d.]+)/);
                       if(!priceM) throw new Error('Ticket price not found in card: '+t);
                       return +parseFloat(priceM[1]).toFixed(2);
                     }
                   }
-                  throw new Error('No 0-sold non-Sold-out ticket found');
+                  throw new Error('No non-Sold-out ticket found');
                 }
             save_as: "ticket-retails-price"
         sleep_extract_price: 500
@@ -111,15 +107,13 @@ testT5649_axs:
                   for(const r of uniq){
                     const t=r.textContent.replace(/\s+/g,' ').trim();
                     const isSoldOut=/Sold out/i.test(t);
-                    const soldM=t.match(/([\d,]+)\s*sold/i);
-                    const sold=soldM?soldM[1]:null;
-                    if(sold==='0' && !isSoldOut){
+                    if(!isSoldOut){
                       const priceM=t.match(/\$([\d.]+)/); const inclM=t.match(/incl\.?\s*\$([\d.]+)/i);
                       const price=parseFloat(priceM[1]); const incl=parseFloat(inclM[1]);
                       return +(price-incl).toFixed(2);
                     }
                   }
-                  throw new Error('No 0-sold non-Sold-out ticket found');
+                  throw new Error('No non-Sold-out ticket found');
                 }
             save_as: "my_revenve"
         sleep_extract_rev: 800
