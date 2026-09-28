@@ -552,7 +552,18 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail and Inclusions content exist
-    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'orderNumber': '{{order_number}}'})
+    # merchant order detail 异步落地：刚建的订单在 merchant 视图可能短暂 404，轮询最多 8 次、间隔 3s
+    import time as _time12
+    _resp12 = None
+    for _att in range(8):
+        _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'orderNumber': '{{order_number}}'})
+        try:
+            if str(_resp12.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        _time12.sleep(3)
+    assert _resp12 is not None
 
     # 断言：merchant order detail 查询成功
     assert _resp12.status_code == 200, f'step12 HTTP状态码应为200，实际={_resp12.status_code}'
