@@ -11319,6 +11319,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         _vm_cat = ctx.extract("categoryId" + _vm_sfx, _resp119, _vm_item + ".categoryId")
         if _vm_cat is None:
             ctx.extract("categoryId" + _vm_sfx, _resp119, _vm_item + ".venueCategoryId")
+        _cid = vars.get("categoryId" + _vm_sfx)
+        if _cid is not None:
+            vars["categoryId" + _vm_sfx] = str(_cid)
     expect(_resp119).json('$.data.items.length').at_least(1)
 
 
@@ -12971,3 +12974,215 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enableEventLineupPayout","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp141).json('$.code').equals('200')
     expect(_resp141).json('$.message').equals('success')
+
+
+
+
+# ============================================================
+    # step 142-146: Create new event "12061 phase2 auto event" (PEAR)
+    # 4 tickets: test v ($0), inside seat with 80 ($80), inside seat with 100 ($100), outside seat ($50)
+    # ============================================================
+
+    # --- step 142: Create event (POST /product-event/v2) ---
+    _resp142 = ctx.api.events.create_v2(body=r"""{
+    "ignoreStartTime": true,
+    "ignoreEndTime": true,
+    "isTimeUnspecified": false,
+    "allowAutoComplete": true,
+    "title": "12061 phase2 auto event",
+    "curatorId": "{{user_id}}",
+    "description": "",
+    "note": "",
+    "location": "City Center, CA",
+    "status": "UPCOMING",
+    "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
+    "isTaxEnabled": false,
+    "isAddressRevealEnabled": false,
+    "venue": "Baseball Venue Tour",
+    "timezone": {
+        "timeZoneId": "America/Los_Angeles",
+        "timeZoneName": "Pacific Daylight Time",
+        "dstOffset": 3600,
+        "rawOffset": -28800
+    },
+    "poster": {
+        "height": 2048,
+        "width": 3072,
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "mediaType": "IMAGE"
+    },
+    "startDateDisplay": "2099-12-31",
+    "platform": "PEAR",
+    "creationStep": "COMPLETED"
+    }""", app_headers=True, token="token")
+    expect(_resp142).json('$.code').equals('200')
+    expect(_resp142).json('$.message').equals('success')
+    expect(_resp142).status().is_(201)
+    ctx.extract("event_12061_id", _resp142, "$.data.id")
+
+
+    # --- step 143: Create event media/poster ---
+    _resp143 = ctx.api.events.media_batch_create(path_vars={"created_event_id": vars.get("event_12061_id", "")}, body="""{
+    "poster": {
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "width": 3072,
+        "height": 2048,
+        "position": 0,
+        "mediaType": "IMAGE",
+        "mediaDuration": 0
+    },
+    "posterBackend": [
+        {
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+            "width": 3072,
+            "height": 2048,
+            "position": 0,
+            "mediaType": "IMAGE",
+            "mediaDuration": 0
+        }
+    ],
+    "medias": [],
+    "mediaTextConfig": {
+        "headline": "Missed our last event?",
+        "subtitle": "Here's a lil recap.",
+        "align": "center"
+    }
+    }""", app_headers=True, token="token")
+    expect(_resp143).json('$.code').equals('200')
+    expect(_resp143).json('$.message').equals('success')
+
+
+    # --- step 144: Create 4 tickets ---
+    _resp144 = ctx.api.events.ticket_batch_v2(path_vars={"created_event_id": vars.get("event_12061_id", "")}, body="""{
+    "poster": {
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "width": 3072,
+        "height": 2048,
+        "position": 0,
+        "mediaType": "IMAGE",
+        "mediaDuration": 0
+    },
+    "listingType": "TICKET",
+    "isTaxEnabled": false,
+    "autoReplace": false,
+    "tickets": [
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "test v",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 20, "ticketPrice": 0, "price": "0", "fees": 0, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 0, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 0}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "inside seat with 80",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 4, "ticketPrice": 71, "price": "80", "fees": 9, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 9, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 9}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "inside seat with 100",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 43, "ticketPrice": 89, "price": "100", "fees": 11, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 11, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 11}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "outside seat",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 35, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}}]
+        }
+    ],
+    "coSellingCommissionRate": 0,
+    "customFeeConfig": {"isEnabled": false, "items": []}
+    }""", app_headers=True, token="token")
+    expect(_resp144).json('$.code').equals('200')
+    expect(_resp144).json('$.message').equals('success')
+
+
+    # --- step 145: Create empty lineup ---
+    _resp145 = ctx.api.events.lineup_batch(path_vars={"created_event_id": vars.get("event_12061_id", "")}, body="""{"lineup":[]}""", app_headers=True, token="token")
+    expect(_resp145).json('$.code').equals('200')
+    expect(_resp145).json('$.message').equals('success')
+
+
+    # --- step 146: Get event post id ---
+    _resp146 = ctx.api.posts.curator_event_posts(path_vars={"event_id": vars.get("event_12061_id", "")}, app_headers=True, token="token")
+    expect(_resp146).json('$.code').equals('200')
+    expect(_resp146).json('$.message').equals('success')
+    ctx.extract("post0_id_12061", _resp146, "$.data.items[0].id")
+
+    # --- step 147: Extract product IDs from ticket batch response ---
+    # tickets order: [0]=test v, [1]=inside seat with 80, [2]=inside seat with 100, [3]=outside seat
+    _products_12061 = _resp144.json()["data"]["tickets"]
+    vars["pid_test_v_12061"] = _products_12061[0]["id"]
+    vars["pid_inside_80_12061"] = _products_12061[1]["id"]
+    vars["pid_inside_100_12061"] = _products_12061[2]["id"]
+    vars["pid_outside_12061"] = _products_12061[3]["id"]
+
+    # --- step 148: Save venue map (admin API) ---
+    import os, json as _json
+    _venue_path = os.path.join(os.path.dirname(__file__), "..", "..", "config", "fixtures", "venue_map_12061.json")
+    with open(_venue_path) as _f:
+        _venue_body = _f.read()
+    _resp148 = ctx.api.admin.events_venue_map_create(
+        venue_map_event_id=vars.get("event_12061_id", ""),
+        body=_venue_body, token="admin_token", app_headers=True)
+    expect(_resp148).json('$.code').equals('200')
+
+    # --- step 149: Publish venue map (admin API) ---
+    _resp149 = ctx.api.admin.events_venue_map_publish(
+        venue_map_event_id=vars.get("event_12061_id", ""),
+        body=_venue_body, token="admin_token", app_headers=True)
+    expect(_resp149).json('$.code').equals('200')
+
+    # --- step 150: Bind categories to products (admin API) ---
+    _assoc_body = _json.dumps({"associations": [
+        {"categoryId": "dd69f2bd-23dc-49a6-9cb7-2b0a7c59f086", "productId": vars["pid_outside_12061"]},
+        {"categoryId": "e27d924e-1848-4f1d-a891-9be07f24aece", "productId": vars["pid_inside_100_12061"]},
+        {"categoryId": "ee8fdf1a-0de6-44a8-9666-dcafe68afd7a", "productId": vars["pid_inside_80_12061"]},
+    ]})
+    _resp150 = ctx.api.admin.events_venue_map_associations(
+        venue_map_event_id=vars.get("event_12061_id", ""),
+        body=_assoc_body, token="admin_token", app_headers=True)
+    expect(_resp150).json('$.code').equals('200')
+
+    # --- step 151: Add "Show venue map drawer" CTA to post content ---
+    import uuid as _uuid
+    _post_id_12061 = vars.get("post0_id_12061", "")
+    _event_id_12061 = vars.get("event_12061_id", "")
+    _resp151a = ctx.api.posts.curator_edit_by_post_id(
+        post_id=_post_id_12061, token="token", app_headers=True)
+    expect(_resp151a).json('$.code').equals('200')
+    _post_data = _resp151a.json()["data"]
+    _body_json = _json.loads(_post_data["bodyJson"]) if isinstance(_post_data.get("bodyJson"), str) else _post_data.get("bodyJson", {})
+    _cta = {
+        "id": str(_uuid.uuid4()),
+        "label": "Show venue map drawer",
+        "height": "42px",
+        "type": "cta-button",
+        "version": 2,
+        "width": "100%",
+        "action": "show-venue-map",
+        "eventId": _event_id_12061
+    }
+    _children = _body_json.get("root", {}).get("children", [])
+    _insert_idx = len(_children)
+    for _i, _child in enumerate(_children):
+        if _child.get("type") == "ticket-all":
+            _insert_idx = _i + 1
+            break
+    _children.insert(_insert_idx, _cta)
+    _body_json["root"]["children"] = _children
+    _patch_body = dict(_post_data)
+    _patch_body["bodyJson"] = _json.dumps(_body_json)
+    _resp151b = ctx.api.posts.update_curator_content(
+        venue_map_post_id=_post_id_12061,
+        body=_json.dumps(_patch_body), token="token", app_headers=True)
+    expect(_resp151b).json('$.code').equals('200')
