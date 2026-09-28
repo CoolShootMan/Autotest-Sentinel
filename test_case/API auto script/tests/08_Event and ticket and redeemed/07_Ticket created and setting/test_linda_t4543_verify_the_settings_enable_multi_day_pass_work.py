@@ -582,7 +582,18 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         assert d.get('checkInEnd'), f"step12 days checkInEnd 为空"
 
     # step 13: Check the merchant order detail exist ticket Redemptions contents
-    _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')
+    # merchant order detail 异步落地：刚建的订单在 merchant 视图可能短暂 404，轮询最多 8 次、间隔 3s
+    import time as _time13
+    _resp13 = None
+    for _att in range(8):
+        _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')
+        try:
+            if str(_resp13.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        _time13.sleep(3)
+    assert _resp13 is not None
 
     # 断言：merchant order detail 查询成功
     assert _resp13.status_code == 200, f'step13 HTTP状态码应为200，实际={_resp13.status_code}'

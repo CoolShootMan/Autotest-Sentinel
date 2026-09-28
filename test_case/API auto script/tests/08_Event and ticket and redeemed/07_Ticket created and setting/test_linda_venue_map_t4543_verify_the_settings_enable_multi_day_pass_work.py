@@ -433,7 +433,6 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars.setdefault('target_ticket_title', 'General Admission 01')
     # step 1: POST Partner 999 login
     # token auto-managed by framework (yuxiao999_token)
-    vars['yuxiao999_token'] = _get_path(_json(_resp1), ['data', 'token'])
     # step 2: GET Partner Get the Event id
     _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
     _j2 = _json(_resp2)
@@ -769,7 +768,6 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert any(_d.get('enabled') is True for _d in _p7['days']), "step7 multipleDaysPass.days 无 enabled=true 项"
     # step 9: Get consumer linda10 token  (POST /auth/sign-in)
     # token auto-managed by framework (linda10_token)
-    vars['linda10_token'] = _get_path(_json(_resp9), ['data', 'token'])
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertions: $.code == 200 ; $.message == success
