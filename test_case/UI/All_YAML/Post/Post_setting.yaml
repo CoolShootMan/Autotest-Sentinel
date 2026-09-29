@@ -972,13 +972,19 @@ testT2834_VerifyPartner:
         # Step 4: Check Free Shipping checkbox
         sleep_step: 500
         click_add_product_btn_1: { role: 'button', name: 'product(s)' }
-        sleep_step: 1000
+        sleep_step: 3000
+        # A "Set resale earnings" onboarding popup can appear on top of the Customize dialog;
+        # the framework scopes test_id-based steps to the last visible dialog, so dismiss it first
+        # (it only shows until it has been walked through once).
+        smart_click_optional_start_customizing: { role: "button", name: "Start Customizing" }
+        sleep_step: 1500
         page_scroll: { y: 800, delay: 1500, steps: 3 }
         sleep_step: 1000
-        # Advanced settings for products.1 is collapsed by default; expand before toggling isFreeShipping
-        # (verified in browser 2026-08-10: collapsed -> input not in DOM; expand index 1 -> products.1.isFreeShipping appears)
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 1 }
-        sleep_step: 1000
+        # Per-product "Advanced settings" is collapsed by default (inputs are not in the DOM until
+        # expanded). Expand the 2nd product card (products.1 = test_general_products) by clicking its
+        # header text - clicking the ExpandMoreIcon svg does nothing (verified 2026-09-29).
+        R_click_expand_details: { locator: 'p:text-is("Advanced settings")', index: 1 }
+        sleep_step: 1500
         check_free_shipping: { locator: 'input[name="products.1.isFreeShipping"]', checked: true }
 
         # Step 5: Save changes
@@ -1076,8 +1082,10 @@ testT2834_VerifyGuest:
         
         # Address dropdown selection
         fill_address: { role: "textbox", name: "e.g. 123 Main St, Austin, TX", value: "ca" }
-        sleep_step: 2000
-        R_click_address_option: { role: "button", name: "Carlton Ave, Columbus, OH, USA" }
+        sleep_step: 3000
+        # Google Places suggestions are not stable (the hard-coded "Carlton Ave" is no longer
+        # returned for "ca"), so just take the first suggestion of the popover list.
+        R_click_address_option: { locator: '[role="presentation"] [data-testid="list-item"]', index: 0 }
         sleep_step: 1000
 
         #fill_zipcode: { locator: 'input[name="address.zipcode"]', value: "40012" }
@@ -1129,6 +1137,9 @@ testT2834_VerifyGuest:
         sleep_after_card_click: 1000
         click_add_product_btn_2: { role: 'button', name: 'product(s)' }
         sleep_after_add_product: 1500
+        # Same onboarding popup as in the partner case; dismiss it so Save is not covered.
+        smart_click_optional_start_customizing_teardown: { role: "button", name: "Start Customizing" }
+        sleep_after_start_customizing_teardown: 1500
         R_click_save_teardown: { role: "button", name: "Save" }
         sleep_after_save_teardown: 1000
         R_click_save_again_teardown: { role: "button", name: "Save" }
@@ -1365,8 +1376,9 @@ testT2515_VerifyDisabled_WithVariant:
         R_click_add_to_cart_7people: { locator: "text=Add to cart" }
         sleep_step: 2000
 
-        # Step 7: Click Checkout button directly (5+3=8 > 5, but first checkout will succeed)
-        R_click_checkout: { role: "button", name: "Checkout" }
+        # Step 7: Open the cart dialog via the cart icon (the bottom CTA label flips
+        # between "Checkout" and "RSVP", the cart icon is stable)
+        R_click_checkout: { locator: '[aria-label="View cart"]' }
         sleep_step: 3000
 
         # Step 7.1: Click Continue to enter Contact info page

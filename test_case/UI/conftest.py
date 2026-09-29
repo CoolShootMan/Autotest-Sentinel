@@ -39,6 +39,7 @@ from playwright.sync_api import (
 )
 from slugify import slugify
 import re
+import uuid
 
 # Load .env file from project root
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -325,6 +326,16 @@ def context(
                     if c.get("name") in non_auth_names
                 ]
                 if guest_cookies:
+                    # Guest runs must not inherit the previous run's identity: the
+                    # per-customer purchase limit and the server-side cart are keyed to
+                    # release_katana_visitor_id, so a stable id makes a case such as
+                    # testT2515_VerifyDisabled_WithVariant fail on its second run (the
+                    # first run consumes the whole limit). A new context is a new browser,
+                    # so mint a fresh visitor id per run. vanity_url, consent and
+                    # analytics cookies still come from the storage state for routing.
+                    for _cookie in guest_cookies:
+                        if _cookie.get("name", "").endswith("katana_visitor_id"):
+                            _cookie["value"] = str(uuid.uuid4())
                     context.add_cookies(guest_cookies)
                     logger.info(
                         f"GUEST MODE: injected {len(guest_cookies)} non-auth "
