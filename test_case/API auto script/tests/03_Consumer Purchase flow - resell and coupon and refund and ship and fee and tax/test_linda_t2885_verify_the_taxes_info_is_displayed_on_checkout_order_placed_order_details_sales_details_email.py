@@ -81,6 +81,7 @@ ENV_NAME = "Release"
 
 
 import json
+import time
 
 from typing import Any, TYPE_CHECKING
 
@@ -164,7 +165,16 @@ def test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed
     # === pre-script（由 Apifox customScript 翻译）===
     orderNumber = vars.get('orderNumber')
 
-    _resp6 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
+    # merchant order detail 异步落地：刚建的订单在 merchant 视图可能短暂 404，轮询最多 10 次、间隔 2s
+    _resp6 = None
+    for _att in range(10):
+        _resp6 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda00_token')
+        try:
+            if str(_resp6.json().get('code')) == '200':
+                break
+        except Exception:
+            pass
+        time.sleep(2)
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal 20
