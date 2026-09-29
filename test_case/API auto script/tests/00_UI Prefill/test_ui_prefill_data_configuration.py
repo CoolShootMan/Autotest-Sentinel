@@ -13186,3 +13186,166 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         venue_map_post_id=_post_id_12061,
         body=_json.dumps(_patch_body), token="token", app_headers=True)
     expect(_resp151b).json('$.code').equals('200')
+
+
+    # ================================================================
+    # Prefill event: lury-ui-automation-testing (for yuxiao_999)
+    # ================================================================
+
+    # --- step 152: Create event lury-ui-automation-testing (POST /product-event/v2) ---
+    _resp152 = ctx.api.events.create_v2(body=r"""{
+    "ignoreStartTime": false,
+    "ignoreEndTime": false,
+    "isTimeUnspecified": false,
+    "allowAutoComplete": true,
+    "description": "",
+    "note": "",
+    "location": "Teston Road, Maple, ON, Canada",
+    "status": "UPCOMING",
+    "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
+    "isTaxEnabled": false,
+    "isAddressRevealEnabled": false,
+    "title": "lury-ui-automation-testing",
+    "venue": "3rd Street Promenade",
+    "timezone": {
+        "timeZoneId": "America/Toronto",
+        "timeZoneName": "Eastern Daylight Time",
+        "dstOffset": 3600,
+        "rawOffset": -18000
+    },
+    "poster": {
+        "height": 2048,
+        "width": 3072,
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "mediaType": "IMAGE"
+    },
+    "startDateDisplay": "2027-09-29 00:00",
+    "endDateDisplay": "2033-09-29 00:45",
+    "locationDetails": {
+        "line1": "Teston Road",
+        "city": "Vaughan",
+        "state": "Ontario",
+        "stateName": "Ontario",
+        "zipcode": "",
+        "country": "Canada",
+        "placeId": "Eh5UZXN0b24gUm9hZCwgTWFwbGUsIE9OLCBDYW5hZGEiLiosChQKEgnZKxgAlCgriBFZxtVPBhJGQxIUChIJnViAXQMpK4gR_d4duheew-k"
+    },
+    "styleSettings": {
+        "template": "ClearSky",
+        "themeName": "MidnightGlow",
+        "layout": {
+            "pageHeader": {"style": "DEDICATED_HEADER_BAR", "displayText": "SHOP_NAME", "height": "MEDIUM"},
+            "productBanner": {"ctaButton": "VIEW_PRODUCT", "display": "HIDE"}
+        },
+        "version": "v2",
+        "backgroundColor": "#000000",
+        "title": {"color": "#F6CA7C", "fontFamily": "Inter", "fontSize": 24, "fontWeight": 700},
+        "columnTitle": {"fontFamily": "Inter", "fontSize": 20, "fontWeight": 700, "color": "#FFFFFF"},
+        "fontFamily": "Inter",
+        "color": "#FFFFFF",
+        "dividerColor": "#5D5D5D",
+        "button": {"backgroundColor": "#F6CA7C", "color": "#000000", "borderRadius": 0, "fontWeight": 400},
+        "secondaryButton": {"color": "#FFFFFF", "borderColor": "#F6CA7C", "borderRadius": 0, "fontWeight": 400},
+        "product": {"borderRadius": 0},
+        "featuredProducts": {"backgroundColor": "#000000", "borderRadius": 0, "color": "#FFFFFF", "secondaryTextColor": "#E0E0E0", "title": {"fontFamily": "Inter", "fontSize": 14, "fontWeight": 400, "color": "#FFFFFF"}},
+        "relatedLink": {"backgroundColor": "#FAFAFA", "color": "#000000 ", "borderRadius": 0},
+        "announcementCarousel": {"backgroundColor": "#F6CA7C", "color": "#000000"},
+        "featuredProduct": {"cover": {"borderRadius": 0}},
+        "recentUsedColors": ["#ffffff"]
+    }
+}""", app_headers=True, token="token")
+    expect(_resp152).json('$.code').equals('200')
+    expect(_resp152).json('$.message').equals('success')
+    ctx.extract("event_lury_id", _resp152, "$.data.id")
+
+
+    # --- step 153: Create event media (POST /product-event/v2/{event_id}/media/batch/create) ---
+    _resp153 = ctx.api.events.media_batch_create(
+        path_vars={"created_event_id": vars.get("event_lury_id", "")},
+        body="""{
+    "poster": {"height": 2048, "mediaDuration": 0, "mediaType": "IMAGE", "position": 0, "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072},
+    "posterBackend": [{"height": 2048, "mediaDuration": 0, "mediaType": "IMAGE", "position": 0, "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072}],
+    "medias": [],
+    "mediaTextConfig": {"headline": "Missed our last event?", "subtitle": "Here's a lil recap. Make sure you buy, tickets SOLD OUT last event!", "align": "center"}
+}""", app_headers=True, token="token")
+    expect(_resp153).json('$.code').equals('200')
+    expect(_resp153).json('$.message').equals('success')
+
+
+    # --- step 153b: Create event ticket (POST /product-event/v2/{event_id}/ticket/batch/v2) ---
+    _resp153b = ctx.api.events.ticket_batch_v2(
+        path_vars={"created_event_id": vars.get("event_lury_id", "")},
+        body="""{
+    "poster": {"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0},
+    "listingType": "TICKET",
+    "isTaxEnabled": false,
+    "autoReplace": false,
+    "tickets": [
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "General Admission",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [
+                {
+                    "inventoryQuantity": 100,
+                    "ticketPrice": 22,
+                    "price": 25.55,
+                    "fees": 3.55,
+                    "priceAnchor": 0,
+                    "option": {"option1": "Default Title"},
+                    "transactionFee": {"platformFee": 3.5, "customFee": 0, "transactionItemFee": 3.55}
+                }
+            ]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "VIP",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [
+                {
+                    "inventoryQuantity": 50,
+                    "ticketPrice": 44,
+                    "price": 50,
+                    "fees": 6,
+                    "priceAnchor": 0,
+                    "option": {"option1": "Default Title"},
+                    "transactionFee": {"platformFee": 6, "customFee": 0, "transactionItemFee": 6}
+                }
+            ]
+        }
+    ],
+    "coSellingCommissionRate": 0,
+    "customFeeConfig": {"isEnabled": false, "items": []}
+}""", app_headers=True, token="token")
+    expect(_resp153b).json('$.code').equals('200')
+    expect(_resp153b).json('$.message').equals('success')
+
+
+    # --- step 154: Create empty lineup (POST /product-event/v2/{event_id}/lineup/batch) ---
+    _resp154 = ctx.api.events.lineup_batch(
+        path_vars={"created_event_id": vars.get("event_lury_id", "")},
+        body="""{"lineup":[]}""", app_headers=True, token="token")
+    expect(_resp154).json('$.code').equals('200')
+    expect(_resp154).json('$.message').equals('success')
+
+
+    # --- step 155: Get event post id (GET /posts/curator/event/{event_id}/posts) ---
+    _resp155 = ctx.api.posts.curator_event_posts(
+        path_vars={"event_id": vars.get("event_lury_id", "")},
+        app_headers=True, token="token")
+    expect(_resp155).json('$.code').equals('200')
+    expect(_resp155).json('$.message').equals('success')
+    ctx.extract("post0_id_lury", _resp155, "$.data.items[0].id")
+
+
+    # --- step 156: Add post to shop module (POST store-front/add-items-to-modules) ---
+    _resp156 = ctx.api.storefront.add_items_to_modules(body=f"""{{
+    "items": [{{"itemId": "{vars.get("post0_id_lury", "")}"}}],
+    "moduleIds": ["013547de-768e-4952-81c8-925247cff24c"]
+}}""", token="token", app_headers=True)
+    expect(_resp156).json('$.code').equals('200')
+    expect(_resp156).json('$.message').equals('success')
