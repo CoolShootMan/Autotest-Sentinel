@@ -465,9 +465,10 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     # step 7: GET Catch the promoterProductvariantId
     # 关联产品由「事件 → 帖子」异步落地（eventually-consistent）：step5 新建商品、step6
     # v2_show_in_post 后立刻查 relate-products，有时拿不到刚创建的目标商品（CI 实测
-    # relatedProducts=2 但缺 'autotest T5379'）。故重试直到目标商品出现（最多 6 次、3s）。
+    # relatedProducts=1 但缺 'autotest T5379'）。CI 连续跑多个用例时同步延迟更长，
+    # 故重试直到目标商品出现（最多 12 次、5s，共 60s）。
     _prod7 = None
-    for _att7 in range(6):
+    for _att7 in range(12):
         _resp7 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
         expect(_resp7).json('$.code').equals('200')
         expect(_resp7).json('$.message').equals('success')
@@ -475,7 +476,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
         _prod7 = next((x for x in _rels7 if x.get('title') == 'autotest T5379'), None)
         if _prod7 is not None:
             break
-        time.sleep(3)
+        time.sleep(5)
     assert _prod7, f"step7 重试后仍找不到 title='autotest T5379' 的关联产品（relatedProducts={len(_rels7)}）"
     _v07 = (_prod7.get('variants') or [{}])[0]
     ctx.set('promoterProductId',
