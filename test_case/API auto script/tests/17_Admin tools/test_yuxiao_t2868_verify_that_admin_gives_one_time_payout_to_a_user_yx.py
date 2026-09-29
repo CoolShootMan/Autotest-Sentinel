@@ -69,9 +69,9 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     expect(_resp1).json('$.message').equals('success')
     # step 2: GET Check the bonus give success
     _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
-    # assertion 2.检查rewarddata_rewardBalance: 一次性贷款不应改变 payoutBalance（与基线一致，兼容历史残留余额）
-    # 若 pre 无任何记录（首次给该 promoter 发贷款），则 items[0] 就是新建记录，其 payoutBalance = 贷款金额 10
-    _expected_balance = _pre_balance if _pre_balance is not None else '10'
-    expect(_resp2).json('$.data.items[0].payoutBalance').equals(_expected_balance)
+    # items 按 createdAt desc 排序：POST 新建贷款后 items[0] 就是刚创建的记录，
+    # 其 payoutBalance 恒等于贷款金额 10（不是旧记录的余额）。
+    expect(_resp2).json('$.data.items[0].payoutBalance').equals(10)
+    expect(_resp2).json('$.data.items[0].payoutToPay').equals(10)
     # assertion 2.assertion: responseJson equal {{promoterId}}
     expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))
