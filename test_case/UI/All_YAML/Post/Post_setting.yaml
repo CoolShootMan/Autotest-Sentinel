@@ -435,12 +435,12 @@ testT3686_CosellerResell:
         # sleep_step: 3000
 
         # # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # # 使用 smart_click_retry: 元素一定存在，但点击可能不稳定（动画遮罩等），需要重试
+        # # Use smart_click_retry: the element always exists, but the click can be flaky (animation overlay etc.), so retry
         # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
         # sleep_step: 2000
 
         # # Second click on Publish confirmation dialog (modal button)
-        # # 确认弹框出现有延迟，增加等待时间和重试次数；弹框里只有1个Publish，用index: 0
+        # # The confirmation dialog shows up late, so raise the wait and the retry count; it holds a single Publish, hence index: 0
         # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
         # sleep_step: 1000
 
@@ -631,7 +631,7 @@ testT2705_VerifyPartner:
     R_click_add_product: { role: "button", name: "Add 1/20 product(s)" }
     sleep_step: 2000
 
-    # Step 8.1: Click "Customize" button (renamed by Pear UI team from "Customize" → "Customize")
+    # Step 8.1: Click "Customize" (the panel was renamed by the Pear UI team from "Customize products" to "Customize")
     R_click_customize: { role: "button", name: "Customize" }
     sleep_before_scroll: 2000
 
@@ -1946,12 +1946,12 @@ testT5033_5034_VerifyPartner:
         check_CTACustomized: { locator: "input[name$='products.1.isCtaCustomized']" }
         sleep_step: 500
         # Set its Buy now CTA option -> "View options"
-        # 按钮选择器 [aria-haspopup='listbox']:has-text('Buy now') 正确（整页唯 1 个）。
-        # 容器不能用 container_text="General Admission"：MUI 把 Advanced settings
-        # (CTA checkbox + Buy now) 渲染在产品卡 data-testid="content" 之外，
-        # page.locator("div", has_text="General Admission").last 取到的是产品名字
-        # wrapper，不含 Buy now → 超时。实测：整页只有 1 个 Buy now 且只在 dialog
-        # 内，故用 container_locator 直接锁定 dialog（不动 framework）。
+        # The button selector [aria-haspopup='listbox']:has-text('Buy now') is correct (exactly one on the page).
+        # container_text="General Admission" is not usable as the container: MUI renders Advanced settings
+        # (CTA checkbox + Buy now) outside the product card's data-testid="content", so
+        # page.locator("div", has_text="General Admission").last resolves to the product-name
+        # wrapper, which holds no Buy now -> timeout. Measured: the page has exactly one
+        # Buy now and it lives inside the dialog, so container_locator pins that dialog (no framework change).
         click_container_button_buynow_tgp: { container_locator: "//div[@role='dialog']", button: "[aria-haspopup='listbox']:has-text('Buy now')", button_index: 0 }
         sleep_step: 500
         R_click_option_view_options: { role: "option", name: "View options" }
@@ -2783,11 +2783,11 @@ testT1928:
         fill_variant_price_1: { locator: "input[name='variants.1.price']", value: '899', optional: true }
         sleep_step_p17: 1000
         
-        # Manage variants 弹窗底部绿色 Done（data-testid=main-button），点掉才关闭弹窗
+        # Green Done at the bottom of the Manage variants dialog (data-testid=main-button); the dialog only closes once it is clicked
         R_click_variant_done: { locator: "div[role='dialog'] button[data-testid='main-button']:has-text('Done')" }
         sleep_step_p18: 3000
 
-        # 保存产品（产品页底部 Create）
+        # Save the product (the Create button at the bottom of the product page)
         R_click_create_product: { role: 'button', name: 'Create' }
         sleep_step_p19: 6000
 
@@ -2829,7 +2829,7 @@ testT1928:
         R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
         sleep_step_s7: 1000
 
-        # 关闭 "You've added products - great start!" 引导浮层（MuiPopover，16x16 Close），否则遮挡 Customize
+        # Dismiss the "You've added products - great start!" onboarding popover (MuiPopover, 16x16 Close); it otherwise covers Customize
         smart_click_optional_great_start_close: { locator: "button[aria-label='Close']", timeout: 3000 }
         sleep_step_p23_a: 1500
 
@@ -2839,7 +2839,7 @@ testT1928:
         R_click_customize_products_btn: { role: 'button', name: 'Customize' }
         sleep_step_s8: 2000
 
-        # 新 UI: Customize products 面板的 Advanced settings 默认已展开，Retail 列直接可编辑
+        # New UI: Advanced settings in the Customize products panel is expanded by default, so the Retail column is directly editable
         sleep_step_p23: 1000
 
         R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
@@ -2851,13 +2851,13 @@ testT1928:
         fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 1928' }
         sleep_step_s11: 1000
 
-        # 固定 post 的 URL alias，guest 才能用稳定链接 {BASE_URL}/autotestshop/post/test1928 打开
+        # Pin the post URL alias so a guest can open it through the stable link {BASE_URL}/autotestshop/post/test1928
         R_click_settings_tab: { role: 'tab', name: 'Settings', exact: true }
         sleep_step_p26: 2500
         fill_post_url_alias: { locator: "textarea[name='urlAlias']", value: 'test1928' }
         sleep_step_p27: 1000
 
-        # 填完 alias 必须切回 Content，否则 Add cover media 不在当前视图
+        # After filling the alias we must switch back to Content, otherwise Add cover media is not in the current view
         R_click_content_tab_1928: { role: 'tab', name: 'Content', exact: true }
         sleep_step_p35: 2000
 
@@ -2870,7 +2870,7 @@ testT1928:
         click_done_btn_commerce: { role: 'button', name: 'Done' }
         sleep_step_s13: 1000
 
-        # 切 Layout 为 Collection，否则默认 Story Only 是纯内容布局、页面不渲染产品卡片
+        # Switch Layout to Collection; the default Story Only is a content-only layout that renders no product cards
         R_click_style_tab_1928: { role: 'tab', name: 'Style', exact: true }
         sleep_step_p28: 2000
         R_click_layout_tab_1928: { role: 'tab', name: 'Layout', exact: true }
@@ -2891,11 +2891,11 @@ testT1928:
         sleep_step_s16: 5000
 
         # Navigate to Catalogs to update product price
-        # 直接导航到 Storefront 页（原 R_click_storefront 的 name=Storefront 其实指向上面的汉堡图标，会误开菜单）
+        # Navigate straight to the Storefront page (the old R_click_storefront name=Storefront actually pointed at the hamburger icon above and opened the menu by mistake)
         open_storefront_page: { url: "{BASE_URL}/autotestshop" }
         sleep_step_s17: 6000
 
-        # Storefront 页需先点右上角汉堡（enhance-button，aria-label=Storefront）展开导航菜单，Catalogs 才可见
+        # On the Storefront page click the top-right hamburger (enhance-button, aria-label=Storefront) first to expand the nav menu before Catalogs becomes visible
         R_click_nav_hamburger: { locator: "button[data-testid='enhance-button'][aria-label='Storefront']" }
         sleep_step_p25: 2500
 
@@ -2912,16 +2912,16 @@ testT1928:
         fill_variants_1_price: { locator: 'input[name="variants.1.price"]', value: '2' }
         sleep_step_s21: 1000
 
-        # Edit product 页底部绿色 Save 保存改价
+        # The green Save at the bottom of the Edit product page stores the price change
         R_click_save_product_1928: { role: 'button', name: 'Save' }
         sleep_step_p24: 3000
 
-        # 收尾验证：切 guest 视角打开固定 alias 的 post，确认产品卡片价格已随 catalog 改价同步
+        # Final check: switch to the guest view and open the post through the pinned alias to confirm the product card price follows the catalog price change
         clear_cookies: { inject_guest: true }
         sleep_step_p32: 2000
         open_guest_post_1928: { url: "{BASE_URL}/autotestshop/post/test1928" }
         sleep_step_p33: 8000
-        # page_scroll 在 storefront 只滚 main 容器（实测 scrollY 恒为 0），改用 slick_swipe 走 mouse.wheel
+        # page_scroll only scrolls the main container on the storefront (scrollY stays 0 in practice), so use slick_swipe via mouse.wheel instead
         scroll_guest_post_1928: { y: 600 }
         sleep_step_p34: 2000
 
