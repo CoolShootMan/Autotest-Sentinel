@@ -19,9 +19,18 @@ STOREFRONT = {
     "cover_image":  "img[alt='background']",
 }
 
+# --- Meta Pixel post page (mehost.cn) ---
+META_PIXEL = {
+    "pixel_script":       "script[src*='connect.facebook.net']",
+    "btn_buy_ticket":     "button:has-text('Buy Ticket') >> nth=0",
+    "dialog":             "[role='dialog']",
+    "btn_buy_now":        "[role='dialog'] button:has-text('Buy now')",
+    "btn_continue_card":  "button:has-text('Continue with credit card')",
+}
+
 # Flattened dict for {{@key}} lookup (keys must be unique across groups)
 LOCATORS = {}
-for _group in (ADMIN_FEATURES, STOREFRONT):
+for _group in (ADMIN_FEATURES, STOREFRONT, META_PIXEL):
     for _k, _v in _group.items():
         if _k in LOCATORS:
             raise ValueError(f"Duplicate locator key: {_k}")
