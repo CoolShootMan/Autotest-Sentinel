@@ -427,9 +427,10 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     }, token='yuxiao999_token')
     # step 6: GET Catch the promoterProductvariantId
     # 关联产品异步落地（eventually-consistent）：step4 新建商品、step5 v2_show_in_post 后
-    # 立即查 relate-products，可能拿不到刚建的目标商品。重试直到目标商品出现（最多 6 次、3s）。
+    # 立即查 relate-products，可能拿不到刚建的目标商品。CI 连续跑多个用例时同步延迟更长，
+    # 重试直到目标商品出现（最多 12 次、5s，共 60s）。
     _prod6 = None
-    for _att6 in range(6):
+    for _att6 in range(12):
         _resp6 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
         expect(_resp6).json('$.code').equals('200')
         expect(_resp6).json('$.message').equals('success')
@@ -439,7 +440,7 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
                       None)
         if _prod6 is not None:
             break
-        time.sleep(3)
+        time.sleep(5)
     assert _prod6, f"step6 重试后仍找不到目标关联产品（relatedProducts={len(_rels6)}）"
     _v06 = (_prod6.get('variants') or [{}])[0]
     ctx.set('promoterProductId',
