@@ -2400,14 +2400,10 @@ testT2281:
         click_add_product_cta: { test_id: 'enhance-button-cta' }
         sleep_after_select_open: 3500
 
-        # The product must be picked by clicking its CARD, not the raw icon:
-        # SquareLineIcon matches 30 elements inside the dialog and clicking one does
-        # NOT toggle selection (the footer stays "Add 0/20 product(s)").
-        # [data-testid="content"] matches 31 nodes and index 0 is a hidden 0x0
-        # page-level container, so the first real product card is index 1.
-        click_product_card_2281: { locator: '[role="dialog"] [data-testid="content"]', index: 1 }
+        # Card = the mui-stack wrapping the product image; container-agnostic on purpose (this panel has been both a bottom MuiDrawer and a [role=dialog] over time), index 0 = first product. Do NOT click SquareLineIcon: it matches every card's icon and does not toggle selection.
+        click_product_card_2281: { locator: '[data-testid="mui-stack"][role="button"]:has([data-testid="product-list-card-image-component"])', index: 0 }
         sleep_after_click_product: 1500
-        click_add_product_btn: { locator: '[role="dialog"] button:has-text("product(s)")' }
+        click_add_product_btn: { locator: 'button:has-text("product(s)")' }
         sleep_after_add_product: 2500
 
         # Step 2: Click Content tab and fill title
