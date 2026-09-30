@@ -219,53 +219,34 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
                      run_number: str = "") -> str:
     agg = _totals(suites)
     ok_all = (agg["failed"] + agg["error"]) == 0
-    head = ":white_check_mark: *PASS*" if ok_all else ":warning: *COMPLETED*"
+    icon = ":white_check_mark:" if ok_all else ":warning:"
 
-    lines = [f"{head} · *API Automation 每日报告（{env}）*"]
+    lines = [f"{icon} *API Automation 每日报告（{env}）*"]
     if not suites:
-        lines.append("> ⚠️ 没有找到任何运行结果（两套 suite 可能都在启动阶段失败）")
+        lines.append("> ⚠️ 没有找到运行结果")
     else:
-        for suite, info in suites.items():
-            s = _counts_of(info["meta"])
-            mark = ":white_check_mark:" if (s["failed"] + s["error"]) == 0 else ":warning:"
-            lines.append(
-                f"> {mark} *{_title(suite)}*：✅ {s['passed']} 通过 / ❌ {s['failed']} 失败 / "
-                f"⚠️ {s['error']} 错误 / ⏭ {s['skipped']} 跳过 · "
-                f"共 {s['total']} 条 · 通过率 *{_rate_str(s['rate'])}*"
-            )
+        rate = _rate_str(agg["rate"])
         lines.append(
-            f"> *合计*：✅ *{agg['passed']} 通过* / ❌ *{agg['failed']} 失败* / "
-            f"⚠️ {agg['error']} 错误 / ⏭ {agg['skipped']} 跳过 · "
-            f"共 {agg['total']} 条 · 通过率 *{_rate_str(agg['rate'])}*"
+            f"> 通过率: *{rate}%*（{agg['passed']}/{agg['total']}）· "
+            f"失败 {agg['failed'] + agg['error']} 条"
         )
 
-    # 失败明细
     all_failures: list[dict] = []
     for info in suites.values():
         all_failures += info["failures"]
     if all_failures:
-        lines += ["", f"*失败明细（前 {min(len(all_failures), MAX_SLACK_FAILURES)} 条，"
-                      f"共 {len(all_failures)} 条）*"]
-        for i, f in enumerate(all_failures[:MAX_SLACK_FAILURES], 1):
-            kind = "错误 " if f.get("kind") == "error" else "未通过"
-            cid = f.get("t_id")
-            cid_s = f"{cid} " if cid else ""
-            lines.append(f"{i}. `{kind}` {cid_s}{_short_name(f.get('name') or '')}")
-            detail = _first_error_line(f.get("message") or "")
-            if detail:
-                lines.append(f"    ↳ {detail}")
+        lines.append("> 失败用例:")
+        for f in all_failures[:MAX_SLACK_FAILURES]:
+            cid = f.get("t_id") or ""
+            name = _short_name(f.get("name") or "")
+            lines.append(f"> • {cid} {name}".strip())
         if len(all_failures) > MAX_SLACK_FAILURES:
-            lines.append(f"… 其余 {len(all_failures) - MAX_SLACK_FAILURES} 条见运行页 Summary")
+            lines.append(f"> … 其余 {len(all_failures) - MAX_SLACK_FAILURES} 条见运行页")
 
     if run_url:
-        lines += ["", f"<{run_url}|🔗 运行详情与日志（含 Job Summary 完整报告）>"]
-    if run_number:
-        lines.append(f":package: Artifacts：`api-run-logs-{run_number}`")
+        lines.append(f"> 运行详情: <{run_url}|{run_url}>")
 
-    text = "\n".join(lines)
-    if len(text) > MAX_SLACK_CHARS:
-        text = text[: MAX_SLACK_CHARS - 24] + "\n…（已截断，详见运行页）"
-    return text
+    return "\n".join(lines)
 
 
 # --- CLI ----------------------------------------------------------------
