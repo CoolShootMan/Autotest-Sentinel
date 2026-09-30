@@ -71,15 +71,15 @@ testT2718:
             cvc: '345'
             card_name: 'linda 4650'
             zipcode: '90021'
-        sleep_card: 5000
+        sleep_card: 3000
+
+        # Step 9: Place Order → Purchase + AddPaymentInfo fires on submit
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_place_order: 8000
 
         execute_js_verify_addpaymentinfo:
             script: "() => JSON.stringify(window._pixelLog.filter(e => e.event === 'AddPaymentInfo').map(e => ({value: e.params.value, currency: e.params.currency})))"
             assert_contains: '"value":11.98'
-
-        # Step 9: Place Order → Purchase event
-        R_click_place_order: { role: 'button', name: 'Place order' }
-        sleep_place_order: 8000
 
         # Step 10: Verify all 4 events captured with matching value=11.98 USD
         execute_js_verify_all_events:
