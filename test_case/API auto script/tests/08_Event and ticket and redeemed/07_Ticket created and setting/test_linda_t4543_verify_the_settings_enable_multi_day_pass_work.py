@@ -477,7 +477,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     expect(_resp7).json('$.code').equals('200')
     # step 8: GET Catch the promoterProductvariantId（重试：related products 异步落地）
     _prod8 = None
-    for _att8 in range(6):
+    for _att8 in range(12):
         _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
         expect(_resp8).json('$.code').equals('200')
         expect(_resp8).json('$.message').equals('success')
