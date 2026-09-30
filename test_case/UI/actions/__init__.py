@@ -8,6 +8,7 @@ from .base import (
     _smart_click_with_fallback,
     smart_fill,
     fill_numeric,
+    fill_type,
     smart_check,
     smart_swipe,
     smart_sleep,
@@ -109,6 +110,7 @@ ACTIONS = {
     "R_click": smart_click,
     "R_click_scan": smart_click_scan,   # Explicitly enable Page-level Search + AI fallback
     "fill": smart_fill,
+    "fill_type": fill_type,
     "check": smart_check,
     "swipe": smart_swipe,
     "sleep": smart_sleep,
@@ -313,6 +315,8 @@ def get_action(name):
         return smart_if
     elif name.startswith("fill_numeric"):
         return fill_numeric
+    elif name.startswith("fill_type"):
+        return fill_type
     elif name.startswith("fill"):
         return smart_fill
     elif name.startswith("check") or name.startswith("uncheck"):

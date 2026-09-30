@@ -397,6 +397,36 @@ def fill_numeric(page: Page, v: dict):
             return
     raise Exception(f"fill_numeric failed")
 
+def fill_type(page: Page, v: dict):
+    """Fill by real keyboard typing — for masked/segmented inputs (e.g. MUI DateField,
+    placeholder 'MMMM DD, YYYY') where locator.fill() is swallowed by the input mask
+    and silently degrades to today's date.
+
+    Sequence (same as fill_numeric, but WITHOUT the equality verification, because
+    masked fields normalize the display value, e.g. typed '12/30/2026' reads back
+    as 'Dec 30, 2026').
+
+    YAML:
+        fill_type_date: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: '12/30/2026' }
+        fill_type_time: { locator: "input[placeholder='hh:mm aa']", index: 0, value: '12:45 am' }
+    """
+    target_locator = v.get("locator")
+    target_value = str(v.get("value", ""))
+    index = v.get("index", 0)
+    if target_locator:
+        el = page.locator(target_locator).nth(index)
+    else:
+        el = page.get_by_placeholder(str(v.get("placeholder", "")), exact=False).nth(index)
+    el.wait_for(state="visible", timeout=v.get("timeout", 10000))
+    el.scroll_into_view_if_needed()
+    el.click(force=True)
+    page.keyboard.press("Control+A")
+    page.keyboard.press("Backspace")
+    page.keyboard.type(target_value, delay=v.get("delay", 80))
+    if v.get("enter", True):
+        page.keyboard.press("Enter")
+    page.wait_for_timeout(300)
+
 def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
     target_locator = v.get("locator")
