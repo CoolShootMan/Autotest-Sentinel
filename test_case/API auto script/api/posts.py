@@ -420,3 +420,20 @@ class PostsApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    def curator_co_selling_update(
+        self, *,
+        post_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """PATCH /posts/curator/{{post_id}}/co-selling"""
+        return self._call(
+            "PATCH", '/posts/curator/{{post_id}}/co-selling',
+            path_vars=_pv(("post_id", post_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
