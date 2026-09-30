@@ -20,7 +20,7 @@ testT1742:
     # but slug is dynamic — organizer flow has no "View post" exposure.
     # See MEMORY.md (UI 重构 / 仍 defer).
     description: "Post commission Batch set to 10%"
-    skip: true
+    #skip: true
     pre_condition:
         description: "delete the resold post"
         expect_result: "Co-seller post deleted successfully or no data to delete"
@@ -76,18 +76,12 @@ testT1742:
 
         R_click_batch_set: { role: 'button', name: 'Batch set commission for all products' }
         sleep_step: 1500
-
-        # Step 4: Fill commission 10 -> Confirm -> Save
         fill_commission: { placeholder: "e.g., 5", value: '10' }
         sleep_step: 3000
         R_click_confirm_value: { role: 'button', name: 'Confirm' }
         sleep_step: 1500
-
-        # Save (skip if already at 10%, Save will be disabled)
         R_click_save_1: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # Optimization: wait for Save button to become disabled, indicating save is complete
         R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true, disable_ai: true }
-        # Optimization: wait for toast to appear, confirming backend save is successful
         wait_toast_success: { message: "Post products updated", timeout: 15000 }
 
         R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
@@ -101,16 +95,15 @@ testT1742:
         R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 3000
 
-        # [drift fix] the organizer Post-tab card is a management card (no offer text); click it to open
-        # the PUBLIC post page where "Offer up to X%" renders, then verify there.
-        R_click_post_card: { role: "button", name: "Select post", index: 0 }
-        sleep_step: 4000
-
-        # Step 5: Verify PUBLIC Post Card displays "Offer up to 10%"
+        # Clear cookies to view as guest/promoter, then check Offer up to 10%
+        clear_cookies: { inject_guest: false }
+        open: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
+        sleep_step: 3000
+        reload_page: {}
+        sleep_step: 5000
         verify_post_offer:
-            scope: { text: "event-for-ui-auto-venue-map" }
             text: "Offer up to 10%"
-            timeout: 5000
+            timeout: 15000
 
         sleep_end: 3000
 

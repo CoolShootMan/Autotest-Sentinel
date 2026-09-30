@@ -7316,6 +7316,66 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp108).json('$.code').equals('200')
     expect(_resp108).json('$.message').equals('success')
 
+    # --- step 108.5: enable co-selling for venue map post (like step 38) ---
+    _resp108b = ctx.api.events.event_co_selling_defaults(body="""{
+    "commissionRate": 0,
+    "enableEventCoSellingCommission": true
+}""", token="token", app_headers=True)
+    expect(_resp108b).json('$.code').equals('200')
+    expect(_resp108b).json('$.message').equals('success')
+
+    # First GET post products to get variant IDs
+    _resp108c_get = ctx.api.admin.post_v2_relate_products(
+        body=None, token="admin_token",
+        path_vars={"post0_id": "{{venue_map_post_id}}"})
+    _related = (_resp108c_get.json().get("data") or {}).get("relatedProducts") or []
+    _rp_body = []
+    for _rp in _related:
+        _variants = []
+        for _v in _rp.get("variants") or []:
+            _variants.append({
+                "wholesalePriceForPromoters": 0,
+                "price": _v.get("price", 0),
+                "costPrice": 0,
+                "isExcluded": False,
+                "isDefault": False,
+                "priceAnchor": 0,
+                "merchantProductVariantId": _v.get("merchantProductVariantId"),
+                "commissionRateForPromoters": 10
+            })
+        _rp_body.append({
+            "type": "PRODUCT",
+            "merchantProductId": _rp.get("merchantProductId") or _rp.get("id"),
+            "isVisible": True,
+            "isPurchaseQuantityLimited": False,
+            "isRecommendation": False,
+            "hasDependentProducts": False,
+            "dependentProductIds": [],
+            "isFreeShipping": False,
+            "isDefaultToSubscription": False,
+            "toReplaceMerchantProductIds": None,
+            "isCtaCustomized": False,
+            "ctaConfig": {"type": "BUY_NOW"},
+            "syncWithCatalogPrice": True,
+            "purchaseQuantityLimit": 1,
+            "variants": _variants
+        })
+    _resp108c = ctx.api.posts.curator_co_selling_update(
+        post_id="{{venue_map_post_id}}",
+        body={
+            "allowPromotersResell": True,
+            "financeModeForPromoters": "FINANCE_MODE_COMMISSION",
+            "allowPromotersCustomizeMedia": True,
+            "allowPromotersHideProducts": True,
+            "allowPromotersAddProducts": False,
+            "allowPromotersCreateCoupon": True,
+            "allowAffiliateSharingOnly": False,
+            "syncEnabled": True,
+            "relatedProducts": _rp_body
+        }, token="token", app_headers=True)
+    expect(_resp108c).json('$.code').equals('200')
+
+
 
 
     # --- step 109: Insert all tickets and all merch section (PATCH posts/curator/{{venue_map_post_id}}/content) ---
@@ -13095,8 +13155,12 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "ticketType": "TICKET_TYPE_STANDARD",
             "title": "outside seat",
             "bodyJson": "",
-            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
-            "variants": [{"inventoryQuantity": 35, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}}]
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
+            "options": [{"name": "Day", "values": ["Saturday", "Sunday"], "images": [{"value": "Saturday", "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png"}, {"value": "Sunday", "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png"}]}],
+            "variants": [
+                {"inventoryQuantity": 20, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "imageIds": [], "imageId": null, "option": {"option1": "Saturday"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}},
+                {"inventoryQuantity": 15, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "imageIds": [], "imageId": null, "option": {"option1": "Sunday"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}}
+            ]
         }
     ],
     "coSellingCommissionRate": 0,
