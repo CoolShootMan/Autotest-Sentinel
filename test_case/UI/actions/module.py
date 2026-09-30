@@ -1195,11 +1195,12 @@ def click_container_button(page: Page, v: dict):
 def select_content_card(page: Page, v: dict):
     """Select an existing post/product card in the 'Add from my content' picker.
 
-    The picker list lives inside a scroll container and the cards render below the
-    fold, so a plain smart_click lands on an in-dialog overlay (the card's own
-    content stack) and never toggles selection. We scroll the card into view, then
-    dispatch a real mouse click at the card's on-screen center — proven to enable
-    the Continue button.
+    2026-09-30 (round-3/4): the parent Add-hub dialog stays mounted behind the
+    picker and its MuiStack intercepts pointer events for the whole dialog
+    lifetime — a raw coordinate click silently lands on the backdrop AND a
+    locator click times out on interception retries (both verified live).
+    dispatch_event('click') delivers the DOM event straight to the card,
+    bypassing hit-testing entirely; React's synthetic handler picks it up.
 
     YAML:
         select_content_card: { index: 0 }            # first card
@@ -1210,12 +1211,7 @@ def select_content_card(page: Page, v: dict):
     card = page.locator("button[data-testid='mui-card-action-area']").nth(index)
     card.scroll_into_view_if_needed()
     page.wait_for_timeout(400)
-    box = card.bounding_box()
-    if not box:
-        raise AssertionError(f"select_content_card: card index {index} has no bounding box")
-    cx = box["x"] + box["width"] / 2
-    cy = box["y"] + box["height"] / 2
-    page.mouse.click(cx, cy)
+    card.dispatch_event("click")
     page.wait_for_timeout(600)
     # confirm selection registered (Continue should enable)
     try:
