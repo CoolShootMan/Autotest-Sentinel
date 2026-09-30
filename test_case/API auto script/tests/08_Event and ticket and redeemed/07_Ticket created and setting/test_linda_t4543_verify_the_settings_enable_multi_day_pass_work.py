@@ -351,7 +351,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
         _post = next((it for it in _items3 if it.get('title') == 'event-for-API-testing'), None)
         assert _post, "post 'event-for-API-testing' not found"
-        vars['postId'] = _post['id']
+        _post_id = _post["id"]
     except Exception as e:
         pytest.fail(f"step3 extract post: {e}")
     # step 4: GET get the event catalog id
@@ -468,7 +468,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         ],
         "posts": [
             {
-                "postId": "{{postId}}",
+                "postId": _post_id,
                 "isVisible": True,
             },
         ],
@@ -478,7 +478,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     # step 8: GET Catch the promoterProductvariantId（重试：related products 异步落地）
     _prod8 = None
     for _att8 in range(12):
-        _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
+        _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': _post_id})
         expect(_resp8).json('$.code').equals('200')
         expect(_resp8).json('$.message').equals('success')
         _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
@@ -508,13 +508,13 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
 
     # step 11: buy now
     _resp11 = ctx.api.orders.buy_now(body={
-        "postIdForFilter": "{{postId}}",
+        "postIdForFilter": _post_id,
         "updateCartItems": [
             {
                 "quantity": 1,
                 "promoterProductVariantId": "{{promoterProductId}}",
                 "price": 2,
-                "postId": "{{postId}}",
+                "postId": _post_id,
                 "selected": True,
                 "customFields": [],
             },
@@ -532,7 +532,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
             {
                 "quantity": 1,
                 "id": "{{productId}}",
-                "postId": "{{postId}}",
+                "postId": _post_id,
                 "price": 2,
                 "customFields": [],
             },
