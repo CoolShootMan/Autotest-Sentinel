@@ -84,29 +84,32 @@ def start_autotest():
     logger.info(f"Running with YAMLs: {yaml_files}")
 
     # ── 1. API 预制脚本：UI Automation Data Pre-configuration ──
-    # UI 用例依赖这条 API 预制脚本先造好测试数据（用户 / event / ticket / product /
-    # post / coupon 等），所以每次跑 UI 用例【之前】必须先跑它。
-    # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
-    # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
-    # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
-    api_dir = str(API_PREFILL_DIR)
-    prefill_runner = os.path.join(api_dir, 'run_suite.py')
-    prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
-    logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
-    logger.info(f"Running command: {prefill_runner} {prefill_suite}")
-    prefill_result = subprocess.run(
-        [sys.executable, prefill_runner, prefill_suite],
-        cwd=api_dir, capture_output=True, text=True
-    )
-    logger.info(f"Prefill stdout: {prefill_result.stdout}")
-    if prefill_result.stderr:
-        logger.info(f"Prefill stderr: {prefill_result.stderr}")
-    if prefill_result.returncode != 0:
-        logger.error(
-            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
-            f"stderr: {prefill_result.stderr}"
+    if os.environ.get('SKIP_PREFILL'):
+        logger.info("=== [1/4] SKIP prefill (SKIP_PREFILL=1) ===")
+    else:
+        # UI 用例依赖这条 API 预制脚本先造好测试数据（用户 / event / ticket / product /
+        # post / coupon 等），所以每次跑 UI 用例【之前】必须先跑它。
+        # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
+        # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
+        # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
+        api_dir = str(API_PREFILL_DIR)
+        prefill_runner = os.path.join(api_dir, 'run_suite.py')
+        prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
+        logger.info(f"=== [1/4] Running API prefill (UI Automation Data Pre-configuration) ===")
+        logger.info(f"Running command: {prefill_runner} {prefill_suite}")
+        prefill_result = subprocess.run(
+            [sys.executable, prefill_runner, prefill_suite],
+            cwd=api_dir, capture_output=True, text=True
         )
-        raise SystemExit(prefill_result.returncode)
+        logger.info(f"Prefill stdout: {prefill_result.stdout}")
+        if prefill_result.stderr:
+            logger.info(f"Prefill stderr: {prefill_result.stderr}")
+        if prefill_result.returncode != 0:
+            logger.error(
+                f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+                f"stderr: {prefill_result.stderr}"
+            )
+            raise SystemExit(prefill_result.returncode)
 
     # ── 2. Fetch cookies for all 3 test accounts ──
     # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），

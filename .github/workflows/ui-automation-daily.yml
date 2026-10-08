@@ -84,6 +84,7 @@ jobs:
         env:
           CI: "true"
           BASE_URL: https://release.pear.us
+          SKIP_PREFILL: "1"
         run: |
           set -o pipefail
           python test_case/UI/main.py 2>&1 | tee run.log
