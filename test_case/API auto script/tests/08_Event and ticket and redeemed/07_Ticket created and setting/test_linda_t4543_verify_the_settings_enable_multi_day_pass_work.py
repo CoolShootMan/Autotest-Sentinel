@@ -475,6 +475,8 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     }, token='yuxiao999_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
+    # step 7.5: 等待 show-in-post 异步落地后再查 relate-products
+    time.sleep(3)
     # step 8: GET Catch the promoterProductvariantId（重试：related products 异步落地）
     _prod8 = None
     for _att8 in range(12):
