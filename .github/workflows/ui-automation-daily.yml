@@ -43,7 +43,7 @@ env:
   # ── Slack 通知总开关 ──
   # 'true' = 向 #api-ui-automation-result-daily-report Slack 群发送结果
   # Secrets: SLACK_WEBHOOK_URL_API_UI_AUTOMATION = #api-ui-automation-result-daily-report incoming webhook url
-  SLACK_NOTIFY_ENABLED: 'false'
+  SLACK_NOTIFY_ENABLED: 'true'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
@@ -85,7 +85,6 @@ jobs:
         env:
           CI: "true"
           BASE_URL: https://release.pear.us
-          SKIP_PREFILL: "1"
         run: |
           set -o pipefail
           python test_case/UI/main.py 2>&1 | tee run.log
