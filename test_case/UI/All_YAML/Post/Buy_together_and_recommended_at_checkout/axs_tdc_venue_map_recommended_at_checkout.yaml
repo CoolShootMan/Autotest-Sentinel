@@ -1,0 +1,462 @@
+# author: Lury
+# time: 2026/9/29 15:16
+
+# --- testT5639_venue_map: check the recommended at checkout is disabled for AXS/TDC/Venue map ticket ---
+testT5639:
+    description: "Verify checkbox of recommended at checkout is disabled for AXS/TDC/Venue map ticket"
+    test_step:
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Search for the event named "event-for-ui-auto-venue-map" and open it.
+        R_click_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_event: 5000
+
+        # 3. Event detail page -> Post tab
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_post_tab: 3000
+
+        # 4. Post view -> Selling sub-tab (sits next to the Content tab)
+        R_click_selling_tab: { role: "tab", name: "Selling", exact: true }
+        sleep_selling_tab: 2000
+
+        # 5. Selling tab -> "Customize" button (opens the Customize products dialog)
+        R_click_customize: { role: "button", name: "Customize" }
+        sleep_customize: 3000
+
+        # 6. Isolate the venue-map product on the Customize products page by its name
+        #    (best-effort search; ensures the visible Advanced-settings click in 7 hits the
+        #     correct card when the post lists multiple products).
+        execute_js_isolate_product:
+            script: |
+                async () => {
+                  const pname = "{{ticket_venue_map}}";
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_venue_map" is not set — run venue_map_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const inp = document.querySelector('input[placeholder="Search product"]');
+                  if (!inp) return 'no-search-box';
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(inp, pname);
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                  await new Promise(r => setTimeout(r, 1500));
+                  return 'searched:' + pname;
+                }
+            save_as: "isolate_result"
+
+        # 7. VISIBLY click the product's "Advanced settings" to expand its options.
+        R_click_advanced_settings: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
+        sleep_adv: 1500
+
+        # 8. Locate the product by {{ticket_venue_map}}, ensure its Advanced settings is expanded, and assert the "Recommend at checkout" checkbox/switch is DISABLED.
+        execute_js_verify_recommend_disabled:
+            script: |
+                async () => {
+                  const pname = "{{ticket_venue_map}}";
+                  // Guard: if the cross-case global was never seeded, the placeholder stays
+                  // literal — fail fast with a clear message instead of a confusing lookup error.
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_venue_map" is not set — run venue_map_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const dlg = document.querySelector('[role="dialog"]') || document;
+
+                  // 3.4.1 Locate the product card by its name (title leaf containing pname)
+                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && e.textContent.trim().includes(pname)
+                  );
+                  if (nameLeaves.length === 0) {
+                    throw new Error('Product "' + pname + '" not found on the Customize products page');
+                  }
+
+                  // Card = nearest ancestor of the title leaf that also contains an "Advanced settings" control
+                  const cardOf = (el) => {
+                    let n = el;
+                    for (let i = 0; i < 12 && n; i++) {
+                      if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n;
+                      n = n.parentElement;
+                    }
+                    return el;
+                  };
+                  const chosen = nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0];
+                  const card = cardOf(chosen);
+
+                  // 3.4.2 Find the "Recommend at checkout" label within THIS product card
+                  const recLeaves = () => [...card.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && /recommend at checkout/i.test(e.textContent)
+                  );
+                  let rl = recLeaves();
+                  let expandedNeeded = false;
+                  if (rl.length === 0) {
+                    // Advanced settings collapsed for this product -> expand it
+                    expandedNeeded = true;
+                    const adv = [...card.querySelectorAll('button, div, span')].find(
+                      e => /advanced settings/i.test(e.textContent)
+                    );
+                    if (adv) adv.click();
+                    await new Promise(r => setTimeout(r, 1000));
+                    rl = recLeaves();
+                  }
+                  if (rl.length === 0) {
+                    throw new Error('"Recommend at checkout" not found for product "' + pname + '"');
+                  }
+
+                  // 3.4.3 From the label, walk up to the nearest ancestor that holds the control
+                  let ctrl = null;
+                  for (const label of rl) {
+                    let el = label.parentElement;
+                    for (let i = 0; i < 6 && el; i++) {
+                      const c = el.querySelector(
+                        'input[type="checkbox"], input[type="radio"], [role="checkbox"], ' +
+                        '[role="switch"], button[role="switch"], input[role="switch"]'
+                      );
+                      if (c) { ctrl = c; break; }
+                      el = el.parentElement;
+                    }
+                    if (ctrl) break;
+                  }
+                  if (!ctrl) {
+                    throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "' + pname + '"');
+                  }
+                  if (!ctrl.disabled) {
+                    throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for AXS/TDC/Venue map ticket ("' + pname + '")');
+                  }
+                  return 'OK: "Recommend at checkout" <' + ctrl.tagName + '> is DISABLED for "' + pname + '" (expandedNeeded=' + expandedNeeded + ')';
+                }
+            save_as: "recommend_disabled_result"
+
+        # 9. Capture evidence screenshot of the expanded Advanced settings panel
+        #    (saved as recommend_at_checkout_verify.png) so the disabled state is provable.
+        screenshot: { name: "recommend_at_checkout_verify" }
+
+        # ----------------------------------------------------------------------
+        # Second pass: the AXS product (driven by cross-case globals event_axs /
+        # ticket_axs, seeded by axs_fee_breakdown_ui.yaml in the same pytest run).
+        # ----------------------------------------------------------------------
+
+        # 10. Close the Customize products dialog via its top-right "X" button.
+        R_click_close_customize_dialog: { locator: "div[role='dialog'] >> button[aria-label='Close']", timeout: 8000 }
+        sleep_after_dialog_close: 2000
+
+        # 11. Close the event-detail / Post view via the top-left back button,
+        #     returning to the events list page (where the global search box lives).
+        R_click_close_event_detail: { locator: "button[aria-label='Back']", timeout: 8000 }
+        sleep_after_back: 2500
+
+        # 12. On the events list, type {{event_axs}} into the search box and submit.
+        #     (smart_fill does NOT template {{var}}, so we drive the input via JS.)
+        execute_js_search_event:
+            script: |
+                async () => {
+                  const ev = "{{event_axs}}";
+                  if (ev.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "event_axs" is not set — run axs_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const inp =
+                    document.querySelector('input[type="search"]') ||
+                    [...document.querySelectorAll('input')].find(
+                      i => /search/i.test(i.placeholder || '') || /search/i.test(i.getAttribute('aria-label') || '')
+                    );
+                  if (!inp) throw new Error('Events-list search input not found');
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(inp, ev);
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                  await new Promise(r => setTimeout(r, 1500));
+                  return 'searched:' + ev;
+                }
+            save_as: "search_event_result"
+
+        # 13. Click the first event in the search results (matched exactly by {{event_axs}}).
+        R_click_axs_event: { locator: "xpath=//*[normalize-space(.)='{{event_axs}}']", index: 0, fallback_scan: true }
+        sleep_axs_event: 5000
+
+        # 14. Event detail page -> Post tab
+        R_click_post_tab_axs: { role: "tab", name: "Post" }
+        sleep_post_tab_axs: 3000
+
+        # 15. Post view -> Selling sub-tab (sits next to the Content tab)
+        R_click_selling_tab_axs: { role: "tab", name: "Selling", exact: true }
+        sleep_selling_tab_axs: 2000
+
+        # 16. Selling tab -> "Customize" button (opens the Customize products dialog)
+        R_click_customize_axs: { role: "button", name: "Customize" }
+        sleep_customize_axs: 3000
+
+        # 17. Isolate the AXS product on the Customize products page by its name
+        #     (best-effort search; ensures the visible Advanced-settings click hits
+        #      the correct card when the post lists multiple products).
+        execute_js_isolate_product_axs:
+            script: |
+                async () => {
+                  const pname = "{{ticket_axs}}";
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_axs" is not set — run axs_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const inp = document.querySelector('input[placeholder="Search product"]');
+                  if (!inp) return 'no-search-box';
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(inp, pname);
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                  await new Promise(r => setTimeout(r, 1500));
+                  return 'searched:' + pname;
+                }
+            save_as: "isolate_axs_result"
+
+        # 18. VISIBLY click the AXS product's "Advanced settings" to expand its options.
+        R_click_advanced_settings_axs: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
+        sleep_adv_axs: 1500
+
+        # 19. Locate the AXS product by {{ticket_axs}}, ensure its Advanced settings is
+        #     expanded, and assert the "Recommend at checkout" checkbox/switch is DISABLED.
+        execute_js_verify_recommend_disabled_axs:
+            script: |
+                async () => {
+                  const pname = "{{ticket_axs}}";
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_axs" is not set — run axs_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const dlg = document.querySelector('[role="dialog"]') || document;
+
+                  // Locate the product card by its name (title leaf containing pname)
+                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && e.textContent.trim().includes(pname)
+                  );
+                  if (nameLeaves.length === 0) {
+                    throw new Error('Product "' + pname + '" not found on the Customize products page');
+                  }
+
+                  // Card = nearest ancestor of the title leaf that also contains an "Advanced settings" control
+                  const cardOf = (el) => {
+                    let n = el;
+                    for (let i = 0; i < 12 && n; i++) {
+                      if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n;
+                      n = n.parentElement;
+                    }
+                    return el;
+                  };
+                  const chosen = nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0];
+                  const card = cardOf(chosen);
+
+                  // Find the "Recommend at checkout" label within THIS product card
+                  const recLeaves = () => [...card.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && /recommend at checkout/i.test(e.textContent)
+                  );
+                  let rl = recLeaves();
+                  let expandedNeeded = false;
+                  if (rl.length === 0) {
+                    // Advanced settings collapsed for this product -> expand it
+                    expandedNeeded = true;
+                    const adv = [...card.querySelectorAll('button, div, span')].find(
+                      e => /advanced settings/i.test(e.textContent)
+                    );
+                    if (adv) adv.click();
+                    await new Promise(r => setTimeout(r, 1000));
+                    rl = recLeaves();
+                  }
+                  if (rl.length === 0) {
+                    throw new Error('"Recommend at checkout" not found for product "' + pname + '"');
+                  }
+
+                  // From the label, walk up to the nearest ancestor that holds the control
+                  let ctrl = null;
+                  for (const label of rl) {
+                    let el = label.parentElement;
+                    for (let i = 0; i < 6 && el; i++) {
+                      const c = el.querySelector(
+                        'input[type="checkbox"], input[type="radio"], [role="checkbox"], ' +
+                        '[role="switch"], button[role="switch"], input[role="switch"]'
+                      );
+                      if (c) { ctrl = c; break; }
+                      el = el.parentElement;
+                    }
+                    if (ctrl) break;
+                  }
+                  if (!ctrl) {
+                    throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "' + pname + '"');
+                  }
+                  if (!ctrl.disabled) {
+                    throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for AXS ticket ("' + pname + '")');
+                  }
+                  return 'OK: "Recommend at checkout" <' + ctrl.tagName + '> is DISABLED for "' + pname + '" (expandedNeeded=' + expandedNeeded + ')';
+                }
+            save_as: "recommend_disabled_axs_result"
+
+        # 20. Capture evidence screenshot of the expanded Advanced settings panel (AXS product).
+        screenshot_axs: { name: "recommend_at_checkout_verify_axs" }
+
+        # ----------------------------------------------------------------------
+        # Third pass: the TDC product (driven by cross-case globals event_tdc /
+        # ticket_tdc, seeded by tdc_fee_breakdown_ui.yaml in the same pytest run).
+        # ----------------------------------------------------------------------
+
+        # 21. Close the Customize products dialog via its top-right "X" button.
+        R_click_close_customize_dialog_tdc: { locator: "div[role='dialog'] >> button[aria-label='Close']", timeout: 8000 }
+        sleep_after_dialog_close_tdc: 2000
+
+        # 22. Close the event-detail / Post view via the top-left back button,
+        #     returning to the events list page (where the global search box lives).
+        R_click_close_event_detail_tdc: { locator: "button[aria-label='Back']", timeout: 8000 }
+        sleep_after_back_tdc: 2500
+
+        # 23. On the events list, type {{event_tdc}} into the search box and submit.
+        #     (smart_fill does NOT template {{var}}, so we drive the input via JS.)
+        execute_js_search_event_tdc:
+            script: |
+                async () => {
+                  const ev = "{{event_tdc}}";
+                  if (ev.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "event_tdc" is not set — run tdc_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const inp =
+                    document.querySelector('input[type="search"]') ||
+                    [...document.querySelectorAll('input')].find(
+                      i => /search/i.test(i.placeholder || '') || /search/i.test(i.getAttribute('aria-label') || '')
+                    );
+                  if (!inp) throw new Error('Events-list search input not found');
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(inp, ev);
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                  await new Promise(r => setTimeout(r, 1500));
+                  return 'searched:' + ev;
+                }
+            save_as: "search_event_tdc_result"
+
+        # 24. Click the first event in the search results (matched exactly by {{event_tdc}}).
+        R_click_tdc_event: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
+        sleep_tdc_event: 5000
+
+        # 25. Event detail page -> Post tab
+        R_click_post_tab_tdc: { role: "tab", name: "Post" }
+        sleep_post_tab_tdc: 3000
+
+        # 26. Post view -> Selling sub-tab (sits next to the Content tab)
+        R_click_selling_tab_tdc: { role: "tab", name: "Selling", exact: true }
+        sleep_selling_tab_tdc: 2000
+
+        # 27. Selling tab -> "Customize" button (opens the Customize products dialog)
+        R_click_customize_tdc: { role: "button", name: "Customize" }
+        sleep_customize_tdc: 3000
+
+        # 28. Isolate the TDC product on the Customize products page by its name
+        #     (best-effort search; ensures the visible Advanced-settings click hits
+        #      the correct card when the post lists multiple products).
+        execute_js_isolate_product_tdc:
+            script: |
+                async () => {
+                  const pname = "{{ticket_tdc}}";
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_tdc" is not set — run tdc_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const inp = document.querySelector('input[placeholder="Search product"]');
+                  if (!inp) return 'no-search-box';
+                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                  setter.call(inp, pname);
+                  inp.dispatchEvent(new Event('input', { bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                  await new Promise(r => setTimeout(r, 1500));
+                  return 'searched:' + pname;
+                }
+            save_as: "isolate_tdc_result"
+
+        # 29. VISIBLY click the TDC product's "Advanced settings" to expand its options.
+        R_click_advanced_settings_tdc: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
+        sleep_adv_tdc: 1500
+
+        # 30. Locate the TDC product by {{ticket_tdc}}, ensure its Advanced settings is
+        #     expanded, and assert the "Recommend at checkout" checkbox/switch is DISABLED.
+        execute_js_verify_recommend_disabled_tdc:
+            script: |
+                async () => {
+                  const pname = "{{ticket_tdc}}";
+                  if (pname.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_tdc" is not set — run tdc_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  const dlg = document.querySelector('[role="dialog"]') || document;
+
+                  // Locate the product card by its name (title leaf containing pname)
+                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && e.textContent.trim().includes(pname)
+                  );
+                  if (nameLeaves.length === 0) {
+                    throw new Error('Product "' + pname + '" not found on the Customize products page');
+                  }
+
+                  // Card = nearest ancestor of the title leaf that also contains an "Advanced settings" control
+                  const cardOf = (el) => {
+                    let n = el;
+                    for (let i = 0; i < 12 && n; i++) {
+                      if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n;
+                      n = n.parentElement;
+                    }
+                    return el;
+                  };
+                  const chosen = nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0];
+                  const card = cardOf(chosen);
+
+                  // Find the "Recommend at checkout" label within THIS product card
+                  const recLeaves = () => [...card.querySelectorAll('*')].filter(
+                    e => e.children.length === 0 && /recommend at checkout/i.test(e.textContent)
+                  );
+                  let rl = recLeaves();
+                  let expandedNeeded = false;
+                  if (rl.length === 0) {
+                    // Advanced settings collapsed for this product -> expand it
+                    expandedNeeded = true;
+                    const adv = [...card.querySelectorAll('button, div, span')].find(
+                      e => /advanced settings/i.test(e.textContent)
+                    );
+                    if (adv) adv.click();
+                    await new Promise(r => setTimeout(r, 1000));
+                    rl = recLeaves();
+                  }
+                  if (rl.length === 0) {
+                    throw new Error('"Recommend at checkout" not found for product "' + pname + '"');
+                  }
+
+                  // From the label, walk up to the nearest ancestor that holds the control
+                  let ctrl = null;
+                  for (const label of rl) {
+                    let el = label.parentElement;
+                    for (let i = 0; i < 6 && el; i++) {
+                      const c = el.querySelector(
+                        'input[type="checkbox"], input[type="radio"], [role="checkbox"], ' +
+                        '[role="switch"], button[role="switch"], input[role="switch"]'
+                      );
+                      if (c) { ctrl = c; break; }
+                      el = el.parentElement;
+                    }
+                    if (ctrl) break;
+                  }
+                  if (!ctrl) {
+                    throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "' + pname + '"');
+                  }
+                  if (!ctrl.disabled) {
+                    throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for TDC ticket ("' + pname + '")');
+                  }
+                  return 'OK: "Recommend at checkout" <' + ctrl.tagName + '> is DISABLED for "' + pname + '" (expandedNeeded=' + expandedNeeded + ')';
+                }
+            save_as: "recommend_disabled_tdc_result"
+
+        # 31. Capture evidence screenshot of the expanded Advanced settings panel (TDC product).
+        screenshot_tdc: { name: "recommend_at_checkout_verify_tdc" }
+
+    # Framework-required block. The actual disabled-state checks are performed in-page
+    # by execute_js_verify_recommend_disabled (venue-map product),
+    # execute_js_verify_recommend_disabled_axs (AXS product) and
+    # execute_js_verify_recommend_disabled_tdc (TDC product) — each throws if the control
+    # is not disabled — so we keep expect_result descriptive rather than adding brittle DOM assertions.
+    expect_result: "For ALL THREE products — venue-map ({{ticket_venue_map}}), AXS ({{ticket_axs}}) and TDC ({{ticket_tdc}}) — the 'Recommend at checkout' checkbox/switch is DISABLED and cannot be selected"

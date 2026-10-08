@@ -4,13 +4,39 @@
 # --- testT5649_axs: AXS-tagged event, verify a ticket name ends with "Pear.Us" ---
 testT5649_axs:
     is_mobile: true
-    description: "Find an event tagged AXS, open it, verify a ticket name ends with 'Pear.Us', then open Settings, enable 'Show fee breakdown at checkout', and save"
+    description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
     test_step:
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
-        # 2. Click the event card that carries the AXS tag.
+        # 2. Find the event card that carries the AXS tag and save its event name into the
+        #    cross-case global var event_axs (see actions/global_state.py: `save_as` + `global: true`).
+        #    [DOM FACT] on the event list the AXS badge <span> lives in the card header whose only
+        #    <p> is the event name (verified live: "DANNA" / "Zack Fox" / "PUFF PUFF PASS TOUR...").
+        #    The click in 2b targets exactly that badge's parent, so both steps touch one card.
+        execute_js_extract_axs_event:
+            save_as: "event_axs"
+            global: true
+            script: |
+                (async () => {
+                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
+                  let name = '';
+                  for (let i = 0; i < 30; i++) {
+                    // the event list renders asynchronously: poll for the AXS badge
+                    const badge = [...document.querySelectorAll('span')]
+                      .find(s => s.children.length === 0 && nz(s) === 'AXS');
+                    const p = badge && badge.parentElement && badge.parentElement.querySelector('p');
+                    if (p && nz(p)) { name = nz(p); break; }
+                    await new Promise(r => setTimeout(r, 500));
+                  }
+                  if (!name) throw new Error('AXS event card not found in the event list (or its name <p> is empty)');
+                  console.log('event_axs = ' + name);
+                  return name;
+                })()
+        sleep_extract_axs_event: 800
+
+        # 2b. Click the event card that carries the AXS tag.
         R_click_axs_event: { locator: "xpath=//span[normalize-space(.)='AXS']/parent::*", index: 0, fallback_scan: true }
         sleep_event: 5000
 
@@ -18,15 +44,25 @@ testT5649_axs:
         R_click_tickets_tab: { role: "tab", name: "Tickets & Merch" }
         sleep_tickets: 3000
 
-        # 4. Verify a ticket name ends with "Pear.Us".
-        execute_js:
+        # 4. Verify a ticket name ends with "Pear.Us", and save the first such name into the
+        #    cross-case global var ticket_axs. Step 9 re-publishes the same variable with the
+        #    first NON-"Sold out" product, so the value other cases read is the ticket
+        #    actually purchased (same convention as ticket_tdc in the TDC case).
+        execute_js_extract_pear_us_ticket:
+            save_as: "ticket_axs"
+            global: true
             script: |
                 () => {
+                    const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
                     const tags = ['h1','h2','h3','h4','h5','h6','p','span','div','li','label','a','button'];
                     const els = [...document.querySelectorAll(tags.join(','))];
-                    const hits = els.filter(e => e.children.length === 0 && e.textContent.trim().toLowerCase().endsWith('pear.us'));
+                    const hits = els.filter(e => e.children.length === 0 && nz(e).toLowerCase().endsWith('pear.us'));
                     if (hits.length === 0) throw new Error('No ticket name ends with "Pear.Us"');
-                    return hits.map(e => e.textContent.trim());
+                    const names = hits.map(nz);
+                    const first = names[0];
+                    console.log('ticket names ending with "Pear.Us": ' + JSON.stringify(names));
+                    console.log('ticket_axs = ' + first);
+                    return first;
                 }
 
         # 5. Open event Settings (drawer). Reachable from the Tickets & Merch tab too.
@@ -52,8 +88,11 @@ testT5649_axs:
         sleep_save: 3000
 
         # 9. Extract the target ticket: the name of the first non-"Sold out"
-        #    product on the Tickets tab -> temp var ticket-axs
+        #    product on the Tickets tab -> temp var ticket-axs, re-published to the
+        #    cross-case global var ticket_axs (overrides step 4's sold-out-prone first hit)
         execute_js_extract_name:
+            save_as: "ticket_axs"
+            global: true
             script: |
                 () => {
                   const all=[...document.querySelectorAll('*')];
@@ -70,7 +109,6 @@ testT5649_axs:
                   }
                   throw new Error('No non-Sold-out ticket found');
                 }
-            save_as: "ticket_axs"
         sleep_extract_name: 800
 
         # 10. Extract the target ticket's price (the first $ amount on the card = retail price)
@@ -159,6 +197,23 @@ testT5649_axs:
         sleep_after_esc: 1200
         R_click_close_ticket: { locator: "button[aria-label='Back']" }
         sleep_back: 3000
+
+        # 15b. Conditional unsaved-changes guard: clicking Back may pop an in-app
+        #      "Leave this page?" confirmation (only when there ARE unsaved changes).
+        #      Click its "Leave without saving" button if the dialog is present; if no
+        #      dialog appears, return immediately (no optional-wait penalty).
+        #      Done in-page so it is both fast and robust against the click target.
+        execute_js_leave_without_saving:
+            script: |
+                () => {
+                  const btns = [...document.querySelectorAll('button, [role="button"]')]
+                    .filter(b => /leave without saving/i.test(b.textContent || ''));
+                  if (btns.length === 0) return 'no-leave-dialog';
+                  btns[0].click();
+                  return 'clicked-leave-without-saving';
+                }
+            save_as: "leave_dialog_action"
+        sleep_leave: 1500
 
         # 16. Extract the event name (used to build the guest public post URL) -> temp var event_name
         execute_js_extract_event:
