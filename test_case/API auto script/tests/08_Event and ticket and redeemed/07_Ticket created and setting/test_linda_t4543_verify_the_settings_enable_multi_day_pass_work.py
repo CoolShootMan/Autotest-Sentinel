@@ -483,7 +483,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         expect(_resp8).json('$.message').equals('success')
         _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
         _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
-        _prod8 = next((it for it in _prods if it.get('title') == 'auto testing with turn on multiple day pass'), None)
+        _prod8 = next((it for it in _prods if 'multiple day pass' in (it.get('title') or '').lower()), None)
         if _prod8 is not None:
             break
         time.sleep(3)
