@@ -1,19 +1,20 @@
 # --- testT5649_tdc: TDC-tagged event, verify the product is priced (non-zero), fee breakdown, guest checkout (no refund flow: TDC tickets are not refundable upstream) ---
 testT5649_tdc:
     is_mobile: true
-    description: "Find a TDC-tagged event, verify its product price is not 0, then open Settings, enable 'Show fee breakdown at checkout', and save"
+    description: "Verify the fee breakdown for TDC ticket on checkout - then place order - check TDC info and link on order confirmation page"
     test_step:
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
         # 1b. [HARD ASSERTION] the target TDC-tagged event is on the list.
-        #     Poll: the list is long (other suites keep creating events) and hydration can outlast
-        #     `sleep_list`; a one-shot find would report "not found" for a merely-slow list.
-        #     NOTE: if this still fails, first check the SESSION — an expired cookie redirects
-        #     /events to /login, which looks exactly like "event not found".
-        #     Refresh with: ./venv/bin/python tools/get_all_cookies.py
+        #     [GLOBAL VARIABLE] the script RETURNS the event name and `save_as` + `global: true`
+        #     publish it as the cross-case global `event_tdc` (see actions/global_state.py), so
+        #     step 2 and OTHER test cases in the same pytest process can use {{event_tdc}}.
+        #     The event name therefore lives in exactly one place: NAME below.
         execute_js_verify_tdc_event:
+            save_as: "event_tdc"
+            global: true
             script: |
                 (async () => {
                   const NAME='09/26 Baseball Stadium Tours';
@@ -33,11 +34,13 @@ testT5649_tdc:
                   let el=nameEl, tagged=false;
                   for(let k=0;k<4 && el;k++){ if(/TDC(?![A-Za-z])/.test(nz(el))){ tagged=true; break; } el=el.parentElement; }
                   if(!tagged) throw new Error('event "'+NAME+'" does not carry the TDC tag');
-                  return 'TDC event card verified: '+NAME;
+                  // return the bare name (not a sentence): save_as stores this value verbatim
+                  return NAME;
                 })()
 
         # 2. Click that TDC event card. Selected BY NAME so the choice is order-independent
-        R_click_tdc_event: { locator: "xpath=//p[normalize-space(.)='09/26 Baseball Stadium Tours']" }
+        #    ({{event_tdc}} = the event name saved by step 1b)
+        R_click_tdc_event: { locator: "xpath=//p[normalize-space(.)='{{event_tdc}}']" }
         sleep_event: 5000
 
         # 3. Open the "Tickets & Merch" tab where ticket names are listed
@@ -45,7 +48,17 @@ testT5649_tdc:
         sleep_tickets: 3000
 
         # 4. Verify every product on the Tickets & Merch tab has a NON-ZERO price.
+        #    [GLOBAL VARIABLE] this step also defines the cross-case global `ticket_tdc`: it RETURNS
+        #    the name of the first product card that is NOT sold out (same rule as the dedicated
+        #    extraction step further down) and `save_as` + `global: true` publish it (see
+        #    actions/global_state.py) -> {{ticket_tdc}} is usable here, in other sessions and in
+        #    other test cases of the same pytest process.
+        #    NOTE: the product cards are in a stable order (T1000 first), so this is deterministic.
+        #    The sibling extraction step below re-saves the same value, so if these two picks ever
+        #    disagree the later one wins and the rest of the case is unaffected.
         execute_js_verify_price:
+            save_as: "ticket_tdc"
+            global: true
             script: |
                 () => {
                     // product cards on the Tickets & Merch tab look like:
@@ -64,7 +77,16 @@ testT5649_tdc:
                     });
                     const bad = priced.filter(p => !(p.price > 0));
                     if (bad.length) throw new Error('Product price is 0 (or missing) for: ' + JSON.stringify(bad.map(p => p.text)));
-                    return 'all ' + priced.length + ' product(s) priced, e.g. $' + priced[0].price.toFixed(2) + ' | ' + priced[0].text;
+
+                    // pick the first non-Sold-out card and return its bare name (no "Ticket" prefix,
+                    // no trailing "Tools") because that is what save_as stores into `ticket_tdc`.
+                    const pick = priced.find(p => !/Sold out/i.test(p.text));
+                    if (!pick) throw new Error('No non-Sold-out ticket found among ' + priced.length + ' product(s)');
+                    const name = (pick.text.match(/([^$]+?)\$[\d.]+/)[1])
+                        .replace(/Tools$/, '').replace(/^Ticket/, '').replace(/\s+/g, ' ').trim();
+                    console.log('price check ok: ' + priced.length + ' product(s), e.g. $'
+                                + priced[0].price.toFixed(2) + ' | picked ticket_tdc = ' + name);
+                    return name;
                 }
 
         # 5. Open event Settings (drawer). Reachable from the Tickets & Merch tab too.
@@ -95,7 +117,13 @@ testT5649_tdc:
         #    had 1 sold this step threw `No 0-sold non-Sold-out ticket found` — the case was
         #    one-shot. The real intent is "a product that still has inventory", i.e. NOT sold out;
         #    the cards are listed in a stable order (T1000 first), so this is deterministic.
+        #    [GLOBAL VARIABLE] `global: true` re-publishes ticket_tdc to the cross-case store with
+        #    this step's pick. Step 4 already publishes its own pick; re-publishing here guarantees
+        #    the global always equals the value this case actually goes on to use (they use two
+        #    different DOM scans, so if they ever disagree the authoritative one wins).
         execute_js_extract_name:
+            save_as: "ticket_tdc"
+            global: true
             script: |
                 () => {
                   const all=[...document.querySelectorAll('*')];
@@ -112,7 +140,6 @@ testT5649_tdc:
                   }
                   throw new Error('No non-Sold-out ticket found');
                 }
-            save_as: "ticket_tdc"
         sleep_extract_name: 800
 
         # 10. Extract the target ticket's price (the first $ amount on the card = retail price)
@@ -202,6 +229,23 @@ testT5649_tdc:
         R_click_close_ticket: { locator: "button[aria-label='Back']" }
         sleep_back: 3000
 
+        # 15b. Conditional unsaved-changes guard: clicking Back may pop an in-app
+        #      "Leave this page?" confirmation (only when there ARE unsaved changes).
+        #      Click its "Leave without saving" button if the dialog is present; if no
+        #      dialog appears, return immediately (no optional-wait penalty).
+        #      Done in-page so it is both fast and robust against the click target.
+        execute_js_leave_without_saving:
+            script: |
+                () => {
+                  const btns = [...document.querySelectorAll('button, [role="button"]')]
+                    .filter(b => /leave without saving/i.test(b.textContent || ''));
+                  if (btns.length === 0) return 'no-leave-dialog';
+                  btns[0].click();
+                  return 'clicked-leave-without-saving';
+                }
+            save_as: "leave_dialog_action"
+        sleep_leave: 1500
+
         # 16. Open the event's "Post" tab — it renders the public post URL as plain text
         R_click_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
         sleep_post_tab: 4000
@@ -233,11 +277,6 @@ testT5649_tdc:
 
         # 20. As a guest, find the product by name in the post and assert its displayed price
         #     == my_revenve (net).
-        #     [PRICING FACT] the post's product row and the "Select tickets" drawer both show the
-        #     NET price ("T1000 - …$102.88$102.88"), while the Checkout drawer itemises
-        #     Subtotal (net) + Transaction fees + Service fee. Do not compare the post row against
-        #     ticket-retails-price: the page also renders a separate "featured product" block higher
-        #     up that carries the retail price with an "(incl. fees)" note — that is a different element.
         session_guest__execute_js_verify:
             script: |
                 (async () => {
@@ -305,8 +344,6 @@ testT5649_tdc:
                 })()
 
         # 23. Normalise the quantity to 1.
-        #     [DOM FACT] the "Select tickets" drawer opens at 0 (a "0-selected" section picker), and
-        #     its quantity input has NO name attribute — target it as input[type=number].
         session_guest__execute_js_ensure_qty:
             script: |
                 (async () => {
@@ -714,10 +751,6 @@ testT5649_tdc:
                 })()
 
         # 39. Assert Confirmation details: contact information / payment method / billing zip code.
-        #     [ORDER MATTERS] this runs BEFORE the "View Tickets" jump (step 38c-38e): jumping to
-        #     mpvsb.tickets.com and navigating back to the confirmation URL is unreliable (the
-        #     magic-link `?code=` page can hang / not re-render), so we assert while we are already
-        #     on the confirmation page and make the jump the LAST thing the guest does.
         session_guest__execute_js_verify_confirmation_details:
             script: |
                 (async () => {

@@ -37,6 +37,21 @@ else:
     ai_vision = None
     logger.debug("AI vision disabled (set ENABLE_AI_VISION=1 to enable)")
 
+# Cross-test-case global variable store (survives across cases in the same pytest
+# process; a step opts in with `save_as` + `global: true`). See global_state.py.
+from .global_state import GLOBAL_VARS as _GLOBAL_VARS, set_global as _set_global
+
+
+def _merged_context_vars(page):
+    """Build the full {{var}} lookup table for a page.
+
+    Precedence: page._workflow_context (local, this case/session) overrides the
+    cross-case GLOBAL_VARS store.  Falls back to an empty dict when neither exists.
+    """
+    _wc = getattr(page, "_workflow_context", None) or {}
+    # workflow_context wins over global on key collision
+    return {**_GLOBAL_VARS, **_wc}
+
 def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
@@ -658,12 +673,13 @@ def _smart_click_core(page: Page, v: dict):
 
     # Template {{var}} placeholders from the workflow context (populated by execute_js save_as),
     # so a click can target a value discovered earlier, e.g. name: "{{ticket_axs}}".
-    _wc = getattr(page, "_workflow_context", None)
-    if _wc:
+    # Falls back to the cross-case global store (see global_state.py).
+    _ctx = _merged_context_vars(page)
+    if _ctx:
         def _fill(s):
             if not isinstance(s, str):
                 return s
-            for _k, _val in _wc.items():
+            for _k, _val in _ctx.items():
                 if _k:
                     s = s.replace("{{%s}}" % _k, str(_val))
             return s
@@ -3081,12 +3097,13 @@ def execute_js(page: Page, v):
     # Template {{var}} placeholders from the workflow context (populated by save_as).
     # This makes variables saved by an earlier execute_js step usable in later steps,
     # including inside a different session (create_session copies _workflow_context).
-    _wc = getattr(page, "_workflow_context", None)
-    if _wc:
+    # Falls back to the cross-case global store (see global_state.py).
+    _ctx = _merged_context_vars(page)
+    if _ctx:
         def _tmpl(s):
             if not isinstance(s, str):
                 return s
-            for _k, _v in _wc.items():
+            for _k, _v in _ctx.items():
                 if _k:
                     s = s.replace("{{%s}}" % _k, str(_v))
             return s
@@ -3117,6 +3134,11 @@ def execute_js(page: Page, v):
             setattr(page, "_workflow_context", {})
         getattr(page, "_workflow_context")[save_as] = result
         logger.info(f"execute_js: saved result as '{save_as}' = {result!r}")
+        # Cross-case global store: a step can publish a value that other test cases
+        # (and any session) can read via {{var}} when running in the same pytest process.
+        if v.get("global"):
+            _set_global(save_as, result)
+            logger.info(f"execute_js: also published '{save_as}' to the cross-case global store")
 
     return result
 
