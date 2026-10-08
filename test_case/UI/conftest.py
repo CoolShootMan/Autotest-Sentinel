@@ -470,30 +470,40 @@ def context(
 
 
 # --- Fake webcam video for camera-permission flows ---
-# (merged from the former repo-root conftest; BASE_DIR below already resolves
-# to the repo root via the walk-up above, where data/*.y4m lives)
+def _generate_scanner_y4m(y4m_path, qr_text="3329635", width=320, height=240, qr_size=160):
+    """Generate a y4m video with a QR code centered on a white canvas."""
+    import qrcode
+    import cv2
+    import numpy as np
+
+    os.makedirs(os.path.dirname(y4m_path), exist_ok=True)
+
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(qr_text)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    canvas = np.full((height, width, 3), 255, dtype=np.uint8)
+    qr_resized = cv2.resize(np.array(qr_img), (qr_size, qr_size))
+    y_off = (height - qr_size) // 2
+    x_off = (width - qr_size) // 2
+    canvas[y_off:y_off+qr_size, x_off:x_off+qr_size] = qr_resized
+
+    yuv = cv2.cvtColor(canvas, cv2.COLOR_BGR2YUV_I420)
+    with open(y4m_path, "wb") as f:
+        f.write(b"YUV4MPEG2 W%d H%d F30:1 Ip C420mpeg2\n" % (width, height))
+        for _ in range(150):
+            f.write(b"FRAME\n")
+            f.write(yuv.tobytes())
+    logger.info(f"Generated scanner y4m: {y4m_path} (QR={qr_text})")
+
+
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
-    # Default to the trimmed small video to prevent OOM
-    y4m_name = "Ticket_Small.y4m"
-
-    # Fallback to Ticket_C.y4m if small one doesn't exist
-    if not os.path.exists(os.path.join(BASE_DIR, "data", y4m_name)):
-        y4m_name = "Ticket_C.y4m"
-    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
-    if worker_id != "master":
-        # Extract index from 'gw0', 'gw1' etc.
-        try:
-            worker_idx = int(re.sub(r'\D', '', worker_id)) + 1
-            worker_y4m = f"Ticket_{worker_idx}.y4m"
-            if os.path.exists(os.path.join(BASE_DIR, "data", worker_y4m)):
-                y4m_name = worker_y4m
-                logger.info(f"WORKER_ISOLATION: Worker {worker_id} using dedicated video: {y4m_name}")
-        except Exception as e:
-            logger.warning(f"Failed to determine worker-specific video: {e}")
-
-    y4m_path = f"/tmp/pear_data/{y4m_name}"
-    logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
+    # Default scanner QR code. Set SCAN_QR_CODE env var to override (e.g. for NotRecognized).
+    scanner_qr = os.environ.get("SCAN_QR_CODE", "3329635")
+    y4m_path = "/tmp/pear_data/Ticket_Small.y4m"
+    _generate_scanner_y4m(y4m_path, qr_text=scanner_qr)
 
     return {
         **browser_type_launch_args,
