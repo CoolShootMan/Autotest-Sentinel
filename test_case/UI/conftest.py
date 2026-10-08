@@ -377,6 +377,9 @@ def context(
                     // requirements and doesn't crop or stretch 1:1 videos like Ticket_C.y4m
                     if (v.width) delete v.width;
                     if (v.height) delete v.height;
+                    if (v.frameRate && (v.frameRate.min || v.frameRate.max)) {
+                        v.frameRate = { ideal: v.frameRate.ideal || 30 };
+                    }
                     constraints = { ...constraints, video: v };
                 }
                 return _original(constraints);
