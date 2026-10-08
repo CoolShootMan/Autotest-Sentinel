@@ -43,7 +43,7 @@ env:
   # ── Slack 通知总开关 ──
   # 'true' = 向 #api-ui-automation-result-daily-report Slack 群发送结果
   # Secrets: SLACK_WEBHOOK_URL_API_UI_AUTOMATION = #api-ui-automation-result-daily-report incoming webhook url
-  SLACK_NOTIFY_ENABLED: 'true'
+  SLACK_NOTIFY_ENABLED: 'false'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
@@ -67,6 +67,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r venv_requirements.txt
+          pip install qrcode opencv-python numpy
       - name: Install Playwright Chromium
         run: python -m playwright install --with-deps chromium
       - name: Print environment info (debug)
