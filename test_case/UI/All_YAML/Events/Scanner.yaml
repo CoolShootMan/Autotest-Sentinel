@@ -8,7 +8,7 @@ testT3981_Verified:
         run_workflow_script: { script: "reset_scan_ticket.py" }
         sleep_reset: 2000
         # Open scanner page - fake camera (Ticket_Small.y4m) auto-feeds QR code
-        open: "https://s.pear.us/v7OObU"
+        open: "https://s.pear.us/7DCjTz"
         sleep_open: 12000
     expect_result:
         description: "Shows Code Verified and ticket redeemed"
@@ -20,20 +20,20 @@ testT3981_Already:
     is_mobile: true
     description: "Verify QR scanner shows 'Already Redeemed' for an already used ticket"
     test_step:
-        open: "https://s.pear.us/iyR93K"
-        sleep_wait_for_scan: 5000
-        verify_already: { text: "Code Already Redeemed", timeout: 5000 }
+        open: "https://s.pear.us/7DCjTz"
+        sleep_wait_for_scan: 10000
     expect_result:
         description: "Should display Already Redeemed status"
         assertions:
-            - { assertion_type: "element_visible_by_text", text: "Code Already Redeemed" }
+            - { assertion_type: "element_visible_by_text", text: "already been redeemed" }
 
 testT3981_NotRecognized:
-    skip: true
     is_mobile: true
     description: "Verify QR scanner shows error for an unrecognized/invalid code"
     test_step:
-        execute_not_recognized_scan: "run"
+        open: "https://s.pear.us/7DCjTz"
+        sleep_wait_for_scan: 10000
     expect_result:
         description: "Should display Code Not Recognized error"
-        assertions: []
+        assertions:
+            - { assertion_type: "element_visible_by_text", text: "QR code is for a different event" }

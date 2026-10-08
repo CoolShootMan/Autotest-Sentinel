@@ -29,8 +29,8 @@ token = auth.sign_in(body={"email": P05_EMAIL, "password": PASSWORD}).json()["da
 # reset ticket to IN_PROCESSING
 orders.ticket_status(
     body={
-        "orderLineItemId": "492fb98d-23b1-4208-b221-813103b2c74f",
-        "orderLineItemUnitIds": ["ed2a72e4-b8ca-47b1-b460-3177ec8418fa"],
+        "orderLineItemId": "1a764e96-7cd4-4600-b2b2-34460596c1a6",
+        "orderLineItemUnitIds": ["af382384-a807-4e1a-a08b-9ab30ea50d49"],
         "status": "IN_PROCESSING",
     },
     token=token,
