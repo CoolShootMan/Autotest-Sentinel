@@ -543,7 +543,10 @@ WHERE
     #     pm.expect(Number(pm.response.json().data.extra.totalRevenue).toFixed(2))
     #       .to.eql(Number(pm.environment.get("total_revenue0")).toFixed(2));
     #   故此处等价改比 {{total_revenue0}}。
-    expect(_resp7).json('$.data.extra.totalRevenue').equals(ctx.render_text('{{total_revenue0}}'))
+    # 两边都按 float 比（API 返回 number 168.4，变量是字符串 '168.40'，直接 equals 会因类型/格式不一致失败）
+    _api_rev = float(_resp7.json()['data']['extra']['totalRevenue'])
+    _db_rev = float(ctx.render_text('{{total_revenue0}}'))
+    assert abs(_api_rev - _db_rev) < 0.01, f"totalRevenue mismatch: api={_api_rev}, db={_db_rev}"
     # step 8: Check consumer order list group by the current time zoon
     # DB 步骤（Apifox database 处理器）: search the order group by created date
     ctx.run_db(112809, """select
