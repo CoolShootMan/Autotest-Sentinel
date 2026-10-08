@@ -43,7 +43,7 @@ env:
   # ── Slack 通知总开关 ──
   # 'true' = 向 #api-ui-automation-result-daily-report Slack 群发送结果
   # Secrets: SLACK_WEBHOOK_URL_API_UI_AUTOMATION = #api-ui-automation-result-daily-report incoming webhook url
-  SLACK_NOTIFY_ENABLED: 'true'
+  SLACK_NOTIFY_ENABLED: 'false'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
@@ -85,16 +85,23 @@ jobs:
         env:
           CI: "true"
           BASE_URL: https://release.pear.us
+          SKIP_PREFILL: "1"
         run: |
           set -o pipefail
           python test_case/UI/main.py 2>&1 | tee run.log
           _rc=${PIPESTATUS[0]}
-          # 失败用例不作为步骤失败：真实结果已完整落盘（allure-results / Job Summary /
-          # artifacts / Slack）。按项目规则「执行完毕且结果如实记录即成功」，这里显式以 0
-          # 退出，避免运行页 Annotations 出现红色 "Process completed with exit code 1"。
-          echo "[ci] main.py exit code = ${_rc}（已记录，不改变步骤结论）"
           echo "suite_exit_code=${_rc}" >> "$GITHUB_OUTPUT"
           exit 0
+      - name: Run NotRecognized test (QR=9329611)
+        continue-on-error: true
+        env:
+          CI: "true"
+          BASE_URL: https://release.pear.us
+          SCAN_QR_CODE: "9329611"
+        run: |
+          cd test_case/UI
+          python -m pytest . --tb=short --yaml="All_YAML/Events/Scanner.yaml" -k "NotRecognized" --alluredir=../../allure-results/notrecog 2>&1 | tee -a ../../run.log
+          cd ../..
       - name: Locate result directories
         if: always()
         id: locate
