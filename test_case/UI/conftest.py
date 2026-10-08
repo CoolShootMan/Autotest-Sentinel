@@ -492,7 +492,7 @@ def browser_type_launch_args(browser_type_launch_args):
         except Exception as e:
             logger.warning(f"Failed to determine worker-specific video: {e}")
 
-    y4m_path = os.path.join(BASE_DIR, "data", y4m_name).replace("\\", "/")
+    y4m_path = f"/tmp/pear_data/{y4m_name}"
     logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
 
     return {
@@ -500,6 +500,7 @@ def browser_type_launch_args(browser_type_launch_args):
         "args": [
             "--use-fake-ui-for-media-stream",
             "--use-fake-device-for-media-stream",
+            f"--use-file-for-fake-video-capture={y4m_path}",
             "--window-size=600,1100",
             "--start-maximized",
             "--disable-translate",
