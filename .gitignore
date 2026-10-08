@@ -198,6 +198,8 @@ data/figma_screenshots/
 data/*_test_cases.json
 data/*_raw.json
 data/figma_*/
+# 线上现状勘查截图（jira-ones-testflow Step 1.6 产出）只留本地；同名 md 报告 data/<TICKET>_recon.md 可入库
+data/recon_*/
 data/figma_analysis_*.md
 data/figma_nodes_raw.json
 data/ones_*.png
@@ -248,3 +250,8 @@ ui_snapshots/
 # data/verify/<KEY>/ 下的 report.md / path_map.md / ones_cases*.json / case_diff.* 要提交，
 # 但 57 张 PNG 单票就有 16MB —— 截图证据请附到 Jira 票里，别塞进仓库。
 data/verify/**/*.png
+# 2026-10-08: verify 顶层堆了 400+ 一次性调试残留（*.b.txt / ua_*.txt / owner_cookies.json
+# 等探针输出，部分含 cookie），只留 <KEY>/ 子目录作为证据目录。
+data/verify/*
+!data/verify/*/
+data/ua_*.txt

@@ -255,7 +255,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
     sleep_after_select_type: 500
 
     # Select the form created in testT4970
-    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_form_dropdown: { text: 'Link to a form' }
     R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
     sleep_after_select_form: 500
     R_click_rte_insert: { role: 'button', name: 'Insert', exact: true }
@@ -488,7 +488,7 @@ testT4866:  # [LAST: PASSED 2026-05-06]
     R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }
     sleep_after_select_type: 500
 
-    R_click_form_dropdown: { text: 'Link to a formPlease select a' }
+    R_click_form_dropdown: { text: 'Link to a form' }
     R_click_select_form: { text: 'single choice/multiple choice', index: 0 }
     sleep_after_select_form: 500
 
