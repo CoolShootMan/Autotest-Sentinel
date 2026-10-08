@@ -12802,9 +12802,17 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     # --- step 126: discovery the TDC event data (GET events/ticket-hub/discovery?userId={{user_id}}&platform=TDC) ---
     # ⚠️ base 域 → 404 Cannot GET；仅 admin 域 + admin_token。
     #    且必须带 ?userId= 与 ?platform=，否则后端拿不到该用户的 TDC 凭据 → 503。
-    _resp126 = ctx.api.admin.events_ticket_hub_discovery(
-        params={"userId": vars.get("user_id", ""), "platform": "TDC"},
-        token="admin_token", app_headers=True)
+    # ⚠️ ticket-hub 后端偶发 500/503（服务端临时错误），加 3 次重试。
+    import time as _time
+    _resp126 = None
+    for _attempt in range(3):
+        _resp126 = ctx.api.admin.events_ticket_hub_discovery(
+            params={"userId": vars.get("user_id", ""), "platform": "TDC"},
+            token="admin_token", app_headers=True)
+        if _resp126.status_code == 200 and _resp126.json().get("code") == 200:
+            break
+        if _attempt < 2:
+            _time.sleep(5 * (_attempt + 1))
     expect(_resp126).json('$.code').equals('200')
     expect(_resp126).json('$.message').equals('success')
     # NOTE: 迁移时提取路径误写成 "$.data.events[i].handle"（该字段不存在 → 提取为 None →
