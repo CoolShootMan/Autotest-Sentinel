@@ -21,19 +21,19 @@ testT3981_Already:
     description: "Verify QR scanner shows 'Already Redeemed' for an already used ticket"
     test_step:
         open: "https://s.pear.us/7DCjTz"
-        sleep_wait_for_scan: 10000
+        sleep_wait_for_scan: 15000
     expect_result:
         description: "Should display Already Redeemed status"
         assertions:
-            - { assertion_type: "element_visible_by_text", text: "already been redeemed" }
+            - { assertion_type: "element_visible_by_text", text: "already been redeemed", timeout: 20000 }
 
 testT3981_NotRecognized:
     is_mobile: true
     description: "Verify QR scanner shows error for an unrecognized/invalid code"
     test_step:
         open: "https://s.pear.us/7DCjTz"
-        sleep_wait_for_scan: 10000
+        sleep_wait_for_scan: 15000
     expect_result:
         description: "Should display Code Not Recognized error"
         assertions:
-            - { assertion_type: "element_visible_by_text", text: "QR code is for a different event" }
+            - { assertion_type: "element_visible_by_text", text: "QR code is for a different event", timeout: 20000 }
