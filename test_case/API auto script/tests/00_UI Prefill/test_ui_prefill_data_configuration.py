@@ -3484,7 +3484,15 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # --- step 45: get the coseller's resell post id (GET /post/{{post0_id}}/children) ---
-    _resp45 = ctx.api.admin.post_children(params={"pageNumber": "1", "pageSize": "20", "includeFinancialInfo": "false"}, path_vars={"post_id": "{{post0_id}}"}, token="admin_token", app_headers=True)
+    # ⚠️ sync promoters 后子帖可能异步生成，加等待和重试
+    import time as _time45
+    _resp45 = None
+    for _attempt45 in range(5):
+        _resp45 = ctx.api.admin.post_children(params={"pageNumber": "1", "pageSize": "20", "includeFinancialInfo": "false"}, path_vars={"post_id": "{{post0_id}}"}, token="admin_token", app_headers=True)
+        _items45 = _resp45.json().get("data", {}).get("items", [])
+        if _items45:
+            break
+        _time45.sleep(3 * (_attempt45 + 1))
     expect(_resp45).json('$.code').equals('200')
     expect(_resp45).json('$.message').equals('success')
     ctx.extract("cosellpost_id", _resp45, "$.data.items[0].id")
