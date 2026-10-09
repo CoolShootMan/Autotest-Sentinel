@@ -62,7 +62,7 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to All_YAML/)
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml,All_YAML/Admin tools/Feature_flag_setting.yaml,All_YAML/Meta Pixel record/Pixel_record.yaml,Post_setting_for_venue_map.yaml"
+    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml,All_YAML/Admin tools/Feature_flag_setting.yaml,All_YAML/Meta Pixel record/Pixel_record.yaml,All_YAML/Post/Post_setting_for_venue_map.yaml"
     # yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
         sys.executable,
