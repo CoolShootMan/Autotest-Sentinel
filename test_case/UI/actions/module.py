@@ -1193,31 +1193,77 @@ def click_container_button(page: Page, v: dict):
 
 
 def select_content_card(page: Page, v: dict):
-    """Select an existing post/product card in the 'Add from my content' picker.
+    """Select a row in the 'Add from my content' picker.
 
-    2026-09-30 (round-3/4): the parent Add-hub dialog stays mounted behind the
-    picker and its MuiStack intercepts pointer events for the whole dialog
-    lifetime — a raw coordinate click silently lands on the backdrop AND a
-    locator click times out on interception retries (both verified live).
-    dispatch_event('click') delivers the DOM event straight to the card,
-    bypassing hit-testing entirely; React's synthetic handler picks it up.
+    2026-10-09 redesign (verified live at both 600px and ~1080px): the
+    picker lists content as rows (thumbnail + title + checkbox) inside a
+    MuiDrawer bottom-sheet (narrow window) or a MuiDialog (wide window).
+    In BOTH layouts selection is done via the checkbox on the row's right
+    edge; clicking the row BODY opens the content instead (navigates to
+    /post/<id>/view).
+
+    Trap: the rows ARE button[data-testid='mui-card-action-area'], but so
+    are the storefront cards on the page BEHIND the picker, and those come
+    first in DOM order - a page-wide nth(index) resolves to a background
+    card and the click lands on the backdrop (this silently failed in
+    pytest rerun3: "Continue still disabled" WARN, then Continue was
+    force-clicked disabled = fake pass). So the locator MUST be scoped to
+    the picker container. Discriminator that works for Drawer AND Dialog:
+    the visible paper panel that actually contains picker rows.
+
+    The checkbox svg has no data-testid, so we click the row's right edge
+    (real trusted mouse coordinates) - verified to toggle selection and
+    enable Continue.
 
     YAML:
-        select_content_card: { index: 0 }            # first card
-        select_content_card: { index: 1 }            # second card
+        select_content_card: { index: 0 }            # first row
+        select_content_card: { index: 1 }            # second row
     """
     index = v.get("index", 0)
-    timeout = v.get("timeout", 8000)
-    card = page.locator("button[data-testid='mui-card-action-area']").nth(index)
+    timeout = v.get("timeout", 20000)
+
+    # The picker opens with a mount + animation: right after the click the
+    # paper may not exist yet (rerun4 failed 0.2s post-click). Poll until a
+    # paper containing rows shows up, or the timeout expires.
+    import time as _time
+    root = None
+    _deadline = _time.time() + timeout / 1000.0
+    while root is None and _time.time() < _deadline:
+        for paper in page.locator(".MuiDrawer-paper, .MuiDialog-paper").all():
+            try:
+                if paper.locator("button[data-testid='mui-card-action-area']").count() > 0:
+                    root = paper  # keep the LAST paper containing rows = topmost picker
+            except Exception:
+                continue
+        if root is None:
+            page.wait_for_timeout(500)
+    if root is None:
+        raise AssertionError(
+            "select_content_card: no open picker with content rows found "
+            "(.MuiDrawer-paper/.MuiDialog-paper containing mui-card-action-area)"
+        )
+
+    card = root.locator("button[data-testid='mui-card-action-area']").nth(index)
     card.scroll_into_view_if_needed()
     page.wait_for_timeout(400)
-    card.dispatch_event("click")
+    box = card.bounding_box()
+    if not box:
+        raise AssertionError(f"select_content_card: picker row {index} has no bounding box")
+    # Real click on the checkbox area (row's right edge). A plain card.click()
+    # hits the action-area's "open" handler instead of toggling selection.
+    page.mouse.click(box["x"] + box["width"] - 20, box["y"] + box["height"] / 2)
     page.wait_for_timeout(600)
-    # confirm selection registered (Continue should enable)
+    # Confirm the selection registered: a still-disabled Continue means the
+    # click missed. Fail fast here instead of letting the next steps
+    # force-click a dead button (rerun3's fake-pass chain).
     try:
         cont = page.get_by_role("button", name="Continue").first
         if not cont.is_enabled(timeout=3000):
-            logger.warning(f"select_content_card: Continue still disabled after selecting card {index}")
+            raise AssertionError(
+                f"select_content_card: Continue still disabled after selecting picker row {index}"
+            )
+    except AssertionError:
+        raise
     except Exception as e:
         logger.debug(f"select_content_card: continue-check skipped ({e})")
     logger.info(f"✓ Selected content card index {index}")
