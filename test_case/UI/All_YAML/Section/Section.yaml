@@ -176,8 +176,9 @@ testAddNewPost:   # [LAST: FIXED 2026-07-27]
         # Step 2: Add the first post to the (existing) section
         click_shop_add_button_2:
         R_click_add_from_my_content: { role: 'button', name: 'Add from my content' }
-        # 2026-09-30: Posts is the default tab; clicking the tab re-renders the list and
-        # select_content_card's click stopped registering (Continue stayed disabled).
+        # 2026-09-30 (round-3): select_content_card's raw coordinate click was
+        # intercepted by the still-mounted Add-hub dialog behind the picker;
+        # fixed in actions/module.py to a locator click. Keep select_content_card.
         select_content_card: { index: 0 }
         R_click_continue: { role: 'button', name: 'Continue' }
         # 2026-09-30: "Your item is ready!" dialog pre-checks the first section
@@ -258,10 +259,10 @@ testT3789:  # [LAST: PASSED 2026-07-27] — manually verified by user against ne
         fill_phone: { role: "textbox", name: "Phone number", value: "(234) 567-8910" }
         fill_email: { locator: 'input[name="contact.email"]', value: "fos.zyx@gmail.com" }
         sleep_step: 1000
-        # 2026-09-30: assert the free-checkout total on the checkout page BEFORE placing
-        # the order (deterministic, verified via step capture); the post-order page no
-        # longer renders '$0.00'.
-        verify_text_visible: { text: '$0.00', timeout: 3000 }
+        # 2026-09-30 (round-3): assert the free-checkout total on the checkout page
+        # BEFORE placing the order; checkout now renders "Free" instead of "$0.00"
+        # (verified via round-2 step capture), and the post-order page shows neither.
+        verify_text_visible: { text: 'Free', timeout: 3000 }
         R_click_place_order: { role: "button", name: "Place order"}
         sleep_after_click_place_order: 5000
 
@@ -983,8 +984,9 @@ testT4605:  # [LAST: FIXED 2026-07-27]
         # Step 2: Add the first post to the (existing) section
         click_shop_add_button_2:
         R_click_add_from_my_content: { role: 'button', name: 'Add from my content' }
-        # 2026-09-30: Posts is the default tab; clicking the tab re-renders the list and
-        # select_content_card's click stopped registering (Continue stayed disabled).
+        # 2026-09-30 (round-3): select_content_card's raw coordinate click was
+        # intercepted by the still-mounted Add-hub dialog behind the picker;
+        # fixed in actions/module.py to a locator click. Keep select_content_card.
         select_content_card: { index: 0 }
         R_click_continue: { role: 'button', name: 'Continue' }
         # 2026-09-30: "Your item is ready!" dialog pre-checks the first section
