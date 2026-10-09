@@ -124,26 +124,26 @@ def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
     dirs = sorted(glob.glob(os.path.join(allure_root, "*/")))
     if not dirs:
         return None, [], {}
-    latest = max(dirs, key=os.path.getmtime)
 
     rows: list[dict] = []
     counts: dict[str, int] = {}
-    for fp in glob.glob(os.path.join(latest, "*-result.json")):
-        data = _read_json(fp)
-        if not isinstance(data, dict):
-            continue
-        status = data.get("status") or "unknown"
-        counts[status] = counts.get(status, 0) + 1
-        start, stop = data.get("start"), data.get("stop")
-        duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
-        rows.append({
-            "name": _md_escape(data.get("name") or "(未命名用例)", 160),
-            "status": status,
-            "duration": duration,
-            "reason": _first_line(data.get("statusDetails")),
-        })
+    for d in dirs:
+        for fp in glob.glob(os.path.join(d, "*-result.json")):
+            data = _read_json(fp)
+            if not isinstance(data, dict):
+                continue
+            status = data.get("status") or "unknown"
+            counts[status] = counts.get(status, 0) + 1
+            start, stop = data.get("start"), data.get("stop")
+            duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
+            rows.append({
+                "name": _md_escape(data.get("name") or "(未命名用例)", 160),
+                "status": status,
+                "duration": duration,
+                "reason": _first_line(data.get("statusDetails")),
+            })
     rows.sort(key=lambda r: (STATUS_ORDER.get(r["status"], 9), r["name"]))
-    return latest, rows, counts
+    return allure_root, rows, counts
 
 
 # ── 结果采集：API 预制 ──────────────────────────────────────────────────────
