@@ -418,40 +418,6 @@ testT3686_CosellerResell:
         click_save_btn: { locator: "div[role='dialog'] button:has-text('Save')", timeout: 5000, optional: true }
         sleep_step: 3000
 
-        # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # Using smart_click_retry: element exists for sure, but click may be unstable (animation overlay etc.), needs retry
-        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        # sleep_step: 2000
-
-        # # Second click on Publish confirmation dialog (modal button)
-        # # Confirm popup appears with delay, increase wait time and retry count; only 1 Publish in popup, use index: 0
-        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        # sleep_step: 1000
-
-
-        # Handle optional success dialog after publishing: check "Do not show me this again" and click Save
-        # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
-        # sleep_step: 500
-        # R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
-        # sleep_step: 3000
-
-        # # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # # Use smart_click_retry: the element always exists, but the click can be flaky (animation overlay etc.), so retry
-        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        # sleep_step: 2000
-
-        # # Second click on Publish confirmation dialog (modal button)
-        # # The confirmation dialog shows up late, so raise the wait and the retry count; it holds a single Publish, hence index: 0
-        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        # sleep_step: 1000
-
-
-        # # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
-        # # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
-        # # sleep_step: 500
-        # R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
-        # sleep_step: 2000
-
 
         # Wait for toast message "Post published and added to your shop."
         # wait_toast_publish: { message: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress.", timeout: 10000 }
@@ -466,9 +432,7 @@ testT3686_CosellerResell:
         sleep_step: 5000
 
         # Step 3.2: Find and click the resold Post to edit
-        page_scroll: { y: 800, steps: 3 }
-        sleep_step: 2000
-        R_click_resold_post: { locator: "img[src*='cloudinary']", index: 0, scroll: true, timeout: 10000 }
+        R_click_resold_post: { locator: "text=auto-test-post-setting-case1742", exact: true, index: 0, scroll: true, timeout: 10000 }
         sleep_step: 3000
 
         # Step 3.3: Switch to Settings tab
