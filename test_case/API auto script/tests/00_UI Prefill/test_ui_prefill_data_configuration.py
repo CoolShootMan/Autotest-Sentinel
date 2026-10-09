@@ -311,6 +311,9 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
+
+
+
     # --- step 19: update the partner999's store shop url to autoshop (PUT /store-front) ---
     _resp19 = ctx.api.storefront.update(body="""{
     "userInfo": {
@@ -13429,3 +13432,198 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }}""", token="token", app_headers=True)
     expect(_resp156).json('$.code').equals('200')
     expect(_resp156).json('$.message').equals('success')
+
+
+    # ================================================================
+    # Prefill event: API Test T4259 (for yuxiao_999)
+    # Tickets: Main ticket, ticket replace1, ticket replace2, ticket replace3
+    # Start time: today 10:00 AM
+    # ================================================================
+    _now_t4259 = _dt.datetime.now()
+    vars["t4259_start"] = _now_t4259.strftime("%Y-%m-%d") + " 10:00"
+    vars["t4259_end"] = (_now_t4259 + _dt.timedelta(days=365)).strftime("%Y-%m-%d") + " 11:00"
+
+    # --- step 157: Create event API Test T4259 ---
+    _resp157 = ctx.api.events.create_v2(body=f"""{{
+    "ignoreStartTime": false,
+    "ignoreEndTime": false,
+    "isTimeUnspecified": false,
+    "allowAutoComplete": true,
+    "description": "",
+    "note": "",
+    "location": "Teston Road, Maple, ON, Canada",
+    "status": "UPCOMING",
+    "descriptionBodyJson": "{{\\"root\\":{{\\"children\\":[{{\\"children\\":[],\\"direction\\":\\"ltr\\",\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"katana-paragraph\\",\\"version\\":1,\\"textFormat\\":0,\\"textStyle\\":\\"\\",\\"style\\":\\"\\"}}],\\"direction\\":null,\\"format\\":\\"\\",\\"indent\\":0,\\"type\\":\\"root\\",\\"version\\":1}}}}",
+    "isTaxEnabled": false,
+    "isAddressRevealEnabled": false,
+    "title": "API Test T4259",
+    "venue": "3rd Street Promenade",
+    "timezone": {{
+        "timeZoneId": "America/Toronto",
+        "timeZoneName": "Eastern Daylight Time",
+        "dstOffset": 3600,
+        "rawOffset": -18000
+    }},
+    "poster": {{
+        "height": 2048,
+        "width": 3072,
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "mediaType": "IMAGE"
+    }},
+    "startDateDisplay": "{vars["t4259_start"]}",
+    "endDateDisplay": "{vars["t4259_end"]}",
+    "locationDetails": {{
+        "line1": "Teston Road",
+        "city": "Vaughan",
+        "state": "Ontario",
+        "stateName": "Ontario",
+        "zipcode": "",
+        "country": "Canada",
+        "placeId": "Eh5UZXN0b24gUm9hZCwgTWFwbGUsIE9OLCBDYW5hZGEiLiosChQKEgnZKxgAlCgriBFZxtVPBhJGQxIUChIJnViAXQMpK4gR_d4duheew-k"
+    }},
+    "styleSettings": {{
+        "template": "ClearSky",
+        "themeName": "MidnightGlow",
+        "layout": {{
+            "pageHeader": {{"style": "DEDICATED_HEADER_BAR", "displayText": "SHOP_NAME", "height": "MEDIUM"}},
+            "productBanner": {{"ctaButton": "VIEW_PRODUCT", "display": "HIDE"}}
+        }},
+        "version": "v2",
+        "backgroundColor": "#000000",
+        "title": {{"color": "#F6CA7C", "fontFamily": "Inter", "fontSize": 24, "fontWeight": 700}},
+        "columnTitle": {{"fontFamily": "Inter", "fontSize": 20, "fontWeight": 700, "color": "#FFFFFF"}},
+        "fontFamily": "Inter",
+        "color": "#FFFFFF",
+        "dividerColor": "#5D5D5D",
+        "button": {{"backgroundColor": "#F6CA7C", "color": "#000000", "borderRadius": 0, "fontWeight": 400}},
+        "secondaryButton": {{"color": "#FFFFFF", "borderColor": "#F6CA7C", "borderRadius": 0, "fontWeight": 400}},
+        "product": {{"borderRadius": 0}},
+        "featuredProducts": {{"backgroundColor": "#000000", "borderRadius": 0, "color": "#FFFFFF", "secondaryTextColor": "#E0E0E0", "title": {{"fontFamily": "Inter", "fontSize": 14, "fontWeight": 400, "color": "#FFFFFF"}}}},
+        "relatedLink": {{"backgroundColor": "#FAFAFA", "color": "#000000 ", "borderRadius": 0}},
+        "announcementCarousel": {{"backgroundColor": "#F6CA7C", "color": "#000000"}},
+        "featuredProduct": {{"cover": {{"borderRadius": 0}}}},
+        "recentUsedColors": ["#ffffff"]
+    }}
+}}""", app_headers=True, token="token")
+    expect(_resp157).json('$.code').equals('200')
+    ctx.extract("event_t4259_id", _resp157, "$.data.id")
+
+    # --- step 158: Create event media/poster ---
+    _resp158 = ctx.api.events.media_batch_create(
+        path_vars={"created_event_id": vars.get("event_t4259_id", "")},
+        body="""{
+    "poster": {"height": 2048, "mediaDuration": 0, "mediaType": "IMAGE", "position": 0, "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072},
+    "posterBackend": [{"height": 2048, "mediaDuration": 0, "mediaType": "IMAGE", "position": 0, "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072}],
+    "medias": [],
+    "mediaTextConfig": {"headline": "Missed our last event?", "subtitle": "Here's a lil recap.", "align": "center"}
+}""", app_headers=True, token="token")
+    expect(_resp158).json('$.code').equals('200')
+
+    # --- step 159: Create 4 tickets ---
+    _resp159 = ctx.api.events.ticket_batch_v2(
+        path_vars={"created_event_id": vars.get("event_t4259_id", "")},
+        body="""{
+    "poster": {"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0},
+    "listingType": "TICKET",
+    "isTaxEnabled": false,
+    "autoReplace": false,
+    "tickets": [
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "Main ticket",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 100, "ticketPrice": 22, "price": 25.55, "fees": 3.55, "priceAnchor": 0, "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 3.5, "customFee": 0, "transactionItemFee": 3.55}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "ticket replace1",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 100, "ticketPrice": 22, "price": 25.55, "fees": 3.55, "priceAnchor": 0, "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 3.5, "customFee": 0, "transactionItemFee": 3.55}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "ticket replace2",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 100, "ticketPrice": 22, "price": 25.55, "fees": 3.55, "priceAnchor": 0, "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 3.5, "customFee": 0, "transactionItemFee": 3.55}}]
+        },
+        {
+            "listingType": "TICKET",
+            "ticketType": "TICKET_TYPE_STANDARD",
+            "title": "ticket replace3",
+            "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 100, "ticketPrice": 22, "price": 25.55, "fees": 3.55, "priceAnchor": 0, "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 3.5, "customFee": 0, "transactionItemFee": 3.55}}]
+        }
+    ],
+    "coSellingCommissionRate": 0,
+    "customFeeConfig": {"isEnabled": false, "items": []}
+}""", app_headers=True, token="token")
+    expect(_resp159).json('$.code').equals('200')
+
+    # --- step 160: Create empty lineup ---
+    _resp160 = ctx.api.events.lineup_batch(
+        path_vars={"created_event_id": vars.get("event_t4259_id", "")},
+        body="""{"lineup":[]}""", app_headers=True, token="token")
+    expect(_resp160).json('$.code').equals('200')
+
+    # --- step 161: Get event post id ---
+    _resp161 = ctx.api.posts.curator_event_posts(
+        path_vars={"event_id": vars.get("event_t4259_id", "")},
+        app_headers=True, token="token")
+    expect(_resp161).json('$.code').equals('200')
+    ctx.extract("T4259_post_id", _resp161, "$.data.items[0].id")
+
+    # --- step 162: Set up replace chain on post products ---
+    _ptoken = ctx.get("token", "")
+    _ph = {"Authorization": f"Bearer {_ptoken}", "from": "client", "Content-Type": "application/json"}
+    # GET post detail to get relatedProducts with product/variant IDs
+    _resp162a = ctx.api._client.request("GET", '/posts/curator/{{post_id}}',
+        path_vars={"post_id": vars.get("T4259_post_id", "")}, headers=_ph)
+    _rp = _resp162a.json().get("data", {}).get("relatedProducts", [])
+    # Build replace chain: rp[0]=Main, rp[1] replaces rp[0], rp[2] replaces rp[1], rp[3] replaces rp[2]
+    _chain = []
+    for i, p in enumerate(_rp):
+        _entry = {
+            "type": "PRODUCT",
+            "merchantProductId": p["merchantProductId"],
+            "isVisible": True,
+            "isPurchaseQuantityLimited": False,
+            "isRecommendation": False,
+            "hasDependentProducts": False,
+            "dependentProductIds": [],
+            "isFreeShipping": False,
+            "isDefaultToSubscription": False,
+            "toReplaceMerchantProductIds": [_rp[i-1]["merchantProductId"]] if i > 0 else None,
+            "isCtaCustomized": False,
+            "ctaConfig": {"type": "BUY_NOW"},
+            "syncWithCatalogPrice": True,
+            "purchaseQuantityLimit": 1,
+            "variants": [{
+                "wholesalePriceForPromoters": v.get("price", 25.55),
+                "price": v.get("price", 25.55),
+                "costPrice": 0,
+                "isExcluded": False,
+                "isDefault": False,
+                "priceAnchor": 0,
+                "merchantProductVariantId": v["merchantProductVariantId"],
+                "commissionRateForPromoters": 0,
+            } for v in p.get("variants", [])]
+        }
+        _chain.append(_entry)
+    _resp162 = ctx.api._client.request("PATCH", '/posts/curator/{{post_id}}/products',
+        path_vars={"post_id": vars.get("T4259_post_id", "")},
+        headers=_ph,
+        body={
+            "relatedProducts": _chain,
+            "financeModeForPromoters": "FINANCE_MODE_COMMISSION",
+            "syncEnabled": False,
+            "allowPromotersResell": True,
+        })
+    expect(_resp162).json('$.code').equals('200')
+    print(f"\n=== T4259 DONE: event_id={vars.get('event_t4259_id','')} post_id={vars.get('T4259_post_id','')} products={len(_chain)} ===\n")

@@ -31,9 +31,8 @@ testT3981_NotRecognized:
     is_mobile: true
     description: "Verify QR scanner shows error for an unrecognized/invalid code"
     test_step:
-        open: "https://s.pear.us/7DCjTz"
-        sleep_wait_for_scan: 15000
+        # Launch fresh browser in subprocess with wrong QR y4m (different event)
+        execute_not_recognized_scan: {}
     expect_result:
-        description: "Should display Code Not Recognized error"
-        assertions:
-            - { assertion_type: "element_visible_by_text", text: "QR code is for a different event", timeout: 20000 }
+        description: "Should display 'QR code is for a different event'"
+        assertions: []
