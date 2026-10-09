@@ -98,6 +98,12 @@ jobs:
           BASE_URL: https://release.pear.us
           SCAN_QR_CODE: "9329611"
         run: |
+          # Pre-generate y4m with QR=9329611 (conftest may not fire in sub-process)
+          python -c "
+          import sys; sys.path.insert(0, 'test_case/UI')
+          from conftest import _generate_scanner_y4m
+          _generate_scanner_y4m('/tmp/pear_data/Ticket_Small.y4m', qr_text='9329611')
+          "
           cd test_case/UI
           python -m pytest . --tb=short --yaml="All_YAML/Events/Scanner.yaml" -k "NotRecognized" --alluredir=../../allure-results/notrecog 2>&1 | tee -a ../../run.log
           cd ../..
