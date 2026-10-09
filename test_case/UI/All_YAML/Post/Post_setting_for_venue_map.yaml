@@ -153,7 +153,6 @@ testT3991_VerifyPartner:
     # Deferred: co-seller note entry flow changed — post Settings no longer has
     # "Add a note for co-sellers" toggle; textbox "Enter a short message for" removed.
     # Needs flow rewrite + live-UI confirm (likely moved into Co-selling sub-tab).
-    skip: true
     description: "Verify that partner can set a note for co-sellers in a post"
     test_step:
         open: "{BASE_URL}/events"
@@ -383,7 +382,6 @@ testT3686_CosellerResell:
     is_coseller: true
     # Deferred: seat-map purchase needs a logged-in +997 buyer; this flow logs out to
     # guest (and owner-via-coseller-link blocked), so the seat table can't be selected.
-    skip: true
     description: "Verify Order Confirmation Note is displayed when purchasing through Coseller's resold Post"
     test_step:
 
@@ -570,7 +568,6 @@ testT3686_CosellerResell:
 testT3686_teardown:
 #Auth: Linda Zhou
     # Deferred: paired cleanup for the deferred T3686_CosellerResell above.
-    skip: true
     description: "delete the resold post"
     expect_result: "Co-seller post deleted successfully or no data to delete"
     test_step:
@@ -2894,7 +2891,6 @@ testT5332:
 
 testT5332_VerifyGuest:
     guest: true
-    skip: true
     description: "Verify that merch 001 and merch 002 are displayed on post detail page for guest users after partner inserts all merch in RTE"
     test_step:
         # Step 1: Open the post detail page as guest
