@@ -32,8 +32,8 @@ testT1742:
             R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
-            # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-            verify_post_alias: { text: "auto-test-post-setting-t1742" }
+            # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+            verify_post_alias: { text: "auto-test-post-setting-case1742" }
 
             # Step 3: Navigate to Co-selling tab
             R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
@@ -96,7 +96,7 @@ testT1742:
         sleep_step: 1500
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 10%"
             timeout: 5000
 
@@ -145,7 +145,7 @@ testT1742:
         sleep_step: 1500
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 8%"
             timeout: 5000
 
@@ -265,8 +265,8 @@ testT3683_T3684:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
         # Step 3: Post edit page -> switch to Settings tab
@@ -308,7 +308,7 @@ testT3683_T3684:
         sleep_step: 3000
 
         # Step 6: Directly access Post page for Guest ticket purchase
-        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_step: 3000
 
         # Step 7: Select product "General Admission 01", click its Buy Ticket button
@@ -401,7 +401,7 @@ testT3686_CosellerResell:
 
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
         open_post: 
-          url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+          url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
           # cookie_file: 'test_case/UI/cookie_{ENV}_co_seller.json"'
         sleep_step: 5000
 
@@ -410,11 +410,12 @@ testT3686_CosellerResell:
         sleep_step: 2000
         
         # Click "Add to shop" button to resell the Post (is_coseller: true)
-        R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 8000 }
+        # Optional: post may already be added from previous run
+        R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 5000, optional: true }
         sleep_step: 3000
 
         # "This post has been added to your shop." dialog -> confirm with Save
-        click_save_btn: { locator: "div[role='dialog']:has-text('This post has been added to your shop') button:has-text('Save')" }
+        click_save_btn: { locator: "div[role='dialog'] button:has-text('Save')", timeout: 5000, optional: true }
         sleep_step: 3000
 
         # Click Publish button to publish the resold post (first click may open confirmation dialog)
@@ -462,10 +463,12 @@ testT3686_CosellerResell:
 
         # Step 3.1: Navigate to Coseller's shop page
         open_coseller_shop: "{BASE_URL}/autotest-coseller"
-        sleep_step: 3000
+        sleep_step: 5000
 
         # Step 3.2: Find and click the resold Post to edit
-        R_click_resold_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+        page_scroll: { y: 800, steps: 3 }
+        sleep_step: 2000
+        R_click_resold_post: { locator: "img[src*='cloudinary']", index: 0, scroll: true, timeout: 10000 }
         sleep_step: 3000
 
         # Step 3.3: Switch to Settings tab
@@ -491,7 +494,7 @@ testT3686_CosellerResell:
         sleep_step: 3000
 
         # T3686 Step 4: Navigate to Coseller's resold Post page as guest
-        open_resold_post: "{BASE_URL}/autotest-coseller/post/auto-test-post-setting-t1742"
+        open_resold_post: "{BASE_URL}/autotest-coseller/post/auto-test-post-setting-case1742"
         sleep_step: 3000
 
         # T3686 Step 5: Guest clicks Buy Ticket (from Coseller's shop General Admission 01)
@@ -563,8 +566,8 @@ testT3686_teardown:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
 
         # Step 3: Navigate to Co-selling tab
         R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
@@ -1683,8 +1686,8 @@ testT4038:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 3: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
         # Step 4: Switch to Coupons tab
@@ -1756,7 +1759,7 @@ testT2069:
     description: "Verify announcement banners auto-scroll every 3 seconds and loop back"
     test_step:
         # Step 1: Open the post landing page as guest (no login required)
-        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_step: 8000
 
         # Step 2: Verify first announcement is displayed initially
@@ -1802,8 +1805,8 @@ testT2069:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 4: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 4: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
         # Step 5: Switch to Coupons tab

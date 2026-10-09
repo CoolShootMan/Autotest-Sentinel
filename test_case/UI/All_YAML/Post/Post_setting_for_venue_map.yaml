@@ -1348,7 +1348,7 @@ testT2069:
     description: "Verify announcement banners auto-scroll every 3 seconds and loop back"
     test_step:
         # Step 1: Open the post landing page as guest (no login required)
-        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_step: 8000
 
         # Step 2: Verify first announcement is displayed initially
@@ -2623,7 +2623,7 @@ testT5442:
             R_click_my_event:               { locator: "text=event-for-UI-auto-venue-map", exact: true, index: 0 }
             sleep_step:                     4000
 
-            # Open post "auto-test-post-setting-t1742"
+            # Open post "auto-test-post-setting-case1742"
             R_click_posts_tab:              { role: "tab", name: "Post" }
             sleep_step:                     2000
             # [UI drift 2026-08-31] "View post" button removed (Post tab shows post directly)
