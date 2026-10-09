@@ -3337,8 +3337,9 @@ testT5440:
     sleep_after_remove_lineup: 500
 
     # 3d: Delete Event info component (date/time/location)
-    # NOTE: text from recording — "Thu Apr 17, 2053 8AMInstagram"
-    R_click_event_info: { text: "Thu Apr 17" }
+    # 2026-10-09: info card renders "Thu · Apr 17 · 2053" (middot separators,
+    # verified live); match on "Apr 17" (contains, exact=False default).
+    R_click_event_info: { text: "Apr 17" }
     sleep_after_info_click: 500
     R_click_delete_info: { role: "button", name: "Delete" }
     sleep_after_delete_info: 500
