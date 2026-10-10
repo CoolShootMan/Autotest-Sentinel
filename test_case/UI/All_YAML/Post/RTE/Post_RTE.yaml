@@ -1,0 +1,225 @@
+# ==============================================================================
+# T4866: Verify a post CTA button can be switched from a Form action to External link
+# Pre-condition: event "Test event post variant settings" with a published post,
+#                form "auto_test help-text / test help" already exists
+# Flow: Post RTE -> Insert -> CTA Button -> action "Form" -> pick the form
+#       -> set Button text -> save in editor -> Update (publish)
+#       -> verify the CTA renders in the Post tab preview
+#       -> as a guest, click the CTA: the linked form modal opens
+#       -> back in the RTE, switch the CTA action to "External link" (Google.com)
+#       -> publish, then as a guest click the CTA: Google opens in a new tab
+#       -> teardown deletes the CTA
+# ==============================================================================
+testT4866:
+    description: "Verify a post CTA button switches from Form to External link and guests see the matching flow"
+
+    # Pre-condition =============================================================
+    pre_condition:
+        description: "Open the event and enter the post RTE editor"
+        expect_result: "RTE editor is opened"
+        test_step:
+            # Events list
+            open: "{BASE_URL}/events"
+            sleep_after_open: 5000
+
+            # Target event card (a DIV, not a BUTTON -> exact text locator)
+            R_click_event: { locator: "text=Test event post variant settings", exact: true }
+            sleep_after_event: 4000
+
+            R_click_post_tab: { role: "tab", name: "Post" }
+            sleep_after_post_tab: 2000
+
+            R_click_edit_content: { locator: "button[aria-label='Content']" }
+            sleep_after_editor: 4000
+
+    # Test Steps ================================================================
+    test_step:
+        # ----------------------------------------------------------------------
+        # Part 1: Insert a CTA Button whose action is a Form
+        # ----------------------------------------------------------------------
+        R_click_insert: { role: "button", name: "Insert", exact: true, index: 0 }
+        sleep_after_insert: 2000
+
+        # "CTA Button" is either a top-level menu item or nested under a "CTA
+        # Elements" group; hover the group when it exists (skipped when absent),
+        # then click the item itself. Portal-rendered menuitems use page-level
+        # locators here: role-scoped lookups are limited to the newest visible
+        # dialog in this framework.
+        smart_click_optional_cta_group: { text: "CTA Elements", optional: true }
+        sleep_after_cta_group: 1500
+        R_click_cta_button: { locator: '[role="menuitem"]:has-text("CTA Button")' }
+        sleep_after_cta_button: 1500
+
+        R_click_action_select: { role: "button", name: "Select an action" }
+        sleep_after_action_select: 1000
+        R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }
+        sleep_after_form_option: 1500
+
+        # The dropdown option renders the form title + subtitle concatenated
+        # ("auto_test help-text" + "test help"); match on the distinctive title
+        # fragment (substring match, exact=False by default).
+        R_click_form_dropdown: { text: "Please select a form" }
+        sleep_after_form_dropdown: 1500
+        R_click_select_form: { text: "auto_test help-text", index: 0 }
+        sleep_after_form_select: 1500
+
+        fill_button_text: { role: "textbox", name: "Button text", value: "test form" }
+        sleep_after_button_text: 1000
+
+        # Save the CTA config, then publish. Keep the two "Update" clicks
+        # back-to-back: a long pause lets the confirm step lapse and the change
+        # silently stays unpublished (T4866 lesson).
+        R_click_cta_save: { locator: '[data-testid="mui-button"]' }
+        sleep_after_cta_save: 1500
+        R_click_update_1: { role: "button", name: "Update" }
+        R_click_update_2: { role: "button", name: "Update" }
+        sleep_after_publish: 3000
+
+        # ----------------------------------------------------------------------
+        # Part 2: Verify the published post renders the CTA form button
+        # ----------------------------------------------------------------------
+        # Publishing navigates back to the event view's Post tab on its own (~2s), and
+        # the phone-frame preview below the sub-tabs renders the saved post. Assert the
+        # CTA right there: the preview is plain DOM in the main frame, so no storefront
+        # trip is needed and the post-publish navigation race disappears.
+        # The alias chip only exists on the Post tab (the editor route shows none), so it
+        # proves the checks below run against the preview and not against the RTE, which
+        # carries the same button text.
+        # Keep the readiness gate on the `wait_for_selector` prefix: a `wait_`-prefixed
+        # name routes to smart_wait, which only logs a warning when it times out.
+        verify_preview_alias_chip: { text: "/autotestshop/post/" }
+        wait_for_selector_cta_preview: { selector: 'button[data-testid="button"]:has-text("test form")', timeout: 20000 }
+        verify_cta_button_in_preview: { text: "test form" }
+
+
+        # ----------------------------------------------------------------------
+        # Part 3: as a guest, clicking the CTA opens the linked form
+        # ----------------------------------------------------------------------
+        # Repo convention for guest checks: clear the partner cookies on the SAME
+        # page and re-inject them afterwards (inject_guest keeps the tenant-routing
+        # cookies so /autotestshop still resolves). Switching identity this way is
+        # the only option that keeps the root page usable afterwards, because the
+        # session registry lives on the root page and cannot be driven from inside
+        # a session page.
+        clear_cookies: { inject_guest: true }
+        sleep_guest_switch: 1500
+        open_guest_post: { url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings" }
+        sleep_guest_open: 6000
+        # The CTA carries data-cta-action: "form" while it links a form.
+        R_click_cta_form_guest: { locator: 'button[data-testid="button"][data-cta-action="form"]:has-text("test form")' }
+        sleep_guest_click: 3500
+        # The form modal is identified by its title and its Submit action; an
+        # external-link CTA renders as a plain <a> that opens a new tab (see Part 5).
+        verify_form_title_guest: { text: "auto_test help-text", scope: { locator: '[role="dialog"]' } }
+        verify_form_submit_guest: { text: "Submit", scope: { locator: '[role="dialog"]' } }
+
+        # ----------------------------------------------------------------------
+        # Part 4: back as the partner, switch the CTA action Form -> External link
+        # ----------------------------------------------------------------------
+        add_cookies: {}
+        sleep_partner_back: 2000
+        open_events_again: { url: "{BASE_URL}/events" }
+        sleep_events_again: 4000
+        R_click_event_again: { locator: "text=Test event post variant settings", exact: true }
+        sleep_event_again: 4500
+        R_click_post_tab_again: { role: "tab", name: "Post" }
+        sleep_post_tab_again: 2000
+        R_click_edit_content_again: { locator: "button[aria-label='Content']" }
+        sleep_editor_again: 4500
+
+        # Selecting the decorator reveals the Lexical CTA toolbar, whose Edit
+        # control opens the "Edit CTA button" panel.
+        R_click_cta_decorator: { locator: 'button[data-testid="button"][data-cta-action="form"]:has-text("test form")', index: 0, force: true }
+        sleep_cta_decorator: 1200
+        R_click_cta_edit: { locator: "button[aria-label='Edit']" }
+        sleep_cta_edit_panel: 2000
+
+        # Inside the panel the first button[data-testid='button'] is the Action
+        # selector; its menu holds Form / External link / Buy now / Add to cart / ...
+        R_click_action_selector: { locator: '[role="dialog"] button[data-testid="button"]', index: 0 }
+        sleep_action_selector: 1200
+        R_click_external_link_action: { locator: '[data-testid="menu-item"]:has-text("External link")' }
+        sleep_external_link_action: 2000
+
+        # The "Link to" field is split in two: a fixed "https://" prefix
+        # (input[name='protocol']) plus the domain input (input[name='href'],
+        # placeholder "example.com"); only the domain part is editable.
+        fill_cta_link: { locator: "input[name='href']", value: "Google.com" }
+        sleep_cta_link: 800
+        fill_button_text_google: { locator: "input[name='label']", value: "Google" }
+        sleep_button_text_google: 800
+        # Save the panel, then publish. Keep the two "Update" clicks back-to-back
+        # (same reason as Part 1).
+        R_click_cta_save_external: { locator: '[data-testid="mui-button"]' }
+        sleep_cta_save_external: 1500
+        R_click_update_3: { role: "button", name: "Update" }
+        R_click_update_4: { role: "button", name: "Update" }
+        sleep_after_publish_2: 4000
+
+        # ----------------------------------------------------------------------
+        # Part 5: as a guest, the CTA is now an external link to Google.com
+        # ----------------------------------------------------------------------
+        # A freshly created session context has no cookies at all = anonymous
+        # visitor. The root page (and its partner cookies) stays untouched, so it
+        # can finish the run on the RTE and drive the teardown.
+        session_guest__open: { url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings" }
+        sleep_guest_open_2: 6000
+        # An external-link CTA is published as a plain anchor, not a button:
+        # <a data-cta-action="none" href="https://google.com/?utm_source_pear=1"
+        # target="_blank">Google</a>. Assert tag + href + target in one hard gate.
+        session_guest__execute_js: { script: "() => { const a = document.querySelector('a[data-cta-action][target=_blank]'); return a ? a.textContent.trim() + '|' + a.getAttribute('href') : 'missing'; }", assert_contains: "Google|https://google.com" }
+        sleep_after_js_check: 500
+        # Clicking the anchor opens https://www.google.com/... in a NEW tab while
+        # the guest page itself never navigates. The framework cannot follow a
+        # popup, so the click below only exercises the real interaction; the
+        # destination is already covered by the href/target assertion above.
+        session_guest__R_click_cta_external: { locator: 'a[data-cta-action][target=_blank]:has-text("Google")' }
+        sleep_guest_click_2: 3000
+        # The guest page is still the post: the navigation happened in the popup.
+        session_guest__execute_js_still_post: { script: "() => location.pathname", assert_contains: "/autotestshop/post/" }
+
+    # Expected Result ===========================================================
+    expect_result:
+        description: "The CTA starts as a Form action and, once switched to External link, renders a Google.com link for guests"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Google"
+
+    # Teardown ==================================================================
+    teardown_step:
+        # The framework runs no try/finally, so a red case would leave the button
+        # on the shared post and break the next run. Delete it here.
+        # Re-inject partner cookies in case the case died while the page was
+        # switched to guest (Part 3 clears them).
+        add_cookies: {}
+        sleep_td_cookies: 1500
+        open_td: { url: "{BASE_URL}/events", auto_handle_modals: false }
+        sleep_td_open: 3000
+        R_click_event_td: { locator: "text=Test event post variant settings", exact: true }
+        sleep_td_event: 4000
+
+        R_click_post_tab_td: { role: "tab", name: "Post" }
+        sleep_td_post_tab: 2000
+        R_click_edit_content_td: { locator: "button[aria-label='Content']" }
+        sleep_td_editor: 3000
+
+        # The CTA is a Lexical client-hydrated decorator: it attaches to the DOM
+        # only after the RTE hydrates. Wait for it before selecting. Depending on
+        # where the case died the decorator is still a Form button or already an
+        # External link anchor, so a single locator covers both shapes; the post's
+        # own native "Buy Ticket" CTA is deliberately excluded.
+        wait_cta_td: { locator: 'button[data-testid="button"][data-cta-action="form"], a[data-cta-action]', timeout: 15000 }
+        sleep_td_editor_ready: 1000
+        R_click_cta_td: { locator: 'button[data-testid="button"][data-cta-action="form"], a[data-cta-action]', index: 0, force: true }
+        sleep_td_select: 800
+        R_click_delete_td: { role: "button", name: "Delete" }
+        sleep_td_delete: 800
+        # Save the editor and publish, twice back-to-back (a long pause lets the
+        # confirm step lapse and the change silently stays unpublished).
+        R_click_update_td_1: { role: "button", name: "Update" }
+        R_click_update_td_2: { role: "button", name: "Update" }
+        sleep_td_publish: 3000
+        # Assert the deletion really got published: without this the confirm
+        # step can lapse silently and the post keeps the button (T4866 lesson).
+        verify_deleted_published_td: { text: "Post published!", timeout: 8000 }
+        sleep_td_end: 2000

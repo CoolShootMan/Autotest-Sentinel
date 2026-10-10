@@ -1,8 +1,19 @@
-# Auto Test Framework v4.4
+# Pear Automation Test
 
-> UI Automation Testing with AI Self-Healing using Python + Pytest + Playwright + Allure + Gemini Vision AI
+> End-to-end test automation for Pear / Ticket.com — UI + API + CI, powered by Python, Pytest, Playwright and Allure.
 
 English | [简体中文](./README.zh-CN.md)
+
+---
+
+## 📦 Modules
+
+| Module | Tech | Description |
+|--------|------|-------------|
+| **UI Automation** | Pytest + Playwright + YAML | Keyword-driven test cases defined in YAML. AI self-healing via Gemini Vision (optional). |
+| **API Automation** | Pytest + Requests | 20+ test suites covering login, purchase flow, post settings, resell, Shopify, admin tools, etc. |
+| **Data Prefill** | API scripts | `00_UI Prefill` suite seeds test posts, events, products and tickets before UI runs. |
+| **CI/CD** | GitHub Actions | Scheduled daily runs on `ubuntu-latest`, Allure reports on GitHub Pages, Slack notifications. |
 
 ---
 
@@ -30,6 +41,17 @@ English | [简体中文](./README.zh-CN.md)
 - **Browser:** Chromium (automatically installed by Playwright)
 - **Memory:** 8GB+ RAM recommended
 - **Disk Space:** At least 2GB free space
+
+---
+
+## ⚙️ CI / Daily Automation
+
+| Workflow | Schedule (Beijing) | What it does |
+|----------|-------------------|--------------|
+| `ui-automation-daily` | **20:00** every night | Full UI suite on `ubuntu-latest`, headless. Publishes Allure report to GitHub Pages, sends Slack summary. |
+| `api-automation-daily` | **08:00** every morning | API suites (linda + lury). Slack notification with pass/fail counts. |
+
+Both workflows support `workflow_dispatch` for manual triggering. Reports are published to GitHub Pages; Slack notifications go to `#api-ui-automation-result-daily-report`.
 
 ---
 
@@ -272,32 +294,25 @@ actions/ (Action Registry)
 │  └─config.yaml          # Configuration file
 ├─recordings              # Playwright codegen recorded scripts
 ├─test_case
-│  └─UI                    # Framework root (run pytest from the repo root)
-│     ├─All_YAML/          # Test case definitions, grouped by feature
-│     ├─actions/           # Action Registry
-│     │  ├─__init__.py     # Registry entry point
-│     │  ├─base.py         # Base actions (smart_click, smart_fill, AI Fallback)
-│     │  └─...             # Domain-specific action modules
-│     ├─page/              # UI layer wrappers (home.py, my_shop_page.py, ...)
-│     ├─utils/             # [NEW v4.0] AI Self-Healing Toolkit
-│     │  ├─ai_vision.py    # Gemini Vision AI Service (SOM + Multi API Key Rotation)
-│     │  ├─rag_knowledge.py   # RAG Knowledge Base (FAISS + SentenceTransformers)
-│     │  └─Knowledge_Base.md  # Domain Knowledge Document
-│     ├─conftest.py        # Pytest fixtures (multi-env + auth, resolves --yaml)
-│     ├─test_ui.py         # Core test execution engine (with execution history)
-│     ├─runner.py          # Interactive launcher (cd test_case/UI first)
-│     └─main.py            # CI entry point (pytest + Allure report)
-├─tools                   # Utilities (run from the repo root)
-│  ├─diagnose_failed.py    # [v4.4] Failed test case diagnosis (9 probes + AI RAG suggestions)
-│  ├─get_all_cookies.py    # Refresh the login cookies used by the framework
-│  ├─ui_snapshot.py        # DOM snapshot + diff detection
-│  ├─locator_updater.py    # YAML locator batch update tool
-│  ├─dom_kb.py             # [NEW v4.4] DOM vector knowledge base (FAISS + RAG)
-│  └─...                   # Other utility scripts
-├─pytest.ini               # Pytest configuration (repo root = rootdir)
-├─venv_requirements.txt    # Project core dependencies (pytest, playwright, allure, FAISS, Gemini, etc.)
-├─setup_env.sh / .bat      # Cross-platform one-click environment setup script
-└─.env.example             # Environment variable template (copy to .env)
+│  ├─UI/                  # UI automation (Playwright)
+│  │  ├─All_YAML/         # YAML test cases by feature (Post, Events, Admin tools, etc.)
+│  │  ├─actions/          # Action Registry (click, fill, verify, execute_js, etc.)
+│  │  ├─ui_workflow/      # Reusable Python workflows (reset ticket, etc.)
+│  │  ├─conftest.py       # Pytest fixtures (multi-env + auth, scanner y4m)
+│  │  ├─test_ui.py        # YAML test runner
+│  │  ├─runner.py         # Interactive launcher
+│  │  └─main.py           # CI entry point
+│  └─API auto script/     # API automation (pytest + requests)
+│     ├─api/              # Reusable API clients (login, orders, posts...)
+│     ├─tests/            # Test suites by domain (00_Prefill, 01_Login, 03_Purchase, 07_Post...)
+│     ├─core/             # API framework core
+│     └─suites/           # Suite configurations
+├─tools                   # Utilities (cookie fetch, CI summary, diagnosis, etc.)
+├─.github/workflows/      # CI pipelines (ui-automation-daily, api-automation-daily)
+├─pytest.ini              # Pytest configuration
+├─venv_requirements.txt   # Project dependencies
+├─setup_env.sh / .bat     # Cross-platform one-click environment setup
+└─.env.example            # Environment variable template
 ```
 
 ---

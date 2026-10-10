@@ -390,7 +390,9 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
             t_action = get_action(tk)
             if t_action:
                 try: t_action(page, tv)
-                except Exception as e: logger.error(f"Teardown Action '{tk}' failed: {e}")
+                except Exception as e:
+                    logger.error(f"Teardown Action '{tk}' failed: {e}")
+                    raise
             else:
                 if tk.startswith("click"):
                     try:

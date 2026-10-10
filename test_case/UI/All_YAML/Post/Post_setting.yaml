@@ -32,8 +32,8 @@ testT1742:
             R_click_post_tab: { role: "tab", name: "Post" }
             sleep_step: 2000
 
-            # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-            verify_post_alias: { text: "auto-test-post-setting-t1742" }
+            # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+            verify_post_alias: { text: "auto-test-post-setting-case1742" }
 
             # Step 3: Navigate to Co-selling tab
             R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
@@ -96,7 +96,7 @@ testT1742:
         sleep_step: 1500
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 10%"
             timeout: 5000
 
@@ -145,7 +145,7 @@ testT1742:
         sleep_step: 1500
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-t1742" >> xpath=ancestor::*[.//img][1]'
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 8%"
             timeout: 5000
 
@@ -265,8 +265,8 @@ testT3683_T3684:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
         # Step 3: Post edit page -> switch to Settings tab
@@ -308,7 +308,7 @@ testT3683_T3684:
         sleep_step: 3000
 
         # Step 6: Directly access Post page for Guest ticket purchase
-        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_step: 3000
 
         # Step 7: Select product "General Admission 01", click its Buy Ticket button
@@ -401,7 +401,7 @@ testT3686_CosellerResell:
 
         # T3686 Step 1 2: Navigate to original Post and click "Add to shop" to resell
         open_post: 
-          url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+          url: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
           # cookie_file: 'test_case/UI/cookie_{ENV}_co_seller.json"'
         sleep_step: 5000
 
@@ -410,46 +410,13 @@ testT3686_CosellerResell:
         sleep_step: 2000
         
         # Click "Add to shop" button to resell the Post (is_coseller: true)
-        R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 8000 }
+        # Optional: post may already be added from previous run
+        R_click_add_to_shop: { locator: "button:has-text('Add to shop')", timeout: 5000, optional: true }
         sleep_step: 3000
 
         # "This post has been added to your shop." dialog -> confirm with Save
-        click_save_btn: { locator: "div[role='dialog']:has-text('This post has been added to your shop') button:has-text('Save')" }
+        click_save_btn: { locator: "div[role='dialog'] button:has-text('Save')", timeout: 5000, optional: true }
         sleep_step: 3000
-
-        # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # Using smart_click_retry: element exists for sure, but click may be unstable (animation overlay etc.), needs retry
-        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        # sleep_step: 2000
-
-        # # Second click on Publish confirmation dialog (modal button)
-        # # Confirm popup appears with delay, increase wait time and retry count; only 1 Publish in popup, use index: 0
-        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        # sleep_step: 1000
-
-
-        # Handle optional success dialog after publishing: check "Do not show me this again" and click Save
-        # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
-        # sleep_step: 500
-        # R_click_customize_now: { locator: "span:has-text('Customize Now')", optional: true, timeout: 5000 }
-        # sleep_step: 3000
-
-        # # Click Publish button to publish the resold post (first click may open confirmation dialog)
-        # # Use smart_click_retry: the element always exists, but the click can be flaky (animation overlay etc.), so retry
-        # smart_click_retry_publish_resold: { role: 'button', name: 'Publish', timeout: 5000, retry: 3, delay: 500 }
-        # sleep_step: 2000
-
-        # # Second click on Publish confirmation dialog (modal button)
-        # # The confirmation dialog shows up late, so raise the wait and the retry count; it holds a single Publish, hence index: 0
-        # smart_click_retry_publish_confirm: { role: 'button', name: 'Publish', index: 0, timeout: 8000, retry: 6, delay: 800 }
-        # sleep_step: 1000
-
-
-        # # Handle optional "Got it" dialog after publishing: check "Do not show me this again" and click Got it
-        # # check_do_not_show_gotit: { locator: "input[name='display']", optional: true }
-        # # sleep_step: 500
-        # R_click_got_it: { role: 'button', name: 'Got it', optional: true, timeout: 3000 }
-        # sleep_step: 2000
 
 
         # Wait for toast message "Post published and added to your shop."
@@ -462,10 +429,10 @@ testT3686_CosellerResell:
 
         # Step 3.1: Navigate to Coseller's shop page
         open_coseller_shop: "{BASE_URL}/autotest-coseller"
-        sleep_step: 3000
+        sleep_step: 5000
 
         # Step 3.2: Find and click the resold Post to edit
-        R_click_resold_post: { locator: "text=auto-test-post-setting-t1742", exact: true, index: 0 }
+        R_click_resold_post: { locator: "text=auto-test-post-setting-case1742", exact: true, index: 0, scroll: true, timeout: 10000 }
         sleep_step: 3000
 
         # Step 3.3: Switch to Settings tab
@@ -491,7 +458,7 @@ testT3686_CosellerResell:
         sleep_step: 3000
 
         # T3686 Step 4: Navigate to Coseller's resold Post page as guest
-        open_resold_post: "{BASE_URL}/autotest-coseller/post/auto-test-post-setting-t1742"
+        open_resold_post: "{BASE_URL}/autotest-coseller/post/auto-test-post-setting-case1742"
         sleep_step: 3000
 
         # T3686 Step 5: Guest clicks Buy Ticket (from Coseller's shop General Admission 01)
@@ -563,8 +530,8 @@ testT3686_teardown:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 2: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 2: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
 
         # Step 3: Navigate to Co-selling tab
         R_click_Co‑selling: { role: "tab", name: "Co‑selling" }
@@ -1683,40 +1650,44 @@ testT4038:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 3: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
-        # Step 4: Switch to Coupons tab
-        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
-        sleep_step: 1500
+        # Step 4: Switch to Content tab, then open Settings panel
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        sleep_step: 2000
+        R_click_settings_gear: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]', timeout: 10000 }
+        sleep_step: 2000
 
-        # Step 6: Click "+ Add promotional announcements" button to open dialog
-        R_click_add_announcements_btn: { role: 'button', name: 'Add' }
-        sleep_step: 1500
+        # Step 5: Toggle "Add promotional announcements" On
+        R_click_toggle_announcements: { locator: 'input[name="isAnnouncementsEnabled"]', timeout: 10000 }
+        sleep_step: 2000
+        page_scroll: { y: 600, steps: 3 }
+        sleep_step: 2000
 
-        # Step 7: Fill Announcement 1 - first input box (id="announcements.0.text")
-        fill_announcement_1: { locator: 'input[id="announcements.0.text"]', value: 'auto test01 Announcement' }
+        # Step 7: Fill Announcement 1
+        fill_announcement_1: { locator: 'input[placeholder="Enter announcement text"]', value: 'auto test01 Announcement' }
         sleep_step: 500
 
-        # Step 8: Click "+ Add item" to add Announcement 2
-        R_click_add_item_1: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
+        # Step 8: Click "+ Add" to add Announcement 2
+        R_click_add_item_1: { role: 'button', name: 'Add', timeout: 5000 }
         sleep_step: 800
 
-        # Step 9: Fill Announcement 2 (id="announcements.1.text")
-        fill_announcement_2: { locator: 'input[id="announcements.1.text"]', value: 'auto test02 Announcement' }
+        # Step 9: Fill Announcement 2
+        fill_announcement_2: { locator: 'input[placeholder="Enter announcement text"] >> nth=1', value: 'auto test02 Announcement' }
         sleep_step: 500
 
-        # Step 10: Click "+ Add item" again to add Announcement 3
-        R_click_add_item_2: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
+        # Step 10: Click "+ Add" again to add Announcement 3
+        R_click_add_item_2: { role: 'button', name: 'Add', timeout: 5000 }
         sleep_step: 800
 
-        # Step 11: Fill Announcement 3 (id="announcements.2.text")
-        fill_announcement_3: { locator: 'input[id="announcements.2.text"]', value: 'auto test03 Announcement' }
+        # Step 11: Fill Announcement 3
+        fill_announcement_3: { locator: 'input[placeholder="Enter announcement text"] >> nth=2', value: 'auto test03 Announcement' }
         sleep_step: 500
 
-        # Step 12: Click "Add" submit button to confirm and close dialog
-        R_click_add_submit: { locator: '[data-testid="mui-button"][type="submit"]' }
+        # Step 12: Click "Confirm" button
+        R_click_add_submit: { role: 'button', name: 'Confirm', timeout: 5000 }
         sleep_step: 2000
 
         # Step 13: Save post settings
@@ -1756,23 +1727,23 @@ testT2069:
     description: "Verify announcement banners auto-scroll every 3 seconds and loop back"
     test_step:
         # Step 1: Open the post landing page as guest (no login required)
-        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open_post: "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_step: 8000
 
         # Step 2: Verify first announcement is displayed initially
-        wait_announcement_1_visible: { text: "auto test01 Announcement", timeout: 8000 }
+        verify_announcement_1_visible: { text: "auto test01 Announcement", timeout: 8000 }
 
         # Step 3: Wait for auto-scroll (3s interval) and verify second announcement appears
         sleep_step: 3500
-        wait_announcement_2_auto: { text: "auto test02 Announcement", timeout: 8000 }
+        verify_announcement_2_auto: { text: "auto test02 Announcement", timeout: 8000 }
 
         # Step 4: Wait for auto-scroll and verify third announcement appears
         sleep_step: 3500
-        wait_announcement_3_auto: { text: "auto test03 Announcement", timeout: 8000 }
+        verify_announcement_3_auto: { text: "auto test03 Announcement", timeout: 8000 }
 
         # Step 5: Wait for auto-scroll and verify it loops back to first announcement
         sleep_step: 3500
-        wait_announcement_1_loop: { text: "auto test01 Announcement", timeout: 8000 }
+        verify_announcement_1_loop: { text: "auto test01 Announcement", timeout: 8000 }
 
     expect_result:
         description: "Announcement banner auto-scrolls every 3 seconds (1→2→3→1) and loops continuously"
@@ -1802,22 +1773,23 @@ testT2069:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 4: Confirm post with alias auto-test-post-setting-t1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-t1742" }
+        # Step 4: Confirm post with alias auto-test-post-setting-case1742 is visible
+        verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
-        # Step 5: Switch to Coupons tab
-        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
-        sleep_step: 1500
+        # Step 5: Switch to Content tab, open Settings panel
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        sleep_step: 2000
+        R_click_settings_gear: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]', timeout: 10000 }
+        sleep_step: 2000
 
-        # Step 6: Click trash icon button to delete all announcements
-        R_click_delete_all_ann: { locator: '[data-testid="button"][aria-label="Remove announcement carousel"]', index: 0 }
-        sleep_step: 1000
+        # Step 6: Toggle "Add promotional announcements" Off
+        R_click_toggle_ann_off: { locator: 'input[name="isAnnouncementsEnabled"]', timeout: 10000 }
+        sleep_step: 2000
 
         # Step 7: Save post settings
         R_click_save_teardown: { role: 'button', name: 'Save' }
         sleep_step: 3000
-        wait_toast_save_teardown: { message: "Post promotions updated", timeout: 15000 }
 
 
 

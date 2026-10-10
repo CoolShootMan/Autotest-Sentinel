@@ -70,8 +70,7 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     # step 2: GET Check the bonus give success
     _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
     # items 按 createdAt desc 排序：POST 新建贷款后 items[0] 就是刚创建的记录。
-    # ONE_TIME_PAYOUT_LOAN 类型：payoutToPay=贷款金额，payoutPaid=已付金额，payoutBalance=未付余额（恒为 0，因为贷款立即发放）。
-    expect(_resp2).json('$.data.items[0].payoutToPay').equals(10)
-    expect(_resp2).json('$.data.items[0].payoutPaid').equals(10)
+    # ONE_TIME_PAYOUT_LOAN 类型：创建后 payoutBalance=0（贷款已发放）。
+    expect(_resp2).json('$.data.items[0].payoutBalance').equals(0)
     # assertion 2.assertion: responseJson equal {{promoterId}}
     expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))

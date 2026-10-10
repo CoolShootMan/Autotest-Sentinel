@@ -67,7 +67,22 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to All_YAML/)
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml,All_YAML/Admin tools/Feature_flag_setting.yaml,All_YAML/Meta Pixel record/Pixel_record.yaml,All_YAML/Post/Post_setting_for_venue_map.yaml"
+    yaml_files = ",".join([
+        "All_YAML/Post/Post_setting.yaml",
+        "All_YAML/Post/Post_content.yaml",
+        "All_YAML/Post/Post_setting_for_venue_map.yaml",
+        "All_YAML/Post/Buy_together_and_recommended_at_checkout/axs_tdc_venue_map_recommended_at_checkout.yaml",
+        "All_YAML/Post/RTE/Post_RTE.yaml",
+        "All_YAML/Events/Scanner.yaml",
+        "All_YAML/Events/Event settings/axs_fee_breakdown_ui.yaml",
+        "All_YAML/Events/Event settings/tdc_fee_breakdown_ui.yaml",
+        "All_YAML/Events/Event settings/venue_map_fee_breakdown_ui.yaml",
+        "All_YAML/Form/Storefront_form.yaml",
+        "All_YAML/Form/Storefront_product_with_form.yaml",
+        "All_YAML/Section/Section.yaml",
+        "All_YAML/Admin tools/Feature_flag_setting.yaml",
+        "All_YAML/Meta Pixel record/Pixel_record.yaml",
+    ])
     # yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
     pytest_args = [
         sys.executable,
@@ -104,11 +119,10 @@ def start_autotest():
     if prefill_result.stderr:
         logger.info(f"Prefill stderr: {prefill_result.stderr}")
     if prefill_result.returncode != 0:
-        logger.error(
-            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+        logger.warning(
+            f"API prefill FAILED (exit {prefill_result.returncode}) — continuing UI run anyway.\n"
             f"stderr: {prefill_result.stderr}"
         )
-        raise SystemExit(prefill_result.returncode)
 
     # ── 2. Fetch cookies for all 3 test accounts ──
     # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），

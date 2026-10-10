@@ -3933,7 +3933,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
     # --- step 54: Admin update the partner's the t1742 post  url (PATCH /post/{{post0_id}}) ---
     _resp54 = ctx.api.admin.post_by_post_id(path_vars={"post_id": vars.get("post0_id", "")}, body="""{
-    "urlAlias": "auto-test-post-setting-t1742",
+    "urlAlias": "auto-test-post-setting-case1742",
     "headline": "Auto-Test-post-setting ",
     "title": "Auto-Test-post-setting ",
     "subTitle": "",
@@ -3950,7 +3950,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp54).json('$.message').equals('success')
     expect(_resp54).status().is_one_of([200,201])
     # 注：常量 expectedAlias
-    expect(_resp54).json('$.data.post.urlAlias').equals('auto-test-post-setting-t1742')
+    expect(_resp54).json('$.data.post.urlAlias').equals('auto-test-post-setting-case1742')
     expect(_resp54).json('$.data.post.status').equals('ACTIVE')
 
 
