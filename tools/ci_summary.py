@@ -116,47 +116,45 @@ def _read_json(path: str):
 # ── 结果采集：UI 用例 ───────────────────────────────────────────────────────
 
 def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
-    """解析 allure-results 下最新一次运行的每个用例结果。
+    """解析 allure-results 下每个用例结果。
 
     Returns:
         (结果目录, 用例列表, 状态计数)。目录缺失时返回 (None, [], {})。
     """
-    dirs = sorted(glob.glob(os.path.join(allure_root, "*/")))
-    if not dirs:
-        return None, [], {}
-
+    # 直接读 allure-results 根目录下的 *-result.json，不扫子目录
     rows: list[dict] = []
     counts: dict[str, int] = {}
     by_name: dict[str, dict] = {}  # dedup by test name, keep latest/best result
-    for d in dirs:
-        for fp in glob.glob(os.path.join(d, "*-result.json")):
-            data = _read_json(fp)
-            if not isinstance(data, dict):
-                continue
-            status = data.get("status") or "unknown"
-            start, stop = data.get("start"), data.get("stop")
-            duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
-            name = _md_escape(data.get("name") or "(未命名用例)", 160)
-            entry = {
-                "name": name,
-                "status": status,
-                "duration": duration,
-                "reason": _first_line(data.get("statusDetails")),
-            }
-            # If same test appears multiple times (rerun/parallel), keep the one
-            # with the "worst" status (failed > broken > passed) but later start time
-            if name in by_name:
-                old = by_name[name]
-                old_rank = STATUS_ORDER.get(old["status"], 9)
-                new_rank = STATUS_ORDER.get(status, 9)
-                if new_rank < old_rank:  # worse status wins
-                    by_name[name] = entry
-            else:
+    for fp in glob.glob(os.path.join(allure_root, "*-result.json")):
+        data = _read_json(fp)
+        if not isinstance(data, dict):
+            continue
+        status = data.get("status") or "unknown"
+        start, stop = data.get("start"), data.get("stop")
+        duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
+        name = _md_escape(data.get("name") or "(未命名用例)", 160)
+        entry = {
+            "name": name,
+            "status": status,
+            "duration": duration,
+            "reason": _first_line(data.get("statusDetails")),
+        }
+        # If same test appears multiple times (rerun/parallel), keep the one
+        # with the "worst" status (failed > broken > passed) but later start time
+        if name in by_name:
+            old = by_name[name]
+            old_rank = STATUS_ORDER.get(old["status"], 9)
+            new_rank = STATUS_ORDER.get(status, 9)
+            if new_rank < old_rank:  # worse status wins
                 by_name[name] = entry
+        else:
+            by_name[name] = entry
     rows = list(by_name.values())
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     rows.sort(key=lambda r: (STATUS_ORDER.get(r["status"], 9), r["name"]))
+    if not rows:
+        return None, [], {}
     return allure_root, rows, counts
 
 

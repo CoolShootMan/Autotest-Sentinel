@@ -1654,36 +1654,40 @@ testT4038:
         verify_post_alias: { text: "auto-test-post-setting-case1742" }
         sleep_step: 3000
 
-        # Step 4: Switch to Coupons tab
-        R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
-        sleep_step: 1500
+        # Step 4: Switch to Content tab, then open Settings panel
+        R_click_content_tab: { role: 'tab', name: 'Content' }
+        sleep_step: 2000
+        R_click_settings_gear: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]', timeout: 10000 }
+        sleep_step: 2000
 
-        # Step 6: Click "+ Add promotional announcements" button to open dialog
-        R_click_add_announcements_btn: { role: 'button', name: 'Add' }
-        sleep_step: 1500
+        # Step 5: Toggle "Add promotional announcements" On
+        R_click_toggle_announcements: { locator: 'input[name="isAnnouncementsEnabled"]', timeout: 10000 }
+        sleep_step: 2000
+        page_scroll: { y: 600, steps: 3 }
+        sleep_step: 2000
 
-        # Step 7: Fill Announcement 1 - first input box (id="announcements.0.text")
-        fill_announcement_1: { locator: 'input[id="announcements.0.text"]', value: 'auto test01 Announcement' }
+        # Step 7: Fill Announcement 1
+        fill_announcement_1: { locator: 'input[placeholder="Enter announcement text"]', value: 'auto test01 Announcement' }
         sleep_step: 500
 
-        # Step 8: Click "+ Add item" to add Announcement 2
-        R_click_add_item_1: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
+        # Step 8: Click "+ Add" to add Announcement 2
+        R_click_add_item_1: { role: 'button', name: 'Add', timeout: 5000 }
         sleep_step: 800
 
-        # Step 9: Fill Announcement 2 (id="announcements.1.text")
-        fill_announcement_2: { locator: 'input[id="announcements.1.text"]', value: 'auto test02 Announcement' }
+        # Step 9: Fill Announcement 2
+        fill_announcement_2: { locator: 'input[placeholder="Enter announcement text"] >> nth=1', value: 'auto test02 Announcement' }
         sleep_step: 500
 
-        # Step 10: Click "+ Add item" again to add Announcement 3
-        R_click_add_item_2: { locator: '[data-testid="button"][type="button"]:has-text("Add item")' }
+        # Step 10: Click "+ Add" again to add Announcement 3
+        R_click_add_item_2: { role: 'button', name: 'Add', timeout: 5000 }
         sleep_step: 800
 
-        # Step 11: Fill Announcement 3 (id="announcements.2.text")
-        fill_announcement_3: { locator: 'input[id="announcements.2.text"]', value: 'auto test03 Announcement' }
+        # Step 11: Fill Announcement 3
+        fill_announcement_3: { locator: 'input[placeholder="Enter announcement text"] >> nth=2', value: 'auto test03 Announcement' }
         sleep_step: 500
 
-        # Step 12: Click "Add" submit button to confirm and close dialog
-        R_click_add_submit: { locator: '[data-testid="mui-button"][type="submit"]' }
+        # Step 12: Click "Confirm" button
+        R_click_add_submit: { role: 'button', name: 'Confirm', timeout: 5000 }
         sleep_step: 2000
 
         # Step 13: Save post settings
