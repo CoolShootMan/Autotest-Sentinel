@@ -41,6 +41,11 @@ def start_autotest():
     logger.remove()
     create_date = time.strftime('%Y_%m_%d', time.localtime(time.time()))
     logger.add(f'log/{create_date}.log', enqueue=True, encoding='utf-8', retention=30)
+    # 本地跑时把日志同步打到终端（此前只有文件 sink，终端全程静默，早退分支
+    # 的报错也只能去翻日志文件，2026-10-10 用户被"秒退无输出"坑过一次）。
+    # CI 保持无 console sink，行为不变（CI 日志走 workflow 自己的采集）。
+    if not os.environ.get("CI"):
+        logger.add(sys.stderr, level="INFO")
     logger.info(f"Python executable: {shutil.which('python')}")
     logger.info(f"sys.path: {sys.path}")
     logger.info(r"""
