@@ -248,7 +248,7 @@ testT4860:  # [LAST: PASSED 2026-05-06]
     # Select "Form" action from dropdown
     R_click_action_select: { role: 'button', name: 'Select an action' }
     # 2026-09-20: 改用页面级 locator。menuitem 是 portal 渲染的下拉项，用 `role:` 会被框架的
-    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4866 成功、T4860 却报
+    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4859 成功、T4860 却报
     # element not found（纯 DOM 顺序抖动）。本仓库既有约定同样是用 locator，见
     # Post_setting.yaml / Post_content.yaml / Section.yaml 里的 menuitem 写法。
     R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }
@@ -451,7 +451,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     description: "Form title validation should block save when empty, and save succeeds with valid title/subtitle/email icon combinations"
     assertions: [ ]
 
-testT4866:  # [LAST: PASSED 2026-05-06]
+testT4859:  # [LAST: PASSED 2026-05-06]
   guest: false
   description: "Verify editing CTA form button text and confirming update on storefront, then delete the button"
   test_step:
@@ -482,7 +482,7 @@ testT4866:  # [LAST: PASSED 2026-05-06]
 
     R_click_action_select: { role: 'button', name: 'Select an action' }
     # 2026-09-20: 改用页面级 locator。menuitem 是 portal 渲染的下拉项，用 `role:` 会被框架的
-    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4866 成功、T4860 却报
+    # 「只在最新可见 dialog 内查找」限死 —— CI 里**同一步骤** T4859 成功、T4860 却报
     # element not found（纯 DOM 顺序抖动）。本仓库既有约定同样是用 locator，见
     # Post_setting.yaml / Post_content.yaml / Section.yaml 里的 menuitem 写法。
     R_click_form_option: { locator: '[role="menuitem"]:has-text("Form")' }

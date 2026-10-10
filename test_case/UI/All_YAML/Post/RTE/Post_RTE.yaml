@@ -1,5 +1,5 @@
 # ==============================================================================
-# T4866-Post: Verify a post CTA button can be switched from a Form action to External link
+# T4866: Verify a post CTA button can be switched from a Form action to External link
 # Pre-condition: event "Test event post variant settings" with a published post,
 #                form "auto_test help-text / test help" already exists
 # Flow: Post RTE -> Insert -> CTA Button -> action "Form" -> pick the form
@@ -10,7 +10,7 @@
 #       -> publish, then as a guest click the CTA: Google opens in a new tab
 #       -> teardown deletes the CTA
 # ==============================================================================
-testT4866-Post:
+testT4866:
     description: "Verify a post CTA button switches from Form to External link and guests see the matching flow"
 
     # Pre-condition =============================================================
@@ -68,7 +68,7 @@ testT4866-Post:
 
         # Save the CTA config, then publish. Keep the two "Update" clicks
         # back-to-back: a long pause lets the confirm step lapse and the change
-        # silently stays unpublished (T4866-Post lesson).
+        # silently stays unpublished (T4866 lesson).
         R_click_cta_save: { locator: '[data-testid="mui-button"]' }
         sleep_after_cta_save: 1500
         R_click_update_1: { role: "button", name: "Update" }
@@ -220,6 +220,6 @@ testT4866-Post:
         R_click_update_td_2: { role: "button", name: "Update" }
         sleep_td_publish: 3000
         # Assert the deletion really got published: without this the confirm
-        # step can lapse silently and the post keeps the button (T4866-Post lesson).
+        # step can lapse silently and the post keeps the button (T4866 lesson).
         verify_deleted_published_td: { text: "Post published!", timeout: 8000 }
         sleep_td_end: 2000
