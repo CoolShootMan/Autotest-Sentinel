@@ -1446,21 +1446,35 @@ def test_invalid_qr(page: Page, v):
 
 def execute_not_recognized_scan(page: Page, v):
     """
-    Subprocess isolated action to verify 'Code Not Recognized'.
-    Bypasses Playwright video source limitations by launching a fresh browser.
+    Verify 'QR code is for a different event' by overwriting the fake camera y4m
+    with a wrong QR code and navigating to the scanner page in the existing browser.
+    Restores the correct y4m afterwards.
     """
-    logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
-    script_path = os.path.join(BASE_DIR, "tools", "run_invalid_qr.py")
-    result = subprocess.run(
-        [sys.executable, script_path],
-        capture_output=True,
-        text=True
-    )
-    if "SUCCESS" in result.stdout:
-        logger.info("Successfully verified 'Code Not Recognized' via subprocess")
-    else:
-        logger.error(f"Failed to verify Invalid QR scan. Output:\n{result.stdout}\nStderr:\n{result.stderr}")
-        raise AssertionError("Invalid QR scan failed in subprocess. Check logs for details.")
+    import shutil
+    sys.path.insert(0, os.path.join(BASE_DIR, "test_case", "UI"))
+    from conftest import _generate_scanner_y4m
+
+    correct_y4m = "/tmp/pear_data/Ticket_Small.y4m"
+    backup_y4m = "/tmp/pear_data/Ticket_Small_backup.y4m"
+    scanner_url = "https://s.pear.us/7DCjTz"
+
+    # Backup correct y4m and generate wrong QR
+    shutil.copy(correct_y4m, backup_y4m)
+    _generate_scanner_y4m(correct_y4m, qr_text="9329611")
+    logger.info(">>> Overwrote camera y4m with wrong QR (9329611)")
+
+    try:
+        # Navigate to scanner page
+        page.goto(scanner_url, wait_until="networkidle")
+        page.wait_for_timeout(12000)
+        page.get_by_text("QR code is for a different event").first.wait_for(
+            state="visible", timeout=20000
+        )
+        logger.info(">>> Verified: 'QR code is for a different event' displayed")
+    finally:
+        # Restore correct y4m
+        shutil.copy(backup_y4m, correct_y4m)
+        logger.info(">>> Restored correct camera y4m")
 
 
 def run_workflow_script(page: Page, v):
