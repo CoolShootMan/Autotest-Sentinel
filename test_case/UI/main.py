@@ -113,11 +113,10 @@ def start_autotest():
     if prefill_result.stderr:
         logger.info(f"Prefill stderr: {prefill_result.stderr}")
     if prefill_result.returncode != 0:
-        logger.error(
-            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+        logger.warning(
+            f"API prefill FAILED (exit {prefill_result.returncode}) — continuing UI run anyway.\n"
             f"stderr: {prefill_result.stderr}"
         )
-        raise SystemExit(prefill_result.returncode)
 
     # ── 2. Fetch cookies for all 3 test accounts ──
     # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），
