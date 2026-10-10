@@ -276,7 +276,9 @@ testT3683_T3684:
         # T3683 Step 3: Verify toggle is enabled (input box appears)
         # Note: Use smart_wait to verify label exists (instead of verify_text_visible)
         wait_order_note_label: { text: "Order confirmation note", timeout: 8000 }
-        fill_order_note: { placeholder: "e.g., Event time, location, or special instructions for buyers", value: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
+        # [UI drift 2026-10-10 venue_map] Order confirmation note renders as a TEXTAREA
+        # (not input), so smart_fill's placeholder fallback (input only) misses it. Use name locator.
+        fill_order_note: { locator: 'textarea[name="orderConfirmationNote"]', value: 'Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID' }
         sleep_step: 500
 
         # T3683 Step 4: Save (skip if already saved, button disabled)
@@ -300,17 +302,33 @@ testT3683_T3684:
         sleep_step: 3000
 
         # Step 7: Select product "General Admission 01", click its Buy Ticket button
-        R_click_buy_ticket_ga01: { near_text: "General Admission 01", role: 'button', name: 'Buy Ticket', index: 0 }
-        sleep_step: 1500
-        # [UI drift 2026-09-01 venue_map] Venue-mapped post: clicking the product "Buy Ticket"
-        # opens a "Select tickets" dialog. A table MUST be selected in the venue map before the
-        # proceed buttons ("Add to cart" / "Buy now") appear. Click the first table cell
-        # (SVG rect[data-id]); smart_click force-clicks past the transparent overlay rect that
-        # intercepts pointer events. After selection "Buy now" becomes available and leads to the
-        # contact-info page where the next step's "Continue" button appears (verified live).
-        R_click_select_table: { locator: '[role="dialog"] rect[data-id]', index: 0, disable_ai: true }
-        sleep_step: 1500
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        # [2026-10-10 r5 ROOT CAUSE] near_text:"General Admission 01" + name:'Buy Ticket'
+        # actually clicked the FIRST product card ("General Admission", $0.00) — every card
+        # owns a "Buy Ticket" button, and that product's seat dialog opens a 5/7/9-people
+        # quantity tooltip (never "1 table selected"), so Buy now never renders. The GA01
+        # card button's accessible name contains "General Admission 01" (other cards don't),
+        # so role+name substring pins the right card (verified in live browser).
+        R_click_buy_ticket_ga01: { role: 'button', name: 'General Admission 01', index: 0 }
+        # [2026-10-10] DO NOT rely on sleep_step here: duplicate `sleep_step` keys inside one
+        # test_step mapping collapse into a single entry (last value wins, first position kept,
+        # MEMORY rule 4) — every per-step sleep in this case is silently dropped. Use distinct
+        # wait_* (smart_wait) keys for timing instead.
+        # Wait until the seat map finished loading (instruction text renders after the
+        # progressbar); clicking earlier lands on a pre-render map and selection never registers.
+        wait_select_dialog_loaded: { text: "Please select tables in the map", timeout: 20000 }
+        # [UI drift 2026-10-10 venue_map] Seat = SVG circle[data-id]; its sibling transparent
+        # rect[data-id] sits below the circle and intercepts the click (r4 log: "circle
+        # intercepts pointer events"). SOLD seats render stroke="transparent" (invisible) while
+        # available seats keep a colored stroke (#CD254A GA01 / #E9803D GA02), so
+        # :not([stroke="transparent"]) = "first AVAILABLE seat" — self-healing as earlier runs
+        # sell seats (index-based nth(2) broke the moment its seat sold in r7). Fails loudly
+        # only when every seat of this product is sold out (= time to reset test data).
+        R_click_select_table: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', index: 0 }
+        # Loud gate: right panel must flip from "No tables selected" to "1 table selected".
+        # Prevents a silent no-selection from cascading into Buy-now/Continue failures.
+        wait_table_selected: { text: "table selected", timeout: 8000 }
+        # Required (not optional): "Buy now" only renders after a successful seat selection.
+        R_click_buy_now: { role: 'button', name: 'Buy now', timeout: 10000 }
 
         # Step 7: Click Continue to enter Contact info page
         R_click_continue: { role: 'button', name: 'Continue' }
