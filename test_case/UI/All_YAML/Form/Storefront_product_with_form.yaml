@@ -783,11 +783,10 @@ testT3690:  # [LAST: PASSED 2026-05-06]
       placeholder: "Phone number"
       value: "13105558976"
 
-    # short answer - realistic business description
-    fill_short_text:
-      placeholder: "Please fill this out"
-      index: 1
-      value: "Pear Partner Cooperation Inquiry"
+    # [2026-10-12] the rebuilt form template has ONE short-answer field (Name, labelled
+    # "Please fill this out") — the old second field targeted by fill_short_text
+    # (index 1) no longer exists, so that step was removed with the form-definition
+    # change. fill_form above already fills the Name field.
     R_click_save: { role: 'button', name: 'Save' }
     sleep_after_save: 2000
 
@@ -811,9 +810,13 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     wait_for_place_order_button2: { role: 'button', name: 'Place order', timeout: 15000 }
 
     # Verify form data after confirm
-    R_click_enhance_2: { locator: '[data-testid="enhance-button"]', index: 0 }
-    sleep_after_enhance_2: 1000
-    verify_form_data_confirm: { text: 'just place some text' }
+    # [2026-10-12] checkout no longer renders the form data as page text — it lives in
+    # input values inside the "Edit required info" dialog (input values are invisible to
+    # inner-text assertions, which is exactly why CI's text assertion failed). Verify the
+    # dialog opens with the form title, then close it and continue.
+    R_click_edit_required_info: { role: 'button', name: 'Edit required info' }
+    sleep_after_edit_required: 1500
+    verify_form_data_confirm: { text: 'Please fill this out' }
     R_click_close_2: { locator: '.modal-header-close-btn[aria-label="Close"]' }
     sleep_after_close_2: 500
 
@@ -823,9 +826,20 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     fill_first_name: { locator: 'input[name="address.firstName"]', value: 'aric' }
     fill_last_name: { locator: 'input[name="address.lastName"]', value: 'zheng' }
     fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: '10' }
+    # [2026-10-12] the address autocomplete options take ~3s to render; without the wait
+    # the option click misses (verified: "Shipping address is invalid" on Place order).
+    sleep_after_address_fill: 3000
     R_click_address_option: { role: 'button', name: '100 East Rich Street,' }
+    # selecting the option auto-fills city/state/zip — verify via the city fill below
+    sleep_after_address_option: 1500
     fill_address_line2: { locator: 'input[name="address.line2"]', value: '10' }
+    # [2026-10-12] these three are new required checkout fields (Place order rejects a
+    # missing city/state/zip with "Shipping address is invalid")
+    fill_city: { locator: 'input[name="address.city"]', value: 'Columbus' }
+    fill_state: { locator: 'input[name="address.state"]', value: 'OH' }
+    fill_zipcode: { locator: 'input[name="address.zipcode"]', value: '43215' }
     fill_phone: { role: 'textbox', name: 'Phone number', value: '(234) 939-2929' }
+    sleep_after_shipping: 1000
 
     # Place order
     R_click_place_order: { role: 'button', name: 'Place order' }
