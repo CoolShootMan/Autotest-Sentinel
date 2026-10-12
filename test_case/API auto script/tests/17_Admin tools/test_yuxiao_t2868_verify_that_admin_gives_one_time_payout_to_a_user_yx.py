@@ -68,9 +68,12 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
     # step 2: GET Check the bonus give success
+    # 等待异步 payout 处理完成（CI 上 GET 太快会读到 payoutBalance=10 的中间态）
+    import time; time.sleep(2)
     _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
     # items 按 createdAt desc 排序：POST 新建贷款后 items[0] 就是刚创建的记录。
-    # ONE_TIME_PAYOUT_LOAN 类型：创建后 payoutBalance=0（贷款已发放）。
+    # ONE_TIME_PAYOUT_LOAN 创建后 payoutBalance=0（贷款已发放）。
+    # 注意：payoutPaid/payoutToPay 受异步处理时序影响，不做断言。
     expect(_resp2).json('$.data.items[0].payoutBalance').equals(0)
     # assertion 2.assertion: responseJson equal {{promoterId}}
     expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))
