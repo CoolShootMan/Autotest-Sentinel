@@ -104,7 +104,7 @@ import case_index as ci  # noqa: E402
 ROOT = Path(__file__).parent
 SUITES_DIR = ROOT / "suites"
 
-PYTEST = str(_MANAGED) if _MANAGED.exists() else sys.executable
+PYTEST = str(_MANAGED) if _MANAGED else sys.executable
 
 
 def _load_yaml(path: Path) -> dict:
