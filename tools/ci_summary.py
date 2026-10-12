@@ -121,11 +121,18 @@ def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
     Returns:
         (结果目录, 用例列表, 状态计数)。目录缺失时返回 (None, [], {})。
     """
-    # 直接读 allure-results 根目录下的 *-result.json，不扫子目录
+    # 读 allure-results 下所有 *-result.json（根目录 + 时间戳子目录）
     rows: list[dict] = []
     counts: dict[str, int] = {}
     by_name: dict[str, dict] = {}  # dedup by test name, keep latest/best result
-    for fp in glob.glob(os.path.join(allure_root, "*-result.json")):
+    patterns = [
+        os.path.join(allure_root, "*-result.json"),
+        os.path.join(allure_root, "*", "*-result.json"),
+    ]
+    fps: list[str] = []
+    for pat in patterns:
+        fps.extend(glob.glob(pat))
+    for fp in fps:
         data = _read_json(fp)
         if not isinstance(data, dict):
             continue
@@ -607,6 +614,10 @@ def build_outputs(args: argparse.Namespace) -> list[str]:
     rate, executed = _pass_rate(ui_counts)
     result_dir = os.path.basename((d["allure_dir"] or "").rstrip("/"))
     pytest_sum = d["pytest_sum"]
+    # failed_count = UI failed + broken + prefill failures（直接从 counts 取，
+    # 不依赖 names 长度——fallback 到 pytest log 时 rows 为空但 counts 有值）
+    failed_total = (ui_counts.get("failed", 0) + ui_counts.get("broken", 0)
+                     + len(d["prefill_failed"]))
     return [
         f"pass_rate={'' if rate is None else f'{rate:.1f}'}",
         f"executed={executed}",
@@ -614,7 +625,7 @@ def build_outputs(args: argparse.Namespace) -> list[str]:
         f"failed={ui_counts.get('failed', 0)}",
         f"broken={ui_counts.get('broken', 0)}",
         f"skipped={ui_counts.get('skipped', 0)}",
-        f"failed_count={len(names)}",
+        f"failed_count={failed_total}",
         f"failed_names={','.join(names)[:900]}",
         f"prefill_failed={len(d['prefill_failed'])}",
         f"pytest_summary={'' if not pytest_sum else pytest_sum['line'][:200]}",
