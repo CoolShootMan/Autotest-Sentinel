@@ -860,6 +860,20 @@ testT5006_curator:  # [LAST: PASSED 2026-05-06]
     description: "Product form should be disabled after unchecking isProductFormEnabled"
     assertions: [ ]
 
+  # [2026-10-12] MANDATORY restore: this case flips the shared fixture's
+  # isProductFormEnabled OFF. Without this teardown the form stays disabled and
+  # testT3690 (and any other case that fills the purchase form) dies on the next
+  # run — that exact leak is what broke CI run #38's T3690.
+  teardown_step:
+    open: "{BASE_URL}/catalog"
+    sleep_after_open: 3000
+    R_click_product1_restore: { role: 'link', name: 'autotest product title - do not delete' }
+    sleep_after_open_product1_restore: 1000
+    R_click_advanced1_restore: { locator: ".MuiTab-root:has-text('Advanced')" }
+    check_enable_form_restore: { role: 'checkbox', name: 'isProductFormEnabled', checked: true, locator: 'input[name="isProductFormEnabled"]' }
+    R_click_confirm_restore: { locator: 'button[data-testid="main-button"]:has-text("Save")' }
+    sleep_after_confirm_restore: 2000
+
 #testT4868:
 #  guest: true
 #  description: "Verify product page shows 'Form unavailable' when form is disabled"
