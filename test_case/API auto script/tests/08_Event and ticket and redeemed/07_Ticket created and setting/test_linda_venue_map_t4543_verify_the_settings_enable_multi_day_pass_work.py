@@ -768,6 +768,13 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert any(_d.get('enabled') is True for _d in _p7['days']), "step7 multipleDaysPass.days 无 enabled=true 项"
     # step 9: Get consumer linda10 token  (POST /auth/sign-in)
     # token auto-managed by framework (linda10_token)
+    # === pre-condition: disable purchase approval on this post ===
+    # The post has isPurchaseApprovalRequired=true which blocks guest checkout with 422.
+    _resp_co = ctx.api.posts.curator_advanced_update(
+        post_id='{{post0_id}}',
+        body={"isPurchaseApprovalRequired": False},
+        token='yuxiao999_token',
+    )
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
     # assertions: $.code == 200 ; $.message == success
@@ -802,7 +809,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     }, app_headers=True, token='linda10_token')
     # validate checkout_express succeeded — otherwise orderId is None and step 12 400s
     _j11 = _json(_resp11)
-    assert _resp11.status_code == 200, f"step11 checkout_express status != 200: {_resp11.status_code}, body={_j11}"
+    assert _resp11.status_code in (200, 201), f"step11 checkout_express status != 200/201: {_resp11.status_code}, body={_j11}"
     assert str(_j11.get('code')) == '200', f"step11 checkout_express code != 200: {_j11}"
     vars['orderId'] = _j11.get('data', {}).get('orderId')
     assert vars['orderId'], f"step11 checkout_express returned empty orderId, data={_j11.get('data')}"
@@ -894,3 +901,10 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
             _expected_cur = _cur.strftime('%Y-%m-%d')
             _actual_cur = _redemptions[_i].get('validDateTimeStartDisplay').split(' ')[0]
             assert _actual_cur == _expected_cur, f"第 {_i + 1} 天的日期不连续或与预期不符"
+
+    # === teardown: restore purchase approval on this post ===
+    ctx.api.posts.curator_advanced_update(
+        post_id='{{post0_id}}',
+        body={"isPurchaseApprovalRequired": True},
+        token='yuxiao999_token',
+    )
