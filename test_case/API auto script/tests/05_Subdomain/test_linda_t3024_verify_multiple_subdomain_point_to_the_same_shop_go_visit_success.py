@@ -126,5 +126,5 @@ def test_linda_t3024_verify_multiple_subdomain_point_to_the_same_shop_go_visit_s
         assert _resp.status_code == 200, f"{_name}: status != 200, got {_resp.status_code}"
         _ct = _resp.headers.get("Content-Type", "")
         assert "text/html" in _ct, f"{_name}: Content-Type != text/html, got {_ct}"
-        _body = _resp.text if hasattr(_resp, "text") else str(_resp.data or "")
+        _body = _resp.text
         assert "katana" in _body, f"{_name}: body missing 'katana'"
