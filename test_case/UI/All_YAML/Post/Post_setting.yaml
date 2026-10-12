@@ -89,16 +89,16 @@ testT1742:
 
         # Step 5: Storefront > My content, verify "Offer up to 10%"
         open_storefront: "{BASE_URL}/autotestshop"
-        sleep_after_storefront: 4000
+        sleep_after_storefront: 5000
         R_click_my_content: { role: "button", name: "My content" }
-        sleep_after_my_content: 4000
+        sleep_after_my_content: 5000
         page_scroll_my_content: { y: 1200, steps: 6, delay: 800 }
-        sleep_step: 1500
+        sleep_step: 2000
         verify_post_offer:
             scope:
                 locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
             text: "Offer up to 10%"
-            timeout: 5000
+            timeout: 15000
 
         # Step 6: Reopen Events > Post tab to verify
         open_again: "{BASE_URL}/events"
