@@ -34,7 +34,7 @@
 # ==============================================================================
 
 
-testT3683_T3684:
+testT3683_T3684_venue_map:
 #Auth: Linda Zhou
     description: "Verify Order Confirmation Note - Edit in Settings Tab and Verify Display on Order Page"
     test_step:
@@ -203,7 +203,7 @@ testT3683_T3684:
 #    (same note content as set by Curator on the original Post)
 # ==============================================================================
 
-testT3686_CosellerResell:
+testT3686_CosellerResell_venue_map:
 #Auth: Linda Zhou
     is_coseller: true
     # Deferred: seat-map purchase needs a logged-in +997 buyer; this flow logs out to
@@ -407,7 +407,7 @@ testT3686_CosellerResell:
 
 
 # Separate verification for Guest
-testT3686_teardown:
+testT3686_teardown_venue_map:
 #Auth: Linda Zhou
     # Deferred: paired cleanup for the deferred T3686_CosellerResell above.
     description: "delete the resold post"
@@ -441,7 +441,7 @@ testT3686_teardown:
 
 
 # T2515 Partner sets Purchase quantity limit=5 for a several-variants item
-testT2515_SetLimit_WithVariant:
+testT2515_SetLimit_WithVariant_venue_map:
     description: "Partner sets Purchase quantity limit=5 for a several-variants item in post"
     test_step:
         # Step 1: Open Events list page
@@ -496,7 +496,7 @@ testT2515_SetLimit_WithVariant:
 
 
 # T2515 Guest verifies Buy now button is disabled after buying 5 variants
-testT2515_VerifyDisabled_WithVariant:
+testT2515_VerifyDisabled_WithVariant_venue_map:
     guest: true
     description: "Verify Buy now button is disabled after buying 5 variants (limit=5)"
     test_step:
@@ -629,7 +629,7 @@ testT2515_VerifyDisabled_WithVariant:
 
 
 # T4955: Partner enables Payment Restriction and sets access code
-testT4955_Partner_SetPaymentRestriction:
+testT4955_Partner_SetPaymentRestriction_venue_map:
     description: "Partner enables Payment Restriction and sets access code 'demi123'"
     test_step:
         # Step 1: Open Events list page
@@ -678,7 +678,7 @@ testT4955_Partner_SetPaymentRestriction:
 
 
 # T4955: Guest verifies Payment Restriction requires access code
-testT4955_Guest_VerifyAccessCode:
+testT4955_Guest_VerifyAccessCode_venue_map:
     guest: true
     description: "Guest verifies that access code is required to purchase when Payment Restriction is enabled"
     test_step:
@@ -811,7 +811,7 @@ testT4955_Guest_VerifyAccessCode:
 #   Coupon created successfully with auto-apply enabled; toast "Post promotions updated" shown
 # ==============================================================================
 
-testT3779:
+testT3779_venue_map:
 #Auth: Linda Zhou
     description: "Create an auto-applied coupon on the venue-map post"
     test_step:
@@ -900,7 +900,7 @@ testT3779:
 #   Guest checkout successful with coupon applied; order page displayed
 # ==============================================================================
 
-testT3767:
+testT3767_venue_map:
 #Auth: Linda Zhou
     guest: true
     description: "Verify auto-applied coupon 'autotest3779' applies at guest checkout (venue-map post)"
