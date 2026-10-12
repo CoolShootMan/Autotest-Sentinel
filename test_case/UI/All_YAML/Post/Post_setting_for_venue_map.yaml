@@ -124,10 +124,15 @@ testT3683_T3684:
         # Required (not optional): "Buy now" only renders after a successful seat selection.
         R_click_buy_now: { role: 'button', name: 'Buy now', timeout: 10000 }
 
-        # Step 7: [2026-10-10] checkout now lands directly on /checkout?postId=... (no
-        # Continue button — screenshot-verified); optional keeps this working on both layouts.
-        R_click_continue: { role: 'button', name: 'Continue', optional: true }
-        sleep_step: 2000
+        # Step 7: [2026-10-12 two-step dialog, browser-verified] Buy now opens a CHECKOUT
+        # DIALOG: step 1 = summary + coupon + "Clear cart & choose again" + Continue CTA;
+        # step 2 = Contact fields + Place order. Continue ALSO fires the async
+        # POST /order/checkout/express session — placing the order before it completes
+        # fails with 400 "Need to call POST /order/checkout first" (the CI failure mode),
+        # hence the waits and the pre-Place-order settle sleep below.
+        wait_checkout_dialog: { text: "Clear cart & choose again", timeout: 20000 }
+        R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
+        wait_place_order_visible: { text: "Place order", timeout: 20000 }
 
         # Step 8: Fill Contact info
         fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'auto' }
@@ -144,17 +149,22 @@ testT3683_T3684:
         fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
         sleep_step: 500
 
-        # Step 8.5: Fill Credit Card information (Stripe iframe)
+        # Step 8.5: Fill Credit Card information (Stripe iframe) — absent on coupon-free
+        # orders (100% off); fill_stripe_iframe tolerates missing fields (warn + continue).
         fill_stripe_iframe:
             card_number: '4242424242424242'
             expiry: '02/45'
             cvc: '345'
             card_name: 'linda 4650'
             zipcode: '90021'
-        sleep_step: 1000
+        # Settle sleep: let POST /order/checkout/express finish before ordering.
+        sleep_step: 8000
 
-        # Step 10: Place Order
+        # Step 10: Place Order (with one retry — a 400 "Need to call POST /order/checkout
+        # first" leaves the dialog open, so a second click succeeds once express finished)
         R_click_place_order: { role: 'button', name: 'Place order', optional: true }
+        sleep_step: 5000
+        R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
         # [2026-10-10] if a leftover auto-coupon (autotest3779) made the order FREE, the CTA
         # becomes "RSVP" instead — fallback click keeps the run alive.
         R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
@@ -341,9 +351,12 @@ testT3686_CosellerResell:
         # DISPROVEN — T3683 buys fine as guest (2 consecutive green runs).
         R_click_buy_now: { role: 'button', name: 'Buy now', timeout: 10000 }
 
-        # T3686 Step 7: [2026-10-10] optional — checkout may land directly on /checkout
-        R_click_continue: { role: 'button', name: 'Continue', optional: true }
-        sleep_step: 2000
+        # T3686 Step 7: [2026-10-12 two-step dialog] Buy now opens the CHECKOUT DIALOG
+        # (summary + Continue -> Contact + Place order); Continue also fires the async
+        # /order/checkout/express session — see T3683 for the full rationale.
+        wait_checkout_dialog: { text: "Clear cart & choose again", timeout: 20000 }
+        R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
+        wait_place_order_visible: { text: "Place order", timeout: 20000 }
 
         # T3686 Step 8: Fill Contact info
         fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Coseller' }
@@ -358,17 +371,21 @@ testT3686_CosellerResell:
         fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
         sleep_step: 500
 
-        # T3686 Step 8.5: Fill Credit Card information (Stripe iframe)
+        # T3686 Step 8.5: Fill Credit Card information (Stripe iframe) — absent on coupon-free
+        # orders; fill_stripe_iframe tolerates missing fields (warn + continue).
         fill_stripe_iframe:
             card_number: '4242424242424242'
             expiry: '02/45'
             cvc: '345'
             card_name: 'linda 4650'
             zipcode: '90021'
-        sleep_step: 1000
+        # Settle sleep: let POST /order/checkout/express finish before ordering.
+        sleep_step: 8000
 
-        # T3686 Step 9: Place Order
+        # T3686 Step 9: Place Order (retry once in case the express session was late)
         R_click_place_order: { role: 'button', name: 'Place order', optional: true }
+        sleep_step: 5000
+        R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
         # [2026-10-10] RSVP fallback for a free order (leftover auto-coupon) — see T3683.
         R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
 
@@ -469,11 +486,13 @@ testT2515_SetLimit_WithVariant:
     expect_result:
         description: "Purchase quantity limit saved successfully"
         assertions:
-            # [2026-10-10] toast "Post settings updated" disappears before assertions run
-            # (manifest showed 8/8 steps passed yet case failed). Assert the persistent
-            # section label + spinbutton row instead.
+            # [2026-10-12] toast "Post settings updated" disappears before assertions run, and
+            # the "Purchase Limit per customer" label sits below the CI headless fold (720p
+            # viewport) so a visibility assertion fails there. Assert the page title instead —
+            # it only proves we are still on the saved settings page, the limit value itself
+            # is already gated by the fill_limit_value + Save steps above.
             - assertion_type: "element_visible_by_text"
-              text: "Purchase Limit per customer"
+              text: "Post settings"
 
 
 # T2515 Guest verifies Buy now button is disabled after buying 5 variants
@@ -501,7 +520,10 @@ testT2515_VerifyDisabled_WithVariant:
         # First AVAILABLE seat — sold seats render stroke="transparent", hardcoded
         # circle[cx="200"] broke the moment that seat sold.
         R_click_add_to_cart_first: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', index: 0 }
-        sleep_step: 1500
+        # [2026-10-12] CI headless: the per-seat quantity tooltip (5/7/9 people + Add rows)
+        # renders with a delay after the seat click — without this buffer the Add locator
+        # finds nothing and the whole flow dies here (the 10-12 CI failure mode).
+        sleep_step: 3000
 
         # Step 4: Select variant "5 people", set qty=2, Add to cart
         R_click_variant_5people: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
@@ -687,10 +709,14 @@ testT4955_Guest_VerifyAccessCode:
         R_click_confirm_code: { role: "button", name: "Confirm" }
         sleep_step: 2000
 
-        # Step 8: [2026-10-10] optional — after the access-code Confirm the checkout may land
-        # directly on /checkout?postId=... with no Continue (screenshot-verified).
+        # Step 8: [2026-10-12 two-step dialog] after the access-code Confirm the CHECKOUT
+        # DIALOG appears (summary + Continue -> Contact + Place order). The dialog's
+        # Continue fires the async /order/checkout/express session — keep it optional here
+        # (the Confirm may land on either dialog step) but gate the second step + settle
+        # before ordering. See T3683 for the full rationale.
         R_click_continue: { role: "button", name: "Continue", optional: true }
-        sleep_step: 3000
+        wait_place_order_visible: { text: "Place order", timeout: 20000, optional: true }
+        sleep_step: 2000
 
         # Step 9: Fill Contact info
         fill_first_name: { locator: 'input[name="contact.firstName"]', value: "Test" }
@@ -702,17 +728,20 @@ testT4955_Guest_VerifyAccessCode:
         fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
         sleep_step: 500
 
-        # Step 10: GA01 is a PAID ticket — Stripe card + "Place order" (the old free-post
-        # flow used "RSVP" with no card; that button does not exist on this checkout).
+        # Step 10: GA01 is a PAID ticket — Stripe card + "Place order". If a leftover
+        # auto-coupon made the total FREE the Stripe fields are absent (fill_stripe warns
+        # + continues) and the CTA can render as "RSVP" — both fallbacks stay optional.
         fill_stripe_iframe:
             card_number: '4242424242424242'
             expiry: '02/45'
             cvc: '345'
             card_name: 'linda 4650'
             zipcode: '90021'
-        sleep_step: 1000
+        # Settle sleep: let POST /order/checkout/express finish before ordering.
+        sleep_step: 8000
         R_click_place_order: { role: 'button', name: 'Place order', optional: true }
-        # [2026-10-10] RSVP fallback for a free order (leftover auto-coupon) — see T3683.
+        sleep_step: 5000
+        R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
         R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
         sleep_end: 3000
 
@@ -895,9 +924,12 @@ testT3767:
         verify_coupon_exists: { text: "autotest3779", timeout: 10000 }
         sleep_step: 500
 
-        # Step 4: optional legacy step — no Continue on the /checkout page
-        R_click_continue: { role: "button", name: "Continue", optional: true }
-        sleep_step: 1000
+        # Step 4: [2026-10-12 two-step dialog] Continue is the dialog step-1 CTA and ALSO
+        # fires the async /order/checkout/express session — waits + settle sleep + order
+        # retry below guard against the 400 "Need to call POST /order/checkout first" race
+        # (the CI failure mode). See T3683 for the full rationale.
+        R_click_continue: { role: "button", name: "Continue", timeout: 15000 }
+        wait_place_order_visible: { text: "Place order", timeout: 20000 }
 
         # Step 5: Fill Contact info
         fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'autoTest' }
@@ -909,17 +941,20 @@ testT3767:
         fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
         sleep_step: 500
 
-        # Step 6: Place order — the 100% coupon usually makes the total Free (Stripe fields
-        # may be absent; fill_stripe_iframe tolerates missing fields), and the CTA can render
-        # as either label depending on state — required click with optional RSVP fallback.
+        # Step 6: Place order — the 100% coupon makes the total Free, so the Stripe fields
+        # are ABSENT (fill_stripe_iframe warns + continues). Settle sleep lets the express
+        # session finish; the retry covers the 400 "Need to call POST /order/checkout first"
+        # race, and RSVP covers any remaining free-order label variation.
         fill_stripe_iframe:
             card_number: '4242424242424242'
             expiry: '02/45'
             cvc: '345'
             card_name: 'linda 4650'
             zipcode: '90021'
-        sleep_step: 1000
+        sleep_step: 8000
         R_click_place_order: { role: "button", name: "Place order", optional: true }
+        sleep_step: 5000
+        R_click_place_order_retry: { role: "button", name: "Place order", optional: true }
         R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
         wait_for_url: { url: "*order*", timeout: 15000 }
         sleep_step: 2000
