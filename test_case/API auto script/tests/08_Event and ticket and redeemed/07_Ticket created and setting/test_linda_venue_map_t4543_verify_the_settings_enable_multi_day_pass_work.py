@@ -800,8 +800,12 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
         ],
         "subdomainVanityUrl": "",
     }, app_headers=True, token='linda10_token')
-    # extractor: orderId = $.data.orderId
-    vars['orderId'] = _get_path(_json(_resp11), ['data', 'orderId'])
+    # validate checkout_express succeeded — otherwise orderId is None and step 12 400s
+    _j11 = _json(_resp11)
+    assert _resp11.status_code == 200, f"step11 checkout_express status != 200: {_resp11.status_code}, body={_j11}"
+    assert str(_j11.get('code')) == '200', f"step11 checkout_express code != 200: {_j11}"
+    vars['orderId'] = _j11.get('data', {}).get('orderId')
+    assert vars['orderId'], f"step11 checkout_express returned empty orderId, data={_j11.get('data')}"
     # step 12: place order  (POST {{base_app_url}}/order)
     _resp12 = ctx.api.orders.create(body={
         "id": "{{orderId}}",
