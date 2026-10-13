@@ -1,0 +1,334 @@
+# author: Lury
+# time: 2026/9/22 14:16
+
+# --- testT5649_venue_map: venue_map-tagged event, enable "Show fee breakdown at checkout" and verify fee breakdown end-to-end ---
+testT5649_venue_map_guest_purchase:
+    is_mobile: true
+    description: "Verify the fee breakdown for venue map ticket on checkout - then place order - check seat info in order confirmation page - refund"
+    test_step:
+        # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
+        create_session_guest: { name: "guest" }
+
+        # 2. As a guest, open the public post (location.href triggers navigation; the next step runs on the already-navigated page)
+        session_guest__execute_js_goto:
+            script: "() => { location.href='{{post_url}}'; return 'navigating'; }"
+        sleep_guest_post: 5000
+
+        # 3. As a guest, find the product by name in the post and assert its displayed price
+        #     == my_revenve (net revenue)
+        session_guest__execute_js_verify:
+            script: |
+                () => {
+                  const name='{{ticket_venue_map}}', rev={{my_revenve}};
+                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
+                  // innermost element containing both the name and "Buy Ticket" = the product card
+                  const card=[...document.querySelectorAll('*')]
+                    .filter(e => { const t=nz(e); return t.includes(name) && t.includes('Buy Ticket'); })
+                    .reduce((best,e) => (!best || best.contains(e)) ? e : best, null);
+                  if(!card) throw new Error('guest: product "'+name+'" not found in public post');
+                  const shown=(nz(card).match(/\$([\d.]+)/)||[])[1];
+                  if(!shown || Math.abs(parseFloat(shown)-rev)>0.01)
+                    throw new Error('guest: product "'+name+'" shows $'+shown+' but my revenue = $'+rev);
+                  return 'guest verified: '+name+' shows $'+shown+' = my revenue $'+rev;
+                }
+
+        # ==================== guest checkout flow ====================
+        # 4. As a guest, click the ticket-venue_map product name on the public post to open the "Select tickets" drawer
+        session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
+
+        # 5. On the opened "Select tickets" drawer a venue map is shown. Click a seat
+        #     circle directly (ignore sold state — just click the circle).
+        session_guest__R_click_select_seat: { locator: 'circle[data-id]', index: 0, disable_ai: true }
+        sleep_select_seat: 1500
+
+        # 6. Assert the price shown in the drawer == my_revenve
+        session_guest__execute_js_verify_drawer:
+            script: |
+                (async () => {
+                  const rev={{my_revenve}};
+                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Select tickets/i.test(x.innerText));
+                  let d=null;
+                  for(let i=0;i<30;i++){ d=drawer(); if(d && /\$/.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
+                  if(!d) throw new Error('guest: "Select tickets" drawer did not open');
+                  const shown=((d.innerText.replace(/\s+/g,' ')).match(/\$\s*([\d,]+(?:\.\d+)?)/)||[])[1];
+                  if(!shown) throw new Error('guest: no price shown in Select tickets drawer; drawer text = '+d.innerText);
+                  if(Math.abs(parseFloat(shown.replace(/,/g,''))-rev)>0.01)
+                    throw new Error('guest: drawer price $'+shown+' != my revenue $'+rev.toFixed(2));
+                  return 'select drawer price verified: $'+shown+' == my revenue';
+                })()
+
+        # 7. Capture seat_unit: the number immediately before the price on the Select tickets
+        #     drawer (the quantity of seats selected, e.g. "1" in "1 × $100.00"). Save as seat_unit.
+        session_guest__execute_js_extract_seat_unit:
+            save_as: "seat_unit"
+            script: |
+                () => {
+                  const d=[...document.querySelectorAll('.MuiDrawer-root')].find(x => /Select tickets/i.test(x.innerText) && /\$/.test(x.innerText));
+                  if(!d) throw new Error('seat_unit: "Select tickets" drawer not found');
+                  const m=(d.innerText.replace(/\s+/g,' ').match(/([\d][\d.,]*)\s*\$\s*[\d.,]+/)||[])[1];
+                  if(!m) throw new Error('seat_unit: no number before a price in drawer; drawer text = '+d.innerText);
+                  return m.replace(/,/g,'');
+                }
+        sleep_seat_unit: 800
+
+        # 8. Click Buy now and wait 3s to reach the Checkout drawer
+        session_guest__R_click_buy_now: { role: "button", name: "Buy now" }
+        sleep_guest_checkout: 3000
+
+        # 9. Assert on the Checkout drawer:
+        #     product name == ticket-venue_map; unit price == my_revenve; no "(incl. $ fees)" suffix;
+        #     Total == my_revenve + transaction-fees + taxes
+        session_guest__execute_js_verify_checkout:
+            script: |
+                (async () => {
+                  const name='{{ticket_venue_map}}', rev={{my_revenve}}, fee={{transaction-fees}}, tax={{taxes}};
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const norm = s => String(s).replace(/Pear\.US/i,'').replace(/[\u2014\u2013-]\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase();
+                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  // [DOM FACT] row labels are either a leaf (<p>Total</p>) or a DIRECT text node
+                  // (<X>Subtotal<span>$64.48</span></X>) -> match the label element, then walk up to
+                  // the nearest ancestor that carries the amount.
+                  const rowVal = (root,label) => {
+                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
+                      let el=c;
+                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
+                    }
+                    return null;
+                  };
+                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
+                  let d=null;
+                  for(let i=0;i<30;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
+                  if(!d) throw new Error('guest checkout: Checkout drawer did not open after Buy now');
+                  const txt=d.innerText.replace(/\s+/g,' ').trim();
+                  if(!norm(txt).includes(norm(name))) throw new Error('guest checkout: product "'+name+'" not shown; drawer text = '+txt);
+                  if(/incl\.?\s*\$/i.test(txt)) throw new Error('guest checkout: price still carries an "(incl. $ fees)" suffix');
+                  // line unit price = the first money leaf after the product-name leaf
+                  const leaves=[...d.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim());
+                  const iName=leaves.findIndex(e => norm(e.textContent)===norm(name));
+                  const linePrice=iName>=0 ? money(leaves.slice(iName+1,iName+8).map(e => e.textContent).find(t => money(t)!==null) || '') : null;
+                  if(linePrice===null || Math.abs(linePrice-rev)>0.01)
+                    throw new Error('guest checkout: product price '+linePrice+' != my revenue $'+rev.toFixed(2));
+                  const total=rowVal(d,'Total'), expect=+(rev+fee+tax).toFixed(2);
+                  if(total===null || Math.abs(total-expect)>0.01)
+                    throw new Error('guest checkout: Total '+total+' != my revenue + fees + taxes = $'+expect.toFixed(2));
+                  // (e) product info "Unit" must equal seat_unit
+                  //     [DOM FACT] the label and value share one leaf, e.g. "Unit: 1"
+                  const seatUnit=String({{seat_unit}});
+                  const um=txt.match(/\bUnit\s*:\s*(\d+)/i);
+                  if(!um) throw new Error('guest checkout: no "Unit" field in product info; drawer text = '+txt);
+                  if(um[1]!==seatUnit) throw new Error('guest checkout: Unit '+um[1]+' != seat_unit '+seatUnit);
+                  return 'checkout verified: line=$'+linePrice.toFixed(2)+', total=$'+total.toFixed(2)+', unit='+um[1]+' ('+rev+' + '+fee+' + '+tax+')';
+                })()
+
+        # 10. Click Total to expand the fee breakdown
+        session_guest__R_click_total: { locator: "xpath=//*[normalize-space(.)='Total']", index: 0 }
+
+        # 11. Assert in the expanded breakdown:
+        #     Subtotal == my_revenve; Transaction fees == transaction-fees;
+        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it must not appear
+        session_guest__execute_js_verify_breakdown:
+            script: |
+                (async () => {
+                  const rev={{my_revenve}}, fee={{transaction-fees}}, tax={{taxes}};
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  // [DOM FACT] Subtotal / Transaction fees / Taxes labels are DIRECT text nodes
+                  // (<X>Subtotal<span>$64.48</span></X>); match the label, then walk up to the
+                  // nearest ancestor carrying the amount.
+                  const rowVal = (root,label) => {
+                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
+                      let el=c;
+                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
+                    }
+                    return null;
+                  };
+                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
+                  let d=null;
+                  for(let i=0;i<25;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,400)); }
+                  if(!d) throw new Error('guest breakdown: Checkout drawer not found');
+                  const sub=rowVal(d,'Subtotal');
+                  if(sub===null || Math.abs(sub-rev)>0.01) throw new Error('guest breakdown: Subtotal '+sub+' != my revenue $'+rev.toFixed(2));
+                  const feeShown=rowVal(d,'Transaction fees');
+                  if(feeShown===null || Math.abs(feeShown-fee)>0.01) throw new Error('guest breakdown: Transaction fees '+feeShown+' != transaction-fees $'+fee.toFixed(2));
+                  const taxShown=rowVal(d,'Taxes');
+                  if(tax!==0 && (taxShown===null || Math.abs(taxShown-tax)>0.01)) throw new Error('guest breakdown: Taxes '+taxShown+' != taxes $'+tax.toFixed(2));
+                  if(tax===0 && taxShown!==null) throw new Error('guest breakdown: taxes=0 but a "Taxes" row is shown ($'+taxShown+')');
+                  return 'breakdown verified: subtotal=$'+sub.toFixed(2)+', transaction fees=$'+feeShown.toFixed(2)+', taxes='+(taxShown===null?'(hidden, taxes=0)':'$'+taxShown.toFixed(2));
+                })()
+
+        # 12. Click Continue with credit card to reach the contact + payment form
+        session_guest__R_click_continue_cc: { role: "button", name: "Continue with credit card" }
+        sleep_guest_cc_form: 5000
+
+        # 13. Fill in Contact (First name / Last name / Phone / Email)
+        session_guest__fill_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
+        session_guest__fill_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
+        session_guest__fill_phone: { locator: "input[name='contact.phoneNumber']", value: "2524001111" }
+        session_guest__fill_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
+        sleep_guest_contact: 1000
+
+        # 14. Fill in Payment (the three Stripe fields live in separate iframes; locate them by
+        #     visible iframe order: nth=0 card number / nth=1 expiry / nth=2 CVC)
+        session_guest__fill_card_number:
+            frame: "iframe[src*='elements-inner-card'] >> nth=0"
+            locator: "input[name='cardnumber']"
+            value: "4242424242424242"
+        sleep_card_number: 1200
+
+        session_guest__fill_expiry:
+            frame: "iframe[src*='elements-inner-card'] >> nth=1"
+            locator: "input[name='exp-date']"
+            value: "830"
+
+        session_guest__fill_cvc:
+            frame: "iframe[src*='elements-inner-card'] >> nth=2"
+            locator: "input[name='cvc']"
+            value: "999"
+        sleep_card_rest: 1500
+
+        # Cardholder name + billing zip (zip 90021 is the agreed value, following the existing
+        # case convention when the case does not specify one)
+        session_guest__fill_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
+        session_guest__fill_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
+        sleep_guest_payment: 1500
+
+        # 15. Assert the payment form was filled correctly (Playwright-native input_value
+        #     assertions; the phone field is auto-formatted so its digit count stays in a tiny JS)
+        session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
+        session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
+        session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
+        session_guest__verify_value_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
+        session_guest__verify_value_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
+        session_guest__execute_js_verify_phone:
+            script: |
+                () => {
+                  const v = document.querySelector("input[name='contact.phoneNumber']").value;
+                  if (v.replace(/\D/g, '').length < 10) throw new Error('payment form: phone incomplete: ' + v);
+                  return 'phone ok: ' + v;
+                }
+
+        # 16. Click Place order
+        session_guest__R_click_place_order: { role: "button", name: "Place order" }
+        sleep_place_order: 8000
+
+        # ==================== order placed + order confirmation page checks ====================
+        # 17. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
+        #     URL lands on /order/<id>/confirmation, then the confirmation copy must be visible.
+        session_guest__wait_for_url_order_confirmation:
+            url: "**/order/**/confirmation"
+            timeout: 30000
+        session_guest__verify_order_confirmed: { text: "Your order is confirmed", timeout: 20000 }
+
+        # 18. Assert the price next to "Show summary" == ticket-retails-price
+        session_guest__execute_js_verify_show_summary_price:
+            script: |
+                (async () => {
+                  const retail={{ticket-retails-price}};
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  // the amount sits in a HIGHER ancestor of "Show summary"; only a SHORT tail
+                  // (<=16 chars) counts as this row's amount, otherwise we grab a foreign amount
+                  const amount = () => {
+                    const el = [...document.querySelectorAll('*')].find(e => vis(e) && e.textContent.trim()==='Show summary');
+                    if(!el) return null;
+                    for(let n=el.parentElement,k=0;k<4 && n;k++,n=n.parentElement){
+                      const tail=n.textContent.replace('Show summary','').trim();
+                      if(tail && tail.length<=16) return money(tail);
+                    }
+                    return null;
+                  };
+                  let shown=null;
+                  for(let i=0;i<20;i++){ shown=amount(); if(shown!==null) break; await new Promise(r=>setTimeout(r,400)); }
+                  if(shown===null || Math.abs(shown-retail)>0.01)
+                    throw new Error('order page: "Show summary" shows '+(shown===null?'no $ amount':'$'+shown.toFixed(2))+', expected ticket-retails-price $'+retail.toFixed(2));
+                  return 'show summary price verified: $'+shown.toFixed(2)+' == ticket-retails-price';
+                })()
+
+        # 19. Click Show summary to expand the order details
+        session_guest__R_click_show_summary: { locator: "xpath=//*[normalize-space(.)='Show summary']" }
+
+        # 20. Assert the details: Item(s) total / Subtotal / Total all equal ticket-retails-price,
+        #     and an "(incl. $a fees)" row exists where a == transaction-fees
+        session_guest__execute_js_verify_order_totals:
+            script: |
+                (async () => {
+                  const retail={{ticket-retails-price}}, fee={{transaction-fees}};
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  // expanded detail rows: the tail must stay short (<=24) so we do not climb past
+                  // this row and grab the first amount of the whole region
+                  const rowVal = label => {
+                    for(const c of [...document.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
+                      let el=c;
+                      for(let k=0;k<4 && el;k++){
+                        const tail=el.textContent.replace(label,'').trim();
+                        if(tail.length>24) break;
+                        const v=money(tail);
+                        if(v!==null) return v;
+                        el=el.parentElement;
+                      }
+                    }
+                    return null;
+                  };
+                  let body='';
+                  for(let i=0;i<25;i++){ body=document.body.innerText; if(/Item\(s\) total/i.test(body)) break; await new Promise(r=>setTimeout(r,400)); }
+                  for(const lab of ['Item(s) total','Subtotal','Total']){
+                    const v=rowVal(lab);
+                    if(v===null || Math.abs(v-retail)>0.01)
+                      throw new Error('order summary: '+lab+' '+(v===null?'row not found':'$'+v.toFixed(2))+' != ticket-retails-price $'+retail.toFixed(2));
+                  }
+                  // "(including $a fees)" — the actual copy is "(incl. $5.27 fees)"; accept both
+                  const fees=[...body.matchAll(/(?:including|incl\.?)\s*\$([\d,]+(?:\.\d+)?)\s*fees/gi)].map(m => parseFloat(m[1].replace(/,/g,'')));
+                  if(!fees.some(a => Math.abs(a-fee)<=0.01))
+                    throw new Error('order summary: "(incl. $x fees)" amounts '+JSON.stringify(fees)+' but transaction-fees = '+fee);
+                  return 'order totals verified: item/subtotal/total=$'+retail.toFixed(2)+', fees=$'+fee.toFixed(2);
+                })()
+
+        # 21. Check the "Ticket Information" section on the confirmation page: it must contain
+        #     the product name, a Unit equal to seat_unit, and Event = event-for-ui-auto-venue-map.
+        #     (Date and Venue checks were removed per request. The event name is static so it is
+        #     a Playwright-native text assertion; name/Unit are dynamic and stay in one JS.)
+        session_guest__verify_ticket_info_event: { text: "event-for-ui-auto-venue-map", timeout: 20000 }
+        session_guest__execute_js_verify_ticket_info:
+            script: |
+                (async () => {
+                  const seatUnit=String({{seat_unit}}), name='{{ticket_venue_map}}';
+                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
+                  const grab = () => {
+                    const head=[...document.querySelectorAll('*')].find(e => /ticket information/i.test(nz(e)) && e.children.length<=1);
+                    let box=head && head.parentElement;
+                    for(let i=0;i<6 && box;i++){ if(/ticket information/i.test(nz(box)) && box.querySelectorAll('*').length>3) break; box=box.parentElement; }
+                    return box;
+                  };
+                  let box=null;
+                  for(let i=0;i<20 && !(box=grab()); i++) await new Promise(r=>setTimeout(r,400));
+                  if(!box) throw new Error('Ticket Information section not found on the confirmation page');
+                  const txt=nz(box);
+                  if(!txt.toLowerCase().includes(name.toLowerCase())) throw new Error('Ticket Information: product "'+name+'" not found; text = '+txt);
+                  // [DOM FACT] the confirmation page shows unrelated numeric IDs (e.g. ticket/order
+                  // id), so extract Unit only from the leaf that actually holds "unit" + a digit
+                  const leaf=[...box.querySelectorAll('*')].find(e => !e.children.length && /\bunits?\b/i.test(nz(e)) && /\d/.test(nz(e)));
+                  const m=leaf && nz(leaf).match(/(\d+)\s*units?\b|\bunits?\s*[:]?\s*(\d+)/i);
+                  if(!m) throw new Error('Ticket Information: no Unit field with value; text = '+txt);
+                  if((m[1]||m[2]).trim()!==seatUnit) throw new Error('Ticket Information: Unit '+(m[1]||m[2])+' != seat_unit '+seatUnit);
+                  return 'Ticket Information verified: unit='+(m[1]||m[2])+', name/event present';
+                })()
+
+        # 22. Assert Confirmation details: contact information / payment method / billing zip code
+        #     (Playwright-native text assertions for the static parts; the paid amount is dynamic
+        #     so it stays in a tiny JS check. The page shows the phone as 252-400-1111.)
+        session_guest__verify_contact_name: { text: "Lury UIAutomation", timeout: 20000 }
+        session_guest__verify_contact_phone: { text: "252-400-1111" }
+        session_guest__verify_contact_email: { text: "dian.yuhong.ext+111@1m.app" }
+        session_guest__verify_card_tail: { text: "Visa x4242" }
+        session_guest__verify_zip_code: { text: "90021", exact: true }
+        session_guest__execute_js_verify_paid_amount:
+            script: |
+                () => {
+                  const retail={{ticket-retails-price}};
+                  const pm=(document.body.innerText.match(/Visa\s*x4242\s*-\s*\$?([\d,]+(?:\.\d+)?)/i)||[])[1];
+                  if(!pm) throw new Error('payment method amount not found next to "Visa x4242"');
+                  if(Math.abs(parseFloat(pm.replace(/,/g,''))-retail)>0.01)
+                    throw new Error('payment method amount: $'+pm+' != ticket-retails-price $'+retail.toFixed(2));
+                  return 'payment amount verified: $'+pm+' == ticket-retails-price';
+                }

@@ -1,0 +1,90 @@
+# author: Lury
+# time: 2026/10/12 17:30
+
+# --- testT5649_axs_partner_full_refund: Patner full refund the axs order" ---
+testT5649_axs_partner_full_refund:
+    is_mobile: true
+    description: "Partner full refund the axs order"
+    test_step:
+        # 1. Create the partner session and open the event list
+        session_partner__open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
+        sleep_partner_events: 6000
+
+        # 2. Enter the same AXS event (same locator as step 2, so we land on the DANNA event page)
+        session_partner__R_click_axs_event: { locator: "xpath=//span[normalize-space(.)='AXS']/parent::*", index: 0, fallback_scan: true }
+        sleep_partner_event: 6000
+
+        # 3. As the partner, click the Sales tab on the event page
+        session_partner__R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
+        sleep_partner_sales: 3500
+
+        # 4. Then click the Orders sub-tab under Sales
+        session_partner__R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
+        sleep_partner_orders: 5000
+
+        # 5. Extract the FIRST order id in the list -> temp var first_order_id
+        session_partner__execute_js_extract_first_order:
+            save_as: "first_order_id"
+            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id (#Pxxxxx) found'); return m[1]; }"
+        sleep_partner_extract: 800
+
+        # 6. Click that order to open the Sale details page
+        session_partner__R_click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
+        sleep_partner_sale_details: 6000
+
+        # 7. On the Sale details page, click the "I want to ..." dropdown trigger
+        session_partner__R_click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
+        sleep_partner_i_want_to: 2500
+
+        # 8. Choose Full refund from the dropdown
+        session_partner__R_click_full_refund: { locator: "[role=menuitem]:has-text('Full refund')" }
+        sleep_partner_full_refund: 3500
+
+        # 9. Type the refund notes into the "Confirm Full Refund" drawer
+        session_partner__fill_refund_notes: { locator: "textarea[placeholder='Add a short note for yourself (optional)']", value: "AXS UI automation" }
+        sleep_partner_notes: 800
+
+        # 10. Verify the refund notes were written (Playwright-native input_value check;
+        #     guard: do not click Refund if the fill failed)
+        session_partner__verify_value_refund_notes:
+            locator: "textarea[placeholder='Add a short note for yourself (optional)']"
+            value: "AXS UI automation"
+
+        # 11. Click Refund to submit (full refund, irreversible)
+        session_partner__R_click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
+        sleep_partner_refund: 6000
+
+        # 12. [HARD ASSERTION] after a full refund, Net Earning == -transaction-fees
+        session_partner__execute_js_verify_net_earning:
+            script: |
+                (async () => {
+                  const fee={{transaction-fees}}, expect=+(-fee).toFixed(2);
+                  const money = s => { const m=String(s).match(/(-?)\s*\$\s*([\d,]+(?:\.\d+)?)/); return m ? (m[1]==='-'?-1:1)*parseFloat(m[2].replace(/,/g,'')) : null; };
+                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  // row value: the label is a leaf / direct text node and the amount sits in its
+                  // nearest upper ancestor; the tail must be short (<=20) so we do not climb past
+                  // this row and grab the region's first amount.
+                  const rowVal = label => {
+                    for(const c of [...document.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
+                      let el=c;
+                      for(let k=0;k<3 && el;k++){
+                        const tail=el.textContent.replace(label,'').trim();
+                        if(tail.length>20) break;
+                        const v=money(tail);
+                        if(v!==null) return v;
+                        el=el.parentElement;
+                      }
+                    }
+                    return null;
+                  };
+                  // the refund settles asynchronously on the server: wait for Net Earning to turn
+                  // from positive to negative (the drawer closing / page refresh also happen here)
+                  let net=null;
+                  for(let i=0;i<50;i++){ net=rowVal('Net Earning'); if(net!==null && net<0) break; await new Promise(r=>setTimeout(r,500)); }
+                  if(net===null || Math.abs(net-expect)>0.01)
+                    throw new Error('full refund: Net Earning '+(net===null?'row not found':'$'+net.toFixed(2))+' != -transaction-fees $'+expect.toFixed(2));
+                  return 'refund verified: order #'+location.pathname.split('/').pop()+' | Net Earning $'+net.toFixed(2)+' == -transaction-fees (-$'+fee.toFixed(2)+')';
+                })()
+    expect_result:
+        description: "At least one ticket name should end with 'Pear.Us'"
+        assertions: []

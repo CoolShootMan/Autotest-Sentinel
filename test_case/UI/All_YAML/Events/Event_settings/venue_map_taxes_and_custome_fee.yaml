@@ -1,0 +1,289 @@
+# author: Lury
+# time: 2026/10/8 13:57
+
+testT4652_venue_map:
+    is_mobile: true
+    description: "Verify partner can set tax rate on events settings for venue map - Consumer place order - check sale details page"
+    test_step:
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Search for the event named "event-for-ui-auto-venue-map" and open it.
+        R_click_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_event: 5000
+
+        # ==================== venue_map taxes & custom fee verification ====================
+        # 3. (guard) Fail fast if the required cross-case global is not set.
+        execute_js_ensure_globals:
+            script: |
+                () => {
+                  const v = "{{ticket_venue_map}}";
+                  if (v.indexOf('{{') !== -1) {
+                    throw new Error('Cross-case global "ticket_venue_map" is not set — run venue_map_fee_breakdown_ui.yaml first in the same pytest process');
+                  }
+                  return 'globals ok: ' + v;
+                }
+            save_as: "globals_check"
+
+        # 4. On the event detail page, find the venue_map product by its name and click it
+        #    to open the Edit ticket page.
+        R_click_ticket_venue_map: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
+        sleep_edit_ticket: 6000
+
+        # 5. On the Edit ticket page, read the "My Revenue" value -> temp var my_revenue_venue_map.
+        execute_js_extract_my_revenue:
+            script: |
+                () => {
+                  const norm = s => String(s).replace(/\s+/g,' ').trim();
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const directText = el => [...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' ').replace(/\s+/g,' ').trim();
+                  const isVisible = el => { const r=el.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  const rowVal = lab => {
+                    const els=[...document.querySelectorAll('*')].filter(x=>directText(x)===lab && isVisible(x));
+                    for(const c of els){
+                      let el=c;
+                      for(let k=0;k<4 && el;k++){
+                        const tail = norm(el.textContent).replace(lab,'').trim();
+                        if(tail.length > 20) break;
+                        const v = money(tail);
+                        if(v!==null) return v;
+                        el=el.parentElement;
+                      }
+                    }
+                    return null;
+                  };
+                  const v = rowVal('My Revenue');
+                  if(v===null) throw new Error('Edit ticket page: "My Revenue" value not found');
+                  return +v.toFixed(2);
+                }
+            save_as: "my_revenue_venue_map"
+        sleep_extract_rev_vm: 800
+
+        # 6. Close the Edit ticket page (top-left Back) -> return to the event detail page.
+        R_click_close_edit_ticket: { locator: "button[aria-label='Back']" }
+        sleep_back_vm: 3000
+
+        # 7. Conditional unsaved-changes guard: if a "Leave this page?" dialog appeared, click
+        #    "Leave without saving"; otherwise do nothing (zero-penalty in-page check).
+        execute_js_leave_without_saving_vm:
+            script: |
+                () => {
+                  const btns = [...document.querySelectorAll('button, [role="button"]')]
+                    .filter(b => /leave without saving/i.test(b.textContent || ''));
+                  if (btns.length === 0) return 'no-leave-dialog';
+                  btns[0].click();
+                  return 'clicked-leave-without-saving';
+                }
+            save_as: "leave_dialog_action_vm"
+        sleep_leave_vm: 1500
+
+        # 8. Go to the event Settings page (tax configuration lives here).
+        R_click_settings: { locator: "xpath=//*[normalize-space(.)='Settings']", index: 0, fallback_scan: true }
+        sleep_settings: 3000
+
+        # 9. Check "Charge tax on tickets" (toggles the tax-on-tickets option on; this triggers a popup).
+        R_click_charge_tax: { locator: "xpath=//*[normalize-space(.)='Charge tax on tickets']", index: 0, fallback_scan: true }
+        sleep_charge_tax: 1500
+
+        # 10. In the "Charge tax on tickets" popup, type 2 into the rate input, then click Apply.
+        fill_tax_rate: { locator: "div[role='dialog'] input", value: "2" }
+        sleep_tax_input: 800
+        R_click_apply_tax: { locator: "xpath=//div[@role='dialog']//button[normalize-space(.)='Apply']" }
+        sleep_apply_tax: 2000
+
+        # 10b. Verify the "Tax rate updated — please review" confirmation dialog appeared with
+        #      the expected title and body copy (before dismissing it with "Got it").
+        execute_js_verify_tax_rate_dialog:
+            script: |
+                () => {
+                  const dlg = [...document.querySelectorAll('[role="dialog"]')]
+                    .find(d => /tax rate updated/i.test(d.textContent))
+                    || document.querySelector('[role="dialog"]');
+                  if (!dlg) throw new Error('Confirmation dialog (role="dialog") not found after Apply');
+                  const txt = dlg.textContent.replace(/\s+/g,' ').trim();
+                  const norm = s => s.toLowerCase().replace(/[\u2014\u2013\u2012—–\-]/g,' ').replace(/\s+/g,' ').trim();
+                  const n = norm(txt);
+                  const need = [
+                    'tax rate updated',
+                    'please review',
+                    'your new tax rate has been applied',
+                    'ticket prices shown to buyers',
+                    'expected revenue have been recalculated',
+                    'please review the updated amounts carefully'
+                  ];
+                  const missing = need.filter(sub => !n.includes(sub));
+                  if (missing.length) throw new Error('Tax rate dialog missing expected copy: ' + JSON.stringify(missing) + ' | dialog text = ' + txt);
+                  return 'tax rate dialog verified: title + body copy present';
+                }
+            save_as: "tax_rate_dialog_verify"
+
+        # 11. On the "Tax rate updated - Please review" dialog, click "Got it".
+        R_click_got_it: { locator: "xpath=//div[@role='dialog']//button[normalize-space(.)='Got it']" }
+        sleep_got_it: 1500
+
+        # 12. Click Save to persist the 2% tax setting.
+        R_click_save_settings: { locator: "xpath=//button[normalize-space(.)='Save']" }
+        sleep_save_settings: 3000
+
+        # 13. Define the GLOBAL helper get_retails_price_by_my_revenue_and_taxes (4 params + defaults).
+        execute_js_define_retails_price_fn:
+            script: |
+                () => {
+                  window.get_retails_price_by_my_revenue_and_taxes =
+                    function(UnitFixedFee = 1, UnitPercentageFee = 0.1, my_revenue = 0, taxes = 0) {
+                      return (my_revenue + UnitFixedFee) / (1 - UnitPercentageFee - taxes);
+                    };
+                  return 'defined get_retails_price_by_my_revenue_and_taxes';
+                }
+            save_as: "fn_defined"
+
+        # 14. Call the function with my_revenue = my_revenue_venue_map, taxes = 0.02
+        execute_js_compute_retails_price:
+            script: |
+                () => {
+                  const fn = window.get_retails_price_by_my_revenue_and_taxes;
+                  if (typeof fn !== 'function') {
+                    throw new Error('get_retails_price_by_my_revenue_and_taxes is not defined');
+                  }
+                  const my_revenue = parseFloat("{{my_revenue_venue_map}}");
+                  const taxes = 0.02;
+                  if (isNaN(my_revenue)) throw new Error('my_revenue_venue_map is not a number: ' + "{{my_revenue_venue_map}}");
+                  const retail = fn(undefined, undefined, my_revenue, taxes);
+                  return +retail.toFixed(2);
+                }
+            save_as: "retails_price_venue_map"
+        sleep_compute: 500
+
+        # 15. On the event detail page, find the venue_map product card, read the retail price
+        execute_js_verify_event_card_prices:
+            script: |
+                () => {
+                  const name = "{{ticket_venue_map}}";
+                  const retail = {{retails_price_venue_map}};
+                  const inclExp = +({{retails_price_venue_map}} - {{my_revenue_venue_map}}).toFixed(2);
+                  const all = [...document.querySelectorAll('*')];
+                  let card = null;
+                  for (const el of all) {
+                    const t = el.textContent || '';
+                    if (t.includes(name) && /\$/.test(t) && el.querySelectorAll('*').length > 3) {
+                      if (!card || card.contains(el)) card = el;
+                    }
+                  }
+                  if (!card) throw new Error('Product card for "' + name + '" not found on the event page');
+                  const txt = card.textContent.replace(/\s+/g,' ').trim();
+                  const prices = [...txt.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)].map(m=>parseFloat(m[1].replace(/,/g,'')));
+                  if (prices.length < 1) throw new Error('No price found in product card: ' + txt);
+                  const shownRetail = prices[0];
+                  const inclM = txt.match(/incl\.?\s*\$\s*([\d,]+(?:\.\d+)?)/i);
+                  if (!inclM) throw new Error('"incl." amount not found in product card: ' + txt);
+                  const shownIncl = parseFloat(inclM[1].replace(/,/g,''));
+                  if (Math.abs(shownRetail - retail) > 0.01) throw new Error('Event card retail $' + shownRetail.toFixed(2) + ' != retails_price_venue_map $' + retail.toFixed(2));
+                  if (Math.abs(shownIncl - inclExp) > 0.01) throw new Error('Event card incl. $' + shownIncl.toFixed(2) + ' != (retails_price_venue_map - my_revenue) $' + inclExp.toFixed(2));
+                  return 'event card verified: retail=$' + shownRetail.toFixed(2) + ', incl.=$' + shownIncl.toFixed(2);
+                }
+            save_as: "event_card_verify"
+        sleep_event_card: 800
+
+        # 16. Re-open the venue_map product (Edit ticket page) and verify:
+        R_click_ticket_venue_map_2: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
+        sleep_edit_ticket_2: 6000
+        execute_js_verify_edit_ticket:
+            script: |
+                () => {
+                  const myRev = {{my_revenue_venue_map}};
+                  const retail = {{retails_price_venue_map}};
+                  const feesTaxesExp = +(retail - myRev).toFixed(2);
+                  const norm = s => String(s).replace(/\s+/g,' ').trim();
+                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
+                  const directText = el => [...el.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' ').replace(/\s+/g,' ').trim();
+                  const isVisible = el => { const r=el.getBoundingClientRect(); return r.width>0 && r.height>0; };
+                  const rowVal = lab => {
+                    const els=[...document.querySelectorAll('*')].filter(x=>directText(x)===lab && isVisible(x));
+                    for(const c of els){
+                      let el=c;
+                      for(let k=0;k<4 && el;k++){
+                        const tail = norm(el.textContent).replace(lab,'').trim();
+                        if(tail.length > 20) break;
+                        const v = money(tail);
+                        if(v!==null) return v;
+                        el=el.parentElement;
+                      }
+                    }
+                    return null;
+                  };
+                  const myRevShown = rowVal('My Revenue');
+                  if(myRevShown===null) throw new Error('Edit ticket: "My Revenue" not found');
+                  if(Math.abs(myRevShown - myRev) > 0.01) throw new Error('Edit ticket My Revenue $' + myRevShown.toFixed(2) + ' != my_revenue_venue_map $' + myRev.toFixed(2));
+                  const ftShown = rowVal('Fees + Taxes');
+                  if(ftShown===null) throw new Error('Edit ticket: "Fees + Taxes" not found');
+                  if(Math.abs(ftShown - feesTaxesExp) > 0.01) throw new Error('Edit ticket Fees+Taxes $' + ftShown.toFixed(2) + ' != (retail - my_revenue) $' + feesTaxesExp.toFixed(2));
+                  const retailShown = rowVal('Retails price');
+                  if(retailShown===null) throw new Error('Edit ticket: "Retails price" not found');
+                  if(Math.abs(retailShown - retail) > 0.01) throw new Error('Edit ticket Retails price $' + retailShown.toFixed(2) + ' != retails_price_venue_map $' + retail.toFixed(2));
+                  return 'edit ticket verified: myRev=$' + myRevShown.toFixed(2) + ', fees+taxes=$' + ftShown.toFixed(2) + ', retail=$' + retailShown.toFixed(2);
+                }
+            save_as: "edit_ticket_verify"
+        sleep_edit_verify: 800
+
+        # 17. Click "Fees + Taxes" to open the breakdown popover; verify:
+        R_click_fees_taxes_vm: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        sleep_fees_tip_vm: 2000
+        execute_js_verify_taxes_popover:
+            script: |
+                () => {
+                  const retail = {{retails_price_venue_map}};
+                  const expectedTax = +(retail * 0.02).toFixed(2);
+                  const pop = [...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Taxes/i.test(e.textContent));
+                  if (!pop) throw new Error('Fees + Taxes popover not found');
+                  const txt = pop.textContent.replace(/\s+/g,' ').trim();
+                  if (!/\(2%\)/i.test(txt)) {
+                    throw new Error('Taxes rate is not (2%) in popover: ' + txt);
+                  }
+                  const amounts = [...txt.matchAll(/\$\s*([\d,]+(?:\.\d+)?)/g)].map(m=>parseFloat(m[1].replace(/,/g,'')));
+                  if (!amounts.some(a => Math.abs(a - expectedTax) < 0.01)) {
+                    throw new Error('Taxes amount ' + JSON.stringify(amounts) + ' != retails_price_venue_map*0.02 = $' + expectedTax.toFixed(2));
+                  }
+                  return 'taxes popover verified: (2%) and amount=$' + expectedTax.toFixed(2);
+                }
+            save_as: "taxes_popover_verify"
+
+    expect_result:
+        description: "On a venue_map event: read My Revenue, enable 'Charge tax on tickets' at 2%, then verify retail / Fees+Taxes / My Revenue and the 2% tax portion reconcile with get_retails_price_by_my_revenue_and_taxes"
+        assertions: []
+
+        # 18. Slugify the event name into the guest-accessible public post URL -> temp var post_url
+        execute_js_extract_url:
+            script: |
+                () => {
+                  const slug='{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+                  return 'https://release.pear.us/autotestshop/post/'+slug;
+                }
+            save_as: "post_url"
+        sleep_extract_url: 800
+
+        # 19. Create the guest session (no cookie = visitor); saved temp vars are copied into it
+        create_session_guest: { name: "guest" }
+
+        # 20. As a guest, open the public post (location.href triggers navigation; the next step runs on the already-navigated page)
+        session_guest__execute_js_goto:
+            script: "() => { location.href='{{post_url}}'; return 'navigating'; }"
+        sleep_guest_post: 5000
+
+        # 21. As a guest, find the product by name in the post and assert its displayed price
+        #     == my_revenve (net revenue)
+        session_guest__execute_js_verify:
+            script: |
+                () => {
+                  const name='{{ticket_venue_map}}';
+                  const rev={{my_revenve}};
+                  const all=[...document.querySelectorAll('*')];
+                  let best=null;
+                  for (const el of all){ const t=el.textContent||''; if(t.includes(name) && t.includes('Buy Ticket')){ if(!best||best.contains(el)) best=el; } }
+                  if(!best) throw new Error('guest: product "'+name+'" not found in public post');
+                  const cardText=best.textContent.replace(/\s+/g,' ').trim();
+                  const prices=[...cardText.matchAll(/\$([\d.]+)/g)].map(m=>parseFloat(m[1]));
+                  const shown=prices[0];
+                  if(Math.abs(shown-rev)>0.01) throw new Error('guest: product "'+name+'" shows $'+shown.toFixed(2)+' but my revenue = $'+rev.toFixed(2));
+                  return 'guest verified: '+name+' shows $'+shown.toFixed(2)+' = my revenue $'+rev.toFixed(2);
+                }

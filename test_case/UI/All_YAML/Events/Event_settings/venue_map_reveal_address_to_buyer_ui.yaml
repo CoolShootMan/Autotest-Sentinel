@@ -1,0 +1,34 @@
+# author: Lury
+# time: 2026/10/12 11:41
+
+
+testT4337_T4334_4333_4272_4242_4241_venue_map:
+    is_mobile: true
+    description: "Verify the reveal address feature works in resell post if the event enable 'Address visibility settings' "
+    test_step:
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Search for the event named "event-for-ui-auto-venue-map" and open it.
+        R_click_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_event: 5000
+
+        # 3. On the event page, click "Edit event" to open the edit form.
+        R_click_edit_event: { locator: "xpath=//*[normalize-space(.)='Edit event']", index: 0, fallback_scan: true }
+        sleep_edit_event: 4000
+
+        # 3b. On the Edit event page, find the "Reveal address later?" toggle next to
+        R_click_reveal_address_later: { locator: "xpath=//*[normalize-space(.)='Reveal address later?']/ancestor::*[.//input[@type='checkbox']][1]//input[@type='checkbox']", index: 0, fallback_scan: true }
+        sleep_reveal: 2500
+
+        # 3c. On the "Address visibility settings" drawer, click "Apply".
+        R_click_apply_address: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]//button[normalize-space(.)='Apply']", index: 0, fallback_scan: true }
+        sleep_apply_address: 2500
+
+        # 3d. Back on the Edit event page, verify the hint below the Address input reads
+        verify_reveal_hint: { text: "Reveal address to ticket buyers only", timeout: 10000 }
+
+        # 3e. Click the "Save" button at the bottom of the Edit event page.
+        R_click_save: { locator: "xpath=//button[normalize-space(.)='Save']", index: 0, fallback_scan: true }
+        sleep_save: 3000
