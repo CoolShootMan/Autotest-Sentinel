@@ -8272,7 +8272,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "rows": [
                 {
                     "id": "84743235-32b0-4a91-a8c2-b4ff48781e87",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -8690,7 +8690,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "f7bd43cd-5acd-47a9-8008-a9e3e5385a71",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -9108,7 +9108,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "95d63e15-56f5-486b-b47c-c750c53c629d",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,

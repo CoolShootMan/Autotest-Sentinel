@@ -448,8 +448,10 @@ testT2515_SetLimit_WithVariant_venue_map:
         open: "{BASE_URL}/events"
         sleep_after_open: 5000
 
-        # Step 2: Find and click "Test event post variant settings" event
-        R_click_event: { locator: "text=event-for-UI-auto-venue-map", exact: true }
+        # Step 2: Find and click "12061 phase2 auto event" event
+        # [2026-10-13] T2515 target post switched from event-for-ui-auto-venue-map to
+        # 12061-phase2-auto-event (the seat-map drawer entry that actually renders).
+        R_click_event: { locator: "text=12061 phase2 auto event", exact: true }
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab to ensure post cards are visible
@@ -495,65 +497,59 @@ testT2515_SetLimit_WithVariant_venue_map:
               text: "Post settings"
 
 
-# T2515 Guest verifies Buy now button is disabled after buying 5 variants
+# T2515 Guest verifies purchase is blocked at limit=5 via the seat-map drawer
+# [2026-10-13 rewrite] Target post switched to 12061-phase2-auto-event; entry is the
+# "Show venue map drawer" button (no variant rows in the seat dialog). The seat map
+# allows selecting any number of tables in the dialog, but the LIMIT IS ENFORCED
+# SERVER-SIDE at checkout: with 6 seats (> limit 5) the cart panel shows
+# "Each customer can buy up to 5 items from this post."
+# Seat clicking: each table renders a 102px transparent hit-rect (pointer-events:all)
+# that overlaps its neighbours, so plain clicks miss. Zooming in 4x separates the
+# rects; we then pick a rect whose center elementFromPoint() returns the rect itself,
+# and real-mouse click it via its data-id (JS-synthesized clicks don't register).
 testT2515_VerifyDisabled_WithVariant_venue_map:
     guest: true
-    description: "Verify Buy now button is disabled after buying 5 variants (limit=5)"
+    description: "Verify purchase is blocked at limit=5 (seat map: 5 seats added, 6th seat shows cart limit warning)"
     test_step:
-        # Step 1: Open post detail page as guest
-        open: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-        sleep_after_open: 3000
+        # Step 1: Open 12061 post detail page as guest
+        open: "{BASE_URL}/autotestshop/post/12061-phase2-auto-event"
+        sleep_after_open: 6000
 
-        # Step 2: Scroll down to load product cards ("+" FAB removed in UI redesign, plain scroll now)
-        # swipe: { x: 0, y: 500 }
-        # sleep_step: 500
+        # Step 2: Open venue map drawer (the post's seat-map entry button)
+        R_click_drawer: { role: "button", name: "Show venue map drawer" }
 
-        # [2026-10-10 seat-flow hardening] Free variant product = FIRST card ("General
-        # Admission", $0.00); the old `text=RSVP` no longer matches any product card on
-        # venue-map posts (all card buttons render "Buy Ticket"). index 0 = DOM-first card.
-        R_click_product_name_first: { role: 'button', name: 'General Admission', index: 0 }
-        sleep_step: 1500
+        # Step 3: Seat dialog must finish loading before seat clicks register
+        wait_seat_dialog: { text: "Select tickets", timeout: 25000 }
 
-        # Seat dialog must finish loading before seat clicks register (instruction text
-        # renders after the progressbar; earlier clicks never select).
-        wait_select_dialog_loaded: { text: "Please select tables in the map", timeout: 20000 }
-        # First AVAILABLE seat — sold seats render stroke="transparent", hardcoded
-        # circle[cx="200"] broke the moment that seat sold.
-        R_click_add_to_cart_first: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', index: 0 }
-        # [2026-10-12] CI headless: the per-seat quantity tooltip (5/7/9 people + Add rows)
-        # renders with a delay after the seat click — without this buffer the Add locator
-        # finds nothing and the whole flow dies here (the 10-12 CI failure mode).
-        sleep_step: 3000
+        # Step 4: Select 5 seats. smart_seat_click does everything self-contained:
+        # zoom-in 4x (and waits for the animation to settle), collects self-hit seat
+        # candidates, real-mouse clicks them until the "N table selected" counter
+        # reaches 5 (skipping clicks that cancel a previously selected seat), and
+        # asserts the final count.
+        smart_seat_click_1: { target: 5 }
 
-        # Step 4: Select variant "5 people", set qty=2, Add to cart
-        R_click_variant_5people: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 500
-        R_click_variant_7people: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 500
-        R_click_variant_9people: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 1500
-        # Second AVAILABLE seat (index 1 of the available-seat list; selection keeps the
-        # stroke colored, so :not([stroke="transparent"]) ordering stays stable).
-        R_click_add_to_cart_first_2: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', index: 1 }
-        sleep_step: 500
-        R_click_variant_5people_2: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 500
-        R_click_variant_7people_2: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 500
-        R_click_variant_9people_2: { locator: '[data-testid="variant-row-add-button"][type="button"]:has-text("Add")' }
-        sleep_step: 500
-        R_click_add_to_cart_5P: { locator: "text=Add to cart" }
-        sleep_step: 2000
+        # Step 5: Add the 5 selected seats to cart
+        R_click_add_to_cart: { role: "button", name: "Add to cart" }
 
-        # Step 7: [2026-10-10 rewrite, browser-verified] With 6 items (> limit 5) the UI no
-        # longer offers Checkout at all — every product card flips to "Unavailable" (over-
-        # limit purchase block, screenshot-verified). The old checkout -> place-order ->
-        # warning flow is gone; the over-limit state itself is now the assertion target.
-        verify_purchase_limit_warning: { text: "Unavailable", timeout: 10000 }
-        sleep_end: 3000
+        # Step 6: Reopen the drawer and add a 6th seat (over the limit=5). The drawer
+        # reset the map, so smart_seat_click re-zooms and only targets seats that are
+        # not in window.__picked (the 5 already-selected ones).
+        R_click_drawer_2: { role: "button", name: "Show venue map drawer" }
+        wait_seat_dialog_2: { text: "Select tickets", timeout: 25000 }
+        smart_seat_click_2: { target: 6 }
+
+        # Step 7: Update cart now holds 6 seats (> limit 5)
+        R_click_update_cart: { role: "button", name: "Update cart" }
+
+        # Step 8: Open the cart — the server enforces limit=5 and the cart panel shows
+        # the limit warning instead of offering checkout (verified 2026-10-13, probe60).
+        R_click_view_cart: { locator: '[aria-label="View cart"]', index: 0 }
+        verify_purchase_limit_warning: { text: "Each customer can buy up to 5 items", timeout: 10000 }
+        sleep_end: 2000
 
     expect_result:
-        description: "Adding 6 items (> limit 5) blocks further purchase: all product cards show 'Unavailable'"
+        description: "Cart with 6 seats (> limit 5) shows the server-enforced limit message 'Each customer can buy up to 5 items'"
+
 
     teardown_step:
         # Step 1: Inject partner cookies to login as partner
@@ -565,7 +561,7 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
         sleep_step: 3000
 
         # Step 2.1: Click event card first to enter event detail page (Posts tab lives inside event detail now)
-        R_click_event_teardown: { locator: "text=event-for-UI-auto-venue-map", exact: true }
+        R_click_event_teardown: { locator: "text=12061 phase2 auto event", exact: true }
         sleep_step: 4000
 
         # Step 2.2: Click Posts tab (now inside event detail)

@@ -3412,3 +3412,107 @@ def ensure_auto_archive(page: Page, v: dict):
 
     logger.info(f"ensure_auto_archive: set to {'enabled' if target else 'disabled'}")
 
+
+
+def smart_seat_click(page: Page, v: dict):
+    """
+    Select seats in the venue-map dialog until the "N table selected" counter reaches
+    `target`, then assert it.
+
+    Seat-map reality (T2515, verified 2026-10-13):
+    - selection only registers for a REAL mouse click at a seat center (Playwright
+      locator.click refuses because the seat's own <circle> dot intercepts the rect;
+      force and JS clicks don't register);
+    - zoom must fully settle before rect coordinates are read, or the saved points are
+      stale (YAML sleep_step keys collapse under PyYAML, so timing lives in here);
+    - after each successful selection the map re-renders and every previously computed
+      coordinate goes stale, so we re-verify elementFromPoint self-hit BEFORE each
+      click, and re-collect candidates each round. Clicking a covered/old point
+      cancels a selected seat instead of selecting the target one.
+    The whole zoom -> collect -> verify -> click loop is self-contained and idempotent
+    per dialog session (calling it again re-zooms and only targets seats not in
+    window.__picked).
+
+    YAML usage:
+        smart_seat_click_1: { target: 5 }   # select 5 fresh seats
+        smart_seat_click_2: { target: 6 }   # after drawer reopen, add a 6th
+    """
+    target = int(v.get("target", 0))
+    if target <= 0:
+        raise ValueError("smart_seat_click: 'target' (>0) is required")
+
+    # --- zoom in 4x and wait for the animation to fully settle ---
+    for _ in range(4):
+        page.evaluate("""() => { const z = document.querySelector('[aria-label="Zoom in"]'); if (z) z.click(); }""")
+        page.wait_for_timeout(900)
+    page.wait_for_timeout(3000)
+
+    def count():
+        m = re.search(r"(\d+) tables? selected", page.locator('[role="dialog"]').inner_text())
+        return int(m.group(1)) if m else 0
+
+    def collect():
+        raw = page.evaluate("""() => {
+            window.__picked = window.__picked || [];
+            const rects = [...document.querySelectorAll('[role="dialog"] rect[data-id]')];
+            const avail = new Set([...document.querySelectorAll('[role="dialog"] circle[data-id]:not([stroke="transparent"])')].map(c => c.getAttribute('data-id')));
+            const out = [];
+            for (const r of rects) {
+                const id = r.getAttribute('data-id');
+                if (window.__picked.includes(id)) continue;
+                if (!avail.has(id)) continue;
+                const rb = r.getBoundingClientRect();
+                if (rb.width < 60) continue;
+                const cx = Math.round(rb.x + rb.width / 2), cy = Math.round(rb.y + rb.height / 2);
+                const hit = document.elementFromPoint(cx, cy);
+                if (hit && hit.getAttribute('data-id') === id) out.push(id + ',' + cx + ',' + cy);
+            }
+            return out.join(';');
+        }""")
+        out = []
+        for chunk in str(raw).split(";"):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            parts = [p.strip() for p in chunk.split(",")]
+            if len(parts) == 3:
+                out.append((parts[0], float(parts[1]), float(parts[2])))
+        return out
+
+    def self_hit(cid, cx, cy):
+        return page.evaluate(
+            "([id, x, y]) => { const el = document.elementFromPoint(x, y); return !!(el && el.getAttribute('data-id') === id); }",
+            [cid, cx, cy],
+        )
+
+    rounds = 0
+    while True:
+        n = count()
+        if n >= target:
+            logger.info(f"smart_seat_click: reached target {target} with {n} selected")
+            return
+        cands = collect()
+        if not cands:
+            raise AssertionError(f"smart_seat_click: no self-hit candidates (count {n})")
+        progress = False
+        for cid, cx, cy in cands:
+            if not self_hit(cid, cx, cy):
+                continue  # stale coordinate after a re-render; skip
+            page.mouse.click(cx, cy)
+            page.wait_for_timeout(1800)
+            n2 = count()
+            logger.info(f"smart_seat_click: clicked seat {cid[:8]} ({cx},{cy}) -> {n2}")
+            if n2 >= target:
+                return
+            if n2 > n:
+                page.evaluate("window.__picked = window.__picked || []; if (!window.__picked.includes(%r)) window.__picked.push(%r);" % (cid, cid))
+                progress = True
+                break
+            # n2 <= n: either a no-op or a cancellation; try the next candidate
+        rounds += 1
+        if rounds >= 20 and not progress:
+            raise AssertionError(f"smart_seat_click: stuck at {count()} tables, target {target}")
+    final = count()
+    if final < target:
+        raise AssertionError(f"smart_seat_click: reached {final} tables, target {target}")
+    logger.info(f"smart_seat_click: done, {final} tables selected")
