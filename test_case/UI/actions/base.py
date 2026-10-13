@@ -3436,26 +3436,47 @@ def smart_seat_click(page: Page, v: dict):
     YAML usage:
         smart_seat_click_1: { target: 5 }   # select 5 fresh seats
         smart_seat_click_2: { target: 6 }   # after drawer reopen, add a 6th
+        # [2026-10-13] KAT-12263 FIXED: $80/$100 inside seats are clickable again.
+        # Back to the original $80 seat; counter text is now "N items selected"
+        # (frontend wording change shipped with the fix).
+        smart_seat_click_1: { target: 1, stroke: "#E9803D" }
     """
     target = int(v.get("target", 0))
     if target <= 0:
         raise ValueError("smart_seat_click: 'target' (>0) is required")
+    zoom_times = int(v.get("zoom", 4))
+    stroke_filter = v.get("stroke") or ""
 
-    # --- zoom in 4x and wait for the animation to fully settle ---
-    for _ in range(4):
-        page.evaluate("""() => { const z = document.querySelector('[aria-label="Zoom in"]'); if (z) z.click(); }""")
+    # --- zoom in (default 4x; T4955 $50 seats need 2x, see docstring) ---
+    # Click the zoom button inside a VISIBLE dialog only: the buy-ticket flow renders
+    # two duplicate "Select tickets" dialogs and querySelector picks the hidden one,
+    # making the zoom a no-op (T4955 on 12061, 2026-10-13).
+    for _ in range(zoom_times):
+        page.evaluate("""() => {
+            const ds = [...document.querySelectorAll('[role="dialog"]')].filter(d => { const s = getComputedStyle(d); return s.display !== 'none' && s.visibility !== 'hidden' && parseFloat(s.opacity) > 0; });
+            for (const d of ds) { const z = d.querySelector('[aria-label="Zoom in"]'); if (z) { z.click(); break; } }
+        }""")
         page.wait_for_timeout(900)
     page.wait_for_timeout(3000)
 
     def count():
-        m = re.search(r"(\d+) tables? selected", page.locator('[role="dialog"]').inner_text())
+        # [2026-10-13] frontend now shows "N items selected" (was "N tables selected"
+        # before the KAT-12263 fix was deployed). Match both wordings.
+        m = re.search(r"(\d+) (tables?|items?) selected", page.locator('[role="dialog"]:visible').first.inner_text())
         return int(m.group(1)) if m else 0
 
     def collect():
-        raw = page.evaluate("""() => {
+        raw = page.evaluate("""(strokeFilter) => {
             window.__picked = window.__picked || [];
-            const rects = [...document.querySelectorAll('[role="dialog"] rect[data-id]')];
-            const avail = new Set([...document.querySelectorAll('[role="dialog"] circle[data-id]:not([stroke="transparent"])')].map(c => c.getAttribute('data-id')));
+            const dialogs = [...document.querySelectorAll('[role="dialog"]')].filter(d => { const s = getComputedStyle(d); return s.display !== 'none' && s.visibility !== 'hidden' && parseFloat(s.opacity) > 0; });
+            const rects = [], avail = new Set();
+            const circleSel = strokeFilter
+                ? 'circle[data-id][stroke="' + strokeFilter + '"]'
+                : 'circle[data-id]:not([stroke="transparent"])';
+            for (const d of dialogs) {
+                rects.push(...d.querySelectorAll('rect[data-id]'));
+                [...d.querySelectorAll(circleSel)].forEach(c => avail.add(c.getAttribute('data-id')));
+            }
             const out = [];
             for (const r of rects) {
                 const id = r.getAttribute('data-id');
@@ -3468,7 +3489,7 @@ def smart_seat_click(page: Page, v: dict):
                 if (hit && hit.getAttribute('data-id') === id) out.push(id + ',' + cx + ',' + cy);
             }
             return out.join(';');
-        }""")
+        }""", stroke_filter)
         out = []
         for chunk in str(raw).split(";"):
             chunk = chunk.strip()
