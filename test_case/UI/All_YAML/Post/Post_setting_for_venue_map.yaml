@@ -534,7 +534,10 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
         # Step 6: Reopen the drawer and add a 6th seat (over the limit=5). The drawer
         # reset the map, so smart_seat_click re-zooms and only targets seats that are
         # not in window.__picked (the 5 already-selected ones).
-        R_click_drawer_2: { role: "button", name: "Show venue map drawer" }
+        # NOTE: uses a global CSS locator (not role) because after "Add to cart" a modal
+        # (cart panel) may be open and smart_click's modal-scoped role lookup would search
+        # inside that dialog, missing the post-body button.
+        R_click_drawer_2: { locator: 'button:has-text("Show venue map drawer")' }
         wait_seat_dialog_2: { text: "Select tickets", timeout: 25000 }
         smart_seat_click_2: { target: 6 }
 
