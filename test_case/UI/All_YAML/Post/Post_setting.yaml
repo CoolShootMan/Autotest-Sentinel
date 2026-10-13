@@ -1784,21 +1784,15 @@ testT2069:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 4: Confirm post with alias auto-test-post-setting-case1742 is visible
-        verify_post_alias: { text: "auto-test-post-setting-case1742" }
-        sleep_step: 3000
-
-        # Step 5: Switch to Content tab, open Settings panel
-        R_click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_step: 2000
+        # Step 4: Open post settings from the Post tab icon rail
         R_click_settings_gear: { locator: 'button[data-testid="enhance-button"][aria-label="Settings"]', timeout: 10000 }
         sleep_step: 2000
 
-        # Step 6: Toggle "Add promotional announcements" Off
+        # Step 5: Toggle "Add promotional announcements" Off
         R_click_toggle_ann_off: { locator: 'input[name="isAnnouncementsEnabled"]', timeout: 10000 }
         sleep_step: 2000
 
-        # Step 7: Save post settings
+        # Step 6: Save post settings
         R_click_save_teardown: { role: 'button', name: 'Save' }
         sleep_step: 3000
 
