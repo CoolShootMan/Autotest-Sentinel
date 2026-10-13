@@ -22,11 +22,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========== Configuration ==========
-# Cookie file: resolved relative to repo root (test_case/UI/Test_Katana/cookie_release.json).
+# Cookie file: resolved relative to repo root (test_case/UI/cookie_release.json).
 # On Windows the original path was hardcoded; now we derive it from the script location.
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _REPO_ROOT = os.path.normpath(os.path.join(_SCRIPT_DIR, "..", "..", "..", ".."))
-COOKIE_FILE = os.path.join(_REPO_ROOT, "test_case", "UI", "Test_Katana", "cookie_release.json")
+COOKIE_FILE = os.path.join(_REPO_ROOT, "test_case", "UI", "cookie_release.json")
 API_BASE = "https://release.katana-api.1m.app"
 SCRIPT_DIR = _SCRIPT_DIR
 RESULT_FILE = os.path.join(SCRIPT_DIR, ".duplicate_result.json")

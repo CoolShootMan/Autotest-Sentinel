@@ -27,7 +27,7 @@ from playwright.sync_api import sync_playwright
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 PROJECT_ROOT = Path(__file__).parent.parent
-COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
+COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" 
 
 # Read from BASE_URL environment variable, default to release environment
 ENV_BASE = os.environ.get("BASE_URL", "https://release.pear.us")
@@ -58,6 +58,19 @@ ACCOUNTS = [
         "email": "yuxiao.zhu.ext+997@1m.app",
         "password": "Happy123",
         "cookie_file": f"cookie_{CURRENT_ENV}_partner_coseller.json",
+    },
+    {
+        "name": "admin (linda.zhou)",
+        "email": "linda.zhou.ext@1m.app",
+        "password": "lindazhou",
+        "cookie_file": "cookie_admin.json",
+        "base_url": "https://release.admin.pear.us",
+    },
+    {
+        "name": "linda (+01)",
+        "email": "linda.zhou.ext+01@1m.app",
+        "password": "Happy123",
+        "cookie_file": "cookie_release_linda01.json",
     },
 ]
 
@@ -108,10 +121,11 @@ def login_and_save(playwright, account: dict):
         # Retry navigation: default goto waits for "load", which hangs if any
         # 3rd-party resource stalls; the release env may also rate-limit rapid
         # sequential logins. Use domcontentloaded + retries to absorb both.
+        login_base = account.get("base_url", ENV_BASE)
         last_err = None
         for attempt in range(1, GOTO_RETRIES + 1):
             try:
-                page.goto(f"{ENV_BASE}/login", timeout=GOTO_TIMEOUT, wait_until="domcontentloaded")
+                page.goto(f"{login_base}/login", timeout=GOTO_TIMEOUT, wait_until="domcontentloaded")
                 page.wait_for_selector(
                     "input[type='email'], input[name='email'], input[placeholder*='email' i]",
                     timeout=10000,

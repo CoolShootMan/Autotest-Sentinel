@@ -43,11 +43,11 @@ MIRROR_NAME = "CoolShootMan"
 MIRROR_EMAIL = "66861349+CoolShootMan@users.noreply.github.com"
 
 # —— 剔除名单：业务用例 / 业务数据 / 生成物 ——
-# 注意：test_case/UI/Test_Katana/{smoke_testing.yaml, Katana_curator_smoke_release.yaml}
+# 注意：test_case/UI/{smoke_testing.yaml, Katana_curator_smoke_release.yaml}
 # 故意**保留** —— 让个人仓至少有一套能直接跑起来的冒烟用例。
 DENY = [
     # UI 业务用例（保留两个 smoke 文件，见上）
-    "test_case/UI/Test_Katana/All_YAML",
+    "test_case/UI/All_YAML",
     # API 业务用例
     "test_case/API auto script/tests",
     "test_case/API auto script/suites",

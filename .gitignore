@@ -10,6 +10,7 @@ build/
 
 # === Virtual Environment ===
 venv/
+venv310/
 .venv/
 env/
 
@@ -26,10 +27,10 @@ env/
 
 # === Sensitive / Auth ===
 # Cookie files contain real auth tokens - NEVER commit
-test_case/UI/Test_Katana/cookie_*.json
+test_case/UI/cookie_*.json
 # API token for ui_workflow scripts
-test_case/UI/Test_Katana/api/ui_workflow/api_token.txt
-test_case/UI/Test_Katana/staging_cookie.json
+test_case/UI/api/ui_workflow/api_token.txt
+test_case/UI/staging_cookie.json
 tools/get_cookie.py
 tools/check_chinese.py
 tools/translate_yaml_comments.py
@@ -148,9 +149,9 @@ Thumbs.db
 # ignore test error screenshots (generated at runtime)
 /*.png
 /requirements.txt
-/test_case/UI/Test_Katana/cookie_release.json
+/test_case/UI/cookie_release.json
 # 登录态 cookie 一律不入库（含真 token）
-/test_case/UI/Test_Katana/*cookie*.json
+/test_case/UI/*cookie*.json
 **/__pycache__/*
 
 venv/pyvenv.cfg
@@ -166,7 +167,7 @@ data/*.xlsx
 debug_*.html
 
 # === Performance Test (local pressure test only, do not commit) ===
-test_case/UI/Test_Katana/All_YAML/Performance/
+test_case/UI/All_YAML/Performance/
 
 # === DOM Knowledge Base (generated index, not source data) ===
 dom_kb/
@@ -198,6 +199,8 @@ data/figma_screenshots/
 data/*_test_cases.json
 data/*_raw.json
 data/figma_*/
+# 线上现状勘查截图（jira-ones-testflow Step 1.6 产出）只留本地；同名 md 报告 data/<TICKET>_recon.md 可入库
+data/recon_*/
 data/figma_analysis_*.md
 data/figma_nodes_raw.json
 data/ones_*.png
@@ -212,23 +215,23 @@ tools/_inject_cookie.js
 /qa_workflow_requirements.md
 
 # === prefill_runner debug/temp artifacts (Apifox export residue, do not commit) ===
-test_case/UI/Test_Katana/api/tmp*.js
+test_case/UI/api/tmp*.js
 # === local AI temp scripts at repo root (do not commit) ===
 /_*.py
 # === KAT case verification + draft artifacts (one-off, do not commit) ===
 data/*_step_verification.json
 data/*_test_cases_draft.md
 # === prefill runtime state (written by manual_event.py at runtime, do not commit) ===
-test_case/UI/Test_Katana/api/prefill_vars.json
+test_case/UI/api/prefill_vars.json
 
 # === QA performance test debug
 test_case/output
 test_case/performance testing/cache-regression/output
 
 # === Failure screenshots written into case dirs (generated at runtime) ===
-test_case/UI/Test_Katana/fail_*.png
-test_case/UI/Test_Katana/warn_*.png
-test_case/UI/Test_Katana/crash_*.png
+test_case/UI/fail_*.png
+test_case/UI/warn_*.png
+test_case/UI/crash_*.png
 
 # === Browser CLI runtime state (local only) ===
 .playwright-cli/
@@ -244,7 +247,14 @@ run.log
 # 没必要把每轮快照都提交（仓库会随每张票膨胀）。
 ui_snapshots/
 
-# === Verification evidence screenshots (large, per-run; text deliverables ARE tracked) ===
-# data/verify/<KEY>/ 下的 report.md / path_map.md / ones_cases*.json / case_diff.* 要提交，
-# 但 57 张 PNG 单票就有 16MB —— 截图证据请附到 Jira 票里，别塞进仓库。
-data/verify/**/*.png
+# === Verification evidence (large, per-run; text deliverables ARE tracked) ===
+# 白名单制：verify 下默认全是探针/运行残留（2026-10-09 实测 500+ 文件），只放行
+# data/verify/<KEY>/ 里的四类正式产物（report.md / path_map.md / ones_cases*.json /
+# case_diff.*）；截图证据请附到 Jira 票里，别塞进仓库。
+data/verify/**
+!data/verify/**/
+!data/verify/**/report.md
+!data/verify/**/path_map.md
+!data/verify/**/ones_cases*.json
+!data/verify/**/case_diff.*
+data/ua_*.txt

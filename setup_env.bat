@@ -95,7 +95,7 @@ echo   1. 激活虚拟环境:
 echo      venv\Scripts\activate.bat
 echo.
 echo   2. 运行测试:
-echo      pytest test_case/UI/Test_Katana/test_ui.py -k testT5106
+echo      pytest test_case/UI/test_ui.py -k testT5106
 echo.
 echo   3. 退出虚拟环境:
 echo      deactivate

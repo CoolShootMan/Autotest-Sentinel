@@ -63,7 +63,7 @@ except ImportError:
 PROJECT_ROOT = Path(__file__).parent.parent
 ALLURE_RESULTS_DIR = PROJECT_ROOT / "allure-results"
 REPORT_OUTPUT_DIR = PROJECT_ROOT / "Error_Test_Case_Diagnosis_Report"
-COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" / "Test_Katana"
+COOKIE_DIR = PROJECT_ROOT / "test_case" / "UI" 
 
 # Ensure project root is on sys.path so we can import test_case.* modules
 if str(PROJECT_ROOT) not in sys.path:
@@ -76,8 +76,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from unittest.mock import MagicMock
 _mock_ai_vision = MagicMock()
 _mock_rag_kb = MagicMock()
-sys.modules.setdefault("test_case.UI.Test_Katana.utils.ai_vision", _mock_ai_vision)
-sys.modules.setdefault("test_case.UI.Test_Katana.utils.rag_knowledge", _mock_rag_kb)
+sys.modules.setdefault("test_case.UI.utils.ai_vision", _mock_ai_vision)
+sys.modules.setdefault("test_case.UI.utils.rag_knowledge", _mock_rag_kb)
 
 # ---------------------------------------------------------------------------
 # Gemini AI + DOM Knowledge Base (lazy-loaded for Probe 9)
@@ -1729,7 +1729,7 @@ def _execute_step(page, step_name: str, step_value: Any, base_url: str):
 
     # --- All other steps: delegate to project's action registry ---
     # This ensures replay behavior matches pytest exactly.
-    from test_case.UI.Test_Katana.actions import get_action
+    from test_case.UI.actions import get_action
     action_fn = get_action(step_name)
     if action_fn:
         action_fn(page, step_value if isinstance(step_value, dict) else {})

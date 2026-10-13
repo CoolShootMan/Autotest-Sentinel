@@ -1,0 +1,123 @@
+{
+  "cookies": [
+    {
+      "name": "release_katana_visitor_id",
+      "value": "77ef84b6-955c-432a-959e-e898d948fa41",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1042744694.1790063395",
+      "domain": ".pear.us",
+      "path": "/",
+      "expires": 1824623429.689568,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_web_auth_token",
+      "value": "K4ZwpgTgkgJgXDGAzAjGAnAI3QWkQZgFYcAWQ8nTAY3wHZTN90A2fZsFKwgQwBowAdgDc4EMABsw3cL1CQASgHtJcAEIBVAMpQAcgFFNmgPoAFAILyAKvvmzwESwE8ADmDibLZnQBEL3-gC23ACW4nCOwAAewdyKAHQAXgAWwHFgkQAuANTouQACKAFx3M7OvDEZcCi06AAMtawkAEyE-JHOVTX1rIRkQA.89gJ-mg2mmIdGUk1LzsJ9nzV1DtbH_jokPf5IRNqmPY",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1790063545,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_web_auth_token_refresh",
+      "value": "K4ZwpgTgkgJgXDGAzAjGAnAI3QWkQZgFYcAWQ8nTAY3wHZTN90A2fZsFKwgQwBowAdgDc4EMABsw3cLwCW3AC5wUtdAAY1rEgCZC-AB4AHZQA5tKZubW6gA.32u5OEeezNJ1AeRLEAEGxgW-l09sOOqhcN7uCG8OaVk",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1821621025,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "release_katana_vanity_url",
+      "value": "/autotestshop",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1821599425,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "katana_cookie_consent",
+      "value": "%7B%22categories%22%3A%5B%22necessary%22%2C%22analytics%22%5D%2C%22revision%22%3A1%2C%22data%22%3Anull%2C%22consentTimestamp%22%3A%222026-09-22T07%3A50%3A25.983Z%22%2C%22consentId%22%3A%22577dc450-d5d9-4186-bf7e-4331b3575ad6%22%2C%22services%22%3A%7B%22necessary%22%3A%5B%5D%2C%22analytics%22%3A%5B%5D%7D%2C%22languageCode%22%3A%22en%22%2C%22lastConsentTimestamp%22%3A%222026-09-22T07%3A50%3A25.983Z%22%2C%22expirationTime%22%3A1821599425984%7D",
+      "domain": ".release.pear.us",
+      "path": "/",
+      "expires": 1821599425,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_RV17GL444M",
+      "value": "GS2.1.s1790063394$o1$g1$t1790063429$j25$l0$h0",
+      "domain": ".pear.us",
+      "path": "/",
+      "expires": 1824623429.691889,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_rdt_uuid",
+      "value": "1790063394892.37c33aeb-cd35-4459-a41b-f30aa0338310",
+      "domain": ".pear.us",
+      "path": "/",
+      "expires": 1797839429,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Strict"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://release.pear.us",
+      "localStorage": [
+        {
+          "name": "eruda-entry-button",
+          "value": "{\"rememberPos\":true,\"pos\":{\"x\":1230,\"y\":670}}"
+        },
+        {
+          "name": "eruda-dev-tools",
+          "value": "{\"transparency\":1,\"displaySize\":80,\"theme\":\"System preference\"}"
+        },
+        {
+          "name": "lastExternalReferrerTime",
+          "value": "1790063396507"
+        },
+        {
+          "name": "eruda-console",
+          "value": "{\"asyncRender\":true,\"catchGlobalErr\":true,\"jsExecution\":true,\"overrideConsole\":true,\"displayExtraInfo\":false,\"displayUnenumerable\":true,\"displayGetterVal\":true,\"lazyEvaluation\":true,\"displayIfErr\":false,\"maxLogNum\":\"infinite\"}"
+        },
+        {
+          "name": "eruda-resources",
+          "value": "{\"hideErudaSetting\":true,\"observeElement\":true}"
+        },
+        {
+          "name": "eruda-elements",
+          "value": "{\"overrideEventTarget\":true}"
+        },
+        {
+          "name": "eruda-sources",
+          "value": "{\"showLineNum\":true}"
+        },
+        {
+          "name": "lastExternalReferrer",
+          "value": "empty"
+        }
+      ]
+    }
+  ]
+}

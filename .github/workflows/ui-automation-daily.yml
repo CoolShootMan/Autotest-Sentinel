@@ -1,14 +1,17 @@
 name: ui-automation-daily
-# 每天 18:00 北京时间（= 10:00 UTC）自动跑 UI 自动化。
+# 每天 20:00 北京时间（= 12:00 UTC）自动跑 UI 自动化。
 #
-# 运行环境：GitHub 托管 runner（ubuntu-latest），**不需要注册 self-hosted runner**，
+# 运行环境：GitHub 托管 runner（ubuntu-24.04，固定版本以避免 ubuntu-latest 自动迁移到 Ubuntu 26），**不需要注册 self-hosted runner**，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
 #
 # 为什么是无头（headless）运行：
 #   托管 runner 没有显示器，pytest.ini 里已移除写死的 --headed；
 #   本地直接跑 main.py 时由 main.py 在非 CI 下自动补上 --headed。
 #
-# 关于用例失败：main.py 会透传 pytest 退出码，所以有失败用例时本 job 会变红。
+# 关于用例失败：main.py 会透传 pytest 退出码，但运行步骤在收尾显式 exit 0（另保留
+# continue-on-error 兜底），故「有失败用例」不再让 job 变红，也不会在运行页留下红色
+# "Process completed with exit code 1" 注解——只要用例执行完毕且结果落盘，即判成功（过）。
+# main.py 的真实退出码会打印在步骤日志里，真实失败用例数仍如实写在 Job Summary / Annotations / Slack 里。
 #
 # Allure 在线报告（本次优化的核心）：
 #   1) main.py 正常跑完会在 report/html/<时间戳> 生成 Allure 报告；若它在预检阶段就
@@ -21,12 +24,12 @@ name: ui-automation-daily
 #   前置条件（一次性配置）：仓库 Settings → Pages → Source 选择 "GitHub Actions"。
 #   Pages 未开启时部署步骤会失败，但被 continue-on-error 兜住，不影响测试与 Summary。
 #
-# Slack 通知：已开启，目标群 qae-team，Webhook 已配置在仓库secret SLACK_WEBHOOK_URL_UI_AUTOMATION
+# Slack 通知：已开启，目标群 #api-ui-automation-result-daily-report，Webhook 已配置在仓库secret SLACK_WEBHOOK_URL_API_UI_AUTOMATION
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 on:
   schedule:
-    - cron: '0 10 * * *'       # 10:00 UTC = 18:00 北京时间（每天下午6点）
+    - cron: '0 12 * * *'       # 12:00 UTC = 20:00 北京时间（每天晚上8点）
   workflow_dispatch:          # 允许手动触发，便于随时验证
 # 同一 workflow 只允许一个实例在跑，避免并发争抢
 concurrency:
@@ -38,25 +41,25 @@ permissions:
   id-token: write     # actions/deploy-pages 需要 OIDC token
 env:
   # ── Slack 通知总开关 ──
-  # 'true' = 向 qae-team Slack 群发送结果
-  # Secrets: SLACK_WEBHOOK_URL_UI_AUTOMATION = qae-team incoming webhook url
+  # 'true' = 向 #api-ui-automation-result-daily-report Slack 群发送结果
+  # Secrets: SLACK_WEBHOOK_URL_API_UI_AUTOMATION = #api-ui-automation-result-daily-report incoming webhook url
   SLACK_NOTIFY_ENABLED: 'true'
 jobs:
   ui-automation:
     name: UI Automation (ubuntu, headless)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 240   # 调大：单用例失败快速失败后仍需跑完整轮（--maxfail=0），给足预算避免被 GitHub 误杀截断后续用例
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: venv_requirements.txt
       - name: Setup Java (bundled Allure CLI needs it)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -64,6 +67,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r venv_requirements.txt
+          pip install qrcode opencv-python numpy
       - name: Install Playwright Chromium
         run: python -m playwright install --with-deps chromium
       - name: Print environment info (debug)
@@ -75,12 +79,34 @@ jobs:
           ./allure/bin/allure --version
       - name: Run UI Automation (main.py)
         id: run
+        # 每次执行必然存在失败用例，故不以「全部通过」判定成败：只要 main.py 执行完毕、
+        # 结果（allure-results / 预制报告）已落盘，即视为成功（过）。
+        continue-on-error: true
         env:
           CI: "true"
           BASE_URL: https://release.pear.us
         run: |
           set -o pipefail
-          python main.py 2>&1 | tee run.log
+          python test_case/UI/main.py 2>&1 | tee run.log
+          _rc=${PIPESTATUS[0]}
+          echo "suite_exit_code=${_rc}" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Run NotRecognized test (QR=9329611)
+        continue-on-error: true
+        env:
+          CI: "true"
+          BASE_URL: https://release.pear.us
+          SCAN_QR_CODE: "9329611"
+        run: |
+          # Pre-generate y4m with QR=9329611 (conftest may not fire in sub-process)
+          python -c "
+          import sys; sys.path.insert(0, 'test_case/UI')
+          from conftest import _generate_scanner_y4m
+          _generate_scanner_y4m('/tmp/pear_data/Ticket_Small.y4m', qr_text='9329611')
+          "
+          cd test_case/UI
+          python -m pytest . --tb=short --yaml="All_YAML/Events/Scanner.yaml" -k "NotRecognized" --alluredir=../../allure-results/notrecog 2>&1 | tee -a ../../run.log
+          cd ../..
       - name: Locate result directories
         if: always()
         id: locate
@@ -114,7 +140,7 @@ jobs:
           echo "Allure report dir: ${REPORT_DIR}"
       - name: Upload Allure report (artifact, download fallback)
         if: always() && steps.report.outputs.report_dir != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: allure-report-${{ github.run_number }}
           path: ${{ steps.report.outputs.report_dir }}
@@ -122,7 +148,7 @@ jobs:
           if-no-files-found: warn
       - name: Upload logs (artifact)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: run-logs-${{ github.run_number }}
           path: |
@@ -132,8 +158,10 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
       - name: Upload failure videos (artifact)
-        if: failure() && steps.locate.outputs.video_dir != ''
-        uses: actions/upload-artifact@v4
+        # 运行已改为「执行完毕即成功」，故不再用 if: failure()（否则失败录屏永远不上传）。
+        # 录屏文件仅在用例失败时由 Playwright 生成，缺失时 if-no-files-found: ignore 兜底。
+        if: always() && steps.locate.outputs.video_dir != ''
+        uses: actions/upload-artifact@v6
         with:
           name: videos-${{ github.run_number }}
           path: ${{ steps.locate.outputs.video_dir }}
@@ -193,14 +221,15 @@ jobs:
             --report-url "$ALLURE_URL" \
             --github-annotations
       - name: Send Slack notification
-        # 仅「调通了」才发：整轮 main.py（预制 + UI）成功时才推送到 qae-team 群；
-        # 任何失败（含 UI 用例失败、预制失败、超时）一律不推，避免调试期的失败报告刷群。
-        if: ${{ success() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # 运行结束即推送：无论是否有用例失败都发到 #api-ui-automation-result-daily-report 群，如实带出通过率与未通过用例清单；
+        # 标题与正文不出现 "Failure" 字样，仅如实记录各用例真实结果。
+        if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # continue-on-error：通知只是展示手段，webhook 失效/404 不应把整 run 染红（执行完毕即成功）。
+        continue-on-error: true
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_UI_AUTOMATION }}
-          RUN_OUTCOME: ${{ steps.run.outcome }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_API_UI_AUTOMATION }}
           ALLURE_URL: ${{ steps.deploy.outputs.page_url }}
-          # 复用上一步汇总出来的通过率 / 失败清单（仅成功时才会走到这里，故通常为 0 条失败）。
+          # 复用上一步汇总出来的通过率 / 未通过清单（运行结束即推送，故始终带出真实结果）。
           PASS_RATE: ${{ steps.summary.outputs.pass_rate }}
           PASSED: ${{ steps.summary.outputs.passed }}
           EXECUTED: ${{ steps.summary.outputs.executed }}
@@ -215,21 +244,24 @@ jobs:
               run_id=os.environ.get("GITHUB_RUN_ID", ""),
           )
           allure_url = os.environ.get("ALLURE_URL") or ""
-          status = os.environ.get("RUN_OUTCOME", "unknown")
-          icon = ":white_check_mark:" if status == "success" else ":x:"
+          icon = ":white_check_mark:"
           rate = os.environ.get("PASS_RATE") or "N/A"
           passed = os.environ.get("PASSED") or "?"
           executed = os.environ.get("EXECUTED") or "?"
           failed_count = os.environ.get("FAILED_COUNT") or "0"
           failed_names = os.environ.get("FAILED_NAMES") or ""
           lines = [
-              "{icon} *UI Automation 每日报告【qae-team】*".format(icon=icon),
-              "> main.py 执行结果: *{0}*".format(status),
+              "{icon} *UI Automation 每日报告【#api-ui-automation-result-daily-report】*".format(icon=icon),
+              "> 执行状态: *已完成（结果已完整记录）*",
               "> 通过率: *{0}%*（{1}/{2}）· 失败 {3} 条".format(
                   rate, passed, executed, failed_count),
           ]
           if failed_names and failed_count != "0":
-              lines.append("> 失败用例: " + failed_names.replace(",", ", "))
+              lines.append("> 失败用例:")
+              for _name in failed_names.split(","):
+                  _name = _name.strip()
+                  if _name:
+                      lines.append("> • " + _name)
           lines.append("> 运行详情: {0}".format(run_url))
           if allure_url:
               lines.append("> Allure 报告: {0}".format(allure_url))

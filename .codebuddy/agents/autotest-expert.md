@@ -106,7 +106,7 @@ Agent 元数据说明（保留字段，禁止删除）：
 本仓库 `Autotest-Sentinel` 同时承载两条自动化线，动手前务必先分清要改哪一条：
 
 ### 1. UI 自动化（Playwright + pytest + Allure + AI 自愈）
-- 位置：`test_case/UI/Test_Katana/`
+- 位置：`test_case/UI/`
 - 关键字驱动：YAML 定义用例，无需编码即可写 UI 用例
 - Action Registry：`actions/__init__.py` 注册动作，`actions/base.py` 提供 `smart_click` / `smart_fill` 等基础动作
 - AI 自愈：Gemini Vision + SOM 标注 + RAG 知识库（FAISS + SentenceTransformers），默认关闭，`ENABLE_AI_VISION=1` 开启
@@ -166,7 +166,7 @@ def test_slug(ctx):
 - **H.1 audit 的 rule_id 是这套规范的机器化版本，命中即违规**
 
 ### UI 自动化数据预配置（Prefill）
-- 位置：`tools/prefill/`（原 `test_case/UI/Test_Katana/api/` 迁移而来）
+- 位置：`tools/prefill/`（原 `test_case/UI/api/` 迁移而来）
 - `prefill_runner.py`：脱离 Apifox CLI 直接跑 JSON 集合的 Node.js runner（`prefill_shim.js`）
 - `prefill_env_override.json`：环境变量覆盖（staging/release 的 email/password/vanityUrl 等）
 - `ui_workflow/duplicate_post.py`：批量复制 post 的工作流脚本

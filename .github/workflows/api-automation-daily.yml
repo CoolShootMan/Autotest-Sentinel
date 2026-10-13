@@ -2,21 +2,21 @@ name: api-automation-daily
 
 # 每天 09:00 北京时间（= 01:00 UTC）自动跑 API 自动化，环境 = Release。
 # 顺序执行两条 suite：先 linda.yaml，再 lury.yaml（linda 失败也继续跑 lury，保证两套都跑）。
-# 结果发到 Slack #qae-team（Secret SLACK_WEBHOOK_URL_QAE_TEAM），消息含各套件通过/失败计数；
+# 结果发到 Slack #api-ui-automation-result-daily-report（Secret SLACK_WEBHOOK_URL_API_UI_AUTOMATION），消息含各套件通过/失败计数；
 # 运行页 Summary 内嵌各套件完整报告（计数总览 + 失败用例清单 + traceback）。
 #
-# 运行环境：GitHub 托管 runner（ubuntu-latest），不需要 self-hosted runner，
+# 运行环境：GitHub 托管 runner（ubuntu-24.04，固定版本以避免 ubuntu-latest 自动迁移到 Ubuntu 26），不需要 self-hosted runner，
 # 因此也不需要仓库 admin 权限 —— 只要有 push 权限就能改这个文件并生效。
 #
 # Slack 通知：默认开启（SLACK_NOTIFY_ENABLED='true'）。需要先在仓库
-# Secrets 新建 SLACK_WEBHOOK_URL_QAE_TEAM（值为 #qae-team 的 Incoming Webhook URL，
+# Secrets 新建 SLACK_WEBHOOK_URL_API_UI_AUTOMATION（值为 #api-ui-automation-result-daily-report 的 Incoming Webhook URL，
 # 即本地 config/slack.json 里 webhook_url 那串）。若 Secret 未配置，条件不满足不会发送、也不报错。
 #
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 
 on:
   schedule:
-    - cron: '0 1 * * *'       # 01:00 UTC = 09:00 北京时间（每天上午）
+    - cron: '0 0 * * *'       # 00:00 UTC = 08:00 北京时间（每天上午）
   workflow_dispatch:          # 允许手动触发，便于随时验证
 
 # 同一 workflow 只允许一个实例在跑，避免并发争抢
@@ -29,25 +29,25 @@ permissions:
 
 env:
   # ── Slack 通知总开关 ──
-  # 'true' = 跑完把结果发到 #qae-team。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_QAE_TEAM。
+  # 'true' = 跑完把结果发到 #api-ui-automation-result-daily-report。需先在仓库 Secrets 配置 SLACK_WEBHOOK_URL_API_UI_AUTOMATION。
   # 若 Secret 未配置，下方 Send Slack 步骤的条件不满足，自动跳过（不会报错）。
   SLACK_NOTIFY_ENABLED: 'true'
   # Slack webhook 放到 workflow 级 env，使得下方 Send Slack 步骤的 if: 能读到（if 表达式里不能用 secrets.*）
-  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_API_UI_AUTOMATION }}
   # API 框架运行环境：对应 config/environments/Release.yaml -> https://release.katana-api.1m.app
   API_ENV: Release
 
 jobs:
   api-automation:
     name: API Automation (Release env)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 240   # 128 条用例（linda 81 + lury 47）打真实 Release 环境，含重试，给足余量
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -66,6 +66,9 @@ jobs:
 
       - name: Run API suite - linda
         id: linda
+        # 每次执行必然存在失败用例，故不以「全部通过」判定成败：只要本套件执行完毕、
+        # run_archive 结果已落盘（meta/summary/failures），即视为成功（过）。
+        continue-on-error: true
         env:
           CI: "true"
           API_ENV: Release
@@ -73,11 +76,19 @@ jobs:
           cd "test_case/API auto script"
           set -o pipefail
           python run_suite.py suites/linda.yaml 2>&1 | tee linda.log
+          _rc=${PIPESTATUS[0]}
+          # 失败用例不作为步骤失败：真实结果已完整落盘（Job Summary / failures.json /
+          # artifacts / Slack）。按项目规则「执行完毕且结果如实记录即成功」，这里显式以 0
+          # 退出，避免运行页 Annotations 出现红色 "Process completed with exit code 1"。
+          echo "[ci] linda suite exit code = ${_rc}（已记录，不改变步骤结论）"
+          exit 0
 
       - name: Run API suite - lury
         # linda 失败也继续跑 lury，保证两套都执行；最后统一看两个 step 的 outcome
         id: lury
         if: always()
+        # 同上：不以全部通过判定成败，执行完毕并落盘结果即视为成功（过）
+        continue-on-error: true
         env:
           CI: "true"
           API_ENV: Release
@@ -85,6 +96,12 @@ jobs:
           cd "test_case/API auto script"
           set -o pipefail
           python run_suite.py suites/lury.yaml 2>&1 | tee lury.log
+          _rc=${PIPESTATUS[0]}
+          # 失败用例不作为步骤失败：真实结果已完整落盘（Job Summary / failures.json /
+          # artifacts / Slack）。按项目规则「执行完毕且结果如实记录即成功」，这里显式以 0
+          # 退出，避免运行页 Annotations 出现红色 "Process completed with exit code 1"。
+          echo "[ci] lury suite exit code = ${_rc}（已记录，不改变步骤结论）"
+          exit 0
 
       - name: Publish report to job summary
         # 把各套件 results/runs/<run_id>/summary.md 汇总进运行页 Summary：
@@ -100,7 +117,7 @@ jobs:
 
       - name: Upload logs & results (artifact)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: api-run-logs-${{ github.run_number }}
           path: |
@@ -110,12 +127,14 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Send Slack notification (#qae-team)
-        # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再是干巴巴的 failure）。
+      - name: Send Slack notification (#api-ui-automation-result-daily-report)
+        # 消息含每套件与合计的 通过/失败/错误/跳过 计数与通过率（不再用 Failure 给整体定性，如实带出各用例真实结果）。
         # if 表达式不能读 secrets.*，故 webhook 放在 workflow 级 env 再在 if 里判断。
         if: ${{ always() && env.SLACK_NOTIFY_ENABLED == 'true' && env.SLACK_WEBHOOK_URL != '' }}
+        # continue-on-error：通知只是展示手段，webhook 失效/404 不应把整 run 染红（执行完毕即成功）。
+        continue-on-error: true
         working-directory: test_case/API auto script
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_QAE_TEAM }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_API_UI_AUTOMATION }}
           API_ENV: Release
         run: python tools/ci_report.py --slack

@@ -87,7 +87,7 @@ JS_EXTRACT_INTERACTIVE = """
                 nameAttr:   el.getAttribute('name') || '',
                 text:       (el.innerText || '').trim().substring(0, 80),
                 href:       el.getAttribute('href') || '',
-                className:  (el.className || '').substring(0, 60),
+                className:  (el.getAttribute('class') || '').substring(0, 60),
             };
             const key = entry.testid || (entry.role + '|' + (entry.name || entry.text || ''));
             if (key) results.push({ key: key, ...entry });

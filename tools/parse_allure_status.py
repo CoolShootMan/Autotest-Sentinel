@@ -102,7 +102,9 @@ def parse_test_cases_from_yaml(yaml_files: list) -> dict:
     Return format: { "Scanner.yaml": ["T3981", "T3981_Already", ...], ... }
     """
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    yaml_dir = os.path.join(base_dir, "test_case", "UI", "Test_Katana")
+    # Mirror of tools/paths.py:UI_YAML_DIR. A stray extra "UI" here pointed at a
+    # non-existent dir, so every lookup missed and no case was ever updated.
+    yaml_dir = os.path.join(base_dir, "test_case", "UI")
     test_cases = {}
 
     for yaml_file in yaml_files:

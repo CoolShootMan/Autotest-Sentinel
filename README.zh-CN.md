@@ -116,9 +116,15 @@ ENABLE_AI_VISION=1
 推荐使用 `runner.py` 智能启动脚本进行测试执行：
 
 ```bash
+# runner.py 在 test_case/UI 下（不在仓库根），先切目录：
+cd test_case/UI
+
 # 交互式执行：终端弹出层级菜单，支持逐层进入目录、选择具体 YAML 或一键执行某个目录下的所有测试！
 python runner.py
 ```
+
+> **📁 说明：** `runner.py` 依据 `__file__` 推导自身目录，与当前工作目录无关，
+> 因此在仓库根直接执行 `python "test_case/UI/runner.py"` 同样可用。
 
 ### 4. 录制测试脚本 (Codegen)
 
@@ -126,6 +132,9 @@ python runner.py
 
 **使用方式：**
 ```bash
+# codegen.py / codegen.sh 在 test_case/UI 下（不在仓库根）：
+cd test_case/UI
+
 # 使用 Python 脚本 (推荐)
 ./codegen.py
 
@@ -151,29 +160,29 @@ python runner.py
 
 除了交互式的 `runner.py`，您也可以通过命令行传递参数或直接使用 pytest 命令。
 
-**使用 `runner.py` 快捷指令：**
+**使用 `runner.py` 快捷指令：**（需先 `cd test_case/UI`）
 ```bash
 # 运行单个测试用例 (默认带上 --headed -v)
-python runner.py testT4718
+python runner.py testT3554
 
 # 运行多个测试用例 (默认使用 or 逻辑匹配)
-python runner.py testT4718 testT4718_guest
+python runner.py testT3554 testT4660
 
 # 传递额外的 pytest 参数 (如无头模式、指定环境等)
-python runner.py testT4718 --headless --env release
+python runner.py testT3554 --headless --env release
 ```
 > **💡 提示：** 当执行整个文件或目录下所有的测试时，`runner.py` 会自动解析 YAML 提取出每一个单独的 `testTxxxx` 测试用例，并**逐一拆分执行**。如果某一个用例失败，不会中断其他用例的执行。
 
-**使用原生 `pytest` 命令：**
+**使用原生 `pytest` 命令：**（在仓库根执行；`--yaml` 相对 `test_case/UI` 解析）
 ```bash
 # 测试特定用例
-pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
+pytest test_case/UI/test_ui.py -k testT3554 --yaml All_YAML/Section/Section.yaml --headed -v --env release
 
 # 测试多个用例
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
+pytest test_case/UI/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Section/Section.yaml --headed -v
 
 # 生成 Allure 报告
-pytest --alluredir=allure-results test_case/UI/Test_Katana/test_ui.py
+pytest --alluredir=allure-results test_case/UI/test_ui.py
 allure serve allure-results
 ```
 
@@ -206,7 +215,7 @@ rmdir /s venv && setup_env.bat         # Windows
 
 # 3. 手动安装依赖与浏览器 (不使用 setup 脚本时)
 python3 -m venv venv                   # 创建虚拟环境
-pip install -r requirements.txt        # 安装依赖
+pip install -r venv_requirements.txt   # 安装依赖
 playwright install                     # 安装浏览器
 ```
 
@@ -259,32 +268,34 @@ actions/ (Action Registry 动作注册表)
 ```shell
 ├─config
 │  └─config.yaml          # 配置文件
-├─page
-│  └─home.py              # UI 层基础封装
 ├─recordings              # playwright codegen 录制脚本
 ├─test_case
-│  └─UI
-│    └─Test_Katana
-│       ├─actions/         # Action Registry (动作注册表)
-│       │  ├─__init__.py   # 注册表入口
-│       │  ├─base.py       # 基础动作 (smart_click, smart_fill, AI Fallback)
-│       │  └─...           # 各业务线动作模块
-│       ├─utils/           # [NEW v4.0] AI 自愈工具集
-│       │  ├─ai_vision.py  # Gemini Vision AI 服务 (SOM + 多 API Key 轮换)
-│       │  ├─rag_knowledge.py  # RAG 知识库 (FAISS + SentenceTransformers)
-│       │  └─Knowledge_Base.md # 领域知识库文档
-│       ├─conftest.py      # Pytest fixtures (多环境 + 认证)
-│       ├─test_ui.py       # 核心测试执行引擎 (含执行历史追踪)
-│       └─*.yaml           # 测试用例定义
-├─tools                    # 工具包
+│  └─UI                    # 框架根（在仓库根执行 pytest）
+│     ├─All_YAML/          # 测试用例定义（按功能分目录）
+│     ├─actions/           # Action Registry (动作注册表)
+│     │  ├─__init__.py     # 注册表入口
+│     │  ├─base.py         # 基础动作 (smart_click, smart_fill, AI Fallback)
+│     │  └─...             # 各业务线动作模块
+│     ├─page/              # UI 层封装 (home.py / my_shop_page.py 等)
+│     ├─utils/             # [NEW v4.0] AI 自愈工具集
+│     │  ├─ai_vision.py    # Gemini Vision AI 服务 (SOM + 多 API Key 轮换)
+│     │  ├─rag_knowledge.py   # RAG 知识库 (FAISS + SentenceTransformers)
+│     │  └─Knowledge_Base.md  # 领域知识库文档
+│     ├─conftest.py        # Pytest fixtures (多环境 + 认证，解析 --yaml)
+│     ├─test_ui.py         # 核心测试执行引擎 (含执行历史追踪)
+│     ├─runner.py          # 交互式启动器（需先 cd test_case/UI）
+│     └─main.py            # CI 主入口（pytest + Allure 报告）
+├─tools                   # 工具包（在仓库根执行）
 │  ├─diagnose_failed.py    # [v4.4] 失败用例诊断报告工具（9 种探查 + AI RAG 建议）
+│  ├─get_all_cookies.py    # 登录态 cookie 刷新
 │  ├─ui_snapshot.py        # DOM 快照 + diff 检测
 │  ├─locator_updater.py    # YAML 定位器批量更新
 │  ├─dom_kb.py             # [NEW v4.4] DOM 向量知识库（FAISS + RAG）
 │  └─...                   # 其他辅助工具
-├─requirements.txt         # 项目核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
+├─pytest.ini               # Pytest 配置（仓库根 = rootdir）
+├─venv_requirements.txt    # 项目核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
 ├─setup_env.sh / .bat      # 跨平台环境一键设置脚本
-└─main.py                  # 主启动文件
+└─.env.example             # 环境变量模板（复制为 .env）
 ```
 
 ---
@@ -295,7 +306,7 @@ actions/ (Action Registry 动作注册表)
 2. **调试利器**: 测试失败或编写新用例时，善用 `--headed` 模式进行可视化调试。
 3. **持续集成**: 提交代码前确保所有冒烟测试通过。
 4. **知识沉淀**: 遇到 AI 定位不准或特殊业务组件时，及时更新 `Knowledge_Base.md`，实现真正的“自愈进化”。
-5. **依赖更新**: 定期更新依赖并测试兼容性 (`pip install --upgrade -r requirements.txt`)。
+5. **依赖更新**: 定期更新依赖并测试兼容性 (`pip install --upgrade -r venv_requirements.txt`)。
 
 ---
 

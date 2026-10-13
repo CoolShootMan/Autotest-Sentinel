@@ -50,9 +50,12 @@ except ImportError:
     sys.exit(2)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DEFAULT_ROOTS = [os.path.join(PROJECT_ROOT, "test_case", "UI", "Test_Katana")]
+# Mirror of tools/paths.py:UI_ROOT. The UI line was flattened to test_case/UI
+# (no Test_Katana layer); a stray extra "UI" here made the linter scan a
+# non-existent directory and silently report "0 findings".
+DEFAULT_ROOTS = [os.path.join(PROJECT_ROOT, "test_case", "UI")]
 DEFAULT_EXCLUDES = [os.path.join("actions", "example")]
-ACTIONS_FILE = os.path.join(PROJECT_ROOT, "test_case", "UI", "Test_Katana",
+ACTIONS_FILE = os.path.join(PROJECT_ROOT, "test_case", "UI",
                             "actions", "__init__.py")
 
 RULE_HELP = OrderedDict([

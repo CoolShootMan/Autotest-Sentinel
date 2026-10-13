@@ -18,7 +18,7 @@ async def demo_self_healing():
         # Load cookies for authenticated state
         context = await browser.new_context(
             viewport={'width': 1280, 'height': 720},
-            storage_state="d:/new test/Autotest-monster/test_case/UI/Test_Katana/cookie_release.json"
+            storage_state="d:/new test/Autotest-monster/test_case/UI/cookie_release.json"
         )
         page = await context.new_page()
         

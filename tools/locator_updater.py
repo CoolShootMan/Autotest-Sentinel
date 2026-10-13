@@ -44,7 +44,7 @@ import yaml
 # ── 项目根路径 & 默认 YAML 搜索目录 ──────────────────────────────────────
 PROJECT_ROOT = Path(__file__).parent.parent
 YAML_SEARCH_DIRS = [
-    PROJECT_ROOT / "test_case" / "UI" / "Test_Katana",
+    PROJECT_ROOT / "test_case" / "UI" ,
 ]
 
 # ── ANSI 颜色 ─────────────────────────────────────────────────────────────

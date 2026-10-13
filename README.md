@@ -1,8 +1,19 @@
-# Auto Test Framework v4.4
+# Pear Automation Test
 
-> UI Automation Testing with AI Self-Healing using Python + Pytest + Playwright + Allure + Gemini Vision AI
+> End-to-end test automation for Pear / Ticket.com — UI + API + CI, powered by Python, Pytest, Playwright and Allure.
 
 English | [简体中文](./README.zh-CN.md)
+
+---
+
+## 📦 Modules
+
+| Module | Tech | Description |
+|--------|------|-------------|
+| **UI Automation** | Pytest + Playwright + YAML | Keyword-driven test cases defined in YAML. AI self-healing via Gemini Vision (optional). |
+| **API Automation** | Pytest + Requests | 20+ test suites covering login, purchase flow, post settings, resell, Shopify, admin tools, etc. |
+| **Data Prefill** | API scripts | `00_UI Prefill` suite seeds test posts, events, products and tickets before UI runs. |
+| **CI/CD** | GitHub Actions | Scheduled daily runs on `ubuntu-latest`, Allure reports on GitHub Pages, Slack notifications. |
 
 ---
 
@@ -30,6 +41,17 @@ English | [简体中文](./README.zh-CN.md)
 - **Browser:** Chromium (automatically installed by Playwright)
 - **Memory:** 8GB+ RAM recommended
 - **Disk Space:** At least 2GB free space
+
+---
+
+## ⚙️ CI / Daily Automation
+
+| Workflow | Schedule (Beijing) | What it does |
+|----------|-------------------|--------------|
+| `ui-automation-daily` | **20:00** every night | Full UI suite on `ubuntu-latest`, headless. Publishes Allure report to GitHub Pages, sends Slack summary. |
+| `api-automation-daily` | **08:00** every morning | API suites (linda + lury). Slack notification with pass/fail counts. |
+
+Both workflows support `workflow_dispatch` for manual triggering. Reports are published to GitHub Pages; Slack notifications go to `#api-ui-automation-result-daily-report`.
 
 ---
 
@@ -116,10 +138,17 @@ ENABLE_AI_VISION=1
 The recommended way to run tests is via the `runner.py` intelligent launcher:
 
 ```bash
+# runner.py lives in test_case/UI, NOT in the repo root - cd there first:
+cd test_case/UI
+
 # Interactive mode: terminal shows a hierarchical menu, navigate into directories,
 # select specific YAML files, or run all tests in a directory with one keypress!
 python runner.py
 ```
+
+> **📁 Note:** `runner.py` resolves its own directories from `__file__`, so the
+> working directory does not matter - `python "test_case/UI/runner.py"` works from the
+> repo root as well.
 
 ### 4. Record Test Scripts (Codegen)
 
@@ -127,6 +156,9 @@ This project provides `codegen.py` and `codegen.sh` to quickly launch the Playwr
 
 **Usage:**
 ```bash
+# codegen.py / codegen.sh live in test_case/UI (NOT in the repo root):
+cd test_case/UI
+
 # Using the Python script (recommended)
 ./codegen.py
 
@@ -152,29 +184,29 @@ After test execution completes, an Allure report is automatically generated and 
 
 In addition to the interactive `runner.py`, you can also pass arguments directly via the command line or use raw pytest commands.
 
-**Using `runner.py` shortcuts:**
+**Using `runner.py` shortcuts:** (run from `test_case/UI`)
 ```bash
 # Run a single test case (--headed -v by default)
-python runner.py testT4718
+python runner.py testT3554
 
 # Run multiple test cases (OR logic by default)
-python runner.py testT4718 testT4718_guest
+python runner.py testT3554 testT4660
 
 # Pass extra pytest arguments (e.g. headless mode, environment override)
-python runner.py testT4718 --headless --env release
+python runner.py testT3554 --headless --env release
 ```
 > **💡 Tip:** When executing an entire file or directory, `runner.py` automatically parses the YAML to extract each individual `testTxxxx` test case and runs them **one by one**. If one case fails, it does **not** interrupt the others.
 
-**Using raw `pytest` commands:**
+**Using raw `pytest` commands:** (run from the repo root; `--yaml` is resolved relative to `test_case/UI`)
 ```bash
 # Test a specific case
-pytest test_case/UI/Test_Katana/test_ui.py -k testT3554 --yaml All_YAML/Module/Module.yaml --headed -v --env release
+pytest test_case/UI/test_ui.py -k testT3554 --yaml All_YAML/Section/Section.yaml --headed -v --env release
 
 # Test multiple cases
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Module/Module.yaml --headed -v
+pytest test_case/UI/test_ui.py -k "testT3554 or testT4660" --yaml All_YAML/Section/Section.yaml --headed -v
 
 # Generate Allure report
-pytest --alluredir=allure-results test_case/UI/Test_Katana/test_ui.py
+pytest --alluredir=allure-results test_case/UI/test_ui.py
 allure serve allure-results
 ```
 
@@ -207,7 +239,7 @@ rmdir /s venv && setup_env.bat         # Windows
 
 # 3. Manual dependency & browser installation (if not using the setup script)
 python3 -m venv venv                   # Create virtual environment
-pip install -r requirements.txt        # Install dependencies
+pip install -r venv_requirements.txt   # Install dependencies
 playwright install                      # Install browsers
 ```
 
@@ -260,32 +292,27 @@ actions/ (Action Registry)
 ```shell
 ├─config
 │  └─config.yaml          # Configuration file
-├─page
-│  └─home.py              # UI layer base encapsulation
 ├─recordings              # Playwright codegen recorded scripts
 ├─test_case
-│  └─UI
-│    └─Test_Katana
-│       ├─actions/         # Action Registry
-│       │  ├─__init__.py   # Registry entry point
-│       │  ├─base.py       # Base actions (smart_click, smart_fill, AI Fallback)
-│       │  └─...           # Domain-specific action modules
-│       ├─utils/           # [NEW v4.0] AI Self-Healing Toolkit
-│       │  ├─ai_vision.py  # Gemini Vision AI Service (SOM + Multi API Key Rotation)
-│       │  ├─rag_knowledge.py  # RAG Knowledge Base (FAISS + SentenceTransformers)
-│       │  └─Knowledge_Base.md # Domain Knowledge Document
-│       ├─conftest.py      # Pytest fixtures (multi-env + auth)
-│       ├─test_ui.py       # Core test execution engine (with execution history)
-│       └─*.yaml           # Test case definitions
-├─tools                    # Utilities
-│  ├─diagnose_failed.py    # [v4.4] Failed test case diagnosis (9 probes + AI RAG suggestions)
-│  ├─ui_snapshot.py        # DOM snapshot + diff detection
-│  ├─locator_updater.py    # YAML locator batch update tool
-│  ├─dom_kb.py             # [NEW v4.4] DOM vector knowledge base (FAISS + RAG)
-│  └─...                   # Other utility scripts
-├─requirements.txt         # Project core dependencies (pytest, playwright, allure, FAISS, Gemini, etc.)
-├─setup_env.sh / .bat      # Cross-platform one-click environment setup script
-└─main.py                  # Main entry point
+│  ├─UI/                  # UI automation (Playwright)
+│  │  ├─All_YAML/         # YAML test cases by feature (Post, Events, Admin tools, etc.)
+│  │  ├─actions/          # Action Registry (click, fill, verify, execute_js, etc.)
+│  │  ├─ui_workflow/      # Reusable Python workflows (reset ticket, etc.)
+│  │  ├─conftest.py       # Pytest fixtures (multi-env + auth, scanner y4m)
+│  │  ├─test_ui.py        # YAML test runner
+│  │  ├─runner.py         # Interactive launcher
+│  │  └─main.py           # CI entry point
+│  └─API auto script/     # API automation (pytest + requests)
+│     ├─api/              # Reusable API clients (login, orders, posts...)
+│     ├─tests/            # Test suites by domain (00_Prefill, 01_Login, 03_Purchase, 07_Post...)
+│     ├─core/             # API framework core
+│     └─suites/           # Suite configurations
+├─tools                   # Utilities (cookie fetch, CI summary, diagnosis, etc.)
+├─.github/workflows/      # CI pipelines (ui-automation-daily, api-automation-daily)
+├─pytest.ini              # Pytest configuration
+├─venv_requirements.txt   # Project dependencies
+├─setup_env.sh / .bat     # Cross-platform one-click environment setup
+└─.env.example            # Environment variable template
 ```
 
 ---
@@ -296,7 +323,7 @@ actions/ (Action Registry)
 2. **Debugging**: Use `--headed` mode for visual debugging when tests fail or when writing new cases.
 3. **CI/CD**: Ensure all smoke tests pass before committing code.
 4. **Knowledge Accumulation**: When AI locators misbehave or you encounter special business components, update `Knowledge_Base.md` promptly for true "self-healing evolution."
-5. **Dependency Updates**: Regularly update dependencies and test compatibility (`pip install --upgrade -r requirements.txt`).
+5. **Dependency Updates**: Regularly update dependencies and test compatibility (`pip install --upgrade -r venv_requirements.txt`).
 
 ---
 

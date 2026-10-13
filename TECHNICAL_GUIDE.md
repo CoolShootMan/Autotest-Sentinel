@@ -28,35 +28,35 @@
 
 ```
 autotest-monster/
-├── test_case/UI/Test_Katana/
-│   ├── actions/                # Action Registry (动作注册表)
-│   │   ├── __init__.py         # 注册表入口 + get_action()
-│   │   ├── base.py             # 基础动作 (smart_click, smart_fill)
-│   │   ├── module.py           # 模块相关动作
-│   │   ├── product.py          # 产品相关动作
-│   │   ├── form.py             # 表单相关动作
-│   │   └── layout.py           # 布局验证动作
-│   ├── utils/                  # [v4.0] AI 自愈工具集
-│   │   ├── ai_vision.py        # Gemini Vision AI 服务
-│   │   ├── rag_knowledge.py    # RAG 知识库引擎
-│   │   └── Knowledge_Base.md   # 领域知识库文档
-├── conftest.py                         # 【根级】全局配置：YAML 加载、storage-state、
-│                                       #          browser_context_args、guest 模式 cookie 隔离
-│   └── test_case/UI/Test_Katana/
-│       ├── conftest.py                 # 【包级】Test_Katana 专属配置：video/screenshot
-│       │                              #          自动附加到 Allure、摄像头伪装参数、
-│       │                              #          is_guest cookie 拦截（以包级为准覆盖根级）
-│   ├── test_ui.py              # 核心测试执行引擎
-│   └── Katana_curator_smoke_release.yaml  # 测试用例定义
-├── page/
-│   └── home.py                 # Playwright UI 操作封装
-├── tools/
-│   ├── __init__.py             # Allure 集成
-│   ├── diagnose_failed.py      # [v4.3] 失败用例诊断报告工具
-│   ├── ui_snapshot.py          # DOM 快照 + diff 检测
-│   ├── locator_updater.py      # YAML 定位器批量更新
-│   └── get_cookie.py           # Cookie 获取
-└── main.py                     # 主启动入口
+├── test_case/UI/                       # 框架根：pytest 在仓库根执行
+│   ├── All_YAML/                       # 测试用例定义（按功能分目录）
+│   ├── actions/                        # Action Registry (动作注册表)
+│   │   ├── __init__.py                 # 注册表入口 + get_action()
+│   │   ├── base.py                     # 基础动作 (smart_click, smart_fill)
+│   │   ├── module.py                   # 模块相关动作
+│   │   ├── product.py                  # 产品相关动作
+│   │   ├── form.py                     # 表单相关动作
+│   │   └── layout.py                   # 布局验证动作
+│   ├── page/                           # Playwright UI 操作封装 (home.py 等)
+│   ├── utils/                          # [v4.0] AI 自愈工具集
+│   │   ├── ai_vision.py                # Gemini Vision AI 服务
+│   │   ├── rag_knowledge.py            # RAG 知识库引擎
+│   │   └── Knowledge_Base.md           # 领域知识库文档
+│   ├── conftest.py                     # 【包级】UI 专属配置：YAML 加载（解析 --yaml）、
+│   │                                   #          storage-state、browser_context_args、
+│   │                                   #          guest 模式 cookie 隔离、
+│   │                                   #          video/screenshot 自动附加 Allure
+│   ├── test_ui.py                      # 核心测试执行引擎
+│   ├── runner.py                       # 交互式启动器（需先 cd test_case/UI）
+│   └── main.py                         # CI 主入口（pytest + Allure 报告）
+├── tools/                              # 辅助工具（在仓库根执行）
+│   ├── __init__.py                     # Allure 集成
+│   ├── diagnose_failed.py              # [v4.3] 失败用例诊断报告工具
+│   ├── ui_snapshot.py                  # DOM 快照 + diff 检测
+│   ├── locator_updater.py              # YAML 定位器批量更新
+│   └── get_all_cookies.py              # 登录态 cookie 刷新
+├── pytest.ini                          # Pytest 配置（仓库根 = rootdir）
+└── venv_requirements.txt               # 项目核心依赖
 ```
 
 ### 1.2 数据流
@@ -86,7 +86,8 @@ Allure 报告 + 截图/录屏
 ### 2.1 完整流程
 
 ```bash
-python main.py
+# 在仓库根执行
+python test_case/UI/main.py
 ```
 
 **执行步骤:**
@@ -101,8 +102,8 @@ python main.py
 ### 2.2 单个测试用例执行
 
 ```bash
-# 运行特定用例
-pytest test_case\UI\Test_Katana\test_ui.py -k "test_guest_submission_2" --storage-state "test_case\UI\Test_Katana\cookie_release_demi.json" --env release --yaml Partner_create_form.yaml --headed -v 
+# 运行特定用例（在仓库根执行；--yaml 相对 test_case/UI 解析）
+pytest test_case/UI/test_ui.py -k "testT3554" --storage-state "test_case/UI/cookie_release.json" --env release --yaml All_YAML/Section/Section.yaml --headed -v
 ```
 
 ### 2.3 多环境支持
@@ -257,7 +258,7 @@ assertions:
 ## 6. RAG 知识库维护
 
 ### 6.1 文件位置
-`test_case/UI/Test_Katana/utils/Knowledge_Base.md`
+`test_case/UI/utils/Knowledge_Base.md`
 
 ### 6.2 内容结构
 使用 `##` 二级标题分块，每个块是一个独立的知识条目：
@@ -304,7 +305,7 @@ AI 每次自愈都会在日志中输出：
 ### 7.2 Headed 模式运行
 
 ```bash
-pytest test_case/UI/Test_Katana/test_ui.py -k "testT4777" --headed -v
+pytest test_case/UI/test_ui.py -k "testT4777" --headed -v
 ```
 
 ### 7.3 查看执行历史
@@ -868,12 +869,15 @@ class RAGKnowledgeBase:
 ### 15.3 使用方式
 
 ```bash
+# runner.py 在 test_case/UI 下（不在仓库根），先切目录
+cd test_case/UI
+
 # 日常调试（默认，快速启动）
-python runner.py testT4718
+python runner.py testT3554
 
 # 需要 AI 自愈时
-ENABLE_AI_VISION=1 python runner.py testT4718     # macOS/Linux
-set ENABLE_AI_VISION=1 && python runner.py testT4718  # Windows CMD
+ENABLE_AI_VISION=1 python runner.py testT3554     # macOS/Linux
+set ENABLE_AI_VISION=1 && python runner.py testT3554  # Windows CMD
 ```
 
 或在 `.env` 文件中永久设置：
@@ -884,8 +888,8 @@ ENABLE_AI_VISION=1
 ### 15.4 影响范围
 
 **所有** python/pytest 命令：
-- `python main.py`
-- `python runner.py`
+- `python test_case/UI/main.py`
+- `python runner.py`（在 `test_case/UI` 目录下执行）
 - `pytest ...`
 - `python tools/diagnose_failed.py`
 
@@ -922,7 +926,7 @@ ENABLE_AI_VISION=1
 
 ```
 1. 运行测试 → 发现失败
-   python main.py
+   python test_case/UI/main.py
 
 2. 生成诊断报告 → 定位失败原因
    python tools/diagnose_failed.py
@@ -935,7 +939,7 @@ ENABLE_AI_VISION=1
    python tools/locator_updater.py update --role button --name "旧文案" --new-name "新文案"
 
 5. 重新运行验证
-   python main.py
+   python test_case/UI/main.py
 ```
 
 **预防性 DOM 监控**:

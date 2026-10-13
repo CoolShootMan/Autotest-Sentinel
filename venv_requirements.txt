@@ -54,3 +54,7 @@ urllib3==2.6.3
 win32_setctime==1.2.0
 pandas==3.0.2
 openpyxl==3.1.5
+
+qrcode
+opencv-python
+numpy

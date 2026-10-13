@@ -1,6 +1,5 @@
-#!usr/bin/env python3
-# -*- coding: cp1252 -*-
-# -*- encoding: utf-8 -*-
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 '''
 Filename         :__init__.py
 Description      :
@@ -16,7 +15,7 @@ import json
 import allure
 
 from jsonpath import jsonpath
-from loguru import logger
+from loguru import logger as logger  # 显式再导出，供 from tools import logger 使用（basedpyright 要求）
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent

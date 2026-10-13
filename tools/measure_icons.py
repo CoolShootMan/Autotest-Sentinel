@@ -4,7 +4,7 @@ def measure():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(
-            storage_state='test_case/UI/Test_Katana/cookie_prod.json',
+            storage_state='test_case/UI/cookie_prod.json',
             viewport={'width': 430, 'height': 932},
             device_scale_factor=3,
             is_mobile=True,

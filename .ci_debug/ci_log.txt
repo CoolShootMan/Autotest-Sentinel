@@ -1,0 +1,1015 @@
+﻿2026-09-21T06:03:16.3939385Z Current runner version: '2.337.0'
+2026-09-21T06:03:16.3961077Z ##[group]Runner Image Provisioner
+2026-09-21T06:03:16.3961892Z Hosted Compute Agent
+2026-09-21T06:03:16.3962362Z Version: 20260828.587
+2026-09-21T06:03:16.3962769Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-21T06:03:16.3963251Z Build Date: 2026-08-28T16:44:25Z
+2026-09-21T06:03:16.3963735Z Worker ID: {18d3c8cd-fb3c-48a9-81ed-6c90e5700b26}
+2026-09-21T06:03:16.3964180Z Azure Region: centralus
+2026-09-21T06:03:16.3964601Z ##[endgroup]
+2026-09-21T06:03:16.3965645Z ##[group]Operating System
+2026-09-21T06:03:16.3966045Z Ubuntu
+2026-09-21T06:03:16.3966427Z 24.04.5
+2026-09-21T06:03:16.3966790Z LTS
+2026-09-21T06:03:16.3967137Z ##[endgroup]
+2026-09-21T06:03:16.3967495Z ##[group]Runner Image
+2026-09-21T06:03:16.3967886Z Image: ubuntu-24.04
+2026-09-21T06:03:16.3968577Z Version: 20260907.300.1
+2026-09-21T06:03:16.3969417Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-21T06:03:16.3970358Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+2026-09-21T06:03:16.3970922Z ##[endgroup]
+2026-09-21T06:03:16.3971700Z ##[group]GITHUB_TOKEN Permissions
+2026-09-21T06:03:16.3973716Z Contents: read
+2026-09-21T06:03:16.3974148Z Metadata: read
+2026-09-21T06:03:16.3974508Z ##[endgroup]
+2026-09-21T06:03:16.3976240Z Secret source: Actions
+2026-09-21T06:03:16.3976839Z Cache mode: write
+2026-09-21T06:03:16.3977608Z Prepare workflow directory
+2026-09-21T06:03:16.4363797Z Prepare all required actions
+2026-09-21T06:03:16.4403602Z Getting action download info
+2026-09-21T06:03:16.7137067Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-21T06:03:16.8137972Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-09-21T06:03:16.9697026Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-09-21T06:03:17.2608585Z Complete job name: API Automation (Release env)
+2026-09-21T06:03:17.3069264Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-21T06:03:17.3074690Z ##[group]Run actions/checkout@v4
+2026-09-21T06:03:17.3075041Z with:
+2026-09-21T06:03:17.3075294Z   repository: bosinc/Pear-automation-test
+2026-09-21T06:03:17.3077387Z   token: ***
+2026-09-21T06:03:17.3077624Z   ssh-strict: true
+2026-09-21T06:03:17.3077866Z   ssh-user: git
+2026-09-21T06:03:17.3078115Z   persist-credentials: true
+2026-09-21T06:03:17.3078386Z   clean: true
+2026-09-21T06:03:17.3078633Z   sparse-checkout-cone-mode: true
+2026-09-21T06:03:17.3078918Z   fetch-depth: 1
+2026-09-21T06:03:17.3079153Z   fetch-tags: false
+2026-09-21T06:03:17.3079398Z   show-progress: true
+2026-09-21T06:03:17.3079667Z   lfs: false
+2026-09-21T06:03:17.3079916Z   submodules: false
+2026-09-21T06:03:17.3080164Z   set-safe-directory: true
+2026-09-21T06:03:17.3080449Z   allow-unsafe-pr-checkout: false
+2026-09-21T06:03:17.3080793Z env:
+2026-09-21T06:03:17.3081020Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:03:17.3081550Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:03:17.3081910Z   API_ENV: Release
+2026-09-21T06:03:17.3082148Z ##[endgroup]
+2026-09-21T06:03:17.3930248Z Syncing repository: bosinc/Pear-automation-test
+2026-09-21T06:03:17.3932901Z ##[group]Getting Git version info
+2026-09-21T06:03:17.3933881Z Working directory is '/home/runner/work/Pear-automation-test/Pear-automation-test'
+2026-09-21T06:03:17.3936582Z [command]/usr/bin/git version
+2026-09-21T06:03:17.3937233Z git version 2.55.0
+2026-09-21T06:03:17.3950969Z ##[endgroup]
+2026-09-21T06:03:17.3964862Z Temporarily overriding HOME='/home/runner/work/_temp/6a1fcd0e-cd36-4857-9fb4-750842b12336' before making global git config changes
+2026-09-21T06:03:17.3972307Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-21T06:03:17.3973671Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Pear-automation-test/Pear-automation-test
+2026-09-21T06:03:17.4025069Z Deleting the contents of '/home/runner/work/Pear-automation-test/Pear-automation-test'
+2026-09-21T06:03:17.4028529Z ##[group]Initializing the repository
+2026-09-21T06:03:17.4032488Z [command]/usr/bin/git init /home/runner/work/Pear-automation-test/Pear-automation-test
+2026-09-21T06:03:17.4129166Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-21T06:03:17.4130362Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-21T06:03:17.4131265Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-21T06:03:17.4132549Z hint: call:
+2026-09-21T06:03:17.4133135Z hint:
+2026-09-21T06:03:17.4133845Z hint: 	git config --global init.defaultBranch <name>
+2026-09-21T06:03:17.4134540Z hint:
+2026-09-21T06:03:17.4135140Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-21T06:03:17.4135998Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-21T06:03:17.4136684Z hint:
+2026-09-21T06:03:17.4137112Z hint: 	git branch -m <name>
+2026-09-21T06:03:17.4137590Z hint:
+2026-09-21T06:03:17.4138201Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-21T06:03:17.4139415Z Initialized empty Git repository in /home/runner/work/Pear-automation-test/Pear-automation-test/.git/
+2026-09-21T06:03:17.4142395Z [command]/usr/bin/git remote add origin https://github.com/bosinc/Pear-automation-test
+2026-09-21T06:03:17.4185718Z ##[endgroup]
+2026-09-21T06:03:17.4187219Z ##[group]Disabling automatic garbage collection
+2026-09-21T06:03:17.4715151Z [command]/usr/bin/git config --local gc.auto 0
+2026-09-21T06:03:17.4717491Z ##[endgroup]
+2026-09-21T06:03:17.4718181Z ##[group]Setting up auth
+2026-09-21T06:03:17.4719236Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-21T06:03:17.4721475Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-21T06:03:17.4728540Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-21T06:03:17.4765437Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-21T06:03:17.4974383Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-21T06:03:17.5010353Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-21T06:03:17.5211214Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-21T06:03:17.5242791Z ##[endgroup]
+2026-09-21T06:03:17.5243726Z ##[group]Fetching the repository
+2026-09-21T06:03:17.5251009Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +cc0cc761f4fd1fb47fe18db141c111fff6e09faa:refs/remotes/origin/main
+2026-09-21T06:03:19.1818820Z From https://github.com/bosinc/Pear-automation-test
+2026-09-21T06:03:19.1834208Z  * [new ref]         cc0cc761f4fd1fb47fe18db141c111fff6e09faa -> origin/main
+2026-09-21T06:03:19.1837727Z ##[endgroup]
+2026-09-21T06:03:19.1838522Z ##[group]Determining the checkout info
+2026-09-21T06:03:19.1839396Z ##[endgroup]
+2026-09-21T06:03:19.1839989Z [command]/usr/bin/git sparse-checkout disable
+2026-09-21T06:03:19.1903737Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-21T06:03:19.1965428Z ##[group]Checking out the ref
+2026-09-21T06:03:19.1966573Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-09-21T06:03:19.3839286Z Switched to a new branch 'main'
+2026-09-21T06:03:19.3841443Z branch 'main' set up to track 'origin/main'.
+2026-09-21T06:03:19.3854204Z ##[endgroup]
+2026-09-21T06:03:19.3895013Z [command]/usr/bin/git log -1 --format=%H
+2026-09-21T06:03:19.3915838Z cc0cc761f4fd1fb47fe18db141c111fff6e09faa
+2026-09-21T06:03:19.4250139Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-21T06:03:19.4253534Z ##[group]Run actions/setup-python@v5
+2026-09-21T06:03:19.4254301Z with:
+2026-09-21T06:03:19.4254932Z   python-version: 3.11
+2026-09-21T06:03:19.4255618Z   check-latest: false
+2026-09-21T06:03:19.4260816Z   token: ***
+2026-09-21T06:03:19.4261474Z   update-environment: true
+2026-09-21T06:03:19.4262420Z   allow-prereleases: false
+2026-09-21T06:03:19.4263150Z   freethreaded: false
+2026-09-21T06:03:19.4263790Z env:
+2026-09-21T06:03:19.4264384Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:03:19.4265598Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:03:19.4266261Z   API_ENV: Release
+2026-09-21T06:03:19.4266846Z ##[endgroup]
+2026-09-21T06:03:19.5148984Z ##[group]Installed versions
+2026-09-21T06:03:19.5214716Z (node:1926) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-21T06:03:19.5230794Z Successfully set up CPython (3.11.16)
+2026-09-21T06:03:19.5232272Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-21T06:03:19.5244621Z ##[endgroup]
+2026-09-21T06:03:19.5360404Z ##[group]Run python -m pip install --upgrade pip
+2026-09-21T06:03:19.5361324Z [36;1mpython -m pip install --upgrade pip[0m
+2026-09-21T06:03:19.5362208Z [36;1mpip install -r requirements.txt[0m
+2026-09-21T06:03:19.5362916Z [36;1mpip install pyyaml[0m
+2026-09-21T06:03:19.5403098Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:03:19.5403716Z env:
+2026-09-21T06:03:19.5404223Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:03:19.5405375Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:03:19.5405942Z   API_ENV: Release
+2026-09-21T06:03:19.5406590Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:19.5407522Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:03:19.5408457Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:19.5409316Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:19.5410211Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:19.5411139Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:03:19.5412009Z ##[endgroup]
+2026-09-21T06:03:20.0620139Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages (26.2.1)
+2026-09-21T06:03:20.6193536Z Collecting pytest (from -r requirements.txt (line 1))
+2026-09-21T06:03:20.6944886Z   Downloading pytest-9.1.1-py3-none-any.whl.metadata (7.6 kB)
+2026-09-21T06:03:20.7240289Z Collecting requests (from -r requirements.txt (line 2))
+2026-09-21T06:03:20.7379093Z   Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+2026-09-21T06:03:20.9784538Z Collecting sqlalchemy (from -r requirements.txt (line 3))
+2026-09-21T06:03:20.9931248Z   Downloading sqlalchemy-2.0.54-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (9.7 kB)
+2026-09-21T06:03:21.0546638Z Collecting psycopg2-binary (from -r requirements.txt (line 4))
+2026-09-21T06:03:21.0684362Z   Downloading psycopg2_binary-2.9.13-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+2026-09-21T06:03:21.0923367Z Collecting pymysql (from -r requirements.txt (line 5))
+2026-09-21T06:03:21.1064425Z   Downloading pymysql-1.2.3-py3-none-any.whl.metadata (4.2 kB)
+2026-09-21T06:03:21.1286496Z Collecting python-dotenv (from -r requirements.txt (line 6))
+2026-09-21T06:03:21.1420917Z   Downloading python_dotenv-1.2.3-py3-none-any.whl.metadata (29 kB)
+2026-09-21T06:03:21.1674153Z Collecting iniconfig>=1.0.1 (from pytest->-r requirements.txt (line 1))
+2026-09-21T06:03:21.1809298Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-09-21T06:03:21.2033591Z Collecting packaging>=22 (from pytest->-r requirements.txt (line 1))
+2026-09-21T06:03:21.2171030Z   Downloading packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+2026-09-21T06:03:21.2383910Z Collecting pluggy<2,>=1.5 (from pytest->-r requirements.txt (line 1))
+2026-09-21T06:03:21.2518916Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-09-21T06:03:21.2760381Z Collecting pygments>=2.7.2 (from pytest->-r requirements.txt (line 1))
+2026-09-21T06:03:21.2893468Z   Downloading pygments-2.21.0-py3-none-any.whl.metadata (2.5 kB)
+2026-09-21T06:03:21.4189124Z Collecting charset_normalizer<4,>=2 (from requests->-r requirements.txt (line 2))
+2026-09-21T06:03:21.4327984Z   Downloading charset_normalizer-3.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (45 kB)
+2026-09-21T06:03:21.4580769Z Collecting idna<4,>=2.5 (from requests->-r requirements.txt (line 2))
+2026-09-21T06:03:21.4718300Z   Downloading idna-3.20-py3-none-any.whl.metadata (7.2 kB)
+2026-09-21T06:03:21.4985156Z Collecting urllib3<3,>=1.26 (from requests->-r requirements.txt (line 2))
+2026-09-21T06:03:21.5123549Z   Downloading urllib3-2.8.0-py3-none-any.whl.metadata (7.4 kB)
+2026-09-21T06:03:21.5365714Z Collecting certifi>=2023.5.7 (from requests->-r requirements.txt (line 2))
+2026-09-21T06:03:21.5518580Z   Downloading certifi-2026.7.22-py3-none-any.whl.metadata (2.5 kB)
+2026-09-21T06:03:21.6688155Z Collecting greenlet>=1 (from sqlalchemy->-r requirements.txt (line 3))
+2026-09-21T06:03:21.6828320Z   Downloading greenlet-3.5.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (3.8 kB)
+2026-09-21T06:03:21.7094119Z Collecting typing-extensions>=4.6.0 (from sqlalchemy->-r requirements.txt (line 3))
+2026-09-21T06:03:21.7232615Z   Downloading typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)
+2026-09-21T06:03:21.7412849Z Downloading pytest-9.1.1-py3-none-any.whl (386 kB)
+2026-09-21T06:03:21.7940687Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-09-21T06:03:21.8098707Z Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+2026-09-21T06:03:21.8258922Z Downloading charset_normalizer-3.5.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (262 kB)
+2026-09-21T06:03:21.8450791Z Downloading idna-3.20-py3-none-any.whl (69 kB)
+2026-09-21T06:03:21.8612112Z Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+2026-09-21T06:03:21.8773977Z Downloading sqlalchemy-2.0.54-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (3.4 MB)
+2026-09-21T06:03:21.9544292Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 43.0 MB/s  0:00:00
+2026-09-21T06:03:21.9688915Z Downloading psycopg2_binary-2.9.13-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.3 MB)
+2026-09-21T06:03:22.0340573Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.3/4.3 MB 63.5 MB/s  0:00:00
+2026-09-21T06:03:22.0474282Z Downloading pymysql-1.2.3-py3-none-any.whl (46 kB)
+2026-09-21T06:03:22.0625709Z Downloading python_dotenv-1.2.3-py3-none-any.whl (22 kB)
+2026-09-21T06:03:22.0807436Z Downloading certifi-2026.7.22-py3-none-any.whl (136 kB)
+2026-09-21T06:03:22.0963827Z Downloading greenlet-3.5.6-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (624 kB)
+2026-09-21T06:03:22.1009830Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 624.4/624.4 kB 134.1 MB/s  0:00:00
+2026-09-21T06:03:22.1145563Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-09-21T06:03:22.1297275Z Downloading packaging-26.3-py3-none-any.whl (129 kB)
+2026-09-21T06:03:22.1452979Z Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+2026-09-21T06:03:22.1527850Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 182.3 MB/s  0:00:00
+2026-09-21T06:03:22.1673182Z Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+2026-09-21T06:03:22.2267746Z Installing collected packages: urllib3, typing-extensions, python-dotenv, pymysql, pygments, psycopg2-binary, pluggy, packaging, iniconfig, idna, greenlet, charset_normalizer, certifi, sqlalchemy, requests, pytest
+2026-09-21T06:03:23.8009322Z 
+2026-09-21T06:03:23.8023778Z Successfully installed certifi-2026.7.22 charset_normalizer-3.5.1 greenlet-3.5.6 idna-3.20 iniconfig-2.3.0 packaging-26.3 pluggy-1.6.0 psycopg2-binary-2.9.13 pygments-2.21.0 pymysql-1.2.3 pytest-9.1.1 python-dotenv-1.2.3 requests-2.34.2 sqlalchemy-2.0.54 typing-extensions-4.16.0 urllib3-2.8.0
+2026-09-21T06:03:24.1662605Z Collecting pyyaml
+2026-09-21T06:03:24.2286081Z   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-09-21T06:03:24.2452413Z Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2026-09-21T06:03:24.3216574Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 13.7 MB/s  0:00:00
+2026-09-21T06:03:24.3395522Z Installing collected packages: pyyaml
+2026-09-21T06:03:24.4017978Z Successfully installed pyyaml-6.0.3
+2026-09-21T06:03:24.4484306Z ##[group]Run python -V
+2026-09-21T06:03:24.4484478Z [36;1mpython -V[0m
+2026-09-21T06:03:24.4484603Z [36;1mpython -m pytest --version[0m
+2026-09-21T06:03:24.4514906Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:03:24.4515046Z env:
+2026-09-21T06:03:24.4515161Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:03:24.4515579Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:03:24.4515704Z   API_ENV: Release
+2026-09-21T06:03:24.4515852Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.4516083Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:03:24.4516303Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.4516508Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.4516723Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.4516923Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:03:24.4517096Z ##[endgroup]
+2026-09-21T06:03:24.4578897Z Python 3.11.16
+2026-09-21T06:03:24.5343399Z pytest 9.1.1
+2026-09-21T06:03:24.5519584Z ##[group]Run cd "test_case/API auto script"
+2026-09-21T06:03:24.5519792Z [36;1mcd "test_case/API auto script"[0m
+2026-09-21T06:03:24.5519958Z [36;1mset -o pipefail[0m
+2026-09-21T06:03:24.5520139Z [36;1mpython run_suite.py suites/linda.yaml 2>&1 | tee linda.log[0m
+2026-09-21T06:03:24.5551082Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:03:24.5551225Z env:
+2026-09-21T06:03:24.5551336Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:03:24.5551698Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:03:24.5551949Z   API_ENV: Release
+2026-09-21T06:03:24.5552104Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.5552331Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:03:24.5552561Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.5552767Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.5552977Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:03:24.5553205Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:03:24.5553375Z   CI: true
+2026-09-21T06:03:24.5553481Z ##[endgroup]
+2026-09-21T06:03:25.2152601Z ============================= test session starts ==============================
+2026-09-21T06:03:25.2153879Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-21T06:03:25.2154663Z cachedir: .pytest_cache
+2026-09-21T06:03:25.2155215Z rootdir: /home/runner/work/Pear-automation-test/Pear-automation-test/test_case/API auto script
+2026-09-21T06:03:25.2155778Z configfile: pytest.ini
+2026-09-21T06:03:25.7824950Z collecting ... [select] selected 81/147 case(s)
+2026-09-21T06:03:25.7826218Z collected 147 items
+2026-09-21T06:03:25.7826533Z 
+2026-09-21T06:03:28.5556980Z tests/01_Login flow/test_linda_t0000_precondition_obtain_all_accounts_token.py::test_linda_t0000_precondition_obtain_all_accounts_token PASSED [  1%]
+2026-09-21T06:03:29.1043596Z tests/02_Customer Campaign/test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page.py::test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page PASSED [  2%]
+2026-09-21T06:03:29.2669912Z tests/02_Customer Campaign/test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list.py::test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list PASSED [  3%]
+2026-09-21T06:03:29.5686024Z tests/02_Customer Campaign/test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list.py::test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list PASSED [  4%]
+2026-09-21T06:03:30.2917456Z tests/02_Customer Campaign/test_linda_t4675_verify_partner_can_duplicate_campaign_from_campaign_list.py::test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campaign_list PASSED [  6%]
+2026-09-21T06:03:30.5651310Z tests/02_Customer Campaign/test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page.py::test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page PASSED [  7%]
+2026-09-21T06:03:31.6928050Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_details_sales_details_email.py::test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_details_sales_details_email PASSED [  8%]
+2026-09-21T06:03:32.7163898Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_the_order_details_and_sales_details.py::test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_the_order_details_and_sales_details PASSED [  9%]
+2026-09-21T06:03:33.7652112Z tests/04_Guest Purchase flow/test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_correct.py::test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_correct PASSED [ 11%]
+2026-09-21T06:03:34.6938451Z tests/04_Guest Purchase flow/test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear.py::test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear FAILED [ 12%]
+2026-09-21T06:03:37.1359394Z tests/04_Guest Purchase flow/test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card_from_admin.py::test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card_from_admin PASSED [ 13%]
+2026-09-21T06:03:53.7074867Z tests/05_Subdomain/test_linda_t3024_verify_multiple_subdomain_point_to_the_same_shop_go_visit_success.py::test_linda_t3024_verify_multiple_subdomain_point_to_the_same_shop_go_visit_success PASSED [ 14%]
+2026-09-21T06:03:55.7008604Z tests/05_Subdomain/test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_switch_between_them_at_will.py::test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_switch_between_them_at_will PASSED [ 16%]
+2026-09-21T06:03:56.0277333Z tests/06_Analytics/test_linda_t3078_verify_the_analytics_page_on_admin_tool.py::test_linda_t3078_verify_the_analytics_page_on_admin_tool PASSED [ 17%]
+2026-09-21T06:03:56.3863152Z tests/06_Analytics/test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear.py::test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear PASSED [ 18%]
+2026-09-21T06:03:57.2013381Z tests/07_Post validation/test_linda_t1058_verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout_page.py::test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout_page PASSED [ 19%]
+2026-09-21T06:03:58.2766848Z tests/07_Post validation/test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_to_a_fix_value.py::test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_to_a_fix_value PASSED [ 20%]
+2026-09-21T06:04:00.3886405Z tests/07_Post validation/test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products_to_the_post.py::test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products_to_the_post PASSED [ 22%]
+2026-09-21T06:04:01.4502438Z tests/07_Post validation/test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_limit.py::test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_limit PASSED [ 23%]
+2026-09-21T06:04:02.0562475Z tests/07_Post validation/test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_correct.py::test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_correct PASSED [ 24%]
+2026-09-21T06:04:02.6273722Z tests/07_Post validation/test_linda_t2731_verify_the_total_saving_contains_the_shipping_discount_that_provided_by_post_owner.py::test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_discount_that_provided_by_post_owner PASSED [ 25%]
+2026-09-21T06:04:03.5730072Z tests/07_Post validation/test_linda_t2747_verify_that_the_creator_can_edit_the_media_of_a_published_post.py::test_linda_t2747_verify_that_the_creator_can_edit_the_media_of_a_published_post PASSED [ 27%]
+2026-09-21T06:04:04.2594192Z tests/07_Post validation/test_linda_t2810_verify_curator_can_set_compared_at_price_for_my_item_when_creating_post.py::test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_item_when_creating_post PASSED [ 28%]
+2026-09-21T06:04:04.9493917Z tests/07_Post validation/test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_tool.py::test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_tool PASSED [ 29%]
+2026-09-21T06:04:07.6957128Z tests/07_Post validation/test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work.py::test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work PASSED [ 30%]
+2026-09-21T06:04:08.3062749Z tests/07_Post validation/test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_products_response_logic_correct.py::test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_products_response_logic_correct PASSED [ 32%]
+2026-09-21T06:04:09.0343410Z tests/07_Post validation/test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_post_not_the_catalog_price.py::test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_post_not_the_catalog_price PASSED [ 33%]
+2026-09-21T06:04:10.1088704Z tests/07_Post validation/test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalog_when_customize_prices_in_this_post_is.py::test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalog_when_customize_prices_in_this_post_is PASSED [ 34%]
+2026-09-21T06:04:11.8721035Z tests/07_Post validation/test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl.py::test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl FAILED [ 35%]
+2026-09-21T06:04:12.5677892Z tests/07_Post validation/test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_using_coupon_with_cou.py::test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_using_coupon_with_cou PASSED [ 37%]
+2026-09-21T06:04:13.3842441Z tests/07_Post validation/test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current.py::test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current PASSED [ 38%]
+2026-09-21T06:04:14.1514768Z tests/07_Post validation/test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current_x.py::test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current_x PASSED [ 39%]
+2026-09-21T06:04:16.5803211Z tests/07_Post validation/test_linda_t4259_verify_the_logic_of_replace_items_is_correct.py::test_linda_t4259_verify_the_logic_of_replace_items_is_correct PASSED [ 40%]
+2026-09-21T06:04:17.7982854Z tests/07_Post validation/test_linda_t4955_verify_user_can_edit_access_code_in_original_post.py::test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post PASSED [ 41%]
+2026-09-21T06:04:18.2942818Z tests/08_Event and ticket and redeemed/01_Co-host/test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete.py::test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete PASSED [ 43%]
+2026-09-21T06:04:18.6435270Z tests/08_Event and ticket and redeemed/01_Co-host/test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete.py::test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete PASSED [ 44%]
+2026-09-21T06:04:18.9478260Z tests/08_Event and ticket and redeemed/01_Co-host/test_linda_t5139_verify_the_co_host_can_be_added_and_delete.py::test_linda_t5139_verify_the_co_host_can_be_added_and_delete PASSED [ 45%]
+2026-09-21T06:04:19.5988677Z tests/08_Event and ticket and redeemed/04_Ticket redeemed/test_linda_t4293_verify_the_ticket_can_be_redeemd_success.py::test_linda_t4293_verify_the_ticket_can_be_redeemd_success PASSED [ 46%]
+2026-09-21T06:04:19.8825585Z tests/08_Event and ticket and redeemed/05_Attendees/test_linda_axs_t4838_add_and_remove_guest.py::test_linda_axs_t4838_add_and_remove_guest PASSED [ 48%]
+2026-09-21T06:04:20.1682709Z tests/08_Event and ticket and redeemed/05_Attendees/test_linda_t4838_add_and_remove_guest.py::test_linda_t4838_add_and_remove_guest PASSED [ 49%]
+2026-09-21T06:04:20.4205718Z tests/08_Event and ticket and redeemed/05_Attendees/test_linda_tdc_t4838_add_and_remove_guest.py::test_linda_tdc_t4838_add_and_remove_guest PASSED [ 50%]
+2026-09-21T06:04:21.0823444Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_demi_t4166_verify_the_event_can_be_created_successfully.py::test_demi_t4166_verify_the_event_can_be_created_successfully PASSED [ 51%]
+2026-09-21T06:04:21.9635667Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_demi_t4167_verify_the_event_can_be_edited_successfully.py::test_demi_t4167_verify_the_event_can_be_edited_successfully PASSED [ 53%]
+2026-09-21T06:04:25.6337148Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_and_switch_status.py::test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_and_switch_status PASSED [ 54%]
+2026-09-21T06:04:26.1563046Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disabled.py::test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disabled PASSED [ 55%]
+2026-09-21T06:04:26.9295759Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page.py::test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page PASSED [ 56%]
+2026-09-21T06:04:27.1152309Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event.py::test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event PASSED [ 58%]
+2026-09-21T06:04:32.5453881Z tests/08_Event and ticket and redeemed/06_Event created and setting/test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process.py::test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process PASSED [ 59%]
+2026-09-21T06:04:33.6797848Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_t4139_verify_the_qr_redeemed_product_can_be_created.py::test_linda_t4139_verify_the_qr_redeemed_product_can_be_created PASSED [ 60%]
+2026-09-21T06:04:36.1072973Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_t4543_verify_the_settings_enable_multi_day_pass_work.py::test_linda_t4543_verify_the_settings_enable_multi_day_pass_work PASSED [ 61%]
+2026-09-21T06:04:37.7802502Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted.py::test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted PASSED [ 62%]
+2026-09-21T06:04:39.5784722Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work.py::test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work FAILED [ 64%]
+2026-09-21T06:04:41.4100191Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work.py::test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work PASSED [ 65%]
+2026-09-21T06:04:43.4261311Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_venue_map_verify_the_customer_provided_details_flow_work.py::test_linda_venue_map_verify_the_customer_provided_details_flow_work PASSED [ 66%]
+2026-09-21T06:04:44.8759923Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_verify_the_require_customer_provided_details_can_be_apply_success.py::test_linda_verify_the_require_customer_provided_details_can_be_apply_success PASSED [ 67%]
+2026-09-21T06:04:45.8804468Z tests/08_Event and ticket and redeemed/test_linda_t4159_verify_user_can_receive_e_ticket_email_if_ticket_poster_format_is_avif_png_jpg.py::test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_poster_format_is_avif_png_jpg PASSED [ 69%]
+2026-09-21T06:04:46.1412562Z tests/09_Event Report/test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report.py::test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report PASSED [ 70%]
+2026-09-21T06:04:46.4163298Z tests/10_Module/test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules.py::test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules PASSED [ 71%]
+2026-09-21T06:04:46.5750187Z tests/11_Subscription and Contract/test_linda_t2910_verify_the_subscription_contract_list_is_displayed_on_subscribe_save_page.py::test_linda_t2910_verify_the_subscription_contract_list_is_displayed_on_subscribe_save_page PASSED [ 72%]
+2026-09-21T06:04:47.0293608Z tests/11_Subscription and Contract/test_linda_t2921_t2920_t2914_verify_consumer_can_change_frequency_cancel_puase_reactive_for_subscription.py::test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_Cancel_Puase_Reactive_for_subscription PASSED [ 74%]
+2026-09-21T06:04:48.4997974Z tests/11_Subscription and Contract/test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan.py::test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan FAILED [ 75%]
+2026-09-21T06:04:51.8723290Z tests/11_Subscription and Contract/test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_uncoming_orders_on_subscribe_save_detai.py::test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_uncoming_orders_on_subscribe_save_detai PASSED [ 76%]
+2026-09-21T06:04:52.0502955Z tests/11_Subscription and Contract/test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_price_on_post_card.py::test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_price_on_post_card XFAIL [ 77%]
+2026-09-21T06:04:54.2221446Z tests/11_Subscription and Contract/test_linda_t3041_verify_the_subscribe_price_is_displayed_on_product_card_or_banner_if_set_subscription_option_as_th.py::test_linda_t3041_verify_the_subscribe_price_is_displayed_on_product_card_or_banner_if_set_subscription_option_as_th PASSED [ 79%]
+2026-09-21T06:05:04.6713551Z tests/11_Subscription and Contract/test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_subscription_item.py::test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_subscription_item PASSED [ 80%]
+2026-09-21T06:05:05.0367549Z tests/11_Subscription and Contract/test_linda_t3164_verify_the_otp_option_is_selected_by_default_if_unchecked_default_to_subscription.py::test__5961755__Linda_T3164_Verify_the_OTP_option_is_selected_by_default_if_unchecked_Default_to_subscription PASSED [ 81%]
+2026-09-21T06:05:05.2102777Z tests/12_Account/test_linda_t1569_verify_the_consumer_can_follow_a_shop.py::test_linda_t1569_verify_the_consumer_can_follow_a_shop PASSED [ 82%]
+2026-09-21T06:05:05.4133290Z tests/12_Account/test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success.py::test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success PASSED [ 83%]
+2026-09-21T06:05:05.8686441Z tests/13_Resell and Affiliate/test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post.py::test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post PASSED [ 85%]
+2026-09-21T06:05:07.6053251Z tests/13_Resell and Affiliate/test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms.py::test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms PASSED [ 86%]
+2026-09-21T06:05:07.9196377Z tests/14_Catalog and Product/test_linda_t1347_verify_the_catalog_can_be_create_and_delete_success.py::test_linda_t1347_verify_the_catalog_can_be_create_and_delete_success PASSED [ 87%]
+2026-09-21T06:05:08.3602825Z tests/14_Catalog and Product/test_linda_t1353_verify_new_product_can_be_creates_successfully.py::test__6080068__Linda_T1353_Verify_new_product_can_be_creates_successfully PASSED [ 88%]
+2026-09-21T06:05:08.7392862Z tests/14_Catalog and Product/test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page.py::test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page PASSED [ 90%]
+2026-09-21T06:05:09.0638953Z tests/15_Collabs invite flow and coseller signup and partner signup/test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invitation_it_will_be_displayed_in_the_my_pr.py::test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invitation_it_will_be_displayed_in_the_my_pr PASSED [ 91%]
+2026-09-21T06:05:09.4815096Z tests/15_Collabs invite flow and coseller signup and partner signup/test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_register_properly_and_be_redirected_to_the_my.py::test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_register_properly_and_be_redirected_to_the_my PASSED [ 92%]
+2026-09-21T06:05:10.5223261Z tests/15_Collabs invite flow and coseller signup and partner signup/test_linda_t3386_verify_the_promoter_signup_flow.py::test_linda_t3386_verify_the_promoter_signup_flow PASSED [ 93%]
+2026-09-21T06:05:10.7705181Z tests/15_Collabs invite flow and coseller signup and partner signup/test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx.py::test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx PASSED [ 95%]
+2026-09-21T06:05:12.8229791Z tests/16_Order group and filter/test_linda_t3100_verify_the_order_is_group_by_date_on_sales_page.py::test__5942267__Linda_T3100_Verify_the_order_is_group_by_date_on_sales_page PASSED [ 96%]
+2026-09-21T06:05:14.8721443Z tests/16_Order group and filter/test_linda_t3130_t3098_t3099_t3111_t3112_verify_the_orders_list_is_correct_when_filtering_by_date_after_set_time_zo.py::test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is_correct_when_filtering_by_date_after_set_time_zo PASSED [ 97%]
+2026-09-21T06:05:15.2844499Z tests/17_Admin tools/test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx.py::test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx FAILED [ 98%]
+2026-09-21T06:05:16.4238788Z tests/20_Shopify/test_t0000_verify_that_the_shipping_status_can_sync_to_pear.py::test_t0000_verify_that_the_shipping_status_can_sync_to_pear PASSED [100%]
+2026-09-21T06:05:16.4239397Z 
+2026-09-21T06:05:16.4239525Z =================================== FAILURES ===================================
+2026-09-21T06:05:16.4239925Z _ test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear _
+2026-09-21T06:05:16.4240703Z tests/04_Guest Purchase flow/test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear.py:163: in test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear
+2026-09-21T06:05:16.4241583Z     expect(_resp5).json('$.code').equals('200')
+2026-09-21T06:05:16.4241989Z core/assertions.py:109: in equals
+2026-09-21T06:05:16.4242468Z     self._fail(expected, "相等")
+2026-09-21T06:05:16.4242677Z core/assertions.py:101: in _fail
+2026-09-21T06:05:16.4242954Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:05:16.4243324Z E   core.errors.AssertionFailed: 断言失败: $.code 相等
+2026-09-21T06:05:16.4243504Z E     期望: '200'
+2026-09-21T06:05:16.4243631Z E     实际: 404
+2026-09-21T06:05:16.4245244Z E     响应: GET https://release.katana-api.1m.app/order/merchant/d1fdc475-8b15-49f0-8718-67c9efa988bf/detail/P186449/v2 -> 404 (43ms) {"code":404,"data":{"orderNumber":"P186449","merchantId":"d1fdc475-8b15-49f0-8718-67c9efa988bf"},"request_id":"09ead1ce-dd23-41fd-9e84-938d99e0d04f","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4246589Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:05:16.4246838Z [API] --> POST https://release.katana-api.1m.app/auth/guest-login
+2026-09-21T06:05:16.4247020Z [API] <-- 201 (99ms)
+2026-09-21T06:05:16.4247168Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4247331Z [API] <-- 200 (33ms)
+2026-09-21T06:05:16.4247483Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4247654Z [API] <-- 201 (489ms)
+2026-09-21T06:05:16.4247801Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4247958Z [API] <-- 201 (198ms)
+2026-09-21T06:05:16.4248201Z [API] --> GET https://release.katana-api.1m.app/order/merchant/d1fdc475-8b15-49f0-8718-67c9efa988bf/detail/P186449/v2
+2026-09-21T06:05:16.4248466Z [API] <-- 404 (43ms)
+2026-09-21T06:05:16.4248737Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:05:16.4249035Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/guest-login
+2026-09-21T06:05:16.4249311Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (99ms)
+2026-09-21T06:05:16.4249566Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4249822Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (33ms)
+2026-09-21T06:05:16.4250083Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4250348Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (489ms)
+2026-09-21T06:05:16.4250600Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4250853Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (198ms)
+2026-09-21T06:05:16.4251212Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/d1fdc475-8b15-49f0-8718-67c9efa988bf/detail/P186449/v2
+2026-09-21T06:05:16.4251563Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (43ms)
+2026-09-21T06:05:16.4252071Z _ test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl _
+2026-09-21T06:05:16.4253164Z tests/07_Post validation/test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl.py:338: in test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl
+2026-09-21T06:05:16.4254223Z     expect(_resp11).json('$.data.totalCommissionSubtotal').equals('64')
+2026-09-21T06:05:16.4254563Z core/assertions.py:109: in equals
+2026-09-21T06:05:16.4270523Z     self._fail(expected, "相等")
+2026-09-21T06:05:16.4270764Z core/assertions.py:101: in _fail
+2026-09-21T06:05:16.4271051Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:05:16.4271498Z E   core.errors.AssertionFailed: 断言失败: $.data.totalCommissionSubtotal 相等
+2026-09-21T06:05:16.4273931Z E     期望: '64'
+2026-09-21T06:05:16.4274134Z E     实际: None
+2026-09-21T06:05:16.4276669Z E     响应: GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186462/v2 -> 404 (43ms) {"code":404,"data":{"orderNumber":"P186462","merchantId":"17c3a9b5-3382-4d02-a0c4-071f50cfa525"},"request_id":"cda95513-b3c7-4cb9-8a30-d3d214ec2152","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4278883Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:05:16.4279264Z [API] --> POST https://release.katana-api.1m.app/auth/guest-login
+2026-09-21T06:05:16.4279548Z [API] <-- 201 (118ms)
+2026-09-21T06:05:16.4279805Z [API] --> GET https://release.katana-api.1m.app/posts/consumer/detail
+2026-09-21T06:05:16.4280091Z [API] <-- 200 (148ms)
+2026-09-21T06:05:16.4280313Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4280569Z [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4280808Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4281084Z [API] <-- 201 (272ms)
+2026-09-21T06:05:16.4281309Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4281556Z [API] <-- 201 (195ms)
+2026-09-21T06:05:16.4281920Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4282185Z [API] <-- 201 (315ms)
+2026-09-21T06:05:16.4282718Z [API] --> GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186461/v2
+2026-09-21T06:05:16.4283125Z [API] <-- 200 (79ms)
+2026-09-21T06:05:16.4283340Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4283588Z [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4283815Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4284078Z [API] <-- 201 (299ms)
+2026-09-21T06:05:16.4284299Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4284586Z [API] <-- 201 (178ms)
+2026-09-21T06:05:16.4284949Z [API] --> GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186462/v2
+2026-09-21T06:05:16.4285360Z [API] <-- 404 (43ms)
+2026-09-21T06:05:16.4285598Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:05:16.4286052Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/guest-login
+2026-09-21T06:05:16.4286485Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (118ms)
+2026-09-21T06:05:16.4286917Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/posts/consumer/detail
+2026-09-21T06:05:16.4287357Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (148ms)
+2026-09-21T06:05:16.4287758Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4288156Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4288569Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4288983Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (272ms)
+2026-09-21T06:05:16.4289490Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4289888Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (195ms)
+2026-09-21T06:05:16.4290312Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4290720Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (315ms)
+2026-09-21T06:05:16.4291281Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186461/v2
+2026-09-21T06:05:16.4292003Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (79ms)
+2026-09-21T06:05:16.4292401Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4292804Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4293217Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4293640Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (299ms)
+2026-09-21T06:05:16.4294037Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4294445Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (178ms)
+2026-09-21T06:05:16.4295008Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186462/v2
+2026-09-21T06:05:16.4295569Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (43ms)
+2026-09-21T06:05:16.4295936Z __ test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work ___
+2026-09-21T06:05:16.4296750Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work.py:861: in test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work
+2026-09-21T06:05:16.4297578Z     assert _resp13.status_code == 200, f"step13 status != 200, got {_resp13.status_code}"
+2026-09-21T06:05:16.4297939Z E   AssertionError: step13 status != 200, got 404
+2026-09-21T06:05:16.4298181Z E   assert 404 == 200
+2026-09-21T06:05:16.4298821Z E    +  where 404 = <ApiResponse GET https://release.katana-api.1m.app/order/merchant/26d5a262-32b7-4036-b539-6904aa9684ee/detail/P186469/v2 -> 404>.status_code
+2026-09-21T06:05:16.4299427Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:05:16.4299791Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4300059Z [API] <-- 201 (321ms)
+2026-09-21T06:05:16.4300311Z [API] --> GET https://release.katana-api.1m.app/product-event/list
+2026-09-21T06:05:16.4300587Z [API] <-- 200 (76ms)
+2026-09-21T06:05:16.4300945Z [API] --> GET https://release.katana-api.1m.app/posts/curator/event/e08b82ca-b0ba-445e-88e9-6e23a23b13e6/posts
+2026-09-21T06:05:16.4301342Z [API] <-- 200 (68ms)
+2026-09-21T06:05:16.4301607Z [API] --> GET https://release.katana-api.1m.app/product-event/default-catalog
+2026-09-21T06:05:16.4302029Z [API] <-- 200 (30ms)
+2026-09-21T06:05:16.4302399Z [API] --> GET https://release.admin.katana-api.1m.app/post/v2/e156736a-dafc-43cb-b544-30ab050e4099/relate-products
+2026-09-21T06:05:16.4302812Z [API] <-- 200 (286ms)
+2026-09-21T06:05:16.4303206Z [API] --> GET https://release.katana-api.1m.app/product-event/tickets/ccc2ab9e-90d1-45bf-a2b2-545c6a7f2bd9/venue-units
+2026-09-21T06:05:16.4303631Z [API] <-- 200 (47ms)
+2026-09-21T06:05:16.4303949Z [API] --> PUT https://release.katana-api.1m.app/v2/products/ccc2ab9e-90d1-45bf-a2b2-545c6a7f2bd9
+2026-09-21T06:05:16.4304297Z [API] <-- 200 (303ms)
+2026-09-21T06:05:16.4304526Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4304795Z [API] <-- 201 (264ms)
+2026-09-21T06:05:16.4305012Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4305266Z [API] <-- 200 (32ms)
+2026-09-21T06:05:16.4305618Z [API] --> POST https://release.katana-api.1m.app/order/checkout/express
+2026-09-21T06:05:16.4305907Z [API] <-- 201 (161ms)
+2026-09-21T06:05:16.4306124Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4306371Z [API] <-- 201 (131ms)
+2026-09-21T06:05:16.4306741Z [API] --> GET https://release.katana-api.1m.app/order/merchant/26d5a262-32b7-4036-b539-6904aa9684ee/detail/P186469/v2
+2026-09-21T06:05:16.4307142Z [API] <-- 404 (37ms)
+2026-09-21T06:05:16.4307380Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:05:16.4307823Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4308252Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (321ms)
+2026-09-21T06:05:16.4308681Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/product-event/list
+2026-09-21T06:05:16.4309112Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (76ms)
+2026-09-21T06:05:16.4309653Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/posts/curator/event/e08b82ca-b0ba-445e-88e9-6e23a23b13e6/posts
+2026-09-21T06:05:16.4310191Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (68ms)
+2026-09-21T06:05:16.4310657Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/product-event/default-catalog
+2026-09-21T06:05:16.4311118Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (30ms)
+2026-09-21T06:05:16.4311672Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.admin.katana-api.1m.app/post/v2/e156736a-dafc-43cb-b544-30ab050e4099/relate-products
+2026-09-21T06:05:16.4312373Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (286ms)
+2026-09-21T06:05:16.4312952Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/product-event/tickets/ccc2ab9e-90d1-45bf-a2b2-545c6a7f2bd9/venue-units
+2026-09-21T06:05:16.4313524Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (47ms)
+2026-09-21T06:05:16.4314015Z INFO     api.framework:logging_util.py:64 [API] --> PUT https://release.katana-api.1m.app/v2/products/ccc2ab9e-90d1-45bf-a2b2-545c6a7f2bd9
+2026-09-21T06:05:16.4314600Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (303ms)
+2026-09-21T06:05:16.4314998Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4315396Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (264ms)
+2026-09-21T06:05:16.4315779Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4316166Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (32ms)
+2026-09-21T06:05:16.4316580Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/checkout/express
+2026-09-21T06:05:16.4317007Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (161ms)
+2026-09-21T06:05:16.4317396Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4317809Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (131ms)
+2026-09-21T06:05:16.4318363Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/26d5a262-32b7-4036-b539-6904aa9684ee/detail/P186469/v2
+2026-09-21T06:05:16.4318910Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (37ms)
+2026-09-21T06:05:16.4319309Z _ test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan _
+2026-09-21T06:05:16.4320149Z tests/11_Subscription and Contract/test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan.py:228: in test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan
+2026-09-21T06:05:16.4320858Z     expect(_resp10).json('$.code').equals('200')
+2026-09-21T06:05:16.4321094Z core/assertions.py:109: in equals
+2026-09-21T06:05:16.4321454Z     self._fail(expected, "相等")
+2026-09-21T06:05:16.4321652Z core/assertions.py:101: in _fail
+2026-09-21T06:05:16.4322024Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:05:16.4322369Z E   core.errors.AssertionFailed: 断言失败: $.code 相等
+2026-09-21T06:05:16.4322624Z E     期望: '200'
+2026-09-21T06:05:16.4322795Z E     实际: 404
+2026-09-21T06:05:16.4325162Z E     响应: GET https://release.katana-api.1m.app/order/merchant/ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4/detail/P186474/v2 -> 404 (45ms) {"code":404,"data":{"orderNumber":"P186474","merchantId":"ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"},"request_id":"3cde9c45-0e88-4f66-a871-fca581346742","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4327229Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:05:16.4327580Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4327835Z [API] <-- 201 (350ms)
+2026-09-21T06:05:16.4328049Z [API] --> GET https://release.katana-api.1m.app/address
+2026-09-21T06:05:16.4328286Z [API] <-- 200 (35ms)
+2026-09-21T06:05:16.4328496Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4328733Z [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4328957Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4329209Z [API] <-- 201 (265ms)
+2026-09-21T06:05:16.4329419Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4329659Z [API] <-- 201 (182ms)
+2026-09-21T06:05:16.4329924Z [API] --> GET https://release.katana-api.1m.app/order/consumer/detail/P186474
+2026-09-21T06:05:16.4330223Z [API] <-- 200 (83ms)
+2026-09-21T06:05:16.4330458Z [API] --> GET https://release.katana-api.1m.app/users/self/contracts/
+2026-09-21T06:05:16.4330726Z [API] <-- 200 (80ms)
+2026-09-21T06:05:16.4331148Z [API] --> GET https://release.katana-api.1m.app/users/self/contracts/8d2d855a-35d7-4e3b-a496-13670bd4733d
+2026-09-21T06:05:16.4331504Z [API] <-- 200 (72ms)
+2026-09-21T06:05:16.4331847Z DEBUG contractId= 8d2d855a-35d7-4e3b-a496-13670bd4733d step8 url path ok
+2026-09-21T06:05:16.4332197Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4332445Z [API] <-- 201 (276ms)
+2026-09-21T06:05:16.4332802Z [API] --> GET https://release.katana-api.1m.app/order/merchant/ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4/detail/P186474/v2
+2026-09-21T06:05:16.4333190Z [API] <-- 404 (45ms)
+2026-09-21T06:05:16.4333422Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:05:16.4333849Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4334251Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (350ms)
+2026-09-21T06:05:16.4334635Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/address
+2026-09-21T06:05:16.4335020Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (35ms)
+2026-09-21T06:05:16.4335404Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:05:16.4335787Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:05:16.4336180Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:05:16.4336571Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (265ms)
+2026-09-21T06:05:16.4336950Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:05:16.4337336Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (182ms)
+2026-09-21T06:05:16.4337872Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/consumer/detail/P186474
+2026-09-21T06:05:16.4338317Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (83ms)
+2026-09-21T06:05:16.4338726Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/users/self/contracts/
+2026-09-21T06:05:16.4339135Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (80ms)
+2026-09-21T06:05:16.4339629Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/users/self/contracts/8d2d855a-35d7-4e3b-a496-13670bd4733d
+2026-09-21T06:05:16.4340133Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (72ms)
+2026-09-21T06:05:16.4340529Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:05:16.4340920Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (276ms)
+2026-09-21T06:05:16.4341459Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4/detail/P186474/v2
+2026-09-21T06:05:16.4342086Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (45ms)
+2026-09-21T06:05:16.4342431Z ____ test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx ____
+2026-09-21T06:05:16.4531677Z tests/17_Admin tools/test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx.py:62: in test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx
+2026-09-21T06:05:16.4533096Z     expect(_resp2).json('$.data.items[0].payoutBalance').equals('0')
+2026-09-21T06:05:16.4533572Z core/assertions.py:109: in equals
+2026-09-21T06:05:16.4534086Z     self._fail(expected, "相等")
+2026-09-21T06:05:16.4534442Z core/assertions.py:101: in _fail
+2026-09-21T06:05:16.4534825Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:05:16.4535391Z E   core.errors.AssertionFailed: 断言失败: $.data.items[0].payoutBalance 相等
+2026-09-21T06:05:16.4535846Z E     期望: '0'
+2026-09-21T06:05:16.4536143Z E     实际: 10
+2026-09-21T06:05:16.4538761Z E     响应: GET https://release.admin.katana-api.1m.app/promoters/reward/edabda22-4152-4b99-b3c9-e9da4f91e862 -> 200 (44ms) {"code":200,"message":"success","data":{"items":[{"id":"ef9140ed-4499-45f3-a4b8-6f4fe13cad52","promoterId":"edabda22-4152-4b99-b3c9-e9da4f91e862","createdAt":"2026-09-21T06:05:15.207Z","updatedAt":"2026-09-21T06:05:15.207Z","type":"ONE_TIME_PAYOUT_LOAN","accountingType":"ACCOUNTING_LOAN","payoutToPay":10,"payoutPaid":0,"payoutBalance":10,"reason":"One-off payout - loan","note":"21+","transactionId":null,"memo":"Auto test","holdTime":0,"issuerEmail":"linda.zhou.ext@1m.app","eventId":null,"source":null,"oneTimePayoutHistoryId":null}],"pageSize":10,"pageNumber":1,"totalCount":1}}
+2026-09-21T06:05:16.4540911Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:05:16.4541432Z [API] --> POST https://release.admin.katana-api.1m.app/promoters/reward
+2026-09-21T06:05:16.4541984Z [API] <-- 201 (183ms)
+2026-09-21T06:05:16.4542475Z [API] --> GET https://release.admin.katana-api.1m.app/promoters/reward/edabda22-4152-4b99-b3c9-e9da4f91e862
+2026-09-21T06:05:16.4542998Z [API] <-- 200 (44ms)
+2026-09-21T06:05:16.4543371Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:05:16.4543973Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.admin.katana-api.1m.app/promoters/reward
+2026-09-21T06:05:16.4544543Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (183ms)
+2026-09-21T06:05:16.4545204Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.admin.katana-api.1m.app/promoters/reward/edabda22-4152-4b99-b3c9-e9da4f91e862
+2026-09-21T06:05:16.4545871Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (44ms)
+2026-09-21T06:05:16.4546602Z - generated xml file: /home/runner/work/Pear-automation-test/Pear-automation-test/test_case/API auto script/results/runs/20260921_060325_linda/junit.xml -
+2026-09-21T06:05:16.4547458Z --------------------------------- run archive ----------------------------------
+2026-09-21T06:05:16.4548124Z results/runs/20260921_060325_linda   →   75 passed / 5 failed / 0 error / 0 skipped   ·   490 HTTP records
+2026-09-21T06:05:16.4548697Z   summary.md · failures.json · junit.xml · http.log
+2026-09-21T06:05:16.4549119Z =========================== short test summary info ============================
+2026-09-21T06:05:16.4550254Z FAILED tests/04_Guest Purchase flow/test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear.py::test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear - core.errors.AssertionFailed: 断言失败: $.code 相等
+2026-09-21T06:05:16.4551174Z   期望: '200'
+2026-09-21T06:05:16.4551469Z   实际: 404
+2026-09-21T06:05:16.4554196Z   响应: GET https://release.katana-api.1m.app/order/merchant/d1fdc475-8b15-49f0-8718-67c9efa988bf/detail/P186449/v2 -> 404 (43ms) {"code":404,"data":{"orderNumber":"P186449","merchantId":"d1fdc475-8b15-49f0-8718-67c9efa988bf"},"request_id":"09ead1ce-dd23-41fd-9e84-938d99e0d04f","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4557478Z FAILED tests/07_Post validation/test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl.py::test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl - core.errors.AssertionFailed: 断言失败: $.data.totalCommissionSubtotal 相等
+2026-09-21T06:05:16.4558641Z   期望: '64'
+2026-09-21T06:05:16.4558940Z   实际: None
+2026-09-21T06:05:16.4561690Z   响应: GET https://release.katana-api.1m.app/order/merchant/17c3a9b5-3382-4d02-a0c4-071f50cfa525/detail/P186462/v2 -> 404 (43ms) {"code":404,"data":{"orderNumber":"P186462","merchantId":"17c3a9b5-3382-4d02-a0c4-071f50cfa525"},"request_id":"cda95513-b3c7-4cb9-8a30-d3d214ec2152","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4564681Z FAILED tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work.py::test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work - AssertionError: step13 status != 200, got 404
+2026-09-21T06:05:16.4565642Z assert 404 == 200
+2026-09-21T06:05:16.4566239Z  +  where 404 = <ApiResponse GET https://release.katana-api.1m.app/order/merchant/26d5a262-32b7-4036-b539-6904aa9684ee/detail/P186469/v2 -> 404>.status_code
+2026-09-21T06:05:16.4567742Z FAILED tests/11_Subscription and Contract/test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan.py::test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan - core.errors.AssertionFailed: 断言失败: $.code 相等
+2026-09-21T06:05:16.4568754Z   期望: '200'
+2026-09-21T06:05:16.4569041Z   实际: 404
+2026-09-21T06:05:16.4571672Z   响应: GET https://release.katana-api.1m.app/order/merchant/ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4/detail/P186474/v2 -> 404 (45ms) {"code":404,"data":{"orderNumber":"P186474","merchantId":"ece8c85b-29b8-4eed-8cfe-1f4d453ad2a4"},"request_id":"3cde9c45-0e88-4f66-a871-fca581346742","message":"Requested resource not found","stack":"Error: Requested resource not found\n    at OrdersRepo.getMerchantOrderDetailByNumber (/var/app/current/src/sales/orders/orders.repo.ts:1051:13)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersService.getMerchantOrderDetailV2ByNumber (/var/app/current/src/sales/orders/orders.service.ts:3657:27)\n    at OrdersController.getMerchantOrderDetailV2 (/var/app/cur...(+163)
+2026-09-21T06:05:16.4574909Z FAILED tests/17_Admin tools/test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx.py::test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx - core.errors.AssertionFailed: 断言失败: $.data.items[0].payoutBalance 相等
+2026-09-21T06:05:16.4575815Z   期望: '0'
+2026-09-21T06:05:16.4576107Z   实际: 10
+2026-09-21T06:05:16.4578510Z   响应: GET https://release.admin.katana-api.1m.app/promoters/reward/edabda22-4152-4b99-b3c9-e9da4f91e862 -> 200 (44ms) {"code":200,"message":"success","data":{"items":[{"id":"ef9140ed-4499-45f3-a4b8-6f4fe13cad52","promoterId":"edabda22-4152-4b99-b3c9-e9da4f91e862","createdAt":"2026-09-21T06:05:15.207Z","updatedAt":"2026-09-21T06:05:15.207Z","type":"ONE_TIME_PAYOUT_LOAN","accountingType":"ACCOUNTING_LOAN","payoutToPay":10,"payoutPaid":0,"payoutBalance":10,"reason":"One-off payout - loan","note":"21+","transactionId":null,"memo":"Auto test","holdTime":0,"issuerEmail":"linda.zhou.ext@1m.app","eventId":null,"source":null,"oneTimePayoutHistoryId":null}],"pageSize":10,"pageNumber":1,"totalCount":1}}
+2026-09-21T06:05:16.4580648Z ============= 5 failed, 75 passed, 1 xfailed in 111.21s (0:01:51) ==============
+2026-09-21T06:05:16.4982903Z Suite : Linda
+2026-09-21T06:05:16.4983785Z Desc  : Linda 日常可运行回归集 — 逐条列出用例名，便于查看/增删（不再用 suite:linda 标签整组拉取）
+2026-09-21T06:05:16.4984172Z Cases : 81 selected
+2026-09-21T06:05:16.4984465Z 
+2026-09-21T06:05:16.5003291Z Running: /opt/hostedtoolcache/Python/3.11.16/x64/bin/python -m pytest tests/ --case-ids test_linda_t0000_precondition_obtain_all_accounts_token,test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a_campaign_page,test_linda_t4673_verify_partner_can_search_campaign_on_campaign_list,test_linda_t4674_verify_partner_can_edit_draft_campaign_from_campaign_list,test__7631342__Linda_T4675_Verify_partner_can_duplicate_campaign_from_campaign_list,test_linda_t4676_verify_partner_can_delete_campaign_on_campaigns_page,test_linda_t2885_verify_the_taxes_info_is_displayed_on_checkout_order_placed_order_details_sales_details_email,test_linda_t3278_t3277_verify_after_add_a_note_when_checkout_it_display_on_the_order_details_and_sales_details,test_linda_t1074_verify_merchant_ship_partial_of_same_items_all_items_show_correct,test_linda_t1291_verify_the_fully_refunded_order_could_be_sync_strip_card_from_pear,test_linda_t1291_verify_the_partilly_refunded_order_could_be_sync_strip_card_from_admin,test_linda_t3024_verify_multiple_subdomain_point_to_the_same_shop_go_visit_success,test_yuxiao_t2668_after_verifying_that_promoter_has_two_subdomains_you_can_switch_between_them_at_will,test_linda_t3078_verify_the_analytics_page_on_admin_tool,test_linda_t3975_verify_the_analytics_page_for_the_post_on_pear,test__5808749__Linda_T1058_Verify_the_4_99_or_free_shipping_fee_is_consisntence_on_the_checkout_page,test_linda_t1742_verify_that_the_post_commission_rate_can_be_batch_setting_to_a_fix_value,test_linda_t2487_verify_the_post_coupon_can_be_created_after_adding_products_to_the_post,test_linda_t2601_verify_the_resale_posts_need_to_inherit_the_parent_post_quantity_limit,test_linda_t2705_verify_the_exclude_and_include_variant_logic_response_correct,test__5800997__Linda_T2731_Verify_the_total_saving_contains_the_shipping_discount_that_provided_by_post_owner,test_linda_t2747_verify_that_the_creator_can_edit_the_media_of_a_published_post,test__6111855__Linda_T2810_Verify_curator_can_set_compared_at_price_for_my_item_when_creating_post,test_linda_t2811_verify_user_can_set_compared_at_price_for_my_item_on_admin_tool,test_linda_t2895_t2938_t2940_verify_the_auto_applied_coupon_can_work,test_linda_t2917_verify_the_checked_for_recommendation_and_recommended_products_response_logic_correct,test_linda_t3115_verify_checking_customize_post_prices_it_only_effect_this_post_not_the_catalog_price,test_linda_t3128_t3129_products_prices_are_automatically_sync_ed_with_catalog_when_customize_prices_in_this_post_is,test_linda_t3131_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_there_is_an_auto_appl,test_linda_t3132_verify_the_price_presentation_of_strikethrough_on_checkout_page_is_update_if_using_coupon_with_cou,test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current,test_linda_t3879_verify_that_the_post_commission_rate_can_be_batch_setting_current_x,test_linda_t4259_verify_the_logic_of_replace_items_is_correct,test__7886135__Linda_T4955_Verify_user_can_edit_access_code_in_original_post,test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete,test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete,test_linda_t5139_verify_the_co_host_can_be_added_and_delete,test_linda_t4293_verify_the_ticket_can_be_redeemd_success,test_linda_axs_t4838_add_and_remove_guest,test_linda_t4838_add_and_remove_guest,test_linda_tdc_t4838_add_and_remove_guest,test_demi_t4166_verify_the_event_can_be_created_successfully,test_demi_t4167_verify_the_event_can_be_edited_successfully,test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_and_switch_status,test_linda_t4288_t4299_on_the_event_advanced_tab_setting_tax_enable_and_disabled,test_linda_t4424_verify_the_search_function_of_the_qr_scanner_page,test_linda_t4440_verify_add_a_new_tab_lineup_when_create_an_event,test_linda_t4623_t4625_t4626_t4628_event_creation_whole_process,test_linda_t4139_verify_the_qr_redeemed_product_can_be_created,test_linda_t4543_verify_the_settings_enable_multi_day_pass_work,test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted,test_linda_venue_map_t4543_verify_the_settings_enable_multi_day_pass_work,test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work,test_linda_venue_map_verify_the_customer_provided_details_flow_work,test_linda_verify_the_require_customer_provided_details_can_be_apply_success,test__7510819__Linda_T4159_Verify_user_can_receive_e_ticket_email_if_ticket_poster_format_is_avif_png_jpg,test_linda_t4519_verify_all_data_are_displayed_correct_in_the_event_report,test_linda_t4658_verify_adding_music_link_types_in_the_storefront_modules,test_linda_t2910_verify_the_subscription_contract_list_is_displayed_on_subscribe_save_page,test__6129906__Linda_T2921_T2920_T2914_Verify_consumer_can_change_frequency_Cancel_Puase_Reactive_for_subscription,test_linda_t2958_and_t2931_verify_the_total_saving_includes_the_percent_off_of_subscription_plan,test_linda_t2995_t2994_verify_consumer_can_change_shipping_address_and_skip_uncoming_orders_on_subscribe_save_detai,test_linda_t3028_verify_the_price_range_and_discount_contains_subscription_price_on_post_card,test_linda_t3041_verify_the_subscribe_price_is_displayed_on_product_card_or_banner_if_set_subscription_option_as_th,test_linda_t3134_verify_the_quantity_works_well_with_change_frequency_on_subscription_item,test__5961755__Linda_T3164_Verify_the_OTP_option_is_selected_by_default_if_unchecked_Default_to_subscription,test_linda_t1569_verify_the_consumer_can_follow_a_shop,test_linda_t3354_verify_the_shipping_address_can_be_added_or_deleted_success,test_linda_t2101_verify_promoter_s_operation_rights_on_the_resell_post,test_linda_t4131_verify_after_created_affiliate_link_can_send_email_or_sms,test_linda_t1347_verify_the_catalog_can_be_create_and_delete_success,test__6080068__Linda_T1353_Verify_new_product_can_be_creates_successfully,test_linda_t2129_verify_the_product_card_can_create_post_success_on_my_shop_page,test_linda_t1994_after_verifying_that_the_promoter_curator_accepts_the_invitation_it_will_be_displayed_in_the_my_pr,test_linda_t3096_verifying_the_partner_signup_link_allows_the_user_to_register_properly_and_be_redirected_to_the_my,test_linda_t3386_verify_the_promoter_signup_flow,test_yuxiao_t1993_verify_the_function_of_generating_invitation_link_yx,test__5942267__Linda_T3100_Verify_the_order_is_group_by_date_on_sales_page,test__5875086__Linda_T3130_T3098_T3099_T3111_T3112_Verify_the_orders_list_is_correct_when_filtering_by_date_after_set_time_zo,test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx,test_t0000_verify_that_the_shipping_status_can_sync_to_pear --run-label Linda -v 
+2026-09-21T06:05:16.5022766Z 
+2026-09-21T06:05:16.5022968Z Report  : results/runs/<timestamp>_linda/  (summary.md / junit.xml / http.log)
+2026-09-21T06:05:16.5023244Z 
+2026-09-21T06:05:16.5063661Z ##[error]Process completed with exit code 1.
+2026-09-21T06:05:16.5099733Z ##[group]Run cd "test_case/API auto script"
+2026-09-21T06:05:16.5099941Z [36;1mcd "test_case/API auto script"[0m
+2026-09-21T06:05:16.5100089Z [36;1mset -o pipefail[0m
+2026-09-21T06:05:16.5100261Z [36;1mpython run_suite.py suites/lury.yaml 2>&1 | tee lury.log[0m
+2026-09-21T06:05:16.5129585Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:05:16.5129712Z env:
+2026-09-21T06:05:16.5129829Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:05:16.5130179Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:05:16.5130301Z   API_ENV: Release
+2026-09-21T06:05:16.5130448Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:05:16.5130673Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:05:16.5130894Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:05:16.5131091Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:05:16.5131293Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:05:16.5131516Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:05:16.5131682Z   CI: true
+2026-09-21T06:05:16.5131951Z ##[endgroup]
+2026-09-21T06:05:16.9832405Z ============================= test session starts ==============================
+2026-09-21T06:05:16.9834285Z platform linux -- Python 3.11.16, pytest-9.1.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.16/x64/bin/python
+2026-09-21T06:05:16.9835754Z cachedir: .pytest_cache
+2026-09-21T06:05:16.9836301Z rootdir: /home/runner/work/Pear-automation-test/Pear-automation-test/test_case/API auto script
+2026-09-21T06:05:16.9836856Z configfile: pytest.ini
+2026-09-21T06:05:17.0828234Z collecting ... [select] selected 47/147 case(s)
+2026-09-21T06:05:17.0828836Z collected 147 items
+2026-09-21T06:05:17.0829148Z 
+2026-09-21T06:05:22.3008794Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail.py::test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail PASSED [  2%]
+2026-09-21T06:05:27.1634717Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail.py::test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail PASSED [  4%]
+2026-09-21T06:05:32.0307555Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail.py::test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail PASSED [  6%]
+2026-09-21T06:05:37.0062405Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2234_consumer_3_2_mixed_items_disabled_my_items_resell_retail.py::test_lury_t2234_consumer_3_2_mixed_items_disabled_my_items_resell_retail PASSED [  8%]
+2026-09-21T06:05:41.9404790Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2236_consumer_4_2_mixed_items_enabled_my_items_resell_retail.py::test_lury_t2236_consumer_4_2_mixed_items_enabled_my_items_resell_retail PASSED [ 10%]
+2026-09-21T06:05:46.8602875Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_retail.py::test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_retail PASSED [ 12%]
+2026-09-21T06:05:48.4006019Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2240_consumer_5_2_my_items_resell_retail.py::test_lury_t2240_consumer_5_2_my_items_resell_retail PASSED [ 14%]
+2026-09-21T06:05:49.6205299Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2241_consumer_5_3_my_items_resell_promoter_retail.py::test_lury_t2241_consumer_5_3_my_items_resell_promoter_retail PASSED [ 17%]
+2026-09-21T06:05:54.6474217Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_retail.py::test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_retail PASSED [ 19%]
+2026-09-21T06:05:59.7775686Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t2245_consumer_7_2_other_items_enabled_disabled_resell_retail.py::test_lury_t2245_consumer_7_2_other_items_enabled_disabled_resell_retail PASSED [ 21%]
+2026-09-21T06:06:18.4514407Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter.py::test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter PASSED [ 23%]
+2026-09-21T06:06:23.8526775Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t4084_verify_the_commission_charge_and_earnings_for_wholesale_mode_after_partial_refund_the_order.py::test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_wholesale_mode_after_partial_refund_the_order PASSED [ 25%]
+2026-09-21T06:06:27.0224712Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t4172_from_hui_verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode.py::test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode PASSED [ 27%]
+2026-09-21T06:06:28.1915239Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t4483_verify_consumer_can_purchase_event_product_and_check_transaction_fee.py::test_lury_t4483_verify_consumer_can_purchase_event_product_and_check_transaction_fee PASSED [ 29%]
+2026-09-21T06:06:29.2829398Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time.py::test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time PASSED [ 31%]
+2026-09-21T06:06:34.9934592Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events.py::test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events FAILED [ 34%]
+2026-09-21T06:06:40.3568533Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t6429_check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool.py::test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool PASSED [ 36%]
+2026-09-21T06:06:46.9530343Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale_posts.py::test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale_posts PASSED [ 38%]
+2026-09-21T06:06:47.7272925Z tests/04_Guest Purchase flow/test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon.py::test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon PASSED [ 40%]
+2026-09-21T06:06:48.5060876Z tests/04_Guest Purchase flow/test_lury_t4782_t2795_guest_place_order_with_0_yuan_and_link_order_to_existing_account.py::test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order_to_existing_account PASSED [ 42%]
+2026-09-21T06:06:49.2246673Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_resell_verify_reveal_address_after_at_time_check_on_order_confirmation_page.py::test_lury_resell_verify_reveal_address_after_at_time_check_on_order_confirmation_page PASSED [ 44%]
+2026-09-21T06:06:49.9937783Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_resell_verify_reveal_address_before_at_time_check_on_order_confirmation_page.py::test_lury_resell_verify_reveal_address_before_at_time_check_on_order_confirmation_page PASSED [ 46%]
+2026-09-21T06:06:50.6943583Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_resell_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page.py::test_lury_resell_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page PASSED [ 48%]
+2026-09-21T06:06:51.4995120Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_resell_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page.py::test_lury_resell_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page PASSED [ 51%]
+2026-09-21T06:06:52.2452524Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_resell_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page.py::test_lury_resell_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page PASSED [ 53%]
+2026-09-21T06:06:52.9473469Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_page.py::test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_page PASSED [ 55%]
+2026-09-21T06:06:53.7143615Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_verify_reveal_address_before_at_time_check_on_order_confirmation_page.py::test_lury_verify_reveal_address_before_at_time_check_on_order_confirmation_page PASSED [ 57%]
+2026-09-21T06:06:54.4053529Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page.py::test_lury_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page PASSED [ 59%]
+2026-09-21T06:06:55.1026722Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page.py::test_lury_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page PASSED [ 61%]
+2026-09-21T06:06:55.8659062Z tests/08_Event and ticket and redeemed/03_Reveal address/test_lury_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page.py::test_lury_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page PASSED [ 63%]
+2026-09-21T06:06:57.7354968Z tests/08_Event and ticket and redeemed/04_Ticket redeemed/test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as_redeemed_automatically.py::test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as_redeemed_automatically PASSED [ 65%]
+2026-09-21T06:07:09.9005744Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_commission_rate.py::test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_commission_rate PASSED [ 68%]
+2026-09-21T06:07:10.9883096Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unavailable_after_stop_selling.py::test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unavailable_after_stop_selling PASSED [ 70%]
+2026-09-21T06:07:12.0468478Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_order_confirmation_details.py::test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_order_confirmation_details PASSED [ 72%]
+2026-09-21T06:07:13.2216081Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_custom_fee.py::test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_custom_fee PASSED [ 74%]
+2026-09-21T06:07:14.0797859Z tests/08_Event and ticket and redeemed/07_Ticket created and setting/test_lury_t5408_verify_fee_is_not_displayed_if_ticekt_set_do_not_display_fees.py::test_lury_t5408_verify_fee_is_not_displayed_if_ticekt_set_do_not_display_fees PASSED [ 76%]
+2026-09-21T06:07:16.0983335Z tests/08_Event and ticket and redeemed/08_Fee breakdown/test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event.py::test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event PASSED [ 78%]
+2026-09-21T06:07:18.6749095Z tests/08_Event and ticket and redeemed/test_lury_t3530_check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool.py::test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool FAILED [ 80%]
+2026-09-21T06:07:19.4609822Z tests/09_Event Report/test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_sold_by_venue_app.py::test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_sold_by_venue_app PASSED [ 82%]
+2026-09-21T06:07:19.9863805Z tests/09_Event Report/test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_the_products_in_the_order_from_different_event.py::test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_the_products_in_the_order_from_different_event PASSED [ 85%]
+2026-09-21T06:07:20.4717996Z tests/09_Event Report/test_lury_t5282_exclude_pear_us_venue_app_sales_from_sales_report.py::test_lury_t5282_exclude_pear_us_venue_app_sales_from_sales_report PASSED [ 87%]
+2026-09-21T06:07:26.5674332Z tests/13_Resell and Affiliate/test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link.py::test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link PASSED [ 89%]
+2026-09-21T06:07:28.3388656Z tests/13_Resell and Affiliate/test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affiliate_post.py::test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affiliate_post PASSED [ 91%]
+2026-09-21T06:07:29.9923889Z tests/18_Revenue Share/test_lury_t4579_t4590_t4593_t4708_verify_partner_can_share_revenue_to_other_account_on_store_settings.py::test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings FAILED [ 93%]
+2026-09-21T06:07:31.4624380Z tests/19_Release schedule/test_lury_t4697_t4700_verify_partner_release_schedule_general_product.py::test_lury_t4697_t4700_verify_partner_release_schedule_general_product PASSED [ 95%]
+2026-09-21T06:07:32.9900199Z tests/19_Release schedule/test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket.py::test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket PASSED [ 97%]
+2026-09-21T06:07:35.1393689Z tests/21_Sales/01_Sales report/test_lury_t5426_verify_sales_report_in_sales_completed_page.py::test_lury_t5426_verify_sales_report_in_sales_completed_page PASSED [100%]
+2026-09-21T06:07:35.1394801Z 
+2026-09-21T06:07:35.1395093Z =================================== FAILURES ===================================
+2026-09-21T06:07:35.1395631Z ___ test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events ___
+2026-09-21T06:07:35.1396651Z tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events.py:665: in test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events
+2026-09-21T06:07:35.1397590Z     assert vars.get('P1_OrderId'), (
+2026-09-21T06:07:35.1398479Z E   AssertionError: test_lury_t5064_t4140_verify_the_event_c L658: promoter orders 中未找到 orderNumber=None 的订单（items=30）
+2026-09-21T06:07:35.1399013Z E   assert ''
+2026-09-21T06:07:35.1399292Z E    +  where '' = get('P1_OrderId')
+2026-09-21T06:07:35.1400002Z E    +    where get = Context(env='Release', vars=570, base_url='https://release.katana-api.1m.app').get
+2026-09-21T06:07:35.1400590Z ----------------------------- Captured stdout call -----------------------------
+2026-09-21T06:07:35.1402875Z DIAG resp9 = 400 {"code":400,"request_id":"0fd8bdba-bb1e-4067-a4f9-d6155bf9544b","message":"You have resold this post: Lury event automation with ticket 100, and can't buy from it","stack":"Error: You have resold this post: Lury event automation with ticket 100, and can't buy from it\n    at CartItemService.updateCart (/var/app/current/src/cart-item/cart-item.service.ts:564:15)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at OrdersController.buyNow (/var/app/current/src/sales/orders/orders.controller.ts:577:5)\n    at /var/app/current/node_modules/@opentelemetry/instrumentat
+2026-09-21T06:07:35.1404851Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:07:35.1405338Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1405723Z [API] <-- 201 (327ms)
+2026-09-21T06:07:35.1406064Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1406429Z [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1406774Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1407151Z [API] <-- 201 (421ms)
+2026-09-21T06:07:35.1407524Z [API] --> POST https://release.katana-api.1m.app/order/update-promotions
+2026-09-21T06:07:35.1407926Z [API] <-- 201 (175ms)
+2026-09-21T06:07:35.1408257Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1408613Z [API] <-- 201 (170ms)
+2026-09-21T06:07:35.1408949Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1409311Z [API] <-- 201 (244ms)
+2026-09-21T06:07:35.1409796Z [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/P186493/v2
+2026-09-21T06:07:35.1410326Z [API] <-- 200 (77ms)
+2026-09-21T06:07:35.1410668Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1411028Z [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1411369Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1411740Z [API] <-- 400 (106ms)
+2026-09-21T06:07:35.1412167Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1412520Z [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1413025Z [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1413572Z [API] <-- 404 (45ms)
+2026-09-21T06:07:35.1413898Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1414256Z [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1414595Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1414970Z [API] <-- 400 (86ms)
+2026-09-21T06:07:35.1415337Z [API] --> POST https://release.katana-api.1m.app/order/update-promotions
+2026-09-21T06:07:35.1415748Z [API] <-- 500 (3162ms)
+2026-09-21T06:07:35.1416076Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1416433Z [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1416940Z [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1417481Z [API] <-- 404 (38ms)
+2026-09-21T06:07:35.1417807Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1418168Z [API] <-- 200 (36ms)
+2026-09-21T06:07:35.1418498Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1418870Z [API] <-- 400 (141ms)
+2026-09-21T06:07:35.1419194Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1419552Z [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1420041Z [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1420578Z [API] <-- 404 (38ms)
+2026-09-21T06:07:35.1420905Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1421381Z [API] <-- 201 (253ms)
+2026-09-21T06:07:35.1421716Z [API] --> GET https://release.katana-api.1m.app/order/promoter
+2026-09-21T06:07:35.1422177Z [API] <-- 200 (114ms)
+2026-09-21T06:07:35.1422525Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:07:35.1423088Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1423614Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (327ms)
+2026-09-21T06:07:35.1424212Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1424731Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1425247Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1425799Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (421ms)
+2026-09-21T06:07:35.1426352Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/update-promotions
+2026-09-21T06:07:35.1426897Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (175ms)
+2026-09-21T06:07:35.1427484Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1428010Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (170ms)
+2026-09-21T06:07:35.1428519Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1429029Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (244ms)
+2026-09-21T06:07:35.1429671Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/P186493/v2
+2026-09-21T06:07:35.1430321Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (77ms)
+2026-09-21T06:07:35.1430817Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1431315Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1431907Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1432416Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (106ms)
+2026-09-21T06:07:35.1432903Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1433395Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1434058Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1434732Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (45ms)
+2026-09-21T06:07:35.1435224Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1435719Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1436218Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1436725Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (86ms)
+2026-09-21T06:07:35.1437256Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/update-promotions
+2026-09-21T06:07:35.1437791Z INFO     api.framework:logging_util.py:74 [API] <-- 500 (3162ms)
+2026-09-21T06:07:35.1438280Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1438773Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1439435Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1440097Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (38ms)
+2026-09-21T06:07:35.1440693Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1441193Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (36ms)
+2026-09-21T06:07:35.1441694Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1442293Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (141ms)
+2026-09-21T06:07:35.1442783Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1443378Z INFO     api.framework:logging_util.py:74 [API] <-- 400 (34ms)
+2026-09-21T06:07:35.1444032Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant/02e0c1e6-89b1-4b36-9e57-daa112331d80/detail/{{orderNumber}}/v2
+2026-09-21T06:07:35.1444690Z INFO     api.framework:logging_util.py:74 [API] <-- 404 (38ms)
+2026-09-21T06:07:35.1445192Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1445702Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (253ms)
+2026-09-21T06:07:35.1446205Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/promoter
+2026-09-21T06:07:35.1446713Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (114ms)
+2026-09-21T06:07:35.1447245Z _ test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool _
+2026-09-21T06:07:35.1448255Z tests/08_Event and ticket and redeemed/test_lury_t3530_check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool.py:642: in test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool
+2026-09-21T06:07:35.1449267Z     expect(_resp14).json('$.data.lifetimeEarning').close_to(ctx.render_text('{{lifetimeEarning_placed}}'))
+2026-09-21T06:07:35.1449751Z core/assertions.py:240: in close_to
+2026-09-21T06:07:35.1450183Z     self._fail(want, f"数值容差 ±{tol}（实际差 {diff}）")
+2026-09-21T06:07:35.1450524Z core/assertions.py:101: in _fail
+2026-09-21T06:07:35.1450915Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:07:35.1451517Z E   core.errors.AssertionFailed: 断言失败: $.data.lifetimeEarning 数值容差 ±0.01（实际差 11.639999999999418）
+2026-09-21T06:07:35.1452078Z E     期望: '130320.15'
+2026-09-21T06:07:35.1452375Z E     实际: 130308.51
+2026-09-21T06:07:35.1454015Z E     响应: GET https://release.katana-api.1m.app/promoter-earning/summary -> 200 (57ms) {"code":200,"message":"success","request_id":"5a6bf453-7e89-4d2a-9792-e0c7c43ea432","data":{"lifetimeEarning":130308.51,"totalWithdrawn":42566.3,"commissionEarning":367.89,"revenueEarning":127898.38,"rewardEarning":1150,"lineupEarning":0,"earningShared":892.24,"hasReward":true,"hasLineupFee":false,"hasEarningShare":true,"hasEarningShareConfig":false,"totalOrders":5830,"totalPaid":271273.68}}
+2026-09-21T06:07:35.1455518Z ----------------------------- Captured stdout call -----------------------------
+2026-09-21T06:07:35.1455950Z DBG step2 lifetimeEarning= 130300.68 commission= 367.89
+2026-09-21T06:07:35.1456394Z DBG step11 orderId= 7c0aa985-6afd-484c-98af-f83e3882e78c orderNumber= P186517
+2026-09-21T06:07:35.1457069Z DBG step12 status= 201 body= {"code":200,"message":"success","request_id":"c9e3af94-c436-4387-b9ad-360d7bd00618","data":{"orderId":"7c0aa985-6afd-484
+2026-09-21T06:07:35.1457725Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:07:35.1458187Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1458554Z [API] <-- 201 (347ms)
+2026-09-21T06:07:35.1458908Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1459300Z [API] <-- 200 (54ms)
+2026-09-21T06:07:35.1459635Z [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1459999Z [API] <-- 200 (185ms)
+2026-09-21T06:07:35.1460454Z [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1460809Z [API] <-- 200 (206ms)
+2026-09-21T06:07:35.1461140Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1461504Z [API] <-- 201 (261ms)
+2026-09-21T06:07:35.1461944Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1462337Z [API] <-- 200 (50ms)
+2026-09-21T06:07:35.1462667Z [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1463082Z [API] <-- 200 (128ms)
+2026-09-21T06:07:35.1463525Z [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1463883Z [API] <-- 200 (132ms)
+2026-09-21T06:07:35.1464209Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1464577Z [API] <-- 201 (262ms)
+2026-09-21T06:07:35.1464888Z [API] --> GET https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1465232Z [API] <-- 200 (58ms)
+2026-09-21T06:07:35.1465561Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1465930Z [API] <-- 201 (405ms)
+2026-09-21T06:07:35.1466257Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1466605Z [API] <-- 201 (146ms)
+2026-09-21T06:07:35.1466930Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1467284Z [API] <-- 201 (252ms)
+2026-09-21T06:07:35.1467637Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1468020Z [API] <-- 200 (57ms)
+2026-09-21T06:07:35.1468366Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:07:35.1468904Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1469410Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (347ms)
+2026-09-21T06:07:35.1469943Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1470481Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (54ms)
+2026-09-21T06:07:35.1470980Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1471483Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (185ms)
+2026-09-21T06:07:35.1472105Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1472642Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (206ms)
+2026-09-21T06:07:35.1473166Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1473686Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (261ms)
+2026-09-21T06:07:35.1474238Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1474792Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (50ms)
+2026-09-21T06:07:35.1475315Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1475830Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (128ms)
+2026-09-21T06:07:35.1476355Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/order/merchant
+2026-09-21T06:07:35.1476883Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (132ms)
+2026-09-21T06:07:35.1477411Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1477933Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (262ms)
+2026-09-21T06:07:35.1478435Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1479043Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (58ms)
+2026-09-21T06:07:35.1479655Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1480420Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (405ms)
+2026-09-21T06:07:35.1481242Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1482050Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (146ms)
+2026-09-21T06:07:35.1482720Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1492667Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (252ms)
+2026-09-21T06:07:35.1497258Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1497860Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (57ms)
+2026-09-21T06:07:35.1498438Z _ test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings _
+2026-09-21T06:07:35.1499480Z tests/18_Revenue Share/test_lury_t4579_t4590_t4593_t4708_verify_partner_can_share_revenue_to_other_account_on_store_settings.py:406: in test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings
+2026-09-21T06:07:35.1500675Z     expect(_resp12).json('$.data.lifetimeEarning').equals(ctx.render_text('{{lifetimeEarning_order}}'))
+2026-09-21T06:07:35.1501214Z core/assertions.py:109: in equals
+2026-09-21T06:07:35.1501657Z     self._fail(expected, "相等")
+2026-09-21T06:07:35.1502139Z core/assertions.py:101: in _fail
+2026-09-21T06:07:35.1502543Z     raise AssertionFailed(msg, expr=self.expr, expected=expected,
+2026-09-21T06:07:35.1503091Z E   core.errors.AssertionFailed: 断言失败: $.data.lifetimeEarning 相等
+2026-09-21T06:07:35.1503529Z E     期望: '130331.07'
+2026-09-21T06:07:35.1503841Z E     实际: 130320.29
+2026-09-21T06:07:35.1505441Z E     响应: GET https://release.katana-api.1m.app/promoter-earning/summary -> 200 (33ms) {"code":200,"message":"success","request_id":"687822ce-e3d4-467f-909b-9bc3221ec8e9","data":{"lifetimeEarning":130320.29,"totalWithdrawn":42566.3,"commissionEarning":367.89,"revenueEarning":127910.16,"rewardEarning":1150,"lineupEarning":0,"earningShared":892.24,"hasReward":true,"hasLineupFee":false,"hasEarningShare":true,"hasEarningShareConfig":false,"totalOrders":5832,"totalPaid":271363.68}}
+2026-09-21T06:07:35.1506911Z ----------------------------- Captured stderr call -----------------------------
+2026-09-21T06:07:35.1507369Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1507759Z [API] <-- 201 (336ms)
+2026-09-21T06:07:35.1508132Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1508545Z [API] <-- 200 (43ms)
+2026-09-21T06:07:35.1508901Z [API] --> GET https://release.katana-api.1m.app/payout/summary
+2026-09-21T06:07:35.1509297Z [API] <-- 200 (59ms)
+2026-09-21T06:07:35.1509647Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1510051Z [API] <-- 201 (212ms)
+2026-09-21T06:07:35.1510452Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1510898Z [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1511223Z [API] --> GET https://release.katana-api.1m.app/payout/summary
+2026-09-21T06:07:35.1511583Z [API] <-- 200 (59ms)
+2026-09-21T06:07:35.1512073Z [API] --> POST https://release.katana-api.1m.app/users/me/earning-share-configs
+2026-09-21T06:07:35.1512453Z [API] <-- 201 (48ms)
+2026-09-21T06:07:35.1512822Z [API] --> GET https://release.katana-api.1m.app/users/me/earning-share-configs
+2026-09-21T06:07:35.1513234Z [API] <-- 200 (41ms)
+2026-09-21T06:07:35.1513565Z [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1513933Z [API] <-- 201 (217ms)
+2026-09-21T06:07:35.1514258Z [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1514606Z [API] <-- 200 (32ms)
+2026-09-21T06:07:35.1514938Z [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1515314Z [API] <-- 201 (358ms)
+2026-09-21T06:07:35.1515630Z [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1516104Z [API] <-- 201 (146ms)
+2026-09-21T06:07:35.1516462Z [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1516858Z [API] <-- 200 (33ms)
+2026-09-21T06:07:35.1517203Z ------------------------------ Captured log call -------------------------------
+2026-09-21T06:07:35.1517775Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1518326Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (336ms)
+2026-09-21T06:07:35.1518970Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1519525Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (43ms)
+2026-09-21T06:07:35.1520039Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/payout/summary
+2026-09-21T06:07:35.1520567Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (59ms)
+2026-09-21T06:07:35.1521088Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1521616Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (212ms)
+2026-09-21T06:07:35.1522280Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1522859Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (37ms)
+2026-09-21T06:07:35.1523370Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/payout/summary
+2026-09-21T06:07:35.1523890Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (59ms)
+2026-09-21T06:07:35.1524451Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/users/me/earning-share-configs
+2026-09-21T06:07:35.1525020Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (48ms)
+2026-09-21T06:07:35.1525587Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/users/me/earning-share-configs
+2026-09-21T06:07:35.1526199Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (41ms)
+2026-09-21T06:07:35.1526743Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/auth/sign-in
+2026-09-21T06:07:35.1527293Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (217ms)
+2026-09-21T06:07:35.1527806Z INFO     api.framework:logging_util.py:64 [API] --> DELETE https://release.katana-api.1m.app/cart
+2026-09-21T06:07:35.1528318Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (32ms)
+2026-09-21T06:07:35.1528836Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order/buy-now
+2026-09-21T06:07:35.1529365Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (358ms)
+2026-09-21T06:07:35.1529876Z INFO     api.framework:logging_util.py:64 [API] --> POST https://release.katana-api.1m.app/order
+2026-09-21T06:07:35.1530391Z INFO     api.framework:logging_util.py:74 [API] <-- 201 (146ms)
+2026-09-21T06:07:35.1530941Z INFO     api.framework:logging_util.py:64 [API] --> GET https://release.katana-api.1m.app/promoter-earning/summary
+2026-09-21T06:07:35.1581939Z INFO     api.framework:logging_util.py:74 [API] <-- 200 (33ms)
+2026-09-21T06:07:35.1582702Z - generated xml file: /home/runner/work/Pear-automation-test/Pear-automation-test/test_case/API auto script/results/runs/20260921_060516_lury/junit.xml -
+2026-09-21T06:07:35.1583444Z --------------------------------- run archive ----------------------------------
+2026-09-21T06:07:35.1584163Z results/runs/20260921_060516_lury   →   44 passed / 3 failed / 0 error / 0 skipped   ·   504 HTTP records
+2026-09-21T06:07:35.1584780Z   summary.md · failures.json · junit.xml · http.log
+2026-09-21T06:07:35.1585209Z =========================== short test summary info ============================
+2026-09-21T06:07:35.1586722Z FAILED tests/03_Consumer Purchase flow - resell and coupon and refund and ship and fee and tax/test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events.py::test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events - AssertionError: test_lury_t5064_t4140_verify_the_event_c L658: promoter orders 中未找到 orderNumber=None 的订单（items=30）
+2026-09-21T06:07:35.1588062Z assert ''
+2026-09-21T06:07:35.1588343Z  +  where '' = get('P1_OrderId')
+2026-09-21T06:07:35.1588831Z  +    where get = Context(env='Release', vars=570, base_url='https://release.katana-api.1m.app').get
+2026-09-21T06:07:35.1590553Z FAILED tests/08_Event and ticket and redeemed/test_lury_t3530_check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool.py::test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool - core.errors.AssertionFailed: 断言失败: $.data.lifetimeEarning 数值容差 ±0.01（实际差 11.639999999999418）
+2026-09-21T06:07:35.1591874Z   期望: '130320.15'
+2026-09-21T06:07:35.1592185Z   实际: 130308.51
+2026-09-21T06:07:35.1593951Z   响应: GET https://release.katana-api.1m.app/promoter-earning/summary -> 200 (57ms) {"code":200,"message":"success","request_id":"5a6bf453-7e89-4d2a-9792-e0c7c43ea432","data":{"lifetimeEarning":130308.51,"totalWithdrawn":42566.3,"commissionEarning":367.89,"revenueEarning":127898.38,"rewardEarning":1150,"lineupEarning":0,"earningShared":892.24,"hasReward":true,"hasLineupFee":false,"hasEarningShare":true,"hasEarningShareConfig":false,"totalOrders":5830,"totalPaid":271273.68}}
+2026-09-21T06:07:35.1596445Z FAILED tests/18_Revenue Share/test_lury_t4579_t4590_t4593_t4708_verify_partner_can_share_revenue_to_other_account_on_store_settings.py::test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings - core.errors.AssertionFailed: 断言失败: $.data.lifetimeEarning 相等
+2026-09-21T06:07:35.1597547Z   期望: '130331.07'
+2026-09-21T06:07:35.1597840Z   实际: 130320.29
+2026-09-21T06:07:35.1599579Z   响应: GET https://release.katana-api.1m.app/promoter-earning/summary -> 200 (33ms) {"code":200,"message":"success","request_id":"687822ce-e3d4-467f-909b-9bc3221ec8e9","data":{"lifetimeEarning":130320.29,"totalWithdrawn":42566.3,"commissionEarning":367.89,"revenueEarning":127910.16,"rewardEarning":1150,"lineupEarning":0,"earningShared":892.24,"hasReward":true,"hasLineupFee":false,"hasEarningShare":true,"hasEarningShareConfig":false,"totalOrders":5832,"totalPaid":271363.68}}
+2026-09-21T06:07:35.1601216Z =================== 3 failed, 44 passed in 138.16s (0:02:18) ===================
+2026-09-21T06:07:35.1832668Z Suite : Lury
+2026-09-21T06:07:35.1842728Z Desc  : Lury 日常可运行回归集 — 逐条列出用例名，便于查看/增删（不再用 suite:lury 标签整组拉取）
+2026-09-21T06:07:35.1843122Z Cases : 47 selected
+2026-09-21T06:07:35.1843372Z 
+2026-09-21T06:07:35.1854996Z Running: /opt/hostedtoolcache/Python/3.11.16/x64/bin/python -m pytest tests/ --case-ids test_lury_t2229_consumer_1_2_others_items_disabled_resell_no_retail,test_lury_t2231_consumer_2_2_others_items_enabled_resell_retail,test_lury_t2232_consumer_2_3_others_items_enabled_resell_promoter_retail,test_lury_t2234_consumer_3_2_mixed_items_disabled_my_items_resell_retail,test_lury_t2236_consumer_4_2_mixed_items_enabled_my_items_resell_retail,test_lury_t2237_consumer_4_3_mixed_items_enabled_my_items_resell_promoter_retail,test_lury_t2240_consumer_5_2_my_items_resell_retail,test_lury_t2241_consumer_5_3_my_items_resell_promoter_retail,test_lury_t2243_consumer_6_2_mixed_items_enabled_disabled_my_items_resell_retail,test_lury_t2245_consumer_7_2_other_items_enabled_disabled_resell_retail,test_lury_t4006_allow_use_in_all_resale_posts_coupon_provide_by_merchant_or_promoter,test__7557782__Lury_T4084_Verify_the_commission_charge_and_earnings_for_wholesale_mode_after_partial_refund_the_order,test__7551337__Lury_T4172_From_HUI_Verify_the_transaction_fee_is_correct_with_different_listing_type_and_commission_mode,test_lury_t4483_verify_consumer_can_purchase_event_product_and_check_transaction_fee,test_lury_t5003_t4807_t4574_test_qr_redemption_product_without_asking_pickup_time,test_lury_t5064_t4140_verify_the_event_coupon_can_be_used_for_all_events,test__7541878__Lury_T6429_Check_earnings_for_all_users_after_partial_and_full_refund_on_admin_tool,test_lury_t7799_check_processing_fee_if_using_two_coupon_that_allow_use_in_all_resale_posts,test_lury_t2670_verify_total_savings_is_equal_to_discount_coupon,test__7855343__Lury_T4782_T2795_guest_place_order_with_0_yuan_and_link_order_to_existing_account,test_lury_resell_verify_reveal_address_after_at_time_check_on_order_confirmation_page,test_lury_resell_verify_reveal_address_before_at_time_check_on_order_confirmation_page,test_lury_resell_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page,test_lury_resell_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page,test_lury_resell_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page,test_lury_verify_reveal_address_after_at_time_check_on_order_confirmation_page,test_lury_verify_reveal_address_before_at_time_check_on_order_confirmation_page,test_lury_verify_reveal_address_to_buyer_after_at_time_check_on_order_confirmation_page,test_lury_verify_reveal_address_to_buyers_before_at_check_address_on_order_confirmation_page,test_lury_verify_reveal_address_to_buyers_check_address_on_order_confirmation_page,test_lury_t4251_verify_in_person_delivery_method_product_should_be_marked_as_redeemed_automatically,test_lury_t4353_t4134_t4123_t4127_t5098_earnings_tax_rebate_ticket_refund_commission_rate,test_lury_t4861_verify_ticket_can_be_purchase_before_stop_selling_and_ticket_is_unavailable_after_stop_selling,test_lury_t5022_t5026_verify_check_in_expiration_time_on_checkout_page_and_order_confirmation_details,test_lury_t5313_verify_custom_fee_is_correct_in_sales_details_page_if_set_custom_fee,test_lury_t5408_verify_fee_is_not_displayed_if_ticekt_set_do_not_display_fees,test_lury_t5650_verify_no_fee_for_ticket_from_event_if_set_show_fee_breakdown_at_checkout_in_event,test__7543049__Lury_T3530_Check_total_revenue_and_total_earnings_after_partial_and_full_refund_on_admin_tool,test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_sold_by_venue_app,test_lury_kat_11581_verify_all_data_are_correct_in_event_report_if_the_products_in_the_order_from_different_event,test_lury_t5282_exclude_pear_us_venue_app_sales_from_sales_report,test_lury_t3781_and_t3687_wholesale_commission_and_affiliate_link,test_lury_t5543_allow_use_in_all_co_sellers_post_coupon_code_can_use_in_direct_affiliate_post,test__8091284__Lury_T4579_T4590_T4593_T4708_Verify_partner_can_share_revenue_to_other_account_on_store_settings,test_lury_t4697_t4700_verify_partner_release_schedule_general_product,test_lury_t4701_t4697_verify_partner_and_co_seller_release_schedule_ticket,test_lury_t5426_verify_sales_report_in_sales_completed_page --run-label Lury -v 
+2026-09-21T06:07:35.1866842Z 
+2026-09-21T06:07:35.1867153Z Report  : results/runs/<timestamp>_lury/  (summary.md / junit.xml / http.log)
+2026-09-21T06:07:35.1867527Z 
+2026-09-21T06:07:35.1885324Z ##[error]Process completed with exit code 1.
+2026-09-21T06:07:35.1905167Z ##[group]Run python tools/ci_report.py --step-summary
+2026-09-21T06:07:35.1905402Z [36;1mpython tools/ci_report.py --step-summary[0m
+2026-09-21T06:07:35.1934310Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:07:35.1934459Z env:
+2026-09-21T06:07:35.1934573Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:07:35.1934939Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:07:35.1935065Z   API_ENV: Release
+2026-09-21T06:07:35.1935216Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.1935453Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:07:35.1935672Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.1935873Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.1936078Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.1936284Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:07:35.1936456Z ##[endgroup]
+2026-09-21T06:07:35.2317018Z [ci_report] 发现 2 个套件结果: linda(20260921_060325_linda), lury(20260921_060516_lury)
+2026-09-21T06:07:35.2318177Z [ci_report] 已写入 Job Summary: /home/runner/work/_temp/_runner_file_commands/step_summary_a7aad085-764d-49c3-98f9-b7f9c80703e1
+2026-09-21T06:07:35.2493051Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-21T06:07:35.2493712Z ##[group]Run actions/upload-artifact@v4
+2026-09-21T06:07:35.2493856Z with:
+2026-09-21T06:07:35.2493962Z   name: api-run-logs-7
+2026-09-21T06:07:35.2494199Z   path: test_case/API auto script/linda.log
+test_case/API auto script/lury.log
+test_case/API auto script/results/
+
+2026-09-21T06:07:35.2494456Z   retention-days: 14
+2026-09-21T06:07:35.2494572Z   if-no-files-found: ignore
+2026-09-21T06:07:35.2494695Z   compression-level: 6
+2026-09-21T06:07:35.2494808Z   overwrite: false
+2026-09-21T06:07:35.2494936Z   include-hidden-files: false
+2026-09-21T06:07:35.2495059Z env:
+2026-09-21T06:07:35.2495168Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:07:35.2495545Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:07:35.2495660Z   API_ENV: Release
+2026-09-21T06:07:35.2495804Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.2496029Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:07:35.2496246Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.2496441Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.2496638Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:35.2496835Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:07:35.2497000Z ##[endgroup]
+2026-09-21T06:07:35.3605989Z (node:2093) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-21T06:07:35.3607775Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-21T06:07:35.3920904Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-09-21T06:07:35.3922752Z The least common ancestor is /home/runner/work/Pear-automation-test/Pear-automation-test/test_case/API auto script. This will be the root directory of the artifact
+2026-09-21T06:07:35.3923516Z With the provided path, there will be 20 files uploaded
+2026-09-21T06:07:35.3924141Z Artifact name is valid!
+2026-09-21T06:07:35.3924456Z Root directory input is valid!
+2026-09-21T06:07:35.6452618Z Beginning upload of artifact content to blob storage
+2026-09-21T06:07:35.7040414Z (node:2093) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-21T06:07:36.0472380Z Uploaded bytes 438172
+2026-09-21T06:07:36.0907437Z Finished uploading artifact content to blob storage!
+2026-09-21T06:07:36.0908107Z SHA256 digest of uploaded artifact zip is 3740e906818d443aab44fff1ec5b57c5a8c0d1e9db301d1037105c9ee575279d
+2026-09-21T06:07:36.0909606Z Finalizing artifact upload
+2026-09-21T06:07:36.3012346Z Artifact api-run-logs-7.zip successfully finalized. Artifact ID 10624254423
+2026-09-21T06:07:36.3021355Z Artifact api-run-logs-7 has been successfully uploaded! Final size is 438172 bytes. Artifact ID is 10624254423
+2026-09-21T06:07:36.3032507Z Artifact download URL: https://github.com/bosinc/Pear-automation-test/actions/runs/35566809130/artifacts/10624254423
+2026-09-21T06:07:36.3116274Z ##[group]Run python tools/ci_report.py --slack
+2026-09-21T06:07:36.3116471Z [36;1mpython tools/ci_report.py --slack[0m
+2026-09-21T06:07:36.3144462Z shell: /usr/bin/bash -e {0}
+2026-09-21T06:07:36.3144592Z env:
+2026-09-21T06:07:36.3144702Z   SLACK_NOTIFY_ENABLED: true
+2026-09-21T06:07:36.3144976Z   SLACK_WEBHOOK_URL: ***
+2026-09-21T06:07:36.3145096Z   API_ENV: Release
+2026-09-21T06:07:36.3145248Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:36.3145605Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib/pkgconfig
+2026-09-21T06:07:36.3145823Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:36.3146028Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:36.3146225Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.16/x64
+2026-09-21T06:07:36.3146425Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.16/x64/lib
+2026-09-21T06:07:36.3146595Z ##[endgroup]
+2026-09-21T06:07:36.9824954Z [ci_report] 发现 2 个套件结果: linda(20260921_060325_linda), lury(20260921_060516_lury)
+2026-09-21T06:07:36.9825504Z [ci_report] Slack 已发送：HTTP 200 ok
+2026-09-21T06:07:36.9968969Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-21T06:07:36.9969633Z Post job cleanup.
+2026-09-21T06:07:37.0507760Z [command]/usr/bin/git version
+2026-09-21T06:07:37.0537653Z git version 2.55.0
+2026-09-21T06:07:37.0560328Z Temporarily overriding HOME='/home/runner/work/_temp/0e4d4f72-3149-445e-8054-250e4defe8e1' before making global git config changes
+2026-09-21T06:07:37.0561134Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-21T06:07:37.0563755Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Pear-automation-test/Pear-automation-test
+2026-09-21T06:07:37.0595545Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-21T06:07:37.0621136Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-21T06:07:37.0836460Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-21T06:07:37.0859110Z http.https://github.com/.extraheader
+2026-09-21T06:07:37.0874114Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-21T06:07:37.0891361Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-21T06:07:37.1065735Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-21T06:07:37.1088639Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-21T06:07:37.1359815Z Cleaning up orphan processes
+2026-09-21T06:07:37.1522139Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-python@v5, actions/upload-artifact@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

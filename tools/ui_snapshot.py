@@ -170,8 +170,10 @@ def _resolve_cookie_path(env: str, account: str = "main") -> Optional[str]:
     suffix = account_suffix_map.get(account, f"_{account}")
     filename = prefix + suffix + ".json"
 
+    # Mirror of tools/paths.py:UI_TEST_DIR. A stray extra "UI" here pointed at a
+    # non-existent dir, so the KB snapshot always fell back to "no cookie".
     cookie_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "test_case", "UI", "Test_Katana"
+        os.path.dirname(os.path.abspath(__file__)), "..", "test_case", "UI"
     )
     path = os.path.join(cookie_dir, filename)
     if os.path.exists(path):
