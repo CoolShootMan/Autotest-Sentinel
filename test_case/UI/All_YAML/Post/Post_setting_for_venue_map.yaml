@@ -850,10 +850,12 @@ testT3779_venue_map:
     description: "Create an auto-applied coupon on the venue-map post"
     test_step:
         # Step 1: Navigate to the venue-map event (the coupon is created on ITS post)
+        # [2026-10-13] event switched to 12061-phase2-auto-event (same as T2515/T4955;
+        # the old event-for-UI-auto-venue-map post has an empty seat map).
         open: "{BASE_URL}/events"
         sleep_step: 5000
 
-        R_click_my_event: { locator: "text=event-for-UI-auto-venue-map", exact: true, index: 0 }
+        R_click_my_event: { locator: "text=12061 phase2 auto event", exact: true, index: 0 }
         sleep_step: 4000
 
         # Step 2: Scroll down to reveal post card
@@ -868,10 +870,7 @@ testT3779_venue_map:
         # [UI drift 2026-08-31] "View post" button removed (Post tab shows post directly)
         sleep_step: 4000
 
-        # Step 3: Switch to Coupons sub-tab (Promotion merged into Coupons in new UI)
-        R_click_selling_tab: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
+        # Step 3: Coupons tab (Selling no longer needed; Coupons is reachable directly)
         R_click_coupons_tab: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
@@ -939,33 +938,40 @@ testT3767_venue_map:
     guest: true
     description: "Verify auto-applied coupon 'autotest3779' applies at guest checkout (venue-map post)"
     test_step:
-        # Step 1: [2026-10-10 user fix] ALL venue-map cases use the designated post
-        # event-for-ui-auto-venue-map — T3779 creates the coupon THERE (Selling → Coupons),
-        # yet this case still opened the old "verify-auto-coupon-apply" post copied from
-        # Post_setting.yaml. Rewritten to the GA01 seat flow on the designated post.
-        open: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
-        sleep_after_open: 5000
+        # Step 1: [2026-10-13] switched to 12061-phase2-auto-event post (same seat map as
+        # T2515/T4955; the old event-for-ui-auto-venue-map post has an empty seat map).
+        # T3779 creates the auto-applied coupon on THIS post (Selling → Coupons).
+        open: "{BASE_URL}/autotestshop/post/12061-phase2-auto-event"
+        sleep_after_open: 6000
 
-        # Step 2: GA01 seat purchase (hardened recipe, see T3683)
-        R_click_buy_ticket_ga01: { role: 'button', name: 'General Admission 01', index: 0 }
-        wait_select_dialog_loaded: { text: "Please select tables in the map", timeout: 20000 }
-        R_click_select_table: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', index: 0 }
-        wait_table_selected: { text: "table selected", timeout: 8000 }
-        R_click_buy_now: { role: 'button', name: 'Buy now', timeout: 10000 }
+        # Step 2: Open the venue map drawer (the post's seat-map entry button)
+        R_click_drawer: { role: "button", name: "Show venue map drawer" }
+
+        # Step 3: Wait until the seat circles actually render
+        wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
+
+        # Step 4: Select 1 $80 inside seat (KAT-12263 fixed, same flow as T4955)
+        smart_seat_click_1: { target: 1, stroke: "#E9803D" }
+
+        # Step 5: Add to cart (button reads "Update cart" when cart already holds items)
+        R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
+        sleep_step: 2000
+
+        # Step 6: Checkout — new two-step dialog, coupon row is visible on step 1
+        R_click_checkout: { locator: 'button:has-text("Checkout")' }
         sleep_step: 3000
 
-        # Step 3: on /checkout?postId=... the auto coupon row shows its display title
+        # Step 7: The auto coupon row shows its display title on the checkout dialog
         verify_coupon_exists: { text: "autotest3779", timeout: 10000 }
         sleep_step: 500
 
-        # Step 4: [2026-10-12 two-step dialog] Continue is the dialog step-1 CTA and ALSO
-        # fires the async /order/checkout/express session — waits + settle sleep + order
-        # retry below guard against the 400 "Need to call POST /order/checkout first" race
-        # (the CI failure mode). See T3683 for the full rationale.
-        R_click_continue: { role: "button", name: "Continue", timeout: 15000 }
+        # Step 8: The 100% coupon makes the order FREE — the checkout dialog shows a
+        # plain "Continue" (no "Continue with credit card" CTA, since no payment method
+        # is needed). Clicking it expands the Contact form.
+        R_click_continue_cc: { role: "button", name: "Continue" }
         wait_place_order_visible: { text: "Place order", timeout: 20000 }
 
-        # Step 5: Fill Contact info
+        # Step 9: Fill Contact info
         fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'autoTest' }
         sleep_step: 500
         fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'User' }
@@ -975,21 +981,12 @@ testT3767_venue_map:
         fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
         sleep_step: 500
 
-        # Step 6: Place order — the 100% coupon makes the total Free, so the Stripe fields
-        # are ABSENT (fill_stripe_iframe warns + continues). Settle sleep lets the express
-        # session finish; the retry covers the 400 "Need to call POST /order/checkout first"
-        # race, and RSVP covers any remaining free-order label variation.
-        fill_stripe_iframe:
-            card_number: '4242424242424242'
-            expiry: '02/45'
-            cvc: '345'
-            card_name: 'linda 4650'
-            zipcode: '90021'
+        # Step 10: Place order — the 100% coupon makes the total Free, so no Stripe
+        # payment fields exist at all. Place order fires once; retries/RSVP fallback
+        # were legacy 400-race workarounds and are not needed on the free-order path.
         sleep_step: 8000
         R_click_place_order: { role: "button", name: "Place order", optional: true }
         sleep_step: 5000
-        R_click_place_order_retry: { role: "button", name: "Place order", optional: true }
-        R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
         wait_for_url: { url: "*order*", timeout: 15000 }
         sleep_step: 2000
 
@@ -1009,7 +1006,8 @@ testT3767_venue_map:
         open: "{BASE_URL}/events"
         sleep_step: 5000
 
-        R_click_my_event: { locator: "text=event-for-UI-auto-venue-map", exact: true, index: 0 }
+        # [2026-10-13] event switched to 12061-phase2-auto-event
+        R_click_my_event: { locator: "text=12061 phase2 auto event", exact: true, index: 0 }
         sleep_step: 4000
 
         # Step 2: Scroll down to reveal post card
@@ -1024,19 +1022,21 @@ testT3767_venue_map:
         # [UI drift 2026-08-31] "View post" button removed (Post tab shows post directly)
         sleep_step: 4000
 
-        R_click_selling_tab_td: { role: 'tab', name: 'Selling' }
-        sleep_step: 1500
-
+        # [2026-10-13] Selling no longer needed; Coupons is reachable directly
         R_click_coupons_tab_td: { role: 'tab', name: 'Coupons' }
         sleep_step: 1500
 
-        # Step 1: Click Edit icon to open coupon edit mode
-        click_edit_coupon: { locator: '[data-testid="enhance-button"]', index: 1 }
-        sleep_step: 1000
+        # Step 1: Click the Edit (pencil) icon on the coupon card to open "Edit a coupon".
+        # [2026-10-13] copied from Post_setting.yaml T3767: the coupon card icons are
+        # enhance-buttons Copy / Edit / Redemption Stats. Do NOT use an index — the first
+        # 6 enhance-buttons (Content/Style/Settings/Tools/Customize/Change cover) are
+        # hidden DOM copies, so index 1 resolves to "Style".
+        click_edit_coupon: { locator: '[data-testid="enhance-button"][aria-label="Edit"]' }
+        sleep_step: 2500
 
-        # Step 2: Click Delete icon to delete the coupon
-        R_click_delete_coupon: { locator: '[data-testid="enhance-button"]', index: 7 }
-        sleep_step: 1000
+        # Step 2: Click the Delete icon (only rendered once the edit panel is open)
+        R_click_delete_coupon: { locator: '[data-testid="enhance-button"][aria-label="Delete"]' }
+        sleep_step: 1500
 
         # Step 3: Confirm delete
         smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 3000 }
