@@ -13158,6 +13158,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "ticketType": "TICKET_TYPE_STANDARD",
             "title": "inside seat with 80",
             "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
             "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
             "variants": [{"inventoryQuantity": 4, "ticketPrice": 71, "price": "80", "fees": 9, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 9, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 9}}]
         },
@@ -13166,6 +13167,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "ticketType": "TICKET_TYPE_STANDARD",
             "title": "inside seat with 100",
             "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
             "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
             "variants": [{"inventoryQuantity": 43, "ticketPrice": 89, "price": "100", "fees": 11, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 11, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 11}}]
         },
