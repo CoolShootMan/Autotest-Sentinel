@@ -39,6 +39,7 @@ from playwright.sync_api import (
 )
 from slugify import slugify
 import re
+import uuid
 
 # Load .env file from project root
 load_dotenv(os.path.join(BASE_DIR, ".env"))
@@ -325,6 +326,16 @@ def context(
                     if c.get("name") in non_auth_names
                 ]
                 if guest_cookies:
+                    # Guest runs must not inherit the previous run's identity: the
+                    # per-customer purchase limit and the server-side cart are keyed to
+                    # release_katana_visitor_id, so a stable id makes a case such as
+                    # testT2515_VerifyDisabled_WithVariant fail on its second run (the
+                    # first run consumes the whole limit). A new context is a new browser,
+                    # so mint a fresh visitor id per run. vanity_url, consent and
+                    # analytics cookies still come from the storage state for routing.
+                    for _cookie in guest_cookies:
+                        if _cookie.get("name", "").endswith("katana_visitor_id"):
+                            _cookie["value"] = str(uuid.uuid4())
                     context.add_cookies(guest_cookies)
                     logger.info(
                         f"GUEST MODE: injected {len(guest_cookies)} non-auth "
@@ -366,6 +377,9 @@ def context(
                     // requirements and doesn't crop or stretch 1:1 videos like Ticket_C.y4m
                     if (v.width) delete v.width;
                     if (v.height) delete v.height;
+                    if (v.frameRate && (v.frameRate.min || v.frameRate.max)) {
+                        v.frameRate = { ideal: v.frameRate.ideal || 30 };
+                    }
                     constraints = { ...constraints, video: v };
                 }
                 return _original(constraints);
@@ -456,36 +470,47 @@ def context(
 
 
 # --- Fake webcam video for camera-permission flows ---
-# (merged from the former repo-root conftest; BASE_DIR below already resolves
-# to the repo root via the walk-up above, where data/*.y4m lives)
+def _generate_scanner_y4m(y4m_path, qr_text="3329635", width=320, height=240, qr_size=160):
+    """Generate a y4m video with a QR code centered on a white canvas."""
+    import qrcode
+    import cv2
+    import numpy as np
+
+    os.makedirs(os.path.dirname(y4m_path), exist_ok=True)
+
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(qr_text)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+
+    canvas = np.full((height, width, 3), 255, dtype=np.uint8)
+    qr_resized = cv2.resize(np.array(qr_img), (qr_size, qr_size))
+    y_off = (height - qr_size) // 2
+    x_off = (width - qr_size) // 2
+    canvas[y_off:y_off+qr_size, x_off:x_off+qr_size] = qr_resized
+
+    yuv = cv2.cvtColor(canvas, cv2.COLOR_BGR2YUV_I420)
+    with open(y4m_path, "wb") as f:
+        f.write(b"YUV4MPEG2 W%d H%d F30:1 Ip C420mpeg2\n" % (width, height))
+        for _ in range(150):
+            f.write(b"FRAME\n")
+            f.write(yuv.tobytes())
+    logger.info(f"Generated scanner y4m: {y4m_path} (QR={qr_text})")
+
+
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
-    # Default to the trimmed small video to prevent OOM
-    y4m_name = "Ticket_Small.y4m"
-
-    # Fallback to Ticket_C.y4m if small one doesn't exist
-    if not os.path.exists(os.path.join(BASE_DIR, "data", y4m_name)):
-        y4m_name = "Ticket_C.y4m"
-    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "master")
-    if worker_id != "master":
-        # Extract index from 'gw0', 'gw1' etc.
-        try:
-            worker_idx = int(re.sub(r'\D', '', worker_id)) + 1
-            worker_y4m = f"Ticket_{worker_idx}.y4m"
-            if os.path.exists(os.path.join(BASE_DIR, "data", worker_y4m)):
-                y4m_name = worker_y4m
-                logger.info(f"WORKER_ISOLATION: Worker {worker_id} using dedicated video: {y4m_name}")
-        except Exception as e:
-            logger.warning(f"Failed to determine worker-specific video: {e}")
-
-    y4m_path = os.path.join(BASE_DIR, "data", y4m_name).replace("\\", "/")
-    logger.info(f"Y4M_LOAD_PATH: {y4m_path}")
+    # Default scanner QR code. Set SCAN_QR_CODE env var to override (e.g. for NotRecognized).
+    scanner_qr = os.environ.get("SCAN_QR_CODE", "3329635")
+    y4m_path = "/tmp/pear_data/Ticket_Small.y4m"
+    _generate_scanner_y4m(y4m_path, qr_text=scanner_qr)
 
     return {
         **browser_type_launch_args,
         "args": [
             "--use-fake-ui-for-media-stream",
             "--use-fake-device-for-media-stream",
+            f"--use-file-for-fake-video-capture={y4m_path}",
             "--window-size=600,1100",
             "--start-maximized",
             "--disable-translate",

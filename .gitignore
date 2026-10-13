@@ -10,6 +10,7 @@ build/
 
 # === Virtual Environment ===
 venv/
+venv310/
 .venv/
 env/
 
@@ -198,6 +199,8 @@ data/figma_screenshots/
 data/*_test_cases.json
 data/*_raw.json
 data/figma_*/
+# 线上现状勘查截图（jira-ones-testflow Step 1.6 产出）只留本地；同名 md 报告 data/<TICKET>_recon.md 可入库
+data/recon_*/
 data/figma_analysis_*.md
 data/figma_nodes_raw.json
 data/ones_*.png
@@ -244,7 +247,14 @@ run.log
 # 没必要把每轮快照都提交（仓库会随每张票膨胀）。
 ui_snapshots/
 
-# === Verification evidence screenshots (large, per-run; text deliverables ARE tracked) ===
-# data/verify/<KEY>/ 下的 report.md / path_map.md / ones_cases*.json / case_diff.* 要提交，
-# 但 57 张 PNG 单票就有 16MB —— 截图证据请附到 Jira 票里，别塞进仓库。
-data/verify/**/*.png
+# === Verification evidence (large, per-run; text deliverables ARE tracked) ===
+# 白名单制：verify 下默认全是探针/运行残留（2026-10-09 实测 500+ 文件），只放行
+# data/verify/<KEY>/ 里的四类正式产物（report.md / path_map.md / ones_cases*.json /
+# case_diff.*）；截图证据请附到 Jira 票里，别塞进仓库。
+data/verify/**
+!data/verify/**/
+!data/verify/**/report.md
+!data/verify/**/path_map.md
+!data/verify/**/ones_cases*.json
+!data/verify/**/case_diff.*
+data/ua_*.txt

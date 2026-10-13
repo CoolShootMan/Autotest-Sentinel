@@ -116,34 +116,63 @@ def _read_json(path: str):
 # ── 结果采集：UI 用例 ───────────────────────────────────────────────────────
 
 def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
-    """解析 allure-results 下最新一次运行的每个用例结果。
+    """解析 allure-results 下每个用例结果。
 
-    Returns:
-        (结果目录, 用例列表, 状态计数)。目录缺失时返回 (None, [], {})。
+    只扫描主运行的时间戳子目录（allure-results/<YYYYMMDD_HHMMSS>/），
+    排除 notrecog/ 等单独调试跑的目录，保证与 allure report 一致。
     """
-    dirs = sorted(glob.glob(os.path.join(allure_root, "*/")))
-    if not dirs:
-        return None, [], {}
-    latest = max(dirs, key=os.path.getmtime)
-
     rows: list[dict] = []
     counts: dict[str, int] = {}
-    for fp in glob.glob(os.path.join(latest, "*-result.json")):
+    by_name: dict[str, dict] = {}  # dedup by test name, keep latest/best result
+
+    # 找到最新的时间戳子目录（格式: YYYYMMDD_HHMMSS），排除 notrecog 等调试目录
+    timestamp_dirs = sorted(
+        [d for d in glob.glob(os.path.join(allure_root, "*/"))
+         if os.path.basename(d.rstrip("/")).startswith(("20",)) and "_" in os.path.basename(d.rstrip("/"))],
+        reverse=True,
+    )
+    if timestamp_dirs:
+        scan_dir = timestamp_dirs[0]  # 最新的主运行目录
+    else:
+        scan_dir = allure_root  # fallback: 根目录
+
+    patterns = [
+        os.path.join(scan_dir, "*-result.json"),
+    ]
+    fps: list[str] = []
+    for pat in patterns:
+        fps.extend(glob.glob(pat))
+    for fp in fps:
         data = _read_json(fp)
         if not isinstance(data, dict):
             continue
         status = data.get("status") or "unknown"
-        counts[status] = counts.get(status, 0) + 1
         start, stop = data.get("start"), data.get("stop")
         duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
-        rows.append({
-            "name": _md_escape(data.get("name") or "(未命名用例)", 160),
+        name = _md_escape(data.get("name") or "(未命名用例)", 160)
+        entry = {
+            "name": name,
             "status": status,
             "duration": duration,
             "reason": _first_line(data.get("statusDetails")),
-        })
+        }
+        # If same test appears multiple times (rerun/parallel), keep the one
+        # with the "worst" status (failed > broken > passed) but later start time
+        if name in by_name:
+            old = by_name[name]
+            old_rank = STATUS_ORDER.get(old["status"], 9)
+            new_rank = STATUS_ORDER.get(status, 9)
+            if new_rank < old_rank:  # worse status wins
+                by_name[name] = entry
+        else:
+            by_name[name] = entry
+    rows = list(by_name.values())
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
     rows.sort(key=lambda r: (STATUS_ORDER.get(r["status"], 9), r["name"]))
-    return latest, rows, counts
+    if not rows:
+        return None, [], {}
+    return scan_dir, rows, counts
 
 
 # ── 结果采集：API 预制 ──────────────────────────────────────────────────────
@@ -595,6 +624,10 @@ def build_outputs(args: argparse.Namespace) -> list[str]:
     rate, executed = _pass_rate(ui_counts)
     result_dir = os.path.basename((d["allure_dir"] or "").rstrip("/"))
     pytest_sum = d["pytest_sum"]
+    # failed_count = UI failed + broken + prefill failures（直接从 counts 取，
+    # 不依赖 names 长度——fallback 到 pytest log 时 rows 为空但 counts 有值）
+    failed_total = (ui_counts.get("failed", 0) + ui_counts.get("broken", 0)
+                     + len(d["prefill_failed"]))
     return [
         f"pass_rate={'' if rate is None else f'{rate:.1f}'}",
         f"executed={executed}",
@@ -602,7 +635,7 @@ def build_outputs(args: argparse.Namespace) -> list[str]:
         f"failed={ui_counts.get('failed', 0)}",
         f"broken={ui_counts.get('broken', 0)}",
         f"skipped={ui_counts.get('skipped', 0)}",
-        f"failed_count={len(names)}",
+        f"failed_count={failed_total}",
         f"failed_names={','.join(names)[:900]}",
         f"prefill_failed={len(d['prefill_failed'])}",
         f"pytest_summary={'' if not pytest_sum else pytest_sum['line'][:200]}",

@@ -67,6 +67,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r venv_requirements.txt
+          pip install qrcode opencv-python numpy
       - name: Install Playwright Chromium
         run: python -m playwright install --with-deps chromium
       - name: Print environment info (debug)
@@ -88,12 +89,24 @@ jobs:
           set -o pipefail
           python test_case/UI/main.py 2>&1 | tee run.log
           _rc=${PIPESTATUS[0]}
-          # 失败用例不作为步骤失败：真实结果已完整落盘（allure-results / Job Summary /
-          # artifacts / Slack）。按项目规则「执行完毕且结果如实记录即成功」，这里显式以 0
-          # 退出，避免运行页 Annotations 出现红色 "Process completed with exit code 1"。
-          echo "[ci] main.py exit code = ${_rc}（已记录，不改变步骤结论）"
           echo "suite_exit_code=${_rc}" >> "$GITHUB_OUTPUT"
           exit 0
+      - name: Run NotRecognized test (QR=9329611)
+        continue-on-error: true
+        env:
+          CI: "true"
+          BASE_URL: https://release.pear.us
+          SCAN_QR_CODE: "9329611"
+        run: |
+          # Pre-generate y4m with QR=9329611 (conftest may not fire in sub-process)
+          python -c "
+          import sys; sys.path.insert(0, 'test_case/UI')
+          from conftest import _generate_scanner_y4m
+          _generate_scanner_y4m('/tmp/pear_data/Ticket_Small.y4m', qr_text='9329611')
+          "
+          cd test_case/UI
+          python -m pytest . --tb=short --yaml="All_YAML/Events/Scanner.yaml" -k "NotRecognized" --alluredir=../../allure-results/notrecog 2>&1 | tee -a ../../run.log
+          cd ../..
       - name: Locate result directories
         if: always()
         id: locate

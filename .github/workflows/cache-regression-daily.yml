@@ -140,7 +140,7 @@ jobs:
               m = re.search(r'违规接口数（预热后仍读 DB）：(\d+)', text)
               if m: violations = m.group(1)
               m = re.search(r'未验证接口数（无实例二次读取样本）：(\d+)', text)
-              if m: unverified = m.group(1)
+              unverified = m.group(1) if m else "0"
               m = re.search(r'BE 已知缺口（已确认后端问题，见专章）：(\d+)', text)
               if m: be_gaps = m.group(1)
 

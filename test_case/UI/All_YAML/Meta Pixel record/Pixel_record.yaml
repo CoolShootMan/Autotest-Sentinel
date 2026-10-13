@@ -1,0 +1,90 @@
+# ==============================================================================
+# Test Case: T2718 Verify Meta Pixel fires on post page checkout flow
+# Ticket: KAT-4769 Usability — partners can config Meta Pixel and Google Analytics
+# Priority: P0
+# Module: End to end / Post / FB Pixel ID
+# Maintainer: YuXiao Zhu
+# Auth: lindazhou
+#
+# Post URL: https://mehost.cn/post/automation-test-for-meta-pixel-record
+# Pixel IDs: 5646548948, 789456123
+# ==============================================================================
+
+testT2718:
+    description: "Verify Meta Pixel fires through checkout: PageView, AddToCart, InitiateCheckout, Purchase"
+    pre_condition:
+        description: "Open the public post page"
+        expect_result: "Post page loads, Meta Pixel script loaded"
+        test_step:
+            open_post:
+                open: "https://mehost.cn/post/automation-test-for-meta-pixel-record"
+            sleep_open: 8000
+
+    test_step:
+        # Step 1: Verify Meta Pixel base script loaded
+        execute_js_check_pixel_script:
+            script: "() => document.querySelectorAll('script[src*=\"connect.facebook.net\"]').length > 0 ? 'pixel_loaded' : 'pixel_missing'"
+            assert_contains: 'pixel_loaded'
+
+        # Step 2: Hook fbq to record events + params into window._pixelLog
+        execute_js_hook_fbq:
+            script: "() => { window._pixelLog = []; const orig = window.fbq; window.fbq = function(...args) { if (args[0] === 'track') { window._pixelLog.push({event: args[1], params: args[2] || {}}); } return orig.apply(this, args); }; return 'hooked'; }"
+            assert_contains: 'hooked'
+
+        # Step 3: Verify fbq initialized
+        execute_js_verify_fbq_ready:
+            script: "() => typeof window.fbq === 'function' ? 'fbq_ready' : 'fbq_missing'"
+            assert_contains: 'fbq_ready'
+        sleep_after_fbq: 1000
+
+        # Step 4: Click "Buy Ticket" → opens ticket selection
+        R_click_buy_ticket: { locator: "{{@btn_buy_ticket}}" }
+        sleep_after_buy_ticket: 5000
+
+        # Step 5: Click "Continue with credit card" → AddToCart + InitiateCheckout
+        R_click_continue: { locator: "{{@btn_continue_card}}" }
+        sleep_after_continue_card: 6000
+
+        execute_js_verify_addtocart:
+            script: "() => JSON.stringify(window._pixelLog.filter(e => e.event === 'AddToCart').map(e => ({value: e.params.value, currency: e.params.currency})))"
+            assert_contains: '"value":11.98'
+
+        execute_js_verify_initiatecheckout:
+            script: "() => JSON.stringify(window._pixelLog.filter(e => e.event === 'InitiateCheckout').map(e => ({value: e.params.value, currency: e.params.currency})))"
+            assert_contains: '"value":11.98'
+        sleep_after_verify_ic: 1000
+
+        # Step 7: Fill Contact info directly on checkout page
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'auto' }
+        sleep_fn: 500
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Guest' }
+        sleep_ln: 500
+        fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+        sleep_ph: 500
+        fill_email: { locator: 'input[name="contact.email"]', value: 'linda.zhou.ext+10@1m.app' }
+        sleep_em: 500
+
+        # Step 8: Fill Credit Card information (Stripe iframe)
+        fill_stripe_iframe:
+            card_number: '4242424242424242'
+            expiry: '02/45'
+            cvc: '345'
+            card_name: 'linda 4650'
+            zipcode: '90021'
+        sleep_card: 3000
+
+        # Step 9: Place Order → Purchase + AddPaymentInfo fires on submit
+        R_click_place_order: { role: 'button', name: 'Place order' }
+        sleep_place_order: 8000
+
+        execute_js_verify_addpaymentinfo:
+            script: "() => JSON.stringify(window._pixelLog.filter(e => e.event === 'AddPaymentInfo').map(e => ({value: e.params.value, currency: e.params.currency})))"
+            assert_contains: '"value":11.98'
+
+        # Step 10: Verify all 4 events captured with matching value=11.98 USD
+        execute_js_verify_all_events:
+            script: "() => JSON.stringify(window._pixelLog.map(e => ({event: e.event, value: e.params.value, currency: e.params.currency, num_items: e.params.num_items})))"
+            assert_contains: '"event":"Purchase","value":11.98'
+
+    expect_result:
+        description: "All pixel events fire correctly with matching value: InitiateCheckout, AddPaymentInfo, Purchase"

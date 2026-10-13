@@ -114,15 +114,17 @@ def test_linda_t3024_verify_multiple_subdomain_point_to_the_same_shop_go_visit_s
     """Apifox case #5451512: Linda_T3024_Verify_multiple_subdomain_point_to_the_same_shop_go_visit_success"""
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
-    # step 1: notip.com.cn
-    _resp1 = ctx.api.external.list()
-    # step 2: notip.com.cm/promoter
-    _resp2 = ctx.api.external.lindazhou_curator()
-    # step 3: notip.com.cn/promoter/postdetail
-    _resp3 = ctx.api.misc.linda_post_lindapromoter()
-    # step 4: suddomain
-    _resp4 = ctx.api.misc.list()
-    # step 5: subdomain post detail
-    _resp5 = ctx.api.posts.tiubyg()
-    # step 6: subdomain/promoter/postdetail
-    _resp6 = ctx.api.external.demi_release_post_538yja()
+    for _i, (_name, _call) in enumerate([
+        ("step1 release.notip.com.cn", ctx.api.external.list),
+        ("step2 /lindazhouCurator", ctx.api.external.lindazhou_curator),
+        ("step3 pear.us/linda/post/lindapromoter", ctx.api.misc.linda_post_lindapromoter),
+        ("step4 mehost.cn", ctx.api.misc.list),
+        ("step5 mehost.cn/post/tiubyg", ctx.api.posts.tiubyg),
+        ("step6 /demi-release/post/538yja", ctx.api.external.demi_release_post_538yja),
+    ], start=1):
+        _resp = _call()
+        assert _resp.status_code == 200, f"{_name}: status != 200, got {_resp.status_code}"
+        _ct = _resp.headers.get("Content-Type", "")
+        assert "text/html" in _ct, f"{_name}: Content-Type != text/html, got {_ct}"
+        _body = _resp.text
+        assert "katana" in _body, f"{_name}: body missing 'katana'"

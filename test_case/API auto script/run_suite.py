@@ -48,16 +48,46 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Always run pytest with the managed venv python (OpenSSL 3.x) to avoid the
+# Always run pytest with a Python >= 3.10 venv (OpenSSL 3.x) to avoid the
 # system python's LibreSSL SSL handshake failures against the API.
-_MANAGED = Path("/Users/a123456/.workbuddy/binaries/python/envs/default/bin/python")
+# Resolution order (2026-10-10 cross-platform fix; was a hardcoded macOS path):
+#   1. $MANAGED_PYTHON env var (explicit override)
+#   2. repo-local venv310/  (Windows Scripts\python.exe / POSIX bin\python)
+#   3. WorkBuddy managed venv ~/ .workbuddy/binaries/python/envs/default
+def _find_managed_python():
+    import os
+    env = os.environ.get("MANAGED_PYTHON")
+    if env and Path(env).exists():
+        return Path(env)
+    repo = Path(__file__).resolve().parents[2]
+    home = Path.home()
+    candidates = [
+        repo / "venv310" / "Scripts" / "python.exe",                       # Windows
+        repo / "venv310" / "bin" / "python",                               # macOS/Linux
+        home / ".workbuddy" / "binaries" / "python" / "envs" / "default" / "python.exe",
+        home / ".workbuddy" / "binaries" / "python" / "envs" / "default" / "bin" / "python",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
+_MANAGED = _find_managed_python()
 
 # This framework needs Python >= 3.10 (PEP 604 unions, pytest 9). macOS ships
 # /usr/bin/python3 = 3.9, and a bare `python run_suite.py` often resolves to it,
 # which crashes at import time with a cryptic
 # "unsupported operand type(s) for |: 'type' and 'NoneType'".
 # Re-exec under the managed interpreter so the command just works either way.
-if sys.version_info < (3, 10) and _MANAGED.exists():
+if sys.version_info < (3, 10) and _MANAGED is not None:
+    if os.name == "nt":
+        # Windows os.execv does not quote argv elements containing spaces, so
+        # ".../API auto script/run_suite.py" splits at the space and the child
+        # tries to open ".../API" (WinError 2). Delegate via subprocess instead
+        # and exit with the child's return code.
+        sys.exit(subprocess.run(
+            [str(_MANAGED), str(Path(__file__).resolve()), *sys.argv[1:]]
+        ).returncode)
     os.execv(
         str(_MANAGED),
         [str(_MANAGED), str(Path(__file__).resolve()), *sys.argv[1:]],
@@ -65,7 +95,8 @@ if sys.version_info < (3, 10) and _MANAGED.exists():
 if sys.version_info < (3, 10):
     sys.exit(
         f"需要 Python >= 3.10（当前 {sys.version.split()[0]}）。"
-        f"请用 {_MANAGED} 运行，或先安装 Python 3.10+。"
+        f"请先创建 venv310（见 run_suite.py 头部 _find_managed_python），"
+        f"或用 MANAGED_PYTHON=<python 路径> 指定一个 3.10+ 解释器。"
     )
 
 import case_index as ci  # noqa: E402
@@ -73,7 +104,7 @@ import case_index as ci  # noqa: E402
 ROOT = Path(__file__).parent
 SUITES_DIR = ROOT / "suites"
 
-PYTEST = str(_MANAGED) if _MANAGED.exists() else sys.executable
+PYTEST = str(_MANAGED) if _MANAGED else sys.executable
 
 
 def _load_yaml(path: Path) -> dict:

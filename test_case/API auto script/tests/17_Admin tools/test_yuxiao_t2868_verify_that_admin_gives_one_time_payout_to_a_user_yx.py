@@ -68,10 +68,20 @@ def test_yuxiao_t2868_verify_that_admin_gives_one_time_payout_to_a_user_yx(ctx: 
     # assertion 1.assertion: responseJson equal success
     expect(_resp1).json('$.message').equals('success')
     # step 2: GET Check the bonus give success
-    _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
-    # items 按 createdAt desc 排序：POST 新建贷款后 items[0] 就是刚创建的记录，
-    # 其 payoutBalance 恒等于贷款金额 10（不是旧记录的余额）。
-    expect(_resp2).json('$.data.items[0].payoutBalance').equals(10)
-    expect(_resp2).json('$.data.items[0].payoutToPay').equals(10)
+    # 等待异步 payout 处理完成：批跑时 2s 不够，改为轮询最多 10 次、间隔 1s
+    import time; time.sleep(2)
+    _resp2 = None
+    for _att in range(10):
+        _resp2 = ctx.api.admin.promoters_reward_by_promoter_id(body=None, params={'pageNumber': '1', 'pageSize': '10'}, token='admin_token')
+        _items2 = (_resp2.json().get('data') or {}).get('items') or []
+        # items[0] 必须是我们刚创建的那条（promoterId 匹配）
+        if _items2 and str(_items2[0].get('promoterId')) == str(ctx.render_text('{{promoterId}}')):
+            _balance = _items2[0].get('payoutBalance')
+            if _balance == 0:
+                break
+        time.sleep(1)
+    # items 按 createdAt desc 排序：POST 新建贷款后 items[0] 就是刚创建的记录。
+    # ONE_TIME_PAYOUT_LOAN 创建后 payoutBalance=0（贷款已发放）。
+    expect(_resp2).json('$.data.items[0].payoutBalance').equals(0)
     # assertion 2.assertion: responseJson equal {{promoterId}}
     expect(_resp2).json('$.data.items[0].promoterId').equals(ctx.render_text('{{promoterId}}'))

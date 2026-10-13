@@ -30,7 +30,7 @@ testT5442:
             sleep_step:                     2000
 
             verify_post_alias:
-                text: "auto-test-post-setting-t1742"
+                text: "auto-test-post-setting-case1742"
 
             R_click_edit_content: { locator: "button[aria-label='Content']" }
             sleep_step: 5000
@@ -106,7 +106,7 @@ VerifyGuest_testT5442:
     guest: true
     description: "Verify guest only sees original 3 tickets; new ticket/merch not visible"
     test_step:
-        open:                               "{BASE_URL}/autotestshop/post/auto-test-post-setting-t1742"
+        open:                               "{BASE_URL}/autotestshop/post/auto-test-post-setting-case1742"
         sleep_after_open:                   5000
 
         verify_page_loaded:
@@ -670,8 +670,10 @@ testT5440:
     sleep_after_remove_lineup: 500
 
     # 3d: Delete Event info component (date/time/location)
-    # NOTE: text from recording — "Thu Apr 17, 2053 8AMInstagram"
-    R_click_event_info: { text: "Thu Apr 17" }
+    # 2026-10-09: the info card now renders "Thu · Apr 17 · 2053" (middot
+    # separators, verified live); the old recording text "Thu Apr 17" is no
+    # longer a substring. Match on "Apr 17" (contains, exact=False default).
+    R_click_event_info: { text: "Apr 17" }
     sleep_after_info_click: 500
     R_click_delete_info: { role: "button", name: "Delete" }
     sleep_after_delete_info: 500

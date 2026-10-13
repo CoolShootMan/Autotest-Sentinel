@@ -372,21 +372,22 @@ testT4556:
         fill_address: { role: 'textbox', name: 'e.g. 123 Main St, Austin, TX', value: 'w' }
         sleep_after_address_fill: 1500
         R_click_address_option: { role: 'button', name: 'West Mound Street, Columbus,' }
-        R_click_calendar_icon: { locator: "[data-testid='calendar-line']", index: 0 }
-        R_click_date_30: { role: 'gridcell', name: '30' }
-        sleep_after_select_calender: 1000
-        R_click_calendar_icon_2: { locator: "[data-testid='calendar-line']", index: 0 }
-        R_click_time_option: { role: 'menuitem', name: '12:45 am' }
+        # 2026-09-30: calendar-line picker removed; date/time are now masked text
+        # inputs (Starts/Ends). fill_type types via real keyboard events (fill() is
+        # swallowed by the mask); step-1 CTA renamed to 'Continue to event flyer'.
+        fill_type_date: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: '12/30/2026' }
+        fill_type_time: { locator: "input[placeholder='hh:mm aa']", index: 0, value: '12:45 am' }
+        sleep_after_time_fill: 2000
+        R_click_continue_flyer: { locator: "button[data-testid='event-form-step-cta']", name: 'Continue to event flyer' }
         sleep_before_tickets: 2000
-        R_click_save_continue: { locator: "button[data-track-location]", name: 'Save and continue' }
-        sleep_before_tickets: 2000
-        R_click_save_tickets: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Tickets' }
+        R_click_continue_tickets: { role: 'button', name: 'Continue to Tickets' }
         fill_quantity: { placeholder: 'Quantity', value: '36' }
         fill_price: { locator: 'input[name="tickets.0.variants.0.ticketPrice"]', value: '82' }
         sleep_after_ticket_fill: 2000
-        R_click_save_lineup: { locator: "button[data-track-location]",  exact: True, name: 'Save and continue to Lineup' }
-        sleep_before_finish: 2000
-        R_click_finish: { role: 'button', name: 'Finish and create post' }
+        R_click_continue_lineup: { role: 'button', name: 'Continue to Lineup' }
+        sleep_before_finish: 6000
+        R_click_finish: { role: 'button', name: 'Create Event' }
+        sleep_after_finish: 3000
         R_click_view_st: { role: 'button', name: 'Go to event list' }
         sleep_after_view_st: 5000
         R_click_edit_event: { locator: 'div[data-testid="mui-stack"]', name: 'Test-event-Auto-archive' , exact: true}

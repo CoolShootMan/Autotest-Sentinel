@@ -430,6 +430,36 @@ def fill_numeric(page: Page, v: dict):
             return
     raise Exception(f"fill_numeric failed")
 
+def fill_type(page: Page, v: dict):
+    """Fill by real keyboard typing — for masked/segmented inputs (e.g. MUI DateField,
+    placeholder 'MMMM DD, YYYY') where locator.fill() is swallowed by the input mask
+    and silently degrades to today's date.
+
+    Sequence (same as fill_numeric, but WITHOUT the equality verification, because
+    masked fields normalize the display value, e.g. typed '12/30/2026' reads back
+    as 'Dec 30, 2026').
+
+    YAML:
+        fill_type_date: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: '12/30/2026' }
+        fill_type_time: { locator: "input[placeholder='hh:mm aa']", index: 0, value: '12:45 am' }
+    """
+    target_locator = v.get("locator")
+    target_value = str(v.get("value", ""))
+    index = v.get("index", 0)
+    if target_locator:
+        el = page.locator(target_locator).nth(index)
+    else:
+        el = page.get_by_placeholder(str(v.get("placeholder", "")), exact=False).nth(index)
+    el.wait_for(state="visible", timeout=v.get("timeout", 10000))
+    el.scroll_into_view_if_needed()
+    el.click(force=True)
+    page.keyboard.press("Control+A")
+    page.keyboard.press("Backspace")
+    page.keyboard.type(target_value, delay=v.get("delay", 80))
+    if v.get("enter", True):
+        page.keyboard.press("Enter")
+    page.wait_for_timeout(300)
+
 def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
     target_locator = v.get("locator")
@@ -854,10 +884,10 @@ def _smart_click_core(page: Page, v: dict):
     #    newest visible dialog: active_modal = visible_modals[-1], and when several dialogs are
     #    visible it can resolve to a dialog that does NOT contain the target -> every strategy
     #    above fails even though the item is plainly on the page.
-    #    CI 2026-09-20 实证（同一次 run、同一份代码）：T4866 的 Form 点击成功，而 T4860 的
-    #    **同一步骤**被限死在 dialog#2 上报 element not found —— 纯 DOM 顺序抖动。
-    #    这里在已有策略全部失败后再放开到整页找一次。属**纯增量**：只有上面已经失败才会走到，
-    #    因此对当前能通过的用例零影响。
+    #    CI evidence (2026-09-20, same run / same code): the Form click in T4859 passed while the
+    #    **same step** in T4860 got trapped in dialog#2 with "element not found" - pure DOM-order
+    #    jitter. This retry only fires after every earlier strategy has failed, so it is
+    #    **purely additive** and has zero impact on currently passing cases.
     if root is not page and target_role in ("menuitem", "option") and target_name:
         try:
             _el = page.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)
@@ -1416,21 +1446,35 @@ def test_invalid_qr(page: Page, v):
 
 def execute_not_recognized_scan(page: Page, v):
     """
-    Subprocess isolated action to verify 'Code Not Recognized'.
-    Bypasses Playwright video source limitations by launching a fresh browser.
+    Verify 'QR code is for a different event' by overwriting the fake camera y4m
+    with a wrong QR code and navigating to the scanner page in the existing browser.
+    Restores the correct y4m afterwards.
     """
-    logger.info(">>> Subprocess Isolation: Launching invalid QR scan...")
-    script_path = os.path.join(BASE_DIR, "tools", "run_invalid_qr.py")
-    result = subprocess.run(
-        [sys.executable, script_path],
-        capture_output=True,
-        text=True
-    )
-    if "SUCCESS" in result.stdout:
-        logger.info("Successfully verified 'Code Not Recognized' via subprocess")
-    else:
-        logger.error(f"Failed to verify Invalid QR scan. Output:\n{result.stdout}\nStderr:\n{result.stderr}")
-        raise AssertionError("Invalid QR scan failed in subprocess. Check logs for details.")
+    import shutil
+    sys.path.insert(0, os.path.join(BASE_DIR, "test_case", "UI"))
+    from conftest import _generate_scanner_y4m
+
+    correct_y4m = "/tmp/pear_data/Ticket_Small.y4m"
+    backup_y4m = "/tmp/pear_data/Ticket_Small_backup.y4m"
+    scanner_url = "https://s.pear.us/7DCjTz"
+
+    # Backup correct y4m and generate wrong QR
+    shutil.copy(correct_y4m, backup_y4m)
+    _generate_scanner_y4m(correct_y4m, qr_text="9329611")
+    logger.info(">>> Overwrote camera y4m with wrong QR (9329611)")
+
+    try:
+        # Navigate to scanner page
+        page.goto(scanner_url, wait_until="networkidle")
+        page.wait_for_timeout(12000)
+        page.get_by_text("QR code is for a different event").first.wait_for(
+            state="visible", timeout=20000
+        )
+        logger.info(">>> Verified: 'QR code is for a different event' displayed")
+    finally:
+        # Restore correct y4m
+        shutil.copy(backup_y4m, correct_y4m)
+        logger.info(">>> Restored correct camera y4m")
 
 
 def run_workflow_script(page: Page, v):

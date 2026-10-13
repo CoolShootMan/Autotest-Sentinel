@@ -351,7 +351,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
         _post = next((it for it in _items3 if it.get('title') == 'event-for-API-testing'), None)
         assert _post, "post 'event-for-API-testing' not found"
-        vars['postId'] = _post['id']
+        postId = _post["id"]
     except Exception as e:
         pytest.fail(f"step3 extract post: {e}")
     # step 4: GET get the event catalog id
@@ -462,32 +462,29 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     vars['productId'] = _j5['data']['id']
 
     # step 7: POST new ticket show in post
-    _resp7 = ctx.api.events.v2_show_in_post(event_id='{{event_id}}', body={
+    event_id = vars['event_id']
+    product_id = vars['productId']
+    _resp7 = ctx.api.events.v2_show_in_post(event_id=event_id, body={
         "productIds": [
-            "{{productId}}",
+            product_id,
         ],
         "posts": [
             {
-                "postId": "{{postId}}",
+                "postId": postId,
                 "isVisible": True,
             },
         ],
     }, token='yuxiao999_token')
     # assertion 7.assertion: responseJson equal 200
     expect(_resp7).json('$.code').equals('200')
-    # step 8: GET Catch the promoterProductvariantId（重试：related products 异步落地）
-    _prod8 = None
-    for _att8 in range(6):
-        _resp8 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
-        expect(_resp8).json('$.code').equals('200')
-        expect(_resp8).json('$.message').equals('success')
-        _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
-        _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
-        _prod8 = next((it for it in _prods if it.get('title') == 'auto testing with turn on multiple day pass'), None)
-        if _prod8 is not None:
-            break
-        time.sleep(3)
-    assert _prod8, f"step8 重试后仍找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}）"
+    # step 8: GET Catch the promoterProductvariantId
+    _resp8 = ctx.api.admin.post_v2_relate_products(post0_id=postId, body=None, token='admin_token')
+    expect(_resp8).json('$.code').equals('200')
+    expect(_resp8).json('$.message').equals('success')
+    _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
+    _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
+    _prod8 = next((it for it in _prods if 'multiple day pass' in (it.get('title') or '').lower()), None)
+    assert _prod8, f"step8 找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}, titles={[p.get('title') for p in _prods]}）"
     vars['promoterProductId'] = _prod8.get('displayVariantId')
     # step 9: Get consumer linda10 token
     # token auto-managed by framework (linda10_token)
@@ -508,13 +505,13 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
 
     # step 11: buy now
     _resp11 = ctx.api.orders.buy_now(body={
-        "postIdForFilter": "{{postId}}",
+        "postIdForFilter": postId,
         "updateCartItems": [
             {
                 "quantity": 1,
                 "promoterProductVariantId": "{{promoterProductId}}",
                 "price": 2,
-                "postId": "{{postId}}",
+                "postId": postId,
                 "selected": True,
                 "customFields": [],
             },
@@ -532,7 +529,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
             {
                 "quantity": 1,
                 "id": "{{productId}}",
-                "postId": "{{postId}}",
+                "postId": postId,
                 "price": 2,
                 "customFields": [],
             },

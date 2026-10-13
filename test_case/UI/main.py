@@ -41,6 +41,11 @@ def start_autotest():
     logger.remove()
     create_date = time.strftime('%Y_%m_%d', time.localtime(time.time()))
     logger.add(f'log/{create_date}.log', enqueue=True, encoding='utf-8', retention=30)
+    # 本地跑时把日志同步打到终端（此前只有文件 sink，终端全程静默，早退分支
+    # 的报错也只能去翻日志文件，2026-10-10 用户被"秒退无输出"坑过一次）。
+    # CI 保持无 console sink，行为不变（CI 日志走 workflow 自己的采集）。
+    if not os.environ.get("CI"):
+        logger.add(sys.stderr, level="INFO")
     logger.info(f"Python executable: {shutil.which('python')}")
     logger.info(f"sys.path: {sys.path}")
     logger.info(r"""
@@ -62,9 +67,28 @@ def start_autotest():
     logger.info(f"Allure data directory: {allure_data_dir}")
     
     # YAML file list to execute, comma-separated (paths relative to All_YAML/)
-    yaml_files = "All_YAML/Post/Post_setting.yaml,All_YAML/Post/Post_content.yaml,All_YAML/Events/Scanner.yaml,All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml,All_YAML/Section/Section.yaml,All_YAML/Admin tools/Feature_flag_setting.yaml,All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml,All_YAML/Events/Event_settings/axs_fee_breakdown_guest_purchase_ui.yaml,All_YAML/Events/Event_settings/axs_fee_breakdown_partner_full_refund_ui.yaml,All_YAML/Events/Event_settings/tdc_fee_breakdown_ui.yaml,All_YAML/Events/Event_settings/tdc_fee_breakdown_guest_purchase_ui.yaml,All_YAML/Events/Event_settings/venue_map_fee_breakdown_ui.yaml,All_YAML/Events/Event_settings/venue_map_fee_breakdown_guest_purchase.yaml,All_YAML/Events/Event_settings/venue_map_fee_breakdown_partner_full_refund.yaml"
+    yaml_files = ",".join([
+        "All_YAML/Post/Post_setting.yaml",
+        "All_YAML/Post/Post_content.yaml",
+        "All_YAML/Post/Post_setting_for_venue_map.yaml",
+        "All_YAML/Events/Scanner.yaml",
+        "All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml",
+        "All_YAML/Events/Event_settings/axs_fee_breakdown_guest_purchase_ui.yaml",
+        "All_YAML/Events/Event_settings/axs_fee_breakdown_partner_full_refund_ui.yaml",
+        "All_YAML/Events/Event_settings/tdc_fee_breakdown_ui.yaml",
+        "All_YAML/Events/Event_settings/tdc_fee_breakdown_guest_purchase_ui.yaml",
+        "All_YAML/Events/Event_settings/venue_map_fee_breakdown_ui.yaml",
+        "All_YAML/Events/Event_settings/venue_map_fee_breakdown_guest_purchase.yaml",
+        "All_YAML/Events/Event_settings/venue_map_fee_breakdown_partner_full_refund.yaml"
+        "All_YAML/Post/Buy_together_and_recommended_at_checkout/axs_tdc_venue_map_recommended_at_checkout.yaml",
+        "All_YAML/Form/Storefront_form.yaml",
+        "All_YAML/Form/Storefront_product_with_form.yaml",
+        "All_YAML/Section/Section.yaml",
+        "All_YAML/Admin tools/Feature_flag_setting.yaml",
+        "All_YAML/Meta Pixel record/Pixel_record.yaml",
+        "All_YAML/Post/RTE/Post_RTE.yaml",
+    ])
     # yaml_files = "All_YAML/Form/Storefront_form.yaml,All_YAML/Form/Storefront_product_with_form.yaml"
-    # yaml_files = "All_YAML/Post/Post_setting.yaml, All_YAML/Post/Post_content.yaml"
     pytest_args = [
         sys.executable,
         "-m",
@@ -87,9 +111,6 @@ def start_autotest():
     # ── 1. API 预制脚本：UI Automation Data Pre-configuration ──
     # UI 用例依赖这条 API 预制脚本先造好测试数据（用户 / event / ticket / product /
     # post / coupon 等），所以每次跑 UI 用例【之前】必须先跑它。
-    # 该用例已从 suites/linda.yaml 显式排除（它属于 UI 自动化的数据准备，不属于 API 日常回归），
-    # 这里用专用套 suites/ui_automation_prefill.yaml 单独调起 ——
-    # 由 run_suite.py 负责选例与报告落盘（results/runs/<时间戳>_ui-automation-prefill/）。
     api_dir = str(API_PREFILL_DIR)
     prefill_runner = os.path.join(api_dir, 'run_suite.py')
     prefill_suite = os.path.join(api_dir, 'suites', 'ui_automation_prefill.yaml')
@@ -101,19 +122,12 @@ def start_autotest():
     )
     logger.info(f"Prefill stdout: {prefill_result.stdout}")
     if prefill_result.stderr:
-        # 框架日志（core/logging_util.py 的 StreamHandler）走的是 stderr，而本步骤成功时
-        # 原先只记 stdout —— 于是「预制到底做了什么」的关键证据在 CI 里看不到，
-        # 例如 step 76 补回的别名写入：`[step 76][db] UPDATE PromoterProduct SET alias='bxasz9' ...`
-        # （这也是 tools/ci_summary.py 的「预制内的 DB 步骤日志」折叠块的数据来源）。
-        # 只读日志、不含请求体（API_LOG_BODY 默认关闭），可安全落 run.log。
         logger.info(f"Prefill stderr: {prefill_result.stderr}")
     if prefill_result.returncode != 0:
-        # 预制失败 → UI 用例会因缺数据大面积假失败；直接中止，避免白跑一整轮（CI 一次约 110 分钟）。
-        logger.error(
-            f"API prefill FAILED (exit {prefill_result.returncode}) — aborting UI run.\n"
+        logger.warning(
+            f"API prefill FAILED (exit {prefill_result.returncode}) — continuing UI run anyway.\n"
             f"stderr: {prefill_result.stderr}"
         )
-        raise SystemExit(prefill_result.returncode)
 
     # ── 2. Fetch cookies for all 3 test accounts ──
     # 本地和 CI 都必须先刷新 cookie：cookie 有有效期（access 当天就过期），

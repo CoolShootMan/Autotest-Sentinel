@@ -2942,6 +2942,8 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
         ],
     },
 }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    expect(_resp21).json('$.code').equals('200')
+    expect(_resp21).json('$.data.status').equals('COMPLETED')
     # step 22: PATCH admin update the event status from complete to upcoming
     _resp22 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "UPCOMING",
