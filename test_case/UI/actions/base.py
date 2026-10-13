@@ -884,10 +884,10 @@ def _smart_click_core(page: Page, v: dict):
     #    newest visible dialog: active_modal = visible_modals[-1], and when several dialogs are
     #    visible it can resolve to a dialog that does NOT contain the target -> every strategy
     #    above fails even though the item is plainly on the page.
-    #    CI evidence (2026-09-20, same run / same code): the Form click in T4859 passed while the
-    #    **same step** in T4860 got trapped in dialog#2 with "element not found" - pure DOM-order
-    #    jitter. This retry only fires after every earlier strategy has failed, so it is
-    #    **purely additive** and has zero impact on currently passing cases.
+    #    CI 2026-09-20 实证（同一次 run、同一份代码）：T4866 的 Form 点击成功，而 T4860 的
+    #    **同一步骤**被限死在 dialog#2 上报 element not found —— 纯 DOM 顺序抖动。
+    #    这里在已有策略全部失败后再放开到整页找一次。属**纯增量**：只有上面已经失败才会走到，
+    #    因此对当前能通过的用例零影响。
     if root is not page and target_role in ("menuitem", "option") and target_name:
         try:
             _el = page.get_by_role(role=target_role, name=target_name, exact=target_exact).nth(target_index)

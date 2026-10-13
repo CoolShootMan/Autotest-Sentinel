@@ -118,26 +118,16 @@ def _read_json(path: str):
 def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
     """解析 allure-results 下每个用例结果。
 
-    只扫描主运行的时间戳子目录（allure-results/<YYYYMMDD_HHMMSS>/），
-    排除 notrecog/ 等单独调试跑的目录，保证与 allure report 一致。
+    Returns:
+        (结果目录, 用例列表, 状态计数)。目录缺失时返回 (None, [], {})。
     """
+    # 读 allure-results 下所有 *-result.json（根目录 + 时间戳子目录）
     rows: list[dict] = []
     counts: dict[str, int] = {}
     by_name: dict[str, dict] = {}  # dedup by test name, keep latest/best result
-
-    # 找到最新的时间戳子目录（格式: YYYYMMDD_HHMMSS），排除 notrecog 等调试目录
-    timestamp_dirs = sorted(
-        [d for d in glob.glob(os.path.join(allure_root, "*/"))
-         if os.path.basename(d.rstrip("/")).startswith(("20",)) and "_" in os.path.basename(d.rstrip("/"))],
-        reverse=True,
-    )
-    if timestamp_dirs:
-        scan_dir = timestamp_dirs[0]  # 最新的主运行目录
-    else:
-        scan_dir = allure_root  # fallback: 根目录
-
     patterns = [
-        os.path.join(scan_dir, "*-result.json"),
+        os.path.join(allure_root, "*-result.json"),
+        os.path.join(allure_root, "*", "*-result.json"),
     ]
     fps: list[str] = []
     for pat in patterns:
@@ -172,7 +162,7 @@ def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
     rows.sort(key=lambda r: (STATUS_ORDER.get(r["status"], 9), r["name"]))
     if not rows:
         return None, [], {}
-    return scan_dir, rows, counts
+    return allure_root, rows, counts
 
 
 # ── 结果采集：API 预制 ──────────────────────────────────────────────────────
