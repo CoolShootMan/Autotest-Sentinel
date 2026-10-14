@@ -463,12 +463,19 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     assert _j6.get('message') == 'success', f"step6 message预期success，实际={_j6.get('message')!r}"
 
     # step 7: GET Catch the promoterProductvariantId
-    # 关联产品由「事件 → 帖子」异步落地（eventually-consistent）：step5 新建商品、step6
-    # v2_show_in_post 后立刻查 relate-products，有时拿不到刚创建的目标商品（CI 实测
-    # relatedProducts=1 但缺 'autotest T5379'）。CI 连续跑多个用例时同步延迟更长，
-    # 故重试直到目标商品出现（最多 12 次、5s，共 60s）。
+    # 关联产品由「事件 → 帖子」异步落地（eventually-consistent）：刚创建的 ticket 可能尚未在
+    # event/catalog 就绪，导致 step6 的 show-in-post 静默 no-op（updated:false），relate-products
+    # 里也就看不到它；而仅仅轮询 relate-products 不会重新建立关联（CI 实测 12×5s 仍报
+    # relatedProducts=1 缺 'autotest T5379'）。所以这里【每次重试都重新调用 v2_show_in_post】
+    # 再查 relate-products，最多 12 次、5s，共 60s。
     _prod7 = None
     for _att7 in range(12):
+        # 重新把商品关联到 post（幂等；若首次 show-in-post 因时序抢跑而 no-op，这里会补上）
+        _resp6r = ctx.api.events.v2_show_in_post(body={
+            "productIds": ["{{productId}}"],
+            "posts": [{"postId": "{{postId}}", "isVisible": True}],
+        }, token='yuxiao999_token')
+        expect(_resp6r).json('$.code').equals('200')
         _resp7 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
         expect(_resp7).json('$.code').equals('200')
         expect(_resp7).json('$.message').equals('success')
