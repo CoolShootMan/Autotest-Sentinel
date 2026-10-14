@@ -146,7 +146,7 @@ testT4970:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Fill form title and subtitle
@@ -369,7 +369,7 @@ testT4281:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Step 5: Clear recipient email and try to save
@@ -409,7 +409,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # --- Step 1: Empty title -> verify error ---
@@ -590,7 +590,7 @@ testT4847:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Fill form title and subtitle
@@ -913,7 +913,7 @@ testT3794:  # [LAST: FAILED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
     sleep_after_click: 1000
     fill_title: { role: 'textbox', name: 'Enter a title', value: 'form will be delete xxyyzz' }
