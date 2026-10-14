@@ -646,28 +646,22 @@ testT4955_Partner_SetPaymentRestriction_venue_map:
         R_click_posts_tab: { role: "tab", name: "Post" }
         sleep_step: 2000
 
-        # Step 3: Post tab shows the post directly; card click removed.
+        # Step 3: Confirm post with alias 12061 phase2 auto event is visible
+        verify_post_alias: { text: "12061 phase2 auto event" }
+        sleep_step: 3000
 
-        # Step 4: Click Settings tab
-        R_click_settings_card: { role: "button", name: "Settings" }
+         # Step 4: Click Setting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
         sleep_step: 2000
 
         # Step 5: Check enablePaymentRestriction checkbox
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
         sleep_step: 1000
 
-        # Step 5.1: Click access code entry — button name depends on state:
-        # "Set up access code" (code not set yet, rendered as button TEXT) OR "Manage"
-        # (code already exists from a previous run whose teardown didn't run; rendered
-        # as a gear button with aria-label only — has-text won't match it). Composite
-        # locator covers both.
-        R_click_access_code_button: { locator: 'button:has-text("Set up access code"), button[aria-label="Manage"]' }
+        # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
+        # R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
+        R_click_access_code_button: { role: "button", name: "Set up access code" }
         sleep_step: 1000
-
-        # Step 5.1.1: If the code was already set, the dialog shows "demi123 + Edit";
-        # click Edit to reveal the code input. No-op when the code was never set.
-        R_click_edit_access_code: { role: "button", name: "Edit", optional: true }
-        sleep_step: 500
 
         # Step 7: Click and fill access code
         R_click_access_code: { role: "textbox", name: "Enter access code" }
