@@ -620,8 +620,11 @@ def clear_cookies(page: Page, v: dict):
 def smart_upload(page: Page, v: dict):
     if "file_path" in v:
         file_path = v.get("file_path")
-        if not os.path.isabs(file_path):
-            file_path = os.path.join(BASE_DIR, file_path)
+        if isinstance(file_path, list):
+            file_path = [p if os.path.isabs(p) else os.path.join(BASE_DIR, p) for p in file_path]
+        else:
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(BASE_DIR, file_path)
         target_index = v.get("index", 0)
         with page.expect_file_chooser(timeout=5000) as fc_info:
             if "locator" in v:
