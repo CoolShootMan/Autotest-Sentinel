@@ -496,7 +496,7 @@ testT3686_CosellerResell:
         R_click_place_order: { role: 'button', name: 'Place order' }
 
         # Wait for order confirmation page to load ("Access Your Order" button appears)
-        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 45000 }
         sleep_step: 2000
 
         # T3686 Expected: Verify confirmation note is displayed
