@@ -461,30 +461,31 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     assert _j5.get('data', {}).get('id'), "step5 data.id 为空"
     vars['productId'] = _j5['data']['id']
 
-    # step 7: POST new ticket show in post
+    # step 7 + step 8: 把新建 ticket 关联进 post，再从 relate-products 读回 promoterProductId
+    # v2_show_in_post 与 relate-products 之间存在最终一致性延迟：刚创建的 ticket 可能尚未在
+    # event/catalog 就绪，导致首次 show-in-post 静默 no-op（updated:false），relate-products 里
+    # 也就看不到它（CI 实测因此报 relatedProducts=1 缺目标商品）。故在重试循环里【每次都重新
+    # 调用 show-in-post】再查 relate-products，最多 12 次、间隔 5s，给后端留出关联落地的时间。
     event_id = vars['event_id']
     product_id = vars['productId']
-    _resp7 = ctx.api.events.v2_show_in_post(event_id=event_id, body={
-        "productIds": [
-            product_id,
-        ],
-        "posts": [
-            {
-                "postId": postId,
-                "isVisible": True,
-            },
-        ],
-    }, token='yuxiao999_token')
-    # assertion 7.assertion: responseJson equal 200
-    expect(_resp7).json('$.code').equals('200')
-    # step 8: GET Catch the promoterProductvariantId
-    _resp8 = ctx.api.admin.post_v2_relate_products(post0_id=postId, body=None, token='admin_token')
-    expect(_resp8).json('$.code').equals('200')
-    expect(_resp8).json('$.message').equals('success')
-    _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type','').startswith('application/json') else {}
-    _prods: list[Any] = (_j8.get('data') or {}).get('relatedProducts') or []
-    _prod8 = next((it for it in _prods if 'multiple day pass' in (it.get('title') or '').lower()), None)
-    assert _prod8, f"step8 找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}, titles={[p.get('title') for p in _prods]}）"
+    _prod8 = None
+    _prods: list[Any] = []
+    for _att8 in range(12):
+        _resp7 = ctx.api.events.v2_show_in_post(event_id=event_id, body={
+            "productIds": [product_id],
+            "posts": [{"postId": postId, "isVisible": True}],
+        }, token='yuxiao999_token')
+        expect(_resp7).json('$.code').equals('200')
+        _resp8 = ctx.api.admin.post_v2_relate_products(post0_id=postId, body=None, token='admin_token')
+        expect(_resp8).json('$.code').equals('200')
+        expect(_resp8).json('$.message').equals('success')
+        _j8: dict[str, Any] = _resp8.json() if _resp8.headers.get('content-type', '').startswith('application/json') else {}
+        _prods = (_j8.get('data') or {}).get('relatedProducts') or []
+        _prod8 = next((it for it in _prods if 'multiple day pass' in (it.get('title') or '').lower()), None)
+        if _prod8 is not None:
+            break
+        time.sleep(5)
+    assert _prod8, f"step7/8 重试后仍找不到 related product 'auto testing with turn on multiple day pass'（relatedProducts={len(_prods)}, titles={[p.get('title') for p in _prods]}）"
     vars['promoterProductId'] = _prod8.get('displayVariantId')
     # step 9: Get consumer linda10 token
     # token auto-managed by framework (linda10_token)
