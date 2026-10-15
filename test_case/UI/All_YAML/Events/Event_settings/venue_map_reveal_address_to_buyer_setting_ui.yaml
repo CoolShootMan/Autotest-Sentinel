@@ -1,0 +1,109 @@
+# author: Lury
+# time: 2026/10/12 11:41
+
+
+testT4337_T4334_4333_4272_4242_4241_venue_map:
+    is_mobile: true
+    description: "Verify the reveal address feature works in resell post if the event enable 'Address visibility settings' "
+    expect_result: "Resell post shows the reveal address hint and the address is only revealed to ticket buyers when the event enables Address visibility settings"
+    test_step:
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Search for the event named "event-for-ui-auto-venue-map" and open it.
+        R_click_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_event: 5000
+
+        # 3. On the event page, click "Edit event" to open the edit form.
+        R_click_edit_event: { locator: "xpath=//*[normalize-space(.)='Edit event']", index: 0, fallback_scan: true }
+        sleep_edit_event: 4000
+
+        # 4. On the Edit event page, find the "Reveal address later?" toggle next to
+        R_click_reveal_address_later: { locator: "xpath=//*[normalize-space(.)='Reveal address later?']/ancestor::*[.//input[@type='checkbox']][1]//input[@type='checkbox']", index: 0, fallback_scan: true }
+        sleep_reveal: 2500
+
+        # 4.5 The "Address visibility settings" drawer is now open — validate its contents
+        # Shared scope: the open dialog whose title is "Address visibility settings"
+        verify_drawer_title:
+            text: "Address visibility settings"
+            exact: true
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+            timeout: 10000
+
+        verify_drawer_desc:
+            text: "Control when the event location is shown and who can see it. Learn more"
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+            timeout: 10000
+
+        verify_learn_more_href:
+            locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]//a[normalize-space(.)='Learn more']"
+            attribute: "href"
+            value: "https://partner.pear.us/post/advanced-event-settings"
+            timeout: 10000
+
+        # 4 radio options + their descriptive texts are present
+        verify_option1_label:
+            text: "Ticket buyers only"
+            exact: true
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option1_desc:
+            text: "The event address is visible to ticket buyers only. It will never be shown publicly on the event post."
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option2_label:
+            text: "Ticket buyers after a set time"
+            exact: true
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option2_desc:
+            text: "The address is hidden initially. After the specified reveal time, it becomes visible to ticket buyers only and remains hidden from the public."
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option3_label:
+            text: "Everyone after a set time"
+            exact: true
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option3_desc:
+            text: "The address is hidden initially. After the specified reveal time, it becomes visible to ticket buyers and publicly on the event post."
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option4_label:
+            text: "Keep address hidden"
+            exact: true
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+        verify_option4_desc:
+            text: "The event address remains hidden from both ticket buyers and the public."
+            scope: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]" }
+
+        # Default selection = option 1 ("Ticket buyers only"); options 2/3/4 are NOT selected
+        verify_default_radio_option1:
+            label: "Ticket buyers only"
+            exact: true
+            group: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]"
+            timeout: 10000
+        verify_radio_option2_unchecked:
+            label: "Ticket buyers after a set time"
+            exact: true
+            assert_checked: false
+            group: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]"
+            timeout: 10000
+        verify_radio_option3_unchecked:
+            label: "Everyone after a set time"
+            exact: true
+            assert_checked: false
+            group: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]"
+            timeout: 10000
+        verify_radio_option4_unchecked:
+            label: "Keep address hidden"
+            exact: true
+            assert_checked: false
+            group: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]"
+            timeout: 10000
+
+        # 5. On the "Address visibility settings" drawer, click "Apply".
+        R_click_apply_address: { locator: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]//button[normalize-space(.)='Apply']", index: 0, fallback_scan: true }
+        sleep_apply_address: 2500
+
+        # 6. Back on the Edit event page, verify the hint below the Address input reads
+        verify_reveal_hint: { text: "Reveal address to ticket buyers only", timeout: 10000 }
+
+        # 7. Click the "Save" button at the bottom of the Edit event page.
+        R_click_save: { locator: "xpath=//button[normalize-space(.)='Save']", index: 0, fallback_scan: true }
+        sleep_save: 3000

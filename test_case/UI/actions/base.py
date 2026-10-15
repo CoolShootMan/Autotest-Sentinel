@@ -56,6 +56,10 @@ def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
     if url:
+        # {{var}} backfill: a URL is often built from a value saved by an earlier step
+        # (e.g. the public post URL read off the event "Post" tab) -> navigate natively
+        # instead of falling back to `location.href = '{{post_url}}'` JS.
+        url = _fill_placeholders(url, page)
         params = v if isinstance(v, dict) else {}
         logger.info(f">>> open_url params keys: {list(params.keys())}")
         # --- Context-level configuration (must be set before page navigation) ---
@@ -290,6 +294,8 @@ def wait_for_url(page: Page, v: dict):
     url = v.get("url") or v.get("verify_navigation")
     timeout = v.get("timeout", 30000)
     if url:
+        # {{var}} backfill so a dynamic expected URL (e.g. "{{post_url}}") can be asserted
+        url = _fill_placeholders(url, page)
         if isinstance(url, str) and "*" in url:
             url = re.compile(url.replace("*", ".*"))
         page.wait_for_url(url, timeout=timeout)
@@ -365,6 +371,11 @@ def smart_fill(page: Page, v: dict):
 
     logger.info(f"Filling field '{target_name or target_locator}' with value '{target_value}' (frame: {target_frame})")
     fill_timeout = v.get("timeout", 10000)
+    # `optional: true` — silently skip when the field is absent/unfillable. Counterpart of
+    # `smart_click_optional` for inputs: needed for dialogs/overlays that may or may not appear
+    # (e.g. the "Access code required" box a guest only sees when the seller enabled
+    # Payment Restriction; see venue_map_fee_breakdown_guest_purchase.yaml).
+    optional = v.get("optional", False)
 
     try:
         # Handle iframe context if frame is specified
@@ -398,6 +409,9 @@ def smart_fill(page: Page, v: dict):
                  page.locator(f"input[placeholder*='{target_name}'], input[aria-label*='{target_name}']").nth(target_id).fill(str(target_value), timeout=fill_timeout)
         page.wait_for_timeout(300)
     except Exception as e:
+        if optional:
+            logger.info(f"smart_fill (optional): '{target_name or target_locator}' not fillable, skipping ({e})")
+            return None
         logger.error(f"Fill failed: {e}. AI Healing not fully implemented for Pure Vision fill yet.")
         raise
 
@@ -543,6 +557,105 @@ def smart_check(page: Page, v: dict):
             return
         logger.error(f"Modal-scoped check also failed: {e2}")
         raise
+
+
+def _visible_overlay_count(page):
+    sels = "[role='dialog'], [role='alertdialog'], .MuiDialog-root, .MuiModal-root, .MuiDrawer-root"
+    try:
+        return sum(1 for e in page.locator(sels).all() if e.is_visible())
+    except Exception:
+        return 0
+
+
+def _active_container(page):
+    """Return the topmost visible modal/drawer, or the page if none is visible."""
+    sels = "[role='dialog'], [role='alertdialog'], .MuiDialog-root, .MuiModal-root, .MuiDrawer-root"
+    try:
+        visible = [e for e in page.locator(sels).all() if e.is_visible()]
+        return visible[-1] if visible else page
+    except Exception:
+        return page
+
+
+def _dismiss_top_overlay(page):
+    """Dismiss the topmost visible modal/drawer by its Cancel/Close/Got it button, else Escape."""
+    sels = "[role='dialog'], [role='alertdialog'], .MuiDialog-root, .MuiModal-root, .MuiDrawer-root"
+    try:
+        visible = [e for e in page.locator(sels).all() if e.is_visible()]
+        top = visible[-1] if visible else None
+        if not top:
+            return
+        for b in top.locator("button").all():
+            try:
+                txt = (b.inner_text() or "").strip().lower()
+            except Exception:
+                continue
+            if txt in ("cancel", "close", "got it", "done", "x"):
+                b.click(force=True, timeout=2000)
+                return
+        page.keyboard.press("Escape")
+    except Exception as e:
+        logger.warning(f"uncheck_all: could not dismiss overlay ({e})")
+
+
+def uncheck_all(page: Page, v: dict):
+    """
+    Reusable reset helper: uncheck EVERY visible checkbox/switch inside a scope.
+
+    Default scope = the topmost visible modal/drawer (e.g. the Event settings drawer);
+    pass `scope` to anchor to a specific container locator. Pass `exclude` (list of input
+    `name` values) to skip known dialog-driven toggles whose "off" state needs a confirm
+    dialog (e.g. isTaxEnabled, whose on/off is better driven by the calling flow).
+
+    Only clicks boxes that are currently checked, so plain toggles are safely reset.
+    A real click fires React onChange; a MUI parent force-click is used as fallback. If a
+    toggle opens a dialog/drawer as a side effect, it is auto-dismissed so the panel stays
+    clean for the next step. Returns the number of boxes clicked.
+
+    Params:
+        scope (str, optional): container locator to search within.
+        exclude (list, optional): input `name` values to skip.
+        optional (bool): if True, no-op (return 0) when no checkboxes are found.
+    """
+    scope_locator = v.get("scope")
+    exclude = set(v.get("exclude") or [])
+    optional = v.get("optional", False)
+
+    container = page.locator(_resolve_locator(scope_locator)) if scope_locator else _active_container(page)
+    try:
+        boxes = container.locator("input[type='checkbox']").all()
+    except Exception as e:
+        if optional:
+            logger.info(f"uncheck_all: no checkboxes found (optional), skipping. ({e})")
+            return 0
+        raise
+
+    unchecked = 0
+    for box in boxes:
+        try:
+            if not box.is_visible():
+                continue
+            name = box.get_attribute("name") or ""
+            if name in exclude:
+                continue
+            if not box.is_checked():
+                continue
+            before = _visible_overlay_count(page)
+            try:
+                box.click(force=True, timeout=2000)
+            except Exception:
+                box.locator("xpath=..").click(force=True, timeout=2000)
+            # dismiss any dialog/drawer the toggle click may have opened (rate/address etc.)
+            after = _visible_overlay_count(page)
+            for _ in range(max(0, after - before)):
+                _dismiss_top_overlay(page)
+            unchecked += 1
+        except Exception as e:
+            logger.warning(f"uncheck_all: skipped a checkbox (name={name or '?'}) ({e})")
+    logger.info(f"uncheck_all: clicked {unchecked} checkbox(es) to uncheck "
+                f"(scope={scope_locator or 'active modal/drawer'}, exclude={exclude})")
+    return unchecked
+
 
 def smart_add_cookies(page: Page, v: dict):
     """Inject cookies from a Playwright storage-state file into the current context.
@@ -1088,6 +1201,22 @@ def verify_text_visible(page: Page, v: dict):
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
+    # --- {{var}} backfill (workflow context + cross-case globals) ---
+    # Expected texts may reference variables saved by earlier steps (e.g.
+    # "${{retails_price_venue_map}}"). Resolve them natively so dynamic-text checks
+    # never need execute_js. No-op when the string contains no placeholder.
+    text = _fill_placeholders(text, page)
+    v = dict(v)
+    if v.get("locator"):
+        v["locator"] = _fill_placeholders(_resolve_locator(v["locator"]), page)
+    if isinstance(v.get("scope"), dict):
+        _scope = dict(v["scope"])
+        if _scope.get("locator"):
+            _scope["locator"] = _fill_placeholders(_resolve_locator(_scope["locator"]), page)
+        if _scope.get("text"):
+            _scope["text"] = _fill_placeholders(_scope["text"], page)
+        v["scope"] = _scope
+
     # --- Optional scope container ---
     # When `scope` is provided, the target text must live INSIDE the scope container
     # instead of anywhere on the page. Supported scope shapes:
@@ -1598,22 +1727,54 @@ def duplicate_post(page: Page, v):
     logger.info(f"[duplicate_post] Stored {capture_key} = {new_post_id} in workflow context")
 
 def verify_value(page: Page, v: dict):
-    target_name = v.get("name")
-    target_locator = v.get("locator")
-    target_locator = _resolve_locator(target_locator)
-    expected_value = str(v.get("value"))
+    """Assert an <input> value (Playwright-native input_value(), no JS).
+
+    YAML usage:
+        verify_value_price: { locator: "input[name='variants.0.ticketPrice']", value: "100.00" }
+        verify_value_dynamic: { locator: "input[name='variants.0.price']", value: "{{retails_price}}", tolerance: 0.01 }
+        verify_value_phone: { locator: "input[name='contact.phoneNumber']", regex: "(\\d\\D*){10}" }
+
+    Supported params:
+      - locator / name : target input (CSS/xpath locator, or input[name=...] via `name`)
+      - value          : expected value; {{var}} placeholders are backfilled from the
+                         workflow context first (e.g. "{{my_revenue_venue_map}}")
+      - regex          : instead of an exact `value`, assert the input value MATCHES this
+                         regex ({{var}} backfilled). Handy for auto-formatted fields whose
+                         exact rendering varies (e.g. a phone field -> "at least 10 digits").
+      - tolerance      : optional numeric tolerance (e.g. 0.01) so a full-precision
+                         stored value ("114.7727") still matches a 2-dp expectation ("114.77")
+      - timeout        : ms to wait for the input to become visible (default 10000)
+    """
+    target_name = _fill_placeholders(v.get("name"), page)
+    target_locator = _resolve_locator(v.get("locator"))
+    target_locator = _fill_placeholders(target_locator, page)
+    expected_value = _fill_placeholders(str(v.get("value")), page)
+    regex = v.get("regex")
+    tolerance = v.get("tolerance")
     timeout = v.get("timeout", 10000)
-    logger.info(f"Verifying value of '{target_name or target_locator}' matches '{expected_value}'")
+    logger.info(f"Verifying value of '{target_name or target_locator}' matches '{regex or expected_value}'")
     if target_locator:
         el = page.locator(target_locator).first
     else:
         el = page.locator(f'input[name="{target_name}"], [name="{target_name}"]').first
     el.wait_for(state="visible", timeout=timeout)
     actual_value = str(el.input_value())
+    if regex:
+        pat = _fill_placeholders(str(regex), page)
+        if re.search(pat, actual_value):
+            logger.info(f"Value '{actual_value}' matches regex {pat!r}")
+            return
+        raise AssertionError(f"verify_value: '{actual_value}' does not match {pat!r}")
     if actual_value != expected_value:
         try:
             if float(actual_value) == float(expected_value): return
         except: pass
+        if tolerance is not None:
+            try:
+                if abs(float(actual_value) - float(expected_value)) <= float(tolerance):
+                    logger.info(f"Value '{actual_value}' is within tolerance {tolerance} of '{expected_value}'")
+                    return
+            except: pass
         raise AssertionError(f"Expected value '{expected_value}', but found '{actual_value}'")
 
 def verify_value_near(page: Page, v: dict):
@@ -1627,6 +1788,645 @@ def verify_value_near(page: Page, v: dict):
     actual_value = str(el.input_value())
     if actual_value != expected_value:
         raise AssertionError(f"Near text '{near_text}': Expected '{expected_value}', got '{actual_value}'")
+
+
+def verify_attribute(page: Page, v: dict):
+    """Assert an element's attribute value (Playwright-native get_attribute(), no JS).
+
+    The native replacement for the ad-hoc execute_js "read getAttribute and compare"
+    pattern. Reusable across all YAML cases — e.g. verifying an <a href>, an <img src/alt>,
+    or an ARIA state (aria-checked). Supports {{var}} backfill on `value` and `regex`.
+
+    Supported params:
+      - locator        : target element (CSS/xpath locator)  [required]
+      - attribute      : attribute name to read (e.g. "href")  [required]
+      - value          : expected exact value; {{var}} placeholders backfilled
+      - regex          : instead of exact `value`, assert the attribute MATCHES this regex
+                         ({{var}} backfilled)
+      - scope          : optional container to search within (same shape as verify_text_visible)
+      - index          : element index when locator matches several (default 0)
+      - timeout        : ms to wait for the element (default 10000)
+
+    YAML usage:
+        verify_learn_more_href:
+            locator: "xpath=//*[@role='dialog']//a[normalize-space(.)='Learn more']"
+            attribute: "href"
+            value: "https://partner.pear.us/post/advanced-event-settings"
+    """
+    target_locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
+    scope_cfg = v.get("scope")
+    attribute = v.get("attribute")
+    expected_value = (
+        _fill_placeholders(str(v["value"]), page) if v.get("value") is not None else None
+    )
+    regex = v.get("regex")
+    index = v.get("index", 0)
+    timeout = v.get("timeout", 10000)
+
+    if not target_locator:
+        raise ValueError("verify_attribute: 'locator' is required")
+    if not attribute:
+        raise ValueError("verify_attribute: 'attribute' is required")
+
+    if scope_cfg:
+        try:
+            if scope_cfg.get("locator"):
+                scope_loc = page.locator(scope_cfg["locator"]).first
+            elif scope_cfg.get("text"):
+                scope_loc = page.get_by_text(
+                    scope_cfg["text"], exact=scope_cfg.get("exact", False)
+                ).first
+            else:
+                raise AssertionError(
+                    f"verify_attribute: invalid scope {scope_cfg}; need 'text' or 'locator'"
+                )
+            scope_loc.wait_for(state="visible", timeout=timeout)
+            el = scope_loc.locator(target_locator).nth(index)
+        except Exception:
+            raise AssertionError(f"verify_attribute: scope container {scope_cfg} not found.")
+    else:
+        el = page.locator(target_locator).nth(index)
+
+    el.wait_for(state="visible", timeout=timeout)
+    actual = el.get_attribute(attribute)
+    actual = "" if actual is None else str(actual)
+    logger.info(f"verify_attribute: {target_locator}[{attribute}] = {actual!r}")
+
+    if regex:
+        pat = _fill_placeholders(str(regex), page)
+        if re.search(pat, actual):
+            logger.info(f"Attribute '{attribute}'='{actual}' matches regex {pat!r}")
+            return
+        raise AssertionError(
+            f"verify_attribute: '{attribute}'='{actual}' does not match {pat!r}"
+        )
+    if expected_value is None:
+        raise ValueError("verify_attribute: need 'value' or 'regex'")
+    if actual != expected_value:
+        raise AssertionError(
+            f"verify_attribute: expected {attribute}='{expected_value}', but found '{actual}'"
+        )
+    logger.info(f"verify_attribute OK: {attribute}='{expected_value}'")
+
+
+def verify_radio_checked(page: Page, v: dict):
+    """Assert a radio option's selection state (Playwright-native, no JS).
+
+    Handles both native <input type="radio"> (is_checked) and MUI role="radio"
+    controls (aria-checked="true"). Reusable across all YAML cases.
+
+    Supported params:
+      - locator        : directly target the radio control (input[type=radio] or
+                         role="radio"); takes precedence over `label`
+      - label          : accessible text of the radio option; the radio control is found
+                         inside the option's container (e.g. "Ticket buyers only")
+      - exact          : exact text match for `label` (default true — avoids matching the
+                         option's descriptive paragraph, which often contains the same words)
+      - group          : optional locator for the radio group / container to scope the label
+                         search (e.g. the open drawer)
+      - assert_checked : expected selection state (default true); set false to assert the
+                         radio is NOT selected
+      - timeout        : ms to wait (default 10000)
+
+    YAML usage:
+        verify_default_radio_option1:
+            label: "Ticket buyers only"
+            group: "xpath=//*[@role='dialog'][.//*[contains(normalize-space(.),'Address visibility settings')]]"
+    """
+    label = v.get("label")
+    group_loc = v.get("group")
+    exact = v.get("exact", True)
+    assert_checked = v.get("assert_checked", True)
+    timeout = v.get("timeout", 10000)
+
+    if v.get("locator"):
+        radio = page.locator(_fill_placeholders(_resolve_locator(v["locator"]), page)).first
+    elif label:
+        if group_loc:
+            group = page.locator(_fill_placeholders(_resolve_locator(group_loc), page)).first
+            group.wait_for(state="visible", timeout=timeout)
+            base = group
+        else:
+            base = page
+        option = base.get_by_text(_fill_placeholders(label, page), exact=exact).first
+        option.wait_for(state="visible", timeout=timeout)
+        # The radio control lives in the SAME option container as the label text, but is
+        # typically a SIBLING of the label span (MUI FormControlLabel:
+        #   <label> [ <span radio><input type=radio></span> <span label>{text}</span> ]).
+        # So walk up to the nearest ancestor that contains a radio, then grab that radio.
+        if option.locator("xpath=ancestor::*[.//input[@type='radio']][1]//input[@type='radio']").count() > 0:
+            radio = option.locator("xpath=ancestor::*[.//input[@type='radio']][1]//input[@type='radio']").first
+        else:
+            radio = option.locator("xpath=ancestor::*[.//*[@role='radio']][1]//*[@role='radio']").first
+    else:
+        raise ValueError("verify_radio_checked: need 'locator' or 'label'")
+
+    radio.wait_for(state="visible", timeout=timeout)
+
+    # Native input -> is_checked(); MUI role=radio -> aria-checked attribute
+    tag = (radio.get_attribute("type") or "").lower()
+    role = (radio.get_attribute("role") or "").lower()
+    if tag == "radio":
+        is_checked = radio.is_checked()
+    elif role == "radio":
+        is_checked = (radio.get_attribute("aria-checked") or "false").lower() == "true"
+    else:
+        try:
+            is_checked = radio.is_checked()
+        except Exception:
+            is_checked = (radio.get_attribute("aria-checked") or "false").lower() == "true"
+
+    if is_checked != assert_checked:
+        wanted = "checked" if assert_checked else "unchecked"
+        got = "checked" if is_checked else "unchecked"
+        raise AssertionError(
+            f"verify_radio_checked: radio (label={label!r}, locator={v.get('locator')!r}) "
+            f"expected {wanted} but is {got}."
+        )
+    logger.info(f"verify_radio_checked OK: radio is {got}")
+
+
+def _money_str(x, nd=2):
+    """Format a number as a fixed-decimal string, half-up (114.7727 -> '114.77')."""
+    from decimal import Decimal, ROUND_HALF_UP
+    quantum = Decimal(1).scaleb(-int(nd))          # nd=2 -> Decimal('0.01')
+    return str(Decimal(str(x)).quantize(quantum, rounding=ROUND_HALF_UP))
+
+
+def _fill_placeholders(s, page):
+    """Backfill {{var}} placeholders from the page workflow context, falling back to the
+    cross-case global store (same lookup table execute_js / smart_click use).
+
+    Lets non-JS actions (verify_*, extract_value, compute_value) consume variables saved
+    by earlier steps. No-op when the value is not a string or has no placeholder.
+    """
+    if not isinstance(s, str) or "{{" not in s:
+        return s
+    for _k, _v in _merged_context_vars(page).items():
+        if _k:
+            s = s.replace("{{%s}}" % _k, str(_v))
+    return s
+
+
+def _save_context_value(page, save_as, value, is_global=False):
+    """Store a value in the page workflow context (optionally the cross-case store)."""
+    if not save_as:
+        return
+    if not hasattr(page, "_workflow_context"):
+        setattr(page, "_workflow_context", {})
+    getattr(page, "_workflow_context")[save_as] = value
+    logger.info(f"Saved '{save_as}' = {value!r} in workflow context")
+    if is_global:
+        _set_global(save_as, value)
+        logger.info(f"Also published '{save_as}' to the cross-case global store")
+
+
+def extract_value(page: Page, v: dict):
+    """Read a value from the page and save it to the workflow context — the Playwright-native
+    replacement for the common `execute_js` "read a price and save_as" pattern.
+
+    Supported params:
+      - locator / name : where to read from (CSS/xpath locator; `name` -> input[name=...])
+      - source         : "input" (default, input_value) | "text" (inner_text) |
+                         "content" (textContent, no layout whitespace) |
+                         "attribute"
+      - attribute      : attribute name when source="attribute"
+      - strip_whitespace : remove ALL whitespace from the raw text before regex/parse
+                         (default false; handy when the target is split across text nodes,
+                         e.g. a post URL rendered as "host\\n/post/\\nslug")
+      - regex          : custom extraction regex (first capture group, else whole match);
+                         default pulls the first number (-123.45) from the raw string
+      - numeric        : parse the result as a number (default true)
+      - round          : decimals of the saved number string (default 2 -> "114.77")
+      - save_as        : workflow-context key, usable as {{save_as}} in later steps
+      - global         : also publish to the cross-case store (like execute_js global:true)
+      - timeout        : ms to poll until the value is readable (default 10000)
+      - index          : element index when the locator matches several (default 0)
+
+    YAML usage:
+        extract_value_my_revenue:
+            locator: "input[name='variants.0.ticketPrice']"
+            save_as: "my_revenue_venue_map"
+        extract_value_card_retail:
+            locator: "xpath=//p[normalize-space(.)='{{ticket}}']/ancestor::*[contains(.,'incl.')][1]"
+            source: text
+            save_as: "retail_price"
+    """
+    import time
+
+    locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
+    name = _fill_placeholders(v.get("name"), page)
+    source = v.get("source", "input")
+    attribute = v.get("attribute")
+    regex = v.get("regex")
+    numeric = v.get("numeric", True)
+    nd = v.get("round", 2)
+    save_as = v.get("save_as")
+    timeout = v.get("timeout", 10000)
+    index = v.get("index", 0)
+
+    if not locator and not name:
+        raise ValueError("extract_value: 'locator' or 'name' is required")
+
+    if locator:
+        el = page.locator(locator).nth(index)
+    else:
+        el = page.locator(f'input[name="{name}"], [name="{name}"]').first
+
+    label = locator or name
+    logger.info(f"extract_value: reading '{label}' (source={source}, save_as={save_as})")
+
+    start = time.time()
+    last_err = None
+    while time.time() - start < timeout / 1000.0:
+        try:
+            el.wait_for(state="visible", timeout=2000)
+            if source == "input":
+                raw = el.input_value()
+            elif source == "attribute":
+                raw = el.get_attribute(attribute) or ""
+            elif source in ("content", "textcontent", "text_content"):
+                # textContent: layout does not inject whitespace/newlines -> good for URLs
+                raw = el.text_content() or ""
+            else:
+                raw = el.inner_text()
+            raw = "" if raw is None else str(raw)
+            if v.get("strip_whitespace"):
+                raw = re.sub(r"\s+", "", raw)
+            if regex:
+                m = re.search(regex, raw)
+                if not m:
+                    raise ValueError(f"regex {regex!r} not found in {raw[:80]!r}")
+                out = m.group(1) if m.groups() else m.group(0)
+            elif numeric:
+                m = re.search(r"-?\d+(?:\.\d+)?", raw.replace(",", ""))
+                if not m:
+                    raise ValueError(f"no number found in {raw[:80]!r}")
+                out = m.group(0)
+            else:
+                out = raw.strip()
+            value = _money_str(float(out), nd) if numeric else out
+            _save_context_value(page, save_as, value, v.get("global"))
+            return value
+        except Exception as e:
+            last_err = e
+            time.sleep(0.3)
+    raise AssertionError(f"extract_value: could not read '{label}' within {timeout}ms: {last_err}")
+
+
+def compute_value(page: Page, v: dict):
+    """Evaluate an arithmetic expression ({{var}} backfilled) and save the result — the
+    native replacement for the `execute_js` "define a helper fn + call it" money-math
+    pattern (e.g. retail = (my_revenue + 1) / (1 - fee% - tax%)).
+
+    Supported params:
+      - expression : arithmetic expression; {{var}} placeholders are backfilled from the
+                     workflow context first. Only digits and + - * / ( ) . are allowed,
+                     so an unresolved {{var}} fails loudly instead of evaluating junk.
+      - save_as    : workflow-context key for the result
+      - global     : also publish to the cross-case store
+      - round      : decimals of the saved number string (default 2 -> "114.77")
+
+    YAML usage:
+        compute_value_retails_price:
+            expression: "({{my_revenue_venue_map}} + 1) / (1 - 0.1 - 0.02)"
+            save_as: "retails_price_venue_map"
+    """
+    expression = v.get("expression") or v.get("expr")
+    if not expression:
+        raise ValueError("compute_value: 'expression' is required")
+    expr = _fill_placeholders(str(expression), page)
+    if not re.fullmatch(r"[\d\s+\-*/().]+", expr):
+        raise ValueError(
+            f"compute_value: unsafe or unresolved expression: {expr!r} "
+            "(only numbers and + - * / ( ) . are allowed; check the {{var}} names)"
+        )
+    try:
+        result = eval(expr, {"__builtins__": {}}, {})
+    except Exception as e:
+        raise AssertionError(f"compute_value: cannot evaluate {expr!r}: {e}")
+    value = _money_str(float(result), v.get("round", 2))
+    logger.info(f"compute_value: {expr} = {value}")
+    _save_context_value(page, v.get("save_as"), value, v.get("global"))
+    return value
+
+
+def _xpath_literal(s):
+    """Return an XPath 1.0 string literal for `s` (handles quotes safely)."""
+    s = str(s)
+    if '"' not in s:
+        return '"%s"' % s
+    if "'" not in s:
+        return "'%s'" % s
+    # both quote kinds present -> concat()
+    return "concat(%s)" % ", '\"', ".join("'%s'" % part for part in s.split('"'))
+
+
+def _find_row_amount(page, label, scope=None, tail_limit=24, levels=4, signed=True, timeout=10000):
+    """Locate the amount of a labelled row with Playwright locators only (no JS).
+
+    [DOM FACT] MUI rows put the label either in a leaf (<p>Total</p>) or in a DIRECT text
+    node (<X>Subtotal<span>$64.48</span></X>); the amount then lives in that element or in
+    one of its nearest ancestors. This helper matches the label via
+    `normalize-space(text())`, climbs up to `levels` ancestors, keeps the stripped tail
+    short (<= tail_limit) so it never walks past the row and grabs a foreign amount, and
+    parses the first signed "$x.yz" it meets.
+
+    Returns (value, error_message); value is None when nothing was found.
+    """
+    import time
+
+    lit = _xpath_literal(label)
+    start = time.time()
+    last_err = None
+    while time.time() - start < timeout / 1000.0:
+        try:
+            if scope:
+                cands = page.locator(scope).first.locator(f"xpath=.//*[normalize-space(text())={lit}]")
+            else:
+                cands = page.locator(f"xpath=//*[normalize-space(text())={lit}]")
+            n = cands.count()
+            for i in range(n):
+                node = cands.nth(i)
+                try:
+                    if not node.is_visible():
+                        continue
+                except Exception:
+                    continue
+                for _lvl in range(int(levels)):
+                    try:
+                        text = node.inner_text()
+                    except Exception:
+                        break
+                    tail = re.sub(r"\s+", " ", text.replace(label, " ")).strip()
+                    if len(tail) <= int(tail_limit):
+                        m = re.search(r"(-?)\s*\$\s*([\d,]+(?:\.\d+)?)", tail)
+                        if m:
+                            val = float(m.group(2).replace(",", ""))
+                            return (-val if (signed and m.group(1) == "-") else val), None
+                    parent = node.locator("xpath=..")
+                    if parent.count() == 0:
+                        break
+                    node = parent.first
+            last_err = f"label matched {n} element(s) but no '$' amount within {levels} ancestor level(s)"
+        except Exception as e:
+            last_err = e
+        time.sleep(0.4)
+    return None, last_err
+
+
+def extract_row_value(page: Page, v: dict):
+    """Read the amount of a labelled row (e.g. "Subtotal", "Transaction fees", "Total",
+    "Net Earning") and save it — the Playwright-native replacement for the `rowVal(label)`
+    JS helper repeated across the fee-breakdown cases (see actions/base.py `_find_row_amount`).
+
+    Supported params:
+      - label      : row label text (exact match against the element's own text node)
+      - scope      : optional locator restricting the search container (e.g. the Checkout drawer)
+                     or the whole page when omitted
+      - save_as    : workflow-context key (usable as {{save_as}} later)
+      - global     : also publish to the cross-case store
+      - round      : decimals of the saved string (default 2 -> "64.48")
+      - timeout    : ms to poll for the row (default 10000)
+      - levels     : how many ancestors to climb while looking for the amount (default 4)
+      - tail_limit : max chars kept after stripping the label (default 24; use 16 for
+                     the "Show summary" header amount)
+      - signed     : keep a leading '-' (default true, e.g. refunded Net Earning "-5.27")
+      - required   : raise when the row is not found (default true; false saves "")
+
+    YAML usage:
+        extract_row_value_subtotal:
+            label: "Subtotal"
+            scope: ".MuiDrawer-root"
+            save_as: "subtotal"
+    """
+    label = _fill_placeholders(v.get("label") or v.get("text"), page)
+    if not label:
+        raise ValueError("extract_row_value: 'label' is required")
+    scope = _fill_placeholders(_resolve_locator(v.get("scope")), page)
+    timeout = v.get("timeout", 10000)
+    val, err = _find_row_amount(
+        page, label, scope,
+        tail_limit=v.get("tail_limit", 24),
+        levels=v.get("levels", 4),
+        signed=v.get("signed", True),
+        timeout=timeout,
+    )
+    if val is None:
+        if v.get("required", True):
+            raise AssertionError(
+                f"extract_row_value: no amount found for row '{label}' within {timeout}ms ({err})"
+            )
+        value = ""
+    else:
+        value = _money_str(val, v.get("round", 2))
+    _save_context_value(page, v.get("save_as"), value, v.get("global"))
+    logger.info(f"extract_row_value: '{label}' = {value}")
+    return value
+
+
+def verify_row_value(page: Page, v: dict):
+    """Assert the amount of a labelled row equals `value` (± tolerance) — the native
+    replacement for the `rowVal(label) == expected` JS assertions.
+
+    Params: label, scope, value (expected; {{var}} backfilled), tolerance (default 0.01),
+            timeout, levels, tail_limit, signed (see extract_row_value),
+            absent_when_zero (default false): when true, a MISSING row is accepted when the
+            expected value is 0 — this encodes the "[PRICING FACT] a 0 amount hides its row"
+            rule natively instead of an `if(tax===0 && !row) ...` JS branch. A row that IS
+            present with 0 still passes (and a present non-zero amount still fails), so the
+            guard stays meaningful while tolerating a UI that renders zero rows in some
+            contexts and hides them in others.
+
+    `value` may also be a LIST of acceptable values — the assertion passes when the row
+    matches ANY of them. (e.g. the confirmation header shows either the item total or the
+    grand total depending on the ticket provider.)
+    """
+    label = _fill_placeholders(v.get("label") or v.get("text"), page)
+    if not label:
+        raise ValueError("verify_row_value: 'label' is required")
+    raw_expected = v.get("value")
+    if isinstance(raw_expected, (list, tuple)):
+        expected_list = [_fill_placeholders(str(e), page) for e in raw_expected]
+    else:
+        expected_list = [_fill_placeholders(str(raw_expected), page)]
+    expected = " | ".join(expected_list)
+    scope = _fill_placeholders(_resolve_locator(v.get("scope")), page)
+    timeout = v.get("timeout", 10000)
+    tolerance = v.get("tolerance", 0.01)
+    val, err = _find_row_amount(
+        page, label, scope,
+        tail_limit=v.get("tail_limit", 24),
+        levels=v.get("levels", 4),
+        signed=v.get("signed", True),
+        timeout=timeout,
+    )
+    exp_nums = []
+    for e in expected_list:
+        m = re.search(r"-?[\d.]+", e.replace(",", ""))
+        exp_nums.append(float(m.group(0)) if m else None)
+    if val is None:
+        if v.get("absent_when_zero") and any(
+            n is not None and abs(n) <= float(tolerance or 0) for n in exp_nums
+        ):
+            logger.info(f"verify_row_value: row '{label}' absent and expected '{expected}' is 0 -> ok")
+            return 0.0
+        raise AssertionError(f"verify_row_value: row '{label}' not found within {timeout}ms ({err})")
+    if tolerance is not None:
+        for exp in exp_nums:
+            if exp is not None and abs(val - exp) <= float(tolerance):
+                logger.info(f"verify_row_value: row '{label}' = {val} matches '{expected}' (±{tolerance})")
+                return val
+    else:
+        for e in expected_list:
+            if _money_str(val) == e.strip():
+                logger.info(f"verify_row_value: row '{label}' = {val} matches '{expected}'")
+                return val
+    raise AssertionError(f"verify_row_value: row '{label}' amount {val} != expected '{expected}'")
+
+
+def verify_number(page: Page, v: dict):
+    """Assert a NUMBER satisfies a relation — the native replacement for the
+    `if(!(x > 0)) throw ...` guards (e.g. "a TDC hub ticket must show a POSITIVE Service fee").
+
+    Params:
+      - value    : the actual number; {{var}} is backfilled (e.g. "{{service_fee}}")
+      - op       : eq | ne | gt | gte | lt | lte (default "gt")
+      - expected : comparison target (default 0)
+      - tolerance: slack for eq/ne (default 0.01)
+
+    YAML usage:
+        verify_number_service_fee: { value: "{{service_fee}}", op: "gt", expected: "0" }
+    """
+    if "value" not in v:
+        raise ValueError("verify_number: 'value' is required")
+    actual_raw = _fill_placeholders(str(v.get("value")), page)
+    m = re.search(r"-?[\d.]+", actual_raw.replace(",", ""))
+    if not m:
+        raise AssertionError(f"verify_number: '{actual_raw}' is not a number")
+    actual = float(m.group(0))
+    exp_raw = _fill_placeholders(str(v.get("expected", 0)), page)
+    me = re.search(r"-?[\d.]+", exp_raw.replace(",", ""))
+    expected = float(me.group(0)) if me else 0.0
+    op = str(v.get("op", "gt")).lower()
+    tol = float(v.get("tolerance", 0.01))
+    ok = {
+        "eq": lambda a, b: abs(a - b) <= tol,
+        "ne": lambda a, b: abs(a - b) > tol,
+        "gt": lambda a, b: a > b,
+        "gte": lambda a, b: a >= b,
+        "lt": lambda a, b: a < b,
+        "lte": lambda a, b: a <= b,
+    }.get(op)
+    if ok is None:
+        raise ValueError(f"verify_number: unsupported op {op!r} (use eq/ne/gt/gte/lt/lte)")
+    if not ok(actual, expected):
+        raise AssertionError(f"verify_number: {actual} {op} {expected} is false")
+    logger.info(f"verify_number: {actual} {op} {expected} -> ok")
+    return actual
+
+
+def set_value(page: Page, v: dict):
+    """Write a literal (or {{var}}-templated) value into the workflow context — the native
+    counterpart of "save a constant / build a URL"; no DOM involved.
+
+    Params: value (required; {{var}} is backfilled from the context first), save_as, global.
+
+    YAML usage:
+        set_value_post_url:
+            value: "https://release.pear.us/autotestshop/post/event-for-ui-auto-venue-map"
+            save_as: "post_url"
+            global: true
+    """
+    if "value" not in v:
+        raise ValueError("set_value: 'value' is required")
+    value = _fill_placeholders(v.get("value"), page)
+    _save_context_value(page, v.get("save_as"), value, v.get("global"))
+    logger.info(f"set_value: '{v.get('save_as')}' = {value!r}")
+    return value
+
+
+def verify_defined(page: Page, v: dict):
+    """Fail fast when context variables the case depends on are missing — the native
+    replacement for the `execute_js_ensure_globals` guard JS.
+
+    Params: vars (list, or comma-separated string). Cross-case globals and local workflow
+    vars share the same lookup table as {{var}}, so both are accepted.
+
+    YAML usage:
+        verify_defined_globals: { vars: [post_url, ticket_venue_map, my_revenve] }
+    """
+    names = v.get("vars") or v.get("names") or v.get("keys") or []
+    if isinstance(names, str):
+        names = [n.strip() for n in names.split(",") if n.strip()]
+    if not names:
+        raise ValueError("verify_defined: 'vars' (list of names) is required")
+    ctx = _merged_context_vars(page)
+    missing = [n for n in names if ctx.get(n) in (None, "")]
+    if missing:
+        raise AssertionError(
+            f"verify_defined: missing context variables {missing} "
+            f"(available: {sorted(k for k in ctx)}) — run the parent case first in the same pytest process"
+        )
+    logger.info(f"verify_defined: all present -> {names}")
+    return "defined: " + ", ".join(names)
+
+
+def verify_text_regex(page: Page, v: dict):
+    """Assert that the page (or a scope container) contains text matching a regex — the
+    native replacement for `if(!/re/.test(txt)) throw ...` JS assertions over a region's text.
+
+    Supported params:
+      - pattern / regex  : Python regex; {{var}} placeholders are backfilled first, so a
+                           dynamic expected value can be injected directly into the pattern
+                           (e.g. "Unit\\\\s*:\\\\s*{{seat_unit}}\\\\b")
+      - scope / locator  : optional region to search (locator string, or {locator:}/{text:}
+                           dict). Defaults to the whole page body.
+      - assert_not_match : invert — assert the pattern is NOT present (default false)
+      - flags            : optional regex flags string, e.g. "i" (default none)
+      - timeout          : ms to poll until it matches/does not match (default 10000)
+
+    YAML usage:
+        verify_unit_matches:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "Unit\\s*:\\s*{{seat_unit}}\\b"
+    """
+    import time
+
+    pat = _fill_placeholders(str(v.get("pattern") or v.get("regex")), page)
+    if not pat:
+        raise ValueError("verify_text_regex: 'pattern' is required")
+    flags = re.IGNORECASE if "i" in str(v.get("flags", "")).lower() else 0
+    negate = bool(v.get("assert_not_match", False))
+    timeout = v.get("timeout", 10000)
+    scope_cfg = v.get("scope") or v.get("locator")
+
+    start = time.time()
+    last = None
+    while True:
+        try:
+            if isinstance(scope_cfg, dict):
+                sl = scope_cfg.get("locator")
+                if sl:
+                    text = page.locator(_fill_placeholders(_resolve_locator(sl), page)).first.inner_text()
+                else:
+                    text = page.get_by_text(cast(str, scope_cfg.get("text"))).first.inner_text()
+            elif isinstance(scope_cfg, str):
+                text = page.locator(_fill_placeholders(_resolve_locator(scope_cfg), page)).first.inner_text()
+            else:
+                text = page.inner_text("body")
+            m = re.search(pat, text, flags)
+            if (m is not None) != negate:
+                logger.info(f"verify_text_regex: pattern {pat!r} {'absent (expected)' if negate else 'matched: ' + repr(m.group(0))}")
+                return m.group(0) if m else ""
+            last = f"pattern {pat!r} {'is present but should be absent' if negate else 'not found'}"
+        except Exception as e:
+            last = e
+        if time.time() - start >= timeout / 1000.0:
+            break
+        time.sleep(0.4)
+    raise AssertionError(f"verify_text_regex: {last}")
+
 
 def verify_all_commission_values(page: Page, v: dict):
     """
@@ -2194,6 +2994,51 @@ def fill_stripe_iframe(page: Page, v: dict):
 
 
 
+
+
+def dispatch_click(page: Page, v: dict):
+    """Click an element by dispatching DOM events directly on it (Playwright's
+    `locator.dispatch_event`) — for widgets whose hit-testing makes a real click impossible.
+
+    [WHY IT EXISTS] A real `locator.click()` needs Playwright's hit-target check to pass, i.e.
+    the element must be the top-most element at the click point. SVG/canvas widgets often break
+    that: the interactive node is covered by a sibling, or a transparent hit area has
+    `pointer-events: none`. Example (verified on release 2026-10-13, venue-map "Select tickets"
+    drawer): the table `circle[data-id]` is covered, and its `rect[data-id]` twin is
+    `pointer-events: none` — a real click times out or is swallowed, while dispatching the
+    event sequence on the circle selects the table ("1 table selected / Total: $100.00").
+
+    Supported params:
+      - locator / name : target element (CSS/xpath locator, or `name` -> input[name=...])
+      - index          : element index when the locator matches several (default 0)
+      - events         : event names to dispatch in order (default the full mouse sequence
+                         ["pointerdown", "mousedown", "pointerup", "mouseup", "click"])
+      - event_init     : eventInit passed to every dispatched event; the default carries the
+                         pointer/mouse payload of a real interaction
+                         ({"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}).
+                         [MEASURED] the venue-map table map ignores the sequence WITHOUT it.
+      - timeout        : ms to wait for the element to be ATTACHED (default 10000; no hit-test)
+
+    YAML usage:
+        dispatch_click_select_seat: { locator: "circle[data-id]", index: 0 }
+    """
+    events = v.get("events") or ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    init = v.get("event_init") or {"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}
+    index = v.get("index", 0)
+    timeout = v.get("timeout", 10000)
+    locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
+    name = _fill_placeholders(v.get("name"), page)
+    if not locator and not name:
+        raise ValueError("dispatch_click: 'locator' or 'name' is required")
+    if locator:
+        el = page.locator(locator).nth(index)
+    else:
+        el = page.locator(f'input[name="{name}"], [name="{name}"]').nth(index)
+    el.wait_for(state="attached", timeout=timeout)
+    for ev in events:
+        el.dispatch_event(ev, init)
+    logger.info(f"dispatch_click: dispatched {list(events)} on {locator or name} (index={index})")
+    return f"dispatched {list(events)}"
 
 
 def smart_click_optional(page: Page, v: dict):

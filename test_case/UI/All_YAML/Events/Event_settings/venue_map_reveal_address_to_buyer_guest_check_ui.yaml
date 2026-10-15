@@ -1,0 +1,9 @@
+# author: Lury
+# time: 2026/10/13 14:41
+
+
+testT4239_venue_map_guest_check:
+    is_mobile: true
+    description: "Verify the event location and venue will only show to buyers if set 'Show address only to ticket buyers' on event page "
+    expect_result: "Only show event address to buyer after purchased"
+    test_step:

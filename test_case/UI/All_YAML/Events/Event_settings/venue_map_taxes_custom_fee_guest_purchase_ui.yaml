@@ -1,0 +1,26 @@
+# author: Lury
+# time: 2026/10/13 14:41
+
+# --- testT4652_venue_map_guest_purchase: as a guest, the public post for the venue_map event
+#     must show the recalculated product price after the partner enabled a 2% tax ---
+testT4652_venue_map_guest_purchase:
+    is_mobile: true
+    description: "Verify fee and retail price from guest view and purchase"
+    expect_result: "fee and retail price is correct"
+    test_step:
+        # 0. (guard) Fail fast if the cross-case globals from the parent cases are missing.
+        verify_defined_globals:
+            vars: [ticket_venue_map, retails_price_venue_map]
+
+        # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it.
+        create_session_guest: { name: "guest" }
+        sleep_guest_session: 1000
+
+        # 2. As a guest, open the public post (event name slug = event-for-ui-auto-venue-map).
+        session_guest__open_post: { url: "https://release.pear.us/autotestshop/post/event-for-ui-auto-venue-map" }
+        sleep_guest_post: 5000
+
+        # 3. As a guest, the product card must show the recalculated retail price.
+        session_guest__verify_net_price:
+            scope: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']/ancestor::*[contains(., 'Buy Ticket')][1]" }
+            text: "${{retails_price_venue_map}}"

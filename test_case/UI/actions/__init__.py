@@ -10,6 +10,7 @@ from .base import (
     fill_numeric,
     fill_type,
     smart_check,
+    uncheck_all,
     smart_swipe,
     smart_sleep,
     smart_press,
@@ -27,6 +28,16 @@ from .base import (
     verify_text_hidden,
     verify_value,
     verify_value_near,
+    verify_attribute,
+    verify_radio_checked,
+    extract_value,
+    compute_value,
+    extract_row_value,
+    verify_row_value,
+    verify_number,
+    set_value,
+    verify_defined,
+    verify_text_regex,
     verify_all_commission_values,
     reload_page,
     go_back,
@@ -42,6 +53,7 @@ from .base import (
     swipe_to_element,
     fill_stripe_iframe,
     smart_click_optional,
+    dispatch_click,
     ensure_auto_archive,
     smart_click_retry,
     handle_modal,
@@ -112,6 +124,7 @@ ACTIONS = {
     "fill": smart_fill,
     "fill_type": fill_type,
     "check": smart_check,
+    "uncheck_all": uncheck_all,
     "swipe": smart_swipe,
     "sleep": smart_sleep,
     "press": smart_press,
@@ -201,6 +214,16 @@ ACTIONS = {
     "verify_text_hidden": verify_text_hidden,
     "verify_value": verify_value,
     "verify_value_near": verify_value_near,
+    "verify_attribute": verify_attribute,
+    "verify_radio_checked": verify_radio_checked,
+    "extract_value": extract_value,
+    "compute_value": compute_value,
+    "extract_row_value": extract_row_value,
+    "verify_row_value": verify_row_value,
+    "verify_number": verify_number,
+    "set_value": set_value,
+    "verify_defined": verify_defined,
+    "verify_text_regex": verify_text_regex,
     "verify_all_commission": verify_all_commission_values,
     "verify_cta_type_4": verify_no_sibling_text,
     "click_module_add_new": click_module_add_new,
@@ -233,6 +256,7 @@ ACTIONS = {
     "scroll_to_bottom": scroll_to_bottom,
     "fill_stripe_iframe": fill_stripe_iframe,
     "smart_click_optional": smart_click_optional,
+    "dispatch_click": dispatch_click,
     "smart_click_retry": smart_click_retry,
     "delete_coseller_if_exists": delete_coseller_if_exists,
     "execute_js": execute_js,
@@ -307,6 +331,8 @@ def get_action(name):
         return smart_click_optional
     if name.startswith("smart_click_retry"):
         return smart_click_retry
+    if name.startswith("dispatch_click"):
+        return dispatch_click
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("move_relative_to_selector") or name.startswith("move_mouse") or name.startswith("move_to"):
@@ -319,6 +345,8 @@ def get_action(name):
         return fill_type
     elif name.startswith("fill"):
         return smart_fill
+    elif name.startswith("uncheck_all"):
+        return uncheck_all
     elif name.startswith("check") or name.startswith("uncheck"):
         return smart_check
     elif name.startswith("swipe") or name.startswith("scroll"):
@@ -365,8 +393,28 @@ def get_action(name):
         return verify_toast_message
     if name.startswith("verify_hidden"):
         return verify_text_hidden
+    if name.startswith("verify_defined"):
+        return verify_defined
+    if name.startswith("verify_row_value"):
+        return verify_row_value
+    if name.startswith("verify_number"):
+        return verify_number
+    if name.startswith("verify_text_regex"):
+        return verify_text_regex
     if name.startswith("verify_value"):
         return verify_value
+    if name.startswith("verify_attribute"):
+        return verify_attribute
+    if name.startswith("verify_radio_checked"):
+        return verify_radio_checked
+    if name.startswith("extract_row_value"):
+        return extract_row_value
+    if name.startswith("extract_value"):
+        return extract_value
+    if name.startswith("compute_value"):
+        return compute_value
+    if name.startswith("set_value"):
+        return set_value
     if name.startswith("verify"):
         return verify_text_visible
 

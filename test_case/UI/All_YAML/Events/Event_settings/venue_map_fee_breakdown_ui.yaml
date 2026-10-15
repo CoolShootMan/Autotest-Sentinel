@@ -2,9 +2,13 @@
 # time: 2026/9/22 14:16
 
 # --- testT5649_venue_map: venue_map-tagged event, enable "Show fee breakdown at checkout" and verify fee breakdown end-to-end ---
+#
+# [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions
+# (extract_value / compute_value / extract_row_value / set_value ...). No JS left in this case.
 testT5649_venue_map:
     is_mobile: true
     description: "Verify the fee breakdown for venue map ticket on checkout - then place order - check seat info in order confirmation page - refund"
+    expect_result: "Checkout shows a fee breakdown for the venue map ticket; order can be placed and the confirmation page shows seat info; partner can refund the order"
     test_step:
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
@@ -34,62 +38,42 @@ testT5649_venue_map:
         sleep_save: 3000
 
         # 8. [GLOBAL VARIABLE] ticket_venue_map —— **跨用例全局变量**（非临时变量）。
-        #    Extract the name of the first non-"Sold out" product on the Tickets tab and save
-        execute_js_extract_name:
+        #    Playwright-native (was execute_js): a product card on the "Tickets & Merch" tab is a
+        #    `div[data-testid="mui-stack"]` that holds exactly one Tools button
+        #    (`button[data-testid="enhance-button"]`). Take the first card that is NOT "Sold out"
+        #    and read its product name = the card's first <p>.
+        extract_value_ticket_name:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_venue_map"
             global: true
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Tools" + $/sold
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+            timeout: 20000
         sleep_extract_name: 800
 
         # 9. Extract the target ticket's price (the first $ amount on the card = retail price)
         #     -> temp var ticket-retails-price
-        execute_js_extract_retail_price:
+        extract_value_retail_price:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
             save_as: "ticket-retails-price"
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const priceM=card.match(/\$([\d.]+)/);
-                  if(!priceM) throw new Error('Ticket price not found in card: '+card);
-                  return +parseFloat(priceM[1]).toFixed(2);
-                }
+            global: true
+            timeout: 20000
         sleep_extract_price: 500
 
-        # 10. Extract the "incl." amount and compute my_revenve = price - incl -> temp var my_revenve
-        execute_js_extract_revenue:
+        # 10. Extract the "(incl. $x fees)" amount, then compute my_revenve = price - incl
+        #     -> temp var my_revenve
+        extract_value_incl_fees:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "incl\\.?\\s*\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "incl_fees_price"
+            timeout: 20000
+        compute_value_my_revenue:
+            expression: "{{ticket-retails-price}} - {{incl_fees_price}}"
             save_as: "my_revenve"
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const price=parseFloat(card.match(/\$([\d.]+)/)[1]);
-                  const incl=parseFloat(card.match(/incl\.?\s*\$([\d.]+)/i)[1]);
-                  return +(price-incl).toFixed(2);
-                }
+            global: true
         sleep_extract_rev: 800
 
         # === Open the ticket-venue_map product -> Edit ticket page -> read the fee breakdown -> go back ===
@@ -104,26 +88,21 @@ testT5649_venue_map:
         sleep_fees_tip: 2000
 
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
-        execute_js_extract_platform_fees:
+        #     (was execute_js; extract_row_value walks the labelled MUI row natively)
+        extract_row_value_platform_fees:
+            label: "Platform fees"
+            scope: ".MuiPopover-root"
             save_as: "transaction-fees"
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Platform fees\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Platform fees" amount not found');
-                  return parseFloat(m);
-                }
+            global: true
+            timeout: 15000
 
         # 14. Extract "Taxes" from the popover -> temp var taxes
-        execute_js_extract_taxes:
+        extract_row_value_taxes:
+            label: "Taxes"
+            scope: ".MuiPopover-root"
             save_as: "taxes"
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Taxes\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Taxes" amount not found');
-                  return parseFloat(m);
-                }
+            global: true
+            timeout: 15000
 
         # 15. This price popover is a modal and covers the Back button, so press Escape to close it
         #     first, then click the Back button (header CloseIcon, aria-label="Back") to go back
@@ -139,17 +118,13 @@ testT5649_venue_map:
         smart_click_optional_leave_without_saving: { text: "Leave without saving" }
         sleep_leave: 1500
 
-        # 16. Extract the event name (used to build the guest public post URL) -> temp var event_name
-        execute_js_extract_event:
-            save_as: "event_name"
-            script: |
-                () => {
-                  const m=document.body.innerText.replace(/\s+/g,' ').match(/([A-Za-z0-9_'’\- ]{1,50}?)\s*(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d/i);
-                  const h=document.querySelector('h1,h2');
-                  return (m && m[1].trim()) || (h && h.textContent.trim()) || document.title.trim();
-                }
-
-        # 17. Slugify the event name into the guest-accessible public post URL -> temp var post_url
-        execute_js_extract_url:
+        # 17. Build the guest-accessible public post URL -> GLOBAL var post_url
+        #     (published cross-case so venue_map_fee_breakdown_guest_purchase.yaml can reuse it)
+        #     [REFACTOR] The old case read the event name off the page and ran a slugify() JS to
+        #     build this URL. Ruby-style slugification is not expressible with the arithmetic
+        #     `compute_value`, and the event name is already a literal in step 2
+        #     ("event-for-ui-auto-venue-map", whose slug is itself) -> publish the URL directly.
+        set_value_post_url:
+            value: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
             save_as: "post_url"
-            script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
+            global: true

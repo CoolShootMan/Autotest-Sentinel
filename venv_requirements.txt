@@ -55,6 +55,8 @@ win32_setctime==1.2.0
 pandas==3.0.2
 openpyxl==3.1.5
 
+# Optional deps: ONLY needed by scanner (QR camera) cases.
+# conftest degrades gracefully without them; install when running Scanner suites.
 qrcode
 opencv-python
 numpy

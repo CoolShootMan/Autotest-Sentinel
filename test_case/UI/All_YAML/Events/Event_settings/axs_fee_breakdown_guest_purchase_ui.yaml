@@ -5,8 +5,178 @@
 testT5649_axs_guest_purchase:
     is_mobile: true
     description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
+    expect_result: "Checkout shows a fee breakdown for the AXS ticket; order can be placed and the confirmation page shows AXS info; partner can refund the order"
     test_step:
-        # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
+        # ==================== [SELF-SEED] admin-side data extraction ====================
+        # This case is runnable on its own: it first seeds every variable it needs from
+        # the admin UI (mirrors axs_fee_breakdown_ui.yaml steps 1-17) and publishes them
+        # as cross-case globals. Without self-seeding, an unset post_url renders as a
+        # literal "{{post_url}}" in location.href and Chrome throws a cryptic
+        # "'' is not a valid URL" SyntaxError.
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Find the event card that carries the AXS tag and save its event name
+        execute_js_seed_event:
+            save_as: "event_axs"
+            global: true
+            script: |
+                (async () => {
+                  // the AXS badge's parent row has a single <p> holding the event name;
+                  // the list renders asynchronously, so poll (30 x 500ms)
+                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
+                  for (let i = 0; i < 30; i++) {
+                    const badge = [...document.querySelectorAll('span')].find(s => !s.children.length && nz(s) === 'AXS');
+                    const name = badge && badge.parentElement.querySelector('p');
+                    if (name && nz(name)) return nz(name);
+                    await new Promise(r => setTimeout(r, 500));
+                  }
+                  throw new Error('AXS event card not found in the event list (or its name <p> is empty)');
+                })()
+        sleep_seed_event: 800
+
+        # 2b. Click the event card that carries the AXS tag
+        R_click_seed_event: { locator: "xpath=//span[normalize-space(.)='AXS']/parent::*", index: 0, fallback_scan: true }
+        sleep_seed_event_page: 5000
+
+        # 3. Open the "Tickets & Merch" tab where ticket names are listed
+        R_click_seed_tickets_tab: { role: "tab", name: "Tickets & Merch" }
+        sleep_seed_tickets: 3000
+
+        # 4. Save the first non-"Sold out" Pear.Us ticket name -> ticket_axs
+        execute_js_seed_ticket:
+            save_as: "ticket_axs"
+            global: true
+            script: |
+                () => {
+                  const cards=[...document.querySelectorAll('*')].filter(el => {
+                    const t=el.textContent||'';
+                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
+                  });
+                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
+                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
+                    .find(t => !/Sold out/i.test(t));
+                  if(!card) throw new Error('No non-Sold-out ticket found');
+                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
+                }
+        sleep_seed_ticket: 800
+
+        # 5. Extract the ticket's retail price (first $ amount on the card)
+        execute_js_seed_retail:
+            save_as: "ticket-retails-price"
+            global: true
+            script: |
+                () => {
+                  const cards=[...document.querySelectorAll('*')].filter(el => {
+                    const t=el.textContent||'';
+                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
+                  });
+                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
+                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
+                    .find(t => !/Sold out/i.test(t));
+                  if(!card) throw new Error('No non-Sold-out ticket found');
+                  const priceM=card.match(/\$([\d.]+)/);
+                  if(!priceM) throw new Error('Ticket price not found in card: '+card);
+                  return +parseFloat(priceM[1]).toFixed(2);
+                }
+        sleep_seed_retail: 500
+
+        # 6. Extract the "incl." amount and compute my_revenve = price - incl
+        execute_js_seed_revenue:
+            save_as: "my_revenve"
+            global: true
+            script: |
+                () => {
+                  const cards=[...document.querySelectorAll('*')].filter(el => {
+                    const t=el.textContent||'';
+                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
+                  });
+                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
+                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
+                    .find(t => !/Sold out/i.test(t));
+                  if(!card) throw new Error('No non-Sold-out ticket found');
+                  const price=parseFloat(card.match(/\$([\d.]+)/)[1]);
+                  const incl=parseFloat(card.match(/incl\.?\s*\$([\d.]+)/i)[1]);
+                  return +(price-incl).toFixed(2);
+                }
+        sleep_seed_revenue: 800
+
+        # 7. Ensure "Show fee breakdown at checkout" is enabled (the guest checkout
+        #     verification below depends on it). smart_check is idempotent.
+        R_click_seed_settings: { role: "button", name: "Settings" }
+        sleep_seed_settings: 3000
+        check_seed_fee_breakdown: { locator: "xpath=//input[@name='showFeesBreakdown']", checked: true }
+        sleep_seed_fee: 1500
+        R_click_seed_save: { name: "Save" }
+        sleep_seed_save: 3000
+
+        # 8. Click the ticket product -> Edit ticket page
+        R_click_seed_product: { locator: "xpath=//p[normalize-space(.)='{{ticket_axs}}']" }
+        sleep_seed_edit: 6000
+
+        # 9. Open the "Fees + Taxes" price popover (2nd match = the price)
+        R_click_seed_fees_taxes: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        sleep_seed_tip: 2000
+
+        # 10. Extract "Platform fees" and "Taxes" from the popover
+        execute_js_seed_fees:
+            save_as: "transaction-fees"
+            global: true
+            script: |
+                () => {
+                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
+                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Platform fees\s*\$?\s*([\d.]+)/i)||[])[1];
+                  if(!m) throw new Error('fees breakdown popover / "Platform fees" amount not found');
+                  return parseFloat(m);
+                }
+        execute_js_seed_taxes:
+            save_as: "taxes"
+            global: true
+            script: |
+                () => {
+                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
+                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Taxes\s*\$?\s*([\d.]+)/i)||[])[1];
+                  if(!m) throw new Error('fees breakdown popover / "Taxes" amount not found');
+                  return parseFloat(m);
+                }
+
+        # 11. The popover covers the Back button: Escape to close it, then Back
+        press_seed_escape: { key: "Escape" }
+        sleep_seed_esc: 1200
+        R_click_seed_back: { locator: "button[aria-label='Back']" }
+        sleep_seed_back: 3000
+        smart_click_optional_seed_leave: { text: "Leave without saving" }
+        sleep_seed_leave: 1500
+
+        # 12. Open the event's "Post" tab and read the public post URL -> post_url
+        R_click_seed_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
+        sleep_seed_post: 4000
+        execute_js_seed_post_url:
+            save_as: "post_url"
+            global: true
+            script: |
+                () => {
+                  const nz = s => (s||'').replace(/\s+/g,' ').trim();
+                  // the Post tab renders the URL as one element's own text, e.g.
+                  //   "release.pear.us/autotestshop/post/0926-baseball-stadium-tours"
+                  const RE = /^(?:https?:\/\/)?[A-Za-z0-9.-]+\.pear\.us\/[A-Za-z0-9._-]+\/post\/[A-Za-z0-9._-]+\/?$/;
+                  const el = [...document.querySelectorAll('*')].find(e => RE.test(nz(e).replace(/\s+/g,'')));
+                  if (el) {
+                    const raw = nz(el.textContent).replace(/\s+/g,'').replace(/\/$/,'');
+                    return raw.startsWith('http') ? raw : 'https://' + raw;
+                  }
+                  // fallback: slugify the event name shown on the page (trim any date
+                  // suffix first) — same rule as axs_fee_breakdown_ui.yaml step 17
+                  const m = document.body.innerText.replace(/\s+/g,' ').match(/([A-Za-z0-9_'’\- ]{1,50}?)\s*(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d/i);
+                  const h = document.querySelector('h1,h2');
+                  const name = (m && m[1].trim()) || (h && h.textContent.trim()) || document.title.trim();
+                  return 'https://release.pear.us/autotestshop/post/' + name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+                }
+        sleep_seed_url: 800
+
+        # ==================== guest checkout flow ====================
+        # 13. Create the guest session (no cookie = visitor); saved temp vars are copied into it
         create_session_guest: { name: "guest" }
 
         # 2. As a guest, open the public post (location.href triggers navigation; the next step runs on the already-navigated page)
