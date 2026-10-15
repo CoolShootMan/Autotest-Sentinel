@@ -500,17 +500,30 @@ def _generate_scanner_y4m(y4m_path, qr_text="3329635", width=320, height=240, qr
 
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
-    # Default scanner QR code. Set SCAN_QR_CODE env var to override (e.g. for NotRecognized).
+    # Fake webcam args are only needed by scanner (QR camera) cases. They require
+    # optional deps (qrcode / opencv-python / numpy) that are NOT part of
+    # venv_requirements.txt; degrade gracefully when they are missing so that
+    # ordinary cases can still run.
     scanner_qr = os.environ.get("SCAN_QR_CODE", "3329635")
     y4m_path = "/tmp/pear_data/Ticket_Small.y4m"
-    _generate_scanner_y4m(y4m_path, qr_text=scanner_qr)
+    camera_args = []
+    try:
+        _generate_scanner_y4m(y4m_path, qr_text=scanner_qr)
+        camera_args = [
+            "--use-fake-ui-for-media-stream",
+            "--use-fake-device-for-media-stream",
+            f"--use-file-for-fake-video-capture={y4m_path}",
+        ]
+    except ImportError as e:
+        logger.warning(
+            f"Optional scanner deps missing ({e}); skipping fake webcam args. "
+            "Scanner QR cases need: pip install qrcode opencv-python numpy"
+        )
 
     return {
         **browser_type_launch_args,
         "args": [
-            "--use-fake-ui-for-media-stream",
-            "--use-fake-device-for-media-stream",
-            f"--use-file-for-fake-video-capture={y4m_path}",
+            *camera_args,
             "--window-size=600,1100",
             "--start-maximized",
             "--disable-translate",

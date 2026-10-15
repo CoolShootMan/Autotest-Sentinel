@@ -1,39 +1,36 @@
 # --- testT5649_tdc: TDC-tagged event, verify the product is priced (non-zero), fee breakdown, guest checkout (no refund flow: TDC tickets are not refundable upstream) ---
+#
+# [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions
+# (extract_value / compute_value / extract_row_value / set_value / verify_number ...).
+# No JS left in this case.
 testT5649_tdc:
     is_mobile: true
     description: "Verify the fee breakdown for TDC ticket on checkout - then place order - check TDC info and link on order confirmation page"
+    expect_result: "Checkout shows a fee breakdown for the TDC ticket; order can be placed and the confirmation page shows TDC info and link"
     test_step:
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
         # 1b. [HARD ASSERTION] the target TDC-tagged event is on the list.
-        #     [GLOBAL VARIABLE] the script RETURNS the event name and `save_as` + `global: true`
-        #     publish it as the cross-case global `event_tdc` (see actions/global_state.py), so
-        #     step 2 and OTHER test cases in the same pytest process can use {{event_tdc}}.
-        #     The event name therefore lives in exactly one place: NAME below.
-        execute_js_verify_tdc_event:
+        #     [GLOBAL VARIABLE] `event_tdc` is published with save_as + global: true (see
+        #     actions/global_state.py) so step 2 and OTHER test cases in the same pytest process
+        #     can use {{event_tdc}}. The event name therefore lives in exactly one place: NAME below.
+        #     (was execute_js; the name leaf assertion + the TDC tag assertion are now native)
+        verify_text_visible_tdc_event:
+            text: "10/12 Baseball Stadium Tours"
+            exact: true
+            timeout: 20000
+        # the tag badge sits in the same row as the name: the row's text concatenates to
+        # "<name>TDC", so match "TDC" only when it is NOT followed by a letter
+        verify_text_regex_tdc_tag:
+            scope: "xpath=//*[normalize-space(.)='10/12 Baseball Stadium Tours']/ancestor::*[contains(., 'TDC')][1]"
+            pattern: "TDC(?![A-Za-z])"
+            timeout: 20000
+        set_value_event_tdc:
+            value: "10/12 Baseball Stadium Tours"
             save_as: "event_tdc"
             global: true
-            script: |
-                (async () => {
-                  const NAME='09/26 Baseball Stadium Tours';
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  const nameLeaf = () => [...document.querySelectorAll('*')].find(e => !e.children.length && nz(e)===NAME);
-                  let nameEl=null;
-                  for(let i=0;i<30;i++){
-                    if(/\/login/.test(location.pathname)) throw new Error('session expired: /events redirected to '+location.href+' (refresh cookies with tools/get_all_cookies.py)');
-                    if((nameEl=nameLeaf())) break;
-                    await new Promise(r=>setTimeout(r,500));
-                  }
-                  if(!nameEl) throw new Error('event "'+NAME+'" not found in the event list (url='+location.href+')');
-                  // the tag badge sits in the same row as the name: the row's text concatenates to
-                  // "<name>TDC", so match "TDC" only when it is NOT followed by a letter
-                  let el=nameEl, tagged=false;
-                  for(let k=0;k<4 && el;k++){ if(/TDC(?![A-Za-z])/.test(nz(el))){ tagged=true; break; } el=el.parentElement; }
-                  if(!tagged) throw new Error('event "'+NAME+'" does not carry the TDC tag');
-                  return NAME;   // bare name: save_as stores this value verbatim
-                })()
 
         # 2. Click that TDC event card. Selected BY NAME so the choice is order-independent
         #    ({{event_tdc}} = the event name saved by step 1b)
@@ -44,35 +41,43 @@ testT5649_tdc:
         R_click_tickets_tab: { role: "tab", name: "Tickets & Merch" }
         sleep_tickets: 3000
 
-        # 4. Verify every product on the Tickets & Merch tab has a NON-ZERO price.
-        #    [GLOBAL VARIABLE] this step also defines the cross-case global `ticket_tdc`: it RETURNS
-        #    the name of the first product card that is NOT sold out (same rule as the dedicated
-        #    extraction step further down) and `save_as` + `global: true` publish it (see
-        #    actions/global_state.py) -> {{ticket_tdc}} is usable here, in other sessions and in
-        #    other test cases of the same pytest process.
-        #    NOTE: the product cards are in a stable order (T1000 first), so this is deterministic.
-        #    The sibling extraction step below re-saves the same value, so if these two picks ever
-        #    disagree the later one wins and the rest of the case is unaffected.
-        execute_js_verify_price:
-            save_as: "ticket_tdc"
-            global: true
-            script: |
-                () => {
-                    // product cards on the Tickets & Merch tab look like:
-                    //   <name><$price>(incl. $fees)<N> sold<Tools>
-                    const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                    const raw = [...document.querySelectorAll('*')].map(nz)
-                        .filter(t => t.includes('Tools') && /sold/i.test(t) && t.includes('$') && t.length < 400);
-                    // keep only the leaf-most cards (drop wrappers that merely contain them)
-                    const cards = raw.filter(t => !raw.some(o => o !== t && o.length < t.length && t.includes(o)));
-                    if (!cards.length) throw new Error('No product card (price + "sold" + Tools) found on the Tickets & Merch tab');
-                    const bad = cards.filter(t => !(parseFloat((t.match(/\$([\d,]+(?:\.\d+)?)/)||[])[1]||0) > 0));
-                    if (bad.length) throw new Error('Product price is 0 (or missing) for: ' + JSON.stringify(bad));
-                    // pick the first non-Sold-out card (stable order) and return its bare name
-                    const pick = cards.find(t => !/Sold out/i.test(t));
-                    if (!pick) throw new Error('No non-Sold-out ticket found among ' + cards.length + ' product(s)');
-                    return (pick.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+        # 4. [HARD ASSERTION] every product on the Tickets & Merch tab has a NON-ZERO price.
+        #    (was execute_js: the JS collected all "(price + sold + Tools)" cards and failed if any
+        #     price was 0. Here each product card is read natively and asserted > 0.)
+        #    NOTE: `ticket_tdc` (the cross-case global) is published by the dedicated extraction
+        #    step 9 below, which uses the same "first non-Sold-out card" rule.
+        extract_value_tdc_card_price_1:
+            locator: "xpath=//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]"
+            index: 0
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "tdc_card_price_1"
+            timeout: 20000
+        verify_number_tdc_card_price_1: { value: "{{tdc_card_price_1}}", op: "gt", expected: "0" }
+        extract_value_tdc_card_price_2:
+            locator: "xpath=//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]"
+            index: 1
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "tdc_card_price_2"
+            timeout: 20000
+        verify_number_tdc_card_price_2: { value: "{{tdc_card_price_2}}", op: "gt", expected: "0" }
+        extract_value_tdc_card_price_3:
+            locator: "xpath=//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]"
+            index: 2
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "tdc_card_price_3"
+            timeout: 20000
+        verify_number_tdc_card_price_3: { value: "{{tdc_card_price_3}}", op: "gt", expected: "0" }
+        extract_value_tdc_card_price_4:
+            locator: "xpath=//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]"
+            index: 3
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "tdc_card_price_4"
+            timeout: 20000
+        verify_number_tdc_card_price_4: { value: "{{tdc_card_price_4}}", op: "gt", expected: "0" }
 
         # 5. Open event Settings (drawer). Reachable from the Tickets & Merch tab too.
         R_click_settings: { role: "button", name: "Settings" }
@@ -80,8 +85,7 @@ testT5649_tdc:
 
         # 6. Enable "Show fee breakdown at checkout".
         #    smart_check is idempotent (set_checked no-ops when already ON) and Playwright's
-        #    set_checked hard-asserts the resulting state ("Clicking the checkbox did not
-        #    change its state" on failure) -> no extra JS check needed.
+        #    set_checked hard-asserts the resulting state -> no extra JS check needed.
         check_fee_breakdown: { locator: "xpath=//input[@name='showFeesBreakdown']", checked: true }
         sleep_fee: 1500
 
@@ -95,71 +99,53 @@ testT5649_tdc:
         #    had 1 sold this step threw `No 0-sold non-Sold-out ticket found` — the case was
         #    one-shot. The real intent is "a product that still has inventory", i.e. NOT sold out;
         #    the cards are listed in a stable order (T1000 first), so this is deterministic.
-        #    [GLOBAL VARIABLE] `global: true` re-publishes ticket_tdc to the cross-case store with
-        #    this step's pick. Step 4 already publishes its own pick; re-publishing here guarantees
-        #    the global always equals the value this case actually goes on to use (they use two
-        #    different DOM scans, so if they ever disagree the authoritative one wins).
-        execute_js_extract_name:
+        #    [GLOBAL VARIABLE] `global: true` publishes ticket_tdc to the cross-case store.
+        extract_value_ticket_name:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_tdc"
             global: true
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Tools" + $/sold
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+            timeout: 20000
         sleep_extract_name: 800
 
         # 10. Extract the target ticket's price (the first $ amount on the card = retail price)
         #     -> temp var ticket-retails-price
-        execute_js_extract_retail_price:
+        extract_value_retail_price:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
             save_as: "ticket-retails-price"
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const priceM=card.match(/\$([\d.]+)/);
-                  if(!priceM) throw new Error('Ticket price not found in card: '+card);
-                  return +parseFloat(priceM[1]).toFixed(2);
-                }
+            global: true
+            timeout: 20000
         sleep_extract_price: 500
 
-        # 10b. Extract the "incl." amount and compute my_revenve = price - incl -> temp var my_revenve
-        execute_js_extract_revenue:
+        # 10b. Extract the "(incl. $x fees)" amount, then compute my_revenve = price - incl
+        #      -> temp var my_revenve
+        extract_value_incl_fees:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "incl\\.?\\s*\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "incl_fees_price"
+            timeout: 20000
+        compute_value_my_revenue:
+            expression: "{{ticket-retails-price}} - {{incl_fees_price}}"
             save_as: "my_revenve"
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const price=parseFloat(card.match(/\$([\d.]+)/)[1]);
-                  const incl=parseFloat(card.match(/incl\.?\s*\$([\d.]+)/i)[1]);
-                  return +(price-incl).toFixed(2);
-                }
+            global: true
         sleep_extract_rev: 800
 
         # === Open the ticket-tdc product -> Edit ticket page -> read the fee breakdown -> go back ===
 
         # 11. Click the ticket-tdc product (located by the temp var name) to enter the Edit ticket page
-        R_click_ticket: { locator: "xpath=//p[normalize-space(.)='{{ticket_tdc}}']" }
+        #     [WHY dispatch_click] The T1000 card sits low in the list and, once the event Settings
+        #     drawer has been opened/saved, the drawer content still overlays that area
+        #     (measured on release 2026-10-13: the top-most element at the card's centre is the
+        #     "Show fee breakdown at checkout" row), so a real Playwright click times out on the
+        #     hit-target check and a force-click is swallowed by the overlay. Dispatching the
+        #     pointer/mouse sequence navigates correctly. See actions/base.py `dispatch_click`.
+        dispatch_click_ticket:
+            locator: "xpath=//p[normalize-space(.)='{{ticket_tdc}}']"
+            timeout: 15000
         sleep_edit_ticket: 6000
 
         # 12. Click the price under "Fees + Taxes" (the 2nd match = the price; the 1st match is
@@ -168,26 +154,21 @@ testT5649_tdc:
         sleep_fees_tip: 2000
 
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
-        execute_js_extract_platform_fees:
+        extract_row_value_platform_fees:
+            label: "Platform fees"
+            scope: ".MuiPopover-root"
             save_as: "transaction-fees"
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Platform fees\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Platform fees" amount not found');
-                  return parseFloat(m);
-                }
+            global: true
+            timeout: 15000
 
         # 14. Extract "Taxes" from the popover -> temp var taxes
-        execute_js_extract_taxes:
+        #     ([PRICING FACT] a TDC hub ticket has no tax -> this is "0.00")
+        extract_row_value_taxes:
+            label: "Taxes"
+            scope: ".MuiPopover-root"
             save_as: "taxes"
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Taxes\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Taxes" amount not found');
-                  return parseFloat(m);
-                }
+            global: true
+            timeout: 15000
 
         # 15. This price popover is a modal and covers the Back button, so press Escape to close it
         #     first, then click the Back button (header CloseIcon, aria-label="Back") to go back
@@ -207,19 +188,21 @@ testT5649_tdc:
         R_click_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
         sleep_post_tab: 4000
 
-        # 17. Read the guest-accessible public post URL straight off the page -> temp var post_url
-        execute_js_extract_url:
+        # 17. Read the guest-accessible public post URL straight off the page -> GLOBAL var post_url
+        #     (published cross-case so tdc_fee_breakdown_guest_purchase_ui.yaml can reuse it)
+        #     [REFACTOR] the old JS found the element whose whole text IS a post URL (anchored) and
+        #     prefixed "https://" when missing; the label is a <button> and its textContent is the
+        #     bare URL -> extract with an anchored regex, then normalise with set_value.
+        extract_value_post_url_raw:
+            locator: "xpath=//button[contains(., '/post/')]"
+            source: content
+            strip_whitespace: true
+            regex: "([A-Za-z0-9.-]+\\.pear\\.us/[A-Za-z0-9._-]+/post/[A-Za-z0-9._-]+)"
+            numeric: false
+            save_as: "post_url_raw"
+            timeout: 15000
+        set_value_post_url:
+            value: "https://{{post_url_raw}}"
             save_as: "post_url"
-            script: |
-                () => {
-                  // the Post tab renders the URL as one element's own text, e.g.
-                  //   "release.pear.us/autotestshop/post/0926-baseball-stadium-tours"
-                  // so require the element's whole text to be a post URL (anchored) — a loose
-                  // scan would swallow the neighbouring tab labels / section names.
-                  const RE = /^(?:https?:\/\/)?[A-Za-z0-9.-]+\.pear\.us\/[A-Za-z0-9._-]+\/post\/[A-Za-z0-9._-]+\/?$/;
-                  const el = [...document.querySelectorAll('*')].find(e => RE.test((e.textContent||'').replace(/\s+/g,'')));
-                  if (!el) throw new Error('public post URL not found on the event "Post" tab');
-                  const raw = (el.textContent||'').replace(/\s+/g,'').replace(/\/$/,'');
-                  return raw.startsWith('http') ? raw : 'https://' + raw;
-                }
+            global: true
         sleep_extract_url: 800

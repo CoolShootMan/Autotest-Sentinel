@@ -5,6 +5,7 @@
 testT5649_axs:
     is_mobile: true
     description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
+    expect_result: "Checkout shows a fee breakdown for the AXS ticket; order can be placed and the confirmation page shows AXS info; partner can refund the order"
     test_step:
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
@@ -91,6 +92,7 @@ testT5649_axs:
         #     -> temp var ticket-retails-price
         execute_js_extract_retail_price:
             save_as: "ticket-retails-price"
+            global: true
             script: |
                 () => {
                   const cards=[...document.querySelectorAll('*')].filter(el => {
@@ -110,6 +112,7 @@ testT5649_axs:
         # 10b. Extract the "incl." amount and compute my_revenve = price - incl -> temp var my_revenve
         execute_js_extract_revenue:
             save_as: "my_revenve"
+            global: true
             script: |
                 () => {
                   const cards=[...document.querySelectorAll('*')].filter(el => {
@@ -139,6 +142,7 @@ testT5649_axs:
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
         execute_js_extract_platform_fees:
             save_as: "transaction-fees"
+            global: true
             script: |
                 () => {
                   const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
@@ -150,6 +154,7 @@ testT5649_axs:
         # 14. Extract "Taxes" from the popover -> temp var taxes
         execute_js_extract_taxes:
             save_as: "taxes"
+            global: true
             script: |
                 () => {
                   const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
@@ -178,8 +183,10 @@ testT5649_axs:
                   return (m && m[1].trim()) || (h && h.textContent.trim()) || document.title.trim();
                 }
 
-        # 17. Slugify the event name into the guest-accessible public post URL -> temp var post_url
+        # 17. Slugify the event name into the guest-accessible public post URL -> GLOBAL var post_url
+        #     (published cross-case so axs_fee_breakdown_guest_purchase_ui.yaml can reuse it)
         execute_js_extract_url:
             save_as: "post_url"
+            global: true
             script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
 

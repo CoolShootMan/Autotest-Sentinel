@@ -2,66 +2,59 @@
 # time: 2026/10/12 17:24
 
 # --- testT5649_tdc_guest_purchase: Guest check fee breakdown and purchase tdc ticket ---
+#
+# [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions.
+# The ONLY JS that remains is step 23 (`execute_js_click_view_tickets`): the order page's
+# "View Tickets" link opens a new tab / window and the framework has no popup handling, so a
+# forced same-tab navigation is required to let wait_for_url assert the destination.
 testT5649_tdc_guest_purchase:
     is_mobile: true
     description: "Guest check fee breakdown and purchase tdc ticket, check TDC info and link on order confirmation page"
+    expect_result: "The TDC product must be priced (non-zero); the guest checkout ends with a confirmed order; pricing/fee assertions cover the post, the Select tickets drawer, the checkout breakdown and the order confirmation (no partner refund flow: TDC tickets are not refundable upstream)"
     test_step:
+        # 0. (guard) Fail fast with a clear message if the cross-case globals from the parent case
+        #     are missing (was execute_js_ensure_globals).
+        verify_defined_globals:
+            vars: [post_url, ticket_tdc, ticket-retails-price, my_revenve, transaction-fees, taxes]
+
         # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
         create_session_guest: { name: "guest" }
 
-        # 2. As a guest, open the public post (location.href triggers navigation; the next step runs on the already-navigated page)
-        session_guest__execute_js_goto:
-            script: "() => { location.href='{{post_url}}'; return 'navigating'; }"
+        # 2. As a guest, open the public post (`open` backfills {{post_url}}, no JS navigation)
+        session_guest__open: { url: "{{post_url}}" }
         sleep_guest_post: 5000
 
-        # 3. As a guest, find the product by name in the post and assert its displayed price
-        #     == my_revenve (net).
-        session_guest__execute_js_verify:
-            script: |
-                (async () => {
-                  const name='{{ticket_tdc}}', rev={{my_revenve}};
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  // [DOM FACT] the post renders the featured product first and the list below; the
-                  // list can hydrate long after domcontentloaded -> poll for the name leaf
-                  const leaf = () => [...document.querySelectorAll('p,span,div,h1,h2,h3,h4,h5,h6')]
-                      .filter(e => !e.children.length && nz(e)===name).sort((a,b) => nz(a).length-nz(b).length)[0];
-                  let el=null;
-                  for(let i=0;i<40 && !(el=leaf()); i++) await new Promise(r=>setTimeout(r,500));
-                  if(!el) throw new Error('guest: product "'+name+'" not found in public post (after 20s)');
-                  // climb to the nearest ancestor that carries a price but is still small — that is
-                  // the product card (a bigger ancestor would swallow the whole list)
-                  let card=null;
-                  for(let c=el,k=0;k<5 && c;k++,c=c.parentElement){ const t=nz(c); if(/\$\s*[\d,]/.test(t) && t.length<=name.length+80){ card=t; break; } }
-                  const shown=card && (card.match(/\$\s*([\d,]+(?:\.\d+)?)/)||[])[1];
-                  if(!shown || Math.abs(parseFloat(shown.replace(/,/g,''))-rev)>0.01)
-                    throw new Error('guest: product "'+name+'" shows '+(card||'no price')+' but my revenue = $'+rev.toFixed(2));
-                  return 'guest verified: '+name+' shows $'+shown+' = my revenue $'+rev.toFixed(2);
-                })()
+        # 3. As a guest, find the product by name in the post and assert its displayed price.
+        #     [PRICING FACT - verified on release 2026-10-13] a TDC hub PUBLIC POST renders the
+        #     RETAIL price (e.g. "$115.42 (incl. fees)"), NOT the organizer's net revenue:
+        #       event card  : $115.42 (incl. $12.54 fees) -> ticket-retails-price = 115.42
+        #       edit ticket : My revenue = $102.88, Fees + Taxes = $12.54
+        #     So the post is asserted against `ticket-retails-price`. (The previous JS compared it
+        #     with my_revenve, which could never match: 115.42 != 102.88.)
+        #     [DOM FACT] the post card = the NEAREST ancestor of the product-name leaf carrying a "$".
+        session_guest__verify_text_regex_post_price:
+            scope: "xpath=//*[normalize-space(.)='{{ticket_tdc}}']/ancestor::*[contains(., '$')][1]"
+            pattern: "\\$\\s*{{ticket-retails-price}}\\b"
+            timeout: 20000
 
         # ==================== guest checkout flow ====================
         # 4. As a guest, click the ticket-tdc product name on the public post to open the "Select tickets" drawer
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_tdc}}']", index: 0 }
 
-        # 5. Assert the price shown in the "Select tickets" drawer == my_revenve (net)
-        session_guest__execute_js_verify_drawer:
-            script: |
-                (async () => {
-                  const rev={{my_revenve}};
-                  // [DOM FACT] for a TDC hub ticket the drawer shows the VENUE + time, NOT the
-                  // product title, so identify it by its heading; fall back to "any drawer holding
-                  // a quantity input" because innerText can briefly read empty.
-                  const byHeading = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Select tickets/i.test(x.innerText));
-                  const byQty = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => x.querySelector('input[type="number"]'));
-                  let d=null;
-                  for(let i=0;i<30;i++){ d=byHeading(); if(d && /\$/.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
-                  if(!d) d = byQty();
-                  if(!d) throw new Error('guest: "Select tickets" drawer did not open');
-                  const shown=((d.innerText.replace(/\s+/g,' ')).match(/\$\s*([\d,]+(?:\.\d+)?)/)||[])[1];
-                  if(!shown) throw new Error('guest: no price shown in the Select tickets drawer; text = '+d.innerText);
-                  if(Math.abs(parseFloat(shown.replace(/,/g,''))-rev)>0.01)
-                    throw new Error('guest: drawer price $'+shown+' != my revenue $'+rev.toFixed(2));
-                  return 'select-tickets drawer price verified: $'+shown+' == my revenue';
-                })()
+        # 5. Assert the price shown in the "Select tickets" drawer.
+        #     [PRICING FACT - verified on release 2026-10-13] the drawer lists the RETAIL price
+        #     ("T1000 ... / $115.42", Total after 1 item = $115.42), i.e. the same amount the public
+        #     post shows — NOT the organizer's net revenue ($102.88). Asserted against
+        #     `ticket-retails-price` for the same reason as step 3.
+        #     [DOM FACT] for a TDC hub ticket the drawer shows the VENUE + time, NOT the product
+        #     title, so identify it by its heading; fall back to "any drawer holding a quantity
+        #     input" because innerText can briefly read empty.
+        #     (`:has-text()` is Playwright's case-insensitive text matcher, mirroring the
+        #      /Select tickets/i test the old JS used.)
+        session_guest__verify_text_regex_drawer_price:
+            scope: ".MuiDrawer-root:has-text('Select tickets'), .MuiDrawer-root:has(input[type='number'])"
+            pattern: "\\$\\s*{{ticket-retails-price}}\\b"
+            timeout: 20000
 
         # 6. Raise the quantity from 0 to 1 (the drawer opens at 0 for hub seat tickets)
         session_guest__R_click_qty_add: { locator: "button[aria-label='Add']", index: 0 }
@@ -78,121 +71,117 @@ testT5649_tdc_guest_purchase:
 
         # 9. Assert on the Checkout drawer:
         #     product name == ticket-tdc; unit price == my_revenve; no "(incl. $ fees)" suffix;
-        #     Total == my_revenve + transaction-fees + taxes
-        session_guest__execute_js_verify_checkout:
-            script: |
-                (async () => {
-                  const name='{{ticket_tdc}}', rev={{my_revenve}}, fee={{transaction-fees}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const norm = s => String(s).replace(/Pear\.US/i,'').replace(/[\u2014\u2013-]\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase();
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // [DOM FACT] row labels are either a leaf (<p>Total</p>) or a DIRECT text node
-                  // (<X>Subtotal<span>$64.48</span></X>) -> match the label element, then walk up to
-                  // the nearest ancestor that carries the amount.
-                  const rowVal = (root,label) => {
-                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
-                    }
-                    return null;
-                  };
-                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
-                  let d=null;
-                  for(let i=0;i<30;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
-                  if(!d) throw new Error('guest checkout: Checkout drawer did not open after Buy now');
-                  const txt=d.innerText.replace(/\s+/g,' ').trim();
-                  if(!norm(txt).includes(norm(name))) throw new Error('guest checkout: product "'+name+'" not shown; drawer text = '+txt);
-                  // [PRICING FACT] the TDC line price is the NET price and carries NO "(incl. $ fees)"
-                  // suffix — the fees are itemised as their own rows below
-                  if(/incl\.?\s*\$/i.test(txt)) throw new Error('guest checkout: price still carries an "(incl. $ fees)" suffix');
-                  const leaves=[...d.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim());
-                  const iName=leaves.findIndex(e => norm(e.textContent)===norm(name));
-                  const linePrice=iName>=0 ? money(leaves.slice(iName+1,iName+8).map(e => e.textContent).find(t => money(t)!==null) || '') : null;
-                  if(linePrice===null || Math.abs(linePrice-rev)>0.01)
-                    throw new Error('guest checkout: product price '+linePrice+' != my revenue $'+rev.toFixed(2));
-                  // [PRICING FACT] a TDC hub ticket itemises as
-                  //   Subtotal (net) + Transaction fees + Service fee = Total
-                  // The Service fee is specific to TDC hub tickets; there is no such row on AXS/Pear.US.
-                  const sub=rowVal(d,'Subtotal');
-                  if(sub===null || Math.abs(sub-rev)>0.01) throw new Error('guest checkout: Subtotal '+sub+' != my revenue $'+rev.toFixed(2));
-                  const feeShown=rowVal(d,'Transaction fees');
-                  if(feeShown===null || Math.abs(feeShown-fee)>0.01) throw new Error('guest checkout: Transaction fees '+feeShown+' != transaction-fees $'+fee.toFixed(2));
-                  const svc=rowVal(d,'Service fee');
-                  if(svc===null || !(svc>0)) throw new Error('guest checkout: no positive "Service fee" row (expected for a TDC hub ticket)');
-                  const total=rowVal(d,'Total'), expect=+(sub+feeShown+svc).toFixed(2);
-                  if(total===null || Math.abs(total-expect)>0.01)
-                    throw new Error('guest checkout: Total '+total+' != Subtotal + fees + service fee = $'+expect.toFixed(2));
-                  return 'checkout verified: line=$'+linePrice.toFixed(2)+' (net), subtotal=$'+sub.toFixed(2)+', transaction fees=$'+feeShown.toFixed(2)+', service fee=$'+svc.toFixed(2)+', total=$'+total.toFixed(2);
-                })()
+        #     Subtotal == my_revenve; Transaction fees == transaction-fees; Service fee > 0;
+        #     Total == Subtotal + Transaction fees + Service fee
+        session_guest__verify_text_visible_checkout_name:
+            text: "{{ticket_tdc}}"
+            scope: { locator: ".MuiDrawer-root:has-text('Checkout')" }
+            timeout: 20000
+        # [PRICING FACT] the TDC line price is the NET price and carries NO "(incl. $ fees)"
+        # suffix — the fees are itemised as their own rows below
+        session_guest__verify_text_regex_no_incl_suffix:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "incl\\.?\\s*\\$"
+            assert_not_match: true
+            timeout: 15000
+        session_guest__verify_text_regex_line_price:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
+            timeout: 15000
+        session_guest__verify_row_value_subtotal:
+            label: "Subtotal"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{my_revenve}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_transaction_fees:
+            label: "Transaction fees"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{transaction-fees}}"
+            tolerance: 0.01
+            timeout: 20000
+        # [PRICING FACT] a TDC hub ticket adds a Service fee row on top of Subtotal +
+        # Transaction fees; it has no counterpart on the AXS/Pear.US checkout.
+        session_guest__extract_row_value_service_fee:
+            label: "Service fee"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            save_as: "service_fee"
+            timeout: 20000
+        session_guest__verify_number_service_fee_positive:
+            value: "{{service_fee}}"
+            op: "gt"
+            expected: "0"
+        # Total == Subtotal (net) + Transaction fees + Service fee
+        session_guest__compute_value_checkout_total:
+            expression: "{{my_revenve}} + {{transaction-fees}} + {{service_fee}}"
+            save_as: "checkout_total_tdc"
+        session_guest__verify_row_value_total:
+            label: "Total"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{checkout_total_tdc}}"
+            tolerance: 0.01
+            timeout: 20000
 
         # 10. Click Total to expand the fee breakdown
         session_guest__R_click_total: { locator: "xpath=//*[normalize-space(.)='Total']", index: 0 }
 
         # 11. Assert in the expanded breakdown:
-        #     Subtotal == my_revenve; Transaction fees == transaction-fees;
-        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it must not appear
-        session_guest__execute_js_verify_breakdown:
-            script: |
-                (async () => {
-                  const rev={{my_revenve}}, fee={{transaction-fees}}, tax={{taxes}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // [DOM FACT] Subtotal / Transaction fees / Taxes labels are DIRECT text nodes
-                  // (<X>Subtotal<span>$64.48</span></X>); match the label, then walk up to the
-                  // nearest ancestor carrying the amount.
-                  const rowVal = (root,label) => {
-                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
-                    }
-                    return null;
-                  };
-                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
-                  let d=null;
-                  for(let i=0;i<25;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,400)); }
-                  if(!d) throw new Error('guest breakdown: Checkout drawer not found');
-                  const sub=rowVal(d,'Subtotal');
-                  if(sub===null || Math.abs(sub-rev)>0.01) throw new Error('guest breakdown: Subtotal '+sub+' != my revenue $'+rev.toFixed(2));
-                  const feeShown=rowVal(d,'Transaction fees');
-                  if(feeShown===null || Math.abs(feeShown-fee)>0.01) throw new Error('guest breakdown: Transaction fees '+feeShown+' != transaction-fees $'+fee.toFixed(2));
-                  // [PRICING FACT] a TDC hub ticket adds a Service fee row on top of
-                  // Subtotal + Transaction fees; it has no counterpart on the AXS/Pear.US checkout.
-                  const svc=rowVal(d,'Service fee');
-                  if(svc===null || !(svc>0)) throw new Error('guest breakdown: no positive "Service fee" row (expected for a TDC hub ticket)');
-                  const taxShown=rowVal(d,'Taxes');
-                  if(tax!==0 && (taxShown===null || Math.abs(taxShown-tax)>0.01)) throw new Error('guest breakdown: Taxes '+taxShown+' != taxes $'+tax.toFixed(2));
-                  if(tax===0 && taxShown!==null) throw new Error('guest breakdown: taxes=0 but a "Taxes" row is shown ($'+taxShown+')');
-                  return 'breakdown verified: subtotal=$'+sub.toFixed(2)+' (net), transaction fees=$'+feeShown.toFixed(2)+', service fee=$'+svc.toFixed(2)+', taxes='+(taxShown===null?'(hidden, taxes=0)':'$'+taxShown.toFixed(2));
-                })()
+        #     Subtotal == my_revenve; Transaction fees == transaction-fees; Service fee > 0;
+        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it may be hidden.
+        session_guest__verify_row_value_breakdown_subtotal:
+            label: "Subtotal"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{my_revenve}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_breakdown_transaction_fees:
+            label: "Transaction fees"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{transaction-fees}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_number_service_fee_positive_breakdown:
+            value: "{{service_fee}}"
+            op: "gt"
+            expected: "0"
+        session_guest__verify_row_value_breakdown_taxes:
+            label: "Taxes"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{taxes}}"
+            tolerance: 0.01
+            absent_when_zero: true
+            timeout: 20000
 
-        # 12. Save the Service fee so the confirmation-page check (step 37) can assert
-        #      Total == Item(s) total + Service fee.
-        session_guest__execute_js_extract_service_fee:
+        # 12. Re-save the Service fee from the expanded breakdown so the confirmation-page checks
+        #      (steps 20/22) assert Total == Item(s) total + Service fee.
+        session_guest__extract_row_value_service_fee_final:
+            label: "Service fee"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
             save_as: "service_fee"
-            script: |
-                () => {
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const d=[...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
-                  if(!d) throw new Error('service fee: Checkout drawer not found');
-                  for(const c of [...d.querySelectorAll('*')].filter(x => [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()==='Service fee'))){
-                    let el=c;
-                    for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
-                  }
-                  throw new Error('service fee: "Service fee" row not found');
-                }
+            timeout: 20000
 
-        # 29. Click Continue with credit card to reach the contact + payment form
-        session_guest__R_click_continue_cc: { role: "button", name: "Continue with credit card" }
+        # 13. Click the Checkout CTA to reach the contact + payment form.
+        #     [UI DRIFT 2026-10-13] the old "Continue with credit card" button no longer exists:
+        #     the shared Checkout drawer renders a single CTA
+        #     `button[data-testid='checkout-in-post-continue-cta']` labelled "Continue", and
+        #     clicking it swaps the drawer body to the contact form (input[name='contact.*'])
+        #     with a "Place order" CTA. Verified on the venue-map checkout (same shared
+        #     component, see venue_map_fee_breakdown_guest_purchase.yaml step 12); not re-verified
+        #     here because the TDC purchase is currently blocked upstream by
+        #     "Ticket pricing unavailable" (product-side).
+        session_guest__R_click_checkout_continue:
+            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            timeout: 15000
         sleep_guest_cc_form: 5000
 
-        # 13. Fill in Contact (First name / Last name / Phone / Email)
+        # 14. Fill in Contact (First name / Last name / Phone / Email)
         session_guest__fill_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
         session_guest__fill_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
         session_guest__fill_phone: { locator: "input[name='contact.phoneNumber']", value: "2524001111" }
         session_guest__fill_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
         sleep_guest_contact: 1000
 
-        # 14. Fill in Payment (the three Stripe fields live in separate iframes; locate them by
+        # 15. Fill in Payment (the three Stripe fields live in separate iframes; locate them by
         #     visible iframe order: nth=0 card number / nth=1 expiry / nth=2 CVC)
         session_guest__fill_card_number:
             frame: "iframe[src*='elements-inner-card'] >> nth=0"
@@ -217,157 +206,125 @@ testT5649_tdc_guest_purchase:
         session_guest__fill_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
         sleep_guest_payment: 1500
 
-        # 15. Assert the payment form was filled correctly (Playwright-native input_value
-        #     assertions; the phone field is auto-formatted so its digit count stays in a tiny JS)
+        # 16. Assert the payment form was filled correctly (Playwright-native input_value
+        #     assertions; the phone field is auto-formatted so it is checked with a regex
+        #     requiring at least 10 digits — was a tiny execute_js)
         session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
         session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
         session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
         session_guest__verify_value_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
         session_guest__verify_value_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
-        session_guest__execute_js_verify_phone:
-            script: |
-                () => {
-                  const v = document.querySelector("input[name='contact.phoneNumber']").value;
-                  if (v.replace(/\D/g, '').length < 10) throw new Error('payment form: phone incomplete: ' + v);
-                  return 'phone ok: ' + v;
-                }
+        session_guest__verify_value_phone:
+            locator: "input[name='contact.phoneNumber']"
+            regex: "(\\d\\D*){10}"
 
-        # 16. Click Place order
+        # 17. Click Place order
         session_guest__R_click_place_order: { role: "button", name: "Place order" }
         sleep_place_order: 8000
 
         # ==================== order placed + order confirmation page checks ====================
-        # 17. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
+        # 18. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
         #     URL lands on /order/<id>/confirmation, then the confirmation copy must be visible.
         session_guest__wait_for_url_order_confirmation:
             url: "**/order/**/confirmation"
             timeout: 30000
         session_guest__verify_order_confirmed: { text: "Your order is confirmed", timeout: 20000 }
 
-        # 18. Assert the price next to "Show summary" == ticket-retails-price (or retail + service fee)
-        session_guest__execute_js_verify_show_summary_price:
-            script: |
-                (async () => {
-                  const retail={{ticket-retails-price}}, grand=+(retail+{{service_fee}}).toFixed(2);
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // the amount sits in a HIGHER ancestor of "Show summary"; only a SHORT tail
-                  // (<=16 chars) counts as this row's amount, otherwise we grab a foreign amount
-                  const amount = () => {
-                    const el = [...document.querySelectorAll('*')].find(e => vis(e) && e.textContent.trim()==='Show summary');
-                    if(!el) return null;
-                    for(let n=el.parentElement,k=0;k<4 && n;k++,n=n.parentElement){
-                      const tail=n.textContent.replace('Show summary','').trim();
-                      if(tail && tail.length<=16) return money(tail);
-                    }
-                    return null;
-                  };
-                  let shown=null;
-                  for(let i=0;i<20;i++){ shown=amount(); if(shown!==null) break; await new Promise(r=>setTimeout(r,400)); }
-                  // [PRICING FACT] on a TDC hub order the header may show the item total (retail) or
-                  // the grand total (retail + Service fee); step 37 hard-asserts the rows either way.
-                  if(shown===null || (Math.abs(shown-retail)>0.01 && Math.abs(shown-grand)>0.01))
-                    throw new Error('order page: "Show summary" shows '+(shown===null?'no $ amount':'$'+shown.toFixed(2))+', expected $'+retail.toFixed(2)+' (retail) or $'+grand.toFixed(2)+' (retail + service fee)');
-                  return 'show summary price verified: $'+shown.toFixed(2)+' == '+(Math.abs(shown-retail)<=0.01?'ticket-retails-price':'retail + service fee');
-                })()
+        # 19. Assert the price next to "Show summary" == ticket-retails-price (or retail + service fee)
+        #     [PRICING FACT] on a TDC hub order the header may show the item total (retail) or the
+        #     grand total (retail + Service fee); steps 20/21 hard-assert the rows either way.
+        session_guest__compute_value_grand_total:
+            expression: "{{ticket-retails-price}} + {{service_fee}}"
+            save_as: "tdc_grand_total"
+        session_guest__verify_row_value_show_summary:
+            label: "Show summary"
+            value: ["{{ticket-retails-price}}", "{{tdc_grand_total}}"]
+            tail_limit: 16
+            levels: 6
+            tolerance: 0.01
+            timeout: 20000
 
-        # 19. Click Show summary to expand the order details
+        # 20. Click Show summary to expand the order details
         session_guest__R_click_show_summary: { locator: "xpath=//*[normalize-space(.)='Show summary']" }
 
-        # 20. Assert the details: Item(s) total == Subtotal == ticket-retails-price, and
+        # 21. Assert the details: Item(s) total == Subtotal == ticket-retails-price, and
         #     Total == Item(s) total + Service fee (the TDC hub settlement model), plus an
         #     "(incl. $a fees)" row where a == transaction-fees
-        session_guest__execute_js_verify_order_totals:
-            script: |
-                (async () => {
-                  const retail={{ticket-retails-price}}, fee={{transaction-fees}}, svc={{service_fee}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // expanded detail rows: the tail must stay short (<=24) so we do not climb past
-                  // this row and grab the first amount of the whole region
-                  const rowVal = label => {
-                    for(const c of [...document.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){
-                        const tail=el.textContent.replace(label,'').trim();
-                        if(tail.length>24) break;
-                        const v=money(tail);
-                        if(v!==null) return v;
-                        el=el.parentElement;
-                      }
-                    }
-                    return null;
-                  };
-                  let body='';
-                  for(let i=0;i<25;i++){ body=document.body.innerText; if(/Item\(s\) total/i.test(body)) break; await new Promise(r=>setTimeout(r,400)); }
-                  for(const lab of ['Item(s) total','Subtotal']){
-                    const v=rowVal(lab);
-                    if(v===null || Math.abs(v-retail)>0.01)
-                      throw new Error('order summary: '+lab+' '+(v===null?'row not found':'$'+v.toFixed(2))+' != ticket-retails-price $'+retail.toFixed(2));
-                  }
-                  // [PRICING FACT] the TDC Total carries the Service fee on top of the item total
-                  const total=rowVal('Total'), totalExpect=+(retail+svc).toFixed(2);
-                  if(total===null || Math.abs(total-totalExpect)>0.01)
-                    throw new Error('order summary: Total '+(total===null?'row not found':'$'+total.toFixed(2))+' != retail $'+retail.toFixed(2)+' + service fee $'+svc.toFixed(2)+' = $'+totalExpect.toFixed(2));
-                  // "(including $a fees)" — the actual copy is "(incl. $5.27 fees)"; accept both
-                  const fees=[...body.matchAll(/(?:including|incl\.?)\s*\$([\d,]+(?:\.\d+)?)\s*fees/gi)].map(m => parseFloat(m[1].replace(/,/g,'')));
-                  if(!fees.some(a => Math.abs(a-fee)<=0.01))
-                    throw new Error('order summary: "(incl. $x fees)" amounts '+JSON.stringify(fees)+' but transaction-fees = '+fee);
-                  return 'order totals verified: item/subtotal=$'+retail.toFixed(2)+', total=$'+(total||0).toFixed(2)+' (retail + service fee $'+svc.toFixed(2)+'), fees=$'+fee.toFixed(2);
-                })()
+        session_guest__verify_row_value_item_total:
+            label: "Item(s) total"
+            value: "{{ticket-retails-price}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_order_subtotal:
+            label: "Subtotal"
+            value: "{{ticket-retails-price}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_order_total:
+            label: "Total"
+            value: "{{tdc_grand_total}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_text_regex_incl_fees_row:
+            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{transaction-fees}}\\s*fees"
+            flags: "i"
+            timeout: 20000
 
-        # 21. Assert the TDC access copy under "Create an account to access your order anytime."
+        # 22. Assert the TDC access copy under "Create an account to access your order anytime."
         #     (TDC ticket messageTemplate; the "MLB.com username" shown is the BUYER's email —
-        #     keep in sync with the checkout contact email, step 30. Playwright-native text
-        #     assertions; the fragments avoid apostrophes, whose curly/straight glyph can differ.)
+        #     keep in sync with the checkout contact email. Playwright-native text assertions;
+        #     the fragments avoid apostrophes, whose curly/straight glyph can differ.)
         session_guest__verify_tdc_anchor: { text: "Create an account to access your order anytime.", timeout: 20000 }
         session_guest__verify_tdc_access_title: { text: "How to access your tickets" }
         session_guest__verify_tdc_timing_line: { text: "will be available before the event" }
         session_guest__verify_tdc_login_line: { text: "log in with your MLB.com username (dian.yuhong.ext+111@1m.app)" }
 
-        # 22. Assert Confirmation details: contact information / payment method / billing zip code.
+        # 23. Assert Confirmation details: contact information / payment method / billing zip code.
         #     (Playwright-native text assertions for the static parts; the charged amount is
-        #     dynamic so it stays in a tiny JS check. The page shows the phone as 252-400-1111.)
+        #     dynamic so it is a regex with {{var}}. The page shows the phone as 252-400-1111.)
         session_guest__verify_contact_name: { text: "Lury UIAutomation", timeout: 20000 }
         session_guest__verify_contact_phone: { text: "252-400-1111" }
         session_guest__verify_contact_email: { text: "dian.yuhong.ext+111@1m.app" }
         session_guest__verify_card_tail: { text: "Visa x4242" }
         session_guest__verify_zip_code: { text: "90021", exact: true }
-        session_guest__execute_js_verify_paid_amount:
-            script: |
-                () => {
-                  // [PRICING FACT] on a TDC hub order the "Payment method" line shows the amount
-                  // actually CHARGED to the card = grand total = retail + Service fee.
-                  const paidExpect=+({{ticket-retails-price}}+{{service_fee}}).toFixed(2);
-                  const pm=(document.body.innerText.match(/Visa\s*x4242\s*-\s*\$?([\d,]+(?:\.\d+)?)/i)||[])[1];
-                  if(!pm) throw new Error('payment method amount not found next to "Visa x4242"');
-                  if(Math.abs(parseFloat(pm.replace(/,/g,''))-paidExpect)>0.01)
-                    throw new Error('payment method amount: $'+pm+' != retail + service fee = $'+paidExpect.toFixed(2));
-                  return 'payment amount verified: $'+pm+' == retail + service fee';
-                }
+        # [PRICING FACT] on a TDC hub order the "Payment method" line shows the amount actually
+        # CHARGED to the card = grand total = retail + Service fee.
+        session_guest__verify_text_regex_paid_amount:
+            pattern: "Visa\\s*x4242\\s*-\\s*\\$\\s*{{tdc_grand_total}}\\b"
+            flags: "i"
+            timeout: 20000
 
-        # 23. Click "View Tickets": capture its href (guarding it points at mpvsb.tickets.com),
-        #      then force a same-tab jump (also redirect any window.open) so the destination can
-        #      be asserted by the Playwright-native wait_for_url in the next step.
-        session_guest__execute_js_click_view_tickets:
+        # 24. Assert the "View Tickets" link points at mpvsb.tickets.com (native: read the href
+        #     attribute and validate it with an anchored regex -> extract_value raises when the
+        #     href does not match, so this doubles as the old JS href guard).
+        session_guest__extract_value_view_tickets_url:
+            locator: "xpath=(//*[self::a or self::button or @role='button'][contains(normalize-space(.), 'View Tickets')])[1]"
+            source: attribute
+            attribute: href
+            regex: "^https://mpvsb\\.tickets\\.com/"
+            numeric: false
             save_as: "view_tickets_url"
+            timeout: 20000
+
+        # 25. Click "View Tickets", forcing a same-tab jump (also redirecting any window.open) so
+        #     the destination can be asserted by the Playwright-native wait_for_url in step 26.
+        #     [ALLOWED JS] The framework has no popup/new-tab handling and this link opens a new
+        #     tab, so the forced same-tab navigation is the one JS exception kept in this suite.
+        session_guest__execute_js_click_view_tickets:
             script: |
                 () => {
                   const el = [...document.querySelectorAll('a,button,[role="button"]')]
                     .filter(e => /View\s*Tickets/i.test((e.textContent||'').replace(/\s+/g,' ').trim()))
                     .sort((a,b) => (a.textContent||'').length - (b.textContent||'').length)[0];
                   if(!el) throw new Error('order page: "View Tickets" button not found');
-                  const url = el.getAttribute('href') || el.href || '';
-                  if(url && !/^https:\/\/mpvsb\.tickets\.com\//i.test(url))
-                    throw new Error('order page: "View Tickets" href is "'+url+'", expected https://mpvsb.tickets.com/...');
-                  try { if(el.tagName === 'A') el.setAttribute('target','_self'); } catch(_){}
+                  try { el.setAttribute('target','_self'); } catch(_){}
                   window.open = function(u){ const s=(typeof u==='string')?u:(u&&u.toString?u.toString():''); if(s) location.href = s; return window; };
                   setTimeout(() => el.click(), 0);   // next tick: evaluate returns before navigation
-                  return url || '(no href; destination verified by wait_for_url)';
+                  return 'clicked';
                 }
         sleep_view_tickets_nav: 6000
 
-        # 24. [HARD ASSERTION] the "View Tickets" click must land on https://mpvsb.tickets.com/
+        # 26. [HARD ASSERTION] the "View Tickets" click must land on https://mpvsb.tickets.com/
         session_guest__wait_for_url_view_tickets:
             url: "*mpvsb.tickets.com*"
             timeout: 30000
@@ -384,7 +341,3 @@ testT5649_tdc_guest_purchase:
         #         - the partner session existed only to drive that refund flow, so it was removed with
         #           it (partner auth is still covered by axs_fee_breakdown_ui.yaml and the API suite).
         #       Add the partner/refund steps back only once TDC refunds are supported.
-
-    expect_result:
-        description: "The TDC product must be priced (non-zero); the guest checkout ends with a confirmed order; pricing/fee assertions cover the post, the Select tickets drawer, the checkout breakdown and the order confirmation (no partner refund flow: TDC tickets are not refundable upstream)"
-        assertions: []

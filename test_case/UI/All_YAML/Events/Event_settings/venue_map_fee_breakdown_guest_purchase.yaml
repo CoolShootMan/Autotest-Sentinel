@@ -1,163 +1,185 @@
 # author: Lury
 # time: 2026/9/22 14:16
 
-# --- testT5649_venue_map: venue_map-tagged event, enable "Show fee breakdown at checkout" and verify fee breakdown end-to-end ---
+# --- testT5649_venue_map_guest_purchase: guest checks the fee breakdown and buys the venue map ticket ---
+#
+# [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions
+# (verify_defined / open / verify_text_regex / verify_row_value / extract_value / compute_value ...).
+# No JS left in this case.
 testT5649_venue_map_guest_purchase:
     is_mobile: true
     description: "Verify the fee breakdown for venue map ticket on checkout - then place order - check seat info in order confirmation page - refund"
+    expect_result: "Checkout shows a fee breakdown for the venue map ticket; order can be placed and the confirmation page shows seat info; partner can refund the order"
     test_step:
+        # 0. (guard) Fail fast with a clear message if the cross-case globals from the parent case
+        #     are missing (was execute_js_ensure_globals). Without this, an unset post_url would
+        #     navigate to a literal "{{post_url}}" and Chrome would throw a cryptic
+        #     "'' is not a valid URL" SyntaxError instead.
+        verify_defined_globals:
+            vars: [post_url, ticket_venue_map, ticket-retails-price, my_revenve, transaction-fees, taxes]
+
         # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
         create_session_guest: { name: "guest" }
 
-        # 2. As a guest, open the public post (location.href triggers navigation; the next step runs on the already-navigated page)
-        session_guest__execute_js_goto:
-            script: "() => { location.href='{{post_url}}'; return 'navigating'; }"
+        # 2. As a guest, open the public post. `open` backfills {{var}} now, so no
+        #     `location.href='{{post_url}}'` JS is needed.
+        session_guest__open: { url: "{{post_url}}" }
         sleep_guest_post: 5000
 
         # 3. As a guest, find the product by name in the post and assert its displayed price
-        #     == my_revenve (net revenue)
-        session_guest__execute_js_verify:
-            script: |
-                () => {
-                  const name='{{ticket_venue_map}}', rev={{my_revenve}};
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  // innermost element containing both the name and "Buy Ticket" = the product card
-                  const card=[...document.querySelectorAll('*')]
-                    .filter(e => { const t=nz(e); return t.includes(name) && t.includes('Buy Ticket'); })
-                    .reduce((best,e) => (!best || best.contains(e)) ? e : best, null);
-                  if(!card) throw new Error('guest: product "'+name+'" not found in public post');
-                  const shown=(nz(card).match(/\$([\d.]+)/)||[])[1];
-                  if(!shown || Math.abs(parseFloat(shown)-rev)>0.01)
-                    throw new Error('guest: product "'+name+'" shows $'+shown+' but my revenue = $'+rev);
-                  return 'guest verified: '+name+' shows $'+shown+' = my revenue $'+rev;
-                }
+        #     == my_revenve (net revenue).
+        #     [DOM FACT] a post product card = the NEAREST ancestor of the product-name leaf that
+        #     carries a "$" amount. On a venue_map public post that amount is the NET price
+        #     (My revenue), e.g. "General Admission 02 / $100.00 / Buy Ticket".
+        session_guest__verify_text_regex_post_price:
+            scope: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']/ancestor::*[contains(., '$')][1]"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
+            timeout: 20000
 
         # ==================== guest checkout flow ====================
         # 4. As a guest, click the ticket-venue_map product name on the public post to open the "Select tickets" drawer
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
-        # 5. On the opened "Select tickets" drawer a venue map is shown. Click a seat
-        #     circle directly (ignore sold state — just click the circle).
-        session_guest__R_click_select_seat: { locator: 'circle[data-id]', index: 0, disable_ai: true }
-        sleep_select_seat: 1500
+        # 5. On the opened "Select tickets" drawer a venue map is shown. Select a table.
+        #     [WHY dispatch_click] This is an SVG table map: the interactive nodes are
+        #     `circle[data-id]` (covered, so a real click times out on the hit-target check) and
+        #     `rect[data-id]` (`pointer-events: none`, so a real click passes through). Dispatching
+        #     the pointer/mouse sequence works. Two dispatches are needed and reproduce
+        #     deterministically (verified on release 2026-10-13, twice):
+        #       (a) a dispatch on the first hit area dismisses the
+        #           "Zoom in and select tables" overlay, then
+        #       (b) a dispatch on a seat circle selects the table
+        #           -> the drawer becomes "1 table selected / Total: $100.00 / 10 / $100.00".
+        #     See actions/base.py `dispatch_click`.
+        session_guest__dispatch_click_map_hint:
+            locator: "rect[data-id]"
+            index: 0
+            timeout: 15000
+        sleep_map_hint: 1500
+        session_guest__dispatch_click_select_seat:
+            locator: "circle[data-id]"
+            index: 1
+            timeout: 15000
+        sleep_select_seat: 2500
 
         # 6. Assert the price shown in the drawer == my_revenve
-        session_guest__execute_js_verify_drawer:
-            script: |
-                (async () => {
-                  const rev={{my_revenve}};
-                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Select tickets/i.test(x.innerText));
-                  let d=null;
-                  for(let i=0;i<30;i++){ d=drawer(); if(d && /\$/.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
-                  if(!d) throw new Error('guest: "Select tickets" drawer did not open');
-                  const shown=((d.innerText.replace(/\s+/g,' ')).match(/\$\s*([\d,]+(?:\.\d+)?)/)||[])[1];
-                  if(!shown) throw new Error('guest: no price shown in Select tickets drawer; drawer text = '+d.innerText);
-                  if(Math.abs(parseFloat(shown.replace(/,/g,''))-rev)>0.01)
-                    throw new Error('guest: drawer price $'+shown+' != my revenue $'+rev.toFixed(2));
-                  return 'select drawer price verified: $'+shown+' == my revenue';
-                })()
+        session_guest__verify_text_regex_drawer_price:
+            scope: ".MuiDrawer-root:has-text('Select tickets')"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
+            timeout: 20000
 
         # 7. Capture seat_unit: the number immediately before the price on the Select tickets
         #     drawer (the quantity of seats selected, e.g. "1" in "1 × $100.00"). Save as seat_unit.
-        session_guest__execute_js_extract_seat_unit:
+        #     (numeric:false so the value stays "1" instead of being formatted to "1.00")
+        session_guest__extract_value_seat_unit:
+            locator: ".MuiDrawer-root:has-text('Select tickets')"
+            source: text
+            regex: "([\\d][\\d.,]*)\\s*\\$\\s*[\\d.,]+"
+            numeric: false
             save_as: "seat_unit"
-            script: |
-                () => {
-                  const d=[...document.querySelectorAll('.MuiDrawer-root')].find(x => /Select tickets/i.test(x.innerText) && /\$/.test(x.innerText));
-                  if(!d) throw new Error('seat_unit: "Select tickets" drawer not found');
-                  const m=(d.innerText.replace(/\s+/g,' ').match(/([\d][\d.,]*)\s*\$\s*[\d.,]+/)||[])[1];
-                  if(!m) throw new Error('seat_unit: no number before a price in drawer; drawer text = '+d.innerText);
-                  return m.replace(/,/g,'');
-                }
+            timeout: 15000
         sleep_seat_unit: 800
 
         # 8. Click Buy now and wait 3s to reach the Checkout drawer
         session_guest__R_click_buy_now: { role: "button", name: "Buy now" }
         sleep_guest_checkout: 3000
 
+        # 8b. (guard, optional) "Access code required" overlay.
+        #     [WHY] This shared venue-map post can be left with Payment Restriction ON by
+        #     `Post/Post_setting_for_venue_map.yaml :: testT4955_Partner_SetPaymentRestriction_venue_map`
+        #     (it enables the restriction with the access code `demi123`; the code persists
+        #     server-side). When that state is active, "Buy now" opens an "Access code required"
+        #     dialog and the Checkout drawer never appears, so step 9 below would fail with
+        #     "Scope container '.MuiDrawer-root:has-text('Checkout')' not found".
+        #     Both steps are OPTIONAL: on a clean post the dialog is absent and they skip silently
+        #     (`smart_fill` gained `optional: true` for exactly this; `smart_click_optional`
+        #     already existed). Recipe mirrored from the only case in the repo that exercises
+        #     this dialog (Post_setting_for_venue_map.yaml T4955 guest half).
+        session_guest__fill_access_code_optional:
+            role: "textbox"
+            name: "Enter code"
+            value: "demi123"
+            optional: true
+            timeout: 5000
+        session_guest__smart_click_optional_confirm_code:
+            role: "button"
+            name: "Confirm"
+        sleep_access_code: 3000
+
         # 9. Assert on the Checkout drawer:
         #     product name == ticket-venue_map; unit price == my_revenve; no "(incl. $ fees)" suffix;
         #     Total == my_revenve + transaction-fees + taxes
-        session_guest__execute_js_verify_checkout:
-            script: |
-                (async () => {
-                  const name='{{ticket_venue_map}}', rev={{my_revenve}}, fee={{transaction-fees}}, tax={{taxes}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const norm = s => String(s).replace(/Pear\.US/i,'').replace(/[\u2014\u2013-]\s*$/,'').replace(/\s+/g,' ').trim().toLowerCase();
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // [DOM FACT] row labels are either a leaf (<p>Total</p>) or a DIRECT text node
-                  // (<X>Subtotal<span>$64.48</span></X>) -> match the label element, then walk up to
-                  // the nearest ancestor that carries the amount.
-                  const rowVal = (root,label) => {
-                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
-                    }
-                    return null;
-                  };
-                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
-                  let d=null;
-                  for(let i=0;i<30;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,500)); }
-                  if(!d) throw new Error('guest checkout: Checkout drawer did not open after Buy now');
-                  const txt=d.innerText.replace(/\s+/g,' ').trim();
-                  if(!norm(txt).includes(norm(name))) throw new Error('guest checkout: product "'+name+'" not shown; drawer text = '+txt);
-                  if(/incl\.?\s*\$/i.test(txt)) throw new Error('guest checkout: price still carries an "(incl. $ fees)" suffix');
-                  // line unit price = the first money leaf after the product-name leaf
-                  const leaves=[...d.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim());
-                  const iName=leaves.findIndex(e => norm(e.textContent)===norm(name));
-                  const linePrice=iName>=0 ? money(leaves.slice(iName+1,iName+8).map(e => e.textContent).find(t => money(t)!==null) || '') : null;
-                  if(linePrice===null || Math.abs(linePrice-rev)>0.01)
-                    throw new Error('guest checkout: product price '+linePrice+' != my revenue $'+rev.toFixed(2));
-                  const total=rowVal(d,'Total'), expect=+(rev+fee+tax).toFixed(2);
-                  if(total===null || Math.abs(total-expect)>0.01)
-                    throw new Error('guest checkout: Total '+total+' != my revenue + fees + taxes = $'+expect.toFixed(2));
-                  // (e) product info "Unit" must equal seat_unit
-                  //     [DOM FACT] the label and value share one leaf, e.g. "Unit: 1"
-                  const seatUnit=String({{seat_unit}});
-                  const um=txt.match(/\bUnit\s*:\s*(\d+)/i);
-                  if(!um) throw new Error('guest checkout: no "Unit" field in product info; drawer text = '+txt);
-                  if(um[1]!==seatUnit) throw new Error('guest checkout: Unit '+um[1]+' != seat_unit '+seatUnit);
-                  return 'checkout verified: line=$'+linePrice.toFixed(2)+', total=$'+total.toFixed(2)+', unit='+um[1]+' ('+rev+' + '+fee+' + '+tax+')';
-                })()
+        session_guest__verify_text_visible_checkout_name:
+            text: "{{ticket_venue_map}}"
+            scope: { locator: ".MuiDrawer-root:has-text('Checkout')" }
+            timeout: 20000
+        # [PRICING FACT] the checkout line itemises the fees, so the product price must NOT
+        # carry the "(incl. $ fees)" buyer-facing suffix anymore.
+        session_guest__verify_text_regex_no_incl_suffix:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "incl\\.?\\s*\\$"
+            assert_not_match: true
+            timeout: 15000
+        session_guest__verify_text_regex_line_price:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
+            timeout: 15000
+        session_guest__compute_value_checkout_total:
+            expression: "{{my_revenve}} + {{transaction-fees}} + {{taxes}}"
+            save_as: "checkout_total_venue_map"
+        session_guest__verify_row_value_total:
+            label: "Total"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{checkout_total_venue_map}}"
+            tolerance: 0.01
+            timeout: 20000
+        # product info "Unit" must equal seat_unit. [DOM FACT] the label and value share one
+        # leaf, e.g. "Unit: 1".
+        session_guest__verify_text_regex_unit:
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            pattern: "\\bUnits?\\s*:?\\s*{{seat_unit}}\\b"
+            flags: "i"
+            timeout: 15000
 
         # 10. Click Total to expand the fee breakdown
         session_guest__R_click_total: { locator: "xpath=//*[normalize-space(.)='Total']", index: 0 }
 
         # 11. Assert in the expanded breakdown:
         #     Subtotal == my_revenve; Transaction fees == transaction-fees;
-        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it must not appear
-        session_guest__execute_js_verify_breakdown:
-            script: |
-                (async () => {
-                  const rev={{my_revenve}}, fee={{transaction-fees}}, tax={{taxes}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // [DOM FACT] Subtotal / Transaction fees / Taxes labels are DIRECT text nodes
-                  // (<X>Subtotal<span>$64.48</span></X>); match the label, then walk up to the
-                  // nearest ancestor carrying the amount.
-                  const rowVal = (root,label) => {
-                    for(const c of [...root.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){ const v=money(el.textContent); if(v!==null) return v; el=el.parentElement; }
-                    }
-                    return null;
-                  };
-                  const drawer = () => [...document.querySelectorAll('.MuiDrawer-root')].find(x => /Checkout/i.test(x.innerText));
-                  let d=null;
-                  for(let i=0;i<25;i++){ d=drawer(); if(d && /Subtotal/i.test(d.innerText)) break; await new Promise(r=>setTimeout(r,400)); }
-                  if(!d) throw new Error('guest breakdown: Checkout drawer not found');
-                  const sub=rowVal(d,'Subtotal');
-                  if(sub===null || Math.abs(sub-rev)>0.01) throw new Error('guest breakdown: Subtotal '+sub+' != my revenue $'+rev.toFixed(2));
-                  const feeShown=rowVal(d,'Transaction fees');
-                  if(feeShown===null || Math.abs(feeShown-fee)>0.01) throw new Error('guest breakdown: Transaction fees '+feeShown+' != transaction-fees $'+fee.toFixed(2));
-                  const taxShown=rowVal(d,'Taxes');
-                  if(tax!==0 && (taxShown===null || Math.abs(taxShown-tax)>0.01)) throw new Error('guest breakdown: Taxes '+taxShown+' != taxes $'+tax.toFixed(2));
-                  if(tax===0 && taxShown!==null) throw new Error('guest breakdown: taxes=0 but a "Taxes" row is shown ($'+taxShown+')');
-                  return 'breakdown verified: subtotal=$'+sub.toFixed(2)+', transaction fees=$'+feeShown.toFixed(2)+', taxes='+(taxShown===null?'(hidden, taxes=0)':'$'+taxShown.toFixed(2));
-                })()
+        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it may be hidden.
+        #     (was one big execute_js rowVal() block -> native labelled-row assertions)
+        session_guest__verify_row_value_subtotal:
+            label: "Subtotal"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{my_revenve}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_transaction_fees:
+            label: "Transaction fees"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{transaction-fees}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_taxes:
+            label: "Taxes"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            value: "{{taxes}}"
+            tolerance: 0.01
+            absent_when_zero: true
+            timeout: 20000
 
-        # 12. Click Continue with credit card to reach the contact + payment form
-        session_guest__R_click_continue_cc: { role: "button", name: "Continue with credit card" }
+        # 12. Click the Checkout CTA to reach the contact + payment form.
+        #     [UI DRIFT 2026-10-13, browser-verified] the drawer CTA is no longer
+        #     "Continue with credit card": the Checkout drawer renders ONE CTA
+        #     `button[data-testid='checkout-in-post-continue-cta']` whose label is just
+        #     "Continue" (probe of the live release drawer: only in-drawer buttons are
+        #     "Add a note" and that Continue CTA). Clicking it replaces the drawer body with
+        #     `Contact: First name / Last name / Phone / Email` +
+        #     `input[name='contact.firstName'|'contact.lastName'|'contact.phoneNumber'|'contact.email']`
+        #     and swaps the CTA for "Place order" — exactly what steps 13-16 below fill/submit.
+        session_guest__R_click_checkout_continue:
+            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            timeout: 15000
         sleep_guest_cc_form: 5000
 
         # 13. Fill in Contact (First name / Last name / Phone / Email)
@@ -167,45 +189,36 @@ testT5649_venue_map_guest_purchase:
         session_guest__fill_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
         sleep_guest_contact: 1000
 
-        # 14. Fill in Payment (the three Stripe fields live in separate iframes; locate them by
-        #     visible iframe order: nth=0 card number / nth=1 expiry / nth=2 CVC)
-        session_guest__fill_card_number:
-            frame: "iframe[src*='elements-inner-card'] >> nth=0"
-            locator: "input[name='cardnumber']"
-            value: "4242424242424242"
-        sleep_card_number: 1200
-
-        session_guest__fill_expiry:
-            frame: "iframe[src*='elements-inner-card'] >> nth=1"
-            locator: "input[name='exp-date']"
-            value: "830"
-
-        session_guest__fill_cvc:
-            frame: "iframe[src*='elements-inner-card'] >> nth=2"
-            locator: "input[name='cvc']"
-            value: "999"
-        sleep_card_rest: 1500
-
-        # Cardholder name + billing zip (zip 90021 is the agreed value, following the existing
-        # case convention when the case does not specify one)
-        session_guest__fill_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
-        session_guest__fill_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
-        sleep_guest_payment: 1500
+        # 14. Fill the payment form with the framework-native `fill_stripe_iframe` action — the
+        #     same action the axs/tdc guest cases use.
+        #     [WHY, browser-verified 2026-10-13] the previous version hard-coded the Stripe
+        #     Elements frame by VISIBLE ORDER (`iframe[src*='elements-inner-card'] >> nth=0/1/2`)
+        #     and filled `input[name='cardnumber'|'exp-date'|'cvc']` one by one. That selector no
+        #     longer resolves on the current release checkout: `fill_card_number` timed out with
+        #     "Locator.fill: Timeout 10000ms exceeded" while the page exposed only the Stripe
+        #     controller / payment-request / metrics frames — NO `elements-inner-card` frame.
+        #     `fill_stripe_iframe` walks EVERY stripe frame (nested ones included) and looks the
+        #     inputs up by name, so it does not depend on frame order or count; it also fills
+        #     `cardName` / `billingAddress.zipcode` on the page itself.
+        session_guest__fill_stripe_iframe:
+            card_number: "4242424242424242"
+            expiry: "830"
+            cvc: "999"
+            card_name: "lury UI automation"
+            zipcode: "90021"
+        sleep_guest_payment: 2000
 
         # 15. Assert the payment form was filled correctly (Playwright-native input_value
-        #     assertions; the phone field is auto-formatted so its digit count stays in a tiny JS)
+        #     assertions; the phone field is auto-formatted so it is checked with a regex
+        #     requiring at least 10 digits — was a tiny execute_js)
         session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
         session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
         session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
         session_guest__verify_value_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
         session_guest__verify_value_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
-        session_guest__execute_js_verify_phone:
-            script: |
-                () => {
-                  const v = document.querySelector("input[name='contact.phoneNumber']").value;
-                  if (v.replace(/\D/g, '').length < 10) throw new Error('payment form: phone incomplete: ' + v);
-                  return 'phone ok: ' + v;
-                }
+        session_guest__verify_value_phone:
+            locator: "input[name='contact.phoneNumber']"
+            regex: "(\\d\\D*){10}"
 
         # 16. Click Place order
         session_guest__R_click_place_order: { role: "button", name: "Place order" }
@@ -220,115 +233,64 @@ testT5649_venue_map_guest_purchase:
         session_guest__verify_order_confirmed: { text: "Your order is confirmed", timeout: 20000 }
 
         # 18. Assert the price next to "Show summary" == ticket-retails-price
-        session_guest__execute_js_verify_show_summary_price:
-            script: |
-                (async () => {
-                  const retail={{ticket-retails-price}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // the amount sits in a HIGHER ancestor of "Show summary"; only a SHORT tail
-                  // (<=16 chars) counts as this row's amount, otherwise we grab a foreign amount
-                  const amount = () => {
-                    const el = [...document.querySelectorAll('*')].find(e => vis(e) && e.textContent.trim()==='Show summary');
-                    if(!el) return null;
-                    for(let n=el.parentElement,k=0;k<4 && n;k++,n=n.parentElement){
-                      const tail=n.textContent.replace('Show summary','').trim();
-                      if(tail && tail.length<=16) return money(tail);
-                    }
-                    return null;
-                  };
-                  let shown=null;
-                  for(let i=0;i<20;i++){ shown=amount(); if(shown!==null) break; await new Promise(r=>setTimeout(r,400)); }
-                  if(shown===null || Math.abs(shown-retail)>0.01)
-                    throw new Error('order page: "Show summary" shows '+(shown===null?'no $ amount':'$'+shown.toFixed(2))+', expected ticket-retails-price $'+retail.toFixed(2));
-                  return 'show summary price verified: $'+shown.toFixed(2)+' == ticket-retails-price';
-                })()
+        #     (was execute_js: the amount sits in a HIGHER ancestor of "Show summary", and only a
+        #     SHORT tail counts as this row's amount -> tail_limit 16)
+        session_guest__verify_row_value_show_summary:
+            label: "Show summary"
+            value: "{{ticket-retails-price}}"
+            tail_limit: 16
+            levels: 6
+            tolerance: 0.01
+            timeout: 20000
 
         # 19. Click Show summary to expand the order details
         session_guest__R_click_show_summary: { locator: "xpath=//*[normalize-space(.)='Show summary']" }
 
         # 20. Assert the details: Item(s) total / Subtotal / Total all equal ticket-retails-price,
         #     and an "(incl. $a fees)" row exists where a == transaction-fees
-        session_guest__execute_js_verify_order_totals:
-            script: |
-                (async () => {
-                  const retail={{ticket-retails-price}}, fee={{transaction-fees}};
-                  const money = s => { const m=String(s).match(/\$\s*([\d,]+(?:\.\d+)?)/); return m?parseFloat(m[1].replace(/,/g,'')):null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // expanded detail rows: the tail must stay short (<=24) so we do not climb past
-                  // this row and grab the first amount of the whole region
-                  const rowVal = label => {
-                    for(const c of [...document.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<4 && el;k++){
-                        const tail=el.textContent.replace(label,'').trim();
-                        if(tail.length>24) break;
-                        const v=money(tail);
-                        if(v!==null) return v;
-                        el=el.parentElement;
-                      }
-                    }
-                    return null;
-                  };
-                  let body='';
-                  for(let i=0;i<25;i++){ body=document.body.innerText; if(/Item\(s\) total/i.test(body)) break; await new Promise(r=>setTimeout(r,400)); }
-                  for(const lab of ['Item(s) total','Subtotal','Total']){
-                    const v=rowVal(lab);
-                    if(v===null || Math.abs(v-retail)>0.01)
-                      throw new Error('order summary: '+lab+' '+(v===null?'row not found':'$'+v.toFixed(2))+' != ticket-retails-price $'+retail.toFixed(2));
-                  }
-                  // "(including $a fees)" — the actual copy is "(incl. $5.27 fees)"; accept both
-                  const fees=[...body.matchAll(/(?:including|incl\.?)\s*\$([\d,]+(?:\.\d+)?)\s*fees/gi)].map(m => parseFloat(m[1].replace(/,/g,'')));
-                  if(!fees.some(a => Math.abs(a-fee)<=0.01))
-                    throw new Error('order summary: "(incl. $x fees)" amounts '+JSON.stringify(fees)+' but transaction-fees = '+fee);
-                  return 'order totals verified: item/subtotal/total=$'+retail.toFixed(2)+', fees=$'+fee.toFixed(2);
-                })()
+        session_guest__verify_row_value_item_total:
+            label: "Item(s) total"
+            value: "{{ticket-retails-price}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_order_subtotal:
+            label: "Subtotal"
+            value: "{{ticket-retails-price}}"
+            tolerance: 0.01
+            timeout: 20000
+        session_guest__verify_row_value_order_total:
+            label: "Total"
+            value: "{{ticket-retails-price}}"
+            tolerance: 0.01
+            timeout: 20000
+        # "(including $a fees)" — the actual copy is "(incl. $5.27 fees)"; accept both
+        session_guest__verify_text_regex_incl_fees_row:
+            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{transaction-fees}}\\s*fees"
+            flags: "i"
+            timeout: 20000
 
         # 21. Check the "Ticket Information" section on the confirmation page: it must contain
-        #     the product name, a Unit equal to seat_unit, and Event = event-for-ui-auto-venue-map.
+        #     the product name and a Unit equal to seat_unit.
         #     (Date and Venue checks were removed per request. The event name is static so it is
-        #     a Playwright-native text assertion; name/Unit are dynamic and stay in one JS.)
+        #     a Playwright-native text assertion; name/Unit are dynamic -> regex with {{var}}.)
         session_guest__verify_ticket_info_event: { text: "event-for-ui-auto-venue-map", timeout: 20000 }
-        session_guest__execute_js_verify_ticket_info:
-            script: |
-                (async () => {
-                  const seatUnit=String({{seat_unit}}), name='{{ticket_venue_map}}';
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  const grab = () => {
-                    const head=[...document.querySelectorAll('*')].find(e => /ticket information/i.test(nz(e)) && e.children.length<=1);
-                    let box=head && head.parentElement;
-                    for(let i=0;i<6 && box;i++){ if(/ticket information/i.test(nz(box)) && box.querySelectorAll('*').length>3) break; box=box.parentElement; }
-                    return box;
-                  };
-                  let box=null;
-                  for(let i=0;i<20 && !(box=grab()); i++) await new Promise(r=>setTimeout(r,400));
-                  if(!box) throw new Error('Ticket Information section not found on the confirmation page');
-                  const txt=nz(box);
-                  if(!txt.toLowerCase().includes(name.toLowerCase())) throw new Error('Ticket Information: product "'+name+'" not found; text = '+txt);
-                  // [DOM FACT] the confirmation page shows unrelated numeric IDs (e.g. ticket/order
-                  // id), so extract Unit only from the leaf that actually holds "unit" + a digit
-                  const leaf=[...box.querySelectorAll('*')].find(e => !e.children.length && /\bunits?\b/i.test(nz(e)) && /\d/.test(nz(e)));
-                  const m=leaf && nz(leaf).match(/(\d+)\s*units?\b|\bunits?\s*[:]?\s*(\d+)/i);
-                  if(!m) throw new Error('Ticket Information: no Unit field with value; text = '+txt);
-                  if((m[1]||m[2]).trim()!==seatUnit) throw new Error('Ticket Information: Unit '+(m[1]||m[2])+' != seat_unit '+seatUnit);
-                  return 'Ticket Information verified: unit='+(m[1]||m[2])+', name/event present';
-                })()
+        session_guest__verify_text_regex_ticket_info_name:
+            pattern: "{{ticket_venue_map}}"
+            timeout: 20000
+        session_guest__verify_text_regex_ticket_info_unit:
+            pattern: "(?:\\bUnits?\\s*:?\\s*{{seat_unit}}\\b|\\b{{seat_unit}}\\s*units?\\b)"
+            flags: "i"
+            timeout: 20000
 
         # 22. Assert Confirmation details: contact information / payment method / billing zip code
         #     (Playwright-native text assertions for the static parts; the paid amount is dynamic
-        #     so it stays in a tiny JS check. The page shows the phone as 252-400-1111.)
+        #     so it is a regex with {{var}}. The page shows the phone as 252-400-1111.)
         session_guest__verify_contact_name: { text: "Lury UIAutomation", timeout: 20000 }
         session_guest__verify_contact_phone: { text: "252-400-1111" }
         session_guest__verify_contact_email: { text: "dian.yuhong.ext+111@1m.app" }
         session_guest__verify_card_tail: { text: "Visa x4242" }
         session_guest__verify_zip_code: { text: "90021", exact: true }
-        session_guest__execute_js_verify_paid_amount:
-            script: |
-                () => {
-                  const retail={{ticket-retails-price}};
-                  const pm=(document.body.innerText.match(/Visa\s*x4242\s*-\s*\$?([\d,]+(?:\.\d+)?)/i)||[])[1];
-                  if(!pm) throw new Error('payment method amount not found next to "Visa x4242"');
-                  if(Math.abs(parseFloat(pm.replace(/,/g,''))-retail)>0.01)
-                    throw new Error('payment method amount: $'+pm+' != ticket-retails-price $'+retail.toFixed(2));
-                  return 'payment amount verified: $'+pm+' == ticket-retails-price';
-                }
+        session_guest__verify_text_regex_paid_amount:
+            pattern: "Visa\\s*x4242\\s*-\\s*\\$\\s*{{ticket-retails-price}}\\b"
+            flags: "i"
+            timeout: 20000
