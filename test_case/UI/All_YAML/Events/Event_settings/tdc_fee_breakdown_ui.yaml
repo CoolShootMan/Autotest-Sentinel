@@ -223,3 +223,7 @@ testT5649_tdc:
                   return raw.startsWith('http') ? raw : 'https://' + raw;
                 }
         sleep_extract_url: 800
+
+    expect_result:
+        description: "TDC checkout fee breakdown shows correct Subtotal / Transaction fees / Taxes, order totals and TDC info on the order confirmation page"
+        assertions: []

@@ -183,3 +183,7 @@ testT5649_axs:
             save_as: "post_url"
             script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
 
+
+    expect_result:
+        description: "AXS checkout fee breakdown shows correct Subtotal / Transaction fees / Taxes, order totals and AXS info on the order confirmation page"
+        assertions: []

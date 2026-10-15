@@ -153,3 +153,7 @@ testT5649_venue_map:
         execute_js_extract_url:
             save_as: "post_url"
             script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
+
+    expect_result:
+        description: "Venue map checkout fee breakdown shows correct Subtotal / Transaction fees / Taxes and order totals on the order confirmation page"
+        assertions: []

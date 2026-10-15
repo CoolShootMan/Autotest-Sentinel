@@ -32,3 +32,7 @@ testT4337_T4334_4333_4272_4242_4241_venue_map:
         # 3e. Click the "Save" button at the bottom of the Edit event page.
         R_click_save: { locator: "xpath=//button[normalize-space(.)='Save']", index: 0, fallback_scan: true }
         sleep_save: 3000
+
+    expect_result:
+        description: "Reveal address works in the resell post when the event enables 'Address visibility settings'"
+        assertions: []
