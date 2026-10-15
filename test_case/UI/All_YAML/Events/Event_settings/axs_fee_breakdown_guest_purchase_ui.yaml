@@ -1,7 +1,8 @@
 # author: Lury
 # time: 2026/10/12 17:24
 # optimized: 2026/10/14 — rewritten to use framework-native actions only (no `script` fields),
-#           step design follows the clean native style (scope / conditional assertions).
+#           step design follows the clean native style (scope / conditional assertions introduced
+#           for the T1742 global-search fix).
 
 # --- testT5649_axs: Guest place order and check fee breakdown ---
 testT5649_axs_guest_purchase:
@@ -15,11 +16,7 @@ testT5649_axs_guest_purchase:
         session_guest__open: { url: "{{post_url}}" }
         sleep_guest_post: 5000
 
-        # 3. As a guest, find the product by name in the post and assert its displayed price.
-        #    [DOM FACT verified 2026-10-15] the guest-facing product card shows the NET price
-        #    (face value, e.g. GA Pit $114.90) — the partner-side retail price incl. fees
-        #    (ticket-retails-price = 128.77) never appears on the public post, so assert
-        #    my_revenve (= retail - incl. fees, computed by the seeder) here.
+        # 3. As a guest, find the product by name in the post and assert its displayed price == my_revenve (net revenue)
         session_guest__verify_product_name: { text: "{{ticket_axs}}" }
         session_guest__verify_product_price: { text: "{{my_revenve}}" }
 
@@ -27,8 +24,7 @@ testT5649_axs_guest_purchase:
         # 4. As a guest, click the ticket-axs product name on the public post to open the "Select tickets" drawer
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_axs}}']", index: 0 }
 
-        # 5. Assert the "Select tickets" drawer opened and its price == my_revenve
-        #    (same display semantics as the product card: the guest sees the net price)
+        # 5. Assert the "Select tickets" drawer opened and its price == my_revenve (net)
         session_guest__verify_select_drawer_open: { text: "Select tickets" }
         session_guest__verify_select_drawer_price: { text: "{{my_revenve}}" }
 
