@@ -228,7 +228,7 @@ testT5332:
         sleep_step: 2000
 
         # Step 10: Click "Update" button in the "Update This Post?" confirmation dialog
-        R_click_confirm_update: { role: "button", name: "Update" }
+        R_click_confirm_update: { locator: "div[role='dialog'] button:has-text('Update')", name: "Update" }
         sleep_step: 2000
 
         # Step 11: Verify "Post published!" toast appears after publishing
@@ -315,7 +315,7 @@ testT5332_VerifyGuest:
         # Step 11: Update post to save the deletion
         R_click_update_post:    { role: "button", name: "Update" }
         sleep_step:             2000
-        R_click_confirm_update: { role: "button", name: "Update" }
+        R_click_confirm_update: { locator: "div[role='dialog'] button:has-text('Update')", name: "Update" }
         sleep_step:             2000
 
 

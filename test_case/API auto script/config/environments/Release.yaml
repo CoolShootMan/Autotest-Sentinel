@@ -550,10 +550,10 @@ variables:
 
   # --- 第三方票务平台凭证 -----------------------------------------------
   # 用于 UI Prefill: PUT users/{{user_id}}/api-platform-credentials
-  # （原 Apifox 集合 "setting TDC API" / "setting AXS API" 中为字面量，
-  #   按敏感信息零泄露规范抽出到本文件；本文件已被 .gitignore 忽略）
+  # （原 Apifox 集合 "setting TDC API" / "setting AXS API" 中为字面量；
+  #   以下均为 sandbox/mock 值，本文件正常入库，无需 gitignore 隐藏）
   tdc_clientId: U2AC3jUAZe3VG1c4mJ9MPUi34j1iH3bBZY2w4EgvGapV5Swy
   tdc_clientSecret: vJapvylk0gJAQgeo4WZA2CgxzV2Zcev1WBFmIkzuDOLNwD2sGUHYjXAAAsPVrcOH
   tdc_userAgent: YqGlXuwgvNrTJZZEtAcq6Ln8awWT
-  axs_accessToken: ZhH8DkKh1zALLcnUh1O4cZIEs9c
-  axs_apiKey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3ODAwOTM4MzQsIm5hbWUiOiJBQVBQX1BlYXIuVXMiLCJlbWFpbCI6IkFBUFBfUGVhci5VcyIsImV4cCI6MTc5NjE2MTM2NjAwMH0.askqIoDhGEnRBdVYMp3Xfe0sM3qikfcZvnoQkuZ0b4I
+  axs_accessToken: axssbx_4ffc042bfde2028e9c9365d7.vhxnCFNKQwYf5m-zZi93lOMocpiCxTKpzBdRbjPk3Do
+  axs_apiKey: axssbx_4ffc042bfde2028e9c9365d7.vhxnCFNKQwYf5m-zZi93lOMocpiCxTKpzBdRbjPk3Do

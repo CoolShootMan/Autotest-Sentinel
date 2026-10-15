@@ -8272,7 +8272,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "rows": [
                 {
                     "id": "84743235-32b0-4a91-a8c2-b4ff48781e87",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -8690,7 +8690,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "f7bd43cd-5acd-47a9-8008-a9e3e5385a71",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -9108,7 +9108,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 },
                 {
                     "id": "95d63e15-56f5-486b-b47c-c750c53c629d",
-                    "chairSpacing": 20,
+                    "chairSpacing": 30,
                     "seatLabeling": {
                         "algorithm": "NUMBERS",
                         "startAtIndex": 0,
@@ -12903,13 +12903,13 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "apiPlatform": "AXS",
         "apiCredentials": {
             "accessToken": "{{axs_accessToken}}",
-            "siteId": "1",
+            "siteId": "sandbox",
             "apiKey": "{{axs_apiKey}}",
             "apiBaseUrl": "https://api.axs.com",
             "appBaseUrl": "https://app.axs.com",
-            "ticketerId": "22",
-            "outletId": "99947",
-            "paymentTypeId": "90043",
+            "ticketerId": "1",
+            "outletId": "1",
+            "paymentTypeId": "1",
             "ticket": {
                 "linkTemplate": "https://axs.page.link/mobile",
                 "messageTemplate": "Click View Tickets and log in with your AXS account ({{email}}) and password to view your tickets."
@@ -12926,10 +12926,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp131).json('$.data.apiCredentials').is_object()
     expect(_resp131).json('$.data.apiCredentials.apiKey').is_string()
     expect(_resp131).json('$.data.apiCredentials.apiKey').is_not_empty()
-    expect(_resp131).json('$.data.apiCredentials.siteId').equals('1')
-    expect(_resp131).json('$.data.apiCredentials.outletId').equals('99947')
-    expect(_resp131).json('$.data.apiCredentials.ticketerId').equals('22')
-    expect(_resp131).json('$.data.apiCredentials.paymentTypeId').equals('90043')
+    expect(_resp131).json('$.data.apiCredentials.siteId').equals('sandbox')
+    expect(_resp131).json('$.data.apiCredentials.outletId').equals('1')
+    expect(_resp131).json('$.data.apiCredentials.ticketerId').equals('1')
+    expect(_resp131).json('$.data.apiCredentials.paymentTypeId').equals('1')
     expect(_resp131).json('$.data.apiCredentials.apiBaseUrl').equals('https://api.axs.com')
     expect(_resp131).json('$.data.apiCredentials.appBaseUrl').equals('https://app.axs.com')
     expect(_resp131).json('$.data.apiCredentials.accessToken').is_string()
@@ -13158,6 +13158,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "ticketType": "TICKET_TYPE_STANDARD",
             "title": "inside seat with 80",
             "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
             "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
             "variants": [{"inventoryQuantity": 4, "ticketPrice": 71, "price": "80", "fees": 9, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 9, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 9}}]
         },
@@ -13166,6 +13167,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "ticketType": "TICKET_TYPE_STANDARD",
             "title": "inside seat with 100",
             "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
             "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
             "variants": [{"inventoryQuantity": 43, "ticketPrice": 89, "price": "100", "fees": 11, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 11, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 11}}]
         },

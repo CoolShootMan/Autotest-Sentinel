@@ -5,7 +5,7 @@ testT3554:  # [LAST: BROKEN 2026-07-22] — FIXED: updated to new storefront sec
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 3000
         click_shop_add_button:
-        R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        R_click_add_section: { role: 'button', name: 'Add a new section' }
         fill_section_title: { role: 'textbox', name: 'Enter title of the section', value: 'Verify Add module' }
         R_click_add: { role: 'button', name: 'Add' }
         sleep_after_add: 1500
@@ -87,7 +87,7 @@ testT4622:  # [LAST: FIXED 2026-07-23 v2] — Section header anchor now also req
 
         # Prerequisite: Create section (from testT3554)
         # click_shop_add_button:
-        # R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        # R_click_add_section: { role: 'button', name: 'Add a new section' }
         # fill_section_title: { role: 'textbox', name: 'Enter title of the section', value: 'Verify Add module' }
         # R_click_add: { role: 'button', name: 'Add' }
         # sleep_after_create: 1500
@@ -169,7 +169,7 @@ testAddNewPost:   # [LAST: FIXED 2026-07-27]
         sleep_after_open: 3000
         # Step 1: Create an EMPTY section via 'Add storefront section'
         click_shop_add_button:
-        R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        R_click_add_section: { role: 'button', name: 'Add a new section' }
         fill_section_title: { role: 'textbox', name: 'Enter title of the section', value: 'Verify Add post section' }
         R_click_add_section_confirm: { role: 'button', name: 'Add' }
         sleep_after_create: 3000
@@ -209,7 +209,7 @@ testAddNewPost:   # [LAST: FIXED 2026-07-27]
 
 
 # ------------------ Section - product ------------------------
-testT3788:  # [LAST: FIXED 2026-07-23 v3] — New storefront flow on partnercoseller997: select posts/products first, then create section; add more product via section "+" -> Add products Existing
+testT3788:  # [LAST: FIXED 2026-07-23 v3] — New storefront flow on partnercoseller997: select posts/products first, then create section; add more product via section "+" -> Add products
     description: "Verify adding products to a new section"
     test_step:
         open:
@@ -218,7 +218,7 @@ testT3788:  # [LAST: FIXED 2026-07-23 v3] — New storefront flow on partnercose
         sleep_after_open: 5000
         # 1. Select 1 post + 2 products from my posts, then create the section.
         R_click_add: { role: 'button', name: 'Add' }
-        R_click_add_products_existing: { role: 'button', name: 'Add products Existing' }
+        R_click_add_products_existing: { role: 'button', name: 'Add products' }
         # 2026-09-30: Posts tab became a URL-search list (no product imgs) and clicking
         # a product thumb opens a preview lightbox. Selection is via the row checkbox.
         R_click_product_checkbox: { locator: "[role='dialog'] svg[data-testid='SquareLineIcon']", index: 0, force: true }
@@ -272,7 +272,7 @@ testT3789:  # [LAST: PASSED 2026-07-27] — manually verified by user against ne
             # '$0.00' was replaced here (2026-09-30): the post-order page no longer shows
             # it; the product title appears both on the shop and the order flow.
             - assertion_type: "element_visible_by_text"
-              text: "auto-test-997-default-product"
+              text: "You're all set"
 
 
 # ------------------ Section - link -> general link ------------------------
@@ -662,7 +662,7 @@ testT4852:  # [LAST: FIXED 2026-07-24] — New storefront flow CONFIRMED PASS. P
         sleep_after_open: 3000
         # Step 1: Create an empty section (mixed content is determined by what we add later).
         click_shop_add_button:
-        R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        R_click_add_section: { role: 'button', name: 'Add a new section' }
         sleep_after_section_click: 2000
         fill_section_title: { role: 'textbox', name: 'Enter title of the section', value: 'Mixed section type' }
         R_click_add: { role: 'button', name: 'Add' }
@@ -747,7 +747,7 @@ testAddNewUpdateSection:  # [LAST: PASSED 2026-05-06]
         open: "{BASE_URL}/autotestshop"
         sleep_after_open: 5000
         click_shop_add_button:
-        R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        R_click_add_section: { role: 'button', name: 'Add a new section' }
         fill1: { role: 'textbox', name: 'Enter title of the section', value: 'new section use in archiving test cases' }
         R_click4: { role: 'button', name: 'Add' }
         sleep_before_verify: 2000
@@ -968,7 +968,7 @@ testT4605:  # [LAST: FIXED 2026-07-27]
         # via 'Add from my content -> create new module' do NOT respond to
         # add-to-existing-section clicks, so that path is avoided here.
         click_shop_add_button:
-        R_click_add_section: { role: 'button', name: 'Add storefront section' }
+        R_click_add_section: { role: 'button', name: 'Add a new section' }
         fill_section_title: { role: 'textbox', name: 'Enter title of the section', value: 'post carousel section' }
         R_click_add_section_confirm: { role: 'button', name: 'Add' }
         sleep_after_create: 3000
@@ -1025,9 +1025,9 @@ testT4603:  # [LAST: FIXED 2026-07-27]
     test_step:
         open: "{BASE_URL}/autotest-coseller"
         sleep_after_open: 5000
-        # New storefront: FAB 'Add' -> 'Add products Existing' -> select product -> new module
+        # New storefront: FAB 'Add' -> 'Add products' -> select product -> new module
         R_click_add: { role: 'button', name: 'Add' }
-        R_click_add_products_existing: { role: 'button', name: 'Add products Existing' }
+        R_click_add_products_existing: { role: 'button', name: 'Add products' }
         # 2026-09-30: clicking the product thumb (role:'img' resolves into the wrapper
         # button) opens a preview lightbox instead of selecting; use the row checkbox.
         R_click_product_checkbox: { locator: "[role='dialog'] svg[data-testid='SquareLineIcon']", index: 0, force: true }

@@ -146,7 +146,7 @@ testT4970:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Fill form title and subtitle
@@ -369,7 +369,7 @@ testT4281:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Step 5: Clear recipient email and try to save
@@ -409,7 +409,7 @@ testT4276:  # [LAST: FAILED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # --- Step 1: Empty title -> verify error ---
@@ -590,7 +590,7 @@ testT4847:  # [LAST: PASSED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
 
     # Fill form title and subtitle
@@ -768,7 +768,8 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     # Add to cart with form data
     R_click_add_to_cart: { locator: '[data-cta-action="add-to-cart"]' }
     sleep_after_click: 1000
-    fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text' }
+    fill_form: { role: 'textbox', name: 'Please fill this out', value: 'just place some text', index: 0 }
+    fill_form_short: { role: 'textbox', name: 'Please fill this out', value: 'short field text', index: 1 }
     # email - realistic business email
     # NOTE: key MUST differ from the checkout `fill_email` below (line ~756) —
     # yaml.safe_load collapses duplicate keys to the LAST value while keeping the
@@ -816,7 +817,7 @@ testT3690:  # [LAST: PASSED 2026-05-06]
     # dialog opens with the form title, then close it and continue.
     R_click_edit_required_info: { role: 'button', name: 'Edit required info' }
     sleep_after_edit_required: 1500
-    verify_form_data_confirm: { text: 'Please fill this out' }
+    verify_form_data_confirm: { text: 'product form must be filled' }
     R_click_close_2: { locator: '.modal-header-close-btn[aria-label="Close"]' }
     sleep_after_close_2: 500
 
@@ -913,7 +914,7 @@ testT3794:  # [LAST: FAILED 2026-05-06]
     sleep_add: 500
 
     R_click_Create_form:
-      { locator: "[data-testid='RightFillIcon']", index: 2, quick: true }
+      { text: "Create form" }
     sleep_add: 500
     sleep_after_click: 1000
     fill_title: { role: 'textbox', name: 'Enter a title', value: 'form will be delete xxyyzz' }

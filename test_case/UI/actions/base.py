@@ -52,9 +52,29 @@ def _merged_context_vars(page):
     # workflow_context wins over global on key collision
     return {**_GLOBAL_VARS, **_wc}
 
+
+def _fill_vars(page, s):
+    """Substitute {{var}} placeholders (from the workflow/global context) inside a string.
+
+    Mirrors the resolution already performed by ``_smart_click_core`` and ``execute_js`` so that
+    native actions such as ``open_url`` / ``verify_text_visible`` / ``verify_value`` / ``smart_fill``
+    can also consume variables saved earlier via ``execute_js`` ``save_as`` (or published with
+    ``global: true``).  No-op when ``s`` is not a string or contains no ``{{...}}`` placeholder, so
+    it is safe to call unconditionally on every string argument.
+    """
+    if not isinstance(s, str) or "{{" not in s:
+        return s
+    _ctx = _merged_context_vars(page)
+    for _k, _val in _ctx.items():
+        if _k:
+            s = s.replace("{{%s}}" % _k, str(_val))
+    return s
+
+
 def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
+    url = _fill_vars(page, url)
     if url:
         # {{var}} backfill: a URL is often built from a value saved by an earlier step
         # (e.g. the public post URL read off the event "Post" tab) -> navigate natively
@@ -355,7 +375,14 @@ def smart_if(page: Page, v: dict):
             action = get_action(k)
             if action:
                 action(page, step_v)
-                getattr(page, "_execution_history").append((k, step_v))
+                # (2026-10-15 fix, T5649) defensive: only the MAIN fixture page gets
+                # `_execution_history` initialized (test_ui.py:67). Pages created by
+                # create_session (guest/partner namespaces) don't have it, and the old
+                # getattr(...) without default raised AttributeError on every if-block
+                # executed inside a session namespace. Mirrors the safe pattern at L1049.
+                _hist = getattr(page, "_execution_history", None)
+                if _hist is not None:
+                    _hist.append((k, step_v))
             else:
                 logger.error(f"  >>> If-block: Action '{k}' not found.")
                 raise Exception(f"Action '{k}' not found in if block.")
@@ -363,6 +390,7 @@ def smart_if(page: Page, v: dict):
 def smart_fill(page: Page, v: dict):  
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
+    target_value = _fill_vars(page, target_value)
     target_locator = v.get("locator")
     target_locator = _resolve_locator(target_locator)
     target_frame = v.get("frame") or v.get("frame_locator")
@@ -733,6 +761,11 @@ def clear_cookies(page: Page, v: dict):
 def smart_upload(page: Page, v: dict):
     if "file_path" in v:
         file_path = v.get("file_path")
+        if isinstance(file_path, list):
+            file_path = [p if os.path.isabs(p) else os.path.join(BASE_DIR, p) for p in file_path]
+        else:
+            if not os.path.isabs(file_path):
+                file_path = os.path.join(BASE_DIR, file_path)
         target_index = v.get("index", 0)
         with page.expect_file_chooser(timeout=5000) as fc_info:
             if "locator" in v:
@@ -1198,6 +1231,7 @@ def click_modal_close(page: Page, v: dict):
 
 def verify_text_visible(page: Page, v: dict):
     text = v.get("text")
+    text = _fill_vars(page, text)
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
@@ -1262,7 +1296,10 @@ def verify_text_visible(page: Page, v: dict):
             if text:
                 el = el.get_by_text(text, exact=v.get("exact", False))
         elif text:
-            el = search_root.get_by_text(text, exact=v.get("exact", False)).first
+            # (2026-10-15 fix, T5649) .filter(visible=True): the DOM-first text match can be a
+            # HIDDEN duplicate (sticky buy-bar / SSR copy) — without the filter, a hidden
+            # .first makes assert_not_visible false-PASS while another copy is still visible.
+            el = search_root.get_by_text(text, exact=v.get("exact", False)).filter(visible=True).first
         else:
             raise AssertionError("verify: no text or locator provided")
         try:
@@ -1276,7 +1313,12 @@ def verify_text_visible(page: Page, v: dict):
 
     logger.info(f"Verifying text visibility: {text}")
     try:
-        search_root.get_by_text(cast(str, text), exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
+        # (2026-10-15 fix, T5649) Do NOT blindly pick .first: on mobile layouts the DOM-first
+        # text match can be a HIDDEN duplicate (e.g. sticky buy-bar / SSR copy), which made
+        # verify_text_visible time out ("Text not found") even though a visible copy existed
+        # (T5649 guest price "$114.90"). filter(visible=True) keeps .first semantics but only
+        # among VISIBLE matches. Requires playwright >= 1.51 (local 1.60, CI pin 1.58 — both OK).
+        search_root.get_by_text(cast(str, text), exact=v.get("exact", False)).filter(visible=True).first.wait_for(state="visible", timeout=timeout)
         logger.info(f"Text '{text}' is visible.")
     except Exception as e:
         page.screenshot(path=f"fail_verify_{str(text)[:10]}.png")
@@ -4257,3 +4299,128 @@ def ensure_auto_archive(page: Page, v: dict):
 
     logger.info(f"ensure_auto_archive: set to {'enabled' if target else 'disabled'}")
 
+
+
+def smart_seat_click(page: Page, v: dict):
+    """
+    Select seats in the venue-map dialog until the "N table selected" counter reaches
+    `target`, then assert it.
+
+    Seat-map reality (T2515, verified 2026-10-13):
+    - selection only registers for a REAL mouse click at a seat center (Playwright
+      locator.click refuses because the seat's own <circle> dot intercepts the rect;
+      force and JS clicks don't register);
+    - zoom must fully settle before rect coordinates are read, or the saved points are
+      stale (YAML sleep_step keys collapse under PyYAML, so timing lives in here);
+    - after each successful selection the map re-renders and every previously computed
+      coordinate goes stale, so we re-verify elementFromPoint self-hit BEFORE each
+      click, and re-collect candidates each round. Clicking a covered/old point
+      cancels a selected seat instead of selecting the target one.
+    The whole zoom -> collect -> verify -> click loop is self-contained and idempotent
+    per dialog session (calling it again re-zooms and only targets seats not in
+    window.__picked).
+
+    YAML usage:
+        smart_seat_click_1: { target: 5 }   # select 5 fresh seats
+        smart_seat_click_2: { target: 6 }   # after drawer reopen, add a 6th
+        # [2026-10-13] KAT-12263 FIXED: $80/$100 inside seats are clickable again.
+        # Back to the original $80 seat; counter text is now "N items selected"
+        # (frontend wording change shipped with the fix).
+        smart_seat_click_1: { target: 1, stroke: "#E9803D" }
+    """
+    target = int(v.get("target", 0))
+    if target <= 0:
+        raise ValueError("smart_seat_click: 'target' (>0) is required")
+    zoom_times = int(v.get("zoom", 4))
+    stroke_filter = v.get("stroke") or ""
+
+    # --- zoom in (default 4x; T4955 $50 seats need 2x, see docstring) ---
+    # Click the zoom button inside a VISIBLE dialog only: the buy-ticket flow renders
+    # two duplicate "Select tickets" dialogs and querySelector picks the hidden one,
+    # making the zoom a no-op (T4955 on 12061, 2026-10-13).
+    for _ in range(zoom_times):
+        page.evaluate("""() => {
+            const ds = [...document.querySelectorAll('[role="dialog"]')].filter(d => { const s = getComputedStyle(d); return s.display !== 'none' && s.visibility !== 'hidden' && parseFloat(s.opacity) > 0; });
+            for (const d of ds) { const z = d.querySelector('[aria-label="Zoom in"]'); if (z) { z.click(); break; } }
+        }""")
+        page.wait_for_timeout(900)
+    page.wait_for_timeout(3000)
+
+    def count():
+        # [2026-10-13] frontend now shows "N items selected" (was "N tables selected"
+        # before the KAT-12263 fix was deployed). Match both wordings.
+        m = re.search(r"(\d+) (tables?|items?) selected", page.locator('[role="dialog"]:visible').first.inner_text())
+        return int(m.group(1)) if m else 0
+
+    def collect():
+        raw = page.evaluate("""(strokeFilter) => {
+            window.__picked = window.__picked || [];
+            const dialogs = [...document.querySelectorAll('[role="dialog"]')].filter(d => { const s = getComputedStyle(d); return s.display !== 'none' && s.visibility !== 'hidden' && parseFloat(s.opacity) > 0; });
+            const rects = [], avail = new Set();
+            const circleSel = strokeFilter
+                ? 'circle[data-id][stroke="' + strokeFilter + '"]'
+                : 'circle[data-id]:not([stroke="transparent"])';
+            for (const d of dialogs) {
+                rects.push(...d.querySelectorAll('rect[data-id]'));
+                [...d.querySelectorAll(circleSel)].forEach(c => avail.add(c.getAttribute('data-id')));
+            }
+            const out = [];
+            for (const r of rects) {
+                const id = r.getAttribute('data-id');
+                if (window.__picked.includes(id)) continue;
+                if (!avail.has(id)) continue;
+                const rb = r.getBoundingClientRect();
+                if (rb.width < 60) continue;
+                const cx = Math.round(rb.x + rb.width / 2), cy = Math.round(rb.y + rb.height / 2);
+                const hit = document.elementFromPoint(cx, cy);
+                if (hit && hit.getAttribute('data-id') === id) out.push(id + ',' + cx + ',' + cy);
+            }
+            return out.join(';');
+        }""", stroke_filter)
+        out = []
+        for chunk in str(raw).split(";"):
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            parts = [p.strip() for p in chunk.split(",")]
+            if len(parts) == 3:
+                out.append((parts[0], float(parts[1]), float(parts[2])))
+        return out
+
+    def self_hit(cid, cx, cy):
+        return page.evaluate(
+            "([id, x, y]) => { const el = document.elementFromPoint(x, y); return !!(el && el.getAttribute('data-id') === id); }",
+            [cid, cx, cy],
+        )
+
+    rounds = 0
+    while True:
+        n = count()
+        if n >= target:
+            logger.info(f"smart_seat_click: reached target {target} with {n} selected")
+            return
+        cands = collect()
+        if not cands:
+            raise AssertionError(f"smart_seat_click: no self-hit candidates (count {n})")
+        progress = False
+        for cid, cx, cy in cands:
+            if not self_hit(cid, cx, cy):
+                continue  # stale coordinate after a re-render; skip
+            page.mouse.click(cx, cy)
+            page.wait_for_timeout(1800)
+            n2 = count()
+            logger.info(f"smart_seat_click: clicked seat {cid[:8]} ({cx},{cy}) -> {n2}")
+            if n2 >= target:
+                return
+            if n2 > n:
+                page.evaluate("window.__picked = window.__picked || []; if (!window.__picked.includes(%r)) window.__picked.push(%r);" % (cid, cid))
+                progress = True
+                break
+            # n2 <= n: either a no-op or a cancellation; try the next candidate
+        rounds += 1
+        if rounds >= 20 and not progress:
+            raise AssertionError(f"smart_seat_click: stuck at {count()} tables, target {target}")
+    final = count()
+    if final < target:
+        raise AssertionError(f"smart_seat_click: reached {final} tables, target {target}")
+    logger.info(f"smart_seat_click: done, {final} tables selected")

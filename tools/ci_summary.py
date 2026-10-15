@@ -123,7 +123,7 @@ def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
     """
     rows: list[dict] = []
     counts: dict[str, int] = {}
-    by_name: dict[str, dict] = {}  # dedup by test name, keep latest/best result
+    by_key: dict[str, dict] = {}  # dedup by stable case key, keep the worst result
 
     # 找到最新的时间戳子目录（格式: YYYYMMDD_HHMMSS），排除 notrecog 等调试目录
     timestamp_dirs = sorted(
@@ -149,24 +149,39 @@ def collect_ui_results(allure_root: str) -> tuple[str | None, list[dict], dict]:
         status = data.get("status") or "unknown"
         start, stop = data.get("start"), data.get("stop")
         duration = f"{(stop - start) / 1000:.1f}s" if start and stop else ""
-        name = _md_escape(data.get("name") or "(未命名用例)", 160)
+        full_name = (data.get("fullName") or "").strip()
+        name = data.get("name") or "(未命名用例)"
+        # [fix 2026-10-15] 去重键不能用显示名 `name`：main.py 的 pytest 入口带
+        # `@allure.title("Test Execution")`（test_ui.py），用例在设置真实标题之前
+        # 就崩溃时（如 YAML 缺 expect_result 的 KeyError），raw result 的 name 会
+        # 回落成占位符 "Test Execution" —— 多条不同的失败用例同名，按 name 去重会把
+        # 它们塌缩成 1 条（实测 run#42: 110 条被算成 106 条、失败 9 条被算成 5 条）。
+        # 改用稳定唯一键 historyId/fullName：同一用例的重跑仍会合并，不同用例不再误并。
+        dedup_key = (data.get("historyId") or full_name or name).strip()
+        # 占位名无法区分用例，展示时回退成 fullName（去掉 pytest 入口的包装更可读）
+        if name in ("", "Test Execution", "(未命名用例)") and full_name:
+            display = full_name
+            if display.startswith("test_case[") and display.endswith("]"):
+                display = display[len("test_case["):-1]
+        else:
+            display = name
         entry = {
-            "name": name,
+            "name": _md_escape(display, 160),
             "status": status,
             "duration": duration,
             "reason": _first_line(data.get("statusDetails")),
         }
         # If same test appears multiple times (rerun/parallel), keep the one
         # with the "worst" status (failed > broken > passed) but later start time
-        if name in by_name:
-            old = by_name[name]
+        if dedup_key in by_key:
+            old = by_key[dedup_key]
             old_rank = STATUS_ORDER.get(old["status"], 9)
             new_rank = STATUS_ORDER.get(status, 9)
             if new_rank < old_rank:  # worse status wins
-                by_name[name] = entry
+                by_key[dedup_key] = entry
         else:
-            by_name[name] = entry
-    rows = list(by_name.values())
+            by_key[dedup_key] = entry
+    rows = list(by_key.values())
     for r in rows:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     rows.sort(key=lambda r: (STATUS_ORDER.get(r["status"], 9), r["name"]))

@@ -64,6 +64,7 @@ from .base import (
     delete_coseller_if_exists,
     execute_js,
     verify_no_sibling_text,
+    smart_seat_click,
 )
 
 from .module import (
@@ -423,7 +424,10 @@ def get_action(name):
         return select_replacement_product
     if name.startswith("execute_js"):
         return execute_js
-        
+
+    if name.startswith("smart_seat_click"):
+        return smart_seat_click
+
     # Add other prefix handlers here as we migrate them
     
     return None
