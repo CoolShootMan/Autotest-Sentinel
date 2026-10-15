@@ -369,7 +369,14 @@ def smart_if(page: Page, v: dict):
             action = get_action(k)
             if action:
                 action(page, step_v)
-                getattr(page, "_execution_history").append((k, step_v))
+                # (2026-10-15 fix, T5649) defensive: only the MAIN fixture page gets
+                # `_execution_history` initialized (test_ui.py:67). Pages created by
+                # create_session (guest/partner namespaces) don't have it, and the old
+                # getattr(...) without default raised AttributeError on every if-block
+                # executed inside a session namespace. Mirrors the safe pattern at L1049.
+                _hist = getattr(page, "_execution_history", None)
+                if _hist is not None:
+                    _hist.append((k, step_v))
             else:
                 logger.error(f"  >>> If-block: Action '{k}' not found.")
                 raise Exception(f"Action '{k}' not found in if block.")
@@ -1160,7 +1167,10 @@ def verify_text_visible(page: Page, v: dict):
             if text:
                 el = el.get_by_text(text, exact=v.get("exact", False))
         elif text:
-            el = search_root.get_by_text(text, exact=v.get("exact", False)).first
+            # (2026-10-15 fix, T5649) .filter(visible=True): the DOM-first text match can be a
+            # HIDDEN duplicate (sticky buy-bar / SSR copy) — without the filter, a hidden
+            # .first makes assert_not_visible false-PASS while another copy is still visible.
+            el = search_root.get_by_text(text, exact=v.get("exact", False)).filter(visible=True).first
         else:
             raise AssertionError("verify: no text or locator provided")
         try:
@@ -1174,7 +1184,12 @@ def verify_text_visible(page: Page, v: dict):
 
     logger.info(f"Verifying text visibility: {text}")
     try:
-        search_root.get_by_text(cast(str, text), exact=v.get("exact", False)).first.wait_for(state="visible", timeout=timeout)
+        # (2026-10-15 fix, T5649) Do NOT blindly pick .first: on mobile layouts the DOM-first
+        # text match can be a HIDDEN duplicate (e.g. sticky buy-bar / SSR copy), which made
+        # verify_text_visible time out ("Text not found") even though a visible copy existed
+        # (T5649 guest price "$114.90"). filter(visible=True) keeps .first semantics but only
+        # among VISIBLE matches. Requires playwright >= 1.51 (local 1.60, CI pin 1.58 — both OK).
+        search_root.get_by_text(cast(str, text), exact=v.get("exact", False)).filter(visible=True).first.wait_for(state="visible", timeout=timeout)
         logger.info(f"Text '{text}' is visible.")
     except Exception as e:
         page.screenshot(path=f"fail_verify_{str(text)[:10]}.png")
