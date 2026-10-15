@@ -91,7 +91,6 @@ testT5649_axs:
         #     -> temp var ticket-retails-price
         execute_js_extract_retail_price:
             save_as: "ticket-retails-price"
-            global: true
             script: |
                 () => {
                   const cards=[...document.querySelectorAll('*')].filter(el => {
@@ -111,7 +110,6 @@ testT5649_axs:
         # 10b. Extract the "incl." amount and compute my_revenve = price - incl -> temp var my_revenve
         execute_js_extract_revenue:
             save_as: "my_revenve"
-            global: true
             script: |
                 () => {
                   const cards=[...document.querySelectorAll('*')].filter(el => {
@@ -141,7 +139,6 @@ testT5649_axs:
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
         execute_js_extract_platform_fees:
             save_as: "transaction-fees"
-            global: true
             script: |
                 () => {
                   const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
@@ -153,7 +150,6 @@ testT5649_axs:
         # 14. Extract "Taxes" from the popover -> temp var taxes
         execute_js_extract_taxes:
             save_as: "taxes"
-            global: true
             script: |
                 () => {
                   const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
@@ -175,7 +171,6 @@ testT5649_axs:
         # 16. Extract the event name (used to build the guest public post URL) -> temp var event_name
         execute_js_extract_event:
             save_as: "event_name"
-            global: true
             script: |
                 () => {
                   const m=document.body.innerText.replace(/\s+/g,' ').match(/([A-Za-z0-9_'’\- ]{1,50}?)\s*(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d/i);
@@ -186,7 +181,6 @@ testT5649_axs:
         # 17. Slugify the event name into the guest-accessible public post URL -> temp var post_url
         execute_js_extract_url:
             save_as: "post_url"
-            global: true
             script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
 
 
