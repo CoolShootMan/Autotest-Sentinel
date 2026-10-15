@@ -12903,13 +12903,13 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "apiPlatform": "AXS",
         "apiCredentials": {
             "accessToken": "{{axs_accessToken}}",
-            "siteId": "1",
+            "siteId": "sandbox",
             "apiKey": "{{axs_apiKey}}",
             "apiBaseUrl": "https://api.axs.com",
             "appBaseUrl": "https://app.axs.com",
-            "ticketerId": "22",
-            "outletId": "99947",
-            "paymentTypeId": "90043",
+            "ticketerId": "1",
+            "outletId": "1",
+            "paymentTypeId": "1",
             "ticket": {
                 "linkTemplate": "https://axs.page.link/mobile",
                 "messageTemplate": "Click View Tickets and log in with your AXS account ({{email}}) and password to view your tickets."
@@ -12926,10 +12926,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp131).json('$.data.apiCredentials').is_object()
     expect(_resp131).json('$.data.apiCredentials.apiKey').is_string()
     expect(_resp131).json('$.data.apiCredentials.apiKey').is_not_empty()
-    expect(_resp131).json('$.data.apiCredentials.siteId').equals('1')
-    expect(_resp131).json('$.data.apiCredentials.outletId').equals('99947')
-    expect(_resp131).json('$.data.apiCredentials.ticketerId').equals('22')
-    expect(_resp131).json('$.data.apiCredentials.paymentTypeId').equals('90043')
+    expect(_resp131).json('$.data.apiCredentials.siteId').equals('sandbox')
+    expect(_resp131).json('$.data.apiCredentials.outletId').equals('1')
+    expect(_resp131).json('$.data.apiCredentials.ticketerId').equals('1')
+    expect(_resp131).json('$.data.apiCredentials.paymentTypeId').equals('1')
     expect(_resp131).json('$.data.apiCredentials.apiBaseUrl').equals('https://api.axs.com')
     expect(_resp131).json('$.data.apiCredentials.appBaseUrl').equals('https://app.axs.com')
     expect(_resp131).json('$.data.apiCredentials.accessToken').is_string()
