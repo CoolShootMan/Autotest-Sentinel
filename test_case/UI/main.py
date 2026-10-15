@@ -79,7 +79,7 @@ def start_autotest():
         "All_YAML/Events/Event_settings/tdc_fee_breakdown_guest_purchase_ui.yaml",
         "All_YAML/Events/Event_settings/venue_map_fee_breakdown_ui.yaml",
         "All_YAML/Events/Event_settings/venue_map_fee_breakdown_guest_purchase.yaml",
-        "All_YAML/Events/Event_settings/venue_map_fee_breakdown_partner_full_refund.yaml"
+        "All_YAML/Events/Event_settings/venue_map_fee_breakdown_partner_full_refund.yaml",
         "All_YAML/Post/Buy_together_and_recommended_at_checkout/axs_tdc_venue_map_recommended_at_checkout.yaml",
         "All_YAML/Form/Storefront_form.yaml",
         "All_YAML/Form/Storefront_product_with_form.yaml",

@@ -52,9 +52,29 @@ def _merged_context_vars(page):
     # workflow_context wins over global on key collision
     return {**_GLOBAL_VARS, **_wc}
 
+
+def _fill_vars(page, s):
+    """Substitute {{var}} placeholders (from the workflow/global context) inside a string.
+
+    Mirrors the resolution already performed by ``_smart_click_core`` and ``execute_js`` so that
+    native actions such as ``open_url`` / ``verify_text_visible`` / ``verify_value`` / ``smart_fill``
+    can also consume variables saved earlier via ``execute_js`` ``save_as`` (or published with
+    ``global: true``).  No-op when ``s`` is not a string or contains no ``{{...}}`` placeholder, so
+    it is safe to call unconditionally on every string argument.
+    """
+    if not isinstance(s, str) or "{{" not in s:
+        return s
+    _ctx = _merged_context_vars(page)
+    for _k, _val in _ctx.items():
+        if _k:
+            s = s.replace("{{%s}}" % _k, str(_val))
+    return s
+
+
 def open_url(page: Page, v):
     logger.info(f">>> Current Step: open_url, v={v}, type={type(v)}")
     url = v.get("open") or v.get("url") if isinstance(v, dict) else v
+    url = _fill_vars(page, url)
     if url:
         params = v if isinstance(v, dict) else {}
         logger.info(f">>> open_url params keys: {list(params.keys())}")
@@ -357,6 +377,7 @@ def smart_if(page: Page, v: dict):
 def smart_fill(page: Page, v: dict):  
     target_name = v.get("name") or v.get("text") or v.get("label") or v.get("placeholder")
     target_value = v.get("value", "")
+    target_value = _fill_vars(page, target_value)
     target_locator = v.get("locator")
     target_locator = _resolve_locator(target_locator)
     target_frame = v.get("frame") or v.get("frame_locator")
@@ -1090,6 +1111,7 @@ def click_modal_close(page: Page, v: dict):
 
 def verify_text_visible(page: Page, v: dict):
     text = v.get("text")
+    text = _fill_vars(page, text)
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
@@ -1607,6 +1629,7 @@ def verify_value(page: Page, v: dict):
     target_locator = v.get("locator")
     target_locator = _resolve_locator(target_locator)
     expected_value = str(v.get("value"))
+    expected_value = _fill_vars(page, expected_value)
     timeout = v.get("timeout", 10000)
     logger.info(f"Verifying value of '{target_name or target_locator}' matches '{expected_value}'")
     if target_locator:

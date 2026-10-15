@@ -332,3 +332,7 @@ testT5649_venue_map_guest_purchase:
                     throw new Error('payment method amount: $'+pm+' != ticket-retails-price $'+retail.toFixed(2));
                   return 'payment amount verified: $'+pm+' == ticket-retails-price';
                 }
+
+    expect_result:
+        description: "Guest purchase of the venue map ticket completes and the confirmation page shows correct fee breakdown and totals"
+        assertions: []
