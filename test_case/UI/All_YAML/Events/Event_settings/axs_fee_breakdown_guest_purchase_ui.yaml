@@ -1,8 +1,7 @@
 # author: Lury
 # time: 2026/10/12 17:24
 # optimized: 2026/10/14 — rewritten to use framework-native actions only (no `script` fields),
-#           step design follows the clean native style (scope / conditional assertions introduced
-#           for the T1742 global-search fix).
+#           step design follows the clean native style (scope / conditional assertions).
 
 # --- testT5649_axs: Guest place order and check fee breakdown ---
 testT5649_axs_guest_purchase:
