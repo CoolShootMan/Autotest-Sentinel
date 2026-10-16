@@ -79,6 +79,58 @@ GOTO_RETRIES = 3
 GOTO_TIMEOUT = 20000
 BETWEEN_ACCOUNTS_DELAY = 3  # seconds; avoid hammering the login endpoint (rate-limit mitigation)
 
+# Profile name used to finish the "What's your name?" step when a test account has just
+# been re-created (see _complete_name_onboarding). No YAML asserts the owner's profile
+# name, so any non-empty value works; we use the account owner's real name so the UI reads
+# naturally if a human opens the account.
+PROFILE_FIRST_NAME = "Yuxiao"
+PROFILE_LAST_NAME = "Zhu"
+
+
+def _complete_name_onboarding(page) -> bool:
+    """Finish the "What's your name?" profile step that follows a fresh sign-in.
+
+    WHY (2026-10-16): the API prefill suite DELETES and RECREATES the UI test accounts
+    (yuxiao.zhu.ext+999/998/997). A re-created account has no profile name yet, so a
+    successful sign-in (HTTP 201 from /auth/sign-in) is followed by an in-app onboarding
+    screen (inputs `firstName` / `lastName` + a "Start Exploring" button) that keeps the
+    SPA URL on `/login`. The old success check `"/login" not in url` could therefore never
+    pass: the tool timed out, retried, found no "Log in" button any more and reported
+    "'Log in' button not found" for all three accounts, leaving stale cookies behind and
+    making the whole UI suite fail with `element not found`.
+
+    Returns True when the onboarding step was detected and submitted (the caller can then
+    wait for the SPA to leave /login), False when there was nothing to complete.
+    """
+    try:
+        first = page.locator("input[name='firstName']").first
+        first.wait_for(state="visible", timeout=8000)
+    except Exception:
+        return False
+
+    print(f"  onboarding detected: \"What's your name?\" step found -> completing it")
+    try:
+        if not first.input_value().strip():
+            first.fill(PROFILE_FIRST_NAME, timeout=10000)
+        last = page.locator("input[name='lastName']").first
+        if last.count() and not last.input_value().strip():
+            last.fill(PROFILE_LAST_NAME, timeout=10000)
+        page.keyboard.press("Tab")
+        page.wait_for_timeout(500)
+        page.get_by_role("button", name="Start Exploring").first.click(timeout=15000)
+    except Exception as e:
+        page.screenshot(path="login_error_onboarding.png")
+        raise RuntimeError(
+            "found the profile-name onboarding step but could not complete it "
+            f"(firstName/lastName + 'Start Exploring'): {e}"
+        )
+    try:
+        page.locator("input[name='firstName']").first.wait_for(state="hidden", timeout=20000)
+    except Exception:
+        pass
+    print("  onboarding completed")
+    return True
+
 
 def _safe_close(obj, label):
     try:
@@ -178,8 +230,22 @@ def login_and_save(playwright, account: dict):
             if not clicked:
                 raise RuntimeError(f"[{name}] 'Log in' button not found")
             page.locator("[data-login-submit='1']").click(timeout=10000)
+            # A re-created account answers the sign-in with 201 and then shows the
+            # in-app "What's your name?" step while the URL stays on /login, so the
+            # poll below would never succeed. Handle it before waiting on the URL.
+            onboarded = _complete_name_onboarding(page)
             try:
-                page.wait_for_url(lambda url: "/login" not in url, timeout=25000)
+                if onboarded:
+                    # Either the SPA moved off /login or it stayed there with the
+                    # onboarding layer gone - in both cases the sign-in cookies are set.
+                    try:
+                        page.wait_for_url(lambda url: "/login" not in url, timeout=8000)
+                    except Exception:
+                        page.locator("input[name='firstName']").first.wait_for(
+                            state="hidden", timeout=8000
+                        )
+                else:
+                    page.wait_for_url(lambda url: "/login" not in url, timeout=25000)
                 break
             except Exception:
                 server_msg = f" | server said: {auth_errors[-1][1]}" if auth_errors else ""

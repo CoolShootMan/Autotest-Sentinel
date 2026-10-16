@@ -7,3 +7,79 @@ testT4239_venue_map_guest_check:
     description: "Verify the event location and venue will only show to buyers if set 'Show address only to ticket buyers' on event page "
     expect_result: "Only show event address to buyer after purchased"
     test_step:
+        # 1. Create the guest session (no cookie = visitor)
+        create_session_guest: { name: "guest" }
+        sleep_guest_session: 1000
+
+        # 2. As a guest, open the public post for the venue_map event
+        session_guest__open_post: { url: "https://release.pear.us/autotestshop/post/event-for-ui-auto-venue-map" }
+        sleep_guest_post: 5000
+
+        # 3. Scroll to the bottom of the page so the venue / address section is rendered
+        scroll_to_bottom: { iterations: 10, delay: 500 }
+
+        # 4. The venue name "Test Venue" must be present on the public post
+        verify_venue_name:
+            text: "Test Venue"
+            timeout: 10000
+
+        # 5. Under "Test Venue", the address must be hidden and replaced by the purchase hint
+        verify_venue_address_hint:
+            text: "Address will be provided after purchase"
+            scope: { locator: "xpath=//*[normalize-space(.)='Test Venue']/ancestor::*[contains(., 'Address will be provided after purchase')][1]" }
+            timeout: 10000
+
+        # 6. As a guest, click the ticket-venue_map product name on the public post to open the "Select tickets" drawer
+        session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
+
+        # 7. On the opened "Select tickets" drawer a venue map is shown. Select a table.
+        session_guest__dispatch_click_map_hint:
+            locator: "rect[data-id]"
+            index: 0
+            timeout: 15000
+        sleep_map_hint: 1500
+        session_guest__dispatch_click_select_seat:
+            locator: "circle[data-id]"
+            index: 1
+            timeout: 15000
+        sleep_select_seat: 2500
+        
+        # 8. Click Buy now and wait 3s to reach the Checkout drawer
+        session_guest__R_click_buy_now: { role: "button", name: "Buy now" }
+        sleep_guest_checkout: 3000
+
+        # 9. Click the Checkout CTA to reach the contact + payment form.
+        session_guest__R_click_checkout_continue:
+            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            timeout: 15000
+        sleep_guest_cc_form: 5000
+
+        # 10. Fill in Contact (First name / Last name / Phone / Email)
+        session_guest__fill_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
+        session_guest__fill_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
+        session_guest__fill_phone: { locator: "input[name='contact.phoneNumber']", value: "2524001111" }
+        session_guest__fill_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
+        sleep_guest_contact: 1000
+
+        # 11. Fill the payment form with the framework-native `fill_stripe_iframe` action — the
+        session_guest__fill_stripe_iframe:
+            card_number: "4242424242424242"
+            expiry: "830"
+            cvc: "999"
+            card_name: "lury UI automation"
+            zipcode: "90021"
+        sleep_guest_payment: 2000
+
+        # 12. Assert the payment form was filled correctly (Playwright-native input_value
+        session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
+        session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
+        session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
+        session_guest__verify_value_card_name: { locator: "input[name='cardName']", value: "lury UI automation" }
+        session_guest__verify_value_zipcode: { locator: "input[name='billingAddress.zipcode']", value: "90021" }
+        session_guest__verify_value_phone:
+            locator: "input[name='contact.phoneNumber']"
+            regex: "(\\d\\D*){10}"
+
+        # 13. Click Place order
+        session_guest__R_click_place_order: { role: "button", name: "Place order" }
+        sleep_place_order: 8000

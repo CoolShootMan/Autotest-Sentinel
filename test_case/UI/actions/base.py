@@ -1230,8 +1230,12 @@ def click_modal_close(page: Page, v: dict):
         logger.warning(f"Failed to close modal: {e}")
 
 def verify_text_visible(page: Page, v: dict):
+<<<<<<< Updated upstream
     text = v.get("text")
     text = _fill_vars(page, text)
+=======
+    raw_text = v.get("text")
+>>>>>>> Stashed changes
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
@@ -1239,7 +1243,17 @@ def verify_text_visible(page: Page, v: dict):
     # Expected texts may reference variables saved by earlier steps (e.g.
     # "${{retails_price_venue_map}}"). Resolve them natively so dynamic-text checks
     # never need execute_js. No-op when the string contains no placeholder.
-    text = _fill_placeholders(text, page)
+    # `text` may ALSO be a LIST of acceptable copies — the assertion passes when ANY of
+    # them is visible (mirrors the list support of `verify_row_value`). Handy when one
+    # assertion has more than one valid wording across UI variants, e.g. the order
+    # confirmation heading renders either "Thank you for your payment." or
+    # "Your order is confirmed" depending on the build.
+    text_options = None
+    if isinstance(raw_text, (list, tuple)):
+        text_options = [_fill_placeholders(str(t), page) for t in raw_text]
+        text = None
+    else:
+        text = _fill_placeholders(raw_text, page)
     v = dict(v)
     if v.get("locator"):
         v["locator"] = _fill_placeholders(_resolve_locator(v["locator"]), page)
@@ -1285,6 +1299,18 @@ def verify_text_visible(page: Page, v: dict):
     search_root = scope_locator if scope_locator is not None else page
 
     if not_visible:
+        if text_options:
+            # "none of the alternatives may be visible"
+            for t in text_options:
+                try:
+                    search_root.get_by_text(t, exact=v.get("exact", False)).first.wait_for(
+                        state="hidden", timeout=timeout
+                    )
+                except Exception:
+                    page.screenshot(path=f"fail_not_visible_{t[:10]}.png")
+                    raise AssertionError(f"Text '{t}' is visible but should not be.")
+            logger.info(f"Confirmed none of the alternative texts is visible: {text_options}")
+            return
         logger.info(f"Verifying text is NOT visible: {text or v.get('locator')}")
         if v.get("locator"):
             # locator + scope: resolve the locator INSIDE the scope container.
@@ -1310,6 +1336,26 @@ def verify_text_visible(page: Page, v: dict):
                 page.screenshot(path=f"fail_not_visible_{str(text or v.get('locator'))[:10]}.png")
                 raise AssertionError(f"Element '{text or v.get('locator')}' is still visible but should not be.")
         return
+
+    if text_options:
+        # Any-of match with ONE shared deadline (so 2 alternatives do not double the wait).
+        import time as _time
+        deadline = _time.time() + timeout / 1000.0
+        while True:
+            for t in text_options:
+                try:
+                    if search_root.get_by_text(t, exact=v.get("exact", False)).first.is_visible():
+                        logger.info(f"Text '{t}' is visible (one of {len(text_options)} accepted copies).")
+                        return
+                except Exception:
+                    pass
+            if _time.time() >= deadline:
+                break
+            page.wait_for_timeout(400)
+        page.screenshot(path=f"fail_verify_{str(text_options[0])[:10]}.png")
+        raise AssertionError(
+            f"None of the accepted texts is visible within {timeout}ms: {text_options}"
+        )
 
     logger.info(f"Verifying text visibility: {text}")
     try:
