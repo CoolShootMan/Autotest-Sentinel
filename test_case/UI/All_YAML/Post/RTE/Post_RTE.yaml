@@ -223,3 +223,214 @@ testT4866:
         # step can lapse silently and the post keeps the button (T4866 lesson).
         verify_deleted_published_td: { text: "Post published!", timeout: 8000 }
         sleep_td_end: 2000
+# ==============================================================================
+# T2800: Verify a post CTA "Buy now" button is fully visible to a guest and
+#        completes a real order when clicked
+# Pre-condition: event "Test event post variant settings" with a published post
+#                and a sellable product (General Admission, $0.00 free)
+# Flow: Post RTE -> Insert -> CTA Button -> action "Buy now" -> pick a product
+#       -> set Button text -> save in editor -> Update (publish)
+#       -> as a guest the whole button is visible on the storefront post
+#       -> guest clicks it: the Checkout drawer opens
+#       -> Continue -> Contact form -> RSVP -> order confirmation ("You're in")
+#       -> teardown deletes the CTA
+# ==============================================================================
+testT2800:
+    description: "Verify a post CTA Buy now button is visible to guests and completes an order when clicked"
+
+    # Pre-condition =============================================================
+    pre_condition:
+        description: "Open the event and enter the post RTE editor"
+        expect_result: "RTE editor is opened"
+        test_step:
+            # Events list
+            open: "{BASE_URL}/events"
+            sleep_after_open: 5000
+
+            # Target event card (a DIV, not a BUTTON -> exact text locator)
+            R_click_event: { locator: "text=Test event post variant settings", exact: true }
+            sleep_after_event: 4000
+
+            R_click_post_tab: { role: "tab", name: "Post" }
+            sleep_after_post_tab: 2000
+
+            R_click_edit_content: { locator: "button[aria-label='Content']" }
+            sleep_after_editor: 4000
+
+    # Test Steps ================================================================
+    test_step:
+        # ----------------------------------------------------------------------
+        # Part 1: Insert a CTA Button whose action is "Buy now"
+        # ----------------------------------------------------------------------
+        R_click_insert: { role: "button", name: "Insert", exact: true, index: 0 }
+        sleep_after_insert: 2000
+
+        # "CTA Button" is either a top-level menu item or nested under a "CTA
+        # Elements" group; hover the group when it exists (skipped when absent),
+        # then click the item itself. Portal-rendered menuitems use page-level
+        # locators here: role-scoped lookups are limited to the newest visible
+        # dialog in this framework.
+        smart_click_optional_cta_group: { text: "CTA Elements", optional: true }
+        sleep_after_cta_group: 1500
+        R_click_cta_button: { locator: '[role="menuitem"]:has-text("CTA Button")' }
+        sleep_after_cta_button: 1500
+
+        R_click_action_select: { role: "button", name: "Select an action" }
+        sleep_after_action_select: 1000
+        # Option list lives on [data-testid="menu-item"] (not role=menuitem).
+        R_click_buy_now_option: { locator: '[data-testid="menu-item"]:has-text("Buy now")' }
+        sleep_after_buy_now_option: 2500
+
+        # ----------------------------------------------------------------------
+        # Part 2: Pick the product the button sells
+        # ----------------------------------------------------------------------
+        # "Buy now" needs a target product, so the editor immediately shows a
+        # "Select a product" picker. The cards expose no native radio input -
+        # the selection circle is an <svg data-testid="RoundLineIcon"> - and the
+        # row itself (a MuiStack-root) swallows Playwright clicks via
+        # pointer-events. So the row is picked with a JS element.click() that
+        # climbs from the circle to the ancestor carrying the retail price.
+        # That flips the dialog's "Select" button from disabled to enabled.
+        R_click_select_product: { text: "Select a product" }
+        sleep_product_picker_open: 3000
+        wait_for_selector_product_picker: { selector: '[role="dialog"] [data-testid="RoundLineIcon"]', timeout: 15000 }
+        execute_js_pick_product: { script: "() => { const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }; const dlgs = [...document.querySelectorAll('[role=\"dialog\"]')].filter(vis); const d = dlgs[dlgs.length - 1]; if (!d) return 'no dialog'; const icon = d.querySelector('[data-testid=\"RoundLineIcon\"]'); if (!icon) return 'no icon'; let n = icon; for (let k = 0; k < 8 && n; k++, n = n.parentElement) { if (/Retail price/.test(n.textContent || '')) { n.click(); return 'picked ' + (n.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 40); } } return 'row not found'; }", assert_contains: "picked" }
+        sleep_after_pick_product: 1500
+        R_click_confirm_product: { locator: '[role="dialog"] button:has-text("Select")', index: -1 }
+        sleep_after_confirm_product: 2500
+
+        # ----------------------------------------------------------------------
+        # Part 3: Name the button, save the panel, publish
+        # ----------------------------------------------------------------------
+        fill_button_text: { locator: "input[name='label']", value: "test buy now" }
+        sleep_after_button_text: 1000
+
+        # Save the CTA config, then publish. Keep the two "Update" clicks
+        # back-to-back: a long pause lets the confirm step lapse and the change
+        # silently stays unpublished (T4866 lesson).
+        R_click_cta_save: { locator: '[data-testid="mui-button"]', index: -1 }
+        sleep_after_cta_save: 1500
+        R_click_update_1: { role: "button", name: "Update" }
+        R_click_update_2: { role: "button", name: "Update" }
+        sleep_after_publish: 6000
+        verify_published: { text: "Post published!", timeout: 10000 }
+
+        # ----------------------------------------------------------------------
+        # Part 4: as a guest, the whole CTA button is visible on the post
+        # ----------------------------------------------------------------------
+        # Repo convention for guest checks: clear the partner cookies on the SAME
+        # page (inject_guest keeps the tenant-routing cookies so /autotestshop
+        # still resolves). Switching identity this way is the only option that
+        # keeps the root page usable afterwards.
+        clear_cookies: { inject_guest: true }
+        sleep_guest_switch: 1500
+        open_guest_post: { url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings" }
+        sleep_guest_open: 8000
+
+        # The button renders as a real button carrying data-cta-action="buy-now".
+        # NOTE: the post also ships a native "Buy Ticket" CTA with the SAME
+        # data-cta-action value, so every locator below must include the button
+        # text to disambiguate.
+        wait_for_selector_cta_guest: { selector: 'button[data-cta-action="buy-now"]:has-text("test buy now")', timeout: 20000 }
+        # Assert the button itself (not just the page) renders and is visible.
+        # `verify_` alone routes to verify_text_visible, which reads `text`; the
+        # locator-scoped variant is verify_element_contains_text.
+        verify_cta_visible_guest: { locator: 'button[data-cta-action="buy-now"]:has-text("test buy now")', text: "test buy now" }
+        # Assert the button is fully painted (non-zero box, enabled, own text) -
+        # "the whole button is visible" is the requirement, not just presence.
+        execute_js_assert_cta_box: { script: "() => { const all = [...document.querySelectorAll('button[data-cta-action=\"buy-now\"]')]; const b = all.find(x => (x.textContent || '').trim() === 'test buy now'); if (!b) return 'missing'; const r = b.getBoundingClientRect(); return b.textContent.trim() + '|' + Math.round(r.width) + 'x' + Math.round(r.height) + '|disabled=' + b.disabled; }", assert_contains: "test buy now" }
+
+        # ----------------------------------------------------------------------
+        # Part 5: the guest clicks it and completes a real order
+        # ----------------------------------------------------------------------
+        # The bound product (General Admission) is free, so the checkout is an
+        # RSVP: Contact form -> RSVP -> confirmation. No payment step is shown.
+        R_click_cta_buy_now_guest: { locator: 'button[data-cta-action="buy-now"]:has-text("test buy now")', force: true }
+        sleep_checkout_drawer: 7000
+        # The Checkout drawer is a plain [role=dialog] with no aria-label.
+        wait_for_selector_checkout_drawer: { selector: '[role="dialog"] button:has-text("Continue")', timeout: 20000 }
+        verify_checkout_drawer: { text: "Checkout" }
+
+        R_click_continue: { locator: '[role="dialog"] button:has-text("Continue")', index: -1 }
+        sleep_contact_form: 6000
+        wait_for_selector_contact_form: { selector: '[role="dialog"] input[name="contact.firstName"]', timeout: 20000 }
+        verify_contact_form: { text: "Contact" }
+
+        # Contact values follow the repo convention used by the other guest
+        # checkout cases (Post_setting.yaml, Post_setting_for_venue_map.yaml).
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: "Test" }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: "User" }
+        fill_phone: { role: "textbox", name: "Phone number", value: "+1 (650) 900-6646" }
+        fill_email: { locator: 'input[name="contact.email"]', value: "xuan.ext+123@1m.app" }
+        sleep_after_contact_fill: 2500
+
+        # RSVP is the final action for a free product ("Place order" + Stripe
+        # card fields only appear for a paid one).
+        wait_for_selector_rsvp: { selector: '[role="dialog"] button:has-text("RSVP")', timeout: 20000 }
+        R_click_rsvp: { locator: '[role="dialog"] button:has-text("RSVP")', index: -1 }
+        sleep_order_confirmation: 9000
+
+        # The order confirmation page. A free RSVP order reads "You’re in"
+        # with a TYPOGRAPHIC apostrophe (U+2019) - an ASCII one will not match.
+        # (The "Your order is confirmed" wording belongs to paid orders.)
+        wait_for_url_order_confirmation: { url: "**/order/**/confirmation**", timeout: 30000 }
+        wait_for_selector_order_confirmed: { selector: "text=You’re in", timeout: 20000 }
+        verify_order_confirmed: { text: "You’re in" }
+        verify_order_summary: { text: "Confirmation number" }
+        verify_ticket_issued: { text: "Ticket Information" }
+        execute_js_assert_order_url: { script: "() => location.pathname", assert_contains: "/order/" }
+
+    # Expected Result ===========================================================
+    expect_result:
+        description: "The guest sees the whole CTA Buy now button on the post and clicking it completes a real order up to the confirmation page"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "You’re in"
+
+    # Teardown ==================================================================
+    teardown_step:
+        # The framework runs no try/finally, so a red case would leave the button
+        # on the shared post and break the next run. Delete it here.
+        # Re-inject partner cookies in case the case died while the page was
+        # switched to guest (Part 4 clears them).
+        add_cookies: {}
+        sleep_td_cookies: 1500
+        open_td: { url: "{BASE_URL}/events", auto_handle_modals: false }
+        sleep_td_open: 3000
+        R_click_event_td: { locator: "text=Test event post variant settings", exact: true }
+        sleep_td_event: 4000
+
+        R_click_post_tab_td: { role: "tab", name: "Post" }
+        sleep_td_post_tab: 2000
+        R_click_edit_content_td: { locator: "button[aria-label='Content']" }
+        sleep_td_editor: 3000
+
+        # The CTA is a Lexical client-hydrated decorator: it attaches to the DOM
+        # only after the RTE hydrates. Wait for it before selecting. The post's
+        # own native "Buy Ticket" CTA shares data-cta-action="buy-now", so match
+        # on our button text to avoid deleting it.
+        wait_cta_td: { locator: 'button[data-testid="button"][data-cta-action="buy-now"]:has-text("test buy now")', timeout: 15000 }
+        sleep_td_editor_ready: 1000
+        R_click_cta_td: { locator: 'button[data-testid="button"][data-cta-action="buy-now"]:has-text("test buy now")', index: 0, force: true }
+        sleep_td_select: 800
+        R_click_delete_td: { role: "button", name: "Delete" }
+        sleep_td_delete: 800
+        # A run that died BEFORE teardown (no try/finally in this framework)
+        # leaves one button behind; the next run then has two, and deleting one
+        # would keep the post dirty forever. Delete a second one when present.
+        if_second_cta_left:
+            condition: { locator: 'button[data-testid="button"][data-cta-action="buy-now"]:has-text("test buy now")' }
+            then:
+                R_click_cta_td_2: { locator: 'button[data-testid="button"][data-cta-action="buy-now"]:has-text("test buy now")', index: 0, force: true }
+                sleep_td_select_2: 800
+                R_click_delete_td_2: { role: "button", name: "Delete" }
+                sleep_td_delete_2: 800
+        # Save the editor and publish, twice back-to-back (a long pause lets the
+        # confirm step lapse and the change silently stays unpublished).
+        R_click_update_td_1: { role: "button", name: "Update" }
+        R_click_update_td_2: { role: "button", name: "Update" }
+        sleep_td_publish: 3000
+        # Assert the deletion really got published: without this the confirm
+        # step can lapse silently and the post keeps the button (T4866 lesson).
+        verify_deleted_published_td: { text: "Post published!", timeout: 8000 }
+        sleep_td_end: 2000
