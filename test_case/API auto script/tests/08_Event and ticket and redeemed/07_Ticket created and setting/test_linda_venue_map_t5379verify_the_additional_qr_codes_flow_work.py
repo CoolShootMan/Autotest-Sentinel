@@ -9,7 +9,7 @@ CASE_ID = 8628565
 ENV_NAME = "Release"
 
 # --- step 1: 3563fc4b-af4c-4484-b728-537830cc03f4 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: e3040033-bc3c-4867-bb12-e3bc01f366a2 ---
 # pre: pm.environment.set("event_title", "event-for-api-auto-venue-map");
 # post[customScript]: // 1. 解析响应 JSON
@@ -368,7 +368,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id
     # === pre-script（由 Apifox customScript 翻译）===
     vars['event_title'] = "event-for-api-auto-venue-map"
@@ -384,7 +384,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     for _kw2 in (_want2, ''):
         _resp2 = ctx.api.events.list(
             body=None, params={'keyword': _kw2, 'pageSize': '200', 'pageNumber': '1'},
-            token='yuxiao999_token')
+            token='linda999_token')
         _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
         _target2 = next((i for i in _items2 if i.get('title') == _want2), None)
         if _target2:
@@ -397,11 +397,11 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     assert _tk2, f"step2 事件 [{_target2.get('id')}] 下没有 tickets"
     ctx.set('copyFromId', _tk2.get('id') or '')
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: GET Catch the ProductId and promoterProductId
@@ -425,7 +425,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
                 _v05.get('displayVariantId') or _p5.get('displayVariantId') or '')
     # step 6: GET get ticket General_Admission_02 one unitId
     # variantId 原写作单花括号 '{...}'，不会被框架渲染。
-    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
+    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='linda999_token')
     # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
     # 提取 id→unitid、number→seatNumber、categoryId→venueUnitCategoryId。
     # （原脚本随机取一项；为免 flaky 改为取首个。）此前漏掉了 unitid，且未做 orderNumber 过滤。
@@ -693,7 +693,7 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
     # step 9: Get consumer linda10 token
     # token auto-managed by framework (linda10_token)
@@ -755,4 +755,4 @@ def test_linda_venue_map_t5379verify_the_additional_qr_codes_flow_work(ctx: "Con
     _ordernumber_val = _get_path(_resp12.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 13: Check the merchant order detail exist ticket Redemptions contents
-    _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})
+    _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

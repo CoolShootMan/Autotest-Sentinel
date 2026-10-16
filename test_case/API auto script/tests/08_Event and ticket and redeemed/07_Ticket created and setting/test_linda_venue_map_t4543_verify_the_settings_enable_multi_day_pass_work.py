@@ -9,7 +9,7 @@ CASE_ID = 8660683
 ENV_NAME = "Release"
 
 # --- step 1: 91c574f3-fdab-47be-bf60-472750a263b8 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: e9985ede-c59f-4723-bad2-ed9a86c642f2 ---
 # pre: pm.environment.set("event_title", "event-for-api-auto-venue-map");
 # post[customScript]: // 1. 解析响应 JSON
@@ -432,9 +432,9 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     vars.setdefault('event_title', 'event-for-api-auto-venue-map')
     vars.setdefault('target_ticket_title', 'General Admission 01')
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id
-    _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp2 = ctx.api.events.list(params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     _j2 = _json(_resp2)
     _items2: list[Any] = (_j2.get('data') or {}).get('items') or []
     _evt = next((it for it in _items2 if it.get('title') == vars['event_title']), None)
@@ -447,7 +447,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert isinstance(_matched.get('id'), str) and _matched['id'], "提取的 ticket id 格式不正确"
     vars['copyFromId'] = _matched['id']
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(token='linda999_token')
     _j3 = _json(_resp3)
     _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
     assert _items3, "posts 列表为空，无法提取 post0_id"
@@ -455,7 +455,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     assert isinstance(_post0, str) and _post0, "提取的 post0_id 格式不正确"
     vars['post0_id'] = _post0
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(token='linda999_token')
     _j4 = _json(_resp4)
     _data4 = _j4.get('data')
     assert isinstance(_data4, dict) and isinstance(_data4.get('id'), str) and _data4.get('id'), "data.id 为空或不存在"
@@ -481,7 +481,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
         vars[f'merchantProductVariantId_{_fmt}'] = _mvid
         vars[f'displayVariantId_{_fmt}'] = _dvid
     # step 6: GET get ticket General_Admission_01 one unitId
-    _resp6 = ctx.api.events.tickets_venue_units(params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_01}}'}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
+    _resp6 = ctx.api.events.tickets_venue_units(params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_01}}'}, token='linda999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     _j6 = _json(_resp6)
     _items6: list[Any] = (_j6.get('data') or {}).get('items') or []
     _null_order = [it for it in _items6 if it.get('orderNumber') is None]
@@ -756,7 +756,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     }
 
     _body7['multipleDaysPass'] = {"days": json.loads(vars['multipleDaysPass_days'])}
-    _resp7 = ctx.api.products.by_product_id_general_admission_02(body=_body7, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
+    _resp7 = ctx.api.products.by_product_id_general_admission_02(body=_body7, token='linda999_token', path_vars={'productId_General_Admission_02': '{{productId_General_Admission_01}}'})
     # === 断言（step7 PUT 启用 multi-day pass 的响应校验）===
     _j7 = _json(_resp7)
     assert _resp7.status_code == 200, f"step7 status != 200, got {_resp7.status_code}"
@@ -773,7 +773,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     _resp_co = ctx.api.posts.curator_advanced_update(
         post_id='{{post0_id}}',
         body={"isPurchaseApprovalRequired": False},
-        token='yuxiao999_token',
+        token='linda999_token',
     )
     # step 10: DELETE Clean Cart
     _resp10 = ctx.api.cart.delete(body={}, app_headers=True, token='linda10_token')
@@ -863,7 +863,7 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     # CI 实测同份代码时好时坏（本地复跑通过）。对 404 做条件轮询，最多 8 次、间隔 3s。
     _resp13: "ApiResponse | None" = None
     for _att in range(8):
-        _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', token='yuxiao999_token')
+        _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', token='linda999_token')
         try:
             if str(_resp13.json().get('code')) == '200':
                 break
@@ -906,5 +906,5 @@ preserved as comments above. Variables resolve from env/Global.yaml + env/Releas
     ctx.api.posts.curator_advanced_update(
         post_id='{{post0_id}}',
         body={"isPurchaseApprovalRequired": True},
-        token='yuxiao999_token',
+        token='linda999_token',
     )

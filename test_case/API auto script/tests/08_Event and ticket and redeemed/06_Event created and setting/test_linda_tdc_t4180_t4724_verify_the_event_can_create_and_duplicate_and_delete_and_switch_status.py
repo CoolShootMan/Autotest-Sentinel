@@ -82,7 +82,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     vars['__uuid_0'] = str(__import__('uuid').uuid4())
     # === Steps ===
     # step 1: GET Partner Get the Event id
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # 取 id/title 写入 event_id/event_title，并取 tickets[0].id 写入 copyFromId。
     # 注意：/product-event/list 按时间倒序，本用例自己复制出来的事件（标题以 "Duplicate "
     # 开头、票已 0 库存）会排在真正源事件前面，直接取首个 TDC 会选中上一轮跑出的副本，
@@ -100,10 +100,10 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     _tickets1 = _tdc_event.get('tickets') or []
     vars['copyFromId'] = (_tickets1[0].get('id') or '') if _tickets1 else ''
     # step 2: GET get the event catalog id
-    _resp2 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp2 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     ctx.extract('catalog_id', _resp2, '$.data.id')
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', event_id='{{event_id}}')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token', event_id='{{event_id}}')
     _items3: list[dict] = (_resp3.json().get('data') or {}).get('items') or []
     _target3 = (_pick_first(_items3, lambda i: i.get('title') == vars.get('event_title'))
                 or _pick_first(_items3, lambda i: i.get('headline') == vars.get('event_title'))
@@ -120,7 +120,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     assert _prod4, f"step4 未找到库存 > 0 的关联产品（relatedProducts={len(_rels4)}）"
     _apply_related_product(ctx, _prod4)
     # step 5: GET get the original ticket's form information
-    _resp5 = ctx.api.products.by_product_id_2(body=None, token='yuxiao999_token')
+    _resp5 = ctx.api.products.by_product_id_2(body=None, token='linda999_token')
     # 实测该接口（GET /merchant/product/{id}）响应里并没有 productForm 字段
     # 源头不可复现 → 取不到就为 None。
     # 下游只有 step7 复制事件的 body 消费它，而服务端要求 isProductFormEnabled=True 时
@@ -581,7 +581,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
             '#FFFFFF',
         ],
     },
-}, token='yuxiao999_token')
+}, token='linda999_token')
     # 复制失败会让 dup_event_id 落空 → 下游 URL 变成 /posts/curator/event//posts (404)，
     # 报错信息完全指不到真正原因，故在此显式断言并带出服务端错误体。
     assert _resp7.status_code in (200, 201), f"step7 复制事件失败：{_resp7.describe()}"
@@ -592,7 +592,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     _lineupid_val = _get_path(_resp7.json(), ['data', 'lineup', 0, 'id'])
     vars['lineup_id'] = _lineupid_val if _lineupid_val is not None else ''
     # step 8: GET get the event post id
-    _resp8 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    _resp8 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})
     _items8: list[dict] = (_resp8.json().get('data') or {}).get('items') or []
     _post0id_val = _get_path(_resp8.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
@@ -1099,7 +1099,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
             '#FFFFFF',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # assertion 10.assertion: responseJson equal 200
     expect(_resp10).json('$.code').equals('200')
     # assertion 10.assertion: event status is ON_HOLD
@@ -1210,7 +1210,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     ],
     'eventId': '{{dup_event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     assert _resp10b.status_code in (200, 201), f"补建 ticket on hold 票失败：{_resp10b.describe()}"
     _d_hold = _resp10b.json().get('data') or {}
     vars['on_hold_productId'] = _d_hold.get('id') or ''
@@ -1231,7 +1231,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
                 "isVisible": True,
             },
         ],
-    }, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    }, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})
     assert _resp10c.status_code in (200, 201), f"补建票 show-in-post 失败：{_resp10c.describe()}"
     # step 11: GET Catch the promoterProductvariantId and merchantProductVariantId
     _resp11 = ctx.api.admin.post_v2_relate_products(
@@ -1319,7 +1319,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
         "subdomainVanityUrl": "",
     }, app_headers=True, token='access_token')
     # step 16: GET get shipping-options
-    _resp16 = ctx.api.merchants.shipping_options(body=None, token='yuxiao999_token')
+    _resp16 = ctx.api.merchants.shipping_options(body=None, token='linda999_token')
     _items16 = (_resp16.json().get('data') or {}).get('items') or []
     assert _items16, 'step16 未取到 shipping options，下游 body 需要 {{shipping_option_id}}'
     vars['shipping_option_id'] = _items16[0].get('id') or ''
@@ -1865,7 +1865,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # assertion 17.assertion: responseJson equal 200
     expect(_resp17).json('$.code').equals('200')
     # assertion 17.assertion: event status is CANCELED
@@ -2435,7 +2435,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # assertion 19.assertion: responseJson equal 200
     expect(_resp19).json('$.code').equals('200')
     # assertion 19.assertion: event status is COMPLETED
@@ -2449,7 +2449,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     # assertion 20.assertion: responseJson equal success
     expect(_resp20).json('$.message').equals('success')
     # assertion 20.assertion: event status is UPCOMING (admin PATCH 不返回 event 对象，重新 GET 校验)
-    _resp20b = ctx.api.events._call("GET", '/product-event/{{dup_event_id}}', token='yuxiao999_token', app_headers=True)
+    _resp20b = ctx.api.events._call("GET", '/product-event/{{dup_event_id}}', token='linda999_token', app_headers=True)
     expect(_resp20b).json('$.data.status').equals('UPCOMING')
     # step 22: DELETE Clean Cart
     _resp22 = ctx.api.cart.delete(body={}, app_headers=True, token='access_token')
@@ -3068,7 +3068,7 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # assertion 25.assertion: responseJson equal COMPLETED
     expect(_resp25).json('$.data.status').equals('COMPLETED')
     # step 26: PATCH admin update the event status from complete to upcoming failed if exist order
@@ -3080,4 +3080,4 @@ def test__8709247__Linda_TDC_T4180_T4724_Verify_the_Event_can_create_and_duplica
     # assertion 26.assertion: responseJson equal Cannot revert an event that has sales.
     expect(_resp26).json('$.message').equals('Cannot revert an event that has sales.')
     # step 27: DELETE delete the event
-    _resp27 = ctx.api.events.by_event_id(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    _resp27 = ctx.api.events.by_event_id(body=None, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})

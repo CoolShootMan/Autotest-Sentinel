@@ -273,21 +273,21 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: GET Partner Get the Event id
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # 原 step1 post-script: 在 data.items 中找 title === "event-for-API-testing" 的事件，取其 id。
     _items1 = _get_path(_resp1.json(), ['data', 'items']) or []
     _ev1 = next((i for i in _items1 if i.get('title') == 'event-for-API-testing'), None)
     assert _ev1, f"step1 未找到 title='event-for-API-testing' 的事件（items={len(_items1)}）"
     ctx.set('event_id', _ev1.get('id') or '')
     # step 2: GET Partner Get the Event Post id
-    _resp2 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp2 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     # 原 step2 post-script: 在 data.items 中找 title === "event-for-API-testing" 的 post，取其 id。
     _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
     _post2 = next((i for i in _items2 if i.get('title') == 'event-for-API-testing'), None)
     assert _post2, f"step2 未找到 title='event-for-API-testing' 的 post（items={len(_items2)}）"
     ctx.set('postId', _post2.get('id') or '')
     # step 3: GET get the event catalog id
-    _resp3 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量（修复：此前误把 JS 变量名当字面量）
     ctx.extract('catalog_id', _resp3, '$.data.id')
     # step 4: POST create ticket with setting the Require customer-provided
@@ -411,7 +411,7 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     ctx.extract('productId', _resp4, '$.data.id')
     # step 5: POST new ticket show in post
     _resp5 = ctx.api.events.v2_show_in_post(body={
@@ -424,7 +424,7 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
                 "isVisible": True,
             },
         ],
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # step 6: GET Catch the promoterProductvariantId
     # 关联产品异步落地（eventually-consistent）：step4 新建商品、step5 v2_show_in_post 后
     # 立即查 relate-products，可能拿不到刚建的目标商品。CI 连续跑多个用例时同步延迟更长，
@@ -587,4 +587,4 @@ def test_linda_verify_the_require_customer_provided_details_can_be_apply_success
     orderNumber = vars.get('orderNumber')
     vars['merchantId'] = "d1fdc475-8b15-49f0-8718-67c9efa988bf"
 
-    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})
+    _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

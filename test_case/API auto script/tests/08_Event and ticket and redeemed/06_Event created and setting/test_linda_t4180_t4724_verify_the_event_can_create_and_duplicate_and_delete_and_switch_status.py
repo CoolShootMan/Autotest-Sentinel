@@ -473,7 +473,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     vars['event_title'] = 'Duplicate Verify the Event can create and duplicate and delete success'
     # === Steps ===
     # step 1: GET get the event catalog id
-    _resp1 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp1 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     vars['catalog_id'] = (_resp1.json().get('data', {}) or {}).get('id')
     # step 2: Partner Create event
     _resp2 = ctx.api.events.v2(body={
@@ -618,7 +618,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
                 "title": "#FFFFFF",
             },
         },
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # assertion 2.assertion: responseJson equal success
     expect(_resp2).json('$.message').equals('success')
     vars['created_event_id'] = (_resp2.json().get('data', {}) or {}).get('id')
@@ -648,7 +648,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             "subtitle": "Here's a lil recap of our last eventð",
             "align": "center",
         },
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
     # assertion 3.assertion: responseJson equal success
@@ -691,7 +691,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
                 },
             ],
         },
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # step 5: POST Partner999 Create event ticket next step
     _resp5 = ctx.api.events.v2_ticket_batch_v2(body={
     'poster': {
@@ -792,7 +792,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             },
         ],
     },
-}, token='yuxiao999_token', path_vars={'event_id': '{{created_event_id}}'})
+}, token='linda999_token', path_vars={'event_id': '{{created_event_id}}'})
     # assertion 5.assertion: responseJson equal 200
     expect(_resp5).json('$.code').equals('200')
     # assertion 5.assertion: responseJson equal success
@@ -821,7 +821,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
                 "order": 0,
             },
         ],
-    }, token='yuxiao999_token', path_vars={'event_id': '{{created_event_id}}'})
+    }, token='linda999_token', path_vars={'event_id': '{{created_event_id}}'})
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success
@@ -831,7 +831,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     vars['ticket_id'] = _tk6.get('id')
     vars['variant_id'] = (_tk6.get('variants') or [{}])[0].get('id')
     # step 7: GET Partner Get the Event id
-    _resp7 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp7 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     _d7: dict[str, Any] = _resp7.json().get('data', {}) or {}
     _items7: list[Any] = _d7.get('items') or []
     _target7 = next((i for i in _items7 if i.get('title') == 'Verify the Event can create and duplicate and delete success'), None)
@@ -1348,12 +1348,12 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             '#E0E0E0',
         ],
     },
-}, token='yuxiao999_token')
+}, token='linda999_token')
     _d8: dict[str, Any] = _resp8.json().get('data', {}) or {}
     vars['dup_event_id'] = _d8.get('id')
     vars['lineup_id'] = (_d8.get('lineup') or [{}])[0].get('id')
     # step 9: GET Partner Get the duplicate Event Post id
-    _resp9 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    _resp9 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})
     _d9: dict[str, Any] = _resp9.json().get('data', {}) or {}
     _items9: list[Any] = _d9.get('items') or []
     # Apifox 原文按 `item.title === event_title` 精确匹配。实测服务端「复制事件」后自动生成的
@@ -1645,7 +1645,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
                 "#E0E0E0",
             ],
         },
-    }, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+    }, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # step 11: POST Add new ticket when the event status is on hold
     _resp11 = ctx.api.products.create(body={
     'merchantId': '{{catalog_id}}',
@@ -1748,7 +1748,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     ],
     'eventId': '{{dup_event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     vars['productId'] = (_resp11.json().get('data', {}) or {}).get('id')
     # step 12: POST new ticket show in post
     _resp12 = ctx.api.events.v2_show_in_post(body={
@@ -1761,7 +1761,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
                 "isVisible": True,
             },
         ],
-    }, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    }, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})
     # assertion 12.assertion: responseJson equal 200
     expect(_resp12).json('$.code').equals('200')
     # step 13: GET Catch the promoterProductvariantId and merchantProductVariantId
@@ -1841,7 +1841,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
         "subdomainVanityUrl": "",
     }, app_headers=True, token='access_token')
     # step 18: GET get shipping-options
-    _resp18 = ctx.api.merchants.shipping_options(body=None, token='yuxiao999_token')
+    _resp18 = ctx.api.merchants.shipping_options(body=None, token='linda999_token')
     _d18: dict[str, Any] = _resp18.json().get('data', {}) or {}
     _items18: list[Any] = _d18.get('items') or []
     vars['shipping_option_id'] = _items18[0].get('id') if _items18 else None
@@ -2381,7 +2381,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # step 20: POST check the "cancelled" post is unable to checkout
     _resp20 = ctx.api.orders.checkout_express(body={
         "items": [
@@ -2941,7 +2941,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     expect(_resp21).json('$.code').equals('200')
     expect(_resp21).json('$.data.status').equals('COMPLETED')
     # step 22: PATCH admin update the event status from complete to upcoming
@@ -3550,7 +3550,7 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
             '#ffffff',
         ],
     },
-}, params={'skipFeesCheck': 'true'}, token='yuxiao999_token')
+}, params={'skipFeesCheck': 'true'}, token='linda999_token')
     # step 28: PATCH admin update the event status from complete to upcoming failed if exist order
     _resp28 = ctx.api.admin.events_by_dup_event_id(body={
         "status": "UPCOMING",
@@ -3560,6 +3560,6 @@ def test_linda_t4180_t4724_verify_the_event_can_create_and_duplicate_and_delete_
     # assertion 28.assertion: responseJson equal Cannot revert an event that has sales.
     expect(_resp28).json('$.message').equals('Cannot revert an event that has sales.')
     # step 29: DELETE delete the event
-    _resp29 = ctx.api.events.by_event_id(body=None, token='yuxiao999_token', path_vars={'event_id': '{{dup_event_id}}'})
+    _resp29 = ctx.api.events.by_event_id(body=None, token='linda999_token', path_vars={'event_id': '{{dup_event_id}}'})
     # step 30: DELETE delete the event
-    _resp30 = ctx.api.events.by_event_id(body=None, token='yuxiao999_token')
+    _resp30 = ctx.api.events.by_event_id(body=None, token='linda999_token')

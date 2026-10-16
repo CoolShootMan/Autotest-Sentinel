@@ -91,8 +91,8 @@ RECIPES: dict[str, dict[str, Any]] = {
     "xuan22_token":    {"email": "xuan_email",            "password": "xuan_password"},
     "linda06_token":   {"email": "p06_email",             "password": "password"},
     "linda10_token":   {"email": "p10_email",             "password": "password"},
-    "yuxiao999_token": {"email": "UIauto_partner_email",  "password": "password",      "app_headers": True},
-    "yuxiao998_token": {"email": "UIauto_coseller_email", "password": "password",      "app_headers": True},
+    "linda999_token": {"email": "UIauto_partner_email",  "password": "password",      "app_headers": True},
+    "linda998_token": {"email": "UIauto_coseller_email", "password": "password",      "app_headers": True},
 }
 
 #: 与已有配方**同账号**的令牌别名（别名 -> 主令牌）。

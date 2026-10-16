@@ -9,7 +9,7 @@ CASE_ID = 7802190
 ENV_NAME = "Release"
 
 # --- step 1: dece4880-ddc9-4ca0-8561-c369469fb798 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: d5306c79-bc8c-4be8-bcec-9b3d520ced47 ---
 # post[customScript]: // 1. 解析响应 JSON
 # post: const responseData = pm.response.json();
@@ -318,9 +318,9 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id
-    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # extract event by title "event-for-API-testing" (mirrors Apifox customScript)
     try:
         _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
@@ -345,7 +345,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     except Exception as e:
         pytest.fail(f"step2 extract event: {e}")
     # step 3: GET Partner Get the Event Post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     try:
         _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type','').startswith('application/json') else {}
         _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
@@ -355,7 +355,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     except Exception as e:
         pytest.fail(f"step3 extract post: {e}")
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     try:
         _j4: dict[str, Any] = _resp4.json() if _resp4.headers.get('content-type','').startswith('application/json') else {}
         vars['catalog_id'] = (_j4.get('data') or {}).get('id')
@@ -452,7 +452,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     # 断言：Ticket 创建成功
     assert _resp5.status_code == 201, f"step5 HTTP状态码应为201，实际={_resp5.status_code}"
     _j5 = _resp5.json()
@@ -474,7 +474,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
         _resp7 = ctx.api.events.v2_show_in_post(event_id=event_id, body={
             "productIds": [product_id],
             "posts": [{"postId": postId, "isVisible": True}],
-        }, token='yuxiao999_token')
+        }, token='linda999_token')
         expect(_resp7).json('$.code').equals('200')
         _resp8 = ctx.api.admin.post_v2_relate_products(post0_id=postId, body=None, token='admin_token')
         expect(_resp8).json('$.code').equals('200')
@@ -585,7 +585,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     import time as _time13
     _resp13 = None
     for _att in range(8):
-        _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='yuxiao999_token')
+        _resp13 = ctx.api.orders.merchant_detail_v2(merchantId='{{catalog_id}}', orderNumber='{{orderNumber}}', app_headers=True, token='linda999_token')
         try:
             if str(_resp13.json().get('code')) == '200':
                 break

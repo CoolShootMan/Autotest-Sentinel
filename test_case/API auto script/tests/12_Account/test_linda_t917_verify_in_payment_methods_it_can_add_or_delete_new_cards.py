@@ -9,7 +9,7 @@ CASE_ID = 5807704
 ENV_NAME = "Release"
 
 # --- step 1: b6e5133c-e65c-449d-a911-058f97c5b6f0 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: d839d154-8a3c-4fa3-acab-5036fdb85260 ---
 # post[extractor]: {"variableName": "Stripeid", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.id", "extractSettings": {"expression": "$.data.id", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # post[extractor]: {"variableName": "clientSecret", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.clientSecret", "extractSettings": {"expression": "$.data.clientSecret", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
@@ -78,40 +78,40 @@ def test_linda_t917_verify_in_payment_methods_it_can_add_or_delete_new_cards(ctx
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: POST setup payment info
-    _resp2 = ctx.api.payments.stripe_setup_intent(body={}, token='yuxiao999_token')
+    _resp2 = ctx.api.payments.stripe_setup_intent(body={}, token='linda999_token')
     # extractor: Stripeid = $.data.id
     ctx.extract('Stripeid', _resp2, '$.data.id')
     # extractor: clientSecret = $.data.clientSecret
     ctx.extract('clientSecret', _resp2, '$.data.clientSecret')
     # step 3: POST confirm payment
-    _resp3 = ctx.api.external.v1_setup_intents_confirm(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.external.v1_setup_intents_confirm(body=None, token='linda999_token')
     # extractor: paymentMethod = $.payment_method
     ctx.extract('paymentMethod', _resp3, '$.payment_method')
     # step 4: create payment
     _resp4 = ctx.api.payments.method(body={
         "billingAddressRequirementLevel": "FULL",
         "externalId": "{{paymentMethod}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # extractor: paymentMethodId = $.data.id
     ctx.extract('paymentMethodId', _resp4, '$.data.id')
     # assertion 4.assertion: responseJson equal 200
     expect(_resp4).json('$.code').equals('200')
     # step 5: GET Check the new payment methods added
-    _resp5 = ctx.api.payments.methods(body=None, token='yuxiao999_token')
+    _resp5 = ctx.api.payments.methods(body=None, token='linda999_token')
     # extractor: methods = $.data.items
     ctx.extract('methods', _resp5, '$.data.items')
     # step 6: DELETE delete card
     _resp6 = ctx.api.payments.method_2(body={
         "externalId": "{{paymentMethod}}",
         "paymentMethodId": "{{paymentMethodId}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # assertion 6.assertion: responseJson equal 200
     expect(_resp6).json('$.code').equals('200')
     # assertion 6.assertion: responseJson equal success
     expect(_resp6).json('$.message').equals('success')
     # step 7: GET Check the new payment methods delete
-    _resp7 = ctx.api.payments.methods(body=None, token='yuxiao999_token')
+    _resp7 = ctx.api.payments.methods(body=None, token='linda999_token')
     # extractor: methods = $.data.items
     ctx.extract('methods', _resp7, '$.data.items')
