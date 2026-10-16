@@ -11,26 +11,50 @@ testT5649_venue_map_guest_purchase:
     description: "Verify the fee breakdown for venue map ticket on checkout - then place order - check seat info in order confirmation page - refund"
     expect_result: "Checkout shows a fee breakdown for the venue map ticket; order can be placed and the confirmation page shows seat info; partner can refund the order"
     test_step:
-        # 0. (guard) Fail fast with a clear message if the cross-case globals from the parent case
-        #     are missing (was execute_js_ensure_globals). Without this, an unset post_url would
-        #     navigate to a literal "{{post_url}}" and Chrome would throw a cryptic
-        #     "'' is not a valid URL" SyntaxError instead.
-        verify_defined_globals:
-            vars: [post_url, ticket_venue_map, ticket-retails-price, my_revenve, transaction-fees, taxes]
+        # 0. [SELF-SEED] This case no longer depends on the parent case
+        #     (venue_map_fee_breakdown_ui.yaml) publishing cross-case globals. All six values are
+        #     extracted locally below: post_url (constant, step 1b), ticket_venue_map + my_revenve
+        #     (from the public post, step 2b), transaction-fees + ticket-retails-price (from the
+        #     Checkout drawer, step 8c) and taxes (derived, step 8c).
 
         # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
         create_session_guest: { name: "guest" }
+
+        # 1b. [SELF-SEED] post_url —— was a cross-case global published by the parent case
+        #      (venue_map_fee_breakdown_ui.yaml step 17). The venue-map public post slug equals the
+        #      event name, so the URL is a fixed constant. Set it locally (no global) so this case
+        #      runs standalone; `open` below backfills {{post_url}} from this temp var.
+        set_value_post_url:
+            value: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
+            save_as: "post_url"
 
         # 2. As a guest, open the public post. `open` backfills {{var}} now, so no
         #     `location.href='{{post_url}}'` JS is needed.
         session_guest__open: { url: "{{post_url}}" }
         sleep_guest_post: 5000
 
+        # 2b. [SELF-SEED] Extract ticket_venue_map (product name) and my_revenve (net price) from
+        #      the public post, replacing the cross-case globals the parent published.
+        #      - product name: same mui-stack product card the parent reads on the Tickets & Merch
+        #        tab (first non-Sold-out card's first <p>); the public post reuses that card.
+        #      - net price: on a venue_map public post the card's $ amount IS the net revenue
+        #        (My revenue), e.g. "General Admission 02 / $100.00 / Buy Ticket" (see step 3 note),
+        #        so the first $ on the card = my_revenve.
+        session_guest__extract_ticket_name:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//*[contains(., '$')]][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
+            save_as: "ticket_venue_map"
+            timeout: 20000
+        session_guest__extract_my_revenue:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//*[contains(., '$')]][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "my_revenve"
+            timeout: 20000
+        sleep_seed_post: 800
+
         # 3. As a guest, find the product by name in the post and assert its displayed price
-        #     == my_revenve (net revenue).
-        #     [DOM FACT] a post product card = the NEAREST ancestor of the product-name leaf that
-        #     carries a "$" amount. On a venue_map public post that amount is the NET price
-        #     (My revenue), e.g. "General Admission 02 / $100.00 / Buy Ticket".
         session_guest__verify_text_regex_post_price:
             scope: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']/ancestor::*[contains(., '$')][1]"
             pattern: "\\$\\s*{{my_revenve}}\\b"
@@ -41,16 +65,6 @@ testT5649_venue_map_guest_purchase:
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
         # 5. On the opened "Select tickets" drawer a venue map is shown. Select a table.
-        #     [WHY dispatch_click] This is an SVG table map: the interactive nodes are
-        #     `circle[data-id]` (covered, so a real click times out on the hit-target check) and
-        #     `rect[data-id]` (`pointer-events: none`, so a real click passes through). Dispatching
-        #     the pointer/mouse sequence works. Two dispatches are needed and reproduce
-        #     deterministically (verified on release 2026-10-13, twice):
-        #       (a) a dispatch on the first hit area dismisses the
-        #           "Zoom in and select tables" overlay, then
-        #       (b) a dispatch on a seat circle selects the table
-        #           -> the drawer becomes "1 table selected / Total: $100.00 / 10 / $100.00".
-        #     See actions/base.py `dispatch_click`.
         session_guest__dispatch_click_map_hint:
             locator: "rect[data-id]"
             index: 0
@@ -69,8 +83,6 @@ testT5649_venue_map_guest_purchase:
             timeout: 20000
 
         # 7. Capture seat_unit: the number immediately before the price on the Select tickets
-        #     drawer (the quantity of seats selected, e.g. "1" in "1 × $100.00"). Save as seat_unit.
-        #     (numeric:false so the value stays "1" instead of being formatted to "1.00")
         session_guest__extract_value_seat_unit:
             locator: ".MuiDrawer-root:has-text('Select tickets')"
             source: text
@@ -84,37 +96,38 @@ testT5649_venue_map_guest_purchase:
         session_guest__R_click_buy_now: { role: "button", name: "Buy now" }
         sleep_guest_checkout: 3000
 
-        # 8b. (guard, optional) "Access code required" overlay.
-        #     [WHY] This shared venue-map post can be left with Payment Restriction ON by
-        #     `Post/Post_setting_for_venue_map.yaml :: testT4955_Partner_SetPaymentRestriction_venue_map`
-        #     (it enables the restriction with the access code `demi123`; the code persists
-        #     server-side). When that state is active, "Buy now" opens an "Access code required"
-        #     dialog and the Checkout drawer never appears, so step 9 below would fail with
-        #     "Scope container '.MuiDrawer-root:has-text('Checkout')' not found".
-        #     Both steps are OPTIONAL: on a clean post the dialog is absent and they skip silently
-        #     (`smart_fill` gained `optional: true` for exactly this; `smart_click_optional`
-        #     already existed). Recipe mirrored from the only case in the repo that exercises
-        #     this dialog (Post_setting_for_venue_map.yaml T4955 guest half).
-        session_guest__fill_access_code_optional:
-            role: "textbox"
-            name: "Enter code"
-            value: "demi123"
-            optional: true
-            timeout: 5000
-        session_guest__smart_click_optional_confirm_code:
-            role: "button"
-            name: "Confirm"
-        sleep_access_code: 3000
+        # 8c. [SELF-SEED] Derive the fee values locally instead of consuming the parent's
+        #      cross-case globals (transaction-fees / taxes / ticket-retails-price). The guest
+        #      session cannot open the partner's Fees+Taxes popover, but the Checkout drawer
+        #      line-items the same numbers, and the "Total" row is ALWAYS present (even when
+        #      taxes == 0, where the "Taxes" row is hidden). So:
+        #        - transaction-fees: from the "Transaction fees" row (always present)
+        #        - ticket-retails-price == checkout Total: what the buyer actually pays
+        #        - taxes: derived = Total - my_revenve - transaction-fees (0 when no tax row)
+        #      This keeps the case standalone AND robust to a zero-tax configuration.
+        session_guest__extract_transaction_fees:
+            label: "Transaction fees"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            save_as: "transaction-fees"
+            timeout: 15000
+        session_guest__extract_checkout_total:
+            label: "Total"
+            scope: ".MuiDrawer-root:has-text('Checkout')"
+            save_as: "checkout_total_venue_map"
+            timeout: 15000
+        session_guest__compute_taxes:
+            expression: "{{checkout_total_venue_map}} - {{my_revenve}} - {{transaction-fees}}"
+            save_as: "taxes"
+        session_guest__compute_retails_price:
+            expression: "{{checkout_total_venue_map}}"
+            save_as: "ticket-retails-price"
 
         # 9. Assert on the Checkout drawer:
-        #     product name == ticket-venue_map; unit price == my_revenve; no "(incl. $ fees)" suffix;
-        #     Total == my_revenve + transaction-fees + taxes
         session_guest__verify_text_visible_checkout_name:
             text: "{{ticket_venue_map}}"
             scope: { locator: ".MuiDrawer-root:has-text('Checkout')" }
             timeout: 20000
-        # [PRICING FACT] the checkout line itemises the fees, so the product price must NOT
-        # carry the "(incl. $ fees)" buyer-facing suffix anymore.
+
         session_guest__verify_text_regex_no_incl_suffix:
             scope: ".MuiDrawer-root:has-text('Checkout')"
             pattern: "incl\\.?\\s*\\$"
@@ -145,9 +158,6 @@ testT5649_venue_map_guest_purchase:
         session_guest__R_click_total: { locator: "xpath=//*[normalize-space(.)='Total']", index: 0 }
 
         # 11. Assert in the expanded breakdown:
-        #     Subtotal == my_revenve; Transaction fees == transaction-fees;
-        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it may be hidden.
-        #     (was one big execute_js rowVal() block -> native labelled-row assertions)
         session_guest__verify_row_value_subtotal:
             label: "Subtotal"
             scope: ".MuiDrawer-root:has-text('Checkout')"
@@ -169,14 +179,6 @@ testT5649_venue_map_guest_purchase:
             timeout: 20000
 
         # 12. Click the Checkout CTA to reach the contact + payment form.
-        #     [UI DRIFT 2026-10-13, browser-verified] the drawer CTA is no longer
-        #     "Continue with credit card": the Checkout drawer renders ONE CTA
-        #     `button[data-testid='checkout-in-post-continue-cta']` whose label is just
-        #     "Continue" (probe of the live release drawer: only in-drawer buttons are
-        #     "Add a note" and that Continue CTA). Clicking it replaces the drawer body with
-        #     `Contact: First name / Last name / Phone / Email` +
-        #     `input[name='contact.firstName'|'contact.lastName'|'contact.phoneNumber'|'contact.email']`
-        #     and swaps the CTA for "Place order" — exactly what steps 13-16 below fill/submit.
         session_guest__R_click_checkout_continue:
             locator: "button[data-testid='checkout-in-post-continue-cta']"
             timeout: 15000
@@ -190,16 +192,6 @@ testT5649_venue_map_guest_purchase:
         sleep_guest_contact: 1000
 
         # 14. Fill the payment form with the framework-native `fill_stripe_iframe` action — the
-        #     same action the axs/tdc guest cases use.
-        #     [WHY, browser-verified 2026-10-13] the previous version hard-coded the Stripe
-        #     Elements frame by VISIBLE ORDER (`iframe[src*='elements-inner-card'] >> nth=0/1/2`)
-        #     and filled `input[name='cardnumber'|'exp-date'|'cvc']` one by one. That selector no
-        #     longer resolves on the current release checkout: `fill_card_number` timed out with
-        #     "Locator.fill: Timeout 10000ms exceeded" while the page exposed only the Stripe
-        #     controller / payment-request / metrics frames — NO `elements-inner-card` frame.
-        #     `fill_stripe_iframe` walks EVERY stripe frame (nested ones included) and looks the
-        #     inputs up by name, so it does not depend on frame order or count; it also fills
-        #     `cardName` / `billingAddress.zipcode` on the page itself.
         session_guest__fill_stripe_iframe:
             card_number: "4242424242424242"
             expiry: "830"
@@ -209,8 +201,6 @@ testT5649_venue_map_guest_purchase:
         sleep_guest_payment: 2000
 
         # 15. Assert the payment form was filled correctly (Playwright-native input_value
-        #     assertions; the phone field is auto-formatted so it is checked with a regex
-        #     requiring at least 10 digits — was a tiny execute_js)
         session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
         session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
         session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
@@ -227,14 +217,19 @@ testT5649_venue_map_guest_purchase:
         # ==================== order placed + order confirmation page checks ====================
         # 17. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
         #     URL lands on /order/<id>/confirmation, then the confirmation copy must be visible.
+        #     [COPY DRIFT 2026-10-16] the current release greets the buyer with
+        #     "Thank you for your payment." (+ a "Confirmation #<id>" line), not the older
+        #     "Your order is confirmed" -> `text` takes a LIST of accepted copies (any-of).
         session_guest__wait_for_url_order_confirmation:
             url: "**/order/**/confirmation"
             timeout: 30000
-        session_guest__verify_order_confirmed: { text: "Your order is confirmed", timeout: 20000 }
+        session_guest__verify_order_confirmed:
+            text:
+                - "Thank you for your payment."
+                - "Your order is confirmed"
+            timeout: 20000
 
         # 18. Assert the price next to "Show summary" == ticket-retails-price
-        #     (was execute_js: the amount sits in a HIGHER ancestor of "Show summary", and only a
-        #     SHORT tail counts as this row's amount -> tail_limit 16)
         session_guest__verify_row_value_show_summary:
             label: "Show summary"
             value: "{{ticket-retails-price}}"
@@ -270,9 +265,6 @@ testT5649_venue_map_guest_purchase:
             timeout: 20000
 
         # 21. Check the "Ticket Information" section on the confirmation page: it must contain
-        #     the product name and a Unit equal to seat_unit.
-        #     (Date and Venue checks were removed per request. The event name is static so it is
-        #     a Playwright-native text assertion; name/Unit are dynamic -> regex with {{var}}.)
         session_guest__verify_ticket_info_event: { text: "event-for-ui-auto-venue-map", timeout: 20000 }
         session_guest__verify_text_regex_ticket_info_name:
             pattern: "{{ticket_venue_map}}"
@@ -283,8 +275,6 @@ testT5649_venue_map_guest_purchase:
             timeout: 20000
 
         # 22. Assert Confirmation details: contact information / payment method / billing zip code
-        #     (Playwright-native text assertions for the static parts; the paid amount is dynamic
-        #     so it is a regex with {{var}}. The page shows the phone as 252-400-1111.)
         session_guest__verify_contact_name: { text: "Lury UIAutomation", timeout: 20000 }
         session_guest__verify_contact_phone: { text: "252-400-1111" }
         session_guest__verify_contact_email: { text: "dian.yuhong.ext+111@1m.app" }

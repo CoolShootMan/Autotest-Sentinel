@@ -12,25 +12,16 @@ testT5649_tdc:
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
-        # 1b. [HARD ASSERTION] the target TDC-tagged event is on the list.
-        #     [GLOBAL VARIABLE] `event_tdc` is published with save_as + global: true (see
-        #     actions/global_state.py) so step 2 and OTHER test cases in the same pytest process
-        #     can use {{event_tdc}}. The event name therefore lives in exactly one place: NAME below.
-        #     (was execute_js; the name leaf assertion + the TDC tag assertion are now native)
-        verify_text_visible_tdc_event:
-            text: "10/12 Baseball Stadium Tours"
-            exact: true
-            timeout: 20000
-        # the tag badge sits in the same row as the name: the row's text concatenates to
-        # "<name>TDC", so match "TDC" only when it is NOT followed by a letter
-        verify_text_regex_tdc_tag:
-            scope: "xpath=//*[normalize-space(.)='10/12 Baseball Stadium Tours']/ancestor::*[contains(., 'TDC')][1]"
-            pattern: "TDC(?![A-Za-z])"
-            timeout: 20000
-        set_value_event_tdc:
-            value: "10/12 Baseball Stadium Tours"
+        # 1b. [HARD ASSERTION] a TDC-tagged event is on the list — located BY TAG, not by name: the event name on release keeps being renamed by other people
+        extract_value_tdc_event:
+            locator: "xpath=//*[normalize-space(.)='TDC' and not(*)]/parent::*//p"
+            index: 0
+            source: text
+            numeric: false
             save_as: "event_tdc"
             global: true
+            timeout: 20000
+        sleep_extract_tdc_event: 800
 
         # 2. Click that TDC event card. Selected BY NAME so the choice is order-independent
         #    ({{event_tdc}} = the event name saved by step 1b)

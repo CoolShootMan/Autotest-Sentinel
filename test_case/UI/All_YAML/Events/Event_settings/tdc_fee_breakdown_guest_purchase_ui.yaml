@@ -225,10 +225,17 @@ testT5649_tdc_guest_purchase:
         # ==================== order placed + order confirmation page checks ====================
         # 18. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
         #     URL lands on /order/<id>/confirmation, then the confirmation copy must be visible.
+        #     [COPY DRIFT 2026-10-16] the current release greets the buyer with
+        #     "Thank you for your payment." (+ a "Confirmation #<id>" line), not the older
+        #     "Your order is confirmed" -> `text` takes a LIST of accepted copies (any-of).
         session_guest__wait_for_url_order_confirmation:
             url: "**/order/**/confirmation"
             timeout: 30000
-        session_guest__verify_order_confirmed: { text: "Your order is confirmed", timeout: 20000 }
+        session_guest__verify_order_confirmed:
+            text:
+                - "Thank you for your payment."
+                - "Your order is confirmed"
+            timeout: 20000
 
         # 19. Assert the price next to "Show summary" == ticket-retails-price (or retail + service fee)
         #     [PRICING FACT] on a TDC hub order the header may show the item total (retail) or the
