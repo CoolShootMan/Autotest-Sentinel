@@ -447,9 +447,9 @@ variables:
   inclusion_3: ''
   inclusion_4: ''
   promoterProductId: ''
-  yuxiao999_token: ''
+  linda999_token: ''
   guest_id: ''
-  yuxiao998_token: ''
+  linda998_token: ''
   co-hostid: ''
   linda01_token: ''
   linda06_token: ''
@@ -541,8 +541,8 @@ variables:
   availableQuantity: ''
   sectionIds: ''
   productForm: ''
-  yuxiao999: yuxiao.zhu.ext+999@1m.app
-  yuxiao999_access_token: ''
+  linda999: linda.zhou.ext+999@1m.app
+  linda999_access_token: ''
   dul_event_title: ''
   axs_event_id: ''
   axs_post_id: ''

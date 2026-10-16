@@ -257,9 +257,9 @@ def extend_auth_map_from_env(vars):
 # ---------------------------------------------------------------------------
 AUTH_EMAIL_MAP = {
     "linda.zhou.ext@1m.app": "admin_token",
-    "yuxiao.zhu.ext+999@1m.app": "token",
-    "yuxiao.zhu.ext+997@1m.app": "partner997_auth_token",
-    "yuxiao.zhu.ext+998@1m.app": "coseller_auth_token",
+    "linda.zhou.ext+999@1m.app": "token",
+    "linda.zhou.ext+997@1m.app": "partner997_auth_token",
+    "linda.zhou.ext+998@1m.app": "coseller_auth_token",
     "yuxiao.zhu.ext+900@1m.app": "token",
     "yuxiao.zhu.ext+901@1m.app": "partner997_auth_token",
     "yuxiao.zhu.ext+9991@1m.app": "token",

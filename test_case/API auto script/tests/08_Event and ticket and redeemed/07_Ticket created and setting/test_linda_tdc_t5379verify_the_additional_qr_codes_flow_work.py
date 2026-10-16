@@ -9,7 +9,7 @@ CASE_ID = 8677597
 ENV_NAME = "Release"
 
 # --- step 1: 5bbc6a1c-120f-404a-ae14-7079b17af1c3 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: f9fdbfd2-b2cd-4ba6-9bf3-c74dff73da29 ---
 # post[customScript]: // 1. 解析响应 JSON
 # post: const responseData = pm.response.json();
@@ -359,7 +359,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id
     # 原 step2 post-script: 在 data.items 中找首个 platform === "TDC" 的事件，
     # 取其 id/title 写入 event_id/event_title；并断言两者非空。
@@ -369,7 +369,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     for _attempt2 in (1, 2):
         _resp2 = ctx.api.events.list(
             body=None, params={'keyword': '', 'pageSize': '200', 'pageNumber': '1'},
-            token='yuxiao999_token')
+            token='linda999_token')
         _items2 = _get_path(_resp2.json(), ['data', 'items']) or []
         _ev2 = next((i for i in _items2 if i.get('platform') == 'TDC'), None)
         if _ev2:
@@ -378,11 +378,11 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     ctx.set('event_id', _ev2.get('id') or '')
     ctx.set('event_title', _ev2.get('title') or '')
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: GET Catch the ProductId and promoterProductId
@@ -446,7 +446,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     ctx.set('ticketHandle', _sec5.get('ticketHandle') or '')
     # step 6: GET get ticket General_Admission_02 one unitId
     # variantId 原写作单花括号 '{...}'，不会被框架渲染。
-    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='yuxiao999_token')
+    _resp6 = ctx.api.events.tickets_venue_units(body=None, params={'pageNumber': '1', 'pageSize': '30', 'variantId': '{{merchantProductVariantId_General_Admission_02}}'}, token='linda999_token')
     # 原 step6 post-script: 在 data.items 中筛出 orderNumber === null 的项，取其中一个，
     # 提取 id→unitid、number→seatNumber、categoryId→venueUnitCategoryId。
     # （原脚本随机取一项；为免 flaky 改为取首个。）此前漏掉了 unitid，且未做 orderNumber 过滤。
@@ -722,7 +722,7 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     vars['inclusionNames'] = 'JSON.stringify(inclusionNames'
     # step 9: Get consumer linda10 token
     # token auto-managed by framework (linda10_token)
@@ -787,4 +787,4 @@ def test_linda_tdc_t5379verify_the_additional_qr_codes_flow_work(ctx: "Context")
     _ordernumber_val = _get_path(_resp12.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 13: Check the merchant order detail exist ticket Redemptions contents
-    _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})
+    _resp13 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

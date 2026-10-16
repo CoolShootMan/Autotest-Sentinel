@@ -27,7 +27,7 @@ def test_linda_t5139_venue_map_verify_the_co_host_can_be_added_and_delete(ctx: "
     # step 1: 查找预置 event，提取 event_id
     if 'event_title' not in vars or not vars['event_title']:
         vars['event_title'] = 'event-for-api-auto-venue-map'
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     _t1 = next((it for it in (_j1.get('data') or {}).get('items') or [] if it.get('title') == vars['event_title']), None)
     assert _t1 is not None, f"列表中未找到 title 为 [{vars['event_title']}] 的事件"
@@ -39,7 +39,7 @@ def test_linda_t5139_venue_map_verify_the_co_host_can_be_added_and_delete(ctx: "
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
         "role": "BASIC",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     ctx.extract('co-hostid', _resp2, '$.data.id')
 
     # 断言：Co-host 添加成功
@@ -62,7 +62,7 @@ def test_linda_t5139_venue_map_verify_the_co_host_can_be_added_and_delete(ctx: "
     assert _d2.get('deletedAt') is None, f"deletedAt 应为 null，实际={_d2.get('deletedAt')!r}"
 
     # step 3: Co-seller 视角验证 event 可见
-    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
+    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda998_token')
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}
     _items3: list[Any] = (_j3.get('data') or {}).get('items') or []
     assert len(_items3) > 0, "返回的 items 数组为空或不存在"
@@ -85,7 +85,7 @@ def test_linda_t5139_venue_map_verify_the_co_host_can_be_added_and_delete(ctx: "
     assert _t3.get('id') == _ev_id, f"事件 id {_t3.get('id')!r} 与 event_id {_ev_id!r} 不一致"
 
     # step 4: 删除 Co-host
-    _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.by_co_hostid(body=None, token='linda999_token')
 
     # 断言：Co-host 删除成功
     assert _resp4.status_code == 200, f"HTTP状态码应为200，实际={_resp4.status_code}"

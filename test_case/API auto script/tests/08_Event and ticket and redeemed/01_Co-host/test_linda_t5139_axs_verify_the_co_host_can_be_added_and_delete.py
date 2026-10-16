@@ -134,7 +134,7 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: GET Partner Get the Event id
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     _t1 = next((it for it in (_j1.get('data') or {}).get('items') or [] if it.get('platform') == 'AXS'), None)
@@ -146,7 +146,7 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
         "role": "BASIC",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     ctx.extract('co-hostid', _resp2, '$.data.id')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     assert _resp2.status_code == 201, f"HTTP状态码应为201，实际={_resp2.status_code}"
@@ -168,9 +168,9 @@ def test_linda_t5139_axs_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"
     # step 3: GET Co-seller check the Event exist
-    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
+    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda998_token')
     # step 4: DELETE Partner delete the Co-seller
-    _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.by_co_hostid(body=None, token='linda999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id/event_title 一致 ----
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}

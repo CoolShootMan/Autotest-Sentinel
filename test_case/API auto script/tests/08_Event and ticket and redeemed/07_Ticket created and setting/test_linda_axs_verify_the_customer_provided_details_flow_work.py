@@ -11,7 +11,7 @@ CASE_ID = 8706050
 ENV_NAME = "Release"
 
 # --- step 1: f25b1efc-89d7-45ce-970f-da05a0ac3925 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: 66d5d716-3a02-4b8c-a925-0485796bcb40 ---
 # post[customScript]: // 1. 解析响应 Body
 # post: const responseData = pm.response.json();
@@ -336,9 +336,9 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id and Event title
-    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # 原 step2 post-script: 在 data.items 中找首个 platform === "AXS" 的项目，
     # 取其 id/title 写入 event_id/event_title。
     _items2: list[dict] = (_resp2.json().get('data') or {}).get('items') or []
@@ -347,11 +347,11 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     ctx.set('event_id', _axs_event.get('id') or '')
     ctx.set('event_title', _axs_event.get('title') or '')
     # step 3: GET get the event post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     _post0id_val = _get_path(_resp3.json(), ['data', 'items', 0, 'id'])
     vars['post0_id'] = _post0id_val if _post0id_val is not None else ''
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: GET Catch the ProductId and promoterProductId
@@ -661,7 +661,7 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token', path_vars={'productId_General_Admission_02': '{{productId}}'})
+}, token='linda999_token', path_vars={'productId_General_Admission_02': '{{productId}}'})
     # step 8: Get consumer linda10 token
     # token auto-managed by framework (linda10_token)
     # step 9: DELETE Clean Cart
@@ -749,4 +749,4 @@ def test__8706050__Linda_AXS_Verify_the_Customer_provided_details_flow_work(ctx:
     _ordernumber_val = _get_path(_resp11.json(), ['data', 'orderNumbers', 0])
     vars['order_number'] = _ordernumber_val if _ordernumber_val is not None else ''
     # step 12: Check the merchant order detail exist ticket Redemptions contents
-    _resp12 = ctx.api.orders.merchant_detail_v2(token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})
+    _resp12 = ctx.api.orders.merchant_detail_v2(token='linda999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'})

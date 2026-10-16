@@ -9,7 +9,7 @@ CASE_ID = 8601276
 ENV_NAME = "Release"
 
 # --- step 1: 0103bf67-b8eb-4911-987e-f6529dccff3a ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 2: ee5d6ffb-b19f-49ea-96b5-58086027e448 ---
 # post[customScript]: // 1. 解析响应 JSON
 # post: const responseData = pm.response.json();
@@ -289,9 +289,9 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: POST Partner 999 login
-    # token auto-managed by framework (yuxiao999_token)
+    # token auto-managed by framework (linda999_token)
     # step 2: GET Partner Get the Event id
-    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp2 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # 原 step2 post-script: 在 data.items 中找 title === "event-for-API-testing" 的事件，取其 id。
     # 注意：该事件名在当前 Release 环境已不存在（列表中的通用测试事件为
     # event-for-api-auto-venue-map，同目录 T4543 用的正是它）。故沿用 T4543 的约定：
@@ -305,7 +305,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     assert _ev2, f"step2 未找到目标事件（want={_want2!r}，可用 titles={_titles2}）"
     ctx.set('event_id', _ev2.get('id') or '')
     # step 3: GET Partner Get the Event Post id
-    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='yuxiao999_token')
+    _resp3 = ctx.api.posts.curator_event_posts(body=None, token='linda999_token')
     # 原 step3 post-script: 在 data.items 中找 title === "event-for-API-testing" 的 post，取其 id。
     # 该 post 名同样已不在环境中，故取列表首个（与同目录 T4543 的 post0_id 取法一致）。
     _items3 = _get_path(_resp3.json(), ['data', 'items']) or []
@@ -314,7 +314,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     assert _post3, f"step3 posts 列表为空，无法提取 postId（items={len(_items3)}）"
     ctx.set('postId', _post3.get('id') or '')
     # step 4: GET get the event catalog id
-    _resp4 = ctx.api.events.default_catalog(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.default_catalog(body=None, token='linda999_token')
     # 原 Apifox post-script: const catalogId = responseData.data.id → 提取为变量
     ctx.extract('catalog_id', _resp4, '$.data.id')
     # step 5: POST create a ticket with 5 Additional QR codes
@@ -426,7 +426,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     ],
     'eventId': '{{event_id}}',
     'isExpirationEnabled': False,
-}, token='yuxiao999_token')
+}, token='linda999_token')
     # 断言：Ticket 创建成功
     assert _resp5.status_code == 201, f"HTTP状态码应为201，实际={_resp5.status_code}"
     _j5: dict[str, Any] = _resp5.json() if _resp5.headers.get('content-type', '').startswith('application/json') else {}
@@ -455,7 +455,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
                 "isVisible": True,
             },
         ],
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # 断言：show in post 成功
     assert _resp6.status_code == 201, f'step6 HTTP状态码应为201，实际={_resp6.status_code}'
     _j6 = _resp6.json()
@@ -474,7 +474,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
         _resp6r = ctx.api.events.v2_show_in_post(body={
             "productIds": ["{{productId}}"],
             "posts": [{"postId": "{{postId}}", "isVisible": True}],
-        }, token='yuxiao999_token')
+        }, token='linda999_token')
         expect(_resp6r).json('$.code').equals('200')
         _resp7 = ctx.api.admin.post_v2_relate_products(body=None, token='admin_token', path_vars={'post0_id': '{{postId}}'})
         expect(_resp7).json('$.code').equals('200')
@@ -564,7 +564,7 @@ def test_linda_t5379_verify_the_additional_qr_codes_can_be_added_edited_deleted(
     import time as _time12
     _resp12 = None
     for _att in range(8):
-        _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='yuxiao999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'orderNumber': '{{order_number}}'})
+        _resp12 = ctx.api.orders.merchant_detail_v2(app_headers=True, token='linda999_token', path_vars={'merchantId': '{{catalog_id}}', 'orderNumber': '{{order_number}}'}, params={'orderNumber': '{{order_number}}'})
         try:
             if str(_resp12.json().get('code')) == '200':
                 break

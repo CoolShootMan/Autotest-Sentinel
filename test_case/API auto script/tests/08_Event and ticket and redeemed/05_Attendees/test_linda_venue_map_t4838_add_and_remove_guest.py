@@ -28,7 +28,7 @@ def test_linda_venue_map_t4838_add_and_remove_guest(ctx: "Context"):
     # step 1: 查找预置 event，提取 event_id
     if 'event_title' not in vars or not vars['event_title']:
         vars['event_title'] = 'event-for-api-auto-venue-map'
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     _items1: list[Any] = (_j1.get('data') or {}).get('items') or []
     _target1 = next((it for it in _items1 if it.get('title') == vars['event_title']), None)
@@ -49,7 +49,7 @@ def test_linda_venue_map_t4838_add_and_remove_guest(ctx: "Context"):
         "lastName": "{{$randomLastName}}",
         "groupIds": [],
         "eventId": "{{event_id}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
 
     # 断言：Guest 添加成功
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type', '').startswith('application/json') else {}
@@ -62,7 +62,7 @@ def test_linda_venue_map_t4838_add_and_remove_guest(ctx: "Context"):
     _resp3 = ctx.api.events.guests_batch(body={
         "guestIds": ["{{guest_id}}"],
         "eventId": "{{event_id}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
 
     # 断言：Guest 删除成功
     expect(_resp3).json('$.code').equals('200')

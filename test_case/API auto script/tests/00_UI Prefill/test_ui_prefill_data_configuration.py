@@ -3547,7 +3547,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "allowAutoComplete": true,
     "description": "",
     "note": "auto test",
-    "location": "Test venue · West Mound Street, Columbus, OH",
+    "location": "West Mound Street, Columbus, Ohio",
     "status": "UPCOMING",
     "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
     "isTaxEnabled": false,
@@ -3985,7 +3985,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "allowAutoComplete": true,
     "description": "",
     "note": "auto test",
-    "location": "Test venue · West Mound Street, Columbus, OH",
+    "location": "West Mound Street, Columbus, Ohio",
     "status": "UPCOMING",
     "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
     "isTaxEnabled": false,
@@ -6233,7 +6233,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "startDate": "{{current_iso_date}}",
         "endDate": null,
         "venue": "Test venue · West Mound Street, Columbus, OH",
-        "location": "Test venue · West Mound Street, Columbus, OH",
+        "location": "West Mound Street, Columbus, Ohio",
         "status": "UPCOMING",
         "isTaxEnabled": false,
         "taxConfig": null,
@@ -6271,7 +6271,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "locationDetails": {
             "city": "Columbus",
             "country": "US",
-            "line1": "Test venue · West Mound Street",
+            "line1": "West Mound Street",
             "line2": "",
             "placeId": null,
             "state": "OH",
@@ -6383,7 +6383,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -6619,7 +6619,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -6855,7 +6855,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -9638,7 +9638,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "startDate": "{{current_iso_date}}",
         "endDate": null,
         "venue": "Test venue · West Mound Street, Columbus, OH",
-        "location": "Test venue · West Mound Street, Columbus, OH",
+        "location": "West Mound Street, Columbus, Ohio",
         "status": "UPCOMING",
         "isTaxEnabled": false,
         "taxConfig": null,
@@ -9677,7 +9677,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "locationDetails": {
             "city": "Columbus",
             "country": "US",
-            "line1": "Test venue · West Mound Street",
+            "line1": "West Mound Street",
             "line2": "",
             "placeId": null,
             "state": "OH",
@@ -9789,7 +9789,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -10025,7 +10025,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -10261,7 +10261,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "mediaDuration": 0
                     },
                     "status": "UPCOMING",
-                    "location": "Test venue · West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "eventNote": "auto test",
                     "startDate": "2032-04-24T04:00:00.000Z",
                     "timeZoneId": "America/New_York",
@@ -13015,8 +13015,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
-    # --- step 137: yuxiao_999 enable feature flag: enableRefund (PATCH users/tool/feature-flags?userId={{user_id}}) ---
-    # ⚠️ 仅 admin 域 + admin_token；userId 取脚本内 admin 搜索 Partner 999（yuxiao_999）登录后提取的 user_id 变量，不硬编码。
+    # --- step 137: linda999 enable feature flag: enableRefund (PATCH users/tool/feature-flags?userId={{user_id}}) ---
+    # ⚠️ 仅 admin 域 + admin_token；userId 取脚本内 admin 搜索 Partner 999（linda999）登录后提取的 user_id 变量，不硬编码。
     _resp137 = ctx.api.admin.users_tool_feature_flags(
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enableRefund","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp137).json('$.code').equals('200')
@@ -13024,7 +13024,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
-    # --- step 138: yuxiao_999 enable feature flag: enableAnalytics ---
+    # --- step 138: linda999 enable feature flag: enableAnalytics ---
     _resp138 = ctx.api.admin.users_tool_feature_flags(
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enableAnalytics","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp138).json('$.code').equals('200')
@@ -13032,7 +13032,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
-    # --- step 139: yuxiao_999 enable feature flag: enablePearVenueApp ---
+    # --- step 139: linda999 enable feature flag: enablePearVenueApp ---
     _resp139 = ctx.api.admin.users_tool_feature_flags(
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enablePearVenueApp","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp139).json('$.code').equals('200')
@@ -13040,7 +13040,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
-    # --- step 140: yuxiao_999 enable feature flag: enablePostABTesting ---
+    # --- step 140: linda999 enable feature flag: enablePostABTesting ---
     _resp140 = ctx.api.admin.users_tool_feature_flags(
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enablePostABTesting","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp140).json('$.code').equals('200')
@@ -13048,7 +13048,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
-    # --- step 141: yuxiao_999 enable feature flag: enableEventLineupPayout ---
+    # --- step 141: linda999 enable feature flag: enableEventLineupPayout ---
     _resp141 = ctx.api.admin.users_tool_feature_flags(
         params={"userId": vars.get("user_id", "")}, body="""{"name":"enableEventLineupPayout","enabled":true}""", token="admin_token", app_headers=True)
     expect(_resp141).json('$.code').equals('200')
@@ -13274,7 +13274,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # ================================================================
-    # Prefill event: lury-ui-automation-testing (for yuxiao_999)
+    # Prefill event: lury-ui-automation-testing (for linda999)
     # ================================================================
 
     # --- step 152: Create event lury-ui-automation-testing (POST /product-event/v2) ---
@@ -13437,7 +13437,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
     # ================================================================
-    # Prefill event: API Test T4259 (for yuxiao_999)
+    # Prefill event: API Test T4259 (for linda999)
     # Tickets: Main ticket, ticket replace1, ticket replace2, ticket replace3
     # Start time: today 10:00 AM
     # ================================================================

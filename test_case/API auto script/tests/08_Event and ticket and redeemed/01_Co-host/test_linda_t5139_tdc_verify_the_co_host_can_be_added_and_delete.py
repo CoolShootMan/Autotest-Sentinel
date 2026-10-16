@@ -134,7 +134,7 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: GET Partner Get the Event id
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type', '').startswith('application/json') else {}
     _t1 = next((it for it in (_j1.get('data') or {}).get('items') or [] if it.get('platform') == 'TDC'), None)
@@ -148,16 +148,16 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     # （Release 上就遗留了一条 2026-09-08 的记录，导致本用例长期 409）。
     # 服务端有列表端点 GET /event-collaborators?eventId=…，Apifox 用例当时环境干净所以没用到；
     # 这里先按协办人邮箱清理，使用例可重复执行。
-    _existing = ctx.api.events.collaborators(eventId=vars['event_id'], token='yuxiao999_token')
+    _existing = ctx.api.events.collaborators(eventId=vars['event_id'], token='linda999_token')
     for _c in ((_existing.json().get('data') or {}).get('items') or []):
         if _c.get('identifier') == ctx.get('UIauto_coseller_email'):
-            ctx.api.events.by_co_hostid(path_vars={'co-hostid': _c['id']}, token='yuxiao999_token')
+            ctx.api.events.by_co_hostid(path_vars={'co-hostid': _c['id']}, token='linda999_token')
     # step 2: POST Partner add co-host
     _resp2 = ctx.api.events.create(body={
         "eventId": "{{event_id}}",
         "identifier": "{{UIauto_coseller_email}}",
         "role": "BASIC",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     ctx.extract('co-hostid', _resp2, '$.data.id')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     assert _resp2.status_code == 201, f"HTTP状态码应为201，实际={_resp2.status_code}"
@@ -179,9 +179,9 @@ def test_linda_t5139_tdc_verify_the_co_host_can_be_added_and_delete(ctx: "Contex
     assert isinstance(_d2.get('updatedAt'), str) and _d2.get('updatedAt'), "updatedAt 应为非空字符串"
     assert _d2.get('deletedAt') is None, f"deletedAt 应为null，实际={_d2.get('deletedAt')!r}"
     # step 3: GET Co-seller check the Event exist
-    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao998_token')
+    _resp3 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda998_token')
     # step 4: DELETE Partner delete the Co-seller
-    _resp4 = ctx.api.events.by_co_hostid(body=None, token='yuxiao999_token')
+    _resp4 = ctx.api.events.by_co_hostid(body=None, token='linda999_token')
     # === 断言（由 Apifox customScript 翻译，原校验逻辑见文件头注释）===
     # ---- step3: 校验事件列表中的 event_id/event_title 一致 ----
     _j3: dict[str, Any] = _resp3.json() if _resp3.headers.get('content-type', '').startswith('application/json') else {}

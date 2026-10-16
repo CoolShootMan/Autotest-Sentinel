@@ -44,9 +44,9 @@ ENV_NAME = "Release"
 # --- step 7: Get consumer linda10 token ---
 # post[extractor]: {"variableName": "linda10_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 8: 8fe52a2b-549e-4b7c-b05f-e23267a11b20 ---
-# post[extractor]: {"variableName": "yuxiao999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda999_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 # --- step 9: 84f647aa-5119-4add-bd41-89431821320f ---
-# post[extractor]: {"variableName": "yuxiao998_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
+# post[extractor]: {"variableName": "linda998_token", "variableType": "environment", "subject": "responseJson", "template": "", "expression": "$.data.token", "extractSettings": {"expression": "$.data.token", "continueExtractorSettings": {"isContinueExtractValue": false, "JsonArrayValueIndexValue": ""}}}
 
 
 
@@ -104,17 +104,17 @@ def test_linda_t0000_precondition_obtain_all_accounts_token(ctx: "Context"):
         "email": "{{UIauto_partner_email}}",
         "password": "{{password}}",
     }, app_headers=True)
-    # extractor: yuxiao999_token = $.data.token
-    ctx.extract('yuxiao999_token', _resp8, '$.data.token')
+    # extractor: linda999_token = $.data.token
+    ctx.extract('linda999_token', _resp8, '$.data.token')
     # step 9: POST Co-seller 998 login
     _resp9 = ctx.api.auth.sign_in(body={"email": "{{UIauto_coseller_email}}", "password": "{{password}}"}, app_headers=True)
-    # extractor: yuxiao998_token = $.data.token
-    ctx.extract('yuxiao998_token', _resp9, '$.data.token')
+    # extractor: linda998_token = $.data.token
+    ctx.extract('linda998_token', _resp9, '$.data.token')
     # Persist tokens so later cases (which depend on t0000's output) can read them.
     _tokens = {k: vars.get(k) for k in [
         "admin_token", "linda00_token", "linda01_token", "linda05_token",
         "xuan22_token", "linda06_token", "linda10_token",
-        "yuxiao999_token", "yuxiao998_token",
+        "linda999_token", "linda998_token",
     ] if vars.get(k)}
     ctx.save_runtime(list(_tokens))
     # Precondition assertions: tokens must be real, non-empty strings.

@@ -85,7 +85,7 @@ def test_linda_t4838_add_and_remove_guest(ctx: "Context"):
     vars = ctx  # Context 别名：人工补丁里的 vars['x'] 继续可用
     # === Steps ===
     # step 1: GET Get the Event id
-    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='yuxiao999_token')
+    _resp1 = ctx.api.events.list(body=None, params={'keyword': '', 'pageSize': '50', 'pageNumber': '1'}, token='linda999_token')
     # --- post 脚本: 从响应 data.items 中提取 event_id ---
     _j1: dict[str, Any] = _resp1.json() if _resp1.headers.get('content-type','').startswith('application/json') else {}
     _items1: list[Any] = (_j1.get('data') or {}).get('items') or []
@@ -105,7 +105,7 @@ def test_linda_t4838_add_and_remove_guest(ctx: "Context"):
         "lastName": "{{$randomLastName}}",
         "groupIds": [],
         "eventId": "{{event_id}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # --- post 脚本: 提取 guest_id ---
     _j2: dict[str, Any] = _resp2.json() if _resp2.headers.get('content-type','').startswith('application/json') else {}
     assert isinstance(_j2.get('data'), dict), f"data 不是对象: {_j2!r}"
@@ -118,6 +118,6 @@ def test_linda_t4838_add_and_remove_guest(ctx: "Context"):
             "{{guest_id}}",
         ],
         "eventId": "{{event_id}}",
-    }, token='yuxiao999_token')
+    }, token='linda999_token')
     # assertion 3.assertion: responseJson equal 200
     expect(_resp3).json('$.code').equals('200')
