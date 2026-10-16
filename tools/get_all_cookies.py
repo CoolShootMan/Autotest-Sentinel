@@ -43,19 +43,19 @@ CURRENT_ENV = _ENV_MAP.get(ENV_BASE, "release")
 ACCOUNTS = [
     {
         "name": "main (+999)",
-        "email": "yuxiao.zhu.ext+999@1m.app",
+        "email": "linda.zhou.ext+999@1m.app",
         "password": "Happy123",
         "cookie_file": f"cookie_{CURRENT_ENV}.json",
     },
     {
         "name": "co-seller (+998)",
-        "email": "yuxiao.zhu.ext+998@1m.app",
+        "email": "linda.zhou.ext+998@1m.app",
         "password": "Happy123",
         "cookie_file": f"cookie_{CURRENT_ENV}_co_seller.json",
     },
     {
         "name": "partner co-seller (+997)",
-        "email": "yuxiao.zhu.ext+997@1m.app",
+        "email": "linda.zhou.ext+997@1m.app",
         "password": "Happy123",
         "cookie_file": f"cookie_{CURRENT_ENV}_partner_coseller.json",
     },
