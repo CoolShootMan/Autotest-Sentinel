@@ -5663,7 +5663,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp84).json('$.code').equals('200')
     expect(_resp84).json('$.message').equals('success')
     ctx.extract("form_id", _resp84, "$.data.id")
-    ctx.extract("user_id", _resp84, "$.data.userId")
+    # NOTE: 切勿在此处用 _resp84 重写 user_id。本步只是创建 store-front 模块（POST
+    # /store-front/module，token="token" 即 linda999），响应体不保证含 $.data.userId；
+    # 即便有也属模块属主字段，非账号 id。user_id 只在 step 18（999 登录）写入
+    # （见 line 300 ctx.extract("user_id", _resp18, "$.data.id")），并被 step 109/118
+    # 等大量 body 引用。此处曾被误加 ctx.extract("user_id", _resp84, "$.data.userId")，
+    # 会把 linda999 的 user_id 覆盖成模块响应里的脏值，导致 step 137-141 的 5 个
+    # feature flag（enableRefund/Analytics/PearVenueApp/PostABTesting/EventLineupPayout）
+    # 以空/错 userId 调用 PATCH /users/tool/feature-flags 而失效，linda999 缺 flag。
     expect(_resp84).json('$.data.title').equals('MyForm')
     expect(_resp84).json('$.data.type').equals('FORM')
     expect(_resp84).json('$.data.direction').equals('VERTICAL')
@@ -6232,7 +6239,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
         "startDate": "{{current_iso_date}}",
         "endDate": null,
-        "venue": "Test venue · West Mound Street, Columbus, OH",
+        "venue": "Test venue",
         "location": "West Mound Street, Columbus, Ohio",
         "status": "UPCOMING",
         "isTaxEnabled": false,
@@ -6372,7 +6379,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "extraInfo": {
                     "date": "Sat Apr 24, 2032 EDT",
                     "event": "Auto-Test-post-setting",
-                    "venue": "Test venue · West Mound Street, Columbus, OH",
+                    "venue": "Test venue",
                     "lineup": [],
                     "poster": {
                         "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
@@ -6608,7 +6615,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "extraInfo": {
                     "date": "Sat Apr 24, 2032 EDT",
                     "event": "Auto-Test-post-setting",
-                    "venue": "Test venue · West Mound Street, Columbus, OH",
+                    "venue": "Test venue",
                     "lineup": [],
                     "poster": {
                         "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
@@ -6844,7 +6851,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                 "extraInfo": {
                     "date": "Sat Apr 24, 2032 EDT",
                     "event": "Auto-Test-post-setting",
-                    "venue": "Test venue · West Mound Street, Columbus, OH",
+                    "venue": "Test venue",
                     "lineup": [],
                     "poster": {
                         "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
@@ -7557,7 +7564,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "eventNote": "auto test",
                     "isAddressHidden": false,
                     "lineup": [],
-                    "location": "Test venue 路 West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "poster": {
                         "height": 2048,
                         "mediaDuration": 0,
@@ -7569,7 +7576,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "startDate": "2026-08-24T04:00:00.000Z",
                     "status": "UPCOMING",
                     "timeZoneId": "America/New_York",
-                    "venue": "Test venue 路 West Mound Street, Columbus, OH"
+                    "venue": "Test venue"
                 },
                 "feesDisplay": 12.22,
                 "hideFees": false,
@@ -7751,7 +7758,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "eventNote": "auto test",
                     "isAddressHidden": false,
                     "lineup": [],
-                    "location": "Test venue 路 West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "poster": {
                         "height": 2048,
                         "mediaDuration": 0,
@@ -7763,7 +7770,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "startDate": "2026-08-24T04:00:00.000Z",
                     "status": "UPCOMING",
                     "timeZoneId": "America/New_York",
-                    "venue": "Test venue 路 West Mound Street, Columbus, OH"
+                    "venue": "Test venue"
                 },
                 "feesDisplay": 7.77,
                 "hideFees": false,
@@ -8029,7 +8036,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "eventNote": "auto test",
                     "isAddressHidden": false,
                     "lineup": [],
-                    "location": "Test venue 路 West Mound Street, Columbus, OH",
+                    "location": "West Mound Street, Columbus, Ohio",
                     "poster": {
                         "height": 2048,
                         "mediaDuration": 0,
@@ -8041,7 +8048,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "startDate": "2026-08-24T04:00:00.000Z",
                     "status": "UPCOMING",
                     "timeZoneId": "America/New_York",
-                    "venue": "Test venue 路 West Mound Street, Columbus, OH"
+                    "venue": "Test venue"
                 },
                 "feesDisplay": 0,
                 "hideFees": false,
@@ -10796,14 +10803,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "id": "{{venue_map_event_id}}",
                     "description": "",
                     "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
-                    "showFeesBreakdown": false
+                    "showFeesBreakdown": true
                 },
                 "eventId": "{{venue_map_event_id}}",
                 "isCtaCustomized": false,
                 "isExpirationEnabled": false,
                 "expirationTime": null,
                 "expirationTimeDisplay": null,
-                "isVenueUnitEnabled": false,
+                "isVenueUnitEnabled": true,
                 "isAddedByPromoter": false,
                 "id": "{{venue_map_ticket_id_General_Admission_02}}",
                 "isCustomizePurchase": false,
@@ -10990,7 +10997,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "id": "{{venue_map_event_id}}",
                     "description": "",
                     "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
-                    "showFeesBreakdown": false
+                    "showFeesBreakdown": true
                 },
                 "eventId": "{{venue_map_event_id}}",
                 "isCtaCustomized": false,
@@ -11184,14 +11191,14 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "id": "{{venue_map_event_id}}",
                     "description": "",
                     "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
-                    "showFeesBreakdown": false
+                    "showFeesBreakdown": true
                 },
                 "eventId": "{{venue_map_event_id}}",
                 "isCtaCustomized": false,
                 "isExpirationEnabled": false,
                 "expirationTime": null,
                 "expirationTimeDisplay": null,
-                "isVenueUnitEnabled": false,
+                "isVenueUnitEnabled": true,
                 "isAddedByPromoter": false,
                 "id": "{{venue_map_ticket_id_General_Admission}}",
                 "isCustomizePurchase": false,
