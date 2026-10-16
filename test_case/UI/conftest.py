@@ -110,6 +110,34 @@ def pytest_generate_tests(metafunc):
         if all_argvalues:
             metafunc.parametrize("smokecases1", all_argvalues, ids=all_ids)
 
+
+def pytest_collection_modifyitems(config, items):
+    """Reorder collected items to match the --yaml file order.
+
+    pytest sorts items alphabetically by nodeid by default, which scrambles
+    the intended execution order (e.g. Post_setting.yaml runs before Post_content.yaml
+    in the --yaml list but sorts differently). This hook re-sorts items by the
+    position of their source YAML file in the --yaml argument.
+    """
+    yaml_files = config.getoption("--yaml")
+    if not yaml_files:
+        return
+    yaml_order = [f.strip() for f in yaml_files.split(",") if f.strip()]
+    if not yaml_order:
+        return
+
+    def _yaml_index(item):
+        nodeid = item.nodeid
+        # nodeid looks like:  test_ui.py::All_YAML/Post/Post_setting.yaml::testT3788_...
+        # The yaml file portion is between "::" and the next "::"
+        for idx, yf in enumerate(yaml_order):
+            if yf in nodeid:
+                return idx
+        return len(yaml_order)  # unknown files go last
+
+    items.sort(key=_yaml_index)
+
+
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     # execute all other hooks to obtain the report object
