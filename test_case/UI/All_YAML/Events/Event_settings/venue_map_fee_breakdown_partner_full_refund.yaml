@@ -11,6 +11,12 @@ testT5649_venue_map_partner_full_refund:
     description: "Partner full refund the venue map order"
     expect_result: "After a full refund the partner's Net Earning equals -transaction-fees on the sale details page"
     test_step:
+        # 0. [SELF-SEED, 2026-10-16] This case no longer depends on the parent case
+        #    (venue_map_fee_breakdown_ui.yaml) publishing `transaction-fees` as a cross-case
+        #    global. Instead it extracts the order's own "Transaction Fee" row from the Sale
+        #    details page (step 6b) before performing the refund, then asserts Net Earning ==
+        #    -transaction-fees after the refund. Fully standalone now.
+
         # 1. Create the partner session and open the event list
         session_partner__open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
         sleep_partner_events: 6000
@@ -42,6 +48,17 @@ testT5649_venue_map_partner_full_refund:
         session_partner__R_click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
         sleep_partner_sale_details: 6000
 
+        # 6b. [SELF-SEED] Extract the order's "Transaction Fee" from the Sale details page so the
+        #      case no longer needs the parent's `transaction-fees` global. The Sale details page
+        #      shows a "Transaction Fee" row (e.g. "$7.77") for the order regardless of refund
+        #      status; the full refund performed below then makes Net Earning == -transaction-fees.
+        #      [DOM FACT, verified 2026-10-16 on release] the row label is "Transaction Fee"
+        #      (NOT "Platform fees" / "Transaction fees").
+        session_partner__extract_row_value_transaction_fees:
+            label: "Transaction Fee"
+            save_as: "transaction-fees"
+            timeout: 15000
+
         # 7. On the Sale details page, click the "I want to ..." dropdown trigger
         session_partner__R_click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
         sleep_partner_i_want_to: 2500
@@ -65,9 +82,13 @@ testT5649_venue_map_partner_full_refund:
         sleep_partner_refund: 6000
 
         # 12. [HARD ASSERTION] after a full refund, Net Earning == -transaction-fees.
-        #     [WHY] the refund settles asynchronously on the server, so the row may still show the
-        #     positive earning for a while -> verify_row_value polls for `timeout` ms (was a
-        #     50 x 500ms polling execute_js). The negative amount is kept by `signed: true`.
+        #     [WHY retry_until_match] the refund settles ASYNCHRONOUSLY on the server, and the
+        #     "Net Earning" row stays VISIBLE the whole time — it just flips from +fees to -fees.
+        #     A plain verify_row_value reads the FIRST amount it sees and fails on the still
+        #     positive value; `retry_until_match: true` keeps re-reading until the amount
+        #     actually matches (or `timeout` runs out). This is the native replacement for the
+        #     old 50 x 500ms polling execute_js, which looped on `if(net<0) break`.
+        #     The negative amount is kept by `signed: true`.
         session_partner__compute_value_expected_net_earning:
             expression: "0 - {{transaction-fees}}"
             save_as: "expected_net_earning"
@@ -75,5 +96,6 @@ testT5649_venue_map_partner_full_refund:
             label: "Net Earning"
             value: "{{expected_net_earning}}"
             tolerance: 0.01
+            retry_until_match: true
             timeout: 30000
             levels: 4

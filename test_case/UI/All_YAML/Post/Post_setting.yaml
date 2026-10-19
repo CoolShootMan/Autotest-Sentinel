@@ -645,9 +645,21 @@ testT2705_VerifyPartner:
     sleep_step: 500
 
     # Step 15: Switch to Settings tab.
-    execute_js_close_popovers_and_click_settings:
-        script: "( () => { const closeAll = () => { const popovers = document.querySelectorAll('.MuiPopover-root, .MuiMenu-root, [role=\"menu\"], [role=\"listbox\"]'); popovers.forEach(p => { if (p.offsetParent !== null) { const closeBtn = p.querySelector('[aria-label=\"Close\"], button'); if (closeBtn) closeBtn.click(); else p.style.display = 'none'; } }); }; closeAll(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); document.body.click(); closeAll(); const tabs = document.querySelectorAll('[role=\"tab\"]'); let visibleSettings = null; for (const t of tabs) { const txt = (t.textContent || '').trim(); if (txt === 'Settings' && t.offsetParent !== null) { visibleSettings = t; break; } } if (visibleSettings) { visibleSettings.click(); return 'clicked Settings (total tabs=' + tabs.length + ')'; } return 'NOT_FOUND: no visible Settings tab (total tabs=' + tabs.length + '); candidates=' + Array.from(tabs).map(t => (t.textContent||'').trim()).filter(Boolean).join('|'); } )()"
-        assert_contains: 'clicked Settings'
+    # [DE-JS 2026-10-16] was an execute_js that force-clicked the close button of every visible
+    # popover, forced `p.style.display = 'none'` on the rest, fired a synthetic Escape keydown
+    # on `document`, clicked `document.body`, then scanned the tab list for a VISIBLE "Settings"
+    # tab and clicked it — asserting only that such a tab was found. Every part has a native
+    # equivalent, and the old assertion is now implicit: `R_click_settings_tab` fails loudly if
+    # the tab is missing OR still covered by an overlay (the old JS cheerfully returned
+    # "clicked Settings" for a tab that was behind the popover).
+    press_close_popovers: { key: "Escape" }
+    sleep_close_popovers: 800
+    # MUI popovers anchored to a still-mounted trigger do not always close on Escape alone;
+    # clicking the document body is the standard dismissal and is exactly what the old JS did
+    # (`document.body.click()`). `dispatch_click` sends it natively, with no hit-test.
+    dispatch_click_document_body: { locator: "body", events: ["click"] }
+    sleep_after_body_click: 800
+    R_click_settings_tab: { role: 'tab', name: 'Settings' }
     sleep_step: 1500
 
     # Step 15.1: Replace the Post URL slug with "test1234".
@@ -710,9 +722,19 @@ testT2705_VerifyGuest:
     # Scroll down to the variant section in the detail page
     swipe_to_variant: { x: 0, y: 600 }
 
-    execute_js_verify_variants_selected:
-        script: "( () => { const buttons = Array.from(document.querySelectorAll('[role=\"button\"][data-testid=\"styled-list-item-button\"]')); const summary = {}; let nineSelected = false; let fivePresent = false; for (const b of buttons) { const text = (b.textContent || '').trim(); const cs = window.getComputedStyle(b); const isSelected = cs.backgroundColor !== 'rgba(0, 0, 0, 0)' && cs.backgroundColor !== 'transparent'; summary[text] = isSelected ? 'selected' : 'unselected'; if (text === '9 people' && isSelected) nineSelected = true; if (text.includes('5 people')) fivePresent = true; } const prefix = fivePresent ? 'FAIL_5_PRESENT ' : (nineSelected ? 'PASS ' : 'FAIL_9_NOT_SELECTED '); return prefix + JSON.stringify(summary); } )()"
-        assert_contains: 'PASS '
+    # [DE-JS 2026-10-16] was an execute_js that read `getComputedStyle(b).backgroundColor` of
+    # every `[role=button][data-testid=styled-list-item-button]` and asserted two things:
+    #   (a) no button whose exact text is "5 people" exists  -> verify_text_hidden (a missing
+    #       element counts as hidden, which is exactly the old "fivePresent" check);
+    #   (b) the "9 people" button has a NON-transparent background -> verify_element_style with
+    #       the new `not_equals` operator, read on the button itself (same element the JS read).
+    verify_text_hidden_5people_variant: { text: "5 people", exact: true, timeout: 10000 }
+    verify_9people_variant_selected:
+        locator: "xpath=//*[@role='button'][@data-testid='styled-list-item-button'][normalize-space(.)='9 people']"
+        property: "backgroundColor"
+        operator: "not_equals"
+        expected: "rgba(0, 0, 0, 0)"
+        timeout: 10000
 
   expect_result:
     description: "The variant '5 people' should be completely hidden and '9 people' variant should be the default (selected) variant"
@@ -839,8 +861,10 @@ testT2830_VerifyGuest:
                 sleep_after_more: 5000
 
                 # Step 4: Scroll down the full list
-                execute_js_scroll_full_list:
-                    script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+                # [DE-JS 2026-10-16] was an execute_js doing 12 x window.scrollBy(0,600)/400ms.
+                # `scroll_to_bottom` (already used at the top of this very case) does the same
+                # with a real mouse wheel and stops early once the page bottom is reached.
+                scroll_to_bottom: { iterations: 12, delay: 400 }
                 sleep_after_full_list: 2000
 
         # Step 5: The post should be hidden from guest view
@@ -893,8 +917,8 @@ testT2830_VerifyGuest:
                 sleep_after_more_teardown: 5000
 
                 # Step 9: Scroll down the full list
-                execute_js_scroll_full_list_teardown:
-                    script: '(async () => { for (let i = 0; i < 12; i++) { window.scrollBy(0, 600); await new Promise(r => setTimeout(r, 400)); } return window.scrollY; })'
+                # [DE-JS 2026-10-16] same execute_js as Step 4 above -> native scroll_to_bottom.
+                scroll_to_bottom: { iterations: 12, delay: 400 }
                 sleep_after_full_list_teardown: 2000
 
         screenshot_guest_view_restored: { name: "debug_guest_view_restored" }

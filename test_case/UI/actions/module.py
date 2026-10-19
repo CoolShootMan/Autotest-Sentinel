@@ -400,7 +400,8 @@ def verify_element_style(page: Page, v: dict):
       - max_levels: Maximum number of parent levels to search (default: 5)
     - property: CSS property name to verify (single string or list)
     - expected: Expected value (single value or dictionary)
-    - operator: Comparison operator, default 'equals', supports: equals, contains, gt, lt, gte, lte
+    - operator: Comparison operator, default 'equals', supports: equals, not_equals,
+      contains, gt, lt, gte, lte
     - timeout: Timeout in milliseconds, default 5000
 
     Usage examples:
@@ -513,6 +514,14 @@ def verify_element_style(page: Page, v: dict):
         passed = False
         if operator == "equals":
             passed = actual_value == exp_value
+        elif operator in ("not_equals", "neq", "!="):
+            # [ADDED 2026-10-16] "is NOT this value" cannot be expressed with the other
+            # operators, and it is the natural way to state a VISUAL-selection check: a
+            # selected MUI chip has a real background colour while an unselected one computes
+            # to "rgba(0, 0, 0, 0)". Motivating case: Post_setting.yaml's variant buttons
+            # ("9 people" selected / "5 people" hidden), previously an execute_js comparing
+            # `cs.backgroundColor` against the transparent literal.
+            passed = actual_value != exp_value
         elif operator == "contains":
             passed = exp_value in actual_value
         elif operator == "gt":

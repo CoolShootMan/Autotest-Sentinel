@@ -1230,12 +1230,7 @@ def click_modal_close(page: Page, v: dict):
         logger.warning(f"Failed to close modal: {e}")
 
 def verify_text_visible(page: Page, v: dict):
-<<<<<<< Updated upstream
-    text = v.get("text")
-    text = _fill_vars(page, text)
-=======
     raw_text = v.get("text")
->>>>>>> Stashed changes
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
@@ -1878,6 +1873,89 @@ def verify_value_near(page: Page, v: dict):
         raise AssertionError(f"Near text '{near_text}': Expected '{expected_value}', got '{actual_value}'")
 
 
+# XPath fragments used by verify_enabled to locate a row's control from its label.
+# [WHY TWO] "the element that IS the control" and "an element that CONTAINS the control" are
+# different predicates, and conflating them silently selects the control's WRAPPER: for
+#     <span><input type="checkbox" disabled></span>
+# the predicate `input[@type='checkbox']` is true of the wrapper <span> (it has that child) and
+# FALSE of the <input> itself, so `//*[input[...]]` returned the useless span — on which
+# is_disabled() is always False (caught by the self-test on 2026-10-16).
+_CONTROL_SELF = ("self::input[@type='checkbox'] or self::input[@type='radio'] "
+                 "or @role='checkbox' or @role='switch'")
+_CONTROL_DESC = (".//input[@type='checkbox'] or .//input[@type='radio'] "
+                 "or .//*[@role='checkbox'] or .//*[@role='switch']")
+
+
+def verify_enabled(page: Page, v: dict):
+    """Assert an element is enabled — or DISABLED (Playwright-native, no JS).
+
+    [WHY IT EXISTS] The framework could assert visibility / text / attributes, but not
+    actionability state, so every "this control must be disabled" check had to be an
+    `execute_js` reading `element.disabled`. `locator.is_disabled()` is the native API and it
+    covers BOTH a native `disabled` attribute and `aria-disabled="true"`, so it works for plain
+    inputs and for MUI Switch / Checkbox / Radio alike.
+
+    Supported params:
+      - locator : directly target the control
+      - label   : accessible text of the row (e.g. "Recommend at checkout"); the control is then
+                  found by walking UP from the label to the nearest ancestor that holds one, and
+                  taking that ancestor's first control — exactly the walk the old JS did.
+      - scope   : optional container locator to search the label within (e.g. the open dialog)
+      - exact   : exact text match for `label` (default False)
+      - enabled : expected state (default True); set false to assert the control is DISABLED
+      - control : optional XPath fragment overriding "the element that IS the control"
+                  (default: self::input[type=checkbox] / self::input[type=radio] /
+                  @role=checkbox / @role=switch)
+      - timeout : ms to wait for the control (default 10000)
+
+    YAML usage:
+        verify_recommend_at_checkout_disabled:
+            label: "Recommend at checkout"
+            scope: "xpath=//*[@role='dialog']"
+            enabled: false
+    """
+    enabled = v.get("enabled", True)
+    timeout = int(v.get("timeout", 10000))
+    exact = bool(v.get("exact", False))
+    ctrl_self = v.get("control") or _CONTROL_SELF
+    ctrl_desc = v.get("control_desc") or _CONTROL_DESC
+
+    if v.get("locator"):
+        ctrl = page.locator(_fill_placeholders(_resolve_locator(v["locator"]), page)).first
+        where = v["locator"]
+    elif v.get("label"):
+        label_text = _fill_placeholders(str(v["label"]), page)
+        scope_loc = v.get("scope")
+        base = (
+            page.locator(_fill_placeholders(_resolve_locator(scope_loc), page)).last
+            if scope_loc
+            else page
+        )
+        label_loc = base.get_by_text(label_text, exact=exact).first
+        label_loc.wait_for(state="visible", timeout=timeout)
+        # nearest ancestor-or-self that CONTAINS a control, then the control itself inside it.
+        # `ancestor-or-self::*[...][1]` counts from the NEAREST on a reverse axis, so this is the
+        # innermost such ancestor — the same element the old JS climb found.
+        ctrl = label_loc.locator(
+            f"xpath=ancestor-or-self::*[{ctrl_desc}][1]//*[{ctrl_self}]"
+        ).first
+        where = f"label {label_text!r} (scope={scope_loc!r})"
+    else:
+        raise ValueError("verify_enabled: need 'locator' or 'label'")
+
+    ctrl.wait_for(state="attached", timeout=timeout)
+    actual_disabled = ctrl.is_disabled()
+    if bool(enabled) == (not actual_disabled):
+        logger.info(f"verify_enabled: control for {where} is "
+                    f"{'enabled' if enabled else 'DISABLED'} as expected")
+        return not actual_disabled
+    raise AssertionError(
+        f"verify_enabled: control for {where} is "
+        f"{'DISABLED' if actual_disabled else 'ENABLED'} but the case expects it to be "
+        f"{'enabled' if enabled else 'DISABLED'}"
+    )
+
+
 def verify_attribute(page: Page, v: dict):
     """Assert an element's attribute value (Playwright-native get_attribute(), no JS).
 
@@ -2024,9 +2102,12 @@ def verify_radio_checked(page: Page, v: dict):
         except Exception:
             is_checked = (radio.get_attribute("aria-checked") or "false").lower() == "true"
 
+    # Compute the state label BEFORE branching: `got` was previously only assigned in
+    # the failure branch, so the success-path logger.info below raised
+    # UnboundLocalError on the very first PASS of this action.
+    got = "checked" if is_checked else "unchecked"
     if is_checked != assert_checked:
         wanted = "checked" if assert_checked else "unchecked"
-        got = "checked" if is_checked else "unchecked"
         raise AssertionError(
             f"verify_radio_checked: radio (label={label!r}, locator={v.get('locator')!r}) "
             f"expected {wanted} but is {got}."
@@ -2325,11 +2406,22 @@ def verify_row_value(page: Page, v: dict):
             present with 0 still passes (and a present non-zero amount still fails), so the
             guard stays meaningful while tolerating a UI that renders zero rows in some
             contexts and hides them in others.
+            retry_until_match (default false, added 2026-10-16): keep RE-READING the row until
+            the amount actually MATCHES (within tolerance) or `timeout` runs out, instead of
+            returning the first amount seen. Needed whenever the value changes ASYNCHRONOUSLY
+            after an action — e.g. a partner full refund settles server-side and "Net Earning"
+            flips from +fees to -fees while the row stays visible the whole time. Native
+            replacement for the old `for(i<50){ v=rowVal(l); if(v!==null && v<0) break; await 500 }`
+            polling JS. `retry_interval` (default 0.5s) controls the pause between reads.
+            Without this flag the first read wins: `_find_row_amount` returns as soon as it
+            sees ANY amount, so an unchanged-but-wrong value fails immediately.
 
     `value` may also be a LIST of acceptable values — the assertion passes when the row
     matches ANY of them. (e.g. the confirmation header shows either the item total or the
     grand total depending on the ticket provider.)
     """
+    import time
+
     label = _fill_placeholders(v.get("label") or v.get("text"), page)
     if not label:
         raise ValueError("verify_row_value: 'label' is required")
@@ -2342,35 +2434,60 @@ def verify_row_value(page: Page, v: dict):
     scope = _fill_placeholders(_resolve_locator(v.get("scope")), page)
     timeout = v.get("timeout", 10000)
     tolerance = v.get("tolerance", 0.01)
-    val, err = _find_row_amount(
-        page, label, scope,
-        tail_limit=v.get("tail_limit", 24),
-        levels=v.get("levels", 4),
-        signed=v.get("signed", True),
-        timeout=timeout,
-    )
+    levels = v.get("levels", 4)
+    tail_limit = v.get("tail_limit", 24)
+    signed = v.get("signed", True)
+    retry_match = bool(v.get("retry_until_match", False))
+    retry_interval = float(v.get("retry_interval", 0.5))
     exp_nums = []
     for e in expected_list:
         m = re.search(r"-?[\d.]+", e.replace(",", ""))
         exp_nums.append(float(m.group(0)) if m else None)
-    if val is None:
-        if v.get("absent_when_zero") and any(
-            n is not None and abs(n) <= float(tolerance or 0) for n in exp_nums
-        ):
-            logger.info(f"verify_row_value: row '{label}' absent and expected '{expected}' is 0 -> ok")
-            return 0.0
-        raise AssertionError(f"verify_row_value: row '{label}' not found within {timeout}ms ({err})")
-    if tolerance is not None:
-        for exp in exp_nums:
-            if exp is not None and abs(val - exp) <= float(tolerance):
-                logger.info(f"verify_row_value: row '{label}' = {val} matches '{expected}' (±{tolerance})")
-                return val
-    else:
-        for e in expected_list:
-            if _money_str(val) == e.strip():
+
+    def _matches(val):
+        """True when `val` satisfies the expected value(s) under the current tolerance mode."""
+        if tolerance is not None:
+            return any(n is not None and abs(val - n) <= float(tolerance) for n in exp_nums)
+        return any(_money_str(val) == e.strip() for e in expected_list)
+
+    absent_ok = bool(v.get("absent_when_zero")) and any(
+        n is not None and abs(n) <= float(tolerance or 0) for n in exp_nums
+    )
+
+    deadline = time.time() + float(timeout) / 1000.0
+    last_val, last_err = None, None
+    while True:
+        # With `retry_until_match` each read gets a SHORT slice of the budget: a single
+        # `_find_row_amount` call returns on the first amount it sees, so giving it the whole
+        # `timeout` would consume the budget on a still-wrong value and never re-read it.
+        if retry_match:
+            left_ms = int(max(0.0, deadline - time.time()) * 1000)
+            slice_ms = max(400, min(left_ms, 1200))
+        else:
+            slice_ms = timeout
+        val, err = _find_row_amount(
+            page, label, scope,
+            tail_limit=tail_limit, levels=levels, signed=signed, timeout=slice_ms,
+        )
+        if val is not None:
+            last_val = val
+            if _matches(val):
                 logger.info(f"verify_row_value: row '{label}' = {val} matches '{expected}'")
                 return val
-    raise AssertionError(f"verify_row_value: row '{label}' amount {val} != expected '{expected}'")
+        else:
+            last_err = err
+            if absent_ok:
+                logger.info(f"verify_row_value: row '{label}' absent and expected '{expected}' is 0 -> ok")
+                return 0.0
+        if not retry_match or time.time() >= deadline:
+            break
+        if last_val is not None:
+            logger.info(f"verify_row_value: row '{label}' = {last_val} != '{expected}' — retrying…")
+        time.sleep(retry_interval)
+
+    if last_val is None:
+        raise AssertionError(f"verify_row_value: row '{label}' not found within {timeout}ms ({last_err})")
+    raise AssertionError(f"verify_row_value: row '{label}' amount {last_val} != expected '{expected}'")
 
 
 def verify_number(page: Page, v: dict):
@@ -3106,27 +3223,493 @@ def dispatch_click(page: Page, v: dict):
                          ({"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}).
                          [MEASURED] the venue-map table map ignores the sequence WITHOUT it.
       - timeout        : ms to wait for the element to be ATTACHED (default 10000; no hit-test)
+      - expect         : optional condition checked AFTER dispatching; the dispatch is REPEATED
+                         until it holds (added 2026-10-16). Shape:
+                             expect:
+                                 scope: "<container locator>"     # default: whole page
+                                 text: "1 item selected"          # substring that must be present
+                                 pattern: "Total:\\s*\\$\\d"       # OR a regex over the scope text
+                                 timeout: 4000                    # per-attempt poll budget
+                         This turns a SILENT no-op into a self-healing step. Motivating case
+                         (venue-map table map, 2026-10-16): the drawer can open, and the
+                         `rect[data-id]` nodes be attached, BEFORE the SVG map finishes laying
+                         out — dispatching on a not-yet-laid-out node is accepted by Playwright
+                         yet IGNORED by the widget, so the cart silently stays empty and the
+                         NEXT assertion fails far away with a misleading "price not found".
+                         With `expect` the click is retried until the drawer really shows it.
+      - retries        : extra attempts when `expect` is set (default 3; ignored without expect)
+      - retry_delay    : ms between attempts (default 1000)
 
     YAML usage:
         dispatch_click_select_seat: { locator: "circle[data-id]", index: 0 }
+        dispatch_click_map_hint:
+            locator: "rect[data-id]"
+            index: 0
+            expect: { scope: ".MuiDrawer-root:has-text('Select tickets')", text: "1 item selected" }
     """
+    import time
+
     events = v.get("events") or ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
     init = v.get("event_init") or {"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}
     index = v.get("index", 0)
     timeout = v.get("timeout", 10000)
+    expect = v.get("expect") or {}
+    retries = int(v.get("retries", 3 if expect else 0))
+    retry_delay = float(v.get("retry_delay", 1000)) / 1000.0
+    expect_timeout = int(expect.get("timeout", 4000)) if expect else 0
     locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
     name = _fill_placeholders(v.get("name"), page)
     if not locator and not name:
         raise ValueError("dispatch_click: 'locator' or 'name' is required")
-    if locator:
-        el = page.locator(locator).nth(index)
+
+    def _target():
+        # Re-resolve every attempt: the widget re-renders its nodes as the map lays out.
+        if locator:
+            return page.locator(locator).nth(index)
+        return page.locator(f'input[name="{name}"], [name="{name}"]').nth(index)
+
+    def _expect_ok():
+        """(ok, message) — poll the expectation for up to expect_timeout."""
+        if not expect:
+            return True, "no expectation"
+        scope_sel = _fill_placeholders(_resolve_locator(expect.get("scope")), page)
+        want_text = _fill_placeholders(expect.get("text"), page)
+        want_pat = _fill_placeholders(expect.get("pattern"), page)
+        start = time.time()
+        last = "no text/pattern declared"
+        while True:
+            try:
+                scope = page.locator(scope_sel).first if scope_sel else None
+                if want_text:
+                    if scope is not None:
+                        hit = scope.locator(f"xpath=.//*[contains(normalize-space(.), {_xpath_literal(want_text)})]")
+                    else:
+                        hit = page.locator(f"xpath=//*[contains(normalize-space(.), {_xpath_literal(want_text)})]")
+                    if hit.count() > 0:
+                        return True, f"text {want_text!r} present"
+                    last = f"text {want_text!r} absent"
+                elif want_pat:
+                    body = (scope or page).inner_text()
+                    if re.search(want_pat, body):
+                        return True, f"pattern {want_pat!r} matched"
+                    last = f"pattern {want_pat!r} not matched"
+            except Exception as e:
+                last = f"expect probe error: {e}"
+            if time.time() - start >= expect_timeout / 1000.0:
+                return False, last
+            time.sleep(0.4)
+
+    last_msg = ""
+    for attempt in range(retries + 1):
+        try:
+            el = _target()
+            el.wait_for(state="attached", timeout=timeout)
+            for ev in events:
+                el.dispatch_event(ev, init)
+        except Exception as e:
+            # The target may legitimately not be there yet (e.g. the drawer that contains the
+            # map is still opening). With retries configured that is just a failed attempt —
+            # without this, the very first wait would abort the whole step.
+            last_msg = f"{type(e).__name__}: {str(e)[:160]}"
+            logger.warning(f"dispatch_click: attempt {attempt + 1}/{retries + 1} could not be sent "
+                           f"({last_msg})" + (" — retrying" if attempt < retries else ""))
+            if attempt < retries:
+                time.sleep(retry_delay)
+                continue
+            raise
+        ok, msg = _expect_ok()
+        if ok:
+            logger.info(f"dispatch_click: dispatched {list(events)} on {locator or name} "
+                        f"(index={index}, attempt {attempt + 1}) -> {msg}")
+            return f"dispatched {list(events)}"
+        last_msg = msg
+        logger.warning(f"dispatch_click: expectation NOT met after attempt {attempt + 1}/{retries + 1} "
+                       f"({msg})" + (" — retrying" if attempt < retries else ""))
+        if attempt < retries:
+            time.sleep(retry_delay)
+    raise AssertionError(
+        f"dispatch_click: expectation not met after {retries + 1} attempt(s) on "
+        f"{locator or name} (index={index}): {last_msg}")
+
+
+# ---------------------------------------------------------------------------------------------
+# Network capture — the native replacement for "monkey-patch a JS global and read it later".
+# ---------------------------------------------------------------------------------------------
+def _net_bucket(page: Page, name: str) -> list:
+    if not hasattr(page, "_net_captures"):
+        setattr(page, "_net_captures", {})
+    return getattr(page, "_net_captures").setdefault(name, [])
+
+
+def _query_params(url: str) -> dict:
+    """Parse a URL's query string into a flat dict (repeated keys -> list)."""
+    from urllib.parse import urlparse, parse_qs
+    try:
+        qs = parse_qs(urlparse(url).query, keep_blank_values=True)
+    except Exception:
+        return {}
+    out = {}
+    for k, vals in qs.items():
+        out[k] = vals[0] if len(vals) == 1 else vals
+    return out
+
+
+def _net_values_equal(expected: str, actual) -> bool:
+    """Lenient value compare: exact string, or numerically equal within 1e-6.
+
+    Trackers commonly serialize the same money amount differently ("11.98" vs
+    "11.980000000000001"), so a strict string compare would be brittle.
+    """
+    if actual is None:
+        return False
+    if str(actual) == str(expected):
+        return True
+    try:
+        return abs(float(actual) - float(expected)) < 1e-6
+    except (TypeError, ValueError):
+        return False
+
+
+def start_network_capture(page: Page, v: dict):
+    """Start recording the page's network requests into a named bucket.
+
+    [WHY IT EXISTS] Verifying that a tracking pixel / analytics beacon fired used to require an
+    `execute_js` that monkey-patched the global (`window.fbq = ...`) and read back a JS array.
+    The framework had NO network observability at all, so there was no native alternative.
+    Recording real requests is both native and strictly stronger: it observes what actually LEFT
+    the browser, including events fired from code the test never touched, and it works for any
+    tracker (Meta Pixel, Google Analytics, TikTok, ...) with no per-vendor JS.
+
+    The handler is attached to the Page once; each bucket keeps its own url filter, so several
+    capture buckets can run at the same time (e.g. "pixel" + "analytics").
+
+    Supported params:
+      - name         : bucket name (default "default")
+      - url_contains : only record requests whose URL contains this substring (optional —
+                       strongly recommended, otherwise every request on the page is buffered)
+      - clear        : empty the bucket before starting (default True)
+
+    YAML usage:
+        start_network_capture_pixel: { name: "pixel", url_contains: "facebook.com" }
+    """
+    name = v.get("name", "default")
+    url_contains = v.get("url_contains")
+
+    if not hasattr(page, "_net_capture_specs"):
+        setattr(page, "_net_capture_specs", {})
+
+        def _on_request(req, _page=page):
+            try:
+                url = req.url
+                for bucket, spec in getattr(_page, "_net_capture_specs", {}).items():
+                    filt = spec.get("url_contains")
+                    if filt and filt not in url:
+                        continue
+                    getattr(_page, "_net_captures").setdefault(bucket, []).append({
+                        "url": url,
+                        "method": req.method,
+                        "resource_type": req.resource_type,
+                        "params": _query_params(url),
+                    })
+            except Exception:
+                pass
+
+        page.on("request", _on_request)
+
+    getattr(page, "_net_capture_specs")[name] = {"url_contains": url_contains}
+    if v.get("clear", True):
+        setattr(page, "_net_captures", {**getattr(page, "_net_captures", {})})
+        getattr(page, "_net_captures")[name] = []
+    logger.info(f"start_network_capture: bucket '{name}' recording "
+                f"(url_contains={url_contains!r})")
+    return f"capturing into '{name}'"
+
+
+def verify_network_capture(page: Page, v: dict):
+    """Assert that a captured request happened — the native pixel / analytics / API-call check.
+
+    Supported params:
+      - name          : bucket name (default "default")
+      - url_contains  : additional substring the request URL must contain
+      - params        : dict of query-param -> expected value; every pair must match. Values are
+                        compared exactly, or numerically when both are numbers (see
+                        _net_values_equal).
+      - regex         : regex that must match somewhere in the FULL request URL. Use this when a
+                        tracker's parameter ENCODING is not worth depending on (Meta sends
+                        `cd[value]=11.98` on some builds and `cd%5Bvalue%5D=11.98` on others, but
+                        the bare `11.98` is present either way).
+      - min_count     : how many matching requests are required (default 1)
+      - timeout       : ms to keep re-checking, so a beacon fired asynchronously is not missed
+                        (default 5000)
+      - save_as / global : publish the matching URLs (newline-joined) as a variable
+
+    On failure the error lists what WAS captured, which makes a wrong expectation obvious.
+
+    YAML usage:
+        verify_pixel_addtocart:
+            name: "pixel"
+            url_contains: "facebook.com/tr"
+            params: { ev: "AddToCart" }
+            regex: "11\\.98"
+            timeout: 10000
+    """
+    import time
+
+    name = v.get("name", "default")
+    url_contains = v.get("url_contains")
+    params = v.get("params") or {}
+    regex = v.get("regex")
+    min_count = int(v.get("min_count", 1))
+    timeout = int(v.get("timeout", 5000))
+    if regex:
+        regex = _fill_placeholders(str(regex), page)
+    deadline = time.time() + timeout / 1000.0
+
+    def _matches(entry):
+        url = entry.get("url", "")
+        if url_contains and url_contains not in url:
+            return False
+        for k, expected in params.items():
+            exp = _fill_placeholders(str(expected), page)
+            if not _net_values_equal(exp, entry.get("params", {}).get(k)):
+                return False
+        if regex and not re.search(regex, url):
+            return False
+        return True
+
+    last_pool = []
+    while True:
+        pool = list(getattr(page, "_net_captures", {}).get(name, []))
+        last_pool = pool
+        hits = [e["url"] for e in pool if _matches(e)]
+        if len(hits) >= min_count:
+            logger.info(f"verify_network_capture: {len(hits)} matching request(s) in bucket "
+                        f"'{name}': {hits[:3]}")
+            if v.get("save_as"):
+                _save_context_value(page, v["save_as"], "\n".join(hits), bool(v.get("global")))
+            return hits[:min_count]
+        if time.time() >= deadline:
+            break
+        time.sleep(0.3)
+
+    sample = "\n    ".join(u for u in (e.get("url", "") for e in last_pool[-8:])) or "(nothing captured)"
+    raise AssertionError(
+        f"verify_network_capture: no request in bucket '{name}' matched "
+        f"url_contains={url_contains!r} params={params!r} regex={regex!r} within {timeout}ms "
+        f"(captured {len(last_pool)} request(s)); last captured:\n    {sample}")
+
+
+def hover(page: Page, v: dict):
+    """Hover an element with Playwright's native `locator.hover()`.
+
+    [WHY IT EXISTS] The framework had NO hover action, so any widget that reveals a SUBMENU on
+    hover had to be driven with an `execute_js` that dispatched synthetic
+    `mouseenter`/`mouseover` events. Motivating case (RTE "Insert" dropdown,
+    Post_content.yaml): the dropdown's "Event" item opens the "Insert all merch" submenu only
+    on hover, so a click would activate it instead of revealing the submenu.
+
+    Supported params:
+      - locator        : element locator (CSS/xpath)
+      - role / name     : alternative addressing via `get_by_role` / `get_by_text`
+      - exact          : exact text match for `name` (default False)
+      - index          : element index when the locator matches several (default 0)
+      - timeout        : ms to wait for the element + for the hover (default 10000)
+      - force          : bypass Playwright's actionability checks (default False)
+      - expect         : optional condition checked AFTER hovering; the hover is REPEATED until
+                         it holds — same shape as `dispatch_click.expect`:
+                             expect:
+                                 scope: "<container locator>"   # default: whole page
+                                 text: "Insert all merch"       # substring that must appear
+                                 pattern: "Insert all merch"    # OR a regex over the scope text
+                                 timeout: 4000
+                                 retries: 3                     # extra attempts
+                                 retry_delay: 800               # ms between attempts
+                         Turns "the submenu did not open" from a confusing downstream failure
+                         into a self-healing step.
+
+    YAML usage:
+        hover_insert_event_item: { role: "menuitem", name: "Event", exact: true }
+        hover_insert_event_item:
+            role: "menuitem"
+            name: "Event"
+            exact: true
+            expect: { text: "Insert all merch" }
+    """
+    import time
+
+    locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
+    role = v.get("role")
+    name = _fill_placeholders(v.get("name") or v.get("text"), page)
+    exact = bool(v.get("exact", False))
+    index = v.get("index", 0)
+    timeout = int(v.get("timeout", 10000))
+    force = bool(v.get("force", False))
+    expect = v.get("expect") or {}
+    retries = int(expect.get("retries", 3)) if expect else 0
+    retry_delay = float(expect.get("retry_delay", 800)) / 1000.0
+    expect_timeout = int(expect.get("timeout", 4000)) if expect else 0
+
+    if not locator and not role and not name:
+        raise ValueError("hover: one of 'locator', 'role' or 'name' is required")
+
+    def _target():
+        if locator:
+            return page.locator(locator).nth(index)
+        if role:
+            return page.get_by_role(role, name=name, exact=exact).nth(index)
+        return page.get_by_text(name, exact=exact).nth(index)
+
+    def _expect_ok():
+        """(ok, message) — poll the expectation for up to expect_timeout."""
+        if not expect:
+            return True, "no expectation"
+        scope_sel = _fill_placeholders(_resolve_locator(expect.get("scope")), page)
+        want_text = _fill_placeholders(expect.get("text"), page)
+        want_pat = _fill_placeholders(expect.get("pattern"), page)
+        start = time.time()
+        last = "no text/pattern declared"
+        while True:
+            try:
+                scope = page.locator(scope_sel).first if scope_sel else None
+                if want_text:
+                    if scope is not None:
+                        hit = scope.locator(f"xpath=.//*[contains(normalize-space(.), {_xpath_literal(want_text)})]")
+                    else:
+                        hit = page.locator(f"xpath=//*[contains(normalize-space(.), {_xpath_literal(want_text)})]")
+                    if hit.count() > 0:
+                        return True, f"text {want_text!r} present"
+                    last = f"text {want_text!r} absent"
+                elif want_pat:
+                    body = (scope or page).inner_text()
+                    if re.search(want_pat, body):
+                        return True, f"pattern {want_pat!r} matched"
+                    last = f"pattern {want_pat!r} not matched"
+            except Exception as e:
+                last = f"expect probe error: {e}"
+            if time.time() - start >= expect_timeout / 1000.0:
+                return False, last
+            time.sleep(0.4)
+
+    last_msg = ""
+    for attempt in range(retries + 1):
+        try:
+            el = _target()
+            el.wait_for(state="visible", timeout=timeout)
+            el.scroll_into_view_if_needed()
+            el.hover(timeout=timeout, force=force)
+        except Exception as e:
+            last_msg = f"{type(e).__name__}: {str(e)[:160]}"
+            logger.warning(f"hover: attempt {attempt + 1}/{retries + 1} failed to hover "
+                           f"{locator or role or name} ({last_msg})"
+                           + (" — retrying" if attempt < retries else ""))
+            if attempt < retries:
+                time.sleep(retry_delay)
+                continue
+            raise
+        ok, msg = _expect_ok()
+        if ok:
+            logger.info(f"hover: hovered {locator or role or name} (index={index}, "
+                        f"attempt {attempt + 1}) -> {msg}")
+            return f"hovered {locator or role or name}"
+        last_msg = msg
+        logger.warning(f"hover: expectation NOT met after attempt {attempt + 1}/{retries + 1} "
+                       f"({msg})" + (" — retrying" if attempt < retries else ""))
+        if attempt < retries:
+            time.sleep(retry_delay)
+    raise AssertionError(
+        f"hover: expectation not met after {retries + 1} attempt(s) on "
+        f"{locator or role or name} (index={index}): {last_msg}")
+
+
+def click_open_new_tab(page: Page, v: dict):
+    """Click an element that opens a NEW BROWSER TAB, then assert where that tab lands.
+
+    [WHY IT EXISTS] This framework had no popup / new-tab handling at all. `smart_click` +
+    `wait_for_url` only work when the link navigates the CURRENT page; when the target is
+    `target="_blank"` (or calls `window.open`) the current page never changes, so `wait_for_url`
+    times out. The old workaround was an `execute_js` that rewrote `target` to `_self` and
+    monkey-patched `window.open` to force a same-tab jump — exactly the JS we no longer allow.
+    This action instead uses Playwright's native `context.expect_page()`, which IS the supported
+    way to catch a popup, so the same coverage is kept with zero JS.
+
+    Motivating case (verified on release 2026-10-16, tdc_fee_breakdown_guest_purchase_ui.yaml):
+    the order confirmation page's "View Tickets" link opens https://mpvsb.tickets.com/ in a new
+    tab.
+
+    Supported params:
+      - locator / name   : target element (locator, or `name` -> input/[name=...])
+      - index            : element index when the locator matches several (default 0)
+      - url              : glob (`*` allowed) the NEW TAB's URL must match, like `wait_for_url`.
+                           Optional, but usually the whole point of the step.
+      - timeout          : ms budget for BOTH catching the popup and matching its URL (default 30000)
+      - click_timeout    : ms budget for waiting for the element + clicking it
+                           (default min(timeout, 15000))
+      - close            : close the new tab afterwards (default True — the suite continues on the
+                           original page)
+      - save_as / global : optionally publish the resolved new-tab URL as a variable
+
+    YAML usage:
+        session_guest__click_open_new_tab_view_tickets:
+            locator: "xpath=(//*[self::a or self::button or @role='button'][contains(normalize-space(.), 'View Tickets')])[1]"
+            url: "*mpvsb.tickets.com*"
+            timeout: 30000
+    """
+    import time
+    from fnmatch import fnmatch
+
+    locator = _fill_placeholders(_resolve_locator(v.get("locator")), page)
+    name = _fill_placeholders(v.get("name"), page)
+    if not locator and not name:
+        raise ValueError("click_open_new_tab: 'locator' or 'name' is required")
+    index = v.get("index", 0)
+    timeout = int(v.get("timeout", 30000))
+    click_timeout = int(v.get("click_timeout", min(timeout, 15000)))
+    url = v.get("url") or v.get("expected_url")
+    if url is not None:
+        url = _fill_placeholders(url, page)
+    close_after = bool(v.get("close", True))
+
+    target = (
+        page.locator(locator).nth(index)
+        if locator
+        else page.locator(f'input[name="{name}"], [name="{name}"]').nth(index)
+    )
+    target.wait_for(state="visible", timeout=click_timeout)
+
+    logger.info(f"click_open_new_tab: clicking {locator or name} (index={index}); "
+                f"expecting a new tab matching {url!r}")
+    with page.context.expect_page(timeout=click_timeout) as page_info:
+        target.click(timeout=click_timeout)
+    new_page = page_info.value
+    try:
+        new_page.wait_for_load_state("domcontentloaded", timeout=timeout)
+    except Exception as e:
+        logger.warning(f"click_open_new_tab: new tab load state not reached within {timeout}ms: {e}")
+
+    if url:
+        deadline = time.time() + timeout / 1000.0
+        while True:
+            got = new_page.url or ""
+            if fnmatch(got, url):
+                logger.info(f"click_open_new_tab: new tab landed on {got!r} (matches {url!r})")
+                break
+            if time.time() >= deadline:
+                raise AssertionError(
+                    f"click_open_new_tab: new tab URL {got!r} did not match {url!r} within {timeout}ms")
+            new_page.wait_for_timeout(300)
     else:
-        el = page.locator(f'input[name="{name}"], [name="{name}"]').nth(index)
-    el.wait_for(state="attached", timeout=timeout)
-    for ev in events:
-        el.dispatch_event(ev, init)
-    logger.info(f"dispatch_click: dispatched {list(events)} on {locator or name} (index={index})")
-    return f"dispatched {list(events)}"
+        got = new_page.url or ""
+        logger.info(f"click_open_new_tab: new tab opened at {got!r} (no url pattern asserted)")
+
+    if v.get("save_as"):
+        _save_context_value(page, v["save_as"], got, bool(v.get("global")))
+
+    if close_after:
+        try:
+            new_page.close()
+        except Exception as e:
+            logger.warning(f"click_open_new_tab: could not close the new tab: {e}")
+    return got
 
 
 def smart_click_optional(page: Page, v: dict):
@@ -3360,6 +3943,164 @@ def smart_click_retry(page: Page, v: dict):
             else:
                 logger.error(f"smart_click_retry: all {retry_count} attempts failed for '{desc}': {e}")
                 raise
+
+
+def select_event_with_sellable_product(page: Page, v: dict):
+    """Open the first badge-tagged event (on the events list) that still has a SELLABLE product.
+
+    WHY (2026-10-16): the events list can carry SEVERAL events with the same provider badge, and
+    the first one may have every product "Sold out" (measured on release: the TDC badge is on both
+    "Parking - League Championship Series TDC" — 3/3 sold out — and "League Championship Series
+    TDC" — 28 sellable). The old seed hard-picked the first badge event (`extract_value` on
+    `//*[normalize-space(.)='TDC' and not(*)]/parent::*//p`) and then clicked it by name, so it died
+    with `extract_value: could not read 'xpath=//div[@data-testid='mui-stack']
+    [...][not(contains(., 'Sold out'))]'` the moment that event sold out.
+
+    This action walks the badge events in list order: open one, look for a sellable product card,
+    and when the event has none, close it with the header X (`button[aria-label='Close']`, the
+    top-left close icon `data-testid='komi-header-icon-btn'`) to return to the events list and try
+    the NEXT badge event. It leaves the page ON the chosen event with `open_tab` selected, and
+    publishes the chosen event's NAME.
+
+    Params:
+      - badge        : badge text matched as a LEAF element, e.g. "TDC" / "AXS" (required)
+      - product_cards: locator of a SELLABLE product card; default = the standard
+                       mui-stack + enhance-button card whose text does NOT contain "Sold out"
+      - open_tab     : optional tab to click after entering the event ("Tickets & Merch")
+      - close        : header close (X) locator; default `xpath=//button[@aria-label='Close']`
+      - list_url     : optional URL ({{var}}-backfilled) to (re)load between attempts
+      - max_events   : how many badge events to try (default 4)
+      - settle       : ms to let the event page / the list render (default 3000)
+      - save_as      : workflow-context key receiving the chosen event NAME
+      - global       : also publish to the cross-case store
+      - required     : raise when no badge event has a sellable product (default true)
+      - timeout      : ms budget for entering the event page (default 15000)
+
+    YAML usage:
+        select_event_with_sellable_product_tdc:
+            badge: "TDC"
+            open_tab: "Tickets & Merch"
+            save_as: "event_tdc"
+            global: true
+    """
+    import time as _time
+
+    badge = _fill_placeholders(v.get("badge") or v.get("tag"), page)
+    if not badge:
+        raise ValueError("select_event_with_sellable_product: 'badge' is required")
+    card_locator = _fill_placeholders(
+        _resolve_locator(v.get("product_cards"))
+        or "xpath=//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']]"
+           "[not(contains(., 'Sold out'))]",
+        page,
+    )
+    open_tab = _fill_placeholders(v.get("open_tab") or v.get("tab"), page)
+    close_locator = _fill_placeholders(
+        _resolve_locator(v.get("close")) or "xpath=//button[@aria-label='Close']", page
+    )
+    list_url = _fill_placeholders(v.get("list_url"), page)
+    max_events = int(v.get("max_events", 4))
+    timeout = v.get("timeout", 15000)
+    settle = v.get("settle", 3000)
+    save_as = v.get("save_as")
+    is_global = bool(v.get("global", False))
+    required = bool(v.get("required", True))
+
+    badge_leaf = f"//*[normalize-space(.)={_xpath_literal(badge)} and not(*)]"
+
+    def _badge_row(index):
+        return page.locator(f"xpath=({badge_leaf}/parent::*)[{index}]")
+
+    # Make sure the badge list is rendered before we start walking it.
+    deadline = _time.time() + timeout / 1000.0
+    while _badge_row(1).count() == 0 and _time.time() < deadline:
+        page.wait_for_timeout(500)
+    if _badge_row(1).count() == 0:
+        if list_url:
+            page.goto(list_url, wait_until="domcontentloaded")
+            page.wait_for_timeout(settle)
+            deadline = _time.time() + timeout / 1000.0
+            while _badge_row(1).count() == 0 and _time.time() < deadline:
+                page.wait_for_timeout(500)
+
+    tried = []
+    for index in range(1, max_events + 1):
+        row = _badge_row(index)
+        if row.count() == 0:
+            break
+
+        name = ""
+        try:
+            name = (row.first.locator("xpath=.//p").first.inner_text() or "").strip()
+        except Exception:
+            pass
+        logger.info(
+            f"select_event_with_sellable_product: trying {badge} event #{index}"
+            f"{' ' + repr(name) if name else ''}"
+        )
+
+        # Enter the event. The card name <p> is what the existing cases click successfully;
+        # fall back to the row itself, then to a force-click.
+        target = row.first.locator("xpath=.//p").first
+        if target.count() == 0:
+            target = row.first
+        try:
+            target.click(timeout=8000)
+        except Exception:
+            target.click(force=True, timeout=5000)
+
+        try:
+            page.wait_for_url(re.compile(r"/events/[^/]+/view"), timeout=timeout)
+        except Exception:
+            pass
+        page.wait_for_timeout(settle)
+
+        if open_tab:
+            try:
+                page.get_by_role("tab", name=open_tab).first.click(timeout=8000)
+            except Exception as e:
+                logger.debug(f"select_event_with_sellable_product: tab '{open_tab}' not clicked: {e}")
+            page.wait_for_timeout(2500)
+
+        sellable = page.locator(card_locator).count()
+        if sellable > 0:
+            logger.info(
+                f"select_event_with_sellable_product: {badge} event #{index}"
+                f"{' ' + repr(name) if name else ''} has {sellable} sellable product(s) -> selected"
+            )
+            if save_as:
+                _save_context_value(page, save_as, name, is_global)
+            return
+
+        # Every product of this event is sold out -> close it (header X) and try the next one.
+        logger.info(
+            f"select_event_with_sellable_product: {badge} event #{index}"
+            f"{' ' + repr(name) if name else ''} has NO sellable product (all 'Sold out') -> "
+            f"closing it and looking for the next {badge} event"
+        )
+        tried.append(name or f"#{index}")
+        try:
+            page.locator(close_locator).first.click(timeout=8000)
+        except Exception:
+            page.locator(close_locator).first.click(force=True, timeout=5000)
+        if list_url:
+            page.goto(list_url, wait_until="domcontentloaded")
+        page.wait_for_timeout(settle)
+        # wait for the list to render again so the next badge row can be resolved
+        deadline = _time.time() + timeout / 1000.0
+        while _badge_row(index + 1).count() == 0 and _time.time() < deadline:
+            page.wait_for_timeout(500)
+
+    msg = (
+        f"select_event_with_sellable_product: no {badge} event with a sellable product found "
+        f"among the first {max_events} badge event(s) (tried: {tried})"
+    )
+    if required:
+        page.screenshot(path=f"fail_select_{badge}_event.png")
+        raise RuntimeError(msg)
+    logger.warning(msg)
+    if save_as:
+        _save_context_value(page, save_as, "", is_global)
 
 
 def handle_modal(page: Page, v: dict):

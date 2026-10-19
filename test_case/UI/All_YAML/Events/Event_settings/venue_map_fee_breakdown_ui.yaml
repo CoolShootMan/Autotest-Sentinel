@@ -80,11 +80,30 @@ testT5649_venue_map:
 
         # 11. Click the ticket-venue_map product (located by the temp var name) to enter the Edit ticket page
         R_click_ticket: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
-        sleep_edit_ticket: 6000
 
-        # 12. Click the price under "Fees + Taxes" (the 2nd match = the price; the 1st match is
-        #     just an explanatory tooltip) to open the breakdown popover
-        R_click_fees_taxes: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        # 11b. [RACE FIX 2026-10-16] same race as tdc_fee_breakdown_ui.yaml: the SPA product
+        #      route can mount before its data, leaving the "Edit ticket" page blank (header only)
+        #      so the "Fees + Taxes" value never renders. Wait for it natively; if it is still
+        #      blank, reload once (a fresh load of the product route always renders) and wait again.
+        #      No JS — smart_if + wait_for_selector + reload are all framework-native.
+        if_edit_ticket_form_rendered:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_edit_ticket: 1000
+
+        # 12. Click the price under "Fees + Taxes" to open the breakdown popover.
+        #     [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
+        #     = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
+        #     directly and no longer depends on the exact match count.
+        R_click_fees_taxes:
+            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip: 2000
 
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees

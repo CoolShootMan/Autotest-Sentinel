@@ -260,7 +260,14 @@ def test_case(smokecases1, page: Page, browser: Browser, request):
 
     # --- Assertion Phase ---
     allure_step_no(f'expect_result:{str(expect_result)}')
-    if "assertions" in expect_result:
+    # [BUG FIX 2026-10-16] `expect_result` is a plain STRING for most cases (per the required
+    # top-level keys) and a dict only for the few that declare structured assertions. Testing
+    # `"assertions" in expect_result` therefore did a SUBSTRING search whenever it was a string,
+    # and any description that merely contained the word "assertions" (e.g. the TDC guest case:
+    # "...pricing/fee assertions cover the post...") made the branch crash with
+    #   TypeError: string indices must be integers, not 'str'
+    # AFTER all of the case's steps had passed. Guard on the type first.
+    if isinstance(expect_result, dict) and "assertions" in expect_result:
         for assertion in expect_result["assertions"]:
             assertion_type = assertion.get("assertion_type")
             

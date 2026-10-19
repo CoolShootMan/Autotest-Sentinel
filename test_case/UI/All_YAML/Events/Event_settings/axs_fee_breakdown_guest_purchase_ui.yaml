@@ -2,62 +2,17 @@
 # time: 2026/10/12 17:24
 
 # --- testT5649_axs: Guest place order and check fee breakdown" ---
-#
-# [REFACTOR 2026-10-16] Every execute_js block was replaced by framework-native actions
-# (extract_value / extract_row_value / compute_value / set_value / verify_text_visible /
-#  verify_text_regex / verify_row_value / verify_value / open / go_back ...). No JS is left.
-#
-# Four real issues were fixed on the way (all browser-verified on release 2026-10-16):
-#   1. `execute_js_seed_post_url` called its helper with an ELEMENT instead of a string
-#      (`nz(e)` where `const nz = s => (s||'').replace(...)`), which threw the runtime error
-#      "Page.evaluate: TypeError: (s || \"\").replace is not a function". The whole step is gone.
-#   2. Step 11 clicked `button[aria-label='Back']` to leave the ticket editor; on the current
-#      build that matches a DIFFERENT element (it opens a drawer and never leaves the product
-#      page), so the following "Post" tab was never found. Replaced by the native `go_back`
-#      action (browser history back), verified to land on the event page again.
-#   3. [CTA VARIANT] Do NOT hard-code the venue_map / TDC checkout CTA here. Those two cases
-#      click `button[data-testid='checkout-in-post-continue-cta']` (label "Continue"), but this
-#      AXS checkout drawer still renders the LEGACY pair "PayPal" + "Continue with credit card"
-#      (browser-verified on release 2026-10-16, see ./fail_session_guest__R_click_checkout_continue.png).
-#      Step 24 therefore uses a UNION locator so it works on both variants.
-#   4. [COPY DRIFT] the order-confirmation heading is now "Thank you for your payment."
-#      (plus a "Confirmation #<id>" line), not the older "Your order is confirmed".
-#      `verify_text_visible` was extended to accept a LIST of valid copies (any-of), and the
-#      order-number regex was added as a copy-independent proof.
-#
-# [ENV CAVEAT] the AXS public post is regenerated/unpublished from time to time: while this
-# was being verified the seeded slug returned HTTP 404 for a while and the "Select tickets"
-# drawer intermittently answered "Something went wrong. If this continues, please contact
-# support@pear.us" (no Add button). The case is SELF-SEEDING, so a re-run picks up the post
-# URL that is current at run time.
-#
-# [PRICING PREREQUISITE - 2026-10-16] the GUEST-facing price display is controlled by the post
-# setting that step 7 enables (`input[name='showFeesBreakdown']`, "Show fee breakdown at
-# checkout"). With it ENABLED the buyer sees the NET price and the fees are itemised at
-# checkout (post/drawer $114.90, checkout Subtotal 114.90 + Transaction fees 13.87 + Total
-# 128.77) - that is the state the assertions in this file expect, and the state observed while
-# the seeded run passed steps 1-38. When the post gets re-created (e.g. by the API prefill) the
-# setting is lost and the storefront instead shows the GROSS price "GA Pit — Pear.US $128.77
-# (incl. fees)" - verified 2026-10-16 12:00 right after such a re-creation. Steps 24/26 and the
-# checkout net-price assertions are only valid once the seed has re-enabled the setting, so run
-# the ADMIN-side seed (not just the guest leg) whenever the post may have been re-created.
 testT5649_axs_guest_purchase:
     is_mobile: true
     description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
     expect_result: "Checkout shows a fee breakdown for the AXS ticket; order can be placed and the confirmation page shows AXS info; partner can refund the order"
     test_step:
         # ==================== [SELF-SEED] admin-side data extraction ====================
-        # This case is runnable on its own: it first seeds every variable it needs from the
-        # admin UI (mirrors axs_fee_breakdown_ui.yaml steps 1-17) and publishes them as
-        # cross-case globals. `open` backfills {{var}}, so no `location.href` JS is needed.
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
         # 2. Save the name of the event card that carries the AXS tag -> event_axs
-        #     [DOM FACT] the `AXS` badge is a leaf <span>; its parent row holds the event name
-        #     in a <p>. (The old JS polled for 15s because the list renders asynchronously;
-        #     extract_value already polls up to `timeout`.)
         extract_value_seed_event:
             locator: "xpath=(//span[normalize-space(.)='AXS']/parent::*//p)[1]"
             source: text
@@ -76,11 +31,6 @@ testT5649_axs_guest_purchase:
         sleep_seed_tickets: 3000
 
         # 4. Save the ticket name of the first non-Sold-out "Pear.US"-listed ticket -> ticket_axs
-        #     [DOM FACT] a product card = DIV[data-testid='mui-stack'] that contains a
-        #     Tools button[data-testid='enhance-button']; its FIRST <p> is the ticket name.
-        #     [WHY the 'Pear.US' filter] only Pear.US-listed tickets are purchasable on release —
-        #     third-party (AXS-issued) tickets are rejected by the ticket hub, so the card must
-        #     be picked by that marker (the old JS used the same /Pear\.US/ test).
         extract_value_seed_ticket:
             locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))]//p)[1]"
             source: text
@@ -124,16 +74,32 @@ testT5649_axs_guest_purchase:
 
         # 8. Click the ticket product -> Edit ticket page (URL .../products/<id>?mode=TICKET)
         R_click_seed_product: { locator: "xpath=//p[normalize-space(.)='{{ticket_axs}}']" }
-        sleep_seed_edit: 6000
 
-        # 9. Open the "Fees + Taxes" price popover (2nd match = the price)
-        R_click_seed_fees_taxes: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        # 8b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
+        #     "Edit ticket" page blank (header only) so the "Fees + Taxes" value never renders.
+        #     Wait for the value natively; when the page is still blank, reload once and wait again.
+        #     No JS — smart_if + wait_for_selector + reload are all framework-native actions.
+        if_edit_ticket_form_rendered:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_seed_edit: 1000
+
+        # 9. Open the "Fees + Taxes" price popover.
+        #    [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
+        #    = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
+        #    directly and no longer depends on the exact match count.
+        R_click_seed_fees_taxes:
+            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_seed_tip: 2000
 
         # 10. Save "Platform fees" and "Taxes" from the popover.
-        #     [DOM FACT] the popover renders as
-        #     `Platform fees | $13.87 | Taxes | $0.00 | Fees + Taxes | $13.87`, so the labels are
-        #     matched as whole rows (the standalone "Taxes" leaf is not the "Fees + Taxes" one).
         extract_row_value_seed_fees:
             label: "Platform fees"
             scope: ".MuiPopover-root"
@@ -148,10 +114,6 @@ testT5649_axs_guest_purchase:
             timeout: 15000
 
         # 11. Close the popover, leave the ticket editor and go back to the EVENT page.
-        #     [WHY go_back] the previous build's `button[aria-label='Back']` no longer returns to
-        #     the event page on this screen (it hits another element and opens a drawer), which
-        #     made the following "Post" tab unreachable. `go_back` is the native browser-history
-        #     back and was verified to land on `/events/<id>/view` again.
         press_seed_escape: { key: "Escape" }
         sleep_seed_esc: 1200
         go_back_seed: { sleep_after: 3500 }
@@ -159,10 +121,6 @@ testT5649_axs_guest_purchase:
         sleep_seed_leave: 1500
 
         # 12. Read the public post URL from the event's "Post" tab -> GLOBAL post_url.
-        #     [DOM FACT] the Post tab prints the URL as the textContent of a <button>, e.g.
-        #     `release.pear.us/autotestshop/post/test-axs-la-office-integrations-club-event-1`
-        #     (no scheme). `source: content` + `strip_whitespace` removes the layout newlines the
-        #     element adds, then the regex keeps just the URL.
         R_click_seed_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
         sleep_seed_post: 4000
         extract_value_seed_post_url_raw:
@@ -187,12 +145,7 @@ testT5649_axs_guest_purchase:
         session_guest__open: { url: "{{post_url}}" }
         sleep_guest_post: 5000
 
-        # 15. As a guest, find the product by name in the post and assert its displayed price
-        #     == my_revenve (net revenue).
-        #     [PRICING FACT - browser-verified 2026-10-16] the AXS public post shows the NET price:
-        #       GA Pit — Pear.US : retail $128.77 - (incl. $13.87 fees) -> $114.90 = My revenue
-        #     [DOM FACT] the post card = the NEAREST ancestor of the product-name leaf that
-        #     carries a "$" amount.
+        # 15. As a guest, find the product by name in the post and assert its displayed price my_revenve (net revenue).
         session_guest__verify_text_regex_post_price:
             scope: "xpath=//*[normalize-space(.)='{{ticket_axs}}']/ancestor::*[contains(., '$')][1]"
             pattern: "\\$\\s*{{my_revenve}}\\b"
@@ -203,7 +156,6 @@ testT5649_axs_guest_purchase:
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_axs}}']", index: 0 }
 
         # 17. Assert the price shown in the "Select tickets" drawer == my_revenve
-        #     (`:has-text()` is Playwright's case-insensitive text matcher)
         session_guest__verify_text_regex_drawer_price:
             scope: ".MuiDrawer-root:has-text('Select tickets')"
             pattern: "\\$\\s*{{my_revenve}}\\b"
@@ -223,9 +175,6 @@ testT5649_axs_guest_purchase:
         sleep_guest_checkout: 3000
 
         # 21. Assert on the Checkout drawer:
-        #     product name == ticket_axs; unit price == my_revenve; no "(incl. $ fees)" suffix;
-        #     Total == my_revenve + transaction-fees + taxes
-        #     (was one big execute_js VerifyCheckout block -> native assertions)
         session_guest__verify_text_visible_checkout_name:
             text: "{{ticket_axs}}"
             scope: { locator: ".MuiDrawer-root:has-text('Checkout')" }
@@ -255,9 +204,6 @@ testT5649_axs_guest_purchase:
         session_guest__R_click_total: { locator: "xpath=//*[normalize-space(.)='Total']", index: 0 }
 
         # 23. Assert in the expanded breakdown:
-        #     Subtotal == my_revenve; Transaction fees == transaction-fees;
-        #     when taxes != 0 a "Taxes" row must show Taxes == taxes, when taxes == 0 it may be hidden.
-        #     (was one big execute_js rowVal() block -> native labelled-row assertions)
         session_guest__verify_row_value_subtotal:
             label: "Subtotal"
             scope: ".MuiDrawer-root:has-text('Checkout')"
@@ -279,11 +225,6 @@ testT5649_axs_guest_purchase:
             timeout: 20000
 
         # 24. Click the Checkout CTA to reach the contact + payment form.
-        #     [UI VARIANT - browser-verified 2026-10-16] unlike venue_map / TDC (whose drawer
-        #     CTA is the single `button[data-testid='checkout-in-post-continue-cta']` labelled
-        #     "Continue"), the AXS checkout drawer renders the legacy payment picker:
-        #     a "PayPal" button + a "Continue with credit card" button. The union locator below
-        #     (Playwright CSS selector list, first match in DOM order) covers both variants.
         session_guest__R_click_checkout_continue:
             locator: "button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
             timeout: 15000
@@ -297,12 +238,6 @@ testT5649_axs_guest_purchase:
         sleep_guest_contact: 1000
 
         # 26. Fill the payment form with the framework-native `fill_stripe_iframe` action.
-        #     [WHY] the previous version hard-coded the Stripe Elements frame by visible order
-        #     (`iframe[src*='elements-inner-card'] >> nth=0/1/2`); that frame does not exist on the
-        #     current release checkout (only the Stripe controller / payment-request / metrics
-        #     frames are present), so the fill timed out. `fill_stripe_iframe` walks every stripe
-        #     frame and looks the inputs up by name, and also fills `cardName` /
-        #     `billingAddress.zipcode` on the page itself.
         session_guest__fill_stripe_iframe:
             card_number: "4242424242424242"
             expiry: "830"
@@ -312,8 +247,6 @@ testT5649_axs_guest_purchase:
         sleep_guest_payment: 2000
 
         # 27. Assert the payment form was filled correctly (Playwright-native input_value
-        #     assertions; the phone field is auto-formatted so it is checked with a regex
-        #     requiring at least 10 digits — was a tiny execute_js)
         session_guest__verify_value_first_name: { locator: "input[name='contact.firstName']", value: "Lury" }
         session_guest__verify_value_last_name: { locator: "input[name='contact.lastName']", value: "UIAutomation" }
         session_guest__verify_value_email: { locator: "input[name='contact.email']", value: "dian.yuhong.ext+111@1m.app" }
@@ -329,11 +262,6 @@ testT5649_axs_guest_purchase:
 
         # ==================== order placed + order confirmation page checks ====================
         # 29. [HARD ASSERTION] order placed (Playwright-native): wait_for_url polls until the
-        #     URL lands on /order/<id>/confirmation, then the confirmation copy must be visible.
-        #     [COPY DRIFT 2026-10-16, browser-verified] the current release checkout greets the
-        #     buyer with "Thank you for your payment." (with a "Confirmation #P192195" line),
-        #     NOT the older "Your order is confirmed". `text` accepts a LIST of valid copies
-        #     (any-of), so the case survives either build.
         session_guest__wait_for_url_order_confirmation:
             url: "**/order/**/confirmation"
             timeout: 30000
@@ -348,14 +276,6 @@ testT5649_axs_guest_purchase:
             timeout: 20000
 
         # 30-31. [UI DRIFT 2026-10-16, browser-verified on real orders #P192195 / #P192196]
-        #     The confirmation page now renders the order details ALREADY EXPANDED: there is no
-        #     "Show summary" toggle any more (a probe click on it timed out after 30s while the
-        #     page already showed "Item(s) total / Subtotal / Total"). The old step 30
-        #     (`verify_row_value_show_summary`, which asserted the amount next to that label) was
-        #     therefore removed — it named a label that no longer exists, and the very same money
-        #     values are hard-asserted by step 32's Item(s) total / Subtotal / Total rows.
-        #     This step keeps expanding the summary on builds that still render the toggle, and
-        #     skips silently when it is absent (`smart_click_optional` is non-fatal by design).
         session_guest__smart_click_optional_show_summary:
             locator: "xpath=//*[normalize-space(.)='Show summary']"
             timeout: 5000
@@ -384,8 +304,6 @@ testT5649_axs_guest_purchase:
             timeout: 20000
 
         # 33. Assert the AXS hint copy under "Create an account to access your order anytime."
-        #     (Playwright-native text assertions; each line is unique on the page. The AXS hint
-        #     shows the BUYER's email — keep in sync with the fill_email step above.)
         session_guest__verify_axs_anchor: { text: "Create an account to access your order anytime.", timeout: 20000 }
         session_guest__verify_axs_title: { text: "Access your tickets in AXS" }
         session_guest__verify_axs_app_line: { text: "Your tickets will be available through AXS Mobile ID in the AXS app." }
@@ -397,8 +315,6 @@ testT5649_axs_guest_purchase:
         session_guest__verify_axs_note: { text: "Some events may delay or disable ticket delivery or transfer." }
 
         # 34. Assert Confirmation details: contact information / payment method / billing zip code
-        #     (Playwright-native text assertions; the charged amount is dynamic so it is a regex
-        #     with {{var}}. The page shows the phone as 252-400-1111.)
         session_guest__verify_contact_name: { text: "Lury UIAutomation", timeout: 20000 }
         session_guest__verify_contact_phone: { text: "252-400-1111" }
         session_guest__verify_contact_email: { text: "dian.yuhong.ext+111@1m.app" }

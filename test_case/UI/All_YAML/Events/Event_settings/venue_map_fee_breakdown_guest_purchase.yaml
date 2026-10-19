@@ -19,11 +19,11 @@ testT5649_venue_map_guest_purchase:
 
         # 1. Create the guest session (no cookie = visitor); saved temp vars are copied into it
         create_session_guest: { name: "guest" }
+        sleep_guest_session: 1000
 
-        # 1b. [SELF-SEED] post_url —— was a cross-case global published by the parent case
-        #      (venue_map_fee_breakdown_ui.yaml step 17). The venue-map public post slug equals the
-        #      event name, so the URL is a fixed constant. Set it locally (no global) so this case
-        #      runs standalone; `open` below backfills {{post_url}} from this temp var.
+        # 1b. [SELF-SEED] post_url —— fixed constant; the venue-map public post slug equals the
+        #      event name. Set locally (no global) so this case runs standalone; `open` below
+        #      backfills {{post_url}} from this temp var.
         set_value_post_url:
             value: "{BASE_URL}/autotestshop/post/event-for-ui-auto-venue-map"
             save_as: "post_url"
@@ -34,20 +34,23 @@ testT5649_venue_map_guest_purchase:
         sleep_guest_post: 5000
 
         # 2b. [SELF-SEED] Extract ticket_venue_map (product name) and my_revenve (net price) from
-        #      the public post, replacing the cross-case globals the parent published.
-        #      - product name: same mui-stack product card the parent reads on the Tickets & Merch
-        #        tab (first non-Sold-out card's first <p>); the public post reuses that card.
-        #      - net price: on a venue_map public post the card's $ amount IS the net revenue
-        #        (My revenue), e.g. "General Admission 02 / $100.00 / Buy Ticket" (see step 3 note),
-        #        so the first $ on the card = my_revenve.
-        session_guest__extract_ticket_name:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//*[contains(., '$')]][not(contains(., 'Sold out'))]//p)[1]"
+        #      the PUBLIC POST itself, replacing the cross-case globals the parent published.
+        #      [DOM FACT, verified 2026-10-16 on release] the public-post product card is NOT a
+        #      `mui-stack` (that testid belongs to the partner Tickets & Merch tab). The public
+        #      card is `div[role='button'][data-track-location='ticket_all_1']` containing:
+        #        - the product name = the card's FIRST <p> (e.g. "General Admission 01");
+        #        - the price = a <p> whose class contains 'price' (e.g. "$60.00");
+        #        - a "Buy Ticket" button.
+        #      So we target the first non-Sold-out public card: name = its first <p>, net price
+        #      (My revenue — shown NET because "Show fee breakdown at checkout" is ON) = the price <p>.
+        session_guest__extract_value_ticket_name:
+            locator: "xpath=(//div[@role='button'][.//p[contains(@class, 'price')]][not(contains(., 'Sold out'))]//p)[1]"
             source: text
             numeric: false
             save_as: "ticket_venue_map"
             timeout: 20000
-        session_guest__extract_my_revenue:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//*[contains(., '$')]][not(contains(., 'Sold out'))])[1]"
+        session_guest__extract_value_my_revenue:
+            locator: "xpath=(//div[@role='button'][.//p[contains(@class, 'price')]][not(contains(., 'Sold out'))]//p[contains(@class, 'price')])[1]"
             source: text
             regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
             save_as: "my_revenve"
@@ -64,17 +67,45 @@ testT5649_venue_map_guest_purchase:
         # 4. As a guest, click the ticket-venue_map product name on the public post to open the "Select tickets" drawer
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
-        # 5. On the opened "Select tickets" drawer a venue map is shown. Select a table.
+        # 5. On the opened "Select tickets" drawer a venue map is shown. Select ONE table.
+        #    [BUG FIX 2026-10-16, measured with a guest probe] the OLD code clicked twice —
+        #    `rect[data-id]` idx 0 (= a table) and then `circle[data-id]` idx 1 — and BOTH clicks
+        #    really SELECT an item, so the cart ended up with TWO tables:
+        #        before any click : "0 items selected / Total: $0.00"
+        #        after the rect   : "1 item selected / Total: $100.00"   <- what this case wants
+        #        after the circle : "2 items selected / Total: $200.00"
+        #    The case's arithmetic is written for ONE item, so the Cart/Checkout then read
+        #        Subtotal $200.00 (expected my_revenve $100.00)  -> verify_row_value: row
+        #        'Subtotal' amount 200.0 != expected '100.00';  Transaction fees $24.44 (= 2x12.22)
+        #    and the derived `taxes` came out as a bogus $100.00 (= Total - net - fees) which would
+        #    then demand a "Taxes" row that does not exist. Selecting a single table keeps every
+        #    downstream number on the intended 1-item footing:
+        #        Subtotal $100.00 + Transaction fees $12.22 + taxes $0.00 = Total $112.22
+        #    Do NOT add a second selection back: any extra click on `rect[data-id]` /
+        #    `circle[data-id]` adds another table to the cart.
+        #    [MEASURED 2026-10-16 with an iPhone-14-Pro-Max probe] `rect[data-id]` idx 0 and
+        #    `circle[data-id]` idx 0 are the SAME table (outline + centre dot), so clicking the
+        #    circle at index 0 DESELECTS it ("1 item selected / Total: $60.00" -> "0 items
+        #    selected"). The old code's circle click used `index: 1` = a different table, which
+        #    is why it really added a 2nd item.
+        #    [RACE FIX 2026-10-16] `expect` + `retries`: the drawer can open and the
+        #    `rect[data-id]` nodes be attached BEFORE the SVG map finishes laying out. A
+        #    dispatch on a not-yet-laid-out node is accepted by Playwright but IGNORED by the
+        #    widget, so the cart silently stays empty and the NEXT step failed far away with a
+        #    misleading `pattern '\$\s*60.00\b' not found`. Now the dispatch is repeated until
+        #    the drawer really shows "1 item selected".
+        sleep_map_ready: 1500
         session_guest__dispatch_click_map_hint:
             locator: "rect[data-id]"
             index: 0
             timeout: 15000
+            retries: 4
+            retry_delay: 1000
+            expect:
+                scope: ".MuiDrawer-root:has-text('Select tickets')"
+                text: "1 item selected"
+                timeout: 4000
         sleep_map_hint: 1500
-        session_guest__dispatch_click_select_seat:
-            locator: "circle[data-id]"
-            index: 1
-            timeout: 15000
-        sleep_select_seat: 2500
 
         # 6. Assert the price shown in the drawer == my_revenve
         session_guest__verify_text_regex_drawer_price:
@@ -105,20 +136,42 @@ testT5649_venue_map_guest_purchase:
         #        - ticket-retails-price == checkout Total: what the buyer actually pays
         #        - taxes: derived = Total - my_revenve - transaction-fees (0 when no tax row)
         #      This keeps the case standalone AND robust to a zero-tax configuration.
-        session_guest__extract_transaction_fees:
+        # [KEY FIX 2026-10-16] labelled rows ("Transaction fees" / "Total") -> `extract_row_value_*`
+        # (previously `extract_*`, unreachable prefix -> "Step not found").
+        # [CROSS-CASE CONSISTENCY FIX 2026-10-16] `global: true` on the fee row: this guest order
+        # IS the order the partner case (venue_map_fee_breakdown_partner_full_refund.yaml) then
+        # refunds, and it asserts `Net Earning == -(transaction-fees)`. The parent case also
+        # publishes a `transaction-fees` global, but it reads the Fees + Taxes popover of
+        # whichever product the EVENT page lists first, which is NOT necessarily the product the
+        # guest bought (the event has 2 products with different platform fees: $60 -> $7.77,
+        # $100 -> $12.22). Real failure: parent published 12.22 while the refunded order's fee was
+        # 7.77 -> `Net Earning -7.77 != expected '-12.22'`. Publishing the guest's OWN Checkout
+        # fee closes the loop, because the guest runs before the partner in the same process.
+        session_guest__extract_row_value_transaction_fees:
             label: "Transaction fees"
             scope: ".MuiDrawer-root:has-text('Checkout')"
             save_as: "transaction-fees"
+            global: true
+            signed: false
             timeout: 15000
-        session_guest__extract_checkout_total:
+        # [tail_limit FIX 2026-10-16] the Checkout "Total" row renders as
+        #     Total / $67.77 / (Including $7.77 fees)
+        # i.e. the amount's own ancestor tail is "$67.77 (Including $7.77 fees)" = 29 chars,
+        # LONGER than the default tail_limit of 24 -> `_find_row_amount` rejects the row and
+        # reports "label matched 1 element(s) but no '$' amount within 4 ancestor level(s)".
+        # [MEASURED with tools/probe_guest_checkout_fees.py] lvl0 = 0 chars, lvl1 = 29 chars.
+        # 60 keeps the first-amount-wins rule intact while clearing the "(Including …)" suffix.
+        session_guest__extract_row_value_checkout_total:
             label: "Total"
             scope: ".MuiDrawer-root:has-text('Checkout')"
             save_as: "checkout_total_venue_map"
+            tail_limit: 60
             timeout: 15000
-        session_guest__compute_taxes:
+        # [KEY FIX 2026-10-16] money math -> `compute_value_*` (previously `compute_*`).
+        session_guest__compute_value_taxes:
             expression: "{{checkout_total_venue_map}} - {{my_revenve}} - {{transaction-fees}}"
             save_as: "taxes"
-        session_guest__compute_retails_price:
+        session_guest__compute_value_retails_price:
             expression: "{{checkout_total_venue_map}}"
             save_as: "ticket-retails-price"
 
@@ -145,6 +198,7 @@ testT5649_venue_map_guest_purchase:
             scope: ".MuiDrawer-root:has-text('Checkout')"
             value: "{{checkout_total_venue_map}}"
             tolerance: 0.01
+            tail_limit: 60      # same "(Including $X fees)" suffix as the extraction above
             timeout: 20000
         # product info "Unit" must equal seat_unit. [DOM FACT] the label and value share one
         # leaf, e.g. "Unit: 1".
@@ -169,6 +223,12 @@ testT5649_venue_map_guest_purchase:
             scope: ".MuiDrawer-root:has-text('Checkout')"
             value: "{{transaction-fees}}"
             tolerance: 0.01
+            # [signed FIX 2026-10-16] a buyer-side fee is NEVER negative, yet with the default
+            # `signed: true` the row read back as **-7.77** (the climb from the label to the
+            # amount's container can pick up a stray '-' from a neighbouring node). That poisoned
+            # the published global: the partner case computes `0 - {{transaction-fees}}` and got
+            # a POSITIVE expected Net Earning ("Net Earning amount -7.77 != expected '7.77'").
+            signed: false
             timeout: 20000
         session_guest__verify_row_value_taxes:
             label: "Taxes"
@@ -179,8 +239,13 @@ testT5649_venue_map_guest_purchase:
             timeout: 20000
 
         # 12. Click the Checkout CTA to reach the contact + payment form.
+        #     [UI FACT 2026-10-16] the venue_map Checkout drawer does NOT carry the
+        #     `checkout-in-post-continue-cta` testid (writing it alone dies with
+        #     `smart_click: element not found`); the live CTA is the old-style
+        #     `Continue with credit card` button, same as TDC and AXS. Use the JOINED list so it
+        #     works on either variant — CSS picks the first match in DOM order.
         session_guest__R_click_checkout_continue:
-            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            locator: "button[data-testid='checkout-in-post-credit-card-cta'], button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
             timeout: 15000
         sleep_guest_cc_form: 5000
 
@@ -229,17 +294,16 @@ testT5649_venue_map_guest_purchase:
                 - "Your order is confirmed"
             timeout: 20000
 
-        # 18. Assert the price next to "Show summary" == ticket-retails-price
-        session_guest__verify_row_value_show_summary:
-            label: "Show summary"
-            value: "{{ticket-retails-price}}"
-            tail_limit: 16
-            levels: 6
-            tolerance: 0.01
-            timeout: 20000
-
-        # 19. Click Show summary to expand the order details
-        session_guest__R_click_show_summary: { locator: "xpath=//*[normalize-space(.)='Show summary']" }
+        # 18-19. [UI DRIFT 2026-10-16, verified on a real AXS order #P192196] the confirmation page
+        #     now renders the order details ALREADY EXPANDED: there is no "Show summary" toggle any
+        #     more (clicking it times out while the page already shows Item(s) total / Subtotal /
+        #     Total). The old `verify_row_value_show_summary` assertion was therefore removed — it
+        #     named a label that no longer exists, and the very same money values are hard-asserted
+        #     by step 20's Item(s) total / Subtotal / Total rows. This step keeps expanding the
+        #     summary on builds that still render the toggle and skips silently when it is absent.
+        session_guest__smart_click_optional_show_summary:
+            locator: "xpath=//*[normalize-space(.)='Show summary']"
+            timeout: 5000
 
         # 20. Assert the details: Item(s) total / Subtotal / Total all equal ticket-retails-price,
         #     and an "(incl. $a fees)" row exists where a == transaction-fees
