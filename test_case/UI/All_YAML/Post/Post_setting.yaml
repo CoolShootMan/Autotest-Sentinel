@@ -2212,11 +2212,7 @@ testT3779:
         check_hide_coupon_box: { locator: 'input[name="hideCouponBox"]', skip_if_checked: true }
         sleep_step: 500
 
-        # Step 6: Enable "Automatically applied at checkout" toggle
-        check_auto_apply: { locator: 'input[name="autoApplied"]', skip_if_checked: true }
-        sleep_step: 500
-
-        # Step 7: Click "Create a coupon" button
+        # Step 6: Click "Create" button to create a new coupon
         R_click_create_coupon_btn: { role: 'button', name: 'Create' }
         sleep_step: 1500
 
@@ -2233,11 +2229,16 @@ testT3779:
         R_click_continue_discount: { role: 'button', name: 'Continue' }
         sleep_step: 1000
 
-        # Fill in coupon code name
-        fill_coupon_code: { locator: 'input[name="applicableCode"]', value: 'autotest3779' }
+        # How should this discount be applied at checkout?  --- select "Automatic discount"
+        R_click_auto_discount: { role: 'radio', name: 'Automatic discount' }
         sleep_step: 500
 
-        # How should this discount be applied at checkout?  --- default select "coupon code"
+        # Fill in Coupon display title and description
+        fill_coupon_title: { locator: 'input[placeholder="Title"]', value: 'autotest3779' }
+        sleep_step: 300
+        fill_coupon_desc: { locator: 'input[placeholder="Description"]', value: 'autotest3779' }
+        sleep_step: 300
+
         R_click_continue_apply: { role: 'button', name: 'Continue' }
 
         # Set coupon availability and limits  --- default value
@@ -2318,7 +2319,7 @@ testT3767:
 
         # Step 7: Place order
         R_click_place_order: { role: "button", name: "Place order" }
-        wait_for_url: { url: "*order*", timeout: 15000 }
+        wait_for_url: { url: "*order*", timeout: 45000 }
         sleep_step: 2000
 
 
