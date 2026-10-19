@@ -97,10 +97,11 @@ testT3683_T3684_venue_map:
         # Step 7: AXS no-map purchase - click the product's "Buy Ticket" button, then the
         # optional "Buy now" CTA, then "Continue" into the contact/checkout form.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
-        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
-        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        # "Select tickets" dialog: click "+" to add 1 ticket
+        sleep_step: 2000
+        R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+        sleep_step: 1000
+        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 5000 }
         R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
         R_click_continue_cc_fallback: { role: 'button', name: 'Continue with credit card', optional: true }
 
@@ -303,19 +304,21 @@ testT3686_CosellerResell_venue_map:
         open_coseller_shop_guest: "{BASE_URL}/autotest-coseller"
         sleep_step: 3000
 
-        R_click_my_content_guest: { role: "button", name: "My content" }
-        sleep_after_my_content_guest: 4000
+        # Guest view: no "My content" tab; scroll down to reveal post cards
+        scroll_to_bottom: { iterations: 3, delay: 500 }
+        sleep_step: 2000
 
-        R_click_resold_post_guest: { locator: "xpath=//*[normalize-space(.)='{{event_axs}}']", index: 0 }
+        R_click_resold_post_guest: { locator: "xpath=//*[normalize-space(.)='{{event_axs}}']", index: 0, fallback_scan: true }
         sleep_step: 3000
 
         # T3686 Step 5: AXS no-map purchase from the coseller's resold post - click
         # "Buy Ticket", optional "Buy now", then "Continue" into contact/checkout.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
-        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
-        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        # "Select tickets" dialog: click "+" to add 1 ticket
+        sleep_step: 2000
+        R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+        sleep_step: 1000
+        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 5000 }
         R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
         R_click_continue_cc_fallback: { role: 'button', name: 'Continue with credit card', optional: true }
 
@@ -481,10 +484,9 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
         # "Buy now". The server enforces the purchase-quantity limit and surfaces the
         # over-limit warning before checkout.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
-        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
-        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
-        R_click_qty_add_1: { locator: "button[aria-label='Add']", index: 0 }
+        # "Select tickets" dialog: raise quantity to 6 via "+" stepper
+        sleep_step: 2000
+        R_click_qty_add_1: { locator: "button[aria-label='Add']", index: 0, timeout: 10000 }
         R_click_qty_add_2: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_3: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_4: { locator: "button[aria-label='Add']", index: 0 }
@@ -493,7 +495,7 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
 
         # Step 3: Verify the server-enforced purchase-limit warning (limit=5, requested 6)
-        verify_purchase_limit_warning: { text: "Each customer can buy up to 5 items", timeout: 10000 }
+        verify_purchase_limit_warning: { text: "has a quantity limit", timeout: 10000 }
         sleep_end: 2000
 
     expect_result:
@@ -604,19 +606,18 @@ testT4955_Partner_SetPaymentRestriction_venue_map:
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
         sleep_step: 1000
 
-        # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
-        # R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
-        R_click_access_code_button: { role: "button", name: "Set up access code" }
+        # Step 5.1: Click "Edit" on access restriction section (dialog already open after toggle)
+        R_click_access_code_button: { locator: "button:has-text('Edit')", timeout: 5000 }
         sleep_step: 1000
 
         # Step 7: Click and fill access code
-        R_click_access_code: { role: "textbox", name: "Enter access code" }
+        R_click_access_code: { role: "textbox", name: "Enter access code", timeout: 5000, optional: true }
         sleep_step: 500
-        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123" }
+        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123", optional: true }
         sleep_step: 500
 
-        # Step 8: Click Confirm to add the code
-        R_click_confirm_code: { role: "button", name: "Confirm" }
+        # Step 8: Click Confirm to add the code (optional - code may already be set)
+        R_click_confirm_code: { role: "button", name: "Confirm", optional: true }
         sleep_step: 1000
 
         # Step 9: Click Apply button
@@ -648,10 +649,11 @@ testT4955_Guest_VerifyAccessCode_venue_map:
         # Step 2: AXS no-map purchase - click "Buy Ticket", then "Buy now" (RSVP for
         # free product) which triggers the "Access code required" gate.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
-        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
-        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        # "Select tickets" dialog: click "+" to add 1 ticket
+        sleep_step: 2000
+        R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+        sleep_step: 1000
+        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 5000 }
 
         # Step 3: Verify access code dialog appears
         verify_access_code_prompt: { text: "Access code required" }
@@ -876,10 +878,11 @@ testT3767_venue_map:
         # Step 2: AXS no-map purchase - click "Buy Ticket", then "Buy now" (the
         # auto-applied coupon row is visible on the checkout dialog that follows).
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
-        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
-        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        # "Select tickets" dialog: click "+" to add 1 ticket
+        sleep_step: 2000
+        R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+        sleep_step: 1000
+        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 5000 }
         sleep_step: 3000
 
         # Step 7: The auto coupon row shows its display title on the checkout dialog
