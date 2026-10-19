@@ -155,6 +155,10 @@ testT3683_T3684_AXS:
             # These assertions run after all test steps complete, when on Order Placed page
             - assertion_type: "element_visible_by_text"
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
+            - assertion_type: "element_visible_by_text"
+              text: "Getting started"
+            - assertion_type: "element_visible_by_text"
+              text: "axs.page.link/mobile"
 
 
 # ==============================================================================
@@ -368,6 +372,10 @@ testT3686_CosellerResell_AXS:
             # Note content matches what was set by Curator on the original Post
             - assertion_type: "element_visible_by_text"
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
+            - assertion_type: "element_visible_by_text"
+              text: "Getting started"
+            - assertion_type: "element_visible_by_text"
+              text: "axs.page.link/mobile"
 
 
 # Separate verification for Guest
@@ -705,6 +713,10 @@ testT4955_Guest_VerifyAccessCode_AXS:
         assertions:
             - assertion_type: "url_contains"
               text: "order"
+            - assertion_type: "element_visible_by_text"
+              text: "Getting started"
+            - assertion_type: "element_visible_by_text"
+              text: "axs.page.link/mobile"
 
     teardown_step:
         # Step 1: Inject partner cookies to switch to partner context
@@ -922,6 +934,10 @@ testT3767_AXS:
               text: "order"
             - assertion_type: "element_visible_by_text"
               text: "Free"
+            - assertion_type: "element_visible_by_text"
+              text: "Getting started"
+            - assertion_type: "element_visible_by_text"
+              text: "axs.page.link/mobile"
 
 
     teardown_step:
