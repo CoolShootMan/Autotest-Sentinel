@@ -2233,6 +2233,10 @@ testT3779:
         R_click_continue_discount: { role: 'button', name: 'Continue' }
         sleep_step: 1000
 
+        # Fill in coupon code name
+        fill_coupon_code: { locator: 'input[name="applicableCode"]', value: 'autotest3779' }
+        sleep_step: 500
+
         # How should this discount be applied at checkout?  --- default select "coupon code"
         R_click_continue_apply: { role: 'button', name: 'Continue' }
 
