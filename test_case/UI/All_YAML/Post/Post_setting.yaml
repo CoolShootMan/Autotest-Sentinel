@@ -96,7 +96,14 @@ testT1742:
         sleep_step: 2000
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
+                # Anchor to the post CARD (MuiCard-root) instead of the image ancestor.
+                # The old locator 'ancestor::*[.//img][1]' flaked on CI because it required a
+                # rendered <img> inside the card; when the image was lazy-loaded/absent (esp.
+                # in teardown) the scope resolved to nothing -> "Scope container not found".
+                # The "Offer up to X%" badge lives in the card regardless of the image, so
+                # scoping to the stable MuiCard-root keeps the anti-false-positive intent
+                # (verify the offer on THIS post only) without the image dependency.
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::div[contains(@class,"MuiCard-root")][1]'
             text: "Offer up to 10%"
             timeout: 15000
 
@@ -145,9 +152,10 @@ testT1742:
         sleep_step: 1500
         verify_post_offer:
             scope:
-                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::*[.//img][1]'
+                # Same fix as the main verify: anchor to MuiCard-root, not the image ancestor.
+                locator: 'text="auto-test-post-setting-case1742" >> xpath=ancestor::div[contains(@class,"MuiCard-root")][1]'
             text: "Offer up to 8%"
-            timeout: 5000
+            timeout: 15000
 
 
 
