@@ -160,13 +160,6 @@ testT3683_T3684_TDC:
             - assertion_type: "element_visible_by_text"
               text: "You're all set"
 
-    teardown_step:
-        # Full refund the guest order
-        add_cookies: {}
-        sleep_step: 1000
-        open: "{BASE_URL}/events"
-        sleep_step: 5000
-        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
 
 # T3686: Verify the order confirmation note is displayed on order placed page when purchased through Coseller's shop
 #
@@ -390,13 +383,6 @@ testT3686_teardown_TDC:
     description: "delete the resold post"
     expect_result: "Co-seller post deleted successfully or no data to delete"
     test_step:
-        # Step 0: Full refund the guest order
-        add_cookies: {}
-        sleep_step: 1000
-        open: "{BASE_URL}/events"
-        sleep_step: 5000
-        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
-
         # Step 1: Events list page -> click Event card
         open: "{BASE_URL}/events"
         sleep_step: 5000
@@ -777,13 +763,6 @@ testT3767_TDC:
 
 
     teardown_step:
-        # Step 0: Full refund the guest order
-        add_cookies: {}
-        sleep_step: 1000
-        open: "{BASE_URL}/events"
-        sleep_step: 5000
-        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
-
         # Partner cleans up: Delete the coupon via Edit -> Delete
         add_cookies: {}
         sleep_step: 1000
@@ -968,13 +947,6 @@ testT4955_Guest_VerifyAccessCode_TDC:
               text: "You're all set"
 
     teardown_step:
-        # Step 0: Full refund the guest order
-        add_cookies: {}
-        sleep_step: 1000
-        open: "{BASE_URL}/events"
-        sleep_step: 5000
-        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
-
         # Step 1: Inject partner cookies to switch to partner context
         add_cookies: {}
         sleep_step: 2000
