@@ -2212,32 +2212,39 @@ testT3779:
         check_hide_coupon_box: { locator: 'input[name="hideCouponBox"]', skip_if_checked: true }
         sleep_step: 500
 
-        # Step 6: Click "Create a coupon" button
-        R_click_create_coupon_btn: { role: 'button', name: 'Create' }
-        sleep_step: 1500
-
-        # Step 7: Enable "Automatically applied at checkout" toggle
+        # Step 6: Enable "Automatically applied at checkout" toggle
         check_auto_apply: { locator: 'input[name="autoApplied"]', skip_if_checked: true }
         sleep_step: 500
 
-        # Step 8: Fill in Coupon display title
-        fill_coupon_title: { locator: 'input[placeholder="Coupon display title"]', value: 'autotest3779' }
-        sleep_step: 300
+        # Step 7: Click "Create a coupon" button
+        R_click_create_coupon_btn: { role: 'button', name: 'Create' }
+        sleep_step: 1500
 
-        # Step 9: Fill in Coupon display description
-        fill_coupon_desc: { locator: 'input[placeholder="Coupon display description"]', value: 'autotest3779' }
-        sleep_step: 300
+        # Which products do you want to discount?  -- default select "All products"
+        R_click_continue_products: { role: 'button', name: 'Continue' }
 
-        # Step 10: Fill in Customer benefits value (100)
+        # What type of discount do you want to offer?  --- default select "Percentage off"
+        R_click_continue_type: { role: 'button', name: 'Continue' }
+
+        # Step 8: Fill in Customer benefits value (100)
         fill_coupon_value: { locator: 'input[name="betterDeals.0.value"]', value: '100' }
         sleep_step: 300
 
-        # Step 11: Click "Create" to submit
-        R_click_create: { role: 'button', name: 'Create' }
+        R_click_continue_discount: { role: 'button', name: 'Continue' }
+        sleep_step: 1000
+
+        # How should this discount be applied at checkout?  --- default select "coupon code"
+        R_click_continue_apply: { role: 'button', name: 'Continue' }
+
+        # Set coupon availability and limits  --- default value
+        R_click_continue_limits: { role: 'button', name: 'Continue' }
+
+        # Step 11:Review your coupon
+        R_click_finish: { role: 'button', name: 'Finish' }
         sleep_step: 2000
 
-        # Step 12: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
-        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
+        # Step 12: If "Hide Coupon Box at Checkout" disabled info dialog appears, click "Got it"
+        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 5000 }
         sleep_step: 1000
 
         # Step 13: Save and verify toast
