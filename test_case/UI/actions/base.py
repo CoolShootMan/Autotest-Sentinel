@@ -1230,12 +1230,7 @@ def click_modal_close(page: Page, v: dict):
         logger.warning(f"Failed to close modal: {e}")
 
 def verify_text_visible(page: Page, v: dict):
-<<<<<<< Updated upstream
-    text = v.get("text")
-    text = _fill_vars(page, text)
-=======
     raw_text = v.get("text")
->>>>>>> Stashed changes
     timeout = v.get("timeout", 10000)
     not_visible = v.get("assert_not_visible", False)
 
