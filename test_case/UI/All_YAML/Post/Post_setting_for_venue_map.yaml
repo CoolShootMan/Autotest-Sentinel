@@ -872,35 +872,47 @@ testT3779_venue_map:
         # Step 3.5: Enable "Hide Coupon Box at Checkout"
         check_hide_coupon_box: { locator: 'input[name="hideCouponBox"]', skip_if_checked: true }
         sleep_step: 500
-        # Step 4: Click "Create a coupon" button
+        # Step 4: Click "Create" button to create a new coupon
         R_click_create_coupon_btn: { role: 'button', name: 'Create' }
         sleep_step: 1500
 
-        # Step 5: Enable "Automatically applied at checkout" toggle
-        check_auto_apply: { locator: 'input[name="autoApplied"]', skip_if_checked: true }
-        sleep_step: 500
+        # Which products? --- default All products
+        R_click_continue_products: { role: 'button', name: 'Continue' }
 
-        # Step 6: Fill in Coupon display title
-        fill_coupon_title: { locator: 'input[placeholder="Coupon display title"]', value: 'autotest3779' }
-        sleep_step: 300
+        # What type? --- default Percentage off
+        R_click_continue_type: { role: 'button', name: 'Continue' }
 
-        # Step 7: Fill in Coupon display description
-        fill_coupon_desc: { locator: 'input[placeholder="Coupon display description"]', value: 'autotest3779' }
-        sleep_step: 300
-
-        # Step 8: Fill in Customer benefits value (100)
+        # Fill discount value (100%)
         fill_coupon_value: { locator: 'input[name="betterDeals.0.value"]', value: '100' }
         sleep_step: 300
 
-        # Step 9: Click "Create" to submit
-        R_click_create: { role: 'button', name: 'Create' }
-        sleep_step: 2000
-
-        # Step 10: If "Hide Coupon Box at Checkout" enabled info drawer appears, click "Save"
-        smart_click_optional_got_it: { role: 'button', name: 'Save', timeout: 3000 }
+        R_click_continue_discount: { role: 'button', name: 'Continue' }
         sleep_step: 1000
 
-        # Step 11: Save and verify toast
+        # Select "Automatic discount"
+        R_click_auto_discount: { role: 'radio', name: 'Automatic discount' }
+        sleep_step: 500
+
+        # Fill display title and description
+        fill_coupon_title: { locator: 'input[placeholder="Title"]', value: 'autotest3779' }
+        sleep_step: 300
+        fill_coupon_desc: { locator: 'input[placeholder="Description"]', value: 'autotest3779' }
+        sleep_step: 300
+
+        R_click_continue_apply: { role: 'button', name: 'Continue' }
+
+        # Set availability --- default
+        R_click_continue_limits: { role: 'button', name: 'Continue' }
+
+        # Review your coupon
+        R_click_finish: { role: 'button', name: 'Finish' }
+        sleep_step: 2000
+
+        # If "Hide Coupon Box at Checkout" disabled info dialog appears
+        smart_click_optional_got_it: { role: 'button', name: 'Got it', timeout: 5000 }
+        sleep_step: 1000
+
+        # Save and verify toast
         R_click_save: { role: 'button', name: 'Save' }
         wait_toast_saved: { message: "Post promotions updated", timeout: 15000 }
 
@@ -981,15 +993,17 @@ testT3767_venue_map:
         sleep_step: 8000
         R_click_place_order: { role: "button", name: "Place order", optional: true }
         sleep_step: 5000
-        wait_for_url: { url: "*order*", timeout: 15000 }
+        wait_for_url: { url: "*order*", timeout: 45000 }
         sleep_step: 2000
 
 
     expect_result:
-        description: "Guest checkout successful with auto-applied coupon; order page displayed"
+        description: "Guest checkout successful with auto-applied coupon; order page displayed, amount shows Free"
         assertions:
             - assertion_type: "url_contains"
               text: "order"
+            - assertion_type: "element_visible_by_text"
+              text: "Free"
 
 
     teardown_step:
