@@ -33,7 +33,7 @@
 # ==============================================================================
 
 
-testT3683_T3684_venue_map:
+testT3683_T3684_AXS:
 #Auth: Linda Zhou
     description: "Verify Order Confirmation Note - Edit in Settings Tab and Verify Display on Order Page"
     test_step:
@@ -174,7 +174,7 @@ testT3683_T3684_venue_map:
 #    (same note content as set by Curator on the original Post)
 # ==============================================================================
 
-testT3686_CosellerResell_venue_map:
+testT3686_CosellerResell_AXS:
 #Auth: Linda Zhou
     is_coseller: true
     # Deferred: seat-map purchase needs a logged-in +997 buyer; this flow logs out to
@@ -371,7 +371,7 @@ testT3686_CosellerResell_venue_map:
 
 
 # Separate verification for Guest
-testT3686_teardown_venue_map:
+testT3686_teardown_AXS:
 #Auth: Linda Zhou
     # Deferred: paired cleanup for the deferred T3686_CosellerResell above.
     description: "delete the resold post"
@@ -405,7 +405,7 @@ testT3686_teardown_venue_map:
 
 
 # T2515 Partner sets Purchase quantity limit=5 for a several-variants item
-testT2515_SetLimit_WithVariant_venue_map:
+testT2515_SetLimit_WithVariant_AXS:
     description: "Partner sets Purchase quantity limit=5 for a several-variants item in post"
     test_step:
         # Step 1: Open Events list page
@@ -471,7 +471,7 @@ testT2515_SetLimit_WithVariant_venue_map:
 # that overlaps its neighbours, so plain clicks miss. Zooming in 4x separates the
 # rects; we then pick a rect whose center elementFromPoint() returns the rect itself,
 # and real-mouse click it via its data-id (JS-synthesized clicks don't register).
-testT2515_VerifyDisabled_WithVariant_venue_map:
+testT2515_VerifyDisabled_WithVariant_AXS:
     guest: true
     description: "Verify purchase is blocked at limit=5 (AXS ticket qty raised to 6 shows the limit warning)"
     test_step:
@@ -579,7 +579,7 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
 # [2026-10-13] Target post switched to 12061-phase2-auto-event (same as T2515; the
 # event-for-ui-auto-venue-map post has an empty seat map - tables=0 - so its guest
 # purchase flow cannot proceed).
-testT4955_Partner_SetPaymentRestriction_venue_map:
+testT4955_Partner_SetPaymentRestriction_AXS:
     description: "Partner enables Payment Restriction and sets access code 'demi123'"
     test_step:
         # Step 1: Open Events list page
@@ -638,7 +638,7 @@ testT4955_Partner_SetPaymentRestriction_venue_map:
 # T4955: Guest verifies Payment Restriction requires access code
 # AXS no-map event: "Buy Ticket" -> "Buy now" triggers the "Access code required"
 # dialog (verified on the no-map flow).
-testT4955_Guest_VerifyAccessCode_venue_map:
+testT4955_Guest_VerifyAccessCode_AXS:
     guest: true
     description: "Guest verifies that access code is required to purchase when Payment Restriction is enabled"
     test_step:
@@ -765,7 +765,7 @@ testT4955_Guest_VerifyAccessCode_venue_map:
 #   Coupon created successfully with auto-apply enabled; toast "Post promotions updated" shown
 # ==============================================================================
 
-testT3779_venue_map:
+testT3779_AXS:
 #Auth: Linda Zhou
     description: "Create an auto-applied coupon on the venue-map post"
     test_step:
@@ -865,7 +865,7 @@ testT3779_venue_map:
 #   Guest checkout successful with coupon applied; order page displayed
 # ==============================================================================
 
-testT3767_venue_map:
+testT3767_AXS:
 #Auth: Linda Zhou
     guest: true
     description: "Verify auto-applied coupon 'autotest3779' applies at guest checkout (AXS no-map post)"
