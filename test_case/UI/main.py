@@ -74,6 +74,7 @@ def start_autotest():
         "All_YAML/Events/Scanner.yaml",
         "All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml",
         "All_YAML/Post/Post_setting_for_AXS.yaml",
+        "All_YAML/Post/Post_setting_for_TDC.yaml",
         "All_YAML/Events/Event_settings/axs_fee_breakdown_guest_purchase_ui.yaml",
         "All_YAML/Events/Event_settings/axs_fee_breakdown_partner_full_refund_ui.yaml",
         "All_YAML/Events/Event_settings/tdc_fee_breakdown_ui.yaml",

@@ -840,20 +840,18 @@ testT4955_Partner_SetPaymentRestriction_TDC:
 
         # Step 5: Check enablePaymentRestriction checkbox
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
+        sleep_step: 2000
+
+        # Step 5.1: Click "Set up access code" button in the "Set checkout restrictions" dialog
+        R_click_access_code_button: { role: "button", name: "Set up access code", timeout: 5000 }
         sleep_step: 1000
 
-        # Step 5.1: Click "Edit" on access restriction section (dialog already open after toggle)
-        R_click_access_code_button: { locator: "button:has-text('Edit')", timeout: 5000 }
-        sleep_step: 1000
-
-        # Step 7: Click and fill access code
-        R_click_access_code: { role: "textbox", name: "Enter access code", timeout: 5000, optional: true }
-        sleep_step: 500
-        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123", optional: true }
+        # Step 7: Fill access code
+        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123", timeout: 5000 }
         sleep_step: 500
 
-        # Step 8: Click Confirm to add the code (optional - code may already be set)
-        R_click_confirm_code: { role: "button", name: "Confirm", optional: true }
+        # Step 8: Click Confirm to save the code
+        R_click_confirm_code: { role: "button", name: "Confirm" }
         sleep_step: 1000
 
         # Step 9: Click Apply button
