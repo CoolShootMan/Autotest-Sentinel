@@ -97,6 +97,9 @@ testT3683_T3684_venue_map:
         # Step 7: AXS no-map purchase - click the product's "Buy Ticket" button, then the
         # optional "Buy now" CTA, then "Continue" into the contact/checkout form.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
+        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
+        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
         R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
         R_click_continue_cc_fallback: { role: 'button', name: 'Continue with credit card', optional: true }
@@ -309,6 +312,9 @@ testT3686_CosellerResell_venue_map:
         # T3686 Step 5: AXS no-map purchase from the coseller's resold post - click
         # "Buy Ticket", optional "Buy now", then "Continue" into contact/checkout.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
+        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
+        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
         R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
         R_click_continue_cc_fallback: { role: 'button', name: 'Continue with credit card', optional: true }
@@ -475,6 +481,9 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
         # "Buy now". The server enforces the purchase-quantity limit and surfaces the
         # over-limit warning before checkout.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
+        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
+        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
         R_click_qty_add_1: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_2: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_3: { locator: "button[aria-label='Add']", index: 0 }
@@ -639,6 +648,9 @@ testT4955_Guest_VerifyAccessCode_venue_map:
         # Step 2: AXS no-map purchase - click "Buy Ticket", then "Buy now" (RSVP for
         # free product) which triggers the "Access code required" gate.
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
+        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
+        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
 
         # Step 3: Verify access code dialog appears
@@ -852,6 +864,9 @@ testT3767_venue_map:
         # Step 2: AXS no-map purchase - click "Buy Ticket", then "Buy now" (the
         # auto-applied coupon row is visible on the checkout dialog that follows).
         R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+        # [2026-10-19] NEW venue-map flow: after "Buy Ticket", adding the selected ticket to the
+        # map requires clicking the Add (+) icon (data-testid="Addicon") before "Buy now" renders.
+        R_click_select_ticket_venue_map: { locator: '[data-testid="Addicon"]', timeout: 10000 }
         smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
         sleep_step: 3000
 
