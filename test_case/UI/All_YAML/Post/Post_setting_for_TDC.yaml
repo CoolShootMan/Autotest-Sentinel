@@ -166,26 +166,8 @@ testT3683_T3684_TDC:
         sleep_step: 1000
         open: "{BASE_URL}/events"
         sleep_step: 5000
-        R_click_event_refund: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
-        sleep_step: 4000
-        R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
-        sleep_step: 3500
-        R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
-        sleep_step: 5000
-        extract_first_order:
-            save_as: "first_order_id"
-            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id found'); return m[1]; }"
-        sleep_step: 1000
-        click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
-        sleep_step: 6000
-        click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
-        sleep_step: 2500
-        click_full_refund: { locator: "[role=menuitem]:has-text('Full refund')" }
-        sleep_step: 3500
-        fill_refund_notes: { locator: "textarea[placeholder='Add a short note for yourself (optional)']", value: "TDC UI automation" }
-        sleep_step: 800
-        click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
-        sleep_step: 6000
+        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
+
 # T3686: Verify the order confirmation note is displayed on order placed page when purchased through Coseller's shop
 #
 # Step description:
@@ -408,31 +390,12 @@ testT3686_teardown_TDC:
     description: "delete the resold post"
     expect_result: "Co-seller post deleted successfully or no data to delete"
     test_step:
-        # Step 0: Full refund the guest order first
+        # Step 0: Full refund the guest order
         add_cookies: {}
         sleep_step: 1000
         open: "{BASE_URL}/events"
         sleep_step: 5000
-        R_click_event_refund: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
-        sleep_step: 4000
-        R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
-        sleep_step: 3500
-        R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
-        sleep_step: 5000
-        extract_first_order:
-            save_as: "first_order_id"
-            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id found'); return m[1]; }"
-        sleep_step: 1000
-        click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
-        sleep_step: 6000
-        click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
-        sleep_step: 2500
-        click_full_refund: { locator: "[role=menuitem]:has-text('Full refund')" }
-        sleep_step: 3500
-        fill_refund_notes: { locator: "textarea[placeholder='Add a short note for yourself (optional)']", value: "TDC UI automation" }
-        sleep_step: 800
-        click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
-        sleep_step: 6000
+        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
 
         # Step 1: Events list page -> click Event card
         open: "{BASE_URL}/events"
@@ -814,31 +777,12 @@ testT3767_TDC:
 
 
     teardown_step:
-        # Step 0: Full refund the guest order first
+        # Step 0: Full refund the guest order
         add_cookies: {}
         sleep_step: 1000
         open: "{BASE_URL}/events"
         sleep_step: 5000
-        R_click_event_refund: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
-        sleep_step: 4000
-        R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
-        sleep_step: 3500
-        R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
-        sleep_step: 5000
-        extract_first_order:
-            save_as: "first_order_id"
-            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id found'); return m[1]; }"
-        sleep_step: 1000
-        click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
-        sleep_step: 6000
-        click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
-        sleep_step: 2500
-        click_full_refund: { locator: "[role=menuitem]:has-text('Full refund')" }
-        sleep_step: 3500
-        fill_refund_notes: { locator: "textarea[placeholder='Add a short note for yourself (optional)']", value: "TDC UI automation" }
-        sleep_step: 800
-        click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
-        sleep_step: 6000
+        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
 
         # Partner cleans up: Delete the coupon via Edit -> Delete
         add_cookies: {}
@@ -1024,31 +968,12 @@ testT4955_Guest_VerifyAccessCode_TDC:
               text: "You're all set"
 
     teardown_step:
-        # Step 0: Full refund the guest order first
+        # Step 0: Full refund the guest order
         add_cookies: {}
         sleep_step: 1000
         open: "{BASE_URL}/events"
         sleep_step: 5000
-        R_click_event_refund: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
-        sleep_step: 4000
-        R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
-        sleep_step: 3500
-        R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
-        sleep_step: 5000
-        extract_first_order:
-            save_as: "first_order_id"
-            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id found'); return m[1]; }"
-        sleep_step: 1000
-        click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
-        sleep_step: 6000
-        click_i_want_to: { locator: "xpath=//*[normalize-space(.)='I want to']" }
-        sleep_step: 2500
-        click_full_refund: { locator: "[role=menuitem]:has-text('Full refund')" }
-        sleep_step: 3500
-        fill_refund_notes: { locator: "textarea[placeholder='Add a short note for yourself (optional)']", value: "TDC UI automation" }
-        sleep_step: 800
-        click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
-        sleep_step: 6000
+        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='{{event_tdc}}']", notes: "TDC UI automation" }
 
         # Step 1: Inject partner cookies to switch to partner context
         add_cookies: {}

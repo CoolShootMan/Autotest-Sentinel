@@ -4465,3 +4465,63 @@ def smart_seat_click(page: Page, v: dict):
     if final < target:
         raise AssertionError(f"smart_seat_click: reached {final} tables, target {target}")
     logger.info(f"smart_seat_click: done, {final} tables selected")
+
+
+def full_refund_first_order(page: Page, v: dict):
+    """
+    Full refund the first (most recent) order on the event's Sales -> Orders page.
+
+    YAML usage:
+        full_refund_first_order: { event_xpath: "//*[normalize-space(.)='My Event']", notes: "UI automation" }
+
+    Parameters:
+    - event_xpath: xpath locator to click the event on the events list page
+    - notes: refund note text, default "UI automation"
+    """
+    event_xpath = v.get("event_xpath")
+    notes = v.get("notes", "UI automation")
+    if not event_xpath:
+        raise ValueError("full_refund_first_order: event_xpath is required")
+
+    logger.info("full_refund_first_order: starting refund flow")
+
+    # Step 1: Click event
+    page.locator(f"xpath={event_xpath}").first.click()
+    page.wait_for_timeout(4000)
+
+    # Step 2: Sales tab
+    page.locator("xpath=//button[@role='tab'][normalize-space(.)='Sales']").click()
+    page.wait_for_timeout(3500)
+
+    # Step 3: Orders sub-tab
+    page.locator("xpath=//*[@role='tab'][normalize-space(.)='Orders']").click()
+    page.wait_for_timeout(5000)
+
+    # Step 4: Extract first order id
+    first_order_id = page.evaluate(
+        "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id (#Pxxxxx) found'); return m[1]; }"
+    )
+    logger.info(f"full_refund_first_order: found order #{first_order_id}")
+    page.wait_for_timeout(800)
+
+    # Step 5: Click the order
+    page.locator(f"xpath=//*[normalize-space(.)='#{first_order_id}']").click()
+    page.wait_for_timeout(6000)
+
+    # Step 6: "I want to" dropdown
+    page.locator("xpath=//*[normalize-space(.)='I want to']").click()
+    page.wait_for_timeout(2500)
+
+    # Step 7: Full refund
+    page.locator("[role=menuitem]:has-text('Full refund')").click()
+    page.wait_for_timeout(3500)
+
+    # Step 8: Fill refund notes
+    page.locator("textarea[placeholder='Add a short note for yourself (optional)']").fill(notes)
+    page.wait_for_timeout(800)
+
+    # Step 9: Confirm refund
+    page.locator(".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')").click()
+    page.wait_for_timeout(6000)
+
+    logger.info(f"full_refund_first_order: refunded order #{first_order_id}")
