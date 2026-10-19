@@ -156,9 +156,9 @@ testT3683_T3684_TDC:
             - assertion_type: "element_visible_by_text"
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
             - assertion_type: "element_visible_by_text"
-              text: "Getting started"
+              text: "How to access your tickets"
             - assertion_type: "element_visible_by_text"
-              text: "axs.page.link/mobile"
+              text: "You're all set"
 
     teardown_step:
         # Full refund the guest order
@@ -396,9 +396,9 @@ testT3686_CosellerResell_TDC:
             - assertion_type: "element_visible_by_text"
               text: "Test Note - Concert at 7PM, Venue: Test Arena, Please bring ID"
             - assertion_type: "element_visible_by_text"
-              text: "Getting started"
+              text: "How to access your tickets"
             - assertion_type: "element_visible_by_text"
-              text: "axs.page.link/mobile"
+              text: "You're all set"
 
 
 # Separate verification for Guest
@@ -808,9 +808,9 @@ testT3767_TDC:
             - assertion_type: "element_visible_by_text"
               text: "Free"
             - assertion_type: "element_visible_by_text"
-              text: "Getting started"
+              text: "How to access your tickets"
             - assertion_type: "element_visible_by_text"
-              text: "axs.page.link/mobile"
+              text: "You're all set"
 
 
     teardown_step:
@@ -1019,9 +1019,9 @@ testT4955_Guest_VerifyAccessCode_TDC:
             - assertion_type: "url_contains"
               text: "order"
             - assertion_type: "element_visible_by_text"
-              text: "Getting started"
+              text: "How to access your tickets"
             - assertion_type: "element_visible_by_text"
-              text: "axs.page.link/mobile"
+              text: "You're all set"
 
     teardown_step:
         # Step 0: Full refund the guest order first
