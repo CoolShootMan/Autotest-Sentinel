@@ -2324,10 +2324,12 @@ testT3767:
 
 
     expect_result:
-        description: "Guest checkout successful with auto-applied coupon; order page displayed"
+        description: "Guest checkout successful with auto-applied coupon; order page displayed, amount shows Free"
         assertions:
             - assertion_type: "url_contains"
               text: "order"
+            - assertion_type: "element_visible_by_text"
+              text: "Free"
 
 
     teardown_step:
