@@ -627,198 +627,6 @@ testT2515_VerifyDisabled_WithVariant_venue_map:
 
 
 
-# T4955: Partner enables Payment Restriction and sets access code
-# [2026-10-13] Target post switched to 12061-phase2-auto-event (same as T2515; the
-# event-for-ui-auto-venue-map post has an empty seat map - tables=0 - so its guest
-# purchase flow cannot proceed).
-testT4955_Partner_SetPaymentRestriction_venue_map:
-    description: "Partner enables Payment Restriction and sets access code 'demi123'"
-    test_step:
-        # Step 1: Open Events list page
-        open: "{BASE_URL}/events"
-        sleep_after_open: 5000
-
-        # Step 2: Find and click "12061 phase2 auto event" event
-        R_click_event: { locator: "text=12061 phase2 auto event", exact: true }
-        sleep_step: 4000
-
-        # Step 2.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
-
-        # Step 3: Confirm post with alias 12061 phase2 auto event is visible
-        verify_post_alias: { text: "12061 phase2 auto event" }
-        sleep_step: 3000
-
-         # Step 4: Click Setting tab
-        R_click_setting_tab: { role: "tab", name: "Settings" }
-        sleep_step: 2000
-
-        # Step 5: Check enablePaymentRestriction checkbox
-        check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
-        sleep_step: 1000
-
-        # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
-        # R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
-        R_click_access_code_button: { role: "button", name: "Set up access code" }
-        sleep_step: 1000
-
-        # Step 7: Click and fill access code
-        R_click_access_code: { role: "textbox", name: "Enter access code" }
-        sleep_step: 500
-        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123" }
-        sleep_step: 500
-
-        # Step 8: Click Confirm to add the code
-        R_click_confirm_code: { role: "button", name: "Confirm" }
-        sleep_step: 1000
-
-        # Step 9: Click Apply button
-        R_click_apply: { role: "button", name: "Apply" }
-        sleep_step: 2000
-
-        # Step 10: Click Save button on main page
-        R_click_save: { role: "button", name: "Save" }
-        sleep_step: 5000
-
-    expect_result:
-        description: "Payment Restriction with access code saved successfully"
-        assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Post settings updated"
-
-
-# T4955: Guest verifies Payment Restriction requires access code
-# [2026-10-13] Target post switched to 12061-phase2-auto-event (T2515 seat map that
-# actually renders). Entry = "Show venue map drawer"; select 1 seat via
-# smart_seat_click; "Add to cart" triggers the "Access code required" dialog
-# (verified on 2026-10-13: dialog text "This product requires access code...").
-testT4955_Guest_VerifyAccessCode_venue_map:
-    guest: true
-    description: "Guest verifies that access code is required to purchase when Payment Restriction is enabled"
-    test_step:
-        # Step 1: Open post detail page as guest
-        open: "{BASE_URL}/autotestshop/post/12061-phase2-auto-event"
-        sleep_after_open: 6000
-
-        # Step 2: Open the venue map drawer (the post's seat-map entry button)
-        R_click_drawer: { role: "button", name: "Show venue map drawer" }
-
-        # Step 3: The drawer opens straight into the seat map — wait until the seat
-        # circles actually render before clicking (the dialog shell appears before
-        # the map SVG finishes loading)
-        wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
-
-        # Step 4: Select 1 seat via smart_seat_click.
-        # [2026-10-13] KAT-12263 (checkout crash on $80/$100 inside-seat products
-        # without images) is FIXED by dev; $80 seats are clickable again. Back to
-        # the original $80 inside seat (stroke #E9803D), zoom 4 default — the same
-        # "N tables selected" interaction as T2515. The temporary $50 workaround
-        # (zoom 2 + stroke #CD254A) is no longer needed.
-        smart_seat_click_1: { target: 1, stroke: "#E9803D" }
-
-        # Step 5: Add to cart triggers the access-code gate.
-        # [2026-10-13] Button shows "Update cart" when the guest cart already holds
-        # items (residue from a previous run / manual test); "Add to cart" when empty.
-        # Composite locator covers both.
-        R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
-        sleep_step: 2000
-
-        # Step 6: Verify access code dialog appears
-        verify_access_code_prompt: { text: "Access code required" }
-        sleep_step: 1000
-
-        # Step 7: Enter access code in dialog
-        fill_guest_access_code: { role: "textbox", name: "Enter code", value: "demi123" }
-        sleep_step: 500
-
-        # Step 8: Click Confirm to submit access code
-        R_click_confirm_code: { role: "button", name: "Confirm" }
-        sleep_step: 2000
-
-        # Step 8.5: Confirm closes the access-code dialog and completes the add-to-cart;
-        # the cart now holds the seat and a "Checkout" button appears (verified 2026-10-13).
-        R_click_checkout: { locator: 'button:has-text("Checkout")' }
-        sleep_step: 3000
-
-        # Step 8.6: New checkout opens collapsed with only the payment CTA — clicking
-        # "Continue with credit card" expands the Contact + Payment form (checkout
-        # redesign shipped with the KAT-12263 fix, 2026-10-13).
-        R_click_continue_cc: { role: "button", name: "Continue with credit card" }
-        sleep_step: 2500
-
-        # Step 9: Fill Contact info (checkout dialog)
-        fill_first_name: { locator: 'input[name="contact.firstName"]', value: "Test" }
-        fill_last_name: { locator: 'input[name="contact.lastName"]', value: "User" }
-        sleep_step: 500
-
-        fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
-        sleep_step: 500
-        fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
-        sleep_step: 500
-
-        # Step 11: Seat ticket is PAID — Stripe card + "Place order". If a leftover
-        # auto-coupon made the total FREE the Stripe fields are absent (fill_stripe warns
-        # + continues) and the CTA can render as "RSVP" — both fallbacks stay optional.
-        fill_stripe_iframe:
-            card_number: '4242424242424242'
-            expiry: '02/45'
-            cvc: '345'
-            card_name: 'linda 4650'
-            zipcode: '90021'
-        # Settle sleep: let POST /order/checkout/express finish before ordering.
-        sleep_step: 8000
-        R_click_place_order: { role: 'button', name: 'Place order', optional: true }
-        sleep_step: 5000
-        R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
-        R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
-        sleep_end: 3000
-
-    expect_result:
-        description: "Guest with correct access code can complete purchase successfully"
-        assertions:
-            - assertion_type: "url_contains"
-              text: "order"
-
-    teardown_step:
-        # Step 1: Inject partner cookies to switch to partner context
-        add_cookies: {}
-        sleep_step: 2000
-
-        # Step 2: Open Events list page
-        open_teardown: "{BASE_URL}/events"
-        sleep_step: 5000
-
-        # Step 3: Find and click "12061 phase2 auto event"
-        R_click_event_teardown: { locator: "text=12061 phase2 auto event", exact: true }
-        sleep_step: 4000
-
-        # Step 3.1: Scroll down to reveal post card
-        swipe_teardown: { x: 0, y: 500 }
-        sleep_step: 1000
-
-        # Step 3.2: Click Posts tab to ensure post cards are visible
-        R_click_posts_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
-
-        # Step 4: Post tab shows the post directly; card click removed.
-        sleep_step: 3000
-
-        # Step 5: Click Settings tab
-        R_click_settings_card_teardown: { role: "button", name: "Settings" }
-        sleep_step: 2000
-
-
-        # Step 6: Uncheck enablePaymentRestriction checkbox to disable
-        uncheck_payment_restriction: { locator: "input[name='enablePaymentRestriction']", checked: false }
-        sleep_step: 1000
-
-        # Step 7: Save
-        R_click_save_teardown: { role: "button", name: "Save" }
-        sleep_step: 3000
-        wait_toast_save_teardown: { message: "Post settings updated", timeout: 15000 }
-
-
 
 
 
@@ -1053,3 +861,197 @@ testT3767_venue_map:
         # Step 4: Save changes
         R_click_save_td: { role: 'button', name: 'Save' }
         wait_toast_td: { message: "Post promotions updated", timeout: 15000 }
+
+
+# T4955: Partner enables Payment Restriction and sets access code
+# [2026-10-13] Target post switched to 12061-phase2-auto-event (same as T2515; the
+# event-for-ui-auto-venue-map post has an empty seat map - tables=0 - so its guest
+# purchase flow cannot proceed).
+testT4955_Partner_SetPaymentRestriction_venue_map:
+    description: "Partner enables Payment Restriction and sets access code 'demi123'"
+    test_step:
+        # Step 1: Open Events list page
+        open: "{BASE_URL}/events"
+        sleep_after_open: 5000
+
+        # Step 2: Find and click "12061 phase2 auto event" event
+        R_click_event: { locator: "text=12061 phase2 auto event", exact: true }
+        sleep_step: 4000
+
+        # Step 2.2: Click Posts tab to ensure post cards are visible
+        R_click_posts_tab: { role: "tab", name: "Post" }
+        sleep_step: 2000
+
+        # Step 3: Confirm post with alias 12061 phase2 auto event is visible
+        verify_post_alias: { text: "12061 phase2 auto event" }
+        sleep_step: 3000
+
+         # Step 4: Click Setting tab
+        R_click_setting_tab: { role: "tab", name: "Settings" }
+        sleep_step: 2000
+
+        # Step 5: Check enablePaymentRestriction checkbox
+        check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
+        sleep_step: 1000
+
+        # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
+        # R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
+        R_click_access_code_button: { role: "button", name: "Set up access code" }
+        sleep_step: 1000
+
+        # Step 7: Click and fill access code
+        R_click_access_code: { role: "textbox", name: "Enter access code" }
+        sleep_step: 500
+        fill_access_code: { role: "textbox", name: "Enter access code", value: "demi123" }
+        sleep_step: 500
+
+        # Step 8: Click Confirm to add the code
+        R_click_confirm_code: { role: "button", name: "Confirm" }
+        sleep_step: 1000
+
+        # Step 9: Click Apply button
+        R_click_apply: { role: "button", name: "Apply" }
+        sleep_step: 2000
+
+        # Step 10: Click Save button on main page
+        R_click_save: { role: "button", name: "Save" }
+        sleep_step: 5000
+
+    expect_result:
+        description: "Payment Restriction with access code saved successfully"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "Post settings updated"
+
+
+# T4955: Guest verifies Payment Restriction requires access code
+# [2026-10-13] Target post switched to 12061-phase2-auto-event (T2515 seat map that
+# actually renders). Entry = "Show venue map drawer"; select 1 seat via
+# smart_seat_click; "Add to cart" triggers the "Access code required" dialog
+# (verified on 2026-10-13: dialog text "This product requires access code...").
+testT4955_Guest_VerifyAccessCode_venue_map:
+    guest: true
+    description: "Guest verifies that access code is required to purchase when Payment Restriction is enabled"
+    test_step:
+        # Step 1: Open post detail page as guest
+        open: "{BASE_URL}/autotestshop/post/12061-phase2-auto-event"
+        sleep_after_open: 6000
+
+        # Step 2: Open the venue map drawer (the post's seat-map entry button)
+        R_click_drawer: { role: "button", name: "Show venue map drawer" }
+
+        # Step 3: The drawer opens straight into the seat map — wait until the seat
+        # circles actually render before clicking (the dialog shell appears before
+        # the map SVG finishes loading)
+        wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
+
+        # Step 4: Select 1 seat via smart_seat_click.
+        # [2026-10-13] KAT-12263 (checkout crash on $80/$100 inside-seat products
+        # without images) is FIXED by dev; $80 seats are clickable again. Back to
+        # the original $80 inside seat (stroke #E9803D), zoom 4 default — the same
+        # "N tables selected" interaction as T2515. The temporary $50 workaround
+        # (zoom 2 + stroke #CD254A) is no longer needed.
+        smart_seat_click_1: { target: 1, stroke: "#E9803D" }
+
+        # Step 5: Add to cart triggers the access-code gate.
+        # [2026-10-13] Button shows "Update cart" when the guest cart already holds
+        # items (residue from a previous run / manual test); "Add to cart" when empty.
+        # Composite locator covers both.
+        R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
+        sleep_step: 2000
+
+        # Step 6: Verify access code dialog appears
+        verify_access_code_prompt: { text: "Access code required" }
+        sleep_step: 1000
+
+        # Step 7: Enter access code in dialog
+        fill_guest_access_code: { role: "textbox", name: "Enter code", value: "demi123" }
+        sleep_step: 500
+
+        # Step 8: Click Confirm to submit access code
+        R_click_confirm_code: { role: "button", name: "Confirm" }
+        sleep_step: 2000
+
+        # Step 8.5: Confirm closes the access-code dialog and completes the add-to-cart;
+        # the cart now holds the seat and a "Checkout" button appears (verified 2026-10-13).
+        R_click_checkout: { locator: 'button:has-text("Checkout")' }
+        sleep_step: 3000
+
+        # Step 8.6: New checkout opens collapsed with only the payment CTA — clicking
+        # "Continue with credit card" expands the Contact + Payment form (checkout
+        # redesign shipped with the KAT-12263 fix, 2026-10-13).
+        R_click_continue_cc: { role: "button", name: "Continue with credit card" }
+        sleep_step: 2500
+
+        # Step 9: Fill Contact info (checkout dialog)
+        fill_first_name: { locator: 'input[name="contact.firstName"]', value: "Test" }
+        fill_last_name: { locator: 'input[name="contact.lastName"]', value: "User" }
+        sleep_step: 500
+
+        fill_phone: { role: "textbox", name: "Phone number", value: '+1 (650) 900-6646' }
+        sleep_step: 500
+        fill_email: { locator: 'input[name="contact.email"]', value: 'xuan.ext+123@1m.app' }
+        sleep_step: 500
+
+        # Step 11: Seat ticket is PAID — Stripe card + "Place order". If a leftover
+        # auto-coupon made the total FREE the Stripe fields are absent (fill_stripe warns
+        # + continues) and the CTA can render as "RSVP" — both fallbacks stay optional.
+        fill_stripe_iframe:
+            card_number: '4242424242424242'
+            expiry: '02/45'
+            cvc: '345'
+            card_name: 'linda 4650'
+            zipcode: '90021'
+        # Settle sleep: let POST /order/checkout/express finish before ordering.
+        sleep_step: 8000
+        R_click_place_order: { role: 'button', name: 'Place order', optional: true }
+        sleep_step: 5000
+        R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
+        R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
+        sleep_end: 3000
+
+    expect_result:
+        description: "Guest with correct access code can complete purchase successfully"
+        assertions:
+            - assertion_type: "url_contains"
+              text: "order"
+
+    teardown_step:
+        # Step 1: Inject partner cookies to switch to partner context
+        add_cookies: {}
+        sleep_step: 2000
+
+        # Step 2: Open Events list page
+        open_teardown: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        # Step 3: Find and click "12061 phase2 auto event"
+        R_click_event_teardown: { locator: "text=12061 phase2 auto event", exact: true }
+        sleep_step: 4000
+
+        # Step 3.1: Scroll down to reveal post card
+        swipe_teardown: { x: 0, y: 500 }
+        sleep_step: 1000
+
+        # Step 3.2: Click Posts tab to ensure post cards are visible
+        R_click_posts_tab: { role: "tab", name: "Post" }
+        sleep_step: 2000
+
+        # Step 4: Post tab shows the post directly; card click removed.
+        sleep_step: 3000
+
+        # Step 5: Click Settings tab
+        R_click_settings_card_teardown: { role: "button", name: "Settings" }
+        sleep_step: 2000
+
+
+        # Step 6: Uncheck enablePaymentRestriction checkbox to disable
+        uncheck_payment_restriction: { locator: "input[name='enablePaymentRestriction']", checked: false }
+        sleep_step: 1000
+
+        # Step 7: Save
+        R_click_save_teardown: { role: "button", name: "Save" }
+        sleep_step: 3000
+        wait_toast_save_teardown: { message: "Post settings updated", timeout: 15000 }
+
+
