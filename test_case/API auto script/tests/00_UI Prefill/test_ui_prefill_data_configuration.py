@@ -13976,3 +13976,36 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         })
     expect(_resp162).json('$.code').equals('200')
     print(f"\n=== T4259 DONE: event_id={vars.get('event_t4259_id','')} post_id={vars.get('T4259_post_id','')} products={len(_chain)} ===\n")
+
+    # --- step 163: give partner 999 (linda999) a one-off payout loan reward ---
+    # Mirrors the manual curl captured on 2026-10-20 (Admin → Reward):
+    #   POST {{adminurl}}/promoters/reward    (admin 域 + admin_token)
+    #   body: {"amount":100,"holdTime":0,"reason":"One-off payout - loan",
+    #          "note":"auto test","memo":"auto test","type":"ONE_TIME_PAYOUT_LOAN",
+    #          "promoterId":"<partner 999>"}
+    #
+    # Why promoterId is NOT hardcoded: this prefill DELETEs and re-creates partner 999
+    # on every run (steps 5-10), so the id captured in that curl
+    # (41ed6681-5558-49df-bb1f-fc74135f4ebe) belongs to a throw-away user and would point
+    # at a deleted promoter on the next run — the call would still answer 200 and silently
+    # do nothing. `user_id` is partner 999's own id (set by the step 18 sign-in and never
+    # overwritten afterwards), and in this backend the promoter entity shares the User id
+    # (see tests/17_Admin tools/...t2868: promoterId == User.id where user_role='PROMOTER').
+    _promoter_999_id = str(vars.get("user_id", "") or "")
+    if not _promoter_999_id:
+        raise AssertionError(
+            "step 163: partner 999 id (vars['user_id']) is empty — cannot create the "
+            "one-off payout loan; the prefill's step 18 sign-in must have failed."
+        )
+    _resp163 = ctx.api.admin.promoters_reward(body={
+        "amount": 100,
+        "holdTime": 0,
+        "reason": "One-off payout - loan",
+        "note": "auto test",
+        "memo": "auto test",
+        "type": "ONE_TIME_PAYOUT_LOAN",
+        "promoterId": _promoter_999_id,
+    }, token="admin_token", app_headers=True)
+    expect(_resp163).json('$.code').equals('200')
+    expect(_resp163).json('$.message').equals('success')
+    print(f"\n=== step 163 DONE: one-off payout loan amount=100 -> partner999 promoterId={_promoter_999_id} ===\n")

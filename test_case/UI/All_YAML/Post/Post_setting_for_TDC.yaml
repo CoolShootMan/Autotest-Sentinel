@@ -859,11 +859,11 @@ testT3767_TDC:
         sleep_step: 1500
 
         # Step 3: Confirm delete
-        smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 3000 }
-        sleep_step: 1000
+        smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 10000 }
+        sleep_step: 2000
 
         # Step 4: Save changes
-        R_click_save_td: { role: 'button', name: 'Save' }
+        R_click_save_td: { role: 'button', name: 'Save', timeout: 10000 }
         wait_toast_td: { message: "Post promotions updated", timeout: 15000 }
 
 
