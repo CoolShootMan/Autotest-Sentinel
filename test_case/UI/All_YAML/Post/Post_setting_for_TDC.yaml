@@ -2,8 +2,13 @@
 # Post_setting_for_TDC.yaml - TDC post C-side (guest) purchase suite (NO seat map)
 #
 # Event is NOT hardcoded: every case takes the first imported TDC event name via
-# the cross-case global {{event_tdc}} (seeded by the TDC prefill script), and the
-# public post URL via {{post_url}}. Each case's purchase step uses the generic
+# the cross-case global {{event_tdc}}, and the public post URL via {{post_url}}.
+# These two globals are SELF-SEEDED in-process by the first case `tdc_event_self_seed`
+# in this file: it locates the live TDC-tagged event by its TDC badge and reads the
+# storefront post URL from the event's Post tab. This removes the dependency on the
+# prefill subprocess, which runs in a separate process and only writes
+# TDC_eventHandle1/2/3 — it can never populate these in-process UI globals.
+# Each case's purchase step uses the generic
 # no-map flow from Post_setting.yaml:
 #   "Buy Ticket" -> optional "Buy now" -> "Continue" -> fill contact -> "Place order".
 # Scope: T3683/T3684 order note -> T3686 coseller resell -> T2515 purchase limit ->
@@ -11,6 +16,50 @@
 # ==============================================================================
 
 
+# ==============================================================================
+# Self-seed case (MUST run first): populate {{event_tdc}} and {{post_url}} in-process
+# so every downstream case can resolve its placeholders. Mirrors the self-seed pattern
+# already used by tdc_fee_breakdown_ui.yaml (step 1b) and
+# axs_tdc_venue_map_recommended_at_checkout.yaml.
+# NOTE: do NOT rely on the prefill for these two values — the prefill runs as a separate
+# subprocess and never writes the UI globals.
+tdc_event_self_seed:
+    description: "Self-seed cross-case globals event_tdc + post_url from the live TDC-tagged event (no prefill dependency)"
+    expect_result: "event_tdc = live TDC event name; post_url = its storefront post URL, both published to the cross-case global store."
+    test_step:
+        # 1. Events list
+        open: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        # 1b. Find the TDC-tagged event BY TAG (leaf <span> whose only text is "TDC"),
+        #     walk up to the card's <p> = event name. Published to the global store.
+        extract_value_tdc_event:
+            locator: "xpath=//*[normalize-space(.)='TDC' and not(*)]/parent::*//p"
+            index: 0
+            source: text
+            numeric: false
+            save_as: "event_tdc"
+            global: true
+            timeout: 20000
+        sleep_extract_tdc_event: 800
+
+        # 2. Click the TDC event card (by name) to open its detail page
+        R_click_tdc_event: { locator: "xpath=//p[normalize-space(.)='{{event_tdc}}']" }
+        sleep_event: 5000
+
+        # 3. Post tab -> the "Select post" box reveals the storefront post URL
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_post_tab: 5000
+
+        extract_value_tdc_post_url:
+            locator: "[aria-label='Select post']"
+            source: content
+            strip_whitespace: true
+            numeric: false
+            save_as: "post_url"
+            global: true
+            timeout: 20000
+        sleep_seed_post: 500
 
 
 # ==============================================================================
@@ -843,7 +892,7 @@ testT4955_Partner_SetPaymentRestriction_TDC:
         sleep_step: 2000
 
         # Step 5.1: Click "Set up access code" button in the "Set checkout restrictions" dialog
-        R_click_access_code_button: { role: "button", name: "Set up access code", timeout: 5000 }
+        R_click_access_code_button: { locator: '[data-testid="mui-button"]:has-text("Set up access code"), [data-testid="mui-button"]:has-text("Edit"), button:has-text("Edit")', timeout: 10000 }
         sleep_step: 1000
 
         # Step 7: Fill access code

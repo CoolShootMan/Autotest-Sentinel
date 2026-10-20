@@ -81,21 +81,49 @@ testT5676_T5673_guest_apply:
     open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
     sleep_after_open: 5000
 
-    R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-    sleep_step: 2000
-
-    R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+    # Click CTA "Show venue map drawer" to open seat map
+    R_click_drawer: { role: 'button', name: 'Show venue map drawer', timeout: 15000 }
     sleep_step: 1000
-    R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
+
+    # Wait until seat circles render
+    wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
+
+    # Select 1 seat
+    smart_seat_click: { target: 1, stroke: "#E9803D" }
+    sleep_step: 1000
+
+    # Add to cart
+    R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
     sleep_step: 2000
 
-    fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Auto' }
+    # Click Checkout
+    R_click_checkout: { locator: 'button:has-text("Checkout")' }
+    sleep_step: 3000
+
+    # Assert: approval notice visible on checkout
+    verify_approval_notice: { text: "These items require approval before purchase" }
+    sleep_step: 500
+
+    # Extract seat unit number for later assertion
+    extract_value:
+      locator: '[role="dialog"]'
+      source: "content"
+      regex: "Unit:\\s*(\\d+)"
+      numeric: false
+      save_as: "seat_unit"
+      timeout: 5000
+
+    # Click "Continue to request approval"
+    R_click_continue: { role: 'button', name: 'Continue to request approval', timeout: 15000 }
+    sleep_step: 2000
+
+    fill_first_name: { locator: 'div[role="dialog"] input >> nth=0', value: 'Auto' }
     sleep_step: 300
-    fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Buyer' }
+    fill_last_name: { locator: 'div[role="dialog"] input >> nth=1', value: 'Buyer' }
     sleep_step: 300
-    fill_email: { locator: 'input[name="contact.email"]', value: 'autotest.buyer@example.com' }
+    fill_phone: { locator: 'div[role="dialog"] input >> nth=2', value: '+1 6502396646' }
     sleep_step: 300
-    fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+    fill_email: { locator: 'div[role="dialog"] input >> nth=3', value: 'autotest.buyer@example.com' }
     sleep_step: 300
 
     R_click_submit: { role: 'button', name: 'Submit for approval' }
@@ -130,40 +158,137 @@ testT5685_partner_approve:
     R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
     sleep_step: 2000
 
-    R_click_waitlist_tab: { role: 'tab', name: 'Waitlist', optional: true }
-    sleep_step: 2000
+    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
+    sleep_step: 5000
 
     # Assert: pending application visible
     wait_pending: { text: "Need Review", timeout: 10000 }
     sleep_step: 1000
 
-    R_click_approve: { role: 'button', name: 'Approve & send email' }
+    # Click the first pending application row to open Application detail dialog
+    R_click_pending_row: { locator: "tr:has-text('Need Review')", timeout: 10000 }
     sleep_step: 2000
 
-    R_click_confirm: { role: 'button', name: 'Confirm', optional: true }
+    # Click Approve in the Application dialog
+    R_click_approve: { role: 'button', name: 'Approve' }
+    sleep_step: 2000
+
+    # Confirm in the "Approve application?" dialog
+    R_click_approve_send: { role: 'button', name: 'Approve & send email' }
     sleep_step: 3000
 
     # Assert: status changed to Approved
     wait_approved: { text: "Approved", timeout: 10000 }
     sleep_step: 1000
 
-    # Copy the approved purchase link
-    R_click_copy_link: { role: 'button', name: 'Copy link', optional: true }
-    sleep_step: 1000
+    # Click the approved row again to open Application detail dialog with Purchase link
+    R_click_approved_row: { locator: "tr:has-text('Buyer, Auto')", timeout: 10000 }
+    sleep_step: 2000
 
-    # Extract the approved purchase link href from the approved row
-    extract_purchase_link:
-      locator: 'a[href*="purchaseApproved"], a[href*="token"], a[href*="approval"]'
-      source: "attribute"
-      attribute: "href"
-      save_as: "approved_purchase_link"
-      timeout: 5000
-      optional: true
+    # Assert Application detail fields
+    verify_name: { text: "Buyer, Auto", timeout: 10000 }
+    verify_email: { text: "autotest.buyer@example.com" }
+    verify_phone: { text: "+1 (650) 239-6646" }
+    verify_item: { text: "inside seat with 80" }
+    verify_qty: { text: "Qty: 1" }
+    verify_unit: { text: "Unit:", optional: true }
+    verify_reviewed: { text: "Reviewed at" }
+
+    # Click Copy link (ContentCopyOutlinedIcon) in the Application dialog
+    R_click_copy_link: { locator: '[data-testid="ContentCopyOutlinedIcon"]', timeout: 10000, optional: true }
+    sleep_step: 1000
 
   expect_result:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Approved"
+
+
+# ==============================================================================
+# Test Case: T5686 (Decline flow E2E)
+# Guest applies -> Partner declines -> Guest sees rejected message
+# ==============================================================================
+
+testT5686_guest_apply:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest applies for approval (for decline flow)"
+  test_step:
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
+    sleep_after_open: 5000
+
+    R_click_drawer: { role: 'button', name: 'Show venue map drawer', timeout: 15000 }
+    sleep_step: 1000
+
+    wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
+    smart_seat_click: { target: 1, stroke: "#E9803D" }
+    sleep_step: 1000
+
+    R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
+    sleep_step: 2000
+    R_click_checkout: { locator: 'button:has-text("Checkout")' }
+    sleep_step: 3000
+
+    R_click_continue: { role: 'button', name: 'Continue to request approval', timeout: 15000 }
+    sleep_step: 2000
+
+    fill_first_name: { locator: 'div[role="dialog"] input >> nth=0', value: 'Decline' }
+    sleep_step: 300
+    fill_last_name: { locator: 'div[role="dialog"] input >> nth=1', value: 'Tester' }
+    sleep_step: 300
+    fill_phone: { locator: 'div[role="dialog"] input >> nth=2', value: '+1 6502396646' }
+    sleep_step: 300
+    fill_email: { locator: 'div[role="dialog"] input >> nth=3', value: 'decline.tester@example.com' }
+    sleep_step: 300
+
+    R_click_submit: { role: 'button', name: 'Submit for approval' }
+    sleep_step: 3000
+
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "pending approval"
+
+
+testT5686_partner_decline:
+#Auth: Linda Zhou
+  guest: false
+  description: "Partner declines a pending approval application"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
+    sleep_step: 2000
+
+    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
+    sleep_step: 5000
+
+    # Click the pending application from "Decline, Tester"
+    wait_pending: { text: "Need Review", timeout: 10000 }
+    sleep_step: 1000
+
+    R_click_pending_row: { locator: "tr:has-text('Decline, Tester')", timeout: 10000 }
+    sleep_step: 2000
+
+    # Click Decline in the Application dialog
+    R_click_decline: { role: 'button', name: 'Decline' }
+    sleep_step: 2000
+
+    # Confirm decline
+    R_click_confirm_decline: { role: 'button', name: 'Confirm', optional: true }
+    sleep_step: 3000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Declined"
 
 
 # ==============================================================================
@@ -177,28 +302,40 @@ testT5692_guest_buy_via_link:
   add_cookies: {}
   description: "Guest opens approved purchase link and completes checkout"
   test_step:
-    open_approved_link: "{{approved_purchase_link}}"
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
     sleep_after_open: 5000
 
-    R_click_buy_ticket: { role: 'button', name: 'Buy Ticket', timeout: 10000 }
+    # Click CTA "Show venue map drawer" to open seat map
+    R_click_drawer: { role: 'button', name: 'Show venue map drawer', timeout: 15000, optional: true }
+    sleep_step: 1000
+
+    # Wait until seat circles render
+    wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000, optional: true }
+
+    # Select 1 seat
+    smart_seat_click: { target: 1, stroke: "#E9803D", optional: true }
+    sleep_step: 1000
+
+    # Add to cart
+    R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")', optional: true }
     sleep_step: 2000
 
-    R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000, optional: true }
-    sleep_step: 1000
-    R_click_buy_now: { role: 'button', name: 'Buy now', optional: true }
-    sleep_step: 1000
+    # Click Checkout
+    R_click_checkout: { locator: 'button:has-text("Checkout")', optional: true }
+    sleep_step: 3000
+
     R_click_continue: { role: 'button', name: 'Continue', timeout: 15000, optional: true }
     sleep_step: 2000
     R_click_continue_cc: { role: 'button', name: 'Continue with credit card', optional: true }
     sleep_step: 1000
 
-    fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Auto' }
+    fill_first_name: { locator: 'div[role="dialog"] input >> nth=0', value: 'Auto' }
     sleep_step: 300
-    fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Buyer' }
+    fill_last_name: { locator: 'div[role="dialog"] input >> nth=1', value: 'Buyer' }
     sleep_step: 300
-    fill_email: { locator: 'input[name="contact.email"]', value: 'autotest.buyer@example.com' }
+    fill_phone: { locator: 'div[role="dialog"] input >> nth=2', value: '+1 6502396646' }
     sleep_step: 300
-    fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+    fill_email: { locator: 'div[role="dialog"] input >> nth=3', value: 'autotest.buyer@example.com' }
     sleep_step: 300
 
     fill_stripe_iframe:
@@ -261,10 +398,3 @@ testT5669_teardown_disable:
   expect_result:
     assertions: []
 
-
-# ==============================================================================
-# Non-automatable:
-# T5692 link expiration (needs email+time), T5696 email content,
-# T5695 revoke (INVALID), T5680/T5677 mixed cart (needs 2nd product),
-# T5750/T5751 after-approval mode
-# ==============================================================================

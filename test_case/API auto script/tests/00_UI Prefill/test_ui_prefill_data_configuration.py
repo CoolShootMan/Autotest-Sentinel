@@ -13594,6 +13594,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp151c).json('$.code').equals('200')
     expect(_resp151c).json('$.message').equals('success')
     ctx.extract("approval_post_id", _resp151c, "$.data.posts[0].id")
+    ctx.extract("approval_event_id", _resp151c, "$.data.id")
     expect(_resp151c).json('$.data.posts').is_array()
     expect(_resp151c).json('$.data.posts').is_not_empty()
 
