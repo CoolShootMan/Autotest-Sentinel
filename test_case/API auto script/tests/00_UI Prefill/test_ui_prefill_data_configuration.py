@@ -12838,11 +12838,53 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     #       同段断言用的是 events[i].eventHandle，据此改正。
     expect(_resp126).status().is_(200)
     expect(_resp126).json('$.data.events').is_array()
-    # NOTE: discovery API returns basic event info (eventId, title, venue) but NOT ticket
-    # inventory. Inventory is only available after import via the event detail API.
-    # We pick the first 2 events; the TDC source data is expected to have in-stock events.
-    ctx.extract("TDC_eventHandle1", _resp126, "$.data.events[0].eventHandle")
-    ctx.extract("TDC_eventHandle2", _resp126, "$.data.events[1].eventHandle")
+
+    # Filter: pick events that have tickets with inventory > 0.
+    # Discovery response structure varies; recursively search for inventory-like fields.
+    import json as _json
+    _all_events = _resp126.json().get("data", {}).get("events", [])
+    print(f"[TDC prefill] total discovery events: {len(_all_events)}")
+    if _all_events:
+        print(f"[TDC prefill] first event keys: {list(_all_events[0].keys())}")
+        print(f"[TDC prefill] first event sample: {_json.dumps(_all_events[0], indent=2)[:2000]}")
+
+    def _has_positive_inventory(obj, depth=0):
+        """Recursively search for any inventory/quantity field > 0."""
+        if depth > 4:
+            return False
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                kl = k.lower()
+                if any(word in kl for word in ("inventory", "quantity", "remaining", "stock", "available")):
+                    if isinstance(v, (int, float)) and v > 0:
+                        return True
+                    if isinstance(v, str) and v.isdigit() and int(v) > 0:
+                        return True
+                if isinstance(v, (dict, list)):
+                    if _has_positive_inventory(v, depth + 1):
+                        return True
+        elif isinstance(obj, list):
+            for item in obj:
+                if _has_positive_inventory(item, depth + 1):
+                    return True
+        return False
+
+    _valid_events = [ev for ev in _all_events if _has_positive_inventory(ev)]
+    print(f"[TDC prefill] events with inventory>0: {len(_valid_events)} / {len(_all_events)}")
+
+    # Fallback: if discovery doesn't expose inventory fields at all, use first N events.
+    if len(_valid_events) < 2:
+        print(f"[TDC prefill] WARNING: only {len(_valid_events)} events with inventory>0 found, "
+              f"falling back to first {min(2, len(_all_events))} events from discovery. "
+              f"Verify TDC source data has in-stock tickets.")
+        _valid_events = _all_events[:2]
+
+    TDC_eventHandle1 = _valid_events[0]["eventHandle"]
+    TDC_eventHandle2 = _valid_events[1]["eventHandle"]
+    vars["TDC_eventHandle1"] = TDC_eventHandle1
+    vars["TDC_eventHandle2"] = TDC_eventHandle2
+    print(f"[TDC prefill] selected eventHandle1={TDC_eventHandle1}, eventHandle2={TDC_eventHandle2}")
+
     expect(_resp126).json('$.data.events.length').at_least(2)
     expect(_resp126).json('$.data.events[0].eventHandle').is_string()
     expect(_resp126).json('$.data.events[0].eventHandle').is_not_empty()
