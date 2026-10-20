@@ -1,9 +1,12 @@
 # ==============================================================================
 # Post_setting_for_AXS.yaml - AXS post C-side (guest) purchase suite (NO seat map)
 #
-# Event is NOT hardcoded: every case takes the first imported AXS event name via
-# the cross-case global {{event_axs}} (seeded by the AXS prefill script), and the
-# public post URL via {{post_url}}. Each case's purchase step uses the generic
+# Event is NOT hardcoded: every case takes the AXS-tagged event name via
+# the cross-case global {{event_axs}}, and the public post URL via {{post_url}}.
+# These two globals are SELF-SEEDED in-process by the first case `axs_event_self_seed`
+# in this file (AXS badge -> event name; Event's Post tab -> storefront post URL), so
+# this suite no longer depends on another YAML running earlier in the same pytest
+# process to publish them. Each case's purchase step uses the generic
 # no-map flow from Post_setting.yaml:
 #   "Buy Ticket" -> optional "Buy now" -> "Continue" -> fill contact -> "Place order".
 # Scope: T3683/T3684 order note -> T3686 coseller resell -> T2515 purchase limit ->
@@ -11,6 +14,58 @@
 # ==============================================================================
 
 
+
+
+# ==============================================================================
+# Self-seed case (MUST run first): populate {{event_axs}} and {{post_url}} in-process
+# so every downstream case can resolve its placeholders without relying on
+# axs_fee_breakdown_ui.yaml running earlier in the same pytest process.
+# Mirrors the self-seed pattern of tdc_fee_breakdown_ui.yaml (AXS badge -> event name)
+# and Post_setting_for_TDC.yaml (Post tab -> storefront post URL).
+axs_event_self_seed:
+    description: "Self-seed cross-case globals event_axs + post_url from the live AXS-tagged event (no cross-YAML order dependency)"
+    expect_result: "event_axs = AXS-tagged event name; post_url = its storefront post URL, both published to the cross-case global store."
+    test_step:
+        # 1. Events list
+        open: "{BASE_URL}/events"
+        sleep_step: 5000
+
+        # 1b. AXS badge is a leaf <span>AXS</span>; its parent row holds a single <p>
+        #     which IS the event name. Same locator axs_fee_breakdown_ui.yaml uses, so
+        #     both suites resolve the same event. Published to the global store.
+        extract_value_axs_event:
+            locator: "xpath=(//span[normalize-space(.)='AXS']/parent::*//p)[1]"
+            source: text
+            numeric: false
+            save_as: "event_axs"
+            global: true
+            timeout: 20000
+        sleep_extract_axs_event: 800
+
+        # 2. Click the event card (by name) to open its detail page
+        R_click_axs_event: { locator: "xpath=//p[normalize-space(.)='{{event_axs}}']" }
+        sleep_event: 5000
+
+        # 3. Post tab -> the "Select post" box reveals the storefront post URL
+        R_click_post_tab: { role: "tab", name: "Post" }
+        sleep_post_tab: 5000
+
+        # NOTE: the "Select post" box shows the URL text WITHOUT scheme
+        # (e.g. "release.pear.us/autotestshop/post/slug"); prepend https:// so the
+        # downstream open_post/open steps navigate to a valid absolute URL.
+        # (extract_value returns the bare text; only JS can safely prepend the scheme.)
+        execute_js_seed_post_url:
+            save_as: "post_url"
+            global: true
+            script: |
+                (async () => {
+                  const el = document.querySelector("[aria-label='Select post']");
+                  if (!el) throw new Error('Select post element not found on Post tab');
+                  const t = (el.textContent || '').trim();
+                  if (!t) throw new Error('Select post element has empty text');
+                  return t.startsWith('http') ? t : ('https://' + t);
+                })()
+        sleep_seed_post: 500
 
 
 # ==============================================================================
