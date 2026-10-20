@@ -13360,196 +13360,6 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     "lineupTransactionStatus": null,
     "autoPayLineupStatus": "PENDING",
     "medias": [],
-    "tickets": [
-        {
-            "id": "{{ticket_id}}",
-            "remote_id": null,
-            "platform": "PEAR",
-            "createdAt": "2026-04-22T07:08:00.363Z",
-            "updatedAt": "2026-04-22T08:09:37.162Z",
-            "merchantId": "{{eventcatalog_id}}",
-            "title": "General Admission",
-            "bodyHtml": "",
-            "originalBodyHtml": "",
-            "isBodyHtmlOverridden": false,
-            "bodyText": "",
-            "handle": null,
-            "productType": "",
-            "publishedAt": "2026-04-22T07:08:00.374Z",
-            "publishedScope": "",
-            "status": "ACTIVE",
-            "externalStatus": "ACTIVE",
-            "followExternalStatus": false,
-            "tags": [],
-            "templateSuffix": null,
-            "vendor": "Pear",
-            "syncAt": null,
-            "deletedAt": null,
-            "delisted": false,
-            "excludedByImportingTag": false,
-            "isFeatured": false,
-            "featuredScore": null,
-            "inventoryQuantity": 1000,
-            "inventoryQuantityOriginal": 1000,
-            "soldQuantity": 0,
-            "priceDisplay": 25.56,
-            "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
-            "priceMinAnchor": 0,
-            "priceMax": 25.56,
-            "priceMaxAnchor": 0,
-            "priceImportedMin": 0,
-            "priceImportedMax": 0,
-            "imageCount": 1,
-            "isUsed": "NWT",
-            "shippingType": "NO_SHIPPING_REQUIRED",
-            "additionalShippingFee": 0,
-            "deliveryTime": [0, 5],
-            "returnPolicyApplied": true,
-            "isAvailable": false,
-            "commissionRate": 10,
-            "textForShare": null,
-            "priceSyncImported": false,
-            "coverImage": {
-                "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
-                "width": 1000,
-                "height": 1000,
-                "mediaSrc": null,
-                "mediaType": "IMAGE",
-                "mediaDuration": 0
-            },
-            "reviewCount": null,
-            "reviewOverallScore": null,
-            "reviewAggregate": null,
-            "displayReviews": true,
-            "links": null,
-            "taxEnable": false,
-            "taxJarCategory": null,
-            "overrideEventTax": false,
-            "customTaxRate": null,
-            "subscriptionPlanId": null,
-            "reviewRedirectProductId": null,
-            "reviewSummary": null,
-            "customFieldsInfo": null,
-            "listingType": "TICKET",
-            "extraInfo": {
-                "date": "Thu, Apr 17, 2053 (CDT)",
-                "event": "verify-co-seller-auto-archive",
-                "venue": "Instagram Live, Zoom, In-person",
-                "lineup": [],
-                "poster": {
-                    "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
-                    "width": 3072,
-                    "height": 2048,
-                    "position": 0,
-                    "mediaType": "IMAGE",
-                    "mediaDuration": 0
-                },
-                "status": "COMPLETED",
-                "location": "789 River East Art Center Promenade, Chicago, Illinois, USA",
-                "eventNote": "linda note",
-                "startDate": "2053-04-17T05:00:00.000Z",
-                "timeZoneId": "America/Chicago",
-                "isAddressHidden": false,
-                "addressRevealConfig": null
-            },
-            "bodyJson": null,
-            "shippingOptions": null,
-            "shippingNote": null,
-            "autoFulfill": true,
-            "eventId": "{{event_12061_id}}",
-            "lifecycleStatus": "LIFECYCLE_STATUS_ARCHIVED",
-            "copyFromId": "{{ticket_id}}",
-            "stopSellingAfter": null,
-            "stopSellingAfterDisplay": null,
-            "deliveryMethod": "QR_CODE",
-            "thirdPartyDeliveryMessage": null,
-            "isMultipleDaysPassEnabled": false,
-            "multipleDaysPass": null,
-            "isPickupEtaEnabled": null,
-            "eventMatchingRules": null,
-            "excludeFromPostSync": false,
-            "isExpirationEnabled": false,
-            "expirationTime": null,
-            "expirationTimeDisplay": null,
-            "allowAtDoorSales": false,
-            "isProductFormEnabled": false,
-            "isVariantPriceDisplayEnabled": false,
-            "isTipEnabled": false,
-            "images": [
-                {
-                    "id": "b471bc6e-a872-4253-ab7a-41fa0cf51c2d",
-                    "remote_id": null,
-                    "createdAt": "2026-04-22T07:08:00.377Z",
-                    "updatedAt": "2026-04-22T07:08:00.377Z",
-                    "height": 1000,
-                    "width": 1000,
-                    "position": 1,
-                    "productId": "{{ticket_id}}",
-                    "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
-                    "variantIds": [],
-                    "mediaType": "IMAGE",
-                    "mediaSrc": null,
-                    "mediaDuration": 0,
-                    "contributedBy": 3,
-                    "contributorId": null,
-                    "productImageType": "PRODUCT",
-                    "source": null
-                }
-            ],
-            "options": [
-                {"name": "Title", "images": [{"value": "Default Title", "image": null}]}
-            ],
-            "variants": [
-                {
-                    "id": "{{variant_id}}",
-                    "remote_id": null,
-                    "createdAt": "2026-04-22T07:08:00.377Z",
-                    "updatedAt": "2026-04-22T07:08:00.377Z",
-                    "compareAtPrice": null,
-                    "fulfillmentService": "manual",
-                    "grams": 0,
-                    "imageId": null,
-                    "imageIds": [],
-                    "inventoryItemId": null,
-                    "inventoryManagement": "Pear",
-                    "inventoryPolicy": "DENY",
-                    "inventoryQuantity": 1000,
-                    "inventoryQuantityOriginal": 1000,
-                    "soldQuantity": 0,
-                    "option": {"option1": "Default Title"},
-                    "position": 1,
-                    "price": "25.56",
-                    "priceAnchor": "0",
-                    "priceImported": "0.00",
-                    "productId": "{{ticket_id}}",
-                    "sku": "",
-                    "taxCode": null,
-                    "taxable": true,
-                    "title": "Default Title",
-                    "weight": null,
-                    "weightUnit": null,
-                    "platform": null,
-                    "fees": 3.56,
-                    "transactionFee": {
-                        "customFee": 0,
-                        "platformFee": 3.56,
-                        "customFeeBreakdown": {"TAX": {"itemFee": 0, "unitFixedFee": 0, "unitPercentageFee": 0}},
-                        "transactionItemFee": 3.56
-                    },
-                    "ticketPrice": 22,
-                    "isMinPurchaseQuantityEnabled": false,
-                    "minPurchaseQuantity": 0,
-                    "isMaxPurchaseQuantityEnabled": false,
-                    "maxPurchaseQuantity": 0,
-                    "isPackSizeEnabled": false,
-                    "packSize": null,
-                    "image": null
-                }
-            ],
-            "productForm": null
-        }
-    ],
     "lineup": [],
     "eventProducts": [],
     "ignoreStartTime": true,
@@ -13598,6 +13408,77 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp151c).json('$.data.posts').is_array()
     expect(_resp151c).json('$.data.posts').is_not_empty()
 
+    # --- step 151c2: create tickets on the duplicated event (duplicateEventId does NOT copy tickets) ---
+    _approval_event_id = vars.get("approval_event_id", "")
+    _resp151c2 = ctx.api.events.ticket_batch_v2(path_vars={"created_event_id": _approval_event_id}, body="""{
+    "poster": {
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0
+    },
+    "listingType": "TICKET",
+    "isTaxEnabled": false,
+    "autoReplace": false,
+    "tickets": [
+        {
+            "listingType": "TICKET", "ticketType": "TICKET_TYPE_STANDARD", "title": "test v", "bodyJson": "",
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 20, "ticketPrice": 0, "price": "0", "fees": 0, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 0, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 0}}]
+        },
+        {
+            "listingType": "TICKET", "ticketType": "TICKET_TYPE_STANDARD", "title": "inside seat with 80", "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 4, "ticketPrice": 71, "price": "80", "fees": 9, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 9, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 9}}]
+        },
+        {
+            "listingType": "TICKET", "ticketType": "TICKET_TYPE_STANDARD", "title": "inside seat with 100", "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
+            "options": [{"name": "Title", "values": ["Default Title"], "images": []}],
+            "variants": [{"inventoryQuantity": 43, "ticketPrice": 89, "price": "100", "fees": 11, "priceAnchor": "0", "option": {"option1": "Default Title"}, "transactionFee": {"platformFee": 11, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 11}}]
+        },
+        {
+            "listingType": "TICKET", "ticketType": "TICKET_TYPE_STANDARD", "title": "outside seat", "bodyJson": "",
+            "images": [{"src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png", "width": 3072, "height": 2048, "position": 0, "mediaType": "IMAGE", "mediaDuration": 0}],
+            "options": [{"name": "Day", "values": ["Saturday", "Sunday"], "images": [{"value": "Saturday", "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png"}, {"value": "Sunday", "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png"}]}],
+            "variants": [
+                {"inventoryQuantity": 20, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "imageIds": [], "imageId": null, "option": {"option1": "Saturday"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}},
+                {"inventoryQuantity": 15, "ticketPrice": 44, "price": "50", "fees": 6, "priceAnchor": "0", "imageIds": [], "imageId": null, "option": {"option1": "Sunday"}, "transactionFee": {"platformFee": 6, "customFee": 0, "customFeeBreakdown": {"TAX": {"title": "Taxes", "unitFixedFee": 0, "unitPercentageFee": 0, "index": 0, "itemFee": 0}}, "transactionItemFee": 6}}
+            ]
+        }
+    ],
+    "coSellingCommissionRate": 0,
+    "customFeeConfig": {"isEnabled": false, "items": []}
+    }""", app_headers=True, token="token")
+    expect(_resp151c2).json('$.code').equals('200')
+    _approval_products = _resp151c2.json()["data"]["tickets"]
+    vars["pid_approval_outside"] = _approval_products[3]["id"]
+    vars["pid_approval_inside_100"] = _approval_products[2]["id"]
+    vars["pid_approval_inside_80"] = _approval_products[1]["id"]
+
+    # --- step 151c3: save + publish venue map on the duplicated event ---
+    _approval_venue_path = os.path.join(os.path.dirname(__file__), "..", "..", "config", "fixtures", "venue_map_12061.json")
+    with open(_approval_venue_path) as _f:
+        _approval_venue_body = _f.read()
+    _resp151c3 = ctx.api.admin.events_venue_map_create(
+        venue_map_event_id=_approval_event_id,
+        body=_approval_venue_body, token="admin_token", app_headers=True)
+    expect(_resp151c3).json('$.code').equals('200')
+    _resp151c4 = ctx.api.admin.events_venue_map_publish(
+        venue_map_event_id=_approval_event_id,
+        body=_approval_venue_body, token="admin_token", app_headers=True)
+    expect(_resp151c4).json('$.code').equals('200')
+
+    # --- step 151c5: bind categories to products ---
+    _approval_assoc = _json.dumps({"associations": [
+        {"categoryId": "dd69f2bd-23dc-49a6-9cb7-2b0a7c59f086", "productId": vars["pid_approval_outside"]},
+        {"categoryId": "e27d924e-1848-4f1d-a891-9be07f24aece", "productId": vars["pid_approval_inside_100"]},
+        {"categoryId": "ee8fdf1a-0de6-44a8-9666-dcafe68afd7a", "productId": vars["pid_approval_inside_80"]},
+    ]})
+    _resp151c5 = ctx.api.admin.events_venue_map_associations(
+        venue_map_event_id=_approval_event_id,
+        body=_approval_assoc, token="admin_token", app_headers=True)
+    expect(_resp151c5).json('$.code').equals('200')
+
 
     # --- step 151d: set post URL alias ---
     _resp151d = ctx.api.admin.post_by_post_id(
@@ -13618,6 +13499,27 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 }""", token="admin_token", app_headers=True)
     expect(_resp151d).json('$.code').equals('200')
     expect(_resp151d).json('$.message').equals('success')
+
+
+    # --- step 151e: fix CTA eventId in duplicated post (duplicate copies old eventId) ---
+    _approval_post_id = vars.get("approval_post_id", "")
+    _approval_event_id = vars.get("approval_event_id", "")
+    _resp151e = ctx.api.posts.curator_edit_by_post_id(
+        post_id=_approval_post_id, token="token", app_headers=True)
+    expect(_resp151e).json('$.code').equals('200')
+    _approval_post_data = _resp151e.json()["data"]
+    _approval_body = _json.loads(_approval_post_data["bodyJson"]) if isinstance(_approval_post_data.get("bodyJson"), str) else _approval_post_data.get("bodyJson", {})
+    _approval_children = _approval_body.get("root", {}).get("children", [])
+    for _child in _approval_children:
+        if _child.get("action") == "show-venue-map":
+            _child["eventId"] = _approval_event_id
+    _approval_body["root"]["children"] = _approval_children
+    _patch_approval = dict(_approval_post_data)
+    _patch_approval["bodyJson"] = _json.dumps(_approval_body)
+    _resp151f = ctx.api.posts.update_curator_content(
+        venue_map_post_id=_approval_post_id,
+        body=_json.dumps(_patch_approval), token="token", app_headers=True)
+    expect(_resp151f).json('$.code').equals('200')
 
 
     # ================================================================
