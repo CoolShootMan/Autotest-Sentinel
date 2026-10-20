@@ -1,0 +1,270 @@
+# ==============================================================================
+# Post_setting_for_Require_approval_to_purchase.yaml
+# KAT-12067: Require approval to purchase - E2E suite
+#
+# Flow: Partner enables approval -> Consumer applies -> Partner approves ->
+#       Partner copies approved link -> Guest opens link -> completes purchase
+#
+# Prefill event: "post setting require approval to purchase" (duplicated from
+#   12061 phase2 auto event, see prefill step 151c/151d)
+# Post URL: {{BASE_URL}}/autotestshop/post/post-setting-require-approval-to-purchase
+# ==============================================================================
+
+
+
+# ==============================================================================
+# Test Case: T5668 + T5749 (Partner-side setup)
+# T5668: Verify organizer can configure the approval framework end-to-end
+# T5749: Verify organizer can choose "Before approval" vs "After approval" mode
+# ==============================================================================
+
+testT5668_T5749_partner_enable_approval:
+#Auth: Linda Zhou
+  guest: false
+  description: "Partner enables Require approval to purchase and selects Before-approval mode"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_posts_tab: { role: "tab", name: "Post" }
+    sleep_step: 2000
+
+    R_click_post_card: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 3000
+
+    R_click_settings_tab: { role: 'button', name: 'Settings' }
+    sleep_step: 2000
+
+    # Assert: approval toggle exists
+    wait_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', timeout: 8000 }
+
+    # Toggle ON
+    R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
+    sleep_step: 1500
+
+    # Dialog: verify mode options visible
+    wait_before_mode: { text: "Before a customer selects", timeout: 8000 }
+    wait_after_mode: { text: "After approval", timeout: 5000, optional: true }
+    sleep_step: 500
+
+    R_click_continue_in_dialog: { role: 'button', name: 'Continue', optional: true }
+    sleep_step: 1000
+
+    R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
+    wait_toast_save: { message: "Post settings updated", timeout: 15000, optional: true }
+    sleep_step: 1000
+
+    R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+    sleep_step: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Require approval to purchase"
+
+
+# ==============================================================================
+# Test Case: T5676 + T5673 (Guest applies, Before-approval mode)
+# T5676: Guest (not logged in) applies for approval
+# T5673: Consumer applies for a single approval-required product
+# ==============================================================================
+
+testT5676_T5673_guest_apply:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest consumer applies for approval on an approval-required post"
+  test_step:
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
+    sleep_after_open: 5000
+
+    R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
+    sleep_step: 2000
+
+    R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000 }
+    sleep_step: 1000
+    R_click_continue: { role: 'button', name: 'Continue', timeout: 15000 }
+    sleep_step: 2000
+
+    fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Auto' }
+    sleep_step: 300
+    fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Buyer' }
+    sleep_step: 300
+    fill_email: { locator: 'input[name="contact.email"]', value: 'autotest.buyer@example.com' }
+    sleep_step: 300
+    fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+    sleep_step: 300
+
+    R_click_submit: { role: 'button', name: 'Submit for approval' }
+    sleep_step: 3000
+
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "pending approval"
+
+
+# ==============================================================================
+# Test Case: T5685 (Partner approves + copies link) + Guest buys via link
+# T5685: Partner sees Waitlist, reviews pending application, approves
+# After approve: copy approved purchase link
+# Then: guest opens link and completes purchase
+# ==============================================================================
+
+testT5685_partner_approve:
+#Auth: Linda Zhou
+  guest: false
+  description: "Partner opens Waitlist, approves application, copies the approved purchase link"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
+    sleep_step: 2000
+
+    R_click_waitlist_tab: { role: 'tab', name: 'Waitlist', optional: true }
+    sleep_step: 2000
+
+    # Assert: pending application visible
+    wait_pending: { text: "Need Review", timeout: 10000 }
+    sleep_step: 1000
+
+    R_click_approve: { role: 'button', name: 'Approve & send email' }
+    sleep_step: 2000
+
+    R_click_confirm: { role: 'button', name: 'Confirm', optional: true }
+    sleep_step: 3000
+
+    # Assert: status changed to Approved
+    wait_approved: { text: "Approved", timeout: 10000 }
+    sleep_step: 1000
+
+    # Copy the approved purchase link
+    R_click_copy_link: { role: 'button', name: 'Copy link', optional: true }
+    sleep_step: 1000
+
+    # Extract the approved purchase link href from the approved row
+    extract_purchase_link:
+      locator: 'a[href*="purchaseApproved"], a[href*="token"], a[href*="approval"]'
+      source: "attribute"
+      attribute: "href"
+      save_as: "approved_purchase_link"
+      timeout: 5000
+      optional: true
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Approved"
+
+
+# ==============================================================================
+# Test Case: T5692/T5751 (Guest uses approved link to purchase)
+# Guest opens the approved link -> completes checkout -> order placed
+# ==============================================================================
+
+testT5692_guest_buy_via_link:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest opens approved purchase link and completes checkout"
+  test_step:
+    open_approved_link: "{{approved_purchase_link}}"
+    sleep_after_open: 5000
+
+    R_click_buy_ticket: { role: 'button', name: 'Buy Ticket', timeout: 10000 }
+    sleep_step: 2000
+
+    R_click_plus_qty: { locator: "button[aria-label='Add']", timeout: 10000, optional: true }
+    sleep_step: 1000
+    R_click_buy_now: { role: 'button', name: 'Buy now', optional: true }
+    sleep_step: 1000
+    R_click_continue: { role: 'button', name: 'Continue', timeout: 15000, optional: true }
+    sleep_step: 2000
+    R_click_continue_cc: { role: 'button', name: 'Continue with credit card', optional: true }
+    sleep_step: 1000
+
+    fill_first_name: { locator: 'input[name="contact.firstName"]', value: 'Auto' }
+    sleep_step: 300
+    fill_last_name: { locator: 'input[name="contact.lastName"]', value: 'Buyer' }
+    sleep_step: 300
+    fill_email: { locator: 'input[name="contact.email"]', value: 'autotest.buyer@example.com' }
+    sleep_step: 300
+    fill_phone: { locator: 'input[name="contact.phoneNumber"]', value: '+1 6502396646' }
+    sleep_step: 300
+
+    fill_stripe_iframe:
+      card_number: '4242424242424242'
+      expiry: '02/45'
+      cvc: '345'
+      card_name: 'Auto Buyer'
+      zipcode: '90021'
+    sleep_step: 8000
+
+    R_click_place_order: { role: 'button', name: 'Place order', optional: true }
+    sleep_step: 5000
+    R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
+    R_click_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
+    sleep_step: 5000
+
+    wait_access_order: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Access Your Order"
+
+
+# ==============================================================================
+# Test Case: T5669 (Teardown: disable approval, restore direct buy)
+# ==============================================================================
+
+testT5669_teardown_disable:
+#Auth: Linda Zhou
+  guest: false
+  description: "Teardown: disable Require approval to purchase"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_posts_tab: { role: "tab", name: "Post" }
+    sleep_step: 2000
+
+    R_click_post_card: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 3000
+
+    R_click_settings_tab: { role: 'button', name: 'Settings' }
+    sleep_step: 2000
+
+    R_click_toggle_off: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: false }
+    sleep_step: 1500
+
+    R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
+    wait_toast: { message: "Post settings updated", timeout: 15000, optional: true }
+    sleep_step: 1000
+
+    R_click_close: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+    sleep_step: 2000
+
+  expect_result:
+    assertions: []
+
+
+# ==============================================================================
+# Non-automatable:
+# T5692 link expiration (needs email+time), T5696 email content,
+# T5695 revoke (INVALID), T5680/T5677 mixed cart (needs 2nd product),
+# T5750/T5751 after-approval mode
+# ==============================================================================
