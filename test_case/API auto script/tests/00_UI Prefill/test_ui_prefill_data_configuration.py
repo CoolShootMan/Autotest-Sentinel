@@ -12838,40 +12838,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     #       同段断言用的是 events[i].eventHandle，据此改正。
     expect(_resp126).status().is_(200)
     expect(_resp126).json('$.data.events').is_array()
-
-    # Filter: only pick events that have tickets with inventory > 0.
-    # Some imported TDC events have 0 ticket inventory, which blocks UI purchase tests.
-    _all_events = _resp126.json().get("data", {}).get("events", [])
-    def _event_has_inventory(ev):
-        # Check tickets/sections/variants for any inventory > 0
-        for key in ("tickets", "sections", "variants", "ticketTypes"):
-            items = ev.get(key) or []
-            if isinstance(items, list):
-                for item in items:
-                    inv = item.get("inventoryQuantity") or item.get("inventory") or item.get("quantity") or 0
-                    if isinstance(inv, (int, float)) and inv > 0:
-                        return True
-        # Also check top-level fields
-        top_inv = ev.get("totalInventory") or ev.get("inventoryQuantity") or 0
-        if isinstance(top_inv, (int, float)) and top_inv > 0:
-            return True
-        return False
-
-    _valid_events = [ev for ev in _all_events if _event_has_inventory(ev)]
-    print(f"[TDC prefill] total discovery events: {len(_all_events)}, events with inventory>0: {len(_valid_events)}")
-    if len(_valid_events) < 2:
-        raise AssertionError(
-            f"TDC discovery: only {len(_valid_events)} events with inventory>0 found "
-            f"(need at least 2). Total events: {len(_all_events)}. "
-            f"Please check TDC source data or import more events."
-        )
-
-    TDC_eventHandle1 = _valid_events[0]["eventHandle"]
-    TDC_eventHandle2 = _valid_events[1]["eventHandle"]
-    vars["TDC_eventHandle1"] = TDC_eventHandle1
-    vars["TDC_eventHandle2"] = TDC_eventHandle2
-    print(f"[TDC prefill] selected eventHandle1={TDC_eventHandle1}, eventHandle2={TDC_eventHandle2}")
-
+    # NOTE: discovery API returns basic event info (eventId, title, venue) but NOT ticket
+    # inventory. Inventory is only available after import via the event detail API.
+    # We pick the first 2 events; the TDC source data is expected to have in-stock events.
+    ctx.extract("TDC_eventHandle1", _resp126, "$.data.events[0].eventHandle")
+    ctx.extract("TDC_eventHandle2", _resp126, "$.data.events[1].eventHandle")
     expect(_resp126).json('$.data.events.length').at_least(2)
     expect(_resp126).json('$.data.events[0].eventHandle').is_string()
     expect(_resp126).json('$.data.events[0].eventHandle').is_not_empty()
