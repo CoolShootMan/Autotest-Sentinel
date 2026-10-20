@@ -21,19 +21,23 @@ testT5442:
         expect_result: "All existing tickets are in Show status (no Hidden label)"
         test_step:
             # Navigate to Event "Auto-Test-post-setting"
+            # [DUP-KEY FIX 2026-10-16] these four waits were ALL named `sleep_step`, so PyYAML
+            # silently kept only the last one (value 5000) and the 5000/4000/2000 waits after
+            # `open` / event click / Post tab never ran. Each wait now has its own key, which
+            # restores the intended pacing (this was a latent flakiness source).
             open:                           "{BASE_URL}/events"
-            sleep_step:                     5000
+            sleep_after_open:               5000
             R_click_my_event:               { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
-            sleep_step:                     4000
+            sleep_after_my_event:           4000
 
             R_click_post_tab:              { role: "tab", name: "Post" }
-            sleep_step:                     2000
+            sleep_after_post_tab:           2000
 
             verify_post_alias:
                 text: "auto-test-post-setting-case1742"
 
             R_click_edit_content: { locator: "button[aria-label='Content']" }
-            sleep_step: 5000
+            sleep_after_content: 5000
 
             verify_no_hide_button:
                 text: "Hidden"
@@ -189,34 +193,20 @@ testT5332:
 
         # Step 7: Hover over "Event" menu item in Insert dropdown to reveal submenu
         # Only targets the Event menuitem inside the Insert popup — never touches CTA Elements
-        execute_js:
-            script: |
-                () => {
-                    // Strategy 1: Find [role="menuitem"] with exact text "Event" inside any popup/dropdown
-                    const popups = document.querySelectorAll('[role="menu"], [data-testid*="popup"], [data-testid*="dropdown"], [class*="dropdown"], [class*="menu"], [class*="popover"]');
-                    for (const popup of popups) {
-                        const items = popup.querySelectorAll('[role="menuitem"]');
-                        for (const el of items) {
-                            if (el.textContent.trim() === 'Event' && el.offsetParent !== null) {
-                                el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
-                                el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
-                                return 'hovered';
-                            }
-                        }
-                    }
-                    // Strategy 2: Any visible [role="menuitem"] exactly named "Event"
-                    const all = document.querySelectorAll('[role="menuitem"]');
-                    for (const el of all) {
-                        if (el.textContent.trim() === 'Event' && el.offsetParent !== null &&
-                            !el.closest('[class*="cta"]') && !el.closest('[class*="CTA"]')) {
-                            el.dispatchEvent(new MouseEvent('mouseenter', {bubbles: true}));
-                            el.dispatchEvent(new MouseEvent('mouseover', {bubbles: true}));
-                            return 'hovered';
-                        }
-                    }
-                    return 'not_found';
-                }
-            assert_equals: "hovered"
+        # [DE-JS 2026-10-16] was an execute_js that scanned every popup/dropdown on the page and
+        # dispatched synthetic `mouseenter`/`mouseover` on the "Event" menuitem (with a second
+        # defensive strategy excluding anything inside a CTA element), because the framework had
+        # NO hover action. `hover` (actions/base.py) now fills that gap with Playwright's native
+        # `locator.hover()`. Scope it to the open menu so a CTA element can never be matched, and
+        # let `expect` re-hover until the submenu is really there — a plain hover is racy because
+        # MUI closes the submenu again if the pointer leaves.
+        hover_insert_event_item:
+            locator: "xpath=//*[@role='menu']//*[@role='menuitem'][normalize-space(.)='Event']"
+            index: 0
+            timeout: 15000
+            expect:
+                text: "Insert all merch"
+                timeout: 4000
         sleep_step: 2000
 
         # Step 8: Click "Insert all merch" from the revealed submenu
@@ -534,10 +524,14 @@ testT5390:
     fill_event_title: { role: "textbox", name: "Event title", value: "T5390" }
     sleep_after_title: 1000
 
-    # Set start date directly by bypassing React's controlled input value tracker
-    # (MUI DatePicker input is readonly and controlled; clear button is unreliable)
-    execute_js_set_start_date:
-      script: '() => { const input = document.querySelector(`input[placeholder="MMMM DD, YYYY"]`) || document.querySelector(`input[type="text"][readonly]`); if (!input) return false; input.removeAttribute("readonly"); input.focus(); const lastValue = input.value; input.value = "Apr 20, 2053"; const tracker = input._valueTracker; if (tracker) tracker.setValue(lastValue); input.dispatchEvent(new Event("input", {bubbles: true})); input.dispatchEvent(new Event("change", {bubbles: true})); input.blur(); return true; }'
+    # Set start date with the framework's native masked-field filler.
+    # [DE-JS 2026-10-16] was an execute_js that stripped the DatePicker input's `readonly` and
+    # poked React's `_valueTracker` to force the value. `fill_type` (actions/base.py) exists for
+    # exactly this widget — its docstring documents this precise placeholder
+    # (`input[placeholder='MMMM DD, YYYY']`) and the reason a plain `fill` fails (the input mask
+    # swallows it) — and is already used this way in Section.yaml / smoke_testing.yaml.
+    # The value is typed in mask form (MM/DD/YYYY); the field renders it back as "Apr 20, 2053".
+    fill_type_start_date: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: "04/20/2053" }
     sleep_after_set_start_date: 1000
 
     # Fill venue
@@ -741,7 +735,9 @@ testT5440:
 
     R_click_edit_content_again:
         locator: "button[aria-label='Content']"
-    sleep_after_edit: 3000
+    # [DUP-KEY FIX 2026-10-16] this was a second `sleep_after_edit` in the same test_step, so
+    # PyYAML silently dropped the step-3 wait above. Renamed to keep both.
+    sleep_after_edit_again: 3000
 
     verify_no_event_media: { text: "Event media", assert_not_visible: true }
     verify_no_event_desc: { text: "Event description", assert_not_visible: true }

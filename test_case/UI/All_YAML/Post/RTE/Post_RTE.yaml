@@ -166,17 +166,38 @@ testT4866:
         sleep_guest_open_2: 6000
         # An external-link CTA is published as a plain anchor, not a button:
         # <a data-cta-action="none" href="https://google.com/?utm_source_pear=1"
-        # target="_blank">Google</a>. Assert tag + href + target in one hard gate.
-        session_guest__execute_js: { script: "() => { const a = document.querySelector('a[data-cta-action][target=_blank]'); return a ? a.textContent.trim() + '|' + a.getAttribute('href') : 'missing'; }", assert_contains: "Google|https://google.com" }
+        # target="_blank">Google</a>. Assert tag + href + target with framework-native
+        # actions (was ONE execute_js that returned "text|href" and asserted on the joined
+        # string): `verify_attribute` reads the attribute and fails unless it matches, so
+        # each line below is still a hard gate, and splitting it reports WHICH part broke.
+        session_guest__verify_attribute_cta_anchor_href:
+            locator: 'a[data-cta-action][target=_blank]'
+            attribute: "href"
+            regex: "^https://google\\.com"
+            timeout: 20000
+        session_guest__verify_attribute_cta_anchor_target:
+            locator: 'a[data-cta-action][target=_blank]'
+            attribute: "target"
+            value: "_blank"
+            timeout: 20000
+        session_guest__verify_text_regex_cta_anchor_text:
+            scope:
+                locator: 'a[data-cta-action][target=_blank]'
+            pattern: "^Google$"
+            timeout: 20000
         sleep_after_js_check: 500
-        # Clicking the anchor opens https://www.google.com/... in a NEW tab while
-        # the guest page itself never navigates. The framework cannot follow a
-        # popup, so the click below only exercises the real interaction; the
-        # destination is already covered by the href/target assertion above.
-        session_guest__R_click_cta_external: { locator: 'a[data-cta-action][target=_blank]:has-text("Google")' }
-        sleep_guest_click_2: 3000
+        # Clicking the anchor opens https://www.google.com/... in a NEW tab while the guest
+        # page itself never navigates. [DE-JS 2026-10-16] this used to be a plain click plus
+        # a comment saying "the framework cannot follow a popup" — it now can:
+        # `click_open_new_tab` (actions/base.py) wraps Playwright's `context.expect_page()`,
+        # follows the popup, asserts where it lands and closes it. So the destination is
+        # verified for real, not just via the href above.
+        session_guest__click_open_new_tab_cta_external:
+            locator: 'a[data-cta-action][target=_blank]:has-text("Google")'
+            url: "*google.com*"
+            timeout: 30000
         # The guest page is still the post: the navigation happened in the popup.
-        session_guest__execute_js_still_post: { script: "() => location.pathname", assert_contains: "/autotestshop/post/" }
+        session_guest__wait_for_url_still_post: { url: "*autotestshop/post/test-event-post-variant-settings*" }
 
     # Expected Result ===========================================================
     expect_result:
@@ -288,13 +309,25 @@ testT2800:
         # "Select a product" picker. The cards expose no native radio input -
         # the selection circle is an <svg data-testid="RoundLineIcon"> - and the
         # row itself (a MuiStack-root) swallows Playwright clicks via
-        # pointer-events. So the row is picked with a JS element.click() that
-        # climbs from the circle to the ancestor carrying the retail price.
-        # That flips the dialog's "Select" button from disabled to enabled.
+        # pointer-events.
+        # [DE-JS 2026-10-16] was an execute_js that climbed from the circle to the
+        # ancestor carrying the retail price and called `element.click()`. That is
+        # exactly the case `dispatch_click` (actions/base.py) exists for: it targets
+        # the row natively and dispatches the full mouse event sequence on it, with
+        # no hit-test. The row = the innermost element inside the top-most dialog
+        # that contains BOTH the selection circle and the "Retail price" text —
+        # XPath document order returns ancestors first, so `index: -1` picks the
+        # innermost one, matching the old climb-up loop exactly.
+        # The old JS also asserted "picked"; the flips-the-Select-button-to-enabled
+        # effect is now proven by the R_click_confirm_product below, which cannot
+        # succeed while the Select button is still disabled.
         R_click_select_product: { text: "Select a product" }
         sleep_product_picker_open: 3000
         wait_for_selector_product_picker: { selector: '[role="dialog"] [data-testid="RoundLineIcon"]', timeout: 15000 }
-        execute_js_pick_product: { script: "() => { const vis = e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }; const dlgs = [...document.querySelectorAll('[role=\"dialog\"]')].filter(vis); const d = dlgs[dlgs.length - 1]; if (!d) return 'no dialog'; const icon = d.querySelector('[data-testid=\"RoundLineIcon\"]'); if (!icon) return 'no icon'; let n = icon; for (let k = 0; k < 8 && n; k++, n = n.parentElement) { if (/Retail price/.test(n.textContent || '')) { n.click(); return 'picked ' + (n.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 40); } } return 'row not found'; }", assert_contains: "picked" }
+        dispatch_click_pick_product:
+            locator: "xpath=(//*[@role='dialog'])[last()]//*[.//*[@data-testid='RoundLineIcon']][contains(normalize-space(.), 'Retail price')]"
+            index: -1
+            timeout: 15000
         sleep_after_pick_product: 1500
         R_click_confirm_product: { locator: '[role="dialog"] button:has-text("Select")', index: -1 }
         sleep_after_confirm_product: 2500
@@ -336,9 +369,21 @@ testT2800:
         # `verify_` alone routes to verify_text_visible, which reads `text`; the
         # locator-scoped variant is verify_element_contains_text.
         verify_cta_visible_guest: { locator: 'button[data-cta-action="buy-now"]:has-text("test buy now")', text: "test buy now" }
-        # Assert the button is fully painted (non-zero box, enabled, own text) -
-        # "the whole button is visible" is the requirement, not just presence.
-        execute_js_assert_cta_box: { script: "() => { const all = [...document.querySelectorAll('button[data-cta-action=\"buy-now\"]')]; const b = all.find(x => (x.textContent || '').trim() === 'test buy now'); if (!b) return 'missing'; const r = b.getBoundingClientRect(); return b.textContent.trim() + '|' + Math.round(r.width) + 'x' + Math.round(r.height) + '|disabled=' + b.disabled; }", assert_contains: "test buy now" }
+        # Assert the button is fully painted and usable.
+        # [DE-JS 2026-10-16] was an execute_js returning "text|WxH|disabled=..." and asserting
+        # only on the text. Each part of that claim now has a native check:
+        #   - non-empty box + not hidden : `wait_for_selector_cta_guest` above uses Playwright's
+        #     default state="visible", which IS "attached + non-empty bounding box + not
+        #     visibility:hidden".
+        #   - own text                   : `verify_cta_visible_guest` above.
+        #   - enabled                    : the real click in Part 5 is the proof — Playwright's
+        #     actionability check refuses to click a disabled element, so a disabled button
+        #     fails loudly there instead of being silently reported in a JS string.
+        # The remaining gap (the JS echoed the computed box) is closed by a real style read:
+        verify_cta_visibility_guest:
+            locator: 'button[data-cta-action="buy-now"]:has-text("test buy now")'
+            property: "visibility"
+            expected: "visible"
 
         # ----------------------------------------------------------------------
         # Part 5: the guest clicks it and completes a real order
@@ -378,7 +423,9 @@ testT2800:
         verify_order_confirmed: { text: "You’re in" }
         verify_order_summary: { text: "Confirmation number" }
         verify_ticket_issued: { text: "Ticket Information" }
-        execute_js_assert_order_url: { script: "() => location.pathname", assert_contains: "/order/" }
+        # [DE-JS 2026-10-16] the old `execute_js_assert_order_url` (location.pathname contains
+        # "/order/") was redundant: `wait_for_url_order_confirmation` above already asserts the
+        # order-confirmation URL with a Playwright-native glob. Deleted rather than translated.
 
     # Expected Result ===========================================================
     expect_result:

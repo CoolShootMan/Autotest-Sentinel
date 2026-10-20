@@ -2,10 +2,27 @@
 # time: 2026/10/12 17:30
 
 # --- testT5649_axs_partner_full_refund: Patner full refund the axs order" ---
+#
+# [REFACTOR 2026-10-16] The two execute_js blocks were replaced by framework-native actions,
+# mirroring the already-refactored venue_map twin (venue_map_fee_breakdown_partner_full_refund.yaml):
+#   - order-id extraction  -> extract_value (source: text + regex "#(P\d+)")
+#   - Net Earning check    -> compute_value + verify_row_value(retry_until_match)
+# No JS left in this case.
 testT5649_axs_partner_full_refund:
     is_mobile: true
     description: "Partner full refund the axs order"
+    expect_result: "After a full refund the partner's Net Earning equals -transaction-fees on the sale details page"
     test_step:
+        # 0. [CROSS-CASE DEPENDENCY GUARD, added 2026-10-16] This case consumes
+        #    `transaction-fees`, published with `global: true` by its parent
+        #    (axs_fee_breakdown_ui.yaml — the "Platform fees" row read on the Fees + Taxes
+        #    popover). The global store lives in the pytest PROCESS (actions/global_state.py),
+        #    so the parent MUST run first in the same process:
+        #        --yaml "axs_fee_breakdown_ui.yaml,axs_fee_breakdown_partner_full_refund_ui.yaml"
+        #    Without this guard a standalone run leaves `{{transaction-fees}}` as a LITERAL and
+        #    only fails ~15 steps later inside compute_value, pointing at the wrong thing.
+        verify_defined_globals: { vars: [transaction-fees] }
+
         # 1. Create the partner session and open the event list
         session_partner__open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
         sleep_partner_events: 6000
@@ -23,9 +40,14 @@ testT5649_axs_partner_full_refund:
         sleep_partner_orders: 5000
 
         # 5. Extract the FIRST order id in the list -> temp var first_order_id
-        session_partner__execute_js_extract_first_order:
+        #     (was execute_js: document.body.innerText.match(/#(P\d+))/ -> extract_value + regex)
+        session_partner__extract_value_first_order:
+            locator: "body"
+            source: text
+            regex: "#(P\\d+)"
+            numeric: false
             save_as: "first_order_id"
-            script: "() => { const m = document.body.innerText.match(/#(P\\d+)/); if(!m) throw new Error('orders list: no order id (#Pxxxxx) found'); return m[1]; }"
+            timeout: 30000
         sleep_partner_extract: 800
 
         # 6. Click that order to open the Sale details page
@@ -54,37 +76,21 @@ testT5649_axs_partner_full_refund:
         session_partner__R_click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
         sleep_partner_refund: 6000
 
-        # 12. [HARD ASSERTION] after a full refund, Net Earning == -transaction-fees
-        session_partner__execute_js_verify_net_earning:
-            script: |
-                (async () => {
-                  const fee={{transaction-fees}}, expect=+(-fee).toFixed(2);
-                  const money = s => { const m=String(s).match(/(-?)\s*\$\s*([\d,]+(?:\.\d+)?)/); return m ? (m[1]==='-'?-1:1)*parseFloat(m[2].replace(/,/g,'')) : null; };
-                  const vis = e => { const r=e.getBoundingClientRect(); return r.width>0 && r.height>0; };
-                  // row value: the label is a leaf / direct text node and the amount sits in its
-                  // nearest upper ancestor; the tail must be short (<=20) so we do not climb past
-                  // this row and grab the region's first amount.
-                  const rowVal = label => {
-                    for(const c of [...document.querySelectorAll('*')].filter(x => vis(x) && [...x.childNodes].some(n => n.nodeType===3 && n.textContent.trim()===label))){
-                      let el=c;
-                      for(let k=0;k<3 && el;k++){
-                        const tail=el.textContent.replace(label,'').trim();
-                        if(tail.length>20) break;
-                        const v=money(tail);
-                        if(v!==null) return v;
-                        el=el.parentElement;
-                      }
-                    }
-                    return null;
-                  };
-                  // the refund settles asynchronously on the server: wait for Net Earning to turn
-                  // from positive to negative (the drawer closing / page refresh also happen here)
-                  let net=null;
-                  for(let i=0;i<50;i++){ net=rowVal('Net Earning'); if(net!==null && net<0) break; await new Promise(r=>setTimeout(r,500)); }
-                  if(net===null || Math.abs(net-expect)>0.01)
-                    throw new Error('full refund: Net Earning '+(net===null?'row not found':'$'+net.toFixed(2))+' != -transaction-fees $'+expect.toFixed(2));
-                  return 'refund verified: order #'+location.pathname.split('/').pop()+' | Net Earning $'+net.toFixed(2)+' == -transaction-fees (-$'+fee.toFixed(2)+')';
-                })()
-    expect_result:
-        description: "At least one ticket name should end with 'Pear.Us'"
-        assertions: []
+        # 12. [HARD ASSERTION] after a full refund, Net Earning == -transaction-fees.
+        #     (was a long execute_js computing the row value with its own 50 x 500ms polling
+        #      loop -> compute_value + verify_row_value, fully native.)
+        #     [WHY retry_until_match] the refund settles ASYNCHRONOUSLY on the server and the
+        #     "Net Earning" row stays VISIBLE the whole time, flipping from +fees to -fees.
+        #     A plain read would return the still-positive amount and fail; retry_until_match
+        #     re-reads until it matches (or `timeout` runs out) — the native equivalent of the
+        #     old `for(i<50){ if(net<0) break; await 500 }` loop. `signed: true` keeps the minus.
+        session_partner__compute_value_expected_net_earning:
+            expression: "0 - {{transaction-fees}}"
+            save_as: "expected_net_earning"
+        session_partner__verify_row_value_net_earning:
+            label: "Net Earning"
+            value: "{{expected_net_earning}}"
+            tolerance: 0.01
+            retry_until_match: true
+            timeout: 30000
+            levels: 4

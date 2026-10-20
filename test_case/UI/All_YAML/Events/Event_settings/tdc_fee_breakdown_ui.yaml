@@ -3,6 +3,11 @@
 # [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions
 # (extract_value / compute_value / extract_row_value / set_value / verify_number ...).
 # No JS left in this case.
+#
+# [2026-10-16] The event is no longer the FIRST TDC badge on the list: several TDC events exist and
+# the products of some are entirely "Sold out". The seed now uses the native action
+# `select_event_with_sellable_product` (actions/base.py), which walks the TDC events and closes an
+# all-sold-out one with the header X before trying the next (see the comment at step 1b-3).
 testT5649_tdc:
     is_mobile: true
     description: "Verify the fee breakdown for TDC ticket on checkout - then place order - check TDC info and link on order confirmation page"
@@ -12,25 +17,27 @@ testT5649_tdc:
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
-        # 1b. [HARD ASSERTION] a TDC-tagged event is on the list — located BY TAG, not by name: the event name on release keeps being renamed by other people
-        extract_value_tdc_event:
-            locator: "xpath=//*[normalize-space(.)='TDC' and not(*)]/parent::*//p"
-            index: 0
-            source: text
-            numeric: false
+        # 1b-3. Pick a USABLE TDC event and open its "Tickets & Merch" tab.
+        #    [WHY A LOOP - 2026-10-16] the events list carries SEVERAL TDC-tagged events and the
+        #    FIRST one may have every product "Sold out" (measured on release: "Parking - League
+        #    Championship Series TDC" = 3/3 sold out, while the next one, "League Championship
+        #    Series TDC", has 28 sellable products). The previous seed hard-picked the FIRST badge
+        #    event, so step 4 then died with
+        #      extract_value: could not read 'xpath=//div[@data-testid='mui-stack']
+        #       [...][not(contains(., 'Sold out'))]' within 20000ms
+        #    The native action below walks the TDC events in list order; when an event's products
+        #    are ALL sold out it clicks the header X (`button[aria-label='Close']`, the top-left
+        #    close icon) to return to the event list and tries the NEXT TDC event. It ends ON a
+        #    usable event with the "Tickets & Merch" tab open, and publishes the chosen event name
+        #    as `event_tdc` — still located BY TAG, never by a hard-coded name (release names keep
+        #    being renamed by other people).
+        select_event_with_sellable_product_tdc:
+            badge: "TDC"
+            open_tab: "Tickets & Merch"
             save_as: "event_tdc"
             global: true
-            timeout: 20000
-        sleep_extract_tdc_event: 800
-
-        # 2. Click that TDC event card. Selected BY NAME so the choice is order-independent
-        #    ({{event_tdc}} = the event name saved by step 1b)
-        R_click_tdc_event: { locator: "xpath=//p[normalize-space(.)='{{event_tdc}}']" }
-        sleep_event: 5000
-
-        # 3. Open the "Tickets & Merch" tab where ticket names are listed
-        R_click_tickets_tab: { role: "tab", name: "Tickets & Merch" }
-        sleep_tickets: 3000
+            max_events: 5
+        sleep_event: 2500
 
         # 4. [HARD ASSERTION] every product on the Tickets & Merch tab has a NON-ZERO price.
         #    (was execute_js: the JS collected all "(price + sold + Tools)" cards and failed if any
@@ -137,11 +144,35 @@ testT5649_tdc:
         dispatch_click_ticket:
             locator: "xpath=//p[normalize-space(.)='{{ticket_tdc}}']"
             timeout: 15000
-        sleep_edit_ticket: 6000
 
-        # 12. Click the price under "Fees + Taxes" (the 2nd match = the price; the 1st match is
-        #     just an explanatory tooltip) to open the breakdown popover
-        R_click_fees_taxes: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        # 11b. [RACE FIX 2026-10-16] the SPA product route sometimes mounts BEFORE its data
+        #      arrives: the "Edit ticket" page then stays COMPLETELY BLANK (header only — captured
+        #      in step_captures/testT5649_tdc/step_019.jpg), so the "Fees + Taxes" value never
+        #      exists and step 12 burned ~43s of click attempts and failed. Wait for the value
+        #      natively (Playwright polls); when the page is still blank, reload once — a fresh
+        #      load of the same product route always renders (verified on release, desktop AND
+        #      mobile) — and wait again. No JS: smart_if + wait_for_selector + reload are all
+        #      framework-native actions.
+        if_edit_ticket_form_rendered:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_edit_ticket: 1000
+
+        # 12. Click the price under "Fees + Taxes" to open the breakdown popover.
+        #     [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1`, which
+        #     silently depended on the page rendering EXACTLY the old number of matches (the 1st
+        #     match is an explanatory tooltip <button>, the 2nd the value <div>). Excluding the
+        #     tooltip selects the value directly — verified on release: 1 match, "$ 61.25" — and
+        #     the click no longer breaks when only one match is present.
+        R_click_fees_taxes:
+            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip: 2000
 
         # 13. Extract "Platform fees" from the popover -> temp var transaction-fees

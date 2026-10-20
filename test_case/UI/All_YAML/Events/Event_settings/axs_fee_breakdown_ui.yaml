@@ -11,23 +11,18 @@ testT5649_axs:
         open: "{BASE_URL}/events"
         sleep_list: 5000
 
-        # 2. Find the event card that carries the AXS tag and save its event name into the
-        execute_js_extract_axs_event:
+        # 2. Save the event name of the event card that carries the AXS tag -> GLOBAL event_axs.
+        #    [DE-JS 2026-10-16] was a 30 x 500ms polling execute_js over
+        #    document.querySelectorAll('span'). [DOM FACT] the badge is a leaf <span>AXS</span> and
+        #    its parent row holds a single <p>, which IS the event name; `extract_value` polls
+        #    internally, so the manual retry loop disappears.
+        extract_value_axs_event:
+            locator: "xpath=(//span[normalize-space(.)='AXS']/parent::*//p)[1]"
+            source: text
+            numeric: false
             save_as: "event_axs"
             global: true
-            script: |
-                (async () => {
-                  // [DOM FACT] the AXS badge's parent row has a single <p> holding the event name;
-                  // the list renders asynchronously, so poll (30 x 500ms)
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  for (let i = 0; i < 30; i++) {
-                    const badge = [...document.querySelectorAll('span')].find(s => !s.children.length && nz(s) === 'AXS');
-                    const name = badge && badge.parentElement.querySelector('p');
-                    if (name && nz(name)) return nz(name);
-                    await new Promise(r => setTimeout(r, 500));
-                  }
-                  throw new Error('AXS event card not found in the event list (or its name <p> is empty)');
-                })()
+            timeout: 20000
         sleep_extract_axs_event: 800
 
         # 2b. Click the event card that carries the AXS tag.
@@ -38,19 +33,25 @@ testT5649_axs:
         R_click_tickets_tab: { role: "tab", name: "Tickets & Merch" }
         sleep_tickets: 3000
 
-        # 4. Verify a ticket name ends with "Pear.Us", and save the first such name into the
-        execute_js_extract_pear_us_ticket:
+        # 4. [ASSERTION, native] at least one ticket name ENDS WITH "Pear.Us", and save the first
+        #    such name into ticket_axs.
+        #    [DE-JS 2026-10-16] the JS scanned every element and ran `endsWith('pear.us')`. Natively:
+        #    the card filter `contains(., 'Pear.US')` narrows to Pear.US-listed tickets, and the
+        #    anchored `Pear\.US$` regex on the NAME element states the "ends with" claim exactly.
+        verify_text_regex_pear_us_ticket_name:
+            scope:
+                locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')]//p)[1]"
+            pattern: "Pear\\.US$"
+            flags: "i"
+            timeout: 20000
+        extract_value_pear_us_ticket:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_axs"
             global: true
-            script: |
-                () => {
-                    const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                    const hits = [...document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div,li,label,a,button')]
-                        .filter(e => !e.children.length && nz(e).toLowerCase().endsWith('pear.us'))
-                        .map(nz);
-                    if (!hits.length) throw new Error('No ticket name ends with "Pear.Us"');
-                    return hits[0];
-                }
+            timeout: 20000
+        sleep_extract_pear_us: 800
 
         # 5. Open event Settings (drawer). Reachable from the Tickets & Merch tab too.
         R_click_settings: { role: "button", name: "Settings" }
@@ -67,101 +68,91 @@ testT5649_axs:
         R_click_save: { name: "Save" }
         sleep_save: 3000
 
-        # 9. Extract the target ticket: the name of the first non-"Sold out"
-        #    product on the Tickets tab -> temp var ticket-axs, re-published to the
-        #    cross-case global var ticket_axs (overrides step 4's sold-out-prone first hit)
-        execute_js_extract_name:
-            save_as: "ticket_axs"
-            global: true
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Pear.US" + $/sold/Tools
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
-        sleep_extract_name: 800
+        # 9. [REMOVED 2026-10-16] the old `execute_js_extract_name` re-scanned the whole DOM for
+        #    "the first non-Sold-out Pear.US card" and re-saved ticket_axs — but step 4's
+        #    `extract_value_pear_us_ticket` above already saves EXACTLY that value from the same
+        #    card (identical locator, identical `[not(contains(., 'Sold out'))]` filter). The JS
+        #    block was pure duplication, so it is deleted rather than translated.
 
-        # 10. Extract the target ticket's price (the first $ amount on the card = retail price)
-        #     -> temp var ticket-retails-price
-        execute_js_extract_retail_price:
+        # 10. Save the target ticket's retail price (the first "$" amount on that card)
+        #     -> GLOBAL ticket-retails-price.
+        #     Playwright-native (was execute_js): read the card element's text and pull the first
+        #     money token out of it with a regex — `extract_value` supports `regex` + `source: text`.
+        extract_value_retail_price:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
             save_as: "ticket-retails-price"
             global: true
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const priceM=card.match(/\$([\d.]+)/);
-                  if(!priceM) throw new Error('Ticket price not found in card: '+card);
-                  return +parseFloat(priceM[1]).toFixed(2);
-                }
+            timeout: 20000
         sleep_extract_price: 500
 
-        # 10b. Extract the "incl." amount and compute my_revenve = price - incl -> temp var my_revenve
-        execute_js_extract_revenue:
+        # 10b. Save the "(incl. $x fees)" amount, then compute my_revenve = retail - incl.
+        #      Playwright-native (was execute_js): `extract_value` + `regex` reads the incl amount,
+        #      `compute_value` does the money math — no JS arithmetic.
+        extract_value_incl_fees:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))])[1]"
+            source: text
+            regex: "incl\\.?\\s*\\$\\s*([\\d,]+(?:\\.\\d+)?)"
+            save_as: "incl_fees_price"
+            timeout: 20000
+        compute_value_my_revenue:
+            expression: "{{ticket-retails-price}} - {{incl_fees_price}}"
             save_as: "my_revenve"
             global: true
-            script: |
-                () => {
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found');
-                  const price=parseFloat(card.match(/\$([\d.]+)/)[1]);
-                  const incl=parseFloat(card.match(/incl\.?\s*\$([\d.]+)/i)[1]);
-                  return +(price-incl).toFixed(2);
-                }
         sleep_extract_rev: 800
 
         # === Open the ticket-axs product -> Edit ticket page -> read the fee breakdown -> go back ===
 
         # 11. Click the ticket-axs product (located by the temp var name) to enter the Edit ticket page
         R_click_ticket: { locator: "xpath=//p[normalize-space(.)='{{ticket_axs}}']" }
-        sleep_edit_ticket: 6000
 
-        # 12. Click the price under "Fees + Taxes" (the 2nd match = the price; the 1st match is
-        R_click_fees_taxes: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        # 11b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
+        #      "Edit ticket" page blank (header only) so the "Fees + Taxes" value never renders (this
+        #      is what took tdc_fee_breakdown_ui.yaml down on release). Wait for the value natively;
+        #      when the page is still blank, reload once and wait again. No JS — smart_if +
+        #      wait_for_selector + reload are all framework-native actions.
+        if_edit_ticket_form_rendered:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_edit_ticket: 1000
+
+        # 12. Click the price under "Fees + Taxes" to open the breakdown popover.
+        #     [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
+        #     = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
+        #     directly and no longer depends on the exact match count.
+        R_click_fees_taxes:
+            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip: 2000
 
-        # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
-        execute_js_extract_platform_fees:
+        # 13. Extract "Platform fees" from the popover -> GLOBAL transaction-fees.
+        #     Playwright-native (was execute_js): `extract_row_value` walks the labelled MUI row.
+        #     `signed: false` — a fee row can never be negative; the default signed walk would
+        #     otherwise fold a neighbouring "−" glyph into the amount and publish a dirty value
+        #     (observed as -7.77 on the buyer-side drawer).
+        extract_row_value_platform_fees:
+            label: "Platform fees"
+            scope: ".MuiPopover-root"
             save_as: "transaction-fees"
             global: true
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Platform fees\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Platform fees" amount not found');
-                  return parseFloat(m);
-                }
+            signed: false
+            timeout: 15000
 
-        # 14. Extract "Taxes" from the popover -> temp var taxes
-        execute_js_extract_taxes:
+        # 14. Extract "Taxes" from the popover -> GLOBAL taxes (same native row walk).
+        extract_row_value_taxes:
+            label: "Taxes"
+            scope: ".MuiPopover-root"
             save_as: "taxes"
             global: true
-            script: |
-                () => {
-                  const pop=[...document.querySelectorAll('.MuiPopover-root, .MuiPaper-root')].find(e => /Platform fees/i.test(e.textContent));
-                  const m=pop && (pop.textContent.replace(/\s+/g,' ').match(/Taxes\s*\$?\s*([\d.]+)/i)||[])[1];
-                  if(!m) throw new Error('fees breakdown popover / "Taxes" amount not found');
-                  return parseFloat(m);
-                }
+            signed: false
+            timeout: 15000
 
         # 15. This price popover is a modal and covers the Back button, so press Escape to close it
         press_close_popover: { key: "Escape" }
@@ -173,20 +164,25 @@ testT5649_axs:
         smart_click_optional_leave_without_saving: { text: "Leave without saving" }
         sleep_leave: 1500
 
-        # 16. Extract the event name (used to build the guest public post URL) -> temp var event_name
-        execute_js_extract_event:
-            save_as: "event_name"
-            script: |
-                () => {
-                  const m=document.body.innerText.replace(/\s+/g,' ').match(/([A-Za-z0-9_'’\- ]{1,50}?)\s*(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d/i);
-                  const h=document.querySelector('h1,h2');
-                  return (m && m[1].trim()) || (h && h.textContent.trim()) || document.title.trim();
-                }
-
-        # 17. Slugify the event name into the guest-accessible public post URL -> GLOBAL var post_url
-        #     (published cross-case so axs_fee_breakdown_guest_purchase_ui.yaml can reuse it)
-        execute_js_extract_url:
+        # 16. Read the event's PUBLIC post URL straight from the "Post" tab -> GLOBAL post_url.
+        #     [DE-JS 2026-10-16] was two JS blocks: one scraped the event name out of document.body
+        #     innerText, the next lower-cased it and slugified it into an ASSUMED
+        #     `.../autotestshop/post/<slug>` URL. That guess silently rots whenever the slug rule or
+        #     the event name changes. The Post tab renders the real, published post link in a button
+        #     whose text contains "/post/", so we read the link itself — no name, no slugify, no JS.
+        R_click_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
+        sleep_post_tab: 4000
+        extract_value_post_url_raw:
+            locator: "xpath=//button[contains(., '/post/')]"
+            source: content
+            strip_whitespace: true
+            regex: "[A-Za-z0-9.-]+\\.pear\\.us/[A-Za-z0-9._-]+/post/[A-Za-z0-9._-]+"
+            numeric: false
+            save_as: "post_url_raw"
+            timeout: 20000
+        set_value_post_url:
+            value: "https://{{post_url_raw}}"
             save_as: "post_url"
             global: true
-            script: "() => 'https://release.pear.us/autotestshop/post/' + '{{event_name}}'.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')"
+        sleep_post_url: 800
 

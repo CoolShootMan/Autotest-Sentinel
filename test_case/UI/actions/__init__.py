@@ -30,6 +30,7 @@ from .base import (
     verify_value_near,
     verify_attribute,
     verify_radio_checked,
+    verify_enabled,
     extract_value,
     compute_value,
     extract_row_value,
@@ -54,8 +55,13 @@ from .base import (
     fill_stripe_iframe,
     smart_click_optional,
     dispatch_click,
+    click_open_new_tab,
+    start_network_capture,
+    verify_network_capture,
+    hover,
     ensure_auto_archive,
     smart_click_retry,
+    select_event_with_sellable_product,
     handle_modal,
     auto_handle_modals,
     create_session,
@@ -217,6 +223,7 @@ ACTIONS = {
     "verify_value_near": verify_value_near,
     "verify_attribute": verify_attribute,
     "verify_radio_checked": verify_radio_checked,
+    "verify_enabled": verify_enabled,
     "extract_value": extract_value,
     "compute_value": compute_value,
     "extract_row_value": extract_row_value,
@@ -258,7 +265,12 @@ ACTIONS = {
     "fill_stripe_iframe": fill_stripe_iframe,
     "smart_click_optional": smart_click_optional,
     "dispatch_click": dispatch_click,
+    "click_open_new_tab": click_open_new_tab,
+    "start_network_capture": start_network_capture,
+    "verify_network_capture": verify_network_capture,
+    "hover": hover,
     "smart_click_retry": smart_click_retry,
+    "select_event_with_sellable_product": select_event_with_sellable_product,
     "delete_coseller_if_exists": delete_coseller_if_exists,
     "execute_js": execute_js,
     "ensure_auto_archive": ensure_auto_archive,
@@ -332,8 +344,22 @@ def get_action(name):
         return smart_click_optional
     if name.startswith("smart_click_retry"):
         return smart_click_retry
+    if name.startswith("select_event_with_sellable_product"):
+        return select_event_with_sellable_product
     if name.startswith("dispatch_click"):
         return dispatch_click
+    # MUST stay above the generic `click*` rule below — otherwise "click_open_new_tab"
+    # would be swallowed by `startswith("click")` -> smart_click and the popup would be lost.
+    if name.startswith("click_open_new_tab") or name.startswith("click_new_tab") or name.startswith("click_expect_new_tab"):
+        return click_open_new_tab
+    # Hover must be routed BEFORE the generic `click*` rule is irrelevant (it doesn't start
+    # with "click"), but it must come before any `move_to*` fallbacks to stay unambiguous.
+    if name.startswith("hover"):
+        return hover
+    if name.startswith("start_network_capture"):
+        return start_network_capture
+    if name.startswith("verify_network_capture"):
+        return verify_network_capture
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click
     elif name.startswith("move_relative_to_selector") or name.startswith("move_mouse") or name.startswith("move_to"):
@@ -408,6 +434,9 @@ def get_action(name):
         return verify_attribute
     if name.startswith("verify_radio_checked"):
         return verify_radio_checked
+    # MUST stay above the generic `verify*` -> verify_text_visible fallback below.
+    if name.startswith("verify_enabled"):
+        return verify_enabled
     if name.startswith("extract_row_value"):
         return extract_row_value
     if name.startswith("extract_value"):

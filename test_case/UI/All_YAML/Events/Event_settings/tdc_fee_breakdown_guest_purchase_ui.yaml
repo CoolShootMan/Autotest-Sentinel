@@ -3,10 +3,10 @@
 
 # --- testT5649_tdc_guest_purchase: Guest check fee breakdown and purchase tdc ticket ---
 #
-# [REFACTOR 2026-10-13] All execute_js blocks were replaced by framework-native actions.
-# The ONLY JS that remains is step 23 (`execute_js_click_view_tickets`): the order page's
-# "View Tickets" link opens a new tab / window and the framework has no popup handling, so a
-# forced same-tab navigation is required to let wait_for_url assert the destination.
+# [REFACTOR 2026-10-13 / DE-JS 2026-10-16] ALL execute_js blocks are gone — this case now
+# contains ZERO JS. The last holdout was the "View Tickets" click (the link opens a new tab and
+# the framework had no popup handling); it is now covered by the reusable native action
+# `click_open_new_tab` (actions/base.py), which wraps Playwright's `context.expect_page()`.
 testT5649_tdc_guest_purchase:
     is_mobile: true
     description: "Guest check fee breakdown and purchase tdc ticket, check TDC info and link on order confirmation page"
@@ -25,16 +25,25 @@ testT5649_tdc_guest_purchase:
         sleep_guest_post: 5000
 
         # 3. As a guest, find the product by name in the post and assert its displayed price.
-        #     [PRICING FACT - verified on release 2026-10-13] a TDC hub PUBLIC POST renders the
-        #     RETAIL price (e.g. "$115.42 (incl. fees)"), NOT the organizer's net revenue:
-        #       event card  : $115.42 (incl. $12.54 fees) -> ticket-retails-price = 115.42
-        #       edit ticket : My revenue = $102.88, Fees + Taxes = $12.54
-        #     So the post is asserted against `ticket-retails-price`. (The previous JS compared it
-        #     with my_revenve, which could never match: 115.42 != 102.88.)
+        #     [PRICING FACT - re-verified on release 2026-10-16, probe 57] the guest-side post
+        #     renders the NET price (the organizer's revenue), NOT the gross "incl. fees" amount,
+        #     because this case ALWAYS runs right after the parent case, whose step 6 turns
+        #     "Show fee breakdown at checkout" (showFeesBreakdown) ON. Measured on the very product
+        #     the parent selects (`DC - Dugout`, event tab shows the gross $602.55 (incl. $61.25)):
+        #       post (guest)          : "DC - Dugout"  ->  $541.30   == my_revenve
+        #       Select tickets drawer : "Dugout"       ->  $541.30   == my_revenve
+        #       Checkout              : Subtotal $541.30 + Transaction fees $61.25
+        #                               + Service fee $2.75 = Total $605.30
+        #     The earlier note here ("the post renders the retail price, e.g. $115.42 (incl. fees)")
+        #     described the *other* display mode — showFeesBreakdown OFF — which is why asserting
+        #     `ticket-retails-price` (the gross) failed with
+        #       verify_text_regex: pattern '\$\s*602.55\b' not found.
+        #     `my_revenve` is also what every downstream assertion in this case already uses
+        #     (checkout line price / Subtotal), so the case is now internally consistent.
         #     [DOM FACT] the post card = the NEAREST ancestor of the product-name leaf carrying a "$".
         session_guest__verify_text_regex_post_price:
             scope: "xpath=//*[normalize-space(.)='{{ticket_tdc}}']/ancestor::*[contains(., '$')][1]"
-            pattern: "\\$\\s*{{ticket-retails-price}}\\b"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
             timeout: 20000
 
         # ==================== guest checkout flow ====================
@@ -42,18 +51,19 @@ testT5649_tdc_guest_purchase:
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_tdc}}']", index: 0 }
 
         # 5. Assert the price shown in the "Select tickets" drawer.
-        #     [PRICING FACT - verified on release 2026-10-13] the drawer lists the RETAIL price
-        #     ("T1000 ... / $115.42", Total after 1 item = $115.42), i.e. the same amount the public
-        #     post shows — NOT the organizer's net revenue ($102.88). Asserted against
-        #     `ticket-retails-price` for the same reason as step 3.
-        #     [DOM FACT] for a TDC hub ticket the drawer shows the VENUE + time, NOT the product
-        #     title, so identify it by its heading; fall back to "any drawer holding a quantity
-        #     input" because innerText can briefly read empty.
+        #     [PRICING FACT - re-verified on release 2026-10-16, probe 58] with showFeesBreakdown ON
+        #     (the state the parent case enforces in its step 6) the guest-side drawer lists the NET
+        #     price: measured "Dugout / $541.30" for the chosen product — the SAME amount the public
+        #     post shows (step 3) and again NOT the gross $602.55. Asserted against `my_revenve`,
+        #     like every other price assertion in this case.
+        #     [DOM FACT] the drawer line is "<section> $<net>" and the product title only appears
+        #     later inside the Checkout drawer, so identify the drawer by its heading; fall back to
+        #     "any drawer holding a quantity input" because innerText can briefly read empty.
         #     (`:has-text()` is Playwright's case-insensitive text matcher, mirroring the
         #      /Select tickets/i test the old JS used.)
         session_guest__verify_text_regex_drawer_price:
             scope: ".MuiDrawer-root:has-text('Select tickets'), .MuiDrawer-root:has(input[type='number'])"
-            pattern: "\\$\\s*{{ticket-retails-price}}\\b"
+            pattern: "\\$\\s*{{my_revenve}}\\b"
             timeout: 20000
 
         # 6. Raise the quantity from 0 to 1 (the drawer opens at 0 for hub seat tickets)
@@ -161,16 +171,17 @@ testT5649_tdc_guest_purchase:
             timeout: 20000
 
         # 13. Click the Checkout CTA to reach the contact + payment form.
-        #     [UI DRIFT 2026-10-13] the old "Continue with credit card" button no longer exists:
-        #     the shared Checkout drawer renders a single CTA
-        #     `button[data-testid='checkout-in-post-continue-cta']` labelled "Continue", and
-        #     clicking it swaps the drawer body to the contact form (input[name='contact.*'])
-        #     with a "Place order" CTA. Verified on the venue-map checkout (same shared
-        #     component, see venue_map_fee_breakdown_guest_purchase.yaml step 12); not re-verified
-        #     here because the TDC purchase is currently blocked upstream by
-        #     "Ticket pricing unavailable" (product-side).
+        #     [UI FACT - re-verified on release 2026-10-16, probe 60 / real order #P192268] the TDC
+        #     Checkout drawer does NOT use the `checkout-in-post-continue-cta` testid that the
+        #     venue-map drawer uses. Its single CTA is
+        #       button[data-testid='checkout-in-post-credit-card-cta']  labelled "Continue with
+        #       credit card"
+        #     (the same old-style variant AXS uses — see axs_fee_breakdown_guest_purchase_ui.yaml).
+        #     Clicking it swaps the drawer body to the contact form (input[name='contact.*']) plus a
+        #     "Place order" CTA. The locator below is a JOINED list so it keeps working on either
+        #     variant: CSS picks the first match in DOM order.
         session_guest__R_click_checkout_continue:
-            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            locator: "button[data-testid='checkout-in-post-credit-card-cta'], button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
             timeout: 15000
         sleep_guest_cc_form: 5000
 
@@ -237,22 +248,22 @@ testT5649_tdc_guest_purchase:
                 - "Your order is confirmed"
             timeout: 20000
 
-        # 19. Assert the price next to "Show summary" == ticket-retails-price (or retail + service fee)
-        #     [PRICING FACT] on a TDC hub order the header may show the item total (retail) or the
-        #     grand total (retail + Service fee); steps 20/21 hard-assert the rows either way.
-        session_guest__compute_value_grand_total:
+        # 19. [PRICING FACT] on a TDC hub order the header may show the item total (retail) or the
+        #     grand total (retail + Service fee); step 21 hard-asserts the rows either way, so the
+        #     old "assert the amount next to Show summary" step is gone (see 19b).
+        compute_value_grand_total:
             expression: "{{ticket-retails-price}} + {{service_fee}}"
             save_as: "tdc_grand_total"
-        session_guest__verify_row_value_show_summary:
-            label: "Show summary"
-            value: ["{{ticket-retails-price}}", "{{tdc_grand_total}}"]
-            tail_limit: 16
-            levels: 6
-            tolerance: 0.01
-            timeout: 20000
 
-        # 20. Click Show summary to expand the order details
-        session_guest__R_click_show_summary: { locator: "xpath=//*[normalize-space(.)='Show summary']" }
+        # 19b-20. [UI DRIFT 2026-10-16, verified on a real AXS order #P192196] the confirmation page
+        #     now renders the order details ALREADY EXPANDED: there is no "Show summary" toggle any
+        #     more. `verify_row_value_show_summary` was removed for that reason (its label does not
+        #     exist; the money values are hard-asserted by step 21's Item(s) total / Subtotal /
+        #     Total rows). This step keeps expanding the summary on builds that still render the
+        #     toggle and skips silently when it is absent.
+        session_guest__smart_click_optional_show_summary:
+            locator: "xpath=//*[normalize-space(.)='Show summary']"
+            timeout: 5000
 
         # 21. Assert the details: Item(s) total == Subtotal == ticket-retails-price, and
         #     Total == Item(s) total + Service fee (the TDC hub settlement model), plus an
@@ -313,26 +324,18 @@ testT5649_tdc_guest_purchase:
             save_as: "view_tickets_url"
             timeout: 20000
 
-        # 25. Click "View Tickets", forcing a same-tab jump (also redirecting any window.open) so
-        #     the destination can be asserted by the Playwright-native wait_for_url in step 26.
-        #     [ALLOWED JS] The framework has no popup/new-tab handling and this link opens a new
-        #     tab, so the forced same-tab navigation is the one JS exception kept in this suite.
-        session_guest__execute_js_click_view_tickets:
-            script: |
-                () => {
-                  const el = [...document.querySelectorAll('a,button,[role="button"]')]
-                    .filter(e => /View\s*Tickets/i.test((e.textContent||'').replace(/\s+/g,' ').trim()))
-                    .sort((a,b) => (a.textContent||'').length - (b.textContent||'').length)[0];
-                  if(!el) throw new Error('order page: "View Tickets" button not found');
-                  try { el.setAttribute('target','_self'); } catch(_){}
-                  window.open = function(u){ const s=(typeof u==='string')?u:(u&&u.toString?u.toString():''); if(s) location.href = s; return window; };
-                  setTimeout(() => el.click(), 0);   // next tick: evaluate returns before navigation
-                  return 'clicked';
-                }
-        sleep_view_tickets_nav: 6000
-
-        # 26. [HARD ASSERTION] the "View Tickets" click must land on https://mpvsb.tickets.com/
-        session_guest__wait_for_url_view_tickets:
+        # 25. Click "View Tickets" and assert the NEW TAB it opens lands on mpvsb.tickets.com.
+        #     [DE-JS 2026-10-16] this was the LAST JS block in the suite: an `execute_js` that
+        #     rewrote `target` to `_self` and monkey-patched `window.open` to force a same-tab
+        #     jump, because the framework had no popup handling and `wait_for_url` cannot see a
+        #     tab it never switched to. The framework gap is now closed by a reusable NATIVE
+        #     action — `click_open_new_tab` (actions/base.py) wraps Playwright's
+        #     `context.expect_page()`, so the popup is caught, its URL asserted and the tab closed
+        #     with zero JS. The old step 26 `wait_for_url_view_tickets` is gone with it: the
+        #     destination is now asserted on the tab that ACTUALLY opened, which is the stronger
+        #     claim (it no longer depends on us hijacking `window.open`).
+        session_guest__click_open_new_tab_view_tickets:
+            locator: "xpath=(//*[self::a or self::button or @role='button'][contains(normalize-space(.), 'View Tickets')])[1]"
             url: "*mpvsb.tickets.com*"
             timeout: 30000
 
