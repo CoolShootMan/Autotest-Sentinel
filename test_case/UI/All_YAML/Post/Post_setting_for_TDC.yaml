@@ -856,10 +856,11 @@ testT3767_TDC:
 
         # Step 2: Click the Delete icon (only rendered once the edit panel is open)
         R_click_delete_coupon: { locator: '[data-testid="enhance-button"][aria-label="Delete"]' }
-        sleep_step: 1500
+        sleep_step: 2000
 
-        # Step 3: Confirm delete
-        smart_click_optional_confirm_delete: { role: 'button', name: 'Delete', timeout: 10000 }
+        # Step 3: Confirm delete in the dialog
+        wait_delete_dialog: { locator: '[role="dialog"]', timeout: 10000 }
+        R_click_confirm_delete: { locator: '[role="dialog"] [data-testid="enhance-button"][aria-label="Delete"], [role="dialog"] button:has-text("Delete")', timeout: 10000 }
         sleep_step: 2000
 
         # Step 4: Save changes
