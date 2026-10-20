@@ -844,8 +844,8 @@ testT4955_Partner_SetPaymentRestriction_AXS:
         check_payment_restriction: { locator: "input[name='enablePaymentRestriction']" }
         sleep_step: 1000
 
-        # Step 5.1: Click "Edit" on access restriction section (dialog already open after toggle)
-        R_click_access_code_button: { locator: "button:has-text('Edit')", timeout: 5000 }
+        # Step 5.1: "Set checkout restrictions" dialog appears, click "Set up access code"
+        R_click_access_code_button: { locator: '[data-testid="mui-button"]:has-text("Set up access code"), [data-testid="mui-button"]:has-text("Edit"), button:has-text("Edit")', timeout: 10000 }
         sleep_step: 1000
 
         # Step 7: Click and fill access code

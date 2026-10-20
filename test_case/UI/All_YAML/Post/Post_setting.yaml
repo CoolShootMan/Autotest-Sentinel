@@ -2060,7 +2060,8 @@ testT4955_Partner_SetPaymentRestriction:
 
         # Step 5.1: Click access code entry — may be "Edit" button, "Set up access code" button, or "Manage" link/button
         # R_click_access_code_button: { locator: "button:has-text('Edit'), button:has-text('Set up access code'), button:has-text('Manage'), a:has-text('Manage')" }
-        R_click_access_code_button: { role: "button", name: "Set up access code" }
+        # Step 5.1: "Set checkout restrictions" dialog — click "Set up access code" or "Edit" (if already set)
+        R_click_access_code_button: { locator: '[data-testid="mui-button"]:has-text("Set up access code"), [data-testid="mui-button"]:has-text("Edit"), button:has-text("Edit")', timeout: 10000 }
         sleep_step: 1000
 
         # Step 7: Click and fill access code
