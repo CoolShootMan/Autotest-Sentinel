@@ -13298,6 +13298,327 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp151b).json('$.code').equals('200')
 
 
+    # --- step 151c: duplicate 12061 event -> "post setting require approval to purchase" ---
+    _resp151c = ctx.api.events.v2_duplicate(body=r"""{
+    "title": "post setting require approval to purchase",
+    "curatorId": "{{user_id}}",
+    "description": "",
+    "descriptionBodyJson": "{\"root\":{\"children\":[{\"children\":[],\"direction\":\"ltr\",\"format\":\"\",\"indent\":0,\"type\":\"katana-paragraph\",\"version\":1,\"textFormat\":0,\"textStyle\":\"\",\"style\":\"\"}],\"direction\":null,\"format\":\"\",\"indent\":0,\"type\":\"root\",\"version\":1}}",
+    "startDate": "2053-04-17T05:00:00.000Z",
+    "endDate": null,
+    "venue": "Instagram Live, Zoom, In-person",
+    "location": "789 River East Art Center Promenade, Chicago, Illinois, USA",
+    "status": "UPCOMING",
+    "isTaxEnabled": false,
+    "taxConfig": null,
+    "mediaTextConfig": {
+        "headline": "Missed our last event?",
+        "subtitle": "Here's a lil recap of our last event👇",
+        "align": "center"
+    },
+    "poster": {
+        "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+        "width": 3072,
+        "height": 2048,
+        "position": 0,
+        "mediaType": "IMAGE",
+        "mediaDuration": 0
+    },
+    "allowAutoComplete": true,
+    "startDateDisplay": "2053-04-17",
+    "note": "linda note",
+    "timezone": {
+        "timeZoneId": "America/Chicago",
+        "timeZoneName": "Central Daylight Time",
+        "dstOffset": 3600,
+        "rawOffset": -21600
+    },
+    "isAddressRevealEnabled": false,
+    "messageInfo": {
+        "smsMaxLimit": 3,
+        "emailMaxLimit": 5,
+        "cooldownMinutes": 15
+    },
+    "platform": "PEAR",
+    "creationStep": "COMPLETED",
+    "extraInfo": null,
+    "locationDetails": {
+        "city": "Chicago",
+        "line1": "789 River East Art Center Promenade",
+        "line2": null,
+        "state": "IL",
+        "country": "US",
+        "placeId": null,
+        "zipcode": null,
+        "stateName": "Illinois",
+        "stripeLocationId": null
+    },
+    "country": "US",
+    "state": "IL",
+    "autoReplace": false,
+    "lineupTransactionId": null,
+    "lineupTransactionStatus": null,
+    "autoPayLineupStatus": "PENDING",
+    "medias": [],
+    "tickets": [
+        {
+            "id": "{{ticket_id}}",
+            "remote_id": null,
+            "platform": "PEAR",
+            "createdAt": "2026-04-22T07:08:00.363Z",
+            "updatedAt": "2026-04-22T08:09:37.162Z",
+            "merchantId": "{{eventcatalog_id}}",
+            "title": "General Admission",
+            "bodyHtml": "",
+            "originalBodyHtml": "",
+            "isBodyHtmlOverridden": false,
+            "bodyText": "",
+            "handle": null,
+            "productType": "",
+            "publishedAt": "2026-04-22T07:08:00.374Z",
+            "publishedScope": "",
+            "status": "ACTIVE",
+            "externalStatus": "ACTIVE",
+            "followExternalStatus": false,
+            "tags": [],
+            "templateSuffix": null,
+            "vendor": "Pear",
+            "syncAt": null,
+            "deletedAt": null,
+            "delisted": false,
+            "excludedByImportingTag": false,
+            "isFeatured": false,
+            "featuredScore": null,
+            "inventoryQuantity": 1000,
+            "inventoryQuantityOriginal": 1000,
+            "soldQuantity": 0,
+            "priceDisplay": 25.56,
+            "priceDisplayAnchor": 0,
+            "priceMin": 25.56,
+            "priceMinAnchor": 0,
+            "priceMax": 25.56,
+            "priceMaxAnchor": 0,
+            "priceImportedMin": 0,
+            "priceImportedMax": 0,
+            "imageCount": 1,
+            "isUsed": "NWT",
+            "shippingType": "NO_SHIPPING_REQUIRED",
+            "additionalShippingFee": 0,
+            "deliveryTime": [0, 5],
+            "returnPolicyApplied": true,
+            "isAvailable": false,
+            "commissionRate": 10,
+            "textForShare": null,
+            "priceSyncImported": false,
+            "coverImage": {
+                "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
+                "width": 1000,
+                "height": 1000,
+                "mediaSrc": null,
+                "mediaType": "IMAGE",
+                "mediaDuration": 0
+            },
+            "reviewCount": null,
+            "reviewOverallScore": null,
+            "reviewAggregate": null,
+            "displayReviews": true,
+            "links": null,
+            "taxEnable": false,
+            "taxJarCategory": null,
+            "overrideEventTax": false,
+            "customTaxRate": null,
+            "subscriptionPlanId": null,
+            "reviewRedirectProductId": null,
+            "reviewSummary": null,
+            "customFieldsInfo": null,
+            "listingType": "TICKET",
+            "extraInfo": {
+                "date": "Thu, Apr 17, 2053 (CDT)",
+                "event": "verify-co-seller-auto-archive",
+                "venue": "Instagram Live, Zoom, In-person",
+                "lineup": [],
+                "poster": {
+                    "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+                    "width": 3072,
+                    "height": 2048,
+                    "position": 0,
+                    "mediaType": "IMAGE",
+                    "mediaDuration": 0
+                },
+                "status": "COMPLETED",
+                "location": "789 River East Art Center Promenade, Chicago, Illinois, USA",
+                "eventNote": "linda note",
+                "startDate": "2053-04-17T05:00:00.000Z",
+                "timeZoneId": "America/Chicago",
+                "isAddressHidden": false,
+                "addressRevealConfig": null
+            },
+            "bodyJson": null,
+            "shippingOptions": null,
+            "shippingNote": null,
+            "autoFulfill": true,
+            "eventId": "{{event_12061_id}}",
+            "lifecycleStatus": "LIFECYCLE_STATUS_ARCHIVED",
+            "copyFromId": "{{ticket_id}}",
+            "stopSellingAfter": null,
+            "stopSellingAfterDisplay": null,
+            "deliveryMethod": "QR_CODE",
+            "thirdPartyDeliveryMessage": null,
+            "isMultipleDaysPassEnabled": false,
+            "multipleDaysPass": null,
+            "isPickupEtaEnabled": null,
+            "eventMatchingRules": null,
+            "excludeFromPostSync": false,
+            "isExpirationEnabled": false,
+            "expirationTime": null,
+            "expirationTimeDisplay": null,
+            "allowAtDoorSales": false,
+            "isProductFormEnabled": false,
+            "isVariantPriceDisplayEnabled": false,
+            "isTipEnabled": false,
+            "images": [
+                {
+                    "id": "b471bc6e-a872-4253-ab7a-41fa0cf51c2d",
+                    "remote_id": null,
+                    "createdAt": "2026-04-22T07:08:00.377Z",
+                    "updatedAt": "2026-04-22T07:08:00.377Z",
+                    "height": 1000,
+                    "width": 1000,
+                    "position": 1,
+                    "productId": "{{ticket_id}}",
+                    "src": "https://res.cloudinary.com/dr9io1zjv/v1755656006/uploaded_images/pt4zctae8zwv8jrljrf7.png",
+                    "variantIds": [],
+                    "mediaType": "IMAGE",
+                    "mediaSrc": null,
+                    "mediaDuration": 0,
+                    "contributedBy": 3,
+                    "contributorId": null,
+                    "productImageType": "PRODUCT",
+                    "source": null
+                }
+            ],
+            "options": [
+                {"name": "Title", "images": [{"value": "Default Title", "image": null}]}
+            ],
+            "variants": [
+                {
+                    "id": "{{variant_id}}",
+                    "remote_id": null,
+                    "createdAt": "2026-04-22T07:08:00.377Z",
+                    "updatedAt": "2026-04-22T07:08:00.377Z",
+                    "compareAtPrice": null,
+                    "fulfillmentService": "manual",
+                    "grams": 0,
+                    "imageId": null,
+                    "imageIds": [],
+                    "inventoryItemId": null,
+                    "inventoryManagement": "Pear",
+                    "inventoryPolicy": "DENY",
+                    "inventoryQuantity": 1000,
+                    "inventoryQuantityOriginal": 1000,
+                    "soldQuantity": 0,
+                    "option": {"option1": "Default Title"},
+                    "position": 1,
+                    "price": "25.56",
+                    "priceAnchor": "0",
+                    "priceImported": "0.00",
+                    "productId": "{{ticket_id}}",
+                    "sku": "",
+                    "taxCode": null,
+                    "taxable": true,
+                    "title": "Default Title",
+                    "weight": null,
+                    "weightUnit": null,
+                    "platform": null,
+                    "fees": 3.56,
+                    "transactionFee": {
+                        "customFee": 0,
+                        "platformFee": 3.56,
+                        "customFeeBreakdown": {"TAX": {"itemFee": 0, "unitFixedFee": 0, "unitPercentageFee": 0}},
+                        "transactionItemFee": 3.56
+                    },
+                    "ticketPrice": 22,
+                    "isMinPurchaseQuantityEnabled": false,
+                    "minPurchaseQuantity": 0,
+                    "isMaxPurchaseQuantityEnabled": false,
+                    "maxPurchaseQuantity": 0,
+                    "isPackSizeEnabled": false,
+                    "packSize": null,
+                    "image": null
+                }
+            ],
+            "productForm": null
+        }
+    ],
+    "lineup": [],
+    "eventProducts": [],
+    "ignoreStartTime": true,
+    "ignoreEndTime": true,
+    "duplicateEventId": "{{event_12061_id}}",
+    "posterBackend": [
+        {
+            "src": "https://res.cloudinary.com/dr9io1zjv/v1762842604/uploaded_images/s47jfs33fgz3do4wvrxz.png",
+            "width": 3072,
+            "height": 2048,
+            "position": 0,
+            "mediaType": "IMAGE",
+            "mediaDuration": 0
+        }
+    ],
+    "styleSettings": {
+        "fontFamily": "Inter",
+        "color": "#FFFFFF",
+        "backgroundColor": "#000000",
+        "borderColor": "#000000",
+        "dividerColor": "#FFFFFF",
+        "secondaryTextColor": "#E0E0E0",
+        "title": {"color": "#F6CA7C", "fontFamily": "Inter", "fontSize": 24, "fontWeight": 700},
+        "columnTitle": {"fontFamily": "Inter", "fontSize": 20, "fontWeight": 700, "color": "#FFFFFF"},
+        "subtitle": {"fontFamily": "Inter", "fontSize": 20, "fontWeight": 400, "color": "#FFFFFF"},
+        "button": {"backgroundColor": "#F6CA7C", "color": "#000000", "borderColor": "#000000", "borderRadius": 12, "boxShadow": "none", "fontSize": 16, "fontWeight": 700},
+        "secondaryButton": {"fontSize": 16, "fontWeight": 700, "color": "#FFFFFF", "borderColor": "#F6CA7C", "borderRadius": 12, "boxShadow": "none"},
+        "textButton": {"fontSize": 16, "fontWeight": 700, "color": "#FFFFFF"},
+        "selectButton": {"borderColor": "#000000"},
+        "relatedLink": {"borderRadius": 99, "color": "#FFFFFF ", "borderColor": "#0000", "backgroundColor": "#FAFAFA"},
+        "featuredProducts": {"borderRadius": 16, "backgroundColor": "#000000", "color": "#FFFFFF", "secondaryTextColor": "#E0E0E0", "title": {"fontFamily": "Inter", "fontSize": 14, "fontWeight": 400, "color": "#FFFFFF"}},
+        "product": {"backgroundColor": "#000000", "borderRadius": 8, "color": "#FFFFFF", "secondaryTextColor": "#E0E0E0"},
+        "discount": {"backgroundColor": "#D32A09", "color": "#FFFFFF", "priceColor": "#FFFFFF"},
+        "freeShipping": {"backgroundColor": "#EBF5EF", "color": "#268E46"},
+        "starRatingColor": "#FAAF03",
+        "layoutFeatureCard": {"title": {"fontFamily": "Inter", "fontSize": 16, "fontWeight": 700, "color": "#FFFFFF"}, "color": "#FFFFFF", "secondaryTextColor": "#E0E0E0", "button": {"backgroundColor": "#F6CA7C", "color": "#000000"}},
+        "lineupBanner": {"titleText": "#FFFFFF", "descriptionText": "#E0E0E0"},
+        "eventInfoBanner": {"text": "#FFFFFF", "secondaryTextColor": "#E0E0E0"},
+        "eventDescription": {"text": "#E0E0E0", "title": "#FFFFFF"}
+    }
+}""", app_headers=True, token="token")
+    expect(_resp151c).json('$.code').equals('200')
+    expect(_resp151c).json('$.message').equals('success')
+    ctx.extract("approval_post_id", _resp151c, "$.data.posts[0].id")
+    expect(_resp151c).json('$.data.posts').is_array()
+    expect(_resp151c).json('$.data.posts').is_not_empty()
+
+
+    # --- step 151d: set post URL alias ---
+    _resp151d = ctx.api.admin.post_by_post_id(
+        path_vars={"post_id": vars.get("approval_post_id", "")},
+        body="""{
+    "urlAlias": "post-setting-require-approval-to-purchase",
+    "headline": "post setting require approval to purchase",
+    "title": "post setting require approval to purchase",
+    "subTitle": "",
+    "links": [],
+    "creatorId": "{{user_id}}",
+    "baseSold": 0,
+    "baseViewed": 0,
+    "expiredAt": null,
+    "hideInStore": false,
+    "checkoutInPost": true,
+    "status": "ACTIVE"
+}""", token="admin_token", app_headers=True)
+    expect(_resp151d).json('$.code').equals('200')
+    expect(_resp151d).json('$.message').equals('success')
+
+
     # ================================================================
     # Prefill event: lury-ui-automation-testing (for linda999)
     # ================================================================
