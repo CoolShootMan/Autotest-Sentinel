@@ -16,22 +16,18 @@ testT5639:
         #     the cross-case global ticket_venue_map in the original design. To keep this case
         #     runnable on its own (no dependency on venue_map_fee_breakdown_ui.yaml), extract it
         #     locally from the now-open event page. No `global: true` -> per-case temp var.
-        #     Mirrors venue_map_taxes_and_custome_fee.yaml step 2b (same product-card scan).
-        execute_js_seed_ticket_venue_map:
+        #     [DE-JS 2026-10-16] was an execute_js scanning for "the outermost element with one
+        #     Tools button + $ + sold". Playwright-native: the product card on the event page is a
+        #     `div[data-testid='mui-stack']` holding exactly one Tools button
+        #     (`button[data-testid='enhance-button']`); the first card that is NOT "Sold out" is
+        #     the target and its first <p> is the name — the same locator the venue_map / tdc fee
+        #     cases use on release.
+        extract_value_ticket_venue_map:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_venue_map"
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Tools" + $/sold
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out ticket found on event page (self-seed ticket_venue_map)');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+            timeout: 20000
         sleep_seed_vm: 800
 
         # 3. Event detail page -> Post tab
@@ -49,62 +45,32 @@ testT5639:
         # 6. Isolate the venue-map product on the Customize products page by its name
         #    (best-effort search; ensures the visible Advanced-settings click in 7 hits the
         #     correct card when the post lists multiple products).
-        execute_js_isolate_product:
-            save_as: "isolate_result"
-            script: |
-                async () => {
-                  // smart_fill cannot template workflow variables, so drive the React search input via JS
-                  // (native setter + input event + Enter key events)
-                  const pname = "{{ticket_venue_map}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_venue_map is not set — it should be self-seeded by execute_js_seed_ticket_venue_map on the event page');
-                  const inp = document.querySelector('input[placeholder="Search product"]');
-                  if (!inp) return 'no-search-box';
-                  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(inp, pname);
-                  inp.dispatchEvent(new Event('input', { bubbles: true }));
-                  for (const k of ['keydown','keypress','keyup']) inp.dispatchEvent(new KeyboardEvent(k, { key: 'Enter', bubbles: true }));
-                  await new Promise(r => setTimeout(r, 1500));
-                  return 'searched:' + pname;
-                }
+        #    [DE-JS 2026-10-16] was an execute_js that set the React input via
+        #    `HTMLInputElement.prototype.value` + an `input` event + Enter, with a comment saying
+        #    "smart_fill cannot template workflow variables". That comment is OUT OF DATE:
+        #    `smart_fill` backfills `{{var}}` (`_fill_vars`), so a plain `fill` + `press` does the
+        #    same thing natively — and `fill` also drives the React onChange through a real
+        #    user interaction rather than a synthesised event.
+        fill_search_product_venue_map: { locator: 'input[placeholder="Search product"]', value: "{{ticket_venue_map}}" }
+        press_search_product_venue_map: { key: "Enter" }
+        sleep_isolate_vm: 1500
 
         # 7. VISIBLY click the product's "Advanced settings" to expand its options.
         R_click_advanced_settings: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
         sleep_adv: 1500
 
-        # 8. Locate the product by {{ticket_venue_map}}, ensure its Advanced settings is expanded,
-        #    and assert the "Recommend at checkout" checkbox/switch is DISABLED.
-        execute_js_verify_recommend_disabled:
-            save_as: "recommend_disabled_result"
-            script: |
-                async () => {
-                  const pname = "{{ticket_venue_map}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_venue_map is not set — it should be self-seeded by execute_js_seed_ticket_venue_map on the event page');
-                  const dlg = document.querySelector('[role="dialog"]') || document;
-                  // locate the product card: nearest ancestor of the title leaf that also holds an
-                  // "Advanced settings" control
-                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim().includes(pname));
-                  if (!nameLeaves.length) throw new Error('Product "'+pname+'" not found on the Customize products page');
-                  const cardOf = el => { for (let n=el,i=0; i<12 && n; i++,n=n.parentElement) { if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n; } return el; };
-                  const card = cardOf(nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0]);
-                  // ensure "Recommend at checkout" is visible (expand Advanced settings if collapsed)
-                  const recLeaves = () => [...card.querySelectorAll('*')].filter(e => !e.children.length && /recommend at checkout/i.test(e.textContent));
-                  if (!recLeaves().length) {
-                    const adv = [...card.querySelectorAll('button, div, span')].find(e => /advanced settings/i.test(e.textContent));
-                    if (adv) adv.click();
-                    await new Promise(r => setTimeout(r, 1000));
-                  }
-                  // from the label, walk up to the nearest ancestor holding the control; assert DISABLED
-                  let ctrl = null;
-                  for (const label of recLeaves()) {
-                    for (let el = label.parentElement, i = 0; i < 6 && el; i++, el = el.parentElement) {
-                      ctrl = el.querySelector('input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"], button[role="switch"], input[role="switch"]');
-                      if (ctrl) break;
-                    }
-                    if (ctrl) break;
-                  }
-                  if (!ctrl) throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "'+pname+'"');
-                  if (!ctrl.disabled) throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for AXS/TDC/Venue map ticket ("'+pname+'")');
-                  return 'OK: "Recommend at checkout" <'+ctrl.tagName+'> is DISABLED for "'+pname+'"';
-                }
+        # 8. Assert the "Recommend at checkout" control is DISABLED for the venue-map product.
+        #    [DE-JS 2026-10-16] was an execute_js locating the title leaf, climbing to its card,
+        #    expanding Advanced settings, then reading `ctrl.disabled`. Natively: the switch is
+        #    found by walking up from its own label (the same walk the JS did) and asserted with
+        #    Playwright's `is_disabled()` — which also covers `aria-disabled`, so it works for MUI
+        #    Switch as well as a plain checkbox. `verify_enabled` fails loudly with the actual
+        #    state, so the old "OK: ... is DISABLED" string check is unnecessary.
+        verify_enabled_recommend_venue_map:
+            label: "Recommend at checkout"
+            scope: "xpath=//*[@role='dialog']"
+            enabled: false
+            timeout: 15000
 
         # 9. Capture evidence screenshot of the expanded Advanced settings panel
         #    (saved as recommend_at_checkout_verify.png) so the disabled state is provable.
@@ -128,49 +94,24 @@ testT5639:
         # 11b. [SELF-SEED] The AXS event name (cross-case global event_axs upstream) is needed by
         #      steps 12/13. Extract it locally from the AXS badge on the events list so this case no
         #      longer depends on axs_fee_breakdown_ui.yaml. No `global: true`.
-        #      Mirrors axs_fee_breakdown_ui.yaml step 2 (AXS badge -> parent card's <p> = name).
-        execute_js_seed_event_axs:
+        #      [DE-JS 2026-10-16] was a 30 x 500ms polling execute_js. [DOM FACT — verified on
+        #      release 2026-10-16 by axs_fee_breakdown_ui.yaml] the badge is a leaf
+        #      <span>AXS</span> and its parent row holds a single <p> = the event name;
+        #      `extract_value` polls internally, so the manual retry loop disappears.
+        extract_value_event_axs:
+            locator: "xpath=(//span[normalize-space(.)='AXS']/parent::*//p)[1]"
+            source: text
+            numeric: false
             save_as: "event_axs"
-            script: |
-                (async () => {
-                  // [DOM FACT] the AXS badge's parent row has a single <p> holding the event name;
-                  // the list renders asynchronously, so poll (30 x 500ms)
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  for (let i = 0; i < 30; i++) {
-                    const badge = [...document.querySelectorAll('span')].find(s => !s.children.length && nz(s) === 'AXS');
-                    const name = badge && badge.parentElement.querySelector('p');
-                    if (name && nz(name)) return nz(name);
-                    await new Promise(r => setTimeout(r, 500));
-                  }
-                  throw new Error('AXS event card not found in the event list (self-seed event_axs)');
-                })()
+            timeout: 20000
         sleep_seed_axs_event: 800
 
         # 12. On the events list, type {{event_axs}} into the search box and submit.
-        #     (smart_fill does NOT template workflow variables, so we drive the input via JS.)
-        execute_js_search_event:
-            script: |
-                async () => {
-                  const ev = "{{event_axs}}";
-                  if (ev.indexOf('{{') !== -1) {
-                    throw new Error('Cross-case global "event_axs" is not set — it should be self-seeded by step execute_js_seed_event_axs from the AXS badge on the events list (no dependency on axs_fee_breakdown_ui.yaml)');
-                  }
-                  const inp =
-                    document.querySelector('input[type="search"]') ||
-                    [...document.querySelectorAll('input')].find(
-                      i => /search/i.test(i.placeholder || '') || /search/i.test(i.getAttribute('aria-label') || '')
-                    );
-                  if (!inp) throw new Error('Events-list search input not found');
-                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                  setter.call(inp, ev);
-                  inp.dispatchEvent(new Event('input', { bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-                  await new Promise(r => setTimeout(r, 1500));
-                  return 'searched:' + ev;
-                }
-            save_as: "search_event_result"
+        #     [DE-JS 2026-10-16] the old JS comment claimed "smart_fill does NOT template workflow
+        #     variables" — outdated: `smart_fill` backfills `{{var}}`. Native fill + Enter.
+        fill_search_event_axs: { locator: 'input[type="search"]', value: "{{event_axs}}" }
+        press_search_event_axs: { key: "Enter" }
+        sleep_search_axs: 1500
 
         # 13. Click the first event in the search results (matched exactly by {{event_axs}}).
         R_click_axs_event: { locator: "xpath=//*[normalize-space(.)='{{event_axs}}']", index: 0, fallback_scan: true }
@@ -179,22 +120,14 @@ testT5639:
         # 13b. [SELF-SEED] The AXS product name (cross-case global ticket_axs upstream) is needed by
         #       steps 17/19. Extract it locally from the now-open AXS event page (the default
         #       event-detail view shows the product card, same component as venue_map_taxes step 2b).
-        #       No `global: true`. Mirrors axs_fee_breakdown_ui.yaml step 9 (Pear.US product scan).
-        execute_js_seed_ticket_axs:
+        #       No `global: true`. [DE-JS 2026-10-16] native mui-stack product card narrowed to
+        #       Pear.US-listed tickets; the same locator proven by axs_fee_breakdown_ui.yaml step 4.
+        extract_value_ticket_axs:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_axs"
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Pear.US" + $/sold/Tools
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return /Pear\.US/.test(t) && t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Pear\.US/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out AXS ticket found (self-seed ticket_axs)');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+            timeout: 20000
         sleep_seed_axs_ticket: 800
 
         # 14. Event detail page -> Post tab
@@ -212,62 +145,22 @@ testT5639:
         # 17. Isolate the AXS product on the Customize products page by its name
         #     (best-effort search; ensures the visible Advanced-settings click hits
         #      the correct card when the post lists multiple products).
-        execute_js_isolate_product_axs:
-            save_as: "isolate_axs_result"
-            script: |
-                async () => {
-                  // smart_fill cannot template workflow variables, so drive the React search input via JS
-                  // (native setter + input event + Enter key events)
-                  const pname = "{{ticket_axs}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_axs is not set — it should be self-seeded by execute_js_seed_ticket_axs on the AXS event page');
-                  const inp = document.querySelector('input[placeholder="Search product"]');
-                  if (!inp) return 'no-search-box';
-                  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(inp, pname);
-                  inp.dispatchEvent(new Event('input', { bubbles: true }));
-                  for (const k of ['keydown','keypress','keyup']) inp.dispatchEvent(new KeyboardEvent(k, { key: 'Enter', bubbles: true }));
-                  await new Promise(r => setTimeout(r, 1500));
-                  return 'searched:' + pname;
-                }
+        #     [DE-JS 2026-10-16] native fill + Enter (see step 6's note).
+        fill_search_product_axs: { locator: 'input[placeholder="Search product"]', value: "{{ticket_axs}}" }
+        press_search_product_axs: { key: "Enter" }
+        sleep_isolate_axs: 1500
 
         # 18. VISIBLY click the AXS product's "Advanced settings" to expand its options.
         R_click_advanced_settings_axs: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
         sleep_adv_axs: 1500
 
-        # 19. Locate the AXS product by {{ticket_axs}}, ensure its Advanced settings is
-        #     expanded, and assert the "Recommend at checkout" checkbox/switch is DISABLED.
-        execute_js_verify_recommend_disabled_axs:
-            save_as: "recommend_disabled_axs_result"
-            script: |
-                async () => {
-                  const pname = "{{ticket_axs}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_axs is not set — it should be self-seeded by execute_js_seed_ticket_axs on the AXS event page');
-                  const dlg = document.querySelector('[role="dialog"]') || document;
-                  // locate the product card: nearest ancestor of the title leaf that also holds an
-                  // "Advanced settings" control
-                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim().includes(pname));
-                  if (!nameLeaves.length) throw new Error('Product "'+pname+'" not found on the Customize products page');
-                  const cardOf = el => { for (let n=el,i=0; i<12 && n; i++,n=n.parentElement) { if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n; } return el; };
-                  const card = cardOf(nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0]);
-                  // ensure "Recommend at checkout" is visible (expand Advanced settings if collapsed)
-                  const recLeaves = () => [...card.querySelectorAll('*')].filter(e => !e.children.length && /recommend at checkout/i.test(e.textContent));
-                  if (!recLeaves().length) {
-                    const adv = [...card.querySelectorAll('button, div, span')].find(e => /advanced settings/i.test(e.textContent));
-                    if (adv) adv.click();
-                    await new Promise(r => setTimeout(r, 1000));
-                  }
-                  // from the label, walk up to the nearest ancestor holding the control; assert DISABLED
-                  let ctrl = null;
-                  for (const label of recLeaves()) {
-                    for (let el = label.parentElement, i = 0; i < 6 && el; i++, el = el.parentElement) {
-                      ctrl = el.querySelector('input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"], button[role="switch"], input[role="switch"]');
-                      if (ctrl) break;
-                    }
-                    if (ctrl) break;
-                  }
-                  if (!ctrl) throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "'+pname+'"');
-                  if (!ctrl.disabled) throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for AXS ticket ("'+pname+'")');
-                  return 'OK: "Recommend at checkout" <'+ctrl.tagName+'> is DISABLED for "'+pname+'"';
-                }
+        # 19. Assert the "Recommend at checkout" control is DISABLED for the AXS product.
+        #     [DE-JS 2026-10-16] native label-based walk-up + `is_disabled()` (see step 8's note).
+        verify_enabled_recommend_axs:
+            label: "Recommend at checkout"
+            scope: "xpath=//*[@role='dialog']"
+            enabled: false
+            timeout: 15000
 
         # 20. Capture evidence screenshot of the expanded Advanced settings panel (AXS product).
         screenshot_axs: { name: "recommend_at_checkout_verify_axs" }
@@ -290,50 +183,24 @@ testT5639:
         # 22b. [SELF-SEED] The TDC event name (cross-case global event_tdc upstream) is needed by
         #       steps 23/24. Extract it locally from the TDC badge on the events list so this case no
         #       longer depends on tdc_fee_breakdown_ui.yaml. No `global: true`.
-        #       Mirrors tdc_fee_breakdown_ui.yaml step 1b (TDC badge -> card <p> = name).
-        execute_js_seed_event_tdc:
+        #       [DE-JS 2026-10-16] was a 30 x 500ms polling execute_js. The TDC badge is a leaf
+        #       <span>TDC</span>; the JS climbed up to the nearest ancestor holding a <p> and took
+        #       that <p>. In XPath that is exactly
+        #       `badge/ancestor-or-self::*[.//p][1]/descendant::p[1]` — `[1]` on the reverse
+        #       `ancestor-or-self` axis counts from the NEAREST, so it selects the same ancestor.
+        extract_value_event_tdc:
+            locator: "xpath=(//span[not(*) and normalize-space(.)='TDC']/ancestor-or-self::*[.//p][1]//p)[1]"
+            source: text
+            numeric: false
             save_as: "event_tdc"
-            script: |
-                (async () => {
-                  // the TDC badge is a leaf <span> starting with TDC; its card holds a <p> name
-                  const nz = e => (e.textContent||'').replace(/\s+/g,' ').trim();
-                  for (let i = 0; i < 30; i++) {
-                    const badge = [...document.querySelectorAll('span')].find(s => !s.children.length && /^TDC(?![A-Za-z])/.test(nz(s)));
-                    for (let el = badge, k = 0; badge && k < 6 && el; k++, el = el.parentElement) {
-                      const p = el.querySelector && el.querySelector('p');
-                      if (p && nz(p)) return nz(p);
-                    }
-                    await new Promise(r => setTimeout(r, 500));
-                  }
-                  throw new Error('TDC-tagged event card not found in the event list (self-seed event_tdc)');
-                })()
+            timeout: 20000
         sleep_seed_tdc_event: 800
 
         # 23. On the events list, type {{event_tdc}} into the search box and submit.
-        #     (smart_fill does NOT template workflow variables, so we drive the input via JS.)
-        execute_js_search_event_tdc:
-            script: |
-                async () => {
-                  const ev = "{{event_tdc}}";
-                  if (ev.indexOf('{{') !== -1) {
-                    throw new Error('Cross-case global "event_tdc" is not set — it should be self-seeded by step execute_js_seed_event_tdc from the TDC badge on the events list (no dependency on tdc_fee_breakdown_ui.yaml)');
-                  }
-                  const inp =
-                    document.querySelector('input[type="search"]') ||
-                    [...document.querySelectorAll('input')].find(
-                      i => /search/i.test(i.placeholder || '') || /search/i.test(i.getAttribute('aria-label') || '')
-                    );
-                  if (!inp) throw new Error('Events-list search input not found');
-                  const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                  setter.call(inp, ev);
-                  inp.dispatchEvent(new Event('input', { bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
-                  inp.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-                  await new Promise(r => setTimeout(r, 1500));
-                  return 'searched:' + ev;
-                }
-            save_as: "search_event_tdc_result"
+        #     [DE-JS 2026-10-16] native fill + Enter (see step 12's note).
+        fill_search_event_tdc: { locator: 'input[type="search"]', value: "{{event_tdc}}" }
+        press_search_event_tdc: { key: "Enter" }
+        sleep_search_tdc: 1500
 
         # 24. Click the first event in the search results (matched exactly by {{event_tdc}}).
         R_click_tdc_event: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
@@ -342,22 +209,14 @@ testT5639:
         # 24b. [SELF-SEED] The TDC product name (cross-case global ticket_tdc upstream) is needed by
         #       steps 28/30. Extract it locally from the now-open TDC event page (the default
         #       event-detail view shows the product card, same component as venue_map_taxes step 2b).
-        #       No `global: true`. Mirrors tdc_fee_breakdown_ui.yaml step 9 (product-card scan).
-        execute_js_seed_ticket_tdc:
+        #       No `global: true`. [DE-JS 2026-10-16] native mui-stack product card, first
+        #       non-Sold-out card's <p>.
+        extract_value_ticket_tdc:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
             save_as: "ticket_tdc"
-            script: |
-                () => {
-                  // product card = outermost element containing exactly one "Tools" + $/sold
-                  const cards=[...document.querySelectorAll('*')].filter(el => {
-                    const t=el.textContent||'';
-                    return t.includes('Tools') && /\$/.test(t) && /sold/i.test(t) && (t.match(/Tools/g)||[]).length===1;
-                  });
-                  const card=cards.filter(c => !cards.some(o => o!==c && o.contains(c)))
-                    .map(c => (c.textContent||'').replace(/\s+/g,' ').trim())
-                    .find(t => !/Sold out/i.test(t));
-                  if(!card) throw new Error('No non-Sold-out TDC ticket found (self-seed ticket_tdc)');
-                  return (card.match(/([^$]+?)\$[\d.]+/)[1]).replace(/Tools$/,'').replace(/^Ticket/,'').trim();
-                }
+            timeout: 20000
         sleep_seed_tdc_ticket: 800
 
         # 25. Event detail page -> Post tab
@@ -375,69 +234,30 @@ testT5639:
         # 28. Isolate the TDC product on the Customize products page by its name
         #     (best-effort search; ensures the visible Advanced-settings click hits
         #      the correct card when the post lists multiple products).
-        execute_js_isolate_product_tdc:
-            save_as: "isolate_tdc_result"
-            script: |
-                async () => {
-                  // smart_fill cannot template workflow variables, so drive the React search input via JS
-                  // (native setter + input event + Enter key events)
-                  const pname = "{{ticket_tdc}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_tdc is not set — it should be self-seeded by execute_js_seed_ticket_tdc on the TDC event page');
-                  const inp = document.querySelector('input[placeholder="Search product"]');
-                  if (!inp) return 'no-search-box';
-                  Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(inp, pname);
-                  inp.dispatchEvent(new Event('input', { bubbles: true }));
-                  for (const k of ['keydown','keypress','keyup']) inp.dispatchEvent(new KeyboardEvent(k, { key: 'Enter', bubbles: true }));
-                  await new Promise(r => setTimeout(r, 1500));
-                  return 'searched:' + pname;
-                }
+        #     [DE-JS 2026-10-16] native fill + Enter (see step 6's note).
+        fill_search_product_tdc: { locator: 'input[placeholder="Search product"]', value: "{{ticket_tdc}}" }
+        press_search_product_tdc: { key: "Enter" }
+        sleep_isolate_tdc: 1500
 
         # 29. VISIBLY click the TDC product's "Advanced settings" to expand its options.
         R_click_advanced_settings_tdc: { locator: "div[role='dialog'] >> text=Advanced settings", optional: true, timeout: 5000 }
         sleep_adv_tdc: 1500
 
-        # 30. Locate the TDC product by {{ticket_tdc}}, ensure its Advanced settings is
-        #     expanded, and assert the "Recommend at checkout" checkbox/switch is DISABLED.
-        execute_js_verify_recommend_disabled_tdc:
-            save_as: "recommend_disabled_tdc_result"
-            script: |
-                async () => {
-                  const pname = "{{ticket_tdc}}";
-                  if (pname.indexOf('{{') !== -1) throw new Error('ticket_tdc is not set — it should be self-seeded by execute_js_seed_ticket_tdc on the TDC event page');
-                  const dlg = document.querySelector('[role="dialog"]') || document;
-                  // locate the product card: nearest ancestor of the title leaf that also holds an
-                  // "Advanced settings" control
-                  const nameLeaves = [...dlg.querySelectorAll('*')].filter(e => !e.children.length && e.textContent.trim().includes(pname));
-                  if (!nameLeaves.length) throw new Error('Product "'+pname+'" not found on the Customize products page');
-                  const cardOf = el => { for (let n=el,i=0; i<12 && n; i++,n=n.parentElement) { if ([...n.querySelectorAll('*')].some(c => /advanced settings/i.test(c.textContent))) return n; } return el; };
-                  const card = cardOf(nameLeaves.find(l => cardOf(l) !== l) || nameLeaves[0]);
-                  // ensure "Recommend at checkout" is visible (expand Advanced settings if collapsed)
-                  const recLeaves = () => [...card.querySelectorAll('*')].filter(e => !e.children.length && /recommend at checkout/i.test(e.textContent));
-                  if (!recLeaves().length) {
-                    const adv = [...card.querySelectorAll('button, div, span')].find(e => /advanced settings/i.test(e.textContent));
-                    if (adv) adv.click();
-                    await new Promise(r => setTimeout(r, 1000));
-                  }
-                  // from the label, walk up to the nearest ancestor holding the control; assert DISABLED
-                  let ctrl = null;
-                  for (const label of recLeaves()) {
-                    for (let el = label.parentElement, i = 0; i < 6 && el; i++, el = el.parentElement) {
-                      ctrl = el.querySelector('input[type="checkbox"], input[type="radio"], [role="checkbox"], [role="switch"], button[role="switch"], input[role="switch"]');
-                      if (ctrl) break;
-                    }
-                    if (ctrl) break;
-                  }
-                  if (!ctrl) throw new Error('"Recommend at checkout" control (checkbox/switch) not found for product "'+pname+'"');
-                  if (!ctrl.disabled) throw new Error('"Recommend at checkout" control is ENABLED — it must be DISABLED for TDC ticket ("'+pname+'")');
-                  return 'OK: "Recommend at checkout" <'+ctrl.tagName+'> is DISABLED for "'+pname+'"';
-                }
+        # 30. Assert the "Recommend at checkout" control is DISABLED for the TDC product.
+        #     [DE-JS 2026-10-16] native label-based walk-up + `is_disabled()` (see step 8's note).
+        verify_enabled_recommend_tdc:
+            label: "Recommend at checkout"
+            scope: "xpath=//*[@role='dialog']"
+            enabled: false
+            timeout: 15000
 
         # 31. Capture evidence screenshot of the expanded Advanced settings panel (TDC product).
         screenshot_tdc: { name: "recommend_at_checkout_verify_tdc" }
 
-    # Framework-required block. The actual disabled-state checks are performed in-page
-    # by execute_js_verify_recommend_disabled (venue-map product),
-    # execute_js_verify_recommend_disabled_axs (AXS product) and
-    # execute_js_verify_recommend_disabled_tdc (TDC product) — each throws if the control
-    # is not disabled — so we keep expect_result descriptive rather than adding brittle DOM assertions.
+    # Framework-required block. The actual disabled-state checks are three native assertions —
+    # verify_enabled_recommend_venue_map / _axs / _tdc — each of which FAILS with the observed
+    # state when the control is not disabled, so we keep expect_result descriptive rather than
+    # duplicating brittle DOM assertions here.
+    # [DE-JS 2026-10-16] the three execute_js_verify_recommend_disabled* blocks that used to
+    # perform this check are gone; the whole file now contains ZERO JS.
     expect_result: "For ALL THREE products — venue-map ({{ticket_venue_map}}), AXS ({{ticket_axs}}) and TDC ({{ticket_tdc}}) — the 'Recommend at checkout' checkbox/switch is DISABLED and cannot be selected"

@@ -7,6 +7,27 @@ testT4239_venue_map_guest_check:
     description: "Verify the event location and venue will only show to buyers if set 'Show address only to ticket buyers' on event page "
     expect_result: "Only show event address to buyer after purchased"
     test_step:
+        # 0. [SELF-SEED] ticket_venue_map — this case is runnable on its own: the product
+        #    name is extracted from the admin event page with the SAME native rule the
+        #    parent case uses (first non-Sold-out card on "Tickets & Merch", card's first
+        #    <p>) and published as a cross-case global for step 6. The main session is
+        #    admin-logged (conftest auto-loads cookie_release.json), so this runs before
+        #    the guest session is created.
+        open: "{BASE_URL}/events"
+        sleep_seed_list: 5000
+        R_click_seed_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_seed_event: 5000
+        R_click_seed_tickets_tab: { role: "tab", name: "Tickets & Merch" }
+        sleep_seed_tickets: 3000
+        extract_value_seed_ticket_name:
+            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
+            source: text
+            numeric: false
+            save_as: "ticket_venue_map"
+            global: true
+            timeout: 20000
+        sleep_seed_name: 800
+
         # 1. Create the guest session (no cookie = visitor)
         create_session_guest: { name: "guest" }
         sleep_guest_session: 1000
@@ -18,26 +39,27 @@ testT4239_venue_map_guest_check:
         # 3. Scroll to the bottom of the page so the venue / address section is rendered
         scroll_to_bottom: { iterations: 10, delay: 500 }
 
-        # 4. The venue name "Test Venue" must be present on the public post
+        # 4. The venue name "Test venue" must be present on the public post
+        #    [2026-10-16 probe] actual render is "Test venue" (lowercase v) — get_by_text
+        #    is case-insensitive so any case passes here, but step 5's XPath scope is
+        #    case-SENSITIVE, so the spelling must match the DOM exactly.
         verify_venue_name:
-            text: "Test Venue"
+            text: "Test venue"
             timeout: 10000
 
-        # 5. Under "Test Venue", the address must be hidden and replaced by the purchase hint
+        # 5. Under the venue line, the address must be hidden and replaced by the purchase hint
+        #    [2026-10-16 probe] the venue name and street render in ONE <p>:
+        #    "Test venue · West Mound Street, Columbus, OH" — there is NO element whose whole
+        #    text is exactly "Test venue", so the scope anchors on contains() instead.
         verify_venue_address_hint:
             text: "Address will be provided after purchase"
-            scope: { locator: "xpath=//*[normalize-space(.)='Test Venue']/ancestor::*[contains(., 'Address will be provided after purchase')][1]" }
+            scope: { locator: "xpath=//p[contains(normalize-space(.), 'Test venue')]/ancestor::*[contains(., 'Address will be provided after purchase')][1]" }
             timeout: 10000
 
         # 6. As a guest, click the ticket-venue_map product name on the public post to open the "Select tickets" drawer
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
         # 7. On the opened "Select tickets" drawer a venue map is shown. Select a table.
-        session_guest__dispatch_click_map_hint:
-            locator: "rect[data-id]"
-            index: 0
-            timeout: 15000
-        sleep_map_hint: 1500
         session_guest__dispatch_click_select_seat:
             locator: "circle[data-id]"
             index: 1
@@ -49,8 +71,12 @@ testT4239_venue_map_guest_check:
         sleep_guest_checkout: 3000
 
         # 9. Click the Checkout CTA to reach the contact + payment form.
+        #    [2026-10-16] the drawer renders EITHER variant: "Continue" (testid
+        #    checkout-in-post-continue-cta) or PayPal + "Continue with credit card"
+        #    (testid checkout-in-post-credit-card-cta or no testid) — combined locator
+        #    covers all three, first match wins.
         session_guest__R_click_checkout_continue:
-            locator: "button[data-testid='checkout-in-post-continue-cta']"
+            locator: "button[data-testid='checkout-in-post-credit-card-cta'], button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
             timeout: 15000
         sleep_guest_cc_form: 5000
 

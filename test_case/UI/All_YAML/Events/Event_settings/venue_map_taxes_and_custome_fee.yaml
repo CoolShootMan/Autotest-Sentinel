@@ -20,14 +20,35 @@ testT4652_venue_map:
         sleep_event: 5000
 
         # 3. Precondition: the cross-case global "ticket_venue_map" (published by
-        #    venue_map_fee_breakdown_ui.yaml in the same pytest process) must resolve, and the
-        #    product must be listed on the event page. If the global is missing, the unresolved
-        #    placeholder text shows up verbatim in the failure message.
+        #    venue_map_fee_breakdown_ui.yaml in the same pytest process) must resolve.
+        #    [GUARD FIX 2026-10-16] the old form was a single
+        #    `verify_ticket_venue_map: { text: "{{ticket_venue_map}}", timeout: 10000 }`, which
+        #    failed in the worst possible way: an unresolved `{{var}}` stays a LITERAL, so the
+        #    case searched the page for the text "{{ticket_venue_map}}" and timed out 10s later
+        #    with a message that never named the missing variable. `verify_defined` names the
+        #    missing key(s) and stops immediately — before any state-changing step runs.
+        verify_defined_globals: { vars: [ticket_venue_map] }
+        # 3b. ...and the product must actually be listed on the event page.
         verify_ticket_venue_map: { text: "{{ticket_venue_map}}", timeout: 10000 }
 
         # 4. Click the venue_map product (located by the temp var name) to open the Edit ticket page.
         R_click_ticket_venue_map: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
-        sleep_edit_ticket: 6000
+
+        # 4b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
+        #     "Edit ticket" page blank (header only) so no price input ever renders. Wait for the
+        #     "Fees + Taxes" value natively; when it is still blank, reload once and wait again.
+        #     No JS — smart_if + wait_for_selector + reload are all framework-native actions.
+        if_edit_ticket_form_rendered_1:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket_1: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form_1:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_edit_ticket: 1000
 
         # 5. Read "My revenue" (input variants.0.ticketPrice) -> temp var my_revenue_venue_map.
         #    extract_value polls until the input is readable, parses the number and saves it
@@ -121,15 +142,35 @@ testT4652_venue_map:
         #     My revenue (ticketPrice) unchanged, Fees + Taxes (fees) and Retail price (price)
         #     recalculated for the 2% tax. tolerance 0.01 covers full-precision stored values.
         R_click_ticket_venue_map_2: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
-        sleep_edit_ticket_2: 6000
+
+        # 17b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
+        #      "Edit ticket" page blank (header only) so no price input/value ever renders. Wait for
+        #      the "Fees + Taxes" value natively; when it is still blank, reload once (a fresh load
+        #      of the product route always renders) and wait again. No JS — smart_if +
+        #      wait_for_selector + reload are all framework-native actions.
+        if_edit_ticket_form_rendered_2:
+            condition:
+                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                state: visible
+                timeout: 12000
+            else:
+                reload_edit_ticket_2: { sleep_after: 4000 }
+                wait_for_selector_edit_ticket_form_2:
+                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+                    timeout: 30000
+        sleep_edit_ticket_2: 1000
         verify_value_my_revenue: { locator: "input[name='variants.0.ticketPrice']", value: "{{my_revenue_venue_map}}", tolerance: 0.01 }
         verify_value_fees_taxes: { locator: "input[name='variants.0.fees']", value: "{{fees_taxes_venue_map}}", tolerance: 0.01 }
         verify_value_retail_price: { locator: "input[name='variants.0.price']", value: "{{retails_price_venue_map}}", tolerance: 0.01 }
         sleep_edit_verify: 800
 
-        # 18. Click the price under "Fees + Taxes" (the 2nd match = the price) to open the
-        #     breakdown popover, then verify the platform-fee line and the 2% tax amount.
-        R_click_fees_taxes_vm: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
+        # 18. Click the price under "Fees + Taxes" to open the breakdown popover, then verify the
+        #     platform-fee line and the 2% tax amount.
+        #     [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
+        #     = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
+        #     directly and no longer depends on the exact match count.
+        R_click_fees_taxes_vm:
+            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip_vm: 2000
         verify_popover_platform_fees: { scope: { locator: ".MuiPopover-root" }, text: "Platform fees" }
         verify_popover_tax_amount: { scope: { locator: ".MuiPopover-root" }, text: "${{tax_amount_venue_map}}" }
