@@ -51,14 +51,21 @@ tdc_event_self_seed:
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_post_tab: 5000
 
-        extract_value_tdc_post_url:
-            locator: "[aria-label='Select post']"
-            source: content
-            strip_whitespace: true
-            numeric: false
+        # NOTE: the "Select post" box shows the URL text WITHOUT scheme
+        # (e.g. "release.pear.us/autotestshop/post/slug"); prepend https:// so the
+        # downstream open_post/open steps navigate to a valid absolute URL.
+        # (extract_value returns the bare text; only JS can safely prepend the scheme.)
+        execute_js_seed_post_url:
             save_as: "post_url"
             global: true
-            timeout: 20000
+            script: |
+                (async () => {
+                  const el = document.querySelector("[aria-label='Select post']");
+                  if (!el) throw new Error('Select post element not found on Post tab');
+                  const t = (el.textContent || '').trim();
+                  if (!t) throw new Error('Select post element has empty text');
+                  return t.startsWith('http') ? t : ('https://' + t);
+                })()
         sleep_seed_post: 500
 
 
