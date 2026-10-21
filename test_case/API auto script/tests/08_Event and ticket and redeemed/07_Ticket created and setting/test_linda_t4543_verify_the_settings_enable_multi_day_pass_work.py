@@ -471,7 +471,7 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
     _prod8 = None
     _prods: list[Any] = []
     for _att8 in range(12):
-        _resp7 = ctx.api.events.v2_show_in_post(event_id=event_id, body={
+        _resp7 = ctx.api.events.v2_show_in_post(body={
             "productIds": [product_id],
             "posts": [{"postId": postId, "isVisible": True}],
         }, token='linda999_token')
