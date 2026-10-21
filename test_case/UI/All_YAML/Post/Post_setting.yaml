@@ -736,8 +736,8 @@ testT2705_VerifyGuest:
     #       element counts as hidden, which is exactly the old "fivePresent" check);
     #   (b) the "9 people" button has a NON-transparent background -> verify_element_style with
     #       the new `not_equals` operator, read on the button itself (same element the JS read).
-    verify_text_hidden_5people_variant: { text: "5 people", exact: true, timeout: 10000 }
-    verify_9people_variant_selected:
+    verify_hidden_5people_variant: { text: "5 people", exact: true, timeout: 10000 }
+    verify_element_style_9people_variant_selected:
         locator: "xpath=//*[@role='button'][@data-testid='styled-list-item-button'][normalize-space(.)='9 people']"
         property: "backgroundColor"
         operator: "not_equals"
