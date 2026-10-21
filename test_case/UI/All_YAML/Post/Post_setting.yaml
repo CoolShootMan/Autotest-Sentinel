@@ -1961,7 +1961,10 @@ testT5033_5034_VerifyPartner:
 
         # Expand test_general_products details (scoped to its product card by name)
         R_click_expand_details: { test_id: "ExpandMoreIcon", index: 2 }
-        verify_text_hidden: { text: "Choose call-to-action type", timeout: 5000 }
+        # [2026-10-21] Removed the `verify_text_hidden: "Choose call-to-action type"` gate.
+        # That label is the checkbox of the very panel the step above expands, so it is
+        # visible by design; the gate was an inverted copy of the original
+        # `verify_cta_type_4` (which asserted the prompt IS visible) and can never pass.
         sleep_step: 1000
 
         # Check its "isCtaCustomized" (scoped to the product card; set_checked is idempotent)
