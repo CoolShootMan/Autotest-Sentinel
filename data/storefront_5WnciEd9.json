@@ -1,0 +1,263 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "5WnciEd9",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/5WnciEd9"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:33",
+  "count": 9,
+  "cases": [
+    {
+      "id": "T1070",
+      "uuid": "6E9bYS4u",
+      "name": "Verify that Curator has successfully added more than 10 links and shared them with consumers to successfully open them",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "#1 Curator into My shop-Links\n\n2. Click \"+ Add link\", enter link title and URL, then click Save button\n\n3. Add 11 such links, then drag and drop the header of the first link to swap places with the second link\n\n4. Share store links with consumers\n\n5.Consumer enters Curator's shop and clicks on Link",
+          "result": "#Curator successfully added the first 10 links, but by the 11th the \"+ Add link\" button has been disabled and cannot be clicked; Consumer successfully opened these links in Curator's shop",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1067",
+      "uuid": "Q5StUacM",
+      "name": "Verify that Curator adds 10 links and changes their positions",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop 2. Click \"Links\" 3. Click \"+ Add link\", enter the link title and URL, and then click the Save button 4. Add 10 such links, and then drag the header of the first link swap positions with the second link",
+          "result": "Curator successfully added 10 links and changed the positions of the first and second links",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3601",
+      "uuid": "QufQkxyX",
+      "name": "Verify the system support LinKedin in the social links on edit profile",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p>7375</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Promoter go to customize shop > social ",
+          "result": "- Facebook icon and input box\n- Instagram icon and input box\n- Tiktok icon and input box\n- Twitter icon and input box\n- Youtuber icon and input box\n- Linkedin icon and input box\n- User email icon and input box\nCan rearrange the order of links\n\"Social\" is removed from the top",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Input linkedin link and save",
+          "result": "The linkedin icon is displayed on my shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Consumer visit the shop page",
+          "result": "The linkedin icon is displayed on my shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click the linkedin icon",
+          "result": "Go to linkedin link with new window",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1068",
+      "uuid": "TeTSm9Gu",
+      "name": "Verify that Curator edits 3 links to \"test.com\" and deletes 1 link during editing.",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop 2. Click \"Links\" 3. Click the edit icon of the first three links, enter the link titl and URL as \"test.com\" 4. Click the \"Delete\" button when editing the second link",
+          "result": "Curator successfully edited 3 Links and deleted 1 Link while editing",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4329",
+      "uuid": "UpG1hPou",
+      "name": "Verify protocol modification and saving in Edit link window",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has entered My Shop → Links → Edit link window\t",
+      "desc": "<p>KAT-9014</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click the edit button of an existing Link",
+          "result": "1. Edit link window opens successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Change the protocol dropdown to https / mailto / tel / sms",
+          "result": "2. Dropdown correctly displays the modified protocol",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Modify the input field with a valid URL, email, or number",
+          "result": "3. Input value is accepted without error",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click Save\t",
+          "result": "4. System saves successfully and returns to Links list, new Link shows protocol + address correctly",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1069",
+      "uuid": "YBHW17eS",
+      "name": "After verifying that Curator deletes 2 Links, the count in the upper right corner of Links is updated together with the number of My shop-Links.",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop-Links 2. Click the trash can icon of the first two links 3. Click \"Delete\" in the Delete link 4. Check the count in the upper right corner of Links and the number of My shop-Links",
+          "result": "Curator successfully deleted 2 Links. The count in the upper right corner of Links is updated together with the number of My shop-Links.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5345",
+      "uuid": "BPwfz6EP",
+      "name": "Verify shop-level global Link card style configuration is removed",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant is on the Customize shop -> Storefront tab",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Scroll down to the bottom section where \"Product card style\" is located.\n\n\n",
+          "result": "1. The page renders normally and still displays the \"Product card style\" configuration.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Check for the old \"Link card style\" radio button block.",
+          "result": "2. The old shop-level \"Link card style\" radio button section is completely hidden/deprecated and no longer visible to the merchant.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5346",
+      "uuid": "M5touE1y",
+      "name": "Verify default style and layout switching logic when creating a new General Link",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant clicks \"+ Add new\" on the Links list page to create a General Link",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Observe the \"Link card layout\" configuration section at the bottom of the popup modal.\n\n\n\n",
+          "result": "1. The new \"Link card layout\" module is present, and the \"Compact\" layout is selected by default.\n\n\n\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Switch the radio button choice to \"Compact\" and check the subtext below it.\n\n\n\n\n",
+          "result": "2. The selection seamlessly switches to \"Large\", displaying its corresponding description text (\"Clean, minimal layout...\") below it.\n\n\n\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "\n3. Complete all required fields and click \"Add\" to save.",
+          "result": "3. The new General Link is successfully saved without any console or UI errors.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5347",
+      "uuid": "SFtB4pRM",
+      "name": "Verify storefront rendering consistency for different link styles",
+      "module": "My Shop / Storefront / Edit Profile / Links",
+      "module_uuid": "5WnciEd9",
+      "priority": "P0",
+      "type": "",
+      "condition": "The shop has both a \"Large\" styled link and a \"Compact\" styled link active",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Open the public storefront URL (pear.us/...) as a Guest Buyer.\n\n\n\n",
+          "result": "1. The storefront page loads completely and smoothly.\n\n\n\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Inspect the UI layouts of the two configured General Links.\n\n",
+          "result": "2. Both link cards render independently based on their individual settings: the link configured as Large shows the full image block, while the one set to Compact presents the slim/minimalist layout.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

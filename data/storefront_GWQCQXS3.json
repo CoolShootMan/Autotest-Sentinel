@@ -1,0 +1,485 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "GWQCQXS3",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/GWQCQXS3"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:39",
+  "count": 11,
+  "cases": [
+    {
+      "id": "T3579",
+      "uuid": "2WoFQudB",
+      "name": "Verify that curator sets up Storefront color",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"BbU72NWz\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"9PNyYDs9\" src=\"https://sz.ones.cn/saas-dc1-tmp/temporary/transform/FsePpTdx2K56Rqfvi4eqfDnbmPPB/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=IAKPLNDYG3PZOLMZGLWO%2F20250818%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20250818T080027Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=528fd5d4a2aa4b0e37998b089c88e462e3845267b9937b8afebc3999cbc74569\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator Go to my shop-Customize-Style",
+          "result": "1. The user successfully entered my shop-Customize-Style",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Set the Storefront color by clicking on the anchor point of the preview view: Background is: #E9DCDCFF, \ntext color is: #363331FF\nCard background is #B8E986FF, \nCard border is #000000; \nSet the Follow button: \nBackground to #8B572AFF, \nText to #363331FF, \nand then click \"Publish\".",
+          "result": "2. The Storefront color was successfully set. Storefront color: Background is: #E9DCDCFF, Card background is #B8E986FF, and Card border is #000000; Follow button: The Background is #8B572AFF and the Text is #363331FF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Use guest POV to view the shop page",
+          "result": "3. Under Guest POV, the color of shop is displayed normally",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The promoter accesses the shop page by inviting the link",
+          "result": "4. Invitation Window:\nThe background color (default is #FFFFFF) is: #E9DCDCFF\ntext color: #363331FF\nCTA color: #8B572AFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Set the Form color by clicking on the anchor point of the preview view: Background is: #E9DCDCFF, \ntext color is: #363331FF\nCard background is #B8E986FF, \nCTA button is #000000; \nCTA text is #363331FF, \nand then click \"Publish\".",
+          "result": "5. The Form color was successfully set. Form color: Background is: #E9DCDCFF, text color is: #363331FF\nCard background is #B8E986FF, \nCTA button is #000000; \nCTA text is #363331FF",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4095",
+      "uuid": "54Yyfd5R",
+      "name": "Verify that the currently saved shop topic is a brand new preset and does not overwrite the previous preset",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Go to my shop and click Customize shop, then click Style",
+          "result": "1. Successfully enter the \"Style\" page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"...\" - \"Apply style settings\", set the template as \"Midnight Glow\", set the font as\" Dosis \", set the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797 \", and then click \"...\" - \"Save current style\", enter the character \"test1\" in the name field, and finally click the \"Save\" button",
+          "result": "2. The theme preset was successfully saved. The template is \"Midnight Glow \", the font is\" Dosis \", the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797\".",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Set the template to \"Shadow focus\", the page background color to \"#E8F3FC\", the font to \"Josefin Sans\", and then click \"...\" - \"Save current style\" save it as a preset named \"test2\".",
+          "result": "3. Successfully save the theme preset \"test2\", set the page background color to \"#E8F3FC\", and set the font to \"Josefin Sans\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click \"Manage saved styles\"",
+          "result": "4. There are two theme presets, test1 and test2",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4098",
+      "uuid": "9NR8KMnG",
+      "name": "Verify where preview content appears when styling the Customize look and feel page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Click to go to Customize shop-Style\n",
+          "result": "1. Curator enters the Style page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"Layout\" in the toolbar",
+          "result": "2. Show the entire shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"Color\" in the toolbar\n",
+          "result": "3. Show the entire shop page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click  \"Font\" in the toolbar",
+          "result": "4. Show the entire shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4097",
+      "uuid": "CRDuoz7L",
+      "name": "Verify the status when creating or editing the shop topic name as an extremely long character, an empty name, and a duplicate name",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P1",
+      "type": "",
+      "condition": "There is already a preset named \"test1\".",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Go to my shop and click Customize shop, then click Style",
+          "result": "1. Successfully enter the Style page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"...\" - \"Apply style settings\", set the template as \"Midnight Glow\", set the font as\" Dosis \", set the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797 \", and then click \"...\" - \"Save current style\", enter the character \"testtesttesttesttesttesttesttesttesttesttesttest\" in the name field, and finally click the \"Save\" button",
+          "result": "2. Successfully saved, but because the name is too long, only one column will be displayed, and the extra name will be shown as \"...\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter the duplicate value \"test1\" in the name field, and finally click the \"Save\" button",
+          "result": "3. Failed to save successfully because The value was duplicated and prompted \"The name already exists, please try another name.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The name field is an empty value. Finally, click the \"Save\" button",
+          "result": "4. It cannot be saved because the value cannot be empty",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4100",
+      "uuid": "DZ1eYFvz",
+      "name": "Verify the custom Reset colors and fonts and layouyt feature（Customize shop）",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Click to go to Customize shop-Style\n",
+          "result": "1. Curator enters the Style",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click the toolbar \"Color\" existing background color \"#FFF4E0\"\n",
+          "result": "2. Color-Background= \"#FFF4E0\" is set successfully\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3 Switch to \"Font\" and set Font family = \"Arial\", Font size = \"24\"\n",
+          "result": "3. Font family = \"Arial\", Font size = \"24\"\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click \"... \"at the top Then click \"Reset colors and fonts\"",
+          "result": "4. The default Settings are restored successfully. Color-Background = \"#FFFFFF\", Font family = \"Inter\", Font size = \"14\"\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Click \"Apply\" in the upper right corner, and enter the shop to check the effect",
+          "result": "5. Enter shop successfully, Color-Background = \"#FFFFFF\", Font family = \"Inter\", Font size = \"14\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. Switch to \"Layouts\", click to change the layout to the third one, and then click \"...\" Click on \"Reset Layout\"",
+          "result": "6. The layout has been reset to \"Spotlight\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4096",
+      "uuid": "QM2xbEwR",
+      "name": "Validate the back button of the Customize look and feel page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Click to go to Customize shop-Style\n",
+          "result": "1. Curator enters the Style page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click the back button in the upper left corner\n",
+          "result": "2. Return to the Customize shop page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter the Style page again, click \"Color\" on the toolbar, set the background color, and click the back button in the upper left corner",
+          "result": "3. \"You have unsaved changes. Do you want to save them?\" is displayed. Tips\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click \"Discard\" or \"X\"\n",
+          "result": "4. Close the popup window\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Click the back button in the upper left corner again and click \"Save\"",
+          "result": "5. The background color Settings are saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4099",
+      "uuid": "T8kQUEdQ",
+      "name": "Verify the Color palette function for custom \"Color\"",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Click to go to Customize shop-Style\n",
+          "result": "1. Curator enters the Style page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"Color\" in the toolbar, and then click the Edit button on the right\n",
+          "result": "2. Pop up the color palette\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3 Click on the Custom bar of Buttons-Color and select the default value \"red\" for the color palette.\n",
+          "result": "3. Buttons-Color = \"Red\" are set successfully\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click on the Custom bar of Buttons-Text color and select a color range \"#FFFFFF\" in the palette.\n",
+          "result": "4. Buttons-Text color = \"#FFFFFF\" are set successfully\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Click \"√ Done\" in the upper right corner, andenter the shop to view the color effect",
+          "result": "5. Enter shop successfully, button-color = \"Red\", button-text color = \"#FFFFFF\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4094",
+      "uuid": "U3VN19re",
+      "name": "Verify to delete the shop topic in \"Manage saved settings\"",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p><font style=\"vertical-align: inherit;\"><font style=\"vertical-align: inherit;\">仅保存</font></font><span><font style=\"vertical-align: inherit;\"><font style=\"vertical-align: inherit;\">font and color</font></font></span></p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Go to my shop and click Customize shop, then click Style",
+          "result": "1. Successfully enter the \"Style\" page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"...\" - \"Apply style settings\", set the template as \"Midnight Glow\", set the font as\" Dosis \", set the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797 \", and then click \"...\" - \"Save current style\", enter the character \"test1\" in the name field, and finally click the \"Save\" button",
+          "result": "2. The theme preset has been saved, named \"test1\".",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"Manage saved styles\", then click the delete button on the right side of \"test1\", and then click \"Cancel\".",
+          "result": "3. Deletion failed because the user cancelled the operation",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click the delete button on the right side of \"test1\", and then click \"Remove\".",
+          "result": "4. Successfully deleted the theme preset",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4093",
+      "uuid": "UdG4TvUE",
+      "name": "Verify the creation of shop topic presets and their application to post",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Go to my shop and click Customize shop, then click Style",
+          "result": "1. Successfully enter the \"Style\" page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"...\" - \"Apply style settings\", set the template as \"Midnight Glow\", set the font as\" Dosis \", set the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797 \", and then click \"...\" - \"Save current style\", enter the character \"test1\" in the name field, and finally click the \"Save\" button",
+          "result": "2. The theme preset was successfully saved. The template is \"Midnight Glow \", the font is\" Dosis \", the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797\".",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"...\" - \"Use predefined styles\", set the template as \"Shadow focus\", the Storefront background color as \"#E8F3FC\", the font as \"Josefin Sans\", and then click \"Apply\"",
+          "result": "3. The theme configuration of post has been modified: The template is \"Shadow focus\", the Storefront background color is \"#E8F3FC\", and the font is \"Josefin Sans\".",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Enter \"Customize look and feel\" again, and then click \"...\" - \"Apply style settings\", select \"test1\", then click \"Done\", and finally click \"Update\"",
+          "result": "4. The theme preset \"test1\" was successfully applied. The template is \"Midnight Glow \", the font is\" Dosis \", the Storefront background color as \"# 972C2C \", the Post card border color as \"#C0B49E\", the Product card background color as \"# B8A797\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4092",
+      "uuid": "VcyTzMBg",
+      "name": "Verify that users can switch the layout mode of the shop page within the \"Customize shop\" section.",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Click to go to Customize shop-Style",
+          "result": "1. Curator enters the Style page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click on \"Layout\"",
+          "result": "2. Switch to the Layout page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"Layout\"",
+          "result": "3. The Layout drop-down list pops up, and currently there is only one option \"Spotlight\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3578",
+      "uuid": "Xn6kRHWi",
+      "name": "Verify that the Storefront color of the new user is Brand Kit color",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Style",
+      "module_uuid": "GWQCQXS3",
+      "priority": "P0",
+      "type": "",
+      "condition": "Set the account status to \"pear verify\"",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. New users register and log in to pear using merchant-sigup",
+          "result": "1. The user successfully registered and logged in to pear and entered the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click account-Edit profile, select \"Brand kit\", and view the Brand color and Background color",
+          "result": "2. The default Brand color is #110921 and the Background color is #F1BBFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3.  Click \"my shop-Customize\", select \"Colors\", and check all colors.\nCheck whether the background color and button color of the post card are Brand colors",
+          "result": "3. \"Colors\" are all default colors\nThe button color of the post card are the colors of the Brand color",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1043 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "32ZwqLSB",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/32ZwqLSB"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:32",
+  "count": 34,
+  "cases": [
+    {
+      "id": "T3752",
+      "uuid": "2odAstgX",
+      "name": "Verify when the user is invited by agent/merchant, some changes on the Customize shop page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-7684, No.1",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "the user is invited by agent/merchant",
+          "result": "remove copy \"Choose how your product cards appear in your posts—Top-Aligned for a uniform look or Waterfall for a dynamic, staggered grid.\" on the Storefront>Product ard layout",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "remove \"Products\" in the \"Manage Tab Order & Visibility\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T940",
+      "uuid": "4BNnrxp3",
+      "name": "After Curator is registered, edit the store name, and after uploading and cropping the avatar, check for changes in the URL before and after the browser bar",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. that Curator is registered and logged into Katana by clicking on \"My Shop\" \"at the bottom.\n2.Curator Click the \"\" Enter name.. \"And type\" tester \"\n3. Curator, click on the avatar on the My Shop page to upload the image, and crop the image with a zoom of 50%.\n4. Curator Look at the route in the bottom system browser bar",
+          "result": "The address bar route is/my-shop before filling in the name, and is name after having the name; the image cropping function is normal",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3714",
+      "uuid": "4mZ2ZFzS",
+      "name": "Verify when setting the font on the Customize shop/Font page, then it will update on the My shop page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "set the font for Store name on the Customize shop/Font page",
+          "result": "then Store name will update on the My shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "set the font for Tab header on the Customize shop/Font page",
+          "result": "then Tab header will update on the My shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "set the font for Section title on the Customize shop/Font page",
+          "result": "then Section title will update on the My shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "set the font for Other texts on the Customize shop/Font page",
+          "result": "then Other texts will update on the My shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T853",
+      "uuid": "5DHXUrsf",
+      "name": "Verify that the Curator has successfully changed personal information and that the store link will be updated",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Successfully entered My Shop",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator rexist My ShopIf the page already has data, click the avatar to upload a new picture, and click name enter \"New tester\"\n2. Refresh the entire page, then check to see if the new avatar, new name, and store link change",
+          "result": "Successfully, the administrator changed the avatar and name in \"my shop\", the store link did not change",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3698",
+      "uuid": "5PoucKwE",
+      "name": "Verify the links can be deleted or moved on the Customize shop>Content page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "add a new link module and add some links",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "click the × icon above the link",
+          "result": "the link will be deleted from the module",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "on the consumer POV",
+          "result": "the link will not be displayed from the module",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "click the = icon above the link",
+          "result": "the link can be moved the position in the module",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "on the consumer POV",
+          "result": "the new order will be displayed in the module",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1063",
+      "uuid": "6bUPTT8b",
+      "name": "Verify whether \"Shop URL\" can be edited and saved for the five time when Curator customizes store details",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters the correct content in Customize shop and then saves it for the first time.\n\n 2.Curator enters Customize shop again and changes the content of the part and saves it for the second time. \n\n3.Curator enters Customize shop again and changes the content of the part and saves it for the third time.\nUntil the fifth time",
+          "result": "Customize shop The five save failed because it was set",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1331",
+      "uuid": "73QEinDB",
+      "name": "Verify set an exist shop URL with another account, error message should pop up",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "set an exist shop URL with another account, error message should pop up",
+          "result": "error message display \"URL already taken\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T855",
+      "uuid": "88HBEQm3",
+      "name": "Curator successfully copies the store link in \"My Shop\" and opens it",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Successfully entered My Shop",
+      "desc": "<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"UooKeZZ9\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator exist My Shop click the \"Share\" button next to the store Socials\n2. Paste and open in browser",
+          "result": "Successfully jumped to the shop page\nIf it is a new user, the follow page will be displayed first; otherwise, it will directly enter the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1958",
+      "uuid": "89h8YSYw",
+      "name": "Verifying that PDP/PLP's own products do not need to show commission earned",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Resell a post\n2. Create a post\n3. Access the PDP/PLP to view posts",
+          "result": "Own products do not show earning",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3670",
+      "uuid": "AZaiVz2Z",
+      "name": "Verify when the link card style is Large, if the user uploaded an image, display a bigger thumbnail image; otherwise, display the shop logo",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "select the link card style as Large",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "if the user uploaded an image for the link",
+          "result": "display a bigger thumbnail image",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "otherwise, display the shop logo",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1059",
+      "uuid": "Esh1wukR",
+      "name": "The user successfully carried out personalized settings for the store details and completed the verification for tab switching interception.",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator into My shop\n\n2. Click the Customize shop edit button\n\n3. Enter the correct store name, store description, upload avatar\n\n4. Click the Save button\n\n5. Click \"Confirm\" button",
+          "result": "Curator successfully customized the store information",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "6. Edit profile, and enter a combination of lowercase letters, numbers and hyphens in the store address and click \"Save\"",
+          "result": "Saved successfully, the store URL is a combination of lowercase letters, numbers, and hyphens",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "7. Click to enter the \"Customize shop\" page. Then, under the \"Storefront\", \"Social\", and \"Style\" tabs, edit the content and switch between them.\n",
+          "result": "7. If there are any modifications made to the content within the tab, when you switch to that tab, a prompt will appear:\nLeave this page?\nAny unsaved changes will be lost if you continue.\n[CTA]Leave without saving\n[CTA]Stay on page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "8. Click \"Leave without saving\" and \"Stay on page\" respectively\n",
+          "result": "8. After clicking \"Leave without saving\", the current changes will be discarded and the user will be switched to the desired tab. After clicking \"Stay on page\", you will remain on the current tab.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "9. Edit the \"shop\" section again. This time, in the \"Storefront\", \"Social\", and \"Style\" tabs, do not edit any content and switch between them.",
+          "result": "9. After making any modifications to the content within the tab, switching to another tab is smooth and natural.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3668",
+      "uuid": "Hga93wPP",
+      "name": "Verify when the link card style is Compact, if the user uploaded an image, display a small size thumbnail; otherwise, do not display thumbnail",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "select the link card style as Compact",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "if the user uploaded an image for the link",
+          "result": "display a small size thumbnail on the link card",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "otherwise, do not display thumbnail on the link card",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3699",
+      "uuid": "J5bRU5bH",
+      "name": "Verify the post card will be shrinked, and only keep URL info and thumbnail on the Customize shop>Content page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "add a new post module and add some posts",
+          "result": "the post card will be shrinked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "and only keep URL info and thumbnail ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "on the mobile mode",
+          "result": "target 3 items per row",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3281",
+      "uuid": "JV19XFHB",
+      "name": "The user can only enter one of the fields when verifying the edit \"Customer support\"",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p>7288</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator click on \"Edit profile\"",
+          "result": "1. Go to the Edit profile page > business operation > customer support\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. In the support contact text box, enter the email field and then the URL field",
+          "result": "2. When one input field contains content, the other input field is disabled\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Delete the email, fill in the URL field",
+          "result": "3. The email input field is empty, and the URL input field is valid\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Edit the profile again, delete the URL",
+          "result": "4. The Settings are saved successfully and the support contact is empty\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Edit the profile again, fill in the email field",
+          "result": "5. The file is saved successfully. The support contact-email file contains information",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3715",
+      "uuid": "MqWXSXhu",
+      "name": "Verify when choosing the aspect ratio for the cover image, then it will update on the My shop page and other's POV",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Ultra Wide (16:9) — Best for banners or desktop\nWide (4:3) — Balanced layout for most devices\nSquare (1:1) — Classic and clean\nTall (4:5) — Great for vertical emphasis\nUltra Tall (9:16) — Ideal for mobile-first and story formats",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "upload a new cover image and choose the aspect ratio",
+          "result": "the image will be cropped and displayed on the My shop page and other's POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T2896",
+      "uuid": "NheTk8aa",
+      "name": "Verify that \"My shop\" and \"Account\" profile pages are merged and data is synchronized",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator goes to \"My shop\", click on profile to edit name, profile picture, shop name, Description, Social & links, and then save, switch to \"Account\" to view profile\n",
+          "result": "\"My shop\" is merged with the profile page of \"Account\" and the data is synchronized",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Curator goes to \"Account\", click on profile to edit name, profile picture, shop name, Description, Social & links, then save, switch to \"My shop\" to view profile",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1060",
+      "uuid": "PxkFoH3s",
+      "name": "Verify that there is no limit to the number of words in Store Description when customizing store details in curators",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator enters My shop\n2. Click the edit button of Customize shop\n3. Enter the correct Shop name, Shop URL, and then enter 600 characters in Shop descrption\n4. Click the Save button",
+          "result": "Save successfully, store description can enter unlimited number of words",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3700",
+      "uuid": "RAXtgvbE",
+      "name": "Verify the product card will be shrinked, and only keep the thumbnail on the Customize shop>Content page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "add a new product module and add some products",
+          "result": "the product card will be shrinked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "and remove all info, only keep the thumbnail",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "on the mobile mode",
+          "result": "target 3 items per row",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T2129",
+      "uuid": "RaTxzUHV",
+      "name": "Verify the Product card can create post success on my shop page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Go to My shop > Products tab, select one product and create post",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "open the price settings and “Allow promoters to set the retail price in their resale post.“\n\n",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Check the catalog retail price and wholesale price",
+          "result": "3.1 wholesale price display: catalog price * (1- commission) \n 3.2 retail price default display the same with catalog price",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "publish the post",
+          "result": "post publish succeed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Click the tooltip \"View in my shop\"",
+          "result": "Page jump to \"Post\" tab",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T852",
+      "uuid": "SUP6uavz",
+      "name": "Verify that Curator successfully added name and uploaded Shop logo and Cover image picture in My Shop for the first time.",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Successfully entered My Shop",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Curator Register and log in Pear Then click on the bottom \"My Shop\"\n\n2. in My Shop Click the \"Customize\" and click the Shop logo and Cover image on the page to upload a picture, click\" Shop name...\" enter\" tester\" click \"Save\"\n\n3.Refresh the entire page",
+          "result": "Curator successfully added a name and uploaded a profile picture for the first time in My shop",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1062",
+      "uuid": "Sf82GNdi",
+      "name": "\"Shop URL\" saved as duplicate route when validating Curator custom store details",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop 2.Click the edit button of Customize shop 3.Enter the correct Shop name, Shop descrption, and then enter the URL of another Curator in the Shop URL 4.Click the Save button",
+          "result": "If the save fails, it will prompt \"URL already taken\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1650",
+      "uuid": "SgZsAfTz",
+      "name": "Verify the URL of shop is removed the param \"edit/view\"",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "https://www.figma.com/file/S9F43vieg9hKl1CoM2ej2a/My-Shop?type=design&node-id=12425-30652&mode=design&t=wBXQRCZzJCRtJBaK-0",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click my shop, check URL",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click \"Visit shop\" from order details page ",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Click shop from buy page",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click store from PDP",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Click back button on PDP page",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Click back button on post details page",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Click all collection",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "Click one collection",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "Click \"<\" on edit collection page",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "Click Save on edit collection page",
+          "result": "There is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "Publish/Delete a post",
+          "result": "Back to shop page and there is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 12,
+          "desc": "Remove from shop",
+          "result": "Refresh shop page and there is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 13,
+          "desc": "Click \"<\" from create post page",
+          "result": "Back to shop page and there is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 14,
+          "desc": "Shop page > product > more > add media",
+          "result": "Refresh shop page and there is no param \"edit/view\" in URL",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1061",
+      "uuid": "SwXTKM9P",
+      "name": "When verifying the Curator custom store details, the \"Shop URL\" is empty or has a space character to save it.",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop 2. Click the Edit button of Customize shop 3. Enter the correct Shop name, Shop descrption, and then do not enter or enter a space character in the Shop URL 4. Click the Save button",
+          "result": "Save fails, error content will be prompted or empty is not allowed\nStore urls can only be a combination of lowercase letters, numbers, and hyphens",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T854",
+      "uuid": "TeY3wVYc",
+      "name": "Verify that when Curator edits the name in My Shop, the super long characters and special characters - spaces are displayed normally.",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "Boundary value testing",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator in My Shop Modify here name, the first time is a super long character, the second time is a single space character, last time is a single number “1”",
+          "result": "A single space character should not be saved; very long strings will be truncated\nshop name can hold at least one character",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2.Refresh the entire page after making changes",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3667",
+      "uuid": "UCnDWKgM",
+      "name": "The style of the verification link card can be edited on the Create/Edit Link page",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "select the link card style as Large on the Customize shop>Storefront page",
+          "result": "it will show the bigger thumbnail image and more space for text from the curator and the consumer POV",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "select the link card style as Compact on the Customize shop>Storefront page",
+          "result": "it will show the clean, minimal layout that fits more links on screen from the curator and the consumer POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1747",
+      "uuid": "UgeRfMCG",
+      "name": "Verify whether clicking the \"Unpublish\" button in the lower left corner of the Create Post page can save it as a draft Post",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "The \"Set promoter commission\" page has been opened",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.MC enters Create Post \n2. Fill in the required fields \n3. Click the \"Unpublish\" button \n4. Click the \"View in My Shop\" button",
+          "result": "Successfully created a draft Post and jumped to the My shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1445",
+      "uuid": "W9dnv5qS",
+      "name": "Verify the profile can upload suceess",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P2",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "upload the profile image on my shop page",
+          "result": "the profile can upload suceess\nChange the profile image upload directory to ‘profile/user ’",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T2716",
+      "uuid": "Wvr99HJx",
+      "name": "If the profile does not have an image, then a default randomly image should be required",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"EtskGo3k\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "A new account accepts the Curator's invitation\n\n",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Log in to pear\n\n",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "View my shop profile picture",
+          "result": "If the profile does not have an image, then a default randomly image should be required",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3282",
+      "uuid": "XtQXE4kB",
+      "name": "Verify that the curator successfully added and removed \"Customer support\" from the store > business operation",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p>7288</p>\n\n<p>https://www.figma.com/design/S9F43vieg9hKl1CoM2ej2a/My-Shop?node-id=19297-73623&amp;m=dev</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator click on \"Edit profile\"\n",
+          "result": "1. Go to the Edit profile page > business operation > Customer support\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Fill in the email field in the support contact field\n",
+          "result": "2. The email address is saved successfully. ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Edit profile again, delete email, fill in the URL field\n",
+          "result": "3. The URL is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. When \"support contact\" is empty",
+          "result": "4. The Settings are saved successfully and the support contact is empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Check the text input components",
+          "result": "Use the text input with label component",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5301",
+      "uuid": "MVJr812b",
+      "name": "Verify mandatory validation for \"Shop name\" field",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant is on the \"Customize shop\" -> Storefront tab",
+      "desc": "<p>KAT-11219</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. . Clear the \"Shop name\" input field.\n\n\n\n",
+          "result": "1. The input field is marked with a red asterisk (*) indicating it is required.\n\n\n\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Attempt to save the settings.\n\n",
+          "result": "2. System prevents saving and displays a validation error: \"Shop name (required)\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5302",
+      "uuid": "YUzEYLCJ",
+      "name": "Verify default state of \"Display shop name\" checkbox",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "Merchant opens the \"Customize shop\" modal for the first time",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Navigate to the Shop info section.\n\n\n\n2. Observe the \"Display shop name on storefront\" checkbox.\n\n",
+          "result": "1. The checkbox \"Display shop name on storefront\" is Not checked by default.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5303",
+      "uuid": "U4o8vBjj",
+      "name": "Verify storefront visibility when shop name is hidden",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Shop name is configured and \"Display shop name on storefront\" is Unchecked",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Save the settings with the checkbox off.\n\n\n\n",
+          "result": "1. The shop name is successfully saved in the database for internal system use.\n\n\n\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. As a Buyer, visit the shop's URL (vanity_url).\n",
+          "result": "2. The shop name is not displayed on the public storefront header/UI.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5304",
+      "uuid": "aTTMDYaX",
+      "name": "Verify storefront visibility when shop name is shown",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P0",
+      "type": "",
+      "condition": "Shop name is configured and \"Display shop name on storefront\" is Checked",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Save the settings with the checkbox on.",
+          "result": "1. The shop name is saved normally.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. As a Buyer, visit the shop's URL.",
+          "result": "2. The shop name is clearly visible on the public storefront.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5305",
+      "uuid": "kgMMuEi5",
+      "name": "Verify internal system fallback for Shop Name",
+      "module": "My Shop / Storefront / Edit Profile / Customize shop",
+      "module_uuid": "32ZwqLSB",
+      "priority": "P1",
+      "type": "",
+      "condition": "Database record exists for the user",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Check internal system areas (e.g., Credit Card billing, Revenue Share, or Admin Payouts) where the shop name is required.",
+          "result": "1. The system correctly identifies the shop via the mandatory \"Shop name\" field.\n\n2. If the field were somehow bypassed, the fallback function getShopName correctly returns the vanity_url to prevent system errors.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

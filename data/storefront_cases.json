@@ -1,0 +1,223 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "TSxXp1zc",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/TSxXp1zc"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:46:33",
+  "count": 7,
+  "cases": [
+    {
+      "id": "T3045",
+      "uuid": "61btDLKf",
+      "name": "Verify that when the shop description owns content, you can open the profile drawer by clicking \">\" and return to the shop via Links",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click on \"My shop\" and click on the profile description or profile picture to enter Edit profile\n",
+          "result": "1. The Edit profile page is displayed\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Add a description, then click \"Back\", then click \"Save\"\n",
+          "result": "2. The shop description is successfully added, and \">\" appears next to the description.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \">\" and then click the \"Links\" icon\n",
+          "result": "3. The profile drawer pops up, and then the Links page\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click \"<\" in the upper left",
+          "result": "4. Return to the shop page successfully",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3046",
+      "uuid": "7Yye7b8R",
+      "name": "Verify that after deleting the background image, the shop background image will be the default green color",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click on \"My shop\" and click on the profile description or profile picture to enter Edit profile\n",
+          "result": "1. The Edit profile page is displayed\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"X\" next to \"Background image\" and click \"Save\"\n",
+          "result": "2. The Background image is deleted and the profile is saved\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"Back\" in the top left corner",
+          "result": "3. Return to the shop page. The shop background will be green by default",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1419",
+      "uuid": "NjihGesH",
+      "name": "Verify when a pear catalog merchant is created from a curator shop, the merchant account's logo is the same as the corator's",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "a pear catalog merchant is created from a curator shop",
+          "result": "the merchant account's logo is the same as the corator's",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T2341",
+      "uuid": "PKWb3dBS",
+      "name": "In consumer and curator POV, Link only shows the title",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. consumer and curator log in to pear\n2. Go to the store where Link is configured\n3. Click Link to view the list",
+          "result": "In consumer and curator POV, Link only shows the title",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T2094",
+      "uuid": "Pm9nqV8M",
+      "name": "Verify that manually written Links beginning with \"www\", copying and pasting into \"Links\" will automatically have \"https\"",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Manually write links that start with \"www\"\n2. Click \"+ Add link\" in Edit profile-Links\n3. Copy and paste to \"Links\" and click \"Save\"",
+          "result": "Manually written links beginning with \"www\", copying and pasting into \"links\" will automatically have \"https\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1421",
+      "uuid": "SyQ2oabp",
+      "name": "Verify when a curator modifies its avatar from the curator shop, also save it to the merchant's logo",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "when a curator modifies its avatar from the curator shop",
+          "result": "also save it to the merchant's logo",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3044",
+      "uuid": "WRAWUxDq",
+      "name": "Verify that the Curator successfully modified the background image of the shop page profile and that the background image defaults to green",
+      "module": "My Shop / Storefront / Edit Profile",
+      "module_uuid": "TSxXp1zc",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Accept the DTC invitation as a new user and log in to pear\n",
+          "result": "1. The user successfully logs in to pear\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"My shop\" to view the background image of the profile\n",
+          "result": "2. The background picture is green\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter the profile description or profile picture into Edit profile\n",
+          "result": "3. The Edit profile page is displayed\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click \"Upload image\" at the bottom, upload an image, and click \"Save\"\n",
+          "result": "4. The image is uploaded successfully, and the profile is saved\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Click \"Back\" to view the background image",
+          "result": "5. The background image is set successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "guest or promoter's view the shop",
+          "result": "Check the new background image sync to guest & promoter's view",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

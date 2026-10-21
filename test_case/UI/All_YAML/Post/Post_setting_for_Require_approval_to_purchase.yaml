@@ -7,7 +7,15 @@
 #
 # Prefill event: "post setting require approval to purchase" (duplicated from
 #   12061 phase2 auto event, see prefill step 151c/151d)
-# Post URL: {{BASE_URL}}/autotestshop/post/post-setting-require-approval-to-purchase
+#
+# The event carries TWO posts (prefill step 151d/151g):
+#   - post-setting-require-approval-to-purchase-before  -> "Before approval" mode
+#   - post-setting-require-approval-to-purchase-after   -> "After approval" mode
+# Post settings are per post, so every partner-side case has to pick the post
+# from the Post tab selector first (chevron pill -> DownLineIcon dropdown).
+# Post URLs:
+#   {{BASE_URL}}/autotestshop/post/post-setting-require-approval-to-purchase-before
+#   {{BASE_URL}}/autotestshop/post/post-setting-require-approval-to-purchase-after
 # ==============================================================================
 
 
@@ -40,6 +48,12 @@ seed_approval_applicant_emails:
         script: |
             (() => 'decline.tester+' + Date.now() + '@example.com')()
 
+    execute_js_seed_after_email:
+        save_as: "approval_after_email"
+        global: true
+        script: |
+            (() => 'after.tester+' + Date.now() + '@example.com')()
+
   expect_result:
     assertions: []
 
@@ -64,18 +78,26 @@ testT5668_T5749_partner_enable_approval:
     R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_step_2: 2000
 
-    R_click_post_card: { locator: "text=post setting require approval to purchase", exact: true }
-    sleep_step_3: 3000
+    # The event has TWO posts now, and post settings are per post -> pick the
+    # target post first. The chevron pill (post-selector-chevron-pill) shows the
+    # post count and opens the list; the entries live in the MUI popover.
+    R_click_post_selector: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
+    sleep_step_3: 2000
+
+    R_click_post_before: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-before")', timeout: 10000 }
+    sleep_step_4: 3000
+
+    verify_post_before_selected: { text: "post-setting-require-approval-to-purchase-before", timeout: 10000 }
 
     R_click_settings_tab: { role: 'button', name: 'Settings' }
-    sleep_step_4: 2000
+    sleep_step_5: 2000
 
     # Assert: approval toggle exists
     wait_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', timeout: 8000 }
 
     # Toggle ON
     R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
-    sleep_step_5: 1500
+    sleep_step_6: 1500
 
     # T5749: the toggle opens "When should customers choose what to purchase?"
     # with two radios: "Before approval" / "After approval".
@@ -89,21 +111,23 @@ testT5668_T5749_partner_enable_approval:
     # T5749: explicitly keep "Before approval" (customers pick items first,
     # then request approval) - it is the default, so the click is optional.
     R_click_before_mode: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]:has-text("Before approval")', timeout: 8000, optional: true }
-    sleep_step_6: 800
+    sleep_step_7: 800
 
     # Step A: confirm the mode dialog with its own (green) Save button.
     R_click_save_mode_dialog: { locator: 'div[role="dialog"] button:has-text("Save")', timeout: 10000, optional: true }
-    sleep_step_7: 2000
+    sleep_step_8: 2000
 
     # Step B: the page-level Save button only becomes enabled after the dialog is
     # confirmed, and THIS is what actually persists the switch. Without it the UI
     # shows the toggle as "On" but nothing is saved.
     R_click_save: { role: 'button', name: 'Save', timeout: 10000, skip_if_disabled: true }
-    wait_toast_save: { message: "Post settings updated", timeout: 20000, optional: true }
-    sleep_step_8: 1500
+    # Soft check: when the switch was already ON the toggle is a no-op, no toast
+    # appears - the mode itself is proven end-to-end by the guest cases.
+    wait_toast_save: { text: "Post settings updated", timeout: 20000 }
+    sleep_step_9: 1500
 
     R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
-    sleep_step_9: 2000
+    sleep_step_10: 2000
 
   expect_result:
     assertions:
@@ -123,7 +147,7 @@ testT5676_T5673_guest_apply:
   add_cookies: {}
   description: "Guest consumer applies for approval on an approval-required post"
   test_step:
-    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-before"
     sleep_after_open: 5000
 
     # Click CTA "Show venue map drawer" to open seat map
@@ -359,7 +383,7 @@ testT5686_guest_apply:
   add_cookies: {}
   description: "Guest applies for approval (for decline flow)"
   test_step:
-    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase"
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-before"
     sleep_after_open: 5000
 
     R_click_drawer: { role: 'button', name: 'Show venue map drawer', timeout: 15000 }
@@ -450,13 +474,16 @@ testT5686_partner_decline:
 
 
 # ==============================================================================
-# Test Case: T5669 (Teardown: disable approval, restore direct buy)
+# Test Case: T5749 (After approval mode on the "-after" post)
+# The very same post settings screen, but this time the mode is
+# "After approval" -> customers apply for approval FIRST, and only after the
+# partner approves them they can choose items and buy.
 # ==============================================================================
 
-testT5669_teardown_disable:
+testT5749_after_approval_mode:
 #Auth: Linda Zhou
   guest: false
-  description: "Teardown: disable Require approval to purchase"
+  description: "Partner enables Require approval to purchase on the -after post and selects After-approval mode"
   test_step:
     open: "{BASE_URL}/events"
     sleep_after_open: 5000
@@ -467,21 +494,199 @@ testT5669_teardown_disable:
     R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_step_2: 2000
 
-    R_click_post_card: { locator: "text=post setting require approval to purchase", exact: true }
-    sleep_step_3: 3000
+    # Switch to the second post of the same event.
+    R_click_post_selector: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
+    sleep_step_3: 2000
+
+    R_click_post_after: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-after")', timeout: 10000 }
+    sleep_step_4: 3000
+
+    verify_post_after_selected: { text: "post-setting-require-approval-to-purchase-after", timeout: 10000 }
 
     R_click_settings_tab: { role: 'button', name: 'Settings' }
-    sleep_step_4: 2000
+    sleep_step_5: 2000
+
+    wait_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', timeout: 8000 }
+
+    # Toggle ON (skipped when the switch is already on, e.g. re-running the file)
+    R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
+    sleep_step_6: 1500
+
+    wait_mode_question: { text: "When should customers choose what to purchase?", timeout: 10000, optional: true }
+
+    # T5749: pick "After approval" - "Customers apply for approval first. Once
+    # approved, they can choose and purchase any available items."
+    R_click_after_mode: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]:has-text("After approval")', timeout: 8000, optional: true }
+    sleep_step_7: 800
+
+    # Step A: confirm the mode dialog with its own (green) Save button.
+    R_click_save_mode_dialog: { locator: 'div[role="dialog"] button:has-text("Save")', timeout: 10000, optional: true }
+    sleep_step_8: 2000
+
+    # Step B: the page-level Save is what actually persists the setting.
+    R_click_save: { role: 'button', name: 'Save', timeout: 10000, skip_if_disabled: true }
+    # Soft check: when the switch was already ON the toggle is a no-op, no toast
+    # appears - the mode itself is proven end-to-end by the guest cases.
+    wait_toast_save: { text: "Post settings updated", timeout: 20000 }
+    sleep_step_9: 1500
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Require approval to purchase"
+
+
+# ==============================================================================
+# Test Case: T5673 (Guest applies on the After-approval post)
+# In "After approval" mode the customer applies WITHOUT picking items, so the
+# request form lives in the cart drawer instead of the seat-map checkout.
+# ==============================================================================
+
+testT5673_after_guest_apply:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest applies for approval on the After-approval post (apply first, choose items later)"
+  test_step:
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-after"
+    sleep_after_open: 9000
+
+    # The approval request form is in the cart drawer.
+    R_click_cart: { role: 'button', name: 'View cart', timeout: 15000 }
+    sleep_step: 4000
+
+    verify_approval_notice: { text: "Your request must be approved before you can select items and make a purchase.", timeout: 15000 }
+    sleep_step_2: 500
+
+    fill_first_name: { locator: 'div[role="dialog"] input[name="firstName"]', value: 'After' }
+    sleep_step_3: 300
+    fill_last_name: { locator: 'div[role="dialog"] input[name="lastName"]', value: 'Tester' }
+    sleep_step_4: 300
+    # Phone widget renders its own "+1" prefix -> national digits only.
+    fill_phone: { locator: 'div[role="dialog"] input[name="phone"]', value: '6502396646' }
+    sleep_step_5: 300
+    fill_email: { locator: 'div[role="dialog"] input[name="email"]', value: '{{approval_after_email}}' }
+    sleep_step_6: 800
+
+    R_click_submit: { role: 'button', name: 'Submit for approval' }
+    sleep_step_7: 4000
+
+    # Hard proof the application was accepted (not just page copy).
+    verify_submission_success: { text: "Thanks for your submission!", timeout: 20000 }
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your submission!"
+      - assertion_type: "element_visible_by_text"
+        text: "pending approval"
+
+
+# ==============================================================================
+# Test Case: T5685 (Partner approves the After-approval application)
+# The Waitlist is per event, so the after-approval application shows up in the
+# same list - it just has no item/unit (nothing was picked yet).
+# ==============================================================================
+
+testT5685_after_partner_approve:
+#Auth: Linda Zhou
+  guest: false
+  description: "Partner approves the pending After-approval application"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
+    sleep_step_2: 2000
+
+    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
+    sleep_step_3: 5000
+
+    # Rows accumulate across runs -> filter by this run's applicant email.
+    fill_waitlist_search: { placeholder: 'Search by name or email', value: '{{approval_after_email}}', timeout: 10000, optional: true }
+    sleep_step_4: 3000
+
+    verify_applicant_row: { text: "{{approval_after_email}}", timeout: 20000 }
+    sleep_step_5: 1000
+
+    R_click_pending_row: { locator: "tr:has-text('{{approval_after_email}}')", timeout: 10000 }
+    sleep_step_6: 2000
+
+    R_click_approve: { role: 'button', name: 'Approve' }
+    sleep_step_7: 2000
+
+    R_click_approve_send: { role: 'button', name: 'Approve & send email' }
+    sleep_step_8: 3000
+
+    wait_approved: { text: "Approved", timeout: 10000 }
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Approved"
+
+
+# ==============================================================================
+# Test Case: T5669 (Teardown: disable approval, restore direct buy)
+# ==============================================================================
+
+testT5669_teardown_disable:
+#Auth: Linda Zhou
+  guest: false
+  description: "Teardown: disable Require approval to purchase on both posts"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_posts_tab: { role: "tab", name: "Post" }
+    sleep_step_2: 2000
+
+    # ---- the "-before" post ----
+    R_click_post_selector: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
+    sleep_step_3: 2000
+
+    R_click_post_before: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-before")', timeout: 10000 }
+    sleep_step_4: 3000
+
+    R_click_settings_tab: { role: 'button', name: 'Settings' }
+    sleep_step_5: 2000
 
     R_click_toggle_off: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: false }
-    sleep_step_5: 1500
+    sleep_step_6: 1500
 
     R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
     wait_toast: { message: "Post settings updated", timeout: 15000, optional: true }
-    sleep_step_6: 1000
+    sleep_step_7: 1000
 
     R_click_close: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
-    sleep_step_7: 2000
+    sleep_step_8: 2000
+
+    # ---- the "-after" post ----
+    R_click_post_selector_2: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
+    sleep_step_9: 2000
+
+    R_click_post_after: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-after")', timeout: 10000 }
+    sleep_step_10: 3000
+
+    R_click_settings_tab_2: { role: 'button', name: 'Settings' }
+    sleep_step_11: 2000
+
+    R_click_toggle_off_2: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: false }
+    sleep_step_12: 1500
+
+    R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true }
+    wait_toast_2: { message: "Post settings updated", timeout: 15000, optional: true }
+    sleep_step_13: 1000
+
+    R_click_close_2: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+    sleep_step_14: 2000
 
   expect_result:
     assertions: []

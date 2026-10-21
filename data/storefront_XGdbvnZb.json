@@ -1,0 +1,271 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "XGdbvnZb",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/XGdbvnZb"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:35",
+  "count": 8,
+  "cases": [
+    {
+      "id": "T4321",
+      "uuid": "6K9QG1k5",
+      "name": "Verify Link input format validation",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P1",
+      "type": "",
+      "condition": "Merchant has entered Add new link or Edit link window",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Select protocol = https, enter invalid URL (e.g., abc), click Save",
+          "result": "1. System blocks saving and shows “Please enter a valid URL”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select protocol = mailto, enter invalid email (e.g., abc@), click Save",
+          "result": "2. System blocks saving and shows “Please enter a valid email”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Select protocol = tel, enter invalid number (e.g., 12a34), click Save",
+          "result": "3. System blocks saving and shows “Please enter a valid number”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Select protocol = sms, enter invalid number, click Save\t",
+          "result": "4. System blocks saving and shows “Please enter a valid number”\n",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1570",
+      "uuid": "9sxPfrtz",
+      "name": "Verify the special characters supported by Socia",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Enter special characters and Spaces in Socia and click \"Save\"",
+          "result": "Socia's format does not allow special characters and Spaces (except @,.-), otherwise it will prompt \"Enter a valid username\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4322",
+      "uuid": "CbHf47xe",
+      "name": "Verify click behavior of Links with different protocols",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has configured and saved Links with https, mailto, tel, and sms protocols via Add new link window",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. As a guest, visit the shop page",
+          "result": "1. Successfully accessed the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click the Link configured with https",
+          "result": "2. Browser opens a new tab and navigates to the configured URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click the Link configured with mailto",
+          "result": "3. Default email client opens with recipient set to the configured email",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. On mobile, click the Link configured with tel",
+          "result": "4. Phone dialer opens with the configured number",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. On mobile, click the Link configured with sms",
+          "result": "5. SMS app opens with the recipient number set to the configured number\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. The guest clicked on the link to invoke a third-party application, and then clicked \"Cancel\".",
+          "result": "6. Normal display of the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1066",
+      "uuid": "EhWHsaCo",
+      "name": "Verify that Curator removes all Social links and then checks the shop icon",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop \n\n2. Click the Customize button, and choice Social\n\n3. Clear the contents of all third-party platforms and mailboxes ",
+          "result": "Curator successfully cleared all external links, and the platform icons on the shop page disappeared.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4320",
+      "uuid": "SdWZQAze",
+      "name": "Verify protocol selection and saving in Add new link window",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has entered My Shop → Links → Add new link window\t",
+      "desc": "<p>KAT-9014</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click the protocol dropdown next to the Link input field",
+          "result": "1. Dropdown correctly shows the selected protocol",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select one of https / mailto / tel / sms",
+          "result": "2. Input value combined with protocol is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter a valid URL, email, or number in the input field",
+          "result": "3. Input value is accepted without error",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click Save\t",
+          "result": "4. System saves successfully and returns to Links list, new Link shows protocol + address correctly",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1064",
+      "uuid": "UsVX3fAi",
+      "name": "Verify that the Curator adds all external links and changes the location of the first and second links, then shares the contents of the successfully opened icon with the Consumer",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "#1 Curator into My shop\n\n2. Click the Socials button under the store link\n\n3. Enter the correct content for all third-party platforms and mailboxes, then drag and drop the header of the first link to swap places with the second link\n\n4. Click the Save button\n\n5. Share store links with consumers\n\n6.Consumer enters Curator's shop and clicks on these ICONS",
+          "result": "# The platform icon becomes black activated, the Curator successfully added all external links and changed the location of the first and second links; Consumer successfully opened links to these platforms in Curator's shop\nps: Social link supports all special characters",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T1065",
+      "uuid": "Wj3oZmYa",
+      "name": "Verify that Curator edits all Social links and changes the location of the links, and then checks the location of the shop icon",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p></p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1.Curator enters My shop and click the \"Customize\".",
+          "result": "Curator successfully updated all external links and changed the position of the second and third platform icons on the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": " 2. Click “Social” and edit all third-party platforms and email addresses to enter new content, then drag the header of the second link to swap positions with the third link ",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3 .Click the Save button",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3885",
+      "uuid": "kH9jKMxA",
+      "name": "Verify that Socia can display up to 7 on the shop page at most",
+      "module": "My Shop / Storefront / Edit Profile / Socials",
+      "module_uuid": "XGdbvnZb",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Curator enters My shop, Click the Customize button, and choice Social\n",
+          "result": "At this time, Socia link is empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Fill in all the Socia links and then return to the shop page",
+          "result": "At this point, only the first 7 Socia ICONS are displayed on the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

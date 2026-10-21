@@ -1,0 +1,87 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "igPaBv4m",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/igPaBv4m"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:42",
+  "count": 3,
+  "cases": [
+    {
+      "id": "T3252",
+      "uuid": "BcJrCGeH",
+      "name": "Verify adding an Tracking tab for the Business partner & Pear verified users on Edit profile page",
+      "module": "My Shop / Storefront / Edit Profile / Tracking",
+      "module_uuid": "igPaBv4m",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "open the Edit profile page for the Business partner & Pear verified users ",
+          "result": "add an Tracking tab on Edit profile page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "open the Edit profile page for the Standard/Pear owned/Partner testing users ",
+          "result": "there is no Tracking tab on Edit profile page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3253",
+      "uuid": "Sc7gFSEL",
+      "name": "Verify Meta Pixel and Conversion API can be added on the Edit profile/Tracking page",
+      "module": "My Shop / Storefront / Edit Profile / Tracking",
+      "module_uuid": "igPaBv4m",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. open the Edit profile/Tracking page on Pear\n2. input Meta Pixel and Conversion API\n3. click Save",
+          "result": "1. it will save successfully and give a prompt \"Update Success\"\n2. then it will be displayed on the Admin Tool Users>Profile>Account>Tracking\n3. it will be displayed on the Meta Pixel Helper",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3264",
+      "uuid": "TNGFrfkv",
+      "name": "Verify when the Meta Pixel and Conversion API are empty on the Edit profile/Tracking page and the Admin Tool Users>Profile>Account>Tracking, and no subdomain, share the shop and post, the link will be \"pear.us\"",
+      "module": "My Shop / Storefront / Edit Profile / Tracking",
+      "module_uuid": "igPaBv4m",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "the Meta Pixel and Conversion API are empty on the Edit profile/Tracking page and the Admin Tool Users>Profile>Account>Tracking, and no subdomain",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "share the shop and post",
+          "result": "the link will be \"pear.us\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1317 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "3moKQuHE",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/3moKQuHE"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:36",
+  "count": 33,
+  "cases": [
+    {
+      "id": "T3499",
+      "uuid": "3wjFycWo",
+      "name": "Verify the link can be deleted on the My shop/Storefront/Links page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "click the more action icon on the link card",
+          "result": "it will open a drawer for choosing Edit/Delete",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "click Delete",
+          "result": "there will appear a second confirmation page \"Delete this link? It will no longer appear in your link list\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "click Delete on the second confirmation page",
+          "result": "the link will be deleted, and will not be displayed in the links list",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "click Cancel on the second confirmation page",
+          "result": "the link will not be deleted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "after deleting the link, view the link list from the promoter/consumer's POV",
+          "result": "the link will not be displayed in the link list",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3294",
+      "uuid": "4RE86yMd",
+      "name": "Verify when selecting \"Show the Products page from my catalogs(s) by default\", then the default tab on the shop page will be the Products from the visitor POV",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-6290\nhttps://pearshop.atlassian.net/browse/KAT-6635, No.4",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. select \"Show the Products page from my catalogs(s) by default\" on the Edit profile>Storefront page\n2. set the products as visible",
+          "result": "the default tab on the shop page will be the Products from the visitor POV",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "1. select \"Show the Products page from my catalogs(s) by default\" on the Edit profile>Storefront page\n2. set the products as invisible",
+          "result": "the default tab on the shop page will be the Posts from the visitor POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3371",
+      "uuid": "7Civkjkj",
+      "name": "After verifying that the product card is \"Top aligned\", it is normal to display it on the post preview page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator go to my shop-Products tab-Setting, modify the layout to \"Top aligned\" and click \"Save\"",
+          "result": "1. The profile is saved. The product card alignment is Top aligned.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"Create a Post\" to add at least 10 products, then click \"Preview\" to view the product list",
+          "result": "2. post-preview's product card alignment is \"Top aligne",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3498",
+      "uuid": "8dH8jdpU",
+      "name": "Verify the link can be edited on the My shop/Storefront/Links page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "Three kinds of link cards have been created",
+      "desc": "<ul>\n\t<li>link cannot modify the type</li>\n\t<li>All the contents of the link except &quot;media&quot; are required</li>\n\t<li>The &quot;media&quot; in the &quot;Product link&quot; is mandatory</li>\n</ul>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"GbgJXRsR\" src=\"https://sz.ones.cn/saas-dc1-tmp/temporary/transform/FgCfLDjBD7Cvr5S8lF7y5DSDtARa/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=IAKPLNDYG3PZOLMZGLWO%2F20250625%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20250625T014330Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=3029d1542e0b2b248fef38cb9165a5795162dad3ea6b0f590f9da5be98acece6\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"TxCQnZgu\" src=\"https://sz.ones.cn/saas-dc1-tmp/temporary/transform/Fv489CV9JuzZocujP0VAIj4LQyR7/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=IAKPLNDYG3PZOLMZGLWO%2F20250625%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20250625T014330Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=163817a6aeff23ba7f62fe06a361c988422bec535de5beda17be51aad2697184\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "click the more action icon on the link card",
+          "result": "it will open a drawer for choosing Edit/Delete",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "click Edit",
+          "result": "it will open the edit link drawer",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "click Replace above the thumbnail",
+          "result": "it will open a drawer for choosing the new media",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "edit the link and Save",
+          "result": "the link will be edited",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Edit the \"General\" link, fill in the Title as \"General1\", and then click \"Save\".",
+          "result": "The General link information was successfully modified",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Edit the \"Ticket/Event\" link, fill in the Date as 10 days after the current day, the Venue as \"12 Atrium Dr\", and then click \"Save\".",
+          "result": "The Ticket/Event link information was successfully modified",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Edit the \"Product\" link, fill in the Price as \"$12\", and then click \"Save\".",
+          "result": "The Product link information was successfully modified",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "after editing the link, click the new link on the Shop page from the promoter/consumer's POV",
+          "result": "it will open the new link page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3349",
+      "uuid": "8xYThp8U",
+      "name": "Verify selecting \"Show the Posts page by default\" or selecting \"Show the Products page from my catalog(s) by default\", the default tab on the shop page will be the Post from the curator and the promoter POV",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-6635",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "select \"Show the Posts page by default\" or select \"Show the Products page from my catalog(s) by default\" on the Edit profile>Storefront page",
+          "result": "the default tab on the shop page will be the Post from the curator and the promoter POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3786",
+      "uuid": "Bpm8FfQi",
+      "name": "Verify the product display rules of \"Select from my posts\"",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "The promoter resold at least three posts from the merchant",
+      "desc": "<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"SMR4enFr\" src=\"https://sz.ones.cn/saas-dc1-tmp/temporary/transform/Fg8jS5Vz9OAH8tnGDvTP-doTNaeL/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=IAKPLNDYG3PZOLMZGLWO%2F20250613%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20250613T070713Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=ce078c813ec98effb5395513fb9b5851a3b3f2f175d07a508103d3d197008b25\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"EiPYAyVD\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The promoter clicks on \"Add from my posts\" in \"Customize-Content-Products\" of the shop",
+          "result": "1. The post column of \"Select from my posts\" is in the drop-down box style, showing only Posts without special Settings",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. The merchant sets the post to be accessible only to the promoter, and then views \"Add from my posts\" (for both sides).",
+          "result": "2. \"Add from my posts\" does not display posts of \"Restrict post access\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. The merchant sets \"Post Limit purchase quantity\", \"Limit purchase quantity \", and \"Must be bought with another item\" for the Post product. Then check \"Add from my posts\" (both sides)",
+          "result": "3. \"Add from my posts\" does not display \"Post Limit purchase quantity\". The products of \"Limit purchase quantity \"and \"Must be bought with another item\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The merchant sets the post to be accessible only to the promoter, and then views \"Add from my posts\"",
+          "result": "4. \"Add from my posts\" does not display posts of \"Restrict post access\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3497",
+      "uuid": "EchQnkVR",
+      "name": "Verify the new link can be added on the My shop/Storefront/Links page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "when the shop owner has no links",
+          "result": "the empty state is \"Share What Matters\", \"Add your favorite links — social profiles, storefronts, content, or anything else you'd like your audience to explore.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "click \"Add new link\" on the My shop/Storefront/Links page",
+          "result": "it will open Add new link drawer",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "input link and title, click Add",
+          "result": "the new link is added, and will be displayed in the links list",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "input nothing to link, click Add",
+          "result": "it will prompt \"Please enter the URL\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "check \"Show the link below the title\"",
+          "result": "the link will be displayed below the title in the links list",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "click the tooltip behind \"Show the link below the title\"",
+          "result": "it will show \"Turn this on if you want the full link to be visible on your card. Leave it off to keep the card cleaner.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "input nothing to title, click Add",
+          "result": "it will prompt \"Please enter the link title\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "does not upload a thumbnail, click Add",
+          "result": "the link thumbnail will be the shop logo",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "upload a thumbnail, click Add",
+          "result": "the link thumbnail will be displayed in the links list",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "after adding the new link, click the link on the Shop page from the promoter/consumer's POV",
+          "result": "it will open the link page",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4183",
+      "uuid": "GCHEg9uu",
+      "name": "Verify that users can add images when creating/editing a link by using a web link.",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The user clicks \"Add new link\" under the \"Links\" tab on the shop page.\n",
+          "result": "1. When the \"Add new link\" page is opened and the input field is empty, the \"Pick from Link\" button is disabled.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select \"General/Product/Ticket\" from the Type option, then enter the correct web link: \"https://the-boys.fandom.com/wiki/Supes\", and click \"Pick from Link\". Select one of the images from the Pick from Link page and click \"Add\".\n",
+          "result": "2. Successfully added a link cover using a web link.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter the incorrect web link: \"ww.baiducom\", then click \"Save\"\n",
+          "result": "3. When the web link is invalid, the \"Pick from Link\" button is disabled and the prompt will say \"Please enter a valid link\".\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click the \"<\" button, enter a link without an image, and then enter the Pick from Link page.\n",
+          "result": "4. Successfully returned to the \"Add a new link\" page; after entering a link without an image, the \"Pick from Link\" \npage is blank. \n\nNo images found in this link\n\nTry uploading one instead.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. The user creates a new link again, selects \"Video\" from the Type option, and checks if \"Pick from Link\" can be used. ",
+          "result": "5. The video link remains unchanged. It does not have the \"Pick from Link\" button.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4265",
+      "uuid": "Hd4abhJv",
+      "name": "Verify the eight sizes and crop image of the Image link card",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p>KAT-8998</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"KjgQ6yvX\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FmiFohRZyAwCSe9A_RylEHdNzv1o/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T065534Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=b2c2514694d19016161ea3fa5c0124709d5c0968db2a8c6f13c031bd94f172c4\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"K2uAHwKp\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"FgbfKBdY\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FpOM4cb6XfDp-TM0E_0aKuXa65Wb/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T065534Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=6ed147cb176ededca3fa9ace902ec567cf321dd691a424eacfd121cb172b4efd\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>KAT-10336</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"X74xScbD\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FsL39A0YWW2_-tjHSUAQx6S2tbEG/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T065534Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=d4ad57a9ed1920901efb49d6db77481b92b8553003020f3c82febcdfeca6d884\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"MBqaKD4N\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FnOI6H0cxVQBhOZYDM778PRrRjvF/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T065533Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=a32cd72b32ae68366ceaac3a6272dc9ce19ae498ea949b3c47ff349ddabe80f1\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>KAT-11000</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"K2uAHwKp\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"MHQxqnG1\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Add a Links-Image module, Size as \"Square (1:1)\", Click Add;  Click \"Add new link\" under this module",
+          "result": "1. The \"Add new link\" window has been opened. The Type is disabled. link, media are all required information",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Type Title as \"Image1\", Link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "2. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 163*163\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3.  Add a Links-Image module, Size as \"Widescreen (16:9)\", Click Add;  Click \"Add new link\" under this module",
+          "result": "3. The \"Add new link\" window has been opened. The Type is disabled. link, media are all required information",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Type Title as \"Image2\", Link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "4. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 343*192\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Add the \"Panoramic Banner (3:1)\" image module, then create a link, set the type as \"Title\" with the name \"Image3\", the link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "5. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 584*204\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. Add the \"Panoramic Banner (4:1)\" image module, then create a link, set the type as \"Title\" with the name \"Image4\", the link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "6. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 584*146\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "7. The user edits the image card, clicks the \"More\" button of \"Image\", and selects \"Crop image\"",
+          "result": "7. Successfully enter the \"Crop image\" page. A selection box based on the module settings ratio will appear in the center of the image.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "8. Drag the selection box, select the top part of the picture, and then click \"Done\"",
+          "result": "8. Successfully set the image",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "9. Edit the image link module, and click on the tooltips labeled \"Select aspect ratio\".",
+          "result": "9. tooltip:\nThis setting determines the display aspect ratio for image links on the storefront. When this module uses an image link, the image will be cropped to this ratio by default.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "10. Add the \"Panoramic Banner (4:5)\" image module, then create a link, set the type as \"Title\" with the name \"Image5\", the link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "10. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 375*408\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "11. Add the \"Panoramic Banner (6:1)\" image module, then create a link, set the type as \"Title\" with the name \"Image5\", the link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "11. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 358*60\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 12,
+          "desc": "12. Add the \"Panoramic Banner (8:1)\" image module, then create a link, set the type as \"Title\" with the name \"Image5\", the link as \"www.bing.com\", upload a picture, then click \"Add\", go back to the shop page and view the link card",
+          "result": "10. The image link has been created successfully, presenting as an image with a title line at the bottom of the image.\nimage size: 358*45\n\"Image\" will be shown in the upper right corner.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3875",
+      "uuid": "R1skKr2C",
+      "name": "Verify that the user hides/shows the navigation bar and the default state is not shown",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "A merchant shop without added modules",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The merchant enters Customize-content and clicks the \"Settings\" icon on the right side of \"Rearrange\"",
+          "result": "1. At this point, it can be seen that the navgation setting is not enabled",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. The merchant added at least three modules and at least three contents in Customize-content, and then returned to the shop page to view the navgation bar",
+          "result": "2. At this point, navgation not can be seen on the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. The merchant clicks the \"Settings\" icon on the right side of \"Rearrange\" in Customize-content, checks \"Navigation\", clicks \"Save\", then returns to the shop page to view the navgation bar, and then uses guest to view the shop page",
+          "result": "3. At this point, navgation can be seen on the shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The merchant clicks the \"Settings\" icon on the right side of \"Rearrange\" in Customize-content, unchecks \"Navigation\", clicks \"Save\", and then returns to the shop page to view the navgation bar. Then use \"guest\" to view the shop page",
+          "result": "4. At this point, on the shop page, the owner view can see navgation, but other views (guest, consumer, promoter) cannot.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3873",
+      "uuid": "R71PEABE",
+      "name": "Verify that the merchant/promoter sets the Navigation bar of the shop page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "The merchant added at least three modules in Shop page",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click on the three modules in the navgation bar",
+          "result": "1. The jump of the navgation bar is normal",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click on the three modules and three tabs of \"table of content\"",
+          "result": "2. The jump of \"table of content\" is normal",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. The promoter added at least three modules in Shop page and then went back to the shop page to check",
+          "result": "3. The promoter has one less tab for products compared to the merchant",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The guest/consumer views the merchant's shop page",
+          "result": "4. The guest/consumer view can jump to the corresponding position normally, but there is no \"table of content\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3785",
+      "uuid": "StUkSreK",
+      "name": "Verify the post sorting rule of \"Select from my posts\"",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The promoter resold at least three posts from the merchant",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The promoter clicks on \"Add from my posts\" in \"Customize-Content-Products\" of the shop",
+          "result": "1. The post column of \"Select from my posts\" is in the dropdown box style. Currently, there are only three Posts, arranged in reverse order according to the update time of the posts",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. At this point, the promoter updates the content of a certain post and checks \"Add from my posts\".",
+          "result": "2. At this point, the first post is the most recently updated one",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. At this point, the promoter has created a post. Check \"Add from my posts\"",
+          "result": "3. At this point, the first post is the one that has just been created",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3796",
+      "uuid": "TE9fYNff",
+      "name": "Verify the impact after the merchant deletes the post and the product",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The promoter resold one post of the merchant and added the product in the post to the module",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The merchant deleted one of the products in this post from catalogs",
+          "result": "1. The products in this post of the merchant and the promoter will all become \"not available\", and the module will delete this product",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. The merchant sets the product in this post as \"Darft\" in catalogs.",
+          "result": "2. The products in this post of the merchant and the promoter will all become \"not available\", and the module will delete this product",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. The merchant deleted this post in my shop",
+          "result": "3. On the shop pages of the merchant and promoter, this post will be deleted, and the module will delete the products and the post of this post",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3370",
+      "uuid": "WYKGAk64",
+      "name": "Verify set the product card alignment at the store level",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator goes to my shop, click on Products tab-Setting CTA",
+          "result": "1. Product card layout \"Waterfall\" is selected by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select Product card layout-Top aligned and click \"Save\"",
+          "result": "2. The profile is saved and the Product card layout is Top aligned.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Curator/Guest view shop page-Products and PDP product list",
+          "result": "3. The product card alignment of shop page-Products and PDP product list is \"Top aligned\".",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Check the alignment between the desktop and mobile terminals of the product list",
+          "result": "4. The product card alignment mode of desktop and mobile terminals is Top aligned.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. curator goes to my shop, click on Products tab-Setting again, modify the layout to \"Waterfall\", then click \"Save\" to view the product list",
+          "result": "5. The product card alignment of shop page-Products and PDP product list is \"Waterfall\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3492",
+      "uuid": "WqbviaLN",
+      "name": "The \"setting\" icon will be located on the right side of the tab. By clicking this icon, you will be able to enter the settings window.",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "switch the tabs on My shop/Storefront",
+          "result": "On the right side of all tab, there is a \"setting\" icon in the shape of a gear.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click on the \"setting\" icon on the right side of the tab.",
+          "result": "it will turn to the Setting window",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3293",
+      "uuid": "Wx8cQy5s",
+      "name": "Verify when selecting \"Show the Posts page by default\", then the default tab on the shop page will be the Post from the visitor POV",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-6290\nhttps://pearshop.atlassian.net/browse/KAT-6635, No.4",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "select \"Show the Posts page by default\" on the Edit profile>Storefront page",
+          "result": "the default tab on the shop page will be the Post from the visitor POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3372",
+      "uuid": "X6Nef145",
+      "name": "Verify that the resale post product card displays normally",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The default layout of promoter is \"Waterfall\"",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. curator go to my shop-Edit profile-Storefront, modify the layout to \"Top aligned\" and click \"Save\"",
+          "result": "1. The curator successfully saved the profile, and the product card alignment is \"Top aligned\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Click \"Create a Post\", add at least 10 products, open resale, then save and post the post",
+          "result": "2. curator successfully released a resale post with 10 products",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. The promoter goes to the curator shop page, then resells the post, and then views the product list of the Post in my shop",
+          "result": "3. The promoter successfully resells the post, because the default layout of the promoter is \"Waterfall\", so the product layout of this post is \"Waterfall\".",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3500",
+      "uuid": "XMVfQMSH",
+      "name": "Verify the links can be rearranged in the links list",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "press the icon in the bottom right corner of the link card and drag to the new position",
+          "result": "this link will be changed to the new position",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "after rearranging the links, view the links list from the promoter/consumer's POV",
+          "result": "the new order will be displayed",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3488",
+      "uuid": "XSKpEyLu",
+      "name": "Verify after the shop owner changes the order of three tabs(Posts, Products, Links), the new order will be displayed on the shop page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "the shop owner changes the order of three tabs(Posts, Products, Links) on Edit profile/Storefront",
+          "result": "the new order will be displayed on the shop page from the shop own's POV, the promoter's POV, the consumer's POV",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3292",
+      "uuid": "Y597AQqS",
+      "name": "Verify adding a \"Storefront\" tab behind \"Brand Kit\"",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-6290\nhttps://pearshop.atlassian.net/browse/KAT-6635",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "click \"Edit profile\" on My shop page(partners, curators, and promoters)",
+          "result": "add a \"Storefront\" tab behind \"Brand Kit\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3495",
+      "uuid": "i6LLe7Da",
+      "name": "Verify the three tabs can be set as visible/invisible on Edit profile/Storefront page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "the shop owner checks Posts/Links/Froms on Edit profile/Storefront page",
+          "result": "1. the Storefront under Posts/Links/Froms will turn to gray on Edit profile/Storefront page\n2.Posts/Links/Froms will be invisible on the Shop page from the promoter/consumer's POV",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "all the invisible tabs will be displayed from the shop owner's POV, and there is a tooltip \"Your visitors can't see this tab\" beside the invisible tab",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "the shop owner unchecks Posts/Links/Froms on Edit profile/Storefront page",
+          "result": "1.the Storefront under Posts/Links/Froms will light up on Edit profile/Storefront page\n2.Posts/Products/Links/Froms will be visible on the Shop page from the promoter/consumer's POV",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "click the tooltip behind \"Manage Tab Order & Visibility\"",
+          "result": "it will show \"Reorder how the Posts, Forms, and Links tabs appear in your shop. The first tab becomes the default view for visitors.\nUse the eye icon to toggle whether each tab is visible to customers.\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5724",
+      "uuid": "WGbefTCA",
+      "name": "Verify a partner can add a storefront footnote via the RTE editor and it renders at the bottom for visitors on desktop and mobile",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "Partner is logged in and owns a published storefront; no footnote is configured yet.",
+      "desc": "End-to-end happy path: a partner with no footnote configured opens the footnote editor from the storefront, enters content with the RTE editor, saves, and the footnote renders at the very bottom of the storefront with a divider above it for both the owner and visitors on desktop and mobile.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the partner's storefront (Shop view) and scroll to the bottom",
+          "result": "The bottom shows an \"Add footer\" CTA and no footnote section is rendered",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click \"Add footer\"",
+          "result": "The \"Storefront footer\" editor opens with the RTE toolbar visible and the content area empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter footnote text in the RTE editor (e.g. \"Contact Us | Privacy Policy | Terms & Conditions\")",
+          "result": "The typed content appears in the editor",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click \"Save\"",
+          "result": "The editor closes with a success confirmation; the storefront now shows the footnote content at the bottom with a divider above it",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Reload the storefront page and re-check the footnote position",
+          "result": "The footnote persists and stays at the very bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Open the same storefront URL in a private window as a visitor and scroll to the bottom",
+          "result": "Visitors also see the footnote; no edit control is shown to visitors",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Repeat the check on a mobile viewport",
+          "result": "The footnote renders correctly on mobile as well",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5725",
+      "uuid": "V7byhv7p",
+      "name": "Verify the footnote section is hidden when no footnote is configured and only an \"Add footer\" entry is shown to the owner",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "Partner owns a published storefront; the footnote is empty / not configured.",
+      "desc": "Confirms that when no footnote content is configured, no footnote section is rendered for visitors on the storefront, and the owner only sees an \"Add footer\" call to action.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "As a visitor (private window), open the storefront and scroll to the very bottom",
+          "result": "No footnote section is rendered; the page ends with the default Powered by / cookie area",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "As the owner, open the storefront and check the bottom",
+          "result": "An \"Add footer\" CTA is displayed instead of an \"Edit footer\" CTA",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Click \"Add footer\" and close the editor (X) without saving any content",
+          "result": "The editor closes; the storefront still shows no footnote section",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5726",
+      "uuid": "4WBTxGGR",
+      "name": "Verify the footnote change takes effect on the storefront immediately after saving, without a refresh",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "A footnote is configured on the storefront and the partner is viewing their own storefront.",
+      "desc": "Confirms that after the partner edits and saves the footnote, the storefront bottom reflects the updated content immediately, without the user having to reload the page.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the footnote editor, modify the existing footnote text (including applying bold to part of it), and click Save",
+          "result": "The editor closes with a success confirmation and the change is saved",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Without refreshing the storefront page, scroll to the bottom of the storefront",
+          "result": "The storefront bottom immediately shows the updated footnote content, including the bold formatting, with no page refresh required",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Reload the storefront page and re-check the footnote",
+          "result": "The updated footnote persists at the bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5727",
+      "uuid": "VeWxrSsG",
+      "name": "Verify \"Insert copyright template\" auto-fills the default copyright template text and centers it",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The footnote editor is open with empty content.",
+      "desc": "Confirms that clicking \"Insert copyright template\" auto-fills the default template copy (privacy/terms links plus a copyright line) centered by default. Per the design this capability is low priority and may land in a later cycle.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click the \"Insert copyright template\" link in the footnote editor",
+          "result": "The template copy is auto-filled into the editor: \"(c) 2026 Your legal entity name. All rights reserved.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Check the alignment of the inserted template",
+          "result": "The inserted template is centered by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Click \"Save\" and view the storefront",
+          "result": "The template copy renders centered at the bottom of the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5728",
+      "uuid": "84u4Gooi",
+      "name": "Verify the footnote RTE editor exposes the required quick actions with centered default alignment and no style-override controls",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "The footnote editor is open.",
+      "desc": "Confirms the footnote RTE editor supports undo, redo, bold, underline, link and alignment (centered by default), and does not offer color, font size or spacing controls.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Inspect the RTE toolbar",
+          "result": "The toolbar shows undo, redo, bold, underline, link and alignment controls",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Type sample text and verify the default alignment",
+          "result": "Text is centered by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Apply bold to one word and underline to another word",
+          "result": "Bold and underline are applied and visible in the editor",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Look for color, font size, or spacing controls",
+          "result": "No color, font size, or spacing controls are available in the RTE",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5729",
+      "uuid": "6XMdxcTk",
+      "name": "Verify inserting an external link in the footnote renders it underlined and not blue",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The footnote editor is open with text available to link.",
+      "desc": "Confirms the Insert link dialog defaults to \"External link\" and that a link inserted into the footnote is displayed underlined but never blue on the storefront.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Select text and click the link icon in the RTE toolbar",
+          "result": "The \"Insert link\" dialog opens",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Check the default value of the \"Action\" dropdown",
+          "result": "\"External link\" is selected by default",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter link text and a URL (e.g. https://example.com) and click \"Add\"",
+          "result": "The link is inserted into the footnote text",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save and view the footnote on the storefront",
+          "result": "The link is displayed with an underline but is not blue",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5730",
+      "uuid": "3B1fnc1b",
+      "name": "Verify the Insert link dialog requires link text and a URL and rejects an invalid URL",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "The footnote editor is open and the Insert link dialog is open.",
+      "desc": "Confirms required-field validation in the Insert link dialog: the Add button stays disabled until link text and a URL are provided, and an invalid URL is rejected.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Leave \"Link text\" and the URL empty and observe the \"Add\" button",
+          "result": "\"Add\" is disabled until the required fields are provided",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Enter link text but leave the URL empty",
+          "result": "\"Add\" stays disabled or a validation message is shown",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter an invalid URL (e.g. \"abc\" with no valid domain) and click \"Add\"",
+          "result": "The invalid URL is rejected; the link is not inserted and an error is shown",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Enter a valid URL and click \"Add\"",
+          "result": "The link is inserted successfully",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5731",
+      "uuid": "DxtYysg3",
+      "name": "Verify the footnote text color and font follow the Storefront Style settings",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the footnote inherits its text color from style > color > text and its font from style > fonts, and cannot be overridden per footnote.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open Customize shop / Style and change the text color (style > color > text)",
+          "result": "The footnote text color on the storefront updates accordingly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Change the font (style > fonts)",
+          "result": "The footnote font updates accordingly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Re-open the footnote editor and check the available controls",
+          "result": "The footnote still cannot override color, font size, or spacing in the RTE",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5732",
+      "uuid": "7TJjrvwm",
+      "name": "Verify the footnote always stays at the very bottom and is excluded from Rearrange section",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "A footnote is configured; the storefront has multiple sections/modules.",
+      "desc": "Confirms the footnote is pinned to the bottom of the storefront, has a divider above it consistent with existing storefront dividers, and is not part of the Rearrange section list.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open \"Rearrange section\" on the storefront",
+          "result": "The footnote is NOT listed among the rearrangeable sections",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Reorder the available sections and save",
+          "result": "Other sections change order while the footnote remains at the very bottom",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Verify the divider above the footnote",
+          "result": "A divider is shown above the footnote, consistent with existing storefront dividers",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5733",
+      "uuid": "PMkmD88F",
+      "name": "Verify the footnote does not conflict with the cookie preferences / Powered by Pear block",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P0",
+      "type": "",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the configured footnote and the default Powered by Pear / cookie preferences area coexist without overlap and are visually tasteful on desktop and mobile.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "View the storefront bottom on desktop",
+          "result": "The footnote renders above the \"POWERED BY Pear\" and \"Cookie preferences\" area with a divider and tasteful spacing; there is no overlap or clipping",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "View the storefront bottom on mobile",
+          "result": "Same correct, non-conflicting layout on mobile",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Open the cookie preferences entry",
+          "result": "The cookie preferences entry remains accessible and is not obscured by the footnote",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5734",
+      "uuid": "5CRKg37w",
+      "name": "Verify editing an existing footnote updates it everywhere and clearing all content removes the footer section",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "A footnote is already configured on the storefront.",
+      "desc": "Confirms existing footnote content is loaded for editing, updates propagate to the storefront across desktop and mobile, and saving an empty footer removes the footnote section entirely.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click \"Edit footer\"",
+          "result": "The editor opens pre-filled with the existing footnote content",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Modify the content (e.g. add a word) and click \"Save\"",
+          "result": "Both desktop and mobile storefronts show the updated footnote",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Open the editor again, clear all content, and click \"Save\"",
+          "result": "Save succeeds and the footnote section is no longer rendered on the storefront",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Reload the storefront",
+          "result": "No footnote is shown and the owner bottom entry is back to \"Add footer\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5735",
+      "uuid": "C2WVmVUe",
+      "name": "Verify the footnote is visible to visitors as well as the owner, not only to the owner",
+      "module": "My Shop / Storefront / Edit Profile / Storefront",
+      "module_uuid": "3moKQuHE",
+      "priority": "P1",
+      "type": "",
+      "condition": "A footnote is configured on the storefront.",
+      "desc": "Confirms the configured footnote is displayed across viewer perspectives: the owner sees the content plus an edit control, while a logged-out visitor sees the same content without any edit control.",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "As the owner, view the storefront bottom",
+          "result": "The footnote content is shown together with an \"Edit footer\" CTA",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "As a logged-out visitor (private window), view the storefront bottom",
+          "result": "The same footnote content is shown with no edit control",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}
