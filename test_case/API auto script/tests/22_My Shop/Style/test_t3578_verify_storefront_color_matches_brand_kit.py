@@ -20,3 +20,6 @@ def test_t3578_verify_storefront_color_matches_brand_kit(ctx: "Context"):
     expect(resp).json("$.code").equals("200")
     expect(resp).json("$.data.storeFront.storeTabs").exists()
     expect(resp).json("$.data.vanityUrl").exists()
+    tabs = resp.json()["data"]["storeFront"]["storeTabs"]
+    assert isinstance(tabs, list) and len(tabs) > 0, f"storeTabs empty: {tabs}"
+    assert "vanityUrl" in resp.json()["data"], "vanityUrl missing from response"

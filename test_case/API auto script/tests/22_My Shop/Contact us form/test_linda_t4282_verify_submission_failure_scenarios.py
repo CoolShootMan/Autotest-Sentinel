@@ -22,6 +22,7 @@ def test_linda_t4282_verify_submission_failure_scenarios(ctx: "Context"):
         ],
     })
     expect(_no_form).json('$.code').not_equals('200')
+    assert _no_form.status_code >= 400, f"expected 4xx/5xx for non-existent form, got {_no_form.status_code}"
 
     # submitting with empty contactId must be rejected
     _no_id = ctx.api.forms.submit(body={
@@ -29,4 +30,5 @@ def test_linda_t4282_verify_submission_failure_scenarios(ctx: "Context"):
         "emailMessage": [],
     })
     expect(_no_id).json('$.code').equals(400)
+    assert _no_id.status_code == 400, f"expected HTTP 400 for empty contactId, got {_no_id.status_code}"
 

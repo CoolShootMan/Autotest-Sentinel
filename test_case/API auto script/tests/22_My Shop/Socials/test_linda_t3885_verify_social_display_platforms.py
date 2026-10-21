@@ -29,5 +29,9 @@ def test_social_display_multiple_platforms(ctx: "Context"):
     resp = ctx.api.users.update_social(body={"socialMedias": socials}, token="linda997_token")
     expect(resp).json("$.code").equals("200")
     expect(resp).json("$.data.socialMedias").length(8)
+    saved = {s["type"]: s["url"] for s in resp.json()["data"]["socialMedias"]}
+    assert saved.get("FACEBOOK") == "https://facebook.com/test", f"facebook url mismatch: {saved}"
+    assert saved.get("TIKTOK") == "https://tiktok.com/@test", f"tiktok url mismatch: {saved}"
+    assert saved.get("EMAIL") == "mailto:test@pear.us", f"email url mismatch: {saved}"
 
     ctx.api.users.update_social(body={"socialMedias": []}, token="linda997_token")
