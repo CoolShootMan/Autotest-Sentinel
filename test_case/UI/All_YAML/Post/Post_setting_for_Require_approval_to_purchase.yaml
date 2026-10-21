@@ -54,6 +54,12 @@ seed_approval_applicant_emails:
         script: |
             (() => 'after.tester+' + Date.now() + '@example.com')()
 
+    execute_js_seed_after_decline_email:
+        save_as: "approval_after_decline_email"
+        global: true
+        script: |
+            (() => 'after.decline+' + Date.now() + '@example.com')()
+
   expect_result:
     assertions: []
 
@@ -157,8 +163,12 @@ testT5676_T5673_guest_apply:
     # Wait until seat circles render
     wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
 
-    # Select 1 seat
-    smart_seat_click: { target: 1, stroke: "#E9803D" }
+    # Select 1 seat.
+    # Seat colours in the venue map = price tiers:
+    #   #E9803D = inside seat with 80  (#CD254A = outside seat 50, #992C4E = inside seat with 100)
+    # The $80 tier runs out of stock after a few runs, so buy the $100 tier
+    # ("inside seat with 100", 0 sold) instead.
+    smart_seat_click: { target: 1, stroke: "#992C4E" }
     sleep_step_2: 1000
 
     # Add to cart
@@ -265,7 +275,7 @@ testT5685_partner_approve:
     verify_name: { text: "Buyer, Auto", timeout: 10000 }
     verify_email: { text: "{{approval_buyer_email}}" }
     verify_phone: { text: "+1 (650) 239-6646" }
-    verify_item: { text: "inside seat with 80" }
+    verify_item: { text: "inside seat with 100" }
     verify_qty: { text: "Qty: 1" }
     verify_unit: { text: "Unit:", optional: true }
     verify_reviewed: { text: "Reviewed at" }
@@ -390,7 +400,8 @@ testT5686_guest_apply:
     sleep_step: 1000
 
     wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
-    smart_seat_click: { target: 1, stroke: "#E9803D" }
+    # Same $100 tier as T5676 (the $80 tier gets sold out).
+    smart_seat_click: { target: 1, stroke: "#992C4E" }
     sleep_step_2: 1000
 
     R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
@@ -463,9 +474,15 @@ testT5686_partner_decline:
     R_click_decline: { role: 'button', name: 'Decline' }
     sleep_step_7: 2000
 
-    # Confirm decline
-    R_click_confirm_decline: { role: 'button', name: 'Confirm', optional: true }
-    sleep_step_8: 3000
+    # The confirmation dialog is "Decline application?" and its button reads
+    # "Decline & send email" (a decline email is sent based on the email
+    # settings). Without clicking it the application is NOT declined.
+    wait_decline_confirm_dialog: { text: "Decline application?", timeout: 10000 }
+    R_click_confirm_decline: { role: 'button', name: 'Decline & send email', timeout: 15000 }
+    sleep_step_8: 4000
+
+    # The application status must be "Declined" now
+    verify_decline_status: { text: "Declined", timeout: 15000 }
 
   expect_result:
     assertions:
@@ -508,27 +525,44 @@ testT5749_after_approval_mode:
 
     wait_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', timeout: 8000 }
 
-    # Toggle ON (skipped when the switch is already on, e.g. re-running the file)
-    R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
-    sleep_step_6: 1500
+    # Only the OFF -> ON transition opens the mode dialog, so make sure the
+    # switch starts OFF. Otherwise a re-run (switch already on) would silently
+    # keep the old mode and this case would assert nothing.
+    execute_js_ensure_off:
+        save_as: "approval_switch_reset"
+        script: |
+            (() => {
+              const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
+              if (!el) return 'switch-missing';
+              if (!el.checked) return 'already-off';
+              el.click();
+              return 'turned-off';
+            })()
+    sleep_step_6: 2000
 
-    wait_mode_question: { text: "When should customers choose what to purchase?", timeout: 10000, optional: true }
+    # Do NOT save in between: the page-level Save navigates away from the
+    # settings screen, so the switch would be gone on the next step.
+    # OFF -> ON opens "When should customers choose what to purchase?"
+    R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
+    sleep_step_7: 2000
+
+    wait_mode_question: { text: "When should customers choose what to purchase?", timeout: 10000 }
 
     # T5749: pick "After approval" - "Customers apply for approval first. Once
     # approved, they can choose and purchase any available items."
-    R_click_after_mode: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]:has-text("After approval")', timeout: 8000, optional: true }
-    sleep_step_7: 800
+    R_click_after_mode: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]:has-text("After approval")', timeout: 8000 }
+    sleep_step_8: 800
 
     # Step A: confirm the mode dialog with its own (green) Save button.
-    R_click_save_mode_dialog: { locator: 'div[role="dialog"] button:has-text("Save")', timeout: 10000, optional: true }
-    sleep_step_8: 2000
+    R_click_save_mode_dialog: { locator: 'div[role="dialog"] button:has-text("Save")', timeout: 10000 }
+    sleep_step_9: 2000
 
     # Step B: the page-level Save is what actually persists the setting.
     R_click_save: { role: 'button', name: 'Save', timeout: 10000, skip_if_disabled: true }
-    # Soft check: when the switch was already ON the toggle is a no-op, no toast
-    # appears - the mode itself is proven end-to-end by the guest cases.
+    # Soft check: the toast is the only visible proof that the page-level Save
+    # went through - the mode itself is proven end-to-end by the guest cases.
     wait_toast_save: { text: "Post settings updated", timeout: 20000 }
-    sleep_step_9: 1500
+    sleep_step_10: 1500
 
   expect_result:
     assertions:
@@ -584,6 +618,99 @@ testT5673_after_guest_apply:
 
 
 # ==============================================================================
+# Test Case: T5686 (Decline flow on the After-approval post)
+# Same flow as the before-mode decline, but the customer applied WITHOUT
+# picking an item, so the Application detail has no item / unit / total.
+# ==============================================================================
+
+testT5686_after_guest_apply:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest applies for approval on the After-approval post (for the decline flow)"
+  test_step:
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-after"
+    sleep_after_open: 9000
+
+    # In After-approval mode the request form lives in the cart drawer.
+    R_click_cart: { role: 'button', name: 'View cart', timeout: 15000 }
+    sleep_step: 4000
+
+    verify_approval_notice: { text: "Your request must be approved before you can select items and make a purchase.", timeout: 15000 }
+    sleep_step_2: 500
+
+    fill_first_name: { locator: 'div[role="dialog"] input[name="firstName"]', value: 'After' }
+    sleep_step_3: 300
+    fill_last_name: { locator: 'div[role="dialog"] input[name="lastName"]', value: 'Decline' }
+    sleep_step_4: 300
+    # Phone widget renders its own "+1" prefix -> national digits only.
+    fill_phone: { locator: 'div[role="dialog"] input[name="phone"]', value: '6502396646' }
+    sleep_step_5: 300
+    fill_email: { locator: 'div[role="dialog"] input[name="email"]', value: '{{approval_after_decline_email}}' }
+    sleep_step_6: 800
+
+    R_click_submit: { role: 'button', name: 'Submit for approval' }
+    sleep_step_7: 4000
+
+    # Hard proof the application was accepted (not just page copy).
+    verify_submission_success: { text: "Thanks for your submission!", timeout: 20000 }
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your submission!"
+      - assertion_type: "element_visible_by_text"
+        text: "pending approval"
+
+
+testT5686_after_partner_decline:
+#Auth: Linda Zhou
+  guest: false
+  description: "Partner declines a pending After-approval application"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
+    sleep_step_2: 2000
+
+    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
+    sleep_step_3: 5000
+
+    # Rows accumulate across runs -> filter by this run's applicant email.
+    fill_waitlist_search: { placeholder: 'Search by name or email', value: '{{approval_after_decline_email}}', timeout: 10000, optional: true }
+    sleep_step_4: 3000
+
+    verify_applicant_row: { text: "{{approval_after_decline_email}}", timeout: 20000 }
+    sleep_step_5: 1000
+
+    R_click_pending_row: { locator: "tr:has-text('{{approval_after_decline_email}}')", timeout: 10000 }
+    sleep_step_6: 2000
+
+    # Click Decline in the Application dialog
+    R_click_decline: { role: 'button', name: 'Decline' }
+    sleep_step_7: 2000
+
+    # The confirmation dialog is "Decline application?" and its button reads
+    # "Decline & send email". Without clicking it the application is NOT declined.
+    wait_decline_confirm_dialog: { text: "Decline application?", timeout: 10000 }
+    R_click_confirm_decline: { role: 'button', name: 'Decline & send email', timeout: 15000 }
+    sleep_step_8: 4000
+
+    # The application status must be "Declined" now
+    verify_decline_status: { text: "Declined", timeout: 15000 }
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Declined"
+
+
+# ==============================================================================
 # Test Case: T5685 (Partner approves the After-approval application)
 # The Waitlist is per event, so the after-approval application shows up in the
 # same list - it just has no item/unit (nothing was picked yet).
@@ -623,11 +750,127 @@ testT5685_after_partner_approve:
     sleep_step_8: 3000
 
     wait_approved: { text: "Approved", timeout: 10000 }
+    sleep_step_9: 1000
+
+    # Re-open the approved row -> Application detail dialog.
+    R_click_approved_row: { locator: "tr:has-text('{{approval_after_email}}')", timeout: 10000 }
+    sleep_step_10: 2000
+
+    # Application detail fields. In "After approval" mode the customer applied
+    # BEFORE choosing anything, so there is no item / unit / total here.
+    verify_name: { text: "Tester, After" }
+    verify_email: { text: "{{approval_after_email}}" }
+    verify_phone: { text: "+1 (650) 239-6646" }
+    verify_submitted_at: { text: "Submitted at" }
+    verify_reviewed_at: { text: "Reviewed at" }
+
+    # The approved customer gets a link that unlocks buying ANY product.
+    # It is only exposed through the "Copy link" element (never rendered as
+    # text), so hook clipboard.writeText and capture whatever it puts there.
+    execute_js_hook_clipboard:
+        script: |
+            (() => {
+              window.__approvalCopiedLink = null;
+              const orig = navigator.clipboard && navigator.clipboard.writeText
+                ? navigator.clipboard.writeText.bind(navigator.clipboard) : null;
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText = (t) => {
+                  window.__approvalCopiedLink = t;
+                  try { return orig ? orig(t) : Promise.resolve(); } catch (e) { return Promise.resolve(); }
+                };
+              }
+              return 'hooked';
+            })()
+    sleep_step_11: 300
+
+    R_click_copy_link: { locator: 'div[role="dialog"]:has-text("Purchase link:") div[data-testid="mui-stack"]:has-text("Copy link")', timeout: 10000, optional: true }
+    sleep_step_12: 1500
+
+    execute_js_read_copied_link:
+        save_as: "approved_after_purchase_link"
+        global: true
+        script: |
+            (() => {
+              const v = window.__approvalCopiedLink;
+              if (!v) throw new Error('Copy link captured nothing (clipboard.writeText was not called)');
+              return v;
+            })()
+    sleep_step_13: 500
 
   expect_result:
     assertions:
       - assertion_type: "element_visible_by_text"
         text: "Approved"
+
+
+# ==============================================================================
+# Test Case: T5692 (After approval: the approved customer buys ANY product)
+# The approved link opens the post with ?purchaseApproved=true -> the venue map
+# is unlocked, so the customer can pick any item and pay for it.
+# ==============================================================================
+
+testT5692_after_guest_buy:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Approved customer opens the approval link, picks any item and completes the purchase"
+  test_step:
+    open: "{{approved_after_purchase_link}}"
+    sleep_after_open: 12000
+
+    # The link redirects to the post page with ?purchaseApproved=true, so the
+    # venue map CTA is enabled and the customer can choose any item now.
+    verify_post_unlocked: { text: "Show venue map drawer", timeout: 40000 }
+    sleep_step: 1000
+
+    R_click_drawer: { role: 'button', name: 'Show venue map drawer', timeout: 15000 }
+    sleep_step_2: 1500
+
+    wait_seat_map_ready: { locator: '[role="dialog"] circle[data-id]:not([stroke="transparent"])', timeout: 25000 }
+    smart_seat_click: { target: 1, stroke: "#992C4E" }
+    sleep_step_3: 1000
+
+    R_click_add_to_cart: { locator: 'button:has-text("Add to cart"), button:has-text("Update cart")' }
+    sleep_step_4: 2000
+
+    R_click_checkout: { locator: 'button:has-text("Checkout")' }
+    sleep_step_5: 4000
+
+    # The cart drawer only offers "Continue with credit card" - the contact
+    # form shows up on the next step.
+    R_click_continue_cc: { role: 'button', name: 'Continue with credit card', timeout: 15000 }
+    sleep_step_6: 4000
+
+    # The link carries the applicant data, so the contact form comes prefilled.
+    verify_value_first_name: { locator: 'input[name="contact.firstName"]', value: 'After' }
+    verify_value_last_name: { locator: 'input[name="contact.lastName"]', value: 'Tester' }
+    verify_value_email: { locator: 'input[name="contact.email"]', value: '{{approval_after_email}}' }
+    verify_value_phone: { locator: 'input[name="contact.phoneNumber"]', regex: '(\d\D*){10}' }
+    sleep_step_7: 500
+
+    fill_stripe_iframe:
+      card_number: '4242424242424242'
+      expiry: '02/45'
+      cvc: '345'
+      card_name: 'Auto Buyer'
+      zipcode: '90021'
+    sleep_step_8: 3000
+
+    R_click_place_order: { role: 'button', name: 'Place order', optional: true }
+    sleep_step_9: 8000
+    R_click_place_order_retry: { role: 'button', name: 'Place order', optional: true }
+    sleep_step_10: 8000
+
+    # Success page: "Thank you for your payment." + confirmation number.
+    verify_payment_success: { text: "Thank you for your payment", timeout: 30000 }
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thank you for your payment"
+      - assertion_type: "element_visible_by_text"
+        text: "Confirmation number"
 
 
 # ==============================================================================
@@ -658,8 +901,19 @@ testT5669_teardown_disable:
     R_click_settings_tab: { role: 'button', name: 'Settings' }
     sleep_step_5: 2000
 
-    R_click_toggle_off: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: false }
-    sleep_step_6: 1500
+    # Only switch it off when it is actually on - a blind click would turn the
+    # approval back ON (and pop the mode dialog) when the file is re-run.
+    execute_js_turn_off_before:
+        save_as: "approval_off_before"
+        script: |
+            (() => {
+              const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
+              if (!el) return 'switch-missing';
+              if (!el.checked) return 'already-off';
+              el.click();
+              return 'turned-off';
+            })()
+    sleep_step_6: 2000
 
     R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
     wait_toast: { message: "Post settings updated", timeout: 15000, optional: true }
@@ -669,8 +923,19 @@ testT5669_teardown_disable:
     sleep_step_8: 2000
 
     # ---- the "-after" post ----
+    # The post settings screen is its own route, so the Post tab (and with it the
+    # post selector) is only reachable again after re-opening the event.
+    open_event_again: "{BASE_URL}/events"
+    sleep_after_open_2: 6000
+
+    R_click_event_2: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step_9: 4000
+
+    R_click_posts_tab_2: { role: "tab", name: "Post" }
+    sleep_step_9_2: 2000
+
     R_click_post_selector_2: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
-    sleep_step_9: 2000
+    sleep_step_9_3: 2000
 
     R_click_post_after: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-after")', timeout: 10000 }
     sleep_step_10: 3000
@@ -678,8 +943,17 @@ testT5669_teardown_disable:
     R_click_settings_tab_2: { role: 'button', name: 'Settings' }
     sleep_step_11: 2000
 
-    R_click_toggle_off_2: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: false }
-    sleep_step_12: 1500
+    execute_js_turn_off_after:
+        save_as: "approval_off_after"
+        script: |
+            (() => {
+              const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
+              if (!el) return 'switch-missing';
+              if (!el.checked) return 'already-off';
+              el.click();
+              return 'turned-off';
+            })()
+    sleep_step_12: 2000
 
     R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true }
     wait_toast_2: { message: "Post settings updated", timeout: 15000, optional: true }
