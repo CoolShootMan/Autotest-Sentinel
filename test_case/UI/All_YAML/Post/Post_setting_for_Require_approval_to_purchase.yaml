@@ -491,6 +491,58 @@ testT5686_partner_decline:
 
 
 # ==============================================================================
+# Test Case: T5669 (Teardown: disable approval on the "-before" post)
+# ==============================================================================
+
+testT5669_teardown_disable_before:
+#Auth: Linda Zhou
+  guest: false
+  description: "Teardown: disable Require approval to purchase on the -before post"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_posts_tab: { role: "tab", name: "Post" }
+    sleep_step_2: 2000
+
+    R_click_post_selector: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
+    sleep_step_3: 2000
+
+    R_click_post_before: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-before")', timeout: 10000 }
+    sleep_step_4: 3000
+
+    R_click_settings_tab: { role: 'button', name: 'Settings' }
+    sleep_step_5: 2000
+
+    # Only switch it off when it is actually on - a blind click would turn the
+    # approval back ON (and pop the mode dialog) when the file is re-run.
+    execute_js_turn_off_before:
+        save_as: "approval_off_before"
+        script: |
+            (() => {
+              const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
+              if (!el) return 'switch-missing';
+              if (!el.checked) return 'already-off';
+              el.click();
+              return 'turned-off';
+            })()
+    sleep_step_6: 2000
+
+    R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
+    wait_toast: { message: "Post settings updated", timeout: 15000, optional: true }
+    sleep_step_7: 1000
+
+    R_click_close: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
+    sleep_step_8: 2000
+
+  expect_result:
+    assertions: []
+
+
+# ==============================================================================
 # Test Case: T5749 (After approval mode on the "-after" post)
 # The very same post settings screen, but this time the mode is
 # "After approval" -> customers apply for approval FIRST, and only after the
@@ -615,99 +667,6 @@ testT5673_after_guest_apply:
         text: "Thanks for your submission!"
       - assertion_type: "element_visible_by_text"
         text: "pending approval"
-
-
-# ==============================================================================
-# Test Case: T5686 (Decline flow on the After-approval post)
-# Same flow as the before-mode decline, but the customer applied WITHOUT
-# picking an item, so the Application detail has no item / unit / total.
-# ==============================================================================
-
-testT5686_after_guest_apply:
-#Auth: Linda Zhou
-  guest: true
-  add_cookies: {}
-  description: "Guest applies for approval on the After-approval post (for the decline flow)"
-  test_step:
-    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-after"
-    sleep_after_open: 9000
-
-    # In After-approval mode the request form lives in the cart drawer.
-    R_click_cart: { role: 'button', name: 'View cart', timeout: 15000 }
-    sleep_step: 4000
-
-    verify_approval_notice: { text: "Your request must be approved before you can select items and make a purchase.", timeout: 15000 }
-    sleep_step_2: 500
-
-    fill_first_name: { locator: 'div[role="dialog"] input[name="firstName"]', value: 'After' }
-    sleep_step_3: 300
-    fill_last_name: { locator: 'div[role="dialog"] input[name="lastName"]', value: 'Decline' }
-    sleep_step_4: 300
-    # Phone widget renders its own "+1" prefix -> national digits only.
-    fill_phone: { locator: 'div[role="dialog"] input[name="phone"]', value: '6502396646' }
-    sleep_step_5: 300
-    fill_email: { locator: 'div[role="dialog"] input[name="email"]', value: '{{approval_after_decline_email}}' }
-    sleep_step_6: 800
-
-    R_click_submit: { role: 'button', name: 'Submit for approval' }
-    sleep_step_7: 4000
-
-    # Hard proof the application was accepted (not just page copy).
-    verify_submission_success: { text: "Thanks for your submission!", timeout: 20000 }
-    sleep_end: 2000
-
-  expect_result:
-    assertions:
-      - assertion_type: "element_visible_by_text"
-        text: "Thanks for your submission!"
-      - assertion_type: "element_visible_by_text"
-        text: "pending approval"
-
-
-testT5686_after_partner_decline:
-#Auth: Linda Zhou
-  guest: false
-  description: "Partner declines a pending After-approval application"
-  test_step:
-    open: "{BASE_URL}/events"
-    sleep_after_open: 5000
-
-    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
-    sleep_step: 4000
-
-    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
-    sleep_step_2: 2000
-
-    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
-    sleep_step_3: 5000
-
-    # Rows accumulate across runs -> filter by this run's applicant email.
-    fill_waitlist_search: { placeholder: 'Search by name or email', value: '{{approval_after_decline_email}}', timeout: 10000, optional: true }
-    sleep_step_4: 3000
-
-    verify_applicant_row: { text: "{{approval_after_decline_email}}", timeout: 20000 }
-    sleep_step_5: 1000
-
-    R_click_pending_row: { locator: "tr:has-text('{{approval_after_decline_email}}')", timeout: 10000 }
-    sleep_step_6: 2000
-
-    # Click Decline in the Application dialog
-    R_click_decline: { role: 'button', name: 'Decline' }
-    sleep_step_7: 2000
-
-    # The confirmation dialog is "Decline application?" and its button reads
-    # "Decline & send email". Without clicking it the application is NOT declined.
-    wait_decline_confirm_dialog: { text: "Decline application?", timeout: 10000 }
-    R_click_confirm_decline: { role: 'button', name: 'Decline & send email', timeout: 15000 }
-    sleep_step_8: 4000
-
-    # The application status must be "Declined" now
-    verify_decline_status: { text: "Declined", timeout: 15000 }
-
-  expect_result:
-    assertions:
-      - assertion_type: "element_visible_by_text"
-        text: "Declined"
 
 
 # ==============================================================================
@@ -874,13 +833,108 @@ testT5692_after_guest_buy:
 
 
 # ==============================================================================
-# Test Case: T5669 (Teardown: disable approval, restore direct buy)
+# Test Case: T5686 (Decline flow on the After-approval post)
+# Same flow as the before-mode decline, but the customer applied WITHOUT
+# picking an item, so the Application detail has no item / unit / total.
 # ==============================================================================
 
-testT5669_teardown_disable:
+testT5686_after_guest_apply:
+#Auth: Linda Zhou
+  guest: true
+  add_cookies: {}
+  description: "Guest applies for approval on the After-approval post (for the decline flow)"
+  test_step:
+    open_post: "{BASE_URL}/autotestshop/post/post-setting-require-approval-to-purchase-after"
+    sleep_after_open: 9000
+
+    # In After-approval mode the request form lives in the cart drawer.
+    R_click_cart: { role: 'button', name: 'View cart', timeout: 15000 }
+    sleep_step: 4000
+
+    verify_approval_notice: { text: "Your request must be approved before you can select items and make a purchase.", timeout: 15000 }
+    sleep_step_2: 500
+
+    fill_first_name: { locator: 'div[role="dialog"] input[name="firstName"]', value: 'After' }
+    sleep_step_3: 300
+    fill_last_name: { locator: 'div[role="dialog"] input[name="lastName"]', value: 'Decline' }
+    sleep_step_4: 300
+    # Phone widget renders its own "+1" prefix -> national digits only.
+    fill_phone: { locator: 'div[role="dialog"] input[name="phone"]', value: '6502396646' }
+    sleep_step_5: 300
+    fill_email: { locator: 'div[role="dialog"] input[name="email"]', value: '{{approval_after_decline_email}}' }
+    sleep_step_6: 800
+
+    R_click_submit: { role: 'button', name: 'Submit for approval' }
+    sleep_step_7: 4000
+
+    # Hard proof the application was accepted (not just page copy).
+    verify_submission_success: { text: "Thanks for your submission!", timeout: 20000 }
+    sleep_end: 2000
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Thanks for your submission!"
+      - assertion_type: "element_visible_by_text"
+        text: "pending approval"
+
+
+testT5686_after_partner_decline:
 #Auth: Linda Zhou
   guest: false
-  description: "Teardown: disable Require approval to purchase on both posts"
+  description: "Partner declines a pending After-approval application"
+  test_step:
+    open: "{BASE_URL}/events"
+    sleep_after_open: 5000
+
+    R_click_event: { locator: "text=post setting require approval to purchase", exact: true }
+    sleep_step: 4000
+
+    R_click_attendees: { role: 'tab', name: 'Attendees', optional: true }
+    sleep_step_2: 2000
+
+    R_click_waitlist_tab: { locator: "button:has-text('Waitlist')", timeout: 10000 }
+    sleep_step_3: 5000
+
+    # Rows accumulate across runs -> filter by this run's applicant email.
+    fill_waitlist_search: { placeholder: 'Search by name or email', value: '{{approval_after_decline_email}}', timeout: 10000, optional: true }
+    sleep_step_4: 3000
+
+    verify_applicant_row: { text: "{{approval_after_decline_email}}", timeout: 20000 }
+    sleep_step_5: 1000
+
+    R_click_pending_row: { locator: "tr:has-text('{{approval_after_decline_email}}')", timeout: 10000 }
+    sleep_step_6: 2000
+
+    # Click Decline in the Application dialog
+    R_click_decline: { role: 'button', name: 'Decline' }
+    sleep_step_7: 2000
+
+    # The confirmation dialog is "Decline application?" and its button reads
+    # "Decline & send email". Without clicking it the application is NOT declined.
+    wait_decline_confirm_dialog: { text: "Decline application?", timeout: 10000 }
+    R_click_confirm_decline: { role: 'button', name: 'Decline & send email', timeout: 15000 }
+    sleep_step_8: 4000
+
+    # The application status must be "Declined" now
+    verify_decline_status: { text: "Declined", timeout: 15000 }
+
+  expect_result:
+    assertions:
+      - assertion_type: "element_visible_by_text"
+        text: "Declined"
+
+
+# ==============================================================================
+# Test Case: T5669 (Teardown: disable approval on the "-after" post)
+# Each flow (before / after) ends with its own teardown, so every post is
+# back to "direct buy" right after its own flow has run.
+# ==============================================================================
+
+testT5669_teardown_disable_after:
+#Auth: Linda Zhou
+  guest: false
+  description: "Teardown: disable Require approval to purchase on the -after post"
   test_step:
     open: "{BASE_URL}/events"
     sleep_after_open: 5000
@@ -891,11 +945,11 @@ testT5669_teardown_disable:
     R_click_posts_tab: { role: "tab", name: "Post" }
     sleep_step_2: 2000
 
-    # ---- the "-before" post ----
+    # Pick the "-after" post, then switch its approval off.
     R_click_post_selector: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
     sleep_step_3: 2000
 
-    R_click_post_before: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-before")', timeout: 10000 }
+    R_click_post_after: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-after")', timeout: 10000 }
     sleep_step_4: 3000
 
     R_click_settings_tab: { role: 'button', name: 'Settings' }
@@ -903,8 +957,8 @@ testT5669_teardown_disable:
 
     # Only switch it off when it is actually on - a blind click would turn the
     # approval back ON (and pop the mode dialog) when the file is re-run.
-    execute_js_turn_off_before:
-        save_as: "approval_off_before"
+    execute_js_turn_off_after:
+        save_as: "approval_off_after"
         script: |
             (() => {
               const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
@@ -921,46 +975,6 @@ testT5669_teardown_disable:
 
     R_click_close: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
     sleep_step_8: 2000
-
-    # ---- the "-after" post ----
-    # The post settings screen is its own route, so the Post tab (and with it the
-    # post selector) is only reachable again after re-opening the event.
-    open_event_again: "{BASE_URL}/events"
-    sleep_after_open_2: 6000
-
-    R_click_event_2: { locator: "text=post setting require approval to purchase", exact: true }
-    sleep_step_9: 4000
-
-    R_click_posts_tab_2: { role: "tab", name: "Post" }
-    sleep_step_9_2: 2000
-
-    R_click_post_selector_2: { locator: '[data-testid="post-selector-chevron-pill"] svg[data-testid="DownLineIcon"]', timeout: 10000 }
-    sleep_step_9_3: 2000
-
-    R_click_post_after: { locator: 'div[role="presentation"] button[data-testid="mui-box"]:has-text("post-setting-require-approval-to-purchase-after")', timeout: 10000 }
-    sleep_step_10: 3000
-
-    R_click_settings_tab_2: { role: 'button', name: 'Settings' }
-    sleep_step_11: 2000
-
-    execute_js_turn_off_after:
-        save_as: "approval_off_after"
-        script: |
-            (() => {
-              const el = document.querySelector('input[name="isPurchaseApprovalRequired"]');
-              if (!el) return 'switch-missing';
-              if (!el.checked) return 'already-off';
-              el.click();
-              return 'turned-off';
-            })()
-    sleep_step_12: 2000
-
-    R_click_save_2: { role: 'button', name: 'Save', skip_if_disabled: true }
-    wait_toast_2: { message: "Post settings updated", timeout: 15000, optional: true }
-    sleep_step_13: 1000
-
-    R_click_close_2: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
-    sleep_step_14: 2000
 
   expect_result:
     assertions: []
