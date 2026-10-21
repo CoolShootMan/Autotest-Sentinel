@@ -102,6 +102,27 @@ class PostsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
+    def duplicate_event_posts(
+        self, *,
+        event_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /posts/curator/event/{eventId}/duplicate/posts
+
+        复制源 event 下的 post 到目标 event（body: fromEventId + postIds）。
+        """
+        return self._call(
+            "POST", '/posts/curator/event/{{eventId}}/duplicate/posts',
+            path_vars=_pv(("eventId", event_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
     def curator_edit_by_post_id(
         self, *,
         post_id: str | None = None,

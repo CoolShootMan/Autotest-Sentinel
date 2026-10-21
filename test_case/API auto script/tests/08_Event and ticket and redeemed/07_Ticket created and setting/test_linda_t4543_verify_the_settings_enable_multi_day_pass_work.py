@@ -476,6 +476,8 @@ def test_linda_t4543_verify_the_settings_enable_multi_day_pass_work(ctx: "Contex
             "posts": [{"postId": postId, "isVisible": True}],
         }, token='linda999_token')
         expect(_resp7).json('$.code').equals('200')
+        _j7 = _resp7.json()
+        print(f"[T4543 retry {_att8}] show-in-post response: code={_j7.get('code')} message={_j7.get('message')} data={_j7.get('data')}")
         _resp8 = ctx.api.admin.post_v2_relate_products(post0_id=postId, body=None, token='admin_token')
         expect(_resp8).json('$.code').equals('200')
         expect(_resp8).json('$.message').equals('success')

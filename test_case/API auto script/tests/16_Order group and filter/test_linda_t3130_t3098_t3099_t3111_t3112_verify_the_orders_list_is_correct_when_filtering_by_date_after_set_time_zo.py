@@ -550,12 +550,12 @@ WHERE
     # step 8: Check consumer order list group by the current time zoon
     # DB 步骤（Apifox database 处理器）: search the order group by created date
     ctx.run_db(112809, """select
-	TO_CHAR(DATE(created_at), 'YYYY-MM-DD') AS order_date,
+	TO_CHAR(DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD') AS order_date,
 	COUNT(*) as order_count
 from "Order" o
 where consumer_id = '7bc6ed8d-51de-446b-8c64-fd321cf1a45d'
 group by
-	TO_CHAR(DATE(created_at), 'YYYY-MM-DD')
+	TO_CHAR(DATE(created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD')
 order by
 	order_date  desc ;""", [('order_date0', '$[0].order_date'), ('order_count0', '$[0].order_count'), ('order_date1', '$[1].order_date'), ('order_count1', '$[1].order_count')])
     _resp8 = ctx.api.orders.consumer(token='linda00_token')
