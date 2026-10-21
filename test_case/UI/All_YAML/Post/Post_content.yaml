@@ -610,6 +610,43 @@ testT5390:
       - assertion_type: "element_visible_by_text"
         text: "AboutT5390"
 
+  # Teardown ====================================================================
+  # test_step renames this shared fixture event to "T5390" (step 2). Before this
+  # teardown existed the rename was never undone, so four other steps that look
+  # the event up by name broke: testT2834_VerifyPartner, the testT2834_VerifyGuest
+  # teardown and testT5033_5034_VerifyPartner. Restore the name (and the start
+  # date the test moves) so the fixture can be used again.
+  # NOTE: the framework has no try/finally — this only runs when test_step passes.
+  teardown_step:
+    # Step 1: Back to the events list (the list needs ~30s to hydrate on release,
+    # far more than the 5s the test itself waits, so wait on the row explicitly)
+    open: "{BASE_URL}/events"
+    wait_for_selector_t5390_row: { selector: "td:has-text('T5390')", timeout: 90000 }
+    sleep_after_td_open: 2000
+
+    # Step 2: Open the renamed event and enter its edit form
+    R_click_event_td: { role: "cell", name: "T5390", index: 0 }
+    sleep_after_td_event: 8000
+    wait_for_selector_edit_event: { selector: "button:has-text('Edit event')", timeout: 60000 }
+    R_click_edit_event_td: { role: "button", name: "Edit event", index: 0 }
+    sleep_after_td_edit: 6000
+
+    # Step 3: Restore the fixture title the other cases look up by name
+    fill_event_title_td: { role: "textbox", name: "Event title", value: "verify-post-shipping_fee" }
+    sleep_after_td_title: 1000
+
+    # Step 4: Restore the start date the test moves to Apr 20, 2053 — otherwise
+    # the "buy venue | Sun, Apr 20" assertion would pass trivially on later runs
+    fill_type_start_date_td: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: "04/17/2053" }
+    sleep_after_td_date: 1000
+
+    # Step 5: Save and confirm the fixture name is back
+    R_click_save_td: { role: "button", name: "Save" }
+    # Saving an event rename can stay on the spinner for 20s+ on release
+    wait_for_url_td_saved: { url: "*view*", timeout: 90000 }
+    sleep_after_td_save: 3000
+    verify_event_title_restored: { text: "verify-post-shipping_fee", timeout: 30000 }
+
 # ==============================================================================
 # T5440: Verify deleted event widgets are NOT re-inserted into Post RTE
 # Pre-condition: Pre-created event "verify auto coupon apply" with published post
