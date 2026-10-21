@@ -1096,8 +1096,10 @@ testT2834_VerifyGuest:
         sleep_step: 1500
 
         # Step 5: Post-purchase expand details
-        verify_order_confirmationh: { text: "Thank you for your payment" }
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
+        # The "Shipping" row chevron is a MUI ArrowDropDownIcon now (was ExpandMoreIcon).
+        # The confirmation page can need more than 10s to render after Place order.
+        verify_order_confirmationh: { text: "Thank you for your payment", timeout: 30000 }
+        R_click_expand_details: { test_id: "ArrowDropDownIcon", index: 0 }
         sleep_step: 1000
 
     expect_result:
