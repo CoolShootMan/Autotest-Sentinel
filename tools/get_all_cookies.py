@@ -74,6 +74,10 @@ ACCOUNTS = [
     },
 ]
 
+# Front-end texts the SPA shows when POST /auth/sign-in never gets an answer. They carry
+# no HTTP status, so they must be detected from the DOM (see _page_shows_request_timeout).
+_TIMEOUT_MARKERS = ("Request timed out", "Network Error", "Failed to fetch")
+
 SUBMIT_RETRIES = 3
 GOTO_RETRIES = 3
 GOTO_TIMEOUT = 20000
@@ -130,6 +134,102 @@ def _complete_name_onboarding(page) -> bool:
         pass
     print("  onboarding completed")
     return True
+
+
+def _page_shows_request_timeout(page) -> bool:
+    """True when the SPA rendered its own network-failure text.
+
+    WHY (2026-10-21): the co-seller refresh failed three times in a row with
+    "submit attempt X/3 stayed on /login" and NO sign-in response at all. The page was
+    actually showing `Request timed out: POST https://release.katana-api.1m.app/auth/sign-in`
+    and the request had ended as net::ERR_ABORTED, so the status-code based logic above
+    never saw a 4xx and the failure looked like a credential problem. This is the rarer
+    sibling of the missing-hydration case below: here the request IS issued but never
+    answered. Start the next attempt from a clean page instead of re-clicking a form
+    that is stuck in its error state.
+    """
+    try:
+        text = page.evaluate("() => (document.body ? document.body.innerText : '')") or ""
+    except Exception:
+        return False
+    return any(m.lower() in text.lower() for m in _TIMEOUT_MARKERS)
+
+
+def _fill_credentials(page, account: dict) -> list:
+    """Fill email + password, blur to trigger validation, and echo the field values."""
+    page.locator("input[name='email']").first.fill(account["email"], timeout=15000)
+    page.locator("input[type='password']").first.fill(account["password"], timeout=15000)
+    # The form validates on blur (react-hook-form mode:'onBlur'). Without a blur the
+    # submit handler sees a stale isValid=false and the click is a silent no-op
+    # (zero network requests). Tab off the password field first.
+    page.keyboard.press("Tab")
+    page.wait_for_timeout(800)
+    values = page.evaluate(
+        "() => Array.from(document.querySelectorAll('input'))"
+        ".map(i => i.name + '=' + (i.type === 'password' ? '***' : i.value))"
+    )
+    print(f"  [{account['name']}] field values before submit: {values}")
+    return values
+
+
+def _is_hydrated(page) -> bool:
+    """True when React has attached to the login form (the SPA is interactive)."""
+    try:
+        return bool(page.evaluate(
+            """() => {
+                const el = document.querySelector("input[name='email']") || document.querySelector('form');
+                if (!el) return false;
+                return Object.keys(el).some(
+                    k => k.startsWith('__reactFiber') || k.startsWith('__reactProps'));
+            }"""
+        ))
+    except Exception:
+        return False
+
+
+def _wait_until_hydrated(page, name: str, login_base: str, attempts: int = 5) -> bool:
+    """Reload the login page until the SPA hydrates.
+
+    A non-hydrated page swallows every click, so filling and submitting it can never
+    work - reloading is the only way out.
+    """
+    for i in range(1, attempts + 1):
+        if _is_hydrated(page):
+            if i > 1:
+                print(f"  [{name}] login page hydrated after {i - 1} reload(s)")
+            return True
+        print(f"  [{name}] login page not hydrated (React never attached) - "
+              f"reloading ({i}/{attempts})")
+        try:
+            page.reload(wait_until="domcontentloaded", timeout=GOTO_TIMEOUT)
+            page.wait_for_selector("input[name='email']", timeout=15000)
+            page.wait_for_timeout(2000)
+        except Exception as e:
+            print(f"  [{name}] reload failed: {e}")
+            try:
+                page.goto(f"{login_base}/login", timeout=GOTO_TIMEOUT,
+                          wait_until="domcontentloaded")
+                page.wait_for_selector("input[name='email']", timeout=15000)
+                page.wait_for_timeout(2000)
+            except Exception as e2:
+                print(f"  [{name}] goto fallback failed: {e2}")
+    return _is_hydrated(page)
+
+
+def _leaves_login(page, timeout_ms: int) -> bool:
+    """Poll page.url until the SPA is off /login.
+
+    WHY (2026-10-21): wait_for_url() only resolves on a real navigation. After a
+    successful sign-in the SPA routes to /autotestshop client-side (history.pushState),
+    so nothing navigates, wait_for_url timed out after 25s, and the retry loop then hit
+    "'Log in' button not found" on a page where the login had in fact succeeded.
+    """
+    end = time.time() + timeout_ms / 1000.0
+    while time.time() < end:
+        if "/login" not in page.url:
+            return True
+        page.wait_for_timeout(500)
+    return "/login" not in page.url
 
 
 def _safe_close(obj, label):
@@ -195,24 +295,24 @@ def login_and_save(playwright, account: dict):
 
         page.wait_for_timeout(2000)
 
+        # The release SPA intermittently serves the SSR markup without hydrating: the
+        # form renders and every button looks enabled, but clicks do nothing at all
+        # (zero network requests, no console error) - verified 2026-10-21 by clicking
+        # the "Use Phone" tab on a dead page, which did not react either. Submitting
+        # such a page can only fail, so reload until React is attached.
+        if not _wait_until_hydrated(page, name, login_base):
+            page.screenshot(path=f"login_error_{name}.png")
+            raise RuntimeError(
+                f"[{name}] the login page never hydrated after 5 reloads - the SPA served"
+                f" static HTML only, so no click could be registered. This is a"
+                f" release-frontend problem, not a credential one; retry the refresh later."
+            )
+
         # NOTE (2026-08-31): the email input on the release login page is
         # <input type="text" name="email" placeholder="Email"> -- it is NOT
         # type="email", so any selector relying on input[type='email'] silently
         # matches nothing and the form never validates. Always target by name.
-        page.locator("input[name='email']").first.fill(account["email"], timeout=15000)
-        page.locator("input[type='password']").first.fill(account["password"], timeout=15000)
-
-        # The form validates on blur (react-hook-form mode:'onBlur'). Without a
-        # blur the submit handler sees a stale isValid=false and the click is a
-        # silent no-op (zero network requests). Tab off the password field first.
-        page.keyboard.press("Tab")
-        page.wait_for_timeout(800)
-
-        values = page.evaluate(
-            "() => Array.from(document.querySelectorAll('input'))"
-            ".map(i => i.name + '=' + (i.type === 'password' ? '***' : i.value))"
-        )
-        print(f"  [{name}] field values before submit: {values}")
+        values = _fill_credentials(page, account)
 
         # Retry the submit: the first click occasionally lands before React has
         # committed the validated state, so re-blur and click again.
@@ -228,8 +328,32 @@ def login_and_save(playwright, account: dict):
             }"""
             )
             if not clicked:
-                raise RuntimeError(f"[{name}] 'Log in' button not found")
-            page.locator("[data-login-submit='1']").click(timeout=10000)
+                if "/login" not in page.url:
+                    # The sign-in already went through and the SPA moved on; no
+                    # button is left to click, which is success rather than failure.
+                    print(f"  [{name}] already off {page.url} - treating as signed in")
+                    break
+                raise RuntimeError(f"[{name}] 'Log in' button not found on {page.url}")
+            # Separate "the click did nothing" from "the server said no".
+            # On 2026-10-21 repeated attempts clicked an enabled button on a filled form
+            # and produced ZERO network requests (the page had lost interactivity again),
+            # while waiting 25s for a URL that could never change. Detect it in seconds.
+            fired = True
+            try:
+                with page.expect_request(
+                    lambda req: "/auth/sign-in" in req.url, timeout=15000
+                ):
+                    page.locator("[data-login-submit='1']").click(timeout=10000)
+            except Exception:
+                fired = False
+            if not fired:
+                print(f"  [{name}] submit attempt {attempt}/{SUBMIT_RETRIES}: the click "
+                      f"sent no /auth/sign-in request (form state not committed) - "
+                      f"re-blurring and retrying")
+                page.keyboard.press("Tab")
+                page.wait_for_timeout(1200)
+                continue
+            page.wait_for_timeout(300)
             # A re-created account answers the sign-in with 201 and then shows the
             # in-app "What's your name?" step while the URL stays on /login, so the
             # poll below would never succeed. Handle it before waiting on the URL.
@@ -238,19 +362,21 @@ def login_and_save(playwright, account: dict):
                 if onboarded:
                     # Either the SPA moved off /login or it stayed there with the
                     # onboarding layer gone - in both cases the sign-in cookies are set.
-                    try:
-                        page.wait_for_url(lambda url: "/login" not in url, timeout=8000)
-                    except Exception:
+                    if not _leaves_login(page, 8000):
                         page.locator("input[name='firstName']").first.wait_for(
                             state="hidden", timeout=8000
                         )
-                else:
-                    page.wait_for_url(lambda url: "/login" not in url, timeout=25000)
+                elif not _leaves_login(page, 25000):
+                    raise TimeoutError(f"URL stayed on {page.url} for 25s")
                 break
             except Exception:
                 server_msg = f" | server said: {auth_errors[-1][1]}" if auth_errors else ""
                 print(f"  [{name}] submit attempt {attempt}/{SUBMIT_RETRIES} "
                       f"stayed on {page.url}{server_msg}")
+                timed_out = _page_shows_request_timeout(page)
+                if timed_out:
+                    print(f"  [{name}] the SPA reported a network failure for "
+                          f"POST /auth/sign-in (no HTTP status) - the API was slow")
                 # A 4xx from sign-in means the credentials themselves were
                 # rejected - retrying cannot succeed and risks locking the
                 # account, so fail fast with the real reason.
@@ -268,13 +394,41 @@ def login_and_save(playwright, account: dict):
                     )
                 if attempt == SUBMIT_RETRIES:
                     page.screenshot(path=f"login_error_{name}.png")
+                    hint = (
+                        " - the SPA reported `Request timed out` for POST /auth/sign-in, "
+                        "which means the API never answered (slow, not a bad password); "
+                        "retry the refresh later"
+                    ) if timed_out else ""
                     raise RuntimeError(
                         f"[{name}] still on login page after {SUBMIT_RETRIES} "
-                        f"submit attempts (fields: {values}){server_msg}"
+                        f"submit attempts (fields: {values}){server_msg}{hint}"
                     )
+                # After a request timeout the form keeps the error text and the button
+                # can stay in its submitting state, so re-clicking it does nothing.
+                # Reload, refill and submit from a clean page instead.
+                if timed_out:
+                    print(f"  [{name}] reloading the login page before the next attempt")
+                    try:
+                        page.goto(f"{login_base}/login", timeout=GOTO_TIMEOUT,
+                                  wait_until="domcontentloaded")
+                        page.wait_for_selector("input[name='email']", timeout=15000)
+                        page.wait_for_timeout(1500)
+                        values = _fill_credentials(page, account)
+                    except Exception as reload_err:
+                        print(f"  [{name}] reload + refill failed: {reload_err}")
+                    continue
                 # re-blur to re-trigger validation, then try again
                 page.keyboard.press("Tab")
                 page.wait_for_timeout(1500)
+        else:
+            # Every attempt took the "click sent nothing" branch above - never fall
+            # through to saving a cookie file that is still a guest session.
+            page.screenshot(path=f"login_error_{name}.png")
+            raise RuntimeError(
+                f"[{name}] the 'Log in' click never issued a /auth/sign-in request in "
+                f"{SUBMIT_RETRIES} attempts (fields: {values}) - every click was swallowed, "
+                f"so the SPA lost interactivity mid-flow (hydration) or its markup changed"
+            )
 
         cookie_path = COOKIE_DIR / account["cookie_file"]
         context.storage_state(path=str(cookie_path))
