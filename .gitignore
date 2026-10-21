@@ -270,3 +270,4 @@ data/ua_*.txt
 # (/test_case/UI/*cookie*.json) and did not cross '/', so cookies written
 # into a subdirectory (e.g. Test_Katana/) slipped straight through.
 **/cookie_*.json
+tools/login_error_*.png
