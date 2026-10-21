@@ -25,10 +25,18 @@ def main():
     auto_t_numbers = set()
     for f in YAML_DIR.rglob("*.yaml"):
         text = f.read_text(encoding="utf-8")
-        for m in re.finditer(r'^test(T\d+)', text, re.MULTILINE):
-            tnum = re.sub(r'_.*$', '', m.group(1))  # strip suffixes
-            auto_t_numbers.add(tnum)
+        # 1a. 从 testT 开头的用例名提取，支持 compound: T3683_T3684, T4600_4602, T5210_5211_5212
+        for m in re.finditer(r'^test((?:T\d{4})(?:_?T?\d{4})*)', text, re.MULTILINE):
+            raw = m.group(1)
+            # Split: T3683_T3684 -> T3683, T3684; T4600_4602 -> T4600, T4602
+            parts = re.findall(r'T?(\d{4})', raw)
+            for p in parts:
+                auto_t_numbers.add(f"T{p}")
+        # 1b. 从注释提取: # T1742: ... 或 # T3686_teardown
+        for m in re.finditer(r'#\s*(T\d{4})', text):
+            auto_t_numbers.add(m.group(1))
     print(f"本地 UI 自动化用例 T 编号: {len(auto_t_numbers)} 条")
+    print(f"  T编号: {sorted(auto_t_numbers)}")
 
     # ── 2. Plan 现有用例 ──
     plan_cases = client.cases_by_plan(PLAN_UUID)
