@@ -284,7 +284,7 @@ def main():
             "description": "Katana 平台后端接口文档（由 katana-server 代码自动提取生成）。支付以 PayPal / Stripe（银行卡、Apple Pay、Google Pay、ACH）为主；对外提供社交电商、活动票务、创作者分销与结算等能力。",
             "version": "1.0.0（自动生成）",
         },
-        "servers": [{"url": "https://{host}", "description": "部署环境由接入方指定", "variables": {"host": {"default": "api.example.com"}}}],
+        "servers": [{"url": "https://release.katana-api.1m.app", "description": "Release 环境（默认）"}],
         "tags": [{"name": m, "description": f"{m} 模块（{n} 个端点）"} for m, n in sorted(tags.items(), key=lambda x: -x[1])],
         "paths": paths,
         "components": {"schemas": schemas},
