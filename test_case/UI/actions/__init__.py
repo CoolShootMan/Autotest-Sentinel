@@ -358,7 +358,7 @@ def get_action(name):
         return hover
     if name.startswith("start_network_capture"):
         return start_network_capture
-    if name.startswith("verify_network_capture"):
+    if name.startswith("verify_network_capture") or name.startswith("verify_pixel_"):
         return verify_network_capture
     if name.startswith("R_click") or name.startswith("click") or name.startswith("l_click"):
         return smart_click

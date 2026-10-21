@@ -45,17 +45,27 @@ testT5668_T5749_partner_enable_approval:
     R_click_approval_toggle: { locator: 'input[name="isPurchaseApprovalRequired"]', skip_if_checked: true }
     sleep_step: 1500
 
-    # Dialog: verify mode options visible
-    wait_before_mode: { text: "Before a customer selects", timeout: 8000 }
+    # T5749: the toggle opens "When should customers choose what to purchase?"
+    # with two radios: "Before approval" / "After approval".
+    wait_mode_question: { text: "When should customers choose what to purchase?", timeout: 10000 }
+    wait_before_mode: { text: "Before approval", timeout: 8000 }
     wait_after_mode: { text: "After approval", timeout: 5000, optional: true }
-    sleep_step: 500
 
-    R_click_continue_in_dialog: { role: 'button', name: 'Continue', optional: true }
-    sleep_step: 1000
+    # T5749: explicitly keep "Before approval" (customers pick items first,
+    # then request approval) - it is the default, so the click is optional.
+    R_click_before_mode: { locator: 'div[role="dialog"] div[data-testid="mui-stack"]:has-text("Before approval")', timeout: 8000, optional: true }
+    sleep_step: 800
 
-    R_click_save: { role: 'button', name: 'Save', skip_if_disabled: true }
-    wait_toast_save: { message: "Post settings updated", timeout: 15000, optional: true }
-    sleep_step: 1000
+    # Step A: confirm the mode dialog with its own (green) Save button.
+    R_click_save_mode_dialog: { locator: 'div[role="dialog"] button:has-text("Save")', timeout: 10000 }
+    sleep_step: 2000
+
+    # Step B: the page-level Save button only becomes enabled after the dialog is
+    # confirmed, and THIS is what actually persists the switch. Without it the UI
+    # shows the toggle as "On" but nothing is saved.
+    R_click_save: { role: 'button', name: 'Save', timeout: 10000 }
+    wait_toast_save: { message: "Post settings updated", timeout: 20000, optional: true }
+    sleep_step: 1500
 
     R_click_close_drawer: { locator: '[data-testid="CloseIcon"]', optional: true, disable_ai: true }
     sleep_step: 2000

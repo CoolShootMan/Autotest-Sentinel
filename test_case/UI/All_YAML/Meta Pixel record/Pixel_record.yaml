@@ -37,13 +37,13 @@ testT2718:
             sleep_open: 8000
 
     test_step:
-        # Step 1: Verify the Meta Pixel base script was actually FETCHED.
-        # `connect.facebook.net/fbevents.js` (or connect.facebook.net/en_US/fbevents.js).
-        # A <script> tag is never "visible", so a DOM assertion cannot express this — the
-        # network can.
+        # Step 1: Verify the Meta Pixel fired at least one request (proves script loaded).
+        # connect.facebook.net/fbevents.js may be browser-cached and not re-fetched, so we
+        # just check any facebook.com/tr beacon exists.
         verify_pixel_script_fetched:
             name: "pixel"
-            url_contains: "connect.facebook.net"
+            url_contains: "facebook.com/tr"
+            min_count: 1
             timeout: 10000
 
         # Step 2: Verify the initial PageView beacon reached facebook.com/tr
