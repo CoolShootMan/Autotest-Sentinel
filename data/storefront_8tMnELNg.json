@@ -1,0 +1,2090 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "8tMnELNg",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/8tMnELNg"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:38",
+  "count": 37,
+  "cases": [
+    {
+      "id": "T4972",
+      "uuid": "2c3QWELc",
+      "name": "Verify Form Social Field Configuration with Auto-Complete URL Generation and Cross-Channel Display",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant is logged in and navigated to the \"Customize shop\" page\nPhase I implementation is active (Instagram only; TikTok/YouTube support pending Phase II)",
+      "desc": "<p><font dir=\"auto\" style=\"vertical-align: inherit;\"><font dir=\"auto\" style=\"vertical-align: inherit;\">KAT-10552</font></font></p>\n\n<p>&nbsp;</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"XZvMv5cX\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Field Configuration: Click \"Add new field\" → Select \"Social\" → Verify \"Social platform\" dropdown defaults to \"Instagram\" (only option in Phase I) → Enter custom Title (e.g., \"Find us on Instagram\") → Check \"Required\" → Click \"Add\" to save\n",
+          "result": "Configuration side: Social field is created successfully; platform dropdown locks to Instagram for Phase I; Title field accepts custom input; field displays in form builder with correct iconography\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "End-User Handle Input (Short Format): Access the form as consumer → Verify Instagram icon displays with placeholder \"@Instagram username\" → Enter handle abc123 (plain alphanumeric) → Submit form\n",
+          "result": "Short format handling: Submission details displays @abc123 as blue, underlined hyperlink; clicking navigates to https://www.instagram.com/abc123 (system auto-completes domain)\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "End-User Handle Input (With @ Symbol): Access form again → Enter @iamsupermush (with @ prefix) → Submit form\n",
+          "result": "@ symbol handling: System strips the @ prefix automatically; displays as @iamsupermush but links to https://www.instagram.com/iamsupermush (normalized format)\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "End-User Handle Input (Full URL): Access form → Enter https://www.instagram.com/xyz_789 → Submit form\n",
+          "result": "Full URL handling: System parses handle xyz_789 from full URL; displays as @xyz_789 linking to https://www.instagram.com/xyz_789 (or maintains original URL per product spec)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Data Display Verification: Navigate to \"Customer submissions\" → Open Submission details for each of the three submissions → Click the Instagram handle link",
+          "result": "Cross-channel consistency:\n1.Submission details: Blue highlighted, clickable text with cursor:pointer; opens in new tab\n2.Email notification: Renders as HTML hyperlink <a href=\"https://www.instagram.com/xxx\">@xxx</a> in blue; clickable in email clients\n3.Excel export: Cell contains hyperlinked formula (e.g., =HYPERLINK(\"https://www.instagram.com/xxx\",\"@xxx\")) appearing as blue, clickable text",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4790",
+      "uuid": "3ULnNFcb",
+      "name": "Verify up tp 10 images can be uploaded in the Contact us form",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "the merchant adds a new form and adds media field",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "upload less than 10 images",
+          "result": "it can be uploaded",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "upload more than 10 images",
+          "result": "it can not be uploaded",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "upload the video",
+          "result": "it can not be uploaded",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "after uploading the images, click the × button on the image",
+          "result": "this image will be deleted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "after uploading the images, use the = button to adjust the images' order",
+          "result": "the images' order will be adjusted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "a user uploads some images and submit the form",
+          "result": "1. the images will be displayed correctly in the merchant's mailbox\n2. when click \"Link address\" in the Submission details, all the images will be downloaded\n3. when export data for this submission, all the the images will be downloaded",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4277",
+      "uuid": "8N87Xddf",
+      "name": "Verify Merchant can configure and publish the “Contact us” form (including basic information)",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant is logged into the shop backend",
+      "desc": "<p>KAT-8086</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"KDsVYnPC\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Add a “Contact us” module on the My Shop page",
+          "result": "1. System successfully adds the module and shows the form configuration entry",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. In the form configuration page, enter Title = “Contact us”, Subtitle = “We’re here to help”, and switch Mail icon = On (default image displayed)",
+          "result": "2. Basic information saved successfully; preview shows Title “Contact us”, Subtitle “We’re here to help”, and default Mail icon",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Configure form fields: add Name (Required), Email (Required), Short answer (Required) and click preview icon",
+          "result": "3. Field configuration saved successfully; preview shows three required fields: Name, Email, Message",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Click the \"Continue\" button",
+          "result": "4. Pop-up window:\nForm confirmation message\nThis message will be shown to visitors after they submit the form. You can customize it if needed. When you’re ready, create the form to finish setup.\n[input]Title\n[input]Message\n[CTA]Save",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. The merchant moves to the \"Forms\" tab at the bottom, clicks on \"+ Add new form\", enters the required message, then clicks \"Continue\", and finally clicks \"Save\"",
+          "result": "5. Successfully created a form on the \"Forms\" tab",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. In the \"Title\" field, enter \"You have successfully submitted the information!\" In the \"Message\" section, enter \"We will reply within three to four working days\", and then click the \"Save\" button.",
+          "result": "6.Publish successful; \nuser‑side shop page displays the “Contact us” entry",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "7. On the user side, visit the shop page and click the “Contact us” entry",
+          "result": "7. Page navigates to the form page, showing configured Title, Subtitle, Mail icon, and fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "8. Fill in all required fields and submit",
+          "result": "8. User inputs information and submits; system processes normally",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "9. System shows a success message",
+          "result": "9. Pop-up message: \nThanks for your submission!\nWe’ve received your information and will follow up soon.\n[CTA]Got it",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "10. Merchant checks their email inbox",
+          "result": "10. Merchant’s email inbox receives a message containing the user’s submitted information",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4971",
+      "uuid": "BVvnsZET",
+      "name": "Verify Form Required Field Validation and User-End Selection Scenarios",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "Merchant has configured one required single choice field and one optional multiple choice field with specific option ordering",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Required Field Validation: Open form as end-user → Leave required single choice field unselected → Click \"Submit\"\n",
+          "result": "Required Check: Submission is blocked with auto-scroll to the unanswered field; validation message \"This field is required\" or red border highlighting is displayed\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Multi-Select All Options: Check all available options for the optional multiple choice field → Submit the form\n",
+          "result": "Select All/None: Both submissions succeed; select-all records all option values, select-none records empty/null value for the optional field\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Multi-Select None: Uncheck all multiple choice options → Fill only the required single choice → Submit the form\n",
+          "result": "Form Verification: Options display on user-end in exact sequence as configured by merchant without reordering or shuffling\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Option Order Consistency: Compare the sequence of options displayed on user-end versus merchant configuration",
+          "result": "Multiple choice field supports simultaneous multiple selections with clear visual distinction between checked and unchecked states",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4274",
+      "uuid": "CQaMbnte",
+      "name": "Verify Merchant can configure Form fields with required/optional logic and display correctly on the user side",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has entered the “Add new form” page\t",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click “Add a field” button",
+          "result": "1. System opens the new field configuration page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Check the default state of the new field configuration page (Title input box is present, Field type defaults to “Email address”, Required toggle is OFF)",
+          "result": "2. Page shows: Title input box, Field type defaulted to “Short answer”, Required toggle OFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Enter Title = “Note”",
+          "result": "3. Title input box displays “Note”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Keep Field type as “Short answer”",
+          "result": "4. Field type remains “Short answer”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Switch ON the Required toggle",
+          "result": "5. Required toggle ON shows the field as mandatory",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. Click “Add” to save the field",
+          "result": "6. System confirms field added successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "7. Click “Add a field” again, enter Title = “Message”, select Field type = “Paragraph”, keep Required OFF, save",
+          "result": "7. Second field “Message” added successfully, Required remains OFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "8. Return to the form configuration page and check the field list",
+          "result": "8. Field list shows “Note (Required)” and “Message (Optional)”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "9. As a guest, open the shop page and enter the Contact us form",
+          "result": "9. Guest form renders both fields correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "10. Try to submit the form: (a) leave “Note” empty (b) leave “Message” empty",
+          "result": "10. (a) Leaving “Note” empty → system shows “This field is required”, form not submitted\n(b) Leaving “Message” empty → form submits successfully, Merchant receives email with Message field empty",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4280",
+      "uuid": "CxScgCSo",
+      "name": "Verify form input validation logic",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "User has opened the form page",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Leave a required field empty and click Submit",
+          "result": "1. System shows error “This field is required”, form not submitted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Enter an invalid email format and click Submit\t",
+          "result": "2. System shows error “Invalid email format”, form not submitted",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4970",
+      "uuid": "E6ZUWacc",
+      "name": "Verify Form Field Option Quantity and Content Boundary Validation",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "\"Add new field\" modal is opened and ready for configuration",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Single Option Validation: Select \"Single choice\" → Enter title → Delete the 2nd option leaving only 1 → Click \"Add\" button\n",
+          "result": "System displays error message \"Please keep at least two options.\"; field creation is blocked; modal remains open with previously entered title data preserved (not cleared)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Zero Option Validation: Delete the remaining option → Confirm Options section is empty → Click \"Add\" button\n\n",
+          "result": "System displays error message \"Please keep at least two options.\"; field creation is blocked; modal remains open with previously entered title data preserved (not cleared)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Whitespace Content Validation: Add two new options → Enter only whitespace/space characters in both fields → Click \"Add\" button",
+          "result": "System either displays \"Option content cannot be empty\" or trims whitespace and validates as empty (based on product specifications)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Duplicate Content Validation: Enter identical text \"Same Option\" in both option fields → Click \"Add\" button",
+          "result": "System displays \"Options must be unique\" or handles duplicates according to product design requirements",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4792",
+      "uuid": "FtNSREAz",
+      "name": "Verify adding a new field \"Date and time\" on the Add new form page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "enter into the “Add new form” page\t",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click “Add new field”",
+          "result": "1. add a new field \"Date and time\", the default title is \"Date and time\", and the default Required is checked\n2. switch to other fields, the default title is still \"Date and time\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "let the title as empty, click Add",
+          "result": "the new field can not be added, and it will show “Please enter the Title”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter Title = “Start-End”, select Field type = “Date and time”, keep Required OFF, save",
+          "result": "The new field “Start-End” added successfully, Required is OFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Start-End(Optional)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Start-End” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "do not select the start time for “Start-End”, submit the form",
+          "result": "form submits successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "1. select the start time for “Start-End”, submit the form\n2. select the start time and the end time for “Start-End”, submit the form",
+          "result": "form submits successfully, Merchant receives email with start and end time",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "Enter Title = “Start-End”, select Field type = “Date and time”, keep Required ON, save",
+          "result": "The new field “Start-End” added successfully, Required is ON",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Start-End(Required)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Start-End” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 12,
+          "desc": "do not select the start time for “Start-End”, submit the form",
+          "result": "system shows “This field is required”, form not submitted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 13,
+          "desc": "1. select the start time for “Start-End”, submit the form\n2. select the start time and the end time for “Start-End”, submit the form",
+          "result": "form submits successfully, Merchant receives email with start and end time",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 14,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4279",
+      "uuid": "G686Cuv8",
+      "name": "Verify user can complete and submit the “Contact us” form successfully",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has published the form",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. User visits the shop page and clicks the “Contact us” entry",
+          "result": "1. Page navigates to the form page, showing configured fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Fill in all required fields and click Submit",
+          "result": "2. Pop-up message: \nThanks for your submission!\nWe’ve received your information and will follow up soon.\n[CTA]Got it",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. System processes the submission",
+          "result": "3. Page displays “Submission successful” or similar confirmation",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Merchant checks their email inbox",
+          "result": "4. Merchant’s email inbox receives a message containing the user’s submitted information",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. On the shop page, click the \"...\" button of the form card for the merchant. Then select \"Copy link for sharing\", and then send the link to the guest.\n",
+          "result": "5. Successfully copied the form link, with the prompt \"Form link has been copied!\"\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. Guest clicks on the form link\n",
+          "result": "6. The user successfully navigates to the \"Contact us\" page. The merchant's shop logo and shop name will be displayed at the top left corner, and below it are the configured fields and the \"Submit\" button.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "7. Click the merchant's shop logo or shop name on the top left corner.\n",
+          "result": "7. Return to the merchant shop page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "8. The guest then reopens the form link, fills in all the required fields, and clicks \"Submit\". After that, the merchant checks the email. ",
+          "result": "8. Once the user submits the order, they will be redirected to the merchant shop page. The merchant also successfully received an email containing the user's submitted information.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4282",
+      "uuid": "Gp9p6zpQ",
+      "name": "Verify submission handling in failure scenarios",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "Network error or email configuration error occurs",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. User fills in the form and clicks Submit",
+          "result": "1. Page displays error “Submission failed, please try again later”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. System fails to send the email",
+          "result": "2. Merchant’s email inbox does not receive any message",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4973",
+      "uuid": "HJMx2fPy",
+      "name": "Verify Form Social Field Input Format Validation (Without Existence Checking)",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "Form contains a required Social field configured for Instagram\nMerchant has published the form and provided the consumer-facing URL",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Empty Field Validation: Open form as consumer → Leave Instagram field blank → Click \"Submit\"\n",
+          "result": "Empty submission: Submission is blocked; inline validation displays \"This field is required\" with red border styling consistent with other required fields (Email, Phone)\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Valid Character Verification: Enter handle using allowed Instagram characters: user_name.123 (letters, numbers, underscores, periods) → Submit successfully\n",
+          "result": "Valid characters: Form accepts submission; handle displays correctly across all merchant touchpoints (dashboard, email, export)\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Invalid Character - Space: Enter user name (containing space) → Attempt to submit\n",
+          "result": "Spaces: Input is rejected with message \"Username can only contain letters, numbers, periods, and underscores\" (or frontend input mask prevents space entry entirely)\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Invalid Character - Special Symbols: Enter user#name or user@name (containing # or middle @) → Attempt to submit\n",
+          "result": "Special symbols: Input is rejected; system enforces Instagram username rules strictly—only alphanumeric characters, periods, and underscores are permitted; special characters trigger validation error\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Format vs Existence Verification: Enter a syntactically valid but potentially non-existent handle (e.g., nonexistent_user_99999) → Submit and verify system accepts it without \"User not found\" errors",
+          "result": "No existence validation: System performs format validation only; does not verify if the Instagram account actually exists. Validly formatted handles (even fictitious ones) generate clickable blue links that may lead to Instagram's \"Page Not Found\" when clicked, but this is acceptable per requirements",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4793",
+      "uuid": "HomvwJvh",
+      "name": "Verify adding a new field \"? Yes / No option\" on the Add new form page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "enter into the “Add new form” page\t",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click “Add new field”",
+          "result": "1. add a new field \"? Yes / No option\", the default title is \"Do you enjoy learning new things?\", and the default Required is checked\n2. switch to other fields, the default title is still \"Do you enjoy learning new things?\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "let the title as empty, click Add",
+          "result": "the new field can not be added, and it will show “Please enter the Title”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter Title = “Do you enjoy learning new things?”, select Field type = “? Yes / No option”, keep Required OFF, save",
+          "result": "The new field “Do you enjoy learning new things?” added successfully, Required is OFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Do you enjoy learning new things?(Optional)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Do you enjoy learning new things?” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "do not select Yes or No, submit the form",
+          "result": "form submits successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "1. select Yes, submit the form\n2. select No, submit the form",
+          "result": "form submits successfully, Merchant receives email with the right selection",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "Enter Title = “Do you enjoy learning new things?”, select Field type = “? Yes / No option”, keep Required ON, save",
+          "result": "The new field “Do you enjoy learning new things?” added successfully, Required is ON",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Do you enjoy learning new things?(Required)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Do you enjoy learning new things?” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 12,
+          "desc": "do not select Yes or No, submit the form",
+          "result": "system shows “This field is required”, form not submitted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 13,
+          "desc": "1. select Yes, submit the form\n2. select No, submit the form",
+          "result": "form submits successfully, Merchant receives email with the right selection",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 14,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4540",
+      "uuid": "MVW5DEEo",
+      "name": "Verify exported report contains correct data, full timestamp, and matches store timezone setting",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Store timezone is configured; submissions exist",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Go to Store settings → Business operation → Timezone and set it to GMT+8:00 Shanghai.\t",
+          "result": "1. Timezone setting is saved successfully.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. On the Customer submissions page, click Batch select → select submissions → click Action... → choose Export data.\t",
+          "result": "2. Export process begins; file is generated and downloaded successfully.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Open the exported file and review its contents.\t",
+          "result": "3.1 The file contains only the selected submissions.\n3.2 Each entry includes a full timestamp (e.g., Mon, Feb 2, 2025, 5:00 PM).\n3.3 All timestamps reflect the store’s configured timezone with no discrepancies.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "if one submmission contains media field \"Event poster\" and the user uploads some media",
+          "result": "the media field will be displayed in the exported file, click \"Download\" below it, it will download all the medias correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "if one submmission contains date and time or Yes/No option",
+          "result": "date and time or Yes/No option will be displayed in the exported file",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4539",
+      "uuid": "PdbNzxEB",
+      "name": "Verify Export data button appears after clicking Batch select and selecting submissions via Action...",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "At least one customer submission exists",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click the “Batch select” button at the top right of the page.",
+          "result": "1. Checkboxes appear next to each submission entry.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select one or more submissions.\t",
+          "result": "2. Selection state is recorded successfully.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click the “Action...” button in the top bar.",
+          "result": "3. The action menu expands and displays the “Export data” option.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4306",
+      "uuid": "RKMziJx5",
+      "name": "Two ways for merchants to view submissions",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. User visits the shop page and clicks the “Contact us” entry",
+          "result": "1. Page navigates to the form page, showing configured fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Fill in all required fields and click Submit",
+          "result": "2. User inputs information and clicks Submit",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. System processes the submission",
+          "result": "3. Page displays “Submission successful” or similar confirmation",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Merchant checks their email inbox",
+          "result": "4. Merchant’s email inbox receives a message containing the user’s submitted information",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "click Download besides Media",
+          "result": "it will download all the images that the user provides",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "5. Return to the shop page and click the \"...\" button next to the \"Form card\" section. Select \"View submissions\" to view the submissions.",
+          "result": "5. Enter the \"Customer Submissions\" page, and the displayed content is:\nTotal submissions: [number]\nsubmission list\n[field]Name, Media, Date and time, Yes / No Option, Submission date",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "click \"Download\" below the media",
+          "result": "it will download all the images that the user provides",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4847",
+      "uuid": "RViftwf9",
+      "name": "Verify when adding a new field to a form, adding a \"Field help text\" to provide more clarity to customers",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://pearshop.atlassian.net/browse/KAT-10113, No.3",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "add a new field to a form",
+          "result": "add a \"Field help text\" to provide more clarity to customers",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "the tooltip is: Add a short tip to help customers understand this field. Customers can view it in a\ntooltip.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "let \"Field help text\" be empty, Add",
+          "result": "the new field will be added without a tooltip behind it",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "input \"This is for test\" to \"Field help text\", Add",
+          "result": "the new field will be added with a tooltip icon behind it; click the tooltip icon, it will show: This is for test",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4276",
+      "uuid": "S1SRew8i",
+      "name": "Verify Contact us header information display (Title required, Image/Subtitle optional)",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "Merchant has entered the “Add new form” page",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Leave Title empty, try to save",
+          "result": "1. System blocks saving, shows error “Title is required”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Enter Title = “Contact us”, Subtitle empty, Mail icon = OFF, save",
+          "result": "2. Save successful, preview shows Title “Contact us”, no Mail icon, no subtitle",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Modify: keep Title = “Contact us”, Subtitle empty, Mail icon = ON, save",
+          "result": "3. Save successful, preview shows Title “Contact us” and default Mail icon, no subtitle",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. Modify: keep Title = “Contact us”, Subtitle = “We’re here to help”, Mail icon = OFF, save",
+          "result": "4. Save successful, preview shows Title “Contact us” and subtitle “We’re here to help”, no Mail icon",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Modify: keep Title = “Contact us”, Subtitle = “We’re here to help”, Mail icon = ON, save\t",
+          "result": "5. Save successful, preview shows Title “Contact us”, subtitle “We’re here to help”, and default Mail icon",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4538",
+      "uuid": "S2xRF9NM",
+      "name": "Verify time range filter correctly filters submission records",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Multiple submissions exist across different dates",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Click the date range selector.",
+          "result": "1. The date picker opens successfully.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Select a start date and an end date.\t",
+          "result": "2. The selected time range is displayed in the filter.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Confirm the selection.\t",
+          "result": "3. The submission list updates to show only entries within the selected time range.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4283",
+      "uuid": "SKfEiaeh",
+      "name": "Verify multiple submissions and data consistency",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "User can access the form multiple times",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. User submits the form with message A",
+          "result": "1. System allows multiple submissions, each showing “Submission successful”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. User submits the form again with message B",
+          "result": "2. Merchant’s inbox contains two separate emails",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Merchant checks their email inbox\t",
+          "result": "3. Email contents match the user’s inputs (A and B) without loss or corruption",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4786",
+      "uuid": "UxcM6Sbu",
+      "name": "Verify adding a new field \"Media\" on the Add new form page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "enter into the “Add new form” page\t",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Click “Add new field”",
+          "result": "add a new field \"Media\", the default title is empty, and the default Required is unchecked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "let the title as empty, click Add",
+          "result": "the new field can not be added, and it will show “Please enter the Title”",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter Title = “Event poster”, select Field type = “Media”, keep Required OFF, save",
+          "result": "The new field “Media” added successfully, Required is OFF",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Event poster(Optional)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Event poster” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "do not upload the media for “Event poster”, submit the form",
+          "result": "form submits successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "upload the media for “Event poster”, submit the form",
+          "result": "form submits successfully, Merchant receives email with media",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "Enter Title = “Event poster”, select Field type = “Media”, keep Required ON, save",
+          "result": "The new field “Media” added successfully, Required is ON",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "Return to the form configuration page and check the field list",
+          "result": "Field list shows “Event poster(Required)” ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "a user opens the shop page and enter the Contact us form",
+          "result": "“Event poster” field displays correctly",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 12,
+          "desc": "do not upload the media for “Event poster”, submit the form",
+          "result": "system shows “This field is required”, form not submitted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 13,
+          "desc": "upload the media for “Event poster”, submit the form",
+          "result": "form submits successfully, Merchant receives email with media",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 14,
+          "desc": "click the preview button on the Add new form page",
+          "result": "it will show a corresponding display",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4537",
+      "uuid": "YQuuawjj",
+      "name": "Verify the search bar on the Customer submissions page returns correct results by keyword",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "At least one customer submission exists",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Enter a keyword (e.g., name or email) into the search bar on the Customer submissions page.",
+          "result": "1. The search bar accepts the input successfully.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Press Enter or confirm the search.\t",
+          "result": "2. The submission list updates to show only matching entries; non-matching entries are excluded.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4281",
+      "uuid": "mxPnV6YV",
+      "name": "Verify Recipient Email default value and required logic",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "Merchant has opened the “Add new form” page",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. Open the “Add new form” configuration",
+          "result": "1. Recipient Email input box is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Check the Recipient Email field. if a contact email is set in system settings → verify it is auto‑filled",
+          "result": "2. If system contact email exists, it is auto‑filled.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. If no contact email is set → verify the field is ”verify email“",
+          "result": "3. If there is no system contact email, the verify email will be automatically filled in.",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. If no verify email is set → verify the field is Empty",
+          "result": "4. If no verify email, field remains empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Clear the Recipient Email field and try to save\t",
+          "result": "5. When cleared and saved, system blocks saving and shows error “Recipient Email is required”",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4969",
+      "uuid": "r1CUJkgC",
+      "name": "Verify Form Single/Multiple Choice Field Configuration and End-to-End Submission Flow",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "1.Merchant is logged in and navigated to the \"Customize shop\" page\n2.A test/preview link is available to view the form from end-user perspective",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Configure Single Choice: Click \"Add new field\" → Select \"Single choice\" → Enter title \"How satisfied are you with our product?\" → Confirm two default option inputs are auto-generated → Add two additional options via \"+ Add option\" (total: \"Very satisfied\", \"Satisfied\", \"Neutral\", \"Dissatisfied\") → Keep \"Required\" unchecked → Click \"Add\" to save\n",
+          "result": "Both field types are created successfully, returning to the main configuration page displaying the new fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure Multiple Choice: Click \"Add new field\" → Select \"Multiple choice\" → Enter title \"What are your main goals?\" → Confirm default two option inputs are displayed → Add third option → Enter content for all three options → Check \"Required\" → Click \"Add\" to save",
+          "result": "Selecting Single/Multiple choice auto-generates two option input fields with placeholder \"Enter an option\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "End-to-End Validation: Access the form via user-facing link → Confirm single choice renders as radio buttons and multiple choice as checkboxes → Select \"Satisfied\" for single choice → Select 2 options for multiple choice → Click \"Submit\"",
+          "result": "User interface displays single choice as exclusive selection (filled circle) and multiple choice as multi-select (checked squares)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "",
+          "result": "Form submits successfully with accurate data capture (single value for single choice, array of values for multiple choice)",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5500",
+      "uuid": "RasykFr3",
+      "name": "Configure redirect URL and verify redirect after form submission",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "A storefront form is created with at least one required field (e.g. Name). The form is accessible to customers.",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Positive — Configure redirect URL and verify end-to-end redirect</p><p><b>Priority:</b> Normal</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page",
+          "result": "Storefront page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Create a new form or open an existing form for editing",
+          "result": "Form editor is open with field configuration visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Configure at least one form field (e.g. Name, Email)",
+          "result": "Field is added to the form",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click the 'Continue' button",
+          "result": "The 'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Enter a valid redirect URL (e.g. https://example.com/thank-you) in the Redirect URL field",
+          "result": "URL is accepted and displayed in the field",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully without errors",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Open the form as a customer (preview or published link)",
+          "result": "Customer-facing form is displayed with configured fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 8,
+          "desc": "Fill in the required fields and submit the form",
+          "result": "Form is submitted and the success page is displayed showing 'Thanks for your submission!'",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 9,
+          "desc": "Verify the 'Got it' button is visible on the success page",
+          "result": "'Got it' button is visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 10,
+          "desc": "Click the 'Got it' button",
+          "result": "Browser navigates to the configured redirect URL (https://example.com/thank-you)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 11,
+          "desc": "Verify the final URL in the browser address bar matches the configured redirect URL",
+          "result": "Browser URL is https://example.com/thank-you",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5501",
+      "uuid": "KYHLfaYw",
+      "name": "Invalid redirect URL format is rejected by configuration",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is being created or edited. User is on the 'After form submission' configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Exception — Invalid URL format</p><p><b>Priority:</b> Normal</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter an invalid URL in the Redirect URL field (e.g. 'not-a-url', 'htt://broken', 'example.com without protocol')",
+          "result": "Invalid URL is entered in the field",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Attempt to save the form configuration",
+          "result": "Save is blocked and an error message is displayed indicating the URL format is invalid",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Verify the form configuration is NOT saved with the invalid URL",
+          "result": "Configuration remains unsaved or reverts to previous valid state",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5502",
+      "uuid": "VPJX3dus",
+      "name": "Empty redirect URL with redirect enabled is handled",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is being created or edited. User is on the 'After form submission' configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Boundary — Empty URL with redirect enabled</p><p><b>Priority:</b> Normal</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Leave the Redirect URL field empty",
+          "result": "Redirect URL field is empty",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Attempt to save the form configuration",
+          "result": "Either save is blocked with a clear message, OR save succeeds with redirect disabled (per product definition)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "If save succeeds: open the form as customer, submit, and click 'Got it'",
+          "result": "Success page closes normally without attempting to redirect to an empty URL",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5503",
+      "uuid": "3Terx3zi",
+      "name": "Click 'Got it' without configured redirect URL does not error",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is created and published WITHOUT a redirect URL configured.",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Boundary — No redirect configured, 'Got it' still works</p><p><b>Priority:</b> Normal</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields, click 'Continue', and do NOT enter a redirect URL",
+          "result": "'After form submission' page is displayed with empty redirect URL",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Open the form as a customer, fill in required fields, and submit",
+          "result": "Success page with 'Thanks for your submission!' is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Click the 'Got it' button",
+          "result": "Success page closes or returns to previous view without errors; no redirect attempt is made",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5504",
+      "uuid": "DKhUPRof",
+      "name": "Redirect URL with special characters is handled correctly",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is being created or edited. User is on the 'After form submission' configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Boundary — URL with special characters (query params, fragments, Unicode)</p><p><b>Priority:</b> Low</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Enter a redirect URL with query parameters (e.g. https://example.com/page?source=form&id=123)",
+          "result": "URL is entered in the field",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save the form configuration",
+          "result": "URL is accepted and saved (or rejected with error per product definition)",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "If saved: open form as customer, submit, and click 'Got it'",
+          "result": "Browser redirects to the exact URL including query parameters",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Repeat with a URL containing a fragment (e.g. https://example.com/page#section)",
+          "result": "Redirect works correctly with fragment preserved",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Repeat with a URL containing Unicode characters (e.g. https://example.com/ありがとう)",
+          "result": "Redirect works correctly or is rejected with clear error per product definition",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5505",
+      "uuid": "GUJzYYhE",
+      "name": "Edit existing form's redirect URL and verify immediate effect",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is already created with a redirect URL configured (e.g. https://old-url.com).",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Regression — Update redirect URL on existing form</p><p><b>Priority:</b> Normal</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open the existing form for editing",
+          "result": "Form editor is open with existing configuration",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click 'Continue' to reach the 'After form submission' configuration page",
+          "result": "Current redirect URL (https://old-url.com) is displayed in the field",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Change the redirect URL to a new value (e.g. https://new-url.com)",
+          "result": "New URL is entered in the field",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Open the form as a customer, fill in required fields, and submit",
+          "result": "Success page with 'Thanks for your submission!' is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Click the 'Got it' button",
+          "result": "Browser redirects to the NEW redirect URL (https://new-url.com), not the old one",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Verify the final URL in the browser address bar matches the new redirect URL",
+          "result": "Browser URL is https://new-url.com",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5506",
+      "uuid": "XPWbZjfm",
+      "name": "Verify existing form submission flow is not broken by redirect feature",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is created WITHOUT any redirect URL configured (legacy form).",
+      "desc": "<p><b>Ticket:</b> KAT-11397</p><p><b>Scenario:</b> Regression — Existing form submission still works</p><p><b>Priority:</b> High</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open a legacy storefront form (created before the redirect feature) as a customer",
+          "result": "Form is displayed with all configured fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Fill in the required fields and submit the form",
+          "result": "Form is submitted successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Verify the success page is displayed with 'Thanks for your submission!'",
+          "result": "Success page is shown as expected",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click the 'Got it' button",
+          "result": "Success page closes normally without errors",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Verify no unexpected redirect occurs",
+          "result": "User is NOT redirected to any external URL",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5516",
+      "uuid": "LeLeimxB",
+      "name": "Verify 'Follow my shop' can be enabled in After form submission settings",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "A storefront form is created or opened for editing. User is on the form field configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Positive — Merchant enables Submit and Follow in form settings</p><p><b>Priority:</b> P0</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page",
+          "result": "Storefront page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Create a new form or open an existing form for editing",
+          "result": "Form editor is open with field configuration visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Configure at least one form field (e.g. Name or Email)",
+          "result": "Field is added to the form",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click the 'Continue' button",
+          "result": "The 'After form submission' configuration page is displayed with Title and Message fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Check the 'Follow my shop' checkbox",
+          "result": "Checkbox is checked; the configuration shows Follow-specific options and the consumer preview updates",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully without errors",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5517",
+      "uuid": "AxXQfCFw",
+      "name": "Verify consumer form shows 'Submit and follow' button and Follow consent section when Follow is enabled",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P0",
+      "type": "",
+      "condition": "A storefront form is created with 'Follow my shop' enabled and at least one required Phone or Email field.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Positive — Consumer-facing Follow consent section is rendered</p><p><b>Priority:</b> P0</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the published or preview form as a customer",
+          "result": "Customer-facing form is displayed with configured fields",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Fill in the required fields on the form",
+          "result": "Required fields are filled in",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Verify the consent section is shown below the Follow call-to-action (e.g. 'Follow Fanka', 'Get updates, new drops, and exclusive offers from this shop')",
+          "result": "Follow consent section with shop name and description is visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Verify the Phone field is displayed and marked as required",
+          "result": "Phone input is visible with a required indicator",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Verify the two consent checkboxes are present: 'Receive updates from this shop' and 'I agree to the Terms & Privacy Policy'",
+          "result": "Both consent checkboxes are visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Verify the submit button text reads 'Submit and follow' instead of 'Submit'",
+          "result": "Button text is 'Submit and follow'",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5518",
+      "uuid": "5s2AnRAm",
+      "name": "Verify form submission without Follow enabled keeps the standard confirmation flow",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is created or edited with 'Follow my shop' left unchecked.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Regression — Existing form submission behavior is unchanged</p><p><b>Priority:</b> P0</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Leave the 'Follow my shop' checkbox unchecked",
+          "result": "Follow option remains disabled",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Open the form as a customer, fill in required fields, and submit",
+          "result": "Success page is displayed with the configured confirmation message (e.g. 'Thanks for your submission!')",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Verify NO Follow consent section or 'Submit and follow' button is shown",
+          "result": "Standard confirmation flow is displayed without any Follow option",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5519",
+      "uuid": "YNMtJVJK",
+      "name": "Verify red validation error appears when Follow is enabled but required phone/email field is missing",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is being edited. User is on the 'After form submission' configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Exception — Validation error text in red for missing required Follow field</p><p><b>Priority:</b> P1</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Check the 'Follow my shop' checkbox",
+          "result": "Checkbox is checked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Ensure no Phone or Email field is marked as required in the form",
+          "result": "No required Phone/Email field exists",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Attempt to save the form configuration",
+          "result": "Save is blocked and a validation message is shown",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Verify the error text is displayed in red (e.g. 'Add a required phone number or email field to let visitors follow your shop')",
+          "result": "Error message is shown in red, consistent with other form errors",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Add a required Phone or Email field and save again",
+          "result": "Error disappears and form saves successfully",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5520",
+      "uuid": "7FgTDzLQ",
+      "name": "Verify customer can follow shop without signup after filling required fields and consent checkboxes",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is created with 'Follow my shop' enabled, a required Phone field, and both consent checkboxes.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Positive — End-to-end Submit and Follow without signup requirement</p><p><b>Priority:</b> P1</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Open the form as a customer who is NOT signed up or logged in",
+          "result": "Customer-facing form is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Fill in the required form fields",
+          "result": "Required fields are filled in",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Fill in the required Phone number in the Follow consent section",
+          "result": "Phone number is entered",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Check the 'Receive updates from this shop' checkbox",
+          "result": "Checkbox is checked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Check the 'I agree to the Terms & Privacy Policy' checkbox",
+          "result": "Checkbox is checked",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Click the 'Submit and follow' button",
+          "result": "Form is submitted and the follow action completes without signup or login prompt",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "Verify a success confirmation is displayed",
+          "result": "Confirmation message is shown and the user is following the shop",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5521",
+      "uuid": "ArYyGv9v",
+      "name": "Verify editing existing form's Follow configuration takes immediate effect",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form already exists with 'Follow my shop' enabled.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Regression — Updating Follow configuration on an existing form</p><p><b>Priority:</b> P1</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open the existing form for editing",
+          "result": "Form editor is open with existing configuration",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Click 'Continue' to reach the 'After form submission' configuration page",
+          "result": "Current Follow configuration is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Modify the Follow configuration (e.g. uncheck 'Follow my shop' or change the required Phone/Email field)",
+          "result": "Changes are made to the Follow configuration",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Save the form configuration",
+          "result": "Form is saved successfully",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Open the form as a customer and submit it",
+          "result": "Customer-facing form is submitted",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "Verify the updated Follow configuration is reflected (e.g. Follow section appears/disappears or required fields change)",
+          "result": "Consumer experience matches the edited configuration",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5522",
+      "uuid": "JtDRv64G",
+      "name": "Verify 'Back to form' button returns to form editor from After form submission page",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Contact us form",
+      "module_uuid": "8tMnELNg",
+      "priority": "P1",
+      "type": "",
+      "condition": "A storefront form is being created or edited. User is on the 'After form submission' configuration page.",
+      "desc": "<p><b>Ticket:</b> KAT-11396</p><p><b>Scenario:</b> Positive — Navigation from After form submission back to form editor</p><p><b>Priority:</b> P1</p>",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "Navigate to the Storefront page and open a form for editing",
+          "result": "Form editor is open",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "Configure form fields and click 'Continue'",
+          "result": "'After form submission' configuration page is displayed",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "Locate the 'Back to form' button next to the 'Save' button",
+          "result": "'Back to form' button is visible",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "Click the 'Back to form' button",
+          "result": "Form editor is displayed again, showing the field configuration page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "Verify the form editor state is preserved (fields and configuration are still intact)",
+          "result": "Form editor shows the previously configured fields without data loss",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

@@ -89,6 +89,73 @@ include:
   - Verify the Additional QR codes can be added/edited/deleted
   - (Linda)(Venue map) Verify the Customer-provided details flow work
   - (Linda) Verify the Require customer-provided details can be apply success
+  # ── My Shop / Storefront / Edit Profile ──
+  - Verify Merchant can configure and publish the "Contact us" form
+  - Verify Form Required Field Validation and User-End Selection Scenarios
+  - Verify Form Social Field Configuration with Auto-Complete URL Generation and Cross-Channel Disp
+  - Verify Form Social Field Input Format Validation (Without Existence Checking)
+  - Verify user can complete and submit the "Contact us" form successfully
+  - Verify form input validation logic
+  - Verify Recipient Email default value and required logic
+  - Verify submission handling in failure scenarios
+  - Verify multiple submissions and data consistency
+  - Two ways for merchants to view submissions
+  - Verify the search bar on the Customer submissions page returns correct results by keyword
+  - Verify time range filter correctly filters submission records
+  - Verify Export data button appears after clicking Batch select and selecting submissions via Act
+  - Verify exported report contains correct data, full timestamp, and matches store timezone settin
+  - Verify adding a new field "Media" on the Add new form page
+  - Verify adding a new field "Date and time" on the Add new form page
+  - Verify adding a new field "? Yes / No option" on the Add new form page
+  - Verify when adding a new field to a form, adding a "Field help text" to provide more clarity
+  - Verify Form Single/Multiple Choice Field Configuration and End-to-End Submission Flow
+  - Verify Form Field Option Quantity and Content Boundary Validation
+  - Verify Form Social Field Input Format Validation (Without Existence Checking)
+  - Configure redirect URL and verify redirect after form submission
+  - Invalid redirect URL format is rejected by configuration
+  - Edit existing form's redirect URL and verify immediate effect
+  - Verify 'Follow my shop' can be enabled in After form submission settings
+  - Verify red validation error appears when Follow is enabled but required phone/email field is mi
+  - Verify editing existing form's Follow configuration takes immediate effect
+  - Verify the Product card can create post success on my shop page
+  - The user successfully carried out personalized settings for the store details and completed the
+  - Verify that Curator successfully added name and uploaded Shop logo and Cover image picture in M
+  - Verify that "My shop" and "Account" profile pages are merged and data is synchronized
+  - Verify when choosing the aspect ratio for the cover image, then it will update on the My shop p
+  - Verify shop-info endpoint reflects the cover image
+  - Verify the cover image source can be updated to a new image
+  - Verify shop-info endpoint reflects the avatar
+  - Verify the profile can upload success
+  - Verify the shop avatar can be removed
+  - Verify that the Curator has successfully changed personal information and that the store link w
+  - Verify that there is no limit to the number of words in Store Description when customizing stor
+  - Verify shop description supports special characters and emoji
+  - The user can clear the shop description
+  - Verify shop name and URL remain unchanged through description/avatar/cover edits
+  - Verify default state of "Display shop name" checkbox
+  - Verify storefront visibility when shop name is hidden
+  - Verify storefront visibility when shop name is shown
+  - Verify internal system fallback for Shop Name
+  - Verify the public storefront shop endpoint returns the shop modules
+  - Verify that Curator adds 10 links and changes their positions
+  - Verify that Curator edits 3 links to "test.com" and deletes 1 link during editing
+  - After verifying that Curator deletes 2 Links, the count in the upper right corner of Links is u
+  - Verify protocol modification and saving in Edit link window
+  - Verify default style and layout switching logic when creating a new General Link
+  - Verify that the Curator adds all external links and changes the location of the first and secon
+  - Verify that Curator edits all Social links and changes the location of the links, and then chec
+  - Verify that Curator removes all Social links and then checks the shop icon
+  - Verify the special characters supported by Social
+  - Verify that Socia can display up to 7 on the shop page at most
+  - Verify protocol selection and saving in Add new link window
+  - Verify Link input format validation
+  - Verify that the Storefront color of the new user is Brand Kit color
+  - Verify that curator sets up Storefront color
+  - Verify that users can switch the layout mode of the shop page
+  - Verify the custom Reset colors and fonts and layouyt feature
+  - Verify that the currently saved shop topic is a brand new preset and does not overwrite the pre
+  - Verify the Color palette function for custom "Color"
+  - Verify the creation of shop topic presets and their application to post
 exclude:
   # ── 以下这条【不属于】API 日常回归，从 linda 套显式排除 ──
   # UI Automation Data Pre-configuration (staging & release, no SQL)

@@ -1,0 +1,184 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "RZTyjk7J",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/RZTyjk7J"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:41",
+  "count": 4,
+  "cases": [
+    {
+      "id": "T4191",
+      "uuid": "FCYRwZXE",
+      "name": "Verify the validity of the links on the third-party platform",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Migrate content tool",
+      "module_uuid": "RZTyjk7J",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p>KAT-7974</p>\n\n<p>&nbsp;</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"WFHzDGJT\" src=\"https://sz.ones.cn/saas-dc1-tmp/temporary/transform/FrSn1siVLyrlGMX6ehPQ88uRvZWv/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20250912%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20250912T021546Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;X-Amz-Signature=aaa325dba7fc903cae8ecbae2ea8b524cffb2d2379a488a2cb7c33f29f911ad4\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p><font dir=\"auto\" style=\"vertical-align: inherit;\"><font dir=\"auto\" style=\"vertical-align: inherit;\">​</font></font></p>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The user enters a non-third-party platform link in \"Add your Linktree URL\" and then clicks \"Continue\".\n",
+          "result": "1. Unable to migrate. Error message: Incorrect link format.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. The user did not fill in the Pear shop link in the BIO of Linktree, then entered the Linktree link in \"Add your Linktree URL\" and then clicked \"Continue\".\n",
+          "result": "2. Unable to migrate. Error message: \"Please ensure that the third-party platform includes your store link in the bio before proceeding.\"\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. \"Add your Linktree URL\" is empty, then the user clicks \"Continue\". ",
+          "result": "3. Unable to migrate. Error message: \"Add URL\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4189",
+      "uuid": "MdLFtcKx",
+      "name": "Verify the migration tool's Edu popup",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Migrate content tool",
+      "module_uuid": "RZTyjk7J",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p>KAT-7974</p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"8nz9ugAb\" src=\"data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The user registers and logs in to pear through the promoter invitation link and clicks \"Customize\".\n",
+          "result": "1. When entering the \"Customize shop\" page, the message \"EDU:\" appears.\ntitle: Migrate Your Content to Pear in Minutes\ntext: Move your content from Linktree or Komi to Pear in one go—just note it’s a one-time transfer and future updates won’t sync automatically.\nCTA: Not now\nCTA: Start migrating\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. The promoter clicks \"Not now\" or \"X\", then clicks \"<\".\n",
+          "result": "2. The user closed this EDU pop-up and returned to the shop page.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. Click \"Customize\", then click \"Start migrating\".\n",
+          "result": "3. After clicking \"Start migrating\", the pop-up will be closed and the user will automatically be scrolled to the \"Migrate content tool\".\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. The promoter clicks \"<\", then clicks \"Customize\" again, then modifies the shop name to \"test linktree\", and finally clicks \"Publish\".\n",
+          "result": "4. The shop name was successfully changed to \"test linktree\".\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. Click \"Customize\".",
+          "result": "5. Since the shop information has been saved, the EDU pop-up will also be permanently closed.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T4190",
+      "uuid": "PJ8rJGCe",
+      "name": "Verify the use of the migration tool to transfer some data from a third-party platform to Pear.",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Migrate content tool",
+      "module_uuid": "RZTyjk7J",
+      "priority": "P0",
+      "type": "",
+      "condition": "",
+      "desc": "<p><font dir=\"auto\" style=\"vertical-align: inherit;\"><font dir=\"auto\" style=\"vertical-align: inherit;\">KAT-7974</font></font></p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"PB4NZmis\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FpqYSQ3fhGar7zD-olpM_afudrnW/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T073630Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=5ce8496939f35358cf100ca6189375e41336e39f07662dd6b8ca6a0b02c6f9aa\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p><font dir=\"auto\" style=\"vertical-align: inherit;\"><font dir=\"auto\" style=\"vertical-align: inherit;\">KAT-9184</font></font></p>\n\n<p><font dir=\"auto\" style=\"vertical-align: inherit;\"><font dir=\"auto\" style=\"vertical-align: inherit;\">add &quot;</font></font><span style=\"background-color:#ffffff; color:#000000; font-size:14px\">Colors&quot; and &quot;Theme&quot;</span></p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"S9WjaBJU\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FtgF8h728y--PqLYXVxk2PYL2AcG/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T073804Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=82a5a86968572b09b2aa51ea286fbd5e2d6d0a3b9bc94b2ee0c9d150cba35c95\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. The user clicks \"Customize\", then click \"Import from other platforms\", and clicks \"Move from Linktree\".\n",
+          "result": "1. When entering the \"Migrate Content Tool\" page, the appears: \n\nAdd your Linktree URL\n\nWhat do you want to migrate?\nProfile, Profile, Content\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "2. Copy the homepage link of Linktree, then return to Pear, paste the homepage link of Linktree into the \"Add your Linktree URL\" input field, and then click \"Continue\".\n",
+          "result": "2. Successfully synchronized the Profile, Social, and Content information of linktree to pear shop at one time.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. (Komi)Log into another account, enter the Customize shop page, repeat the migration process this time migrating Profile, Social, Module, Content, Colors and Theme in sequence. ",
+          "result": "3. Successfully synchronized the Profile, Social, Module, Content information, Colors and Theme of linktree to pear shop sequentially.",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T5213",
+      "uuid": "PJ3G7pQD",
+      "name": "Verify the color and theme coverage logic of the migration tool",
+      "module": "My Shop / Storefront / Edit Profile / Storefront / Migrate content tool",
+      "module_uuid": "RZTyjk7J",
+      "priority": "P0",
+      "type": "",
+      "condition": "https://linktr.ee/loren",
+      "desc": "<p>KAT-9184</p>\n\n<p>add &quot;<span style=\"background-color:#ffffff; color:#000000; font-size:14px\">Colors&quot; and &quot;Theme&quot;</span></p>\n\n<figure class=\"ones-image-figure\" data-size=\"medium\">\n<div class=\"image-wrapper\"><img data-mime=\"image/png\" data-orientation=\"1\" data-ref-id=\"HKJxJn4E\" data-ref-type=\"user\" data-size=\"medium\" data-uuid=\"S9WjaBJU\" src=\"https://sz.ones.cn/ones-tmp-files/temporary/transform/FtgF8h728y--PqLYXVxk2PYL2AcG/image_auto-orient_g0/image.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;X-Amz-Credential=HPUAW4FOHECSD6P9II0F%2F20260417%2Fcn-north-4%2Fs3%2Faws4_request&amp;X-Amz-Date=20260417T073804Z&amp;X-Amz-Expires=3600&amp;X-Amz-SignedHeaders=host&amp;response-content-disposition=inline%3B%20filename%3D%22image.png%22%3B%20filename%2A%3Dutf-8%27%27image.png&amp;X-Amz-Signature=82a5a86968572b09b2aa51ea286fbd5e2d6d0a3b9bc94b2ee0c9d150cba35c95\" /></div>\n\n<figcaption></figcaption>\n</figure>\n\n<p>&nbsp;</p>\n\n<p>&nbsp;</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "1. When registering as a partner/coseller, import the colors and themes, and then log in to check the themes.",
+          "result": "1. The color, theme and the linked content are consistent.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": " 2. During the registration process, import the colors and themes. Then, at the final step of registration, select another theme, and finally log in to check the theme.\n",
+          "result": "2. The color is consistent with the imported link, and the theme is the one selected during registration.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "3. During the registration process for partner/coseller, do not import the link. Instead, at the final step of registration, select the topic, and then log in to check the topic.\n",
+          "result": "3. Color, theme should be consistent with that specified during registration.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "4. During the registration process for partner/coseller, do not import the link. Select the appropriate theme, log in, then import the link, and finally check for any changes in color and theme.\n",
+          "result": "4. The color, theme, and the linked content should be consistent. ",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "5. During registration, import the colors and themes. After logging in, change the theme in the \"Style\" section, and then verify the changes in the colors and themes.\n",
+          "result": "5. The color is consistent with the imported link, and the theme is set as \"Style\" when the appropriate option is selected.\n",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "6. After logging in, import the link. During the import process, do not select the color and theme options. Then, check the color and theme.",
+          "result": "6. Color and theme remain unchanged",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}

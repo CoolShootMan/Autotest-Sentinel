@@ -1,0 +1,95 @@
+{
+  "source": {
+    "team": "T7u1zXum",
+    "library": "XcAFFViB",
+    "module": "ChYmAYpL",
+    "raw": "https://ones.cn/project/#/testcase/team/T7u1zXum/library/XcAFFViB/module/ChYmAYpL"
+  },
+  "library_name": "Katana",
+  "fetched_at": "2026-10-21 15:49:29",
+  "count": 2,
+  "cases": [
+    {
+      "id": "T3002",
+      "uuid": "2aS4GsKA",
+      "name": "Verify when there is no change on Brand Kit page, then the color of the Save button is grey out",
+      "module": "My Shop / Storefront / Edit Profile / Brand Kit",
+      "module_uuid": "ChYmAYpL",
+      "priority": "P1",
+      "type": "",
+      "condition": "",
+      "desc": "<p>the Save button is always enabled</p>\n",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "there is no change on Brand Kit page",
+          "result": "then the color of the Save button is grey out",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    },
+    {
+      "id": "T3003",
+      "uuid": "HA7TRNv7",
+      "name": "Verify the UI and tooltips on the Brand Kit page",
+      "module": "My Shop / Storefront / Edit Profile / Brand Kit",
+      "module_uuid": "ChYmAYpL",
+      "priority": "P2",
+      "type": "",
+      "condition": "https://www.figma.com/design/S9F43vieg9hKl1CoM2ej2a/My-Shop?node-id=13284-787&node-type=canvas&t=7pjie6953ORjD33m-0",
+      "desc": "",
+      "steps": [
+        {
+          "index": 1,
+          "desc": "according to the Figma",
+          "result": "",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 2,
+          "desc": "",
+          "result": "add a left and right arrows beside the page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 3,
+          "desc": "on the desktop mode",
+          "result": "there is a banner appears on the top of the page",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 4,
+          "desc": "check the tooltip of Brand logo",
+          "result": "it shows \"Your logo will appear on various pages, such as the promoter invitation and consumer checkout pages. A 2:1 aspect ratio (400x200) in PNG format with a transparent background should be used.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 5,
+          "desc": "check the tooltip of Onboarding image",
+          "result": "it shows \"Your onboarding image will appear on the signup and login pages. The recommended format is a 1:1 ratio (1000x1000) in JPEG.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 6,
+          "desc": "check the tooltip of Brand color",
+          "result": "it shows \"This brand color will be applied to various pages, such as the invitation page. A dark shade from your brand’s color palette should be used.\"",
+          "execute_result": "",
+          "actual_result": ""
+        },
+        {
+          "index": 7,
+          "desc": "check the tooltip of Background color",
+          "result": "it shows \"This background color will be applied to various pages, such as the invitation page. A light shade from your brand’s color palette should be used.\"",
+          "execute_result": "",
+          "actual_result": ""
+        }
+      ]
+    }
+  ]
+}
