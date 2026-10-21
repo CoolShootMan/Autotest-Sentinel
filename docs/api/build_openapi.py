@@ -1,42 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""生成 katana-server 标准 OpenAPI 3.0 文档（YAML）。
-输入：/tmp/katana_endpoints.json（controller 解析结果）
-过程：扫描 src 下 class 定义（class-validator 装饰器 → JSON Schema），组装 paths + components.schemas。
+"""生成 katana-server 标准 OpenAPI 3.0 文档（增强版）。
+输入：/tmp/katana_endpoints.json（controller 解析结果，含 jsdoc/returns/calls/http_code）
+增强：默认响应码按 NestJS 语义（POST/PUT/PATCH=201，GET/DELETE=200，@HttpCode 覆盖）；
+      @Query DTO 展开为具体 query 参数；@Body('field') 拆分为内联字段；
+      operation description 优先取 JSDoc，其次生成 service 调用链；200 schema 由 return 表达式推断；
+      DTO 字段提取行尾注释；修复 @Type(() => Date) 悬空 $ref。
 """
 import os, re, json, sys
 
 ROOT = "/Users/a123456/Documents/Pear code/katana-server/src"
 ENDPOINTS = json.load(open("/tmp/katana_endpoints.json", encoding="utf-8"))
 
-# ---------- 1. 扫描 class 定义与枚举 ----------
 TYPE_MAP = {
-    "IsString": ("string", None),
-    "IsUUID": ("string", "uuid"),
-    "IsEmail": ("string", "email"),
-    "IsUrl": ("string", "uri"),
-    "IsDateString": ("string", "date-time"),
-    "IsISO8601": ("string", "date-time"),
-    "IsNumber": ("number", None),
-    "IsInt": ("integer", "int32"),
-    "IsPositive": ("number", None),
-    "IsBoolean": ("boolean", None),
-    "IsArray": ("array", None),
-    "IsNotEmptyObject": ("object", None),
-    "IsPhoneNumber": ("string", None),
-    "IsHexadecimal": ("string", None),
-    "IsAlphanumeric": ("string", None),
-    "IsLowercase": ("string", None),
-    "IsUppercase": ("string", None),
-    "IsEnum": ("string", None),
-    "IsDate": ("string", "date"),
-    "IsJsonString": ("string", None),
-    "IsObject": ("object", None),
+    "IsString": ("string", None), "IsUUID": ("string", "uuid"), "IsEmail": ("string", "email"),
+    "IsUrl": ("string", "uri"), "IsDateString": ("string", "date-time"), "IsISO8601": ("string", "date-time"),
+    "IsNumber": ("number", None), "IsInt": ("integer", "int32"), "IsPositive": ("number", None),
+    "IsBoolean": ("boolean", None), "IsArray": ("array", None), "IsNotEmptyObject": ("object", None),
+    "IsPhoneNumber": ("string", None), "IsHexadecimal": ("string", None), "IsAlphanumeric": ("string", None),
+    "IsLowercase": ("string", None), "IsUppercase": ("string", None), "IsEnum": ("string", None),
+    "IsDate": ("string", "date"), "IsJsonString": ("string", None), "IsObject": ("object", None),
     "IsIn": ("string", None),
 }
 
 def collect_classes():
-    """返回 {ClassName: {"fields": {name: {type, format, required, $ref, items}}, "raw": 定义片段}}"""
+    """返回 {ClassName: {"fields": {...}}, "raw": 定义片段}；同时收集枚举。"""
     classes = {}
     enums = {}
     for dirpath, _, files in os.walk(ROOT):
@@ -48,9 +36,8 @@ def collect_classes():
                 text = open(fp, encoding="utf-8").read()
             except Exception:
                 continue
-            text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
-            # 枚举：enum X { A = 'a' } 或 const X = {...} as const
-            for em in re.finditer(r'enum\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([^}]*)\}', text):
+            text_wo_block = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+            for em in re.finditer(r'enum\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{([^}]*)\}', text_wo_block):
                 vals = []
                 for line in em.group(2).split(','):
                     line = line.strip()
@@ -61,43 +48,44 @@ def collect_classes():
                         v = (vm.group(1) or line.split('=')[0].strip()).strip('\'"')
                         vals.append(v)
                 enums[em.group(1)] = vals
-            for cm in re.finditer(r'export\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{', text):
+            for cm in re.finditer(r'export\s+class\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{', text_wo_block):
                 cname = cm.group(1)
-                # 找类体
                 start = cm.end() - 1
                 depth = 0
-                for i in range(start, len(text)):
-                    if text[i] == '{':
+                for i in range(start, len(text_wo_block)):
+                    if text_wo_block[i] == '{':
                         depth += 1
-                    elif text[i] == '}':
+                    elif text_wo_block[i] == '}':
                         depth -= 1
                         if depth == 0:
-                            body = text[cm.start():i + 1]
-                            classes[cname] = parse_class(body, enums, text)
+                            body = text_wo_block[cm.start():i + 1]
+                            classes[cname] = parse_class(body, enums)
                             break
     return classes, enums
 
-def parse_class(body, enums, file_text):
-    """解析类体：字段名 + 装饰器 → schema 属性。"""
+def parse_class(body, enums):
+    """解析类体：字段名 + 装饰器 → schema 属性；提取行尾注释。"""
     fields = {}
-    # 提取类体内所有字段声明：装饰器序列 + name[:]? type;
-    # 简化：先按 "字段名: 类型;" 提取，再向前收集装饰器
-    field_re = re.compile(r'(?:^|\n)\s*((?:@[A-Za-z]+\([^;]*?\)\s*|@[A-Za-z]+\s*)+)?\s*([A-Za-z_][A-Za-z0-9_]*)\s*(\??)\s*:\s*([^;\n]+);', re.M)
+    field_re = re.compile(
+        r'(?:^|\n)\s*((?:@[A-Za-z]+\([^;]*?\)\s*|@[A-Za-z]+\s*)+)?\s*([A-Za-z_][A-Za-z0-9_]*)\s*(\??)\s*:\s*([^;\n]+?)\s*(?=;|$)\s*(?://([^\n]*))?',
+        re.M)
     for fm in field_re.finditer(body):
         decorators_src = fm.group(1) or ""
         name = fm.group(2)
         optional_mark = fm.group(3) == '?'
         type_src = fm.group(4).strip()
+        comment = (fm.group(5) or "").strip()
         decs = re.findall(r'@(\w+)', decorators_src)
-        schema = build_field_schema(decs, decorators_src, type_src, enums, file_text)
+        schema = build_field_schema(decs, decorators_src, type_src, enums)
         if schema is not None:
             schema["required"] = not (optional_mark or "IsOptional" in decs)
+            if comment:
+                schema["description"] = comment
             fields[name] = schema
     return {"fields": fields}
 
-def build_field_schema(decs, decorators_src, type_src, enums, file_text):
+def build_field_schema(decs, decorators_src, type_src, enums):
     schema = {}
-    # 数组优先：@IsArray / @ValidateNested({each:true}) / TS 类型 Array<X> 或 X[]
     is_array = "IsArray" in decs or "each" in decorators_src
     if not is_array and (type_src.startswith("Array<") or type_src.endswith("[]")):
         is_array = True
@@ -123,13 +111,15 @@ def build_field_schema(decs, decorators_src, type_src, enums, file_text):
             tm = re.search(r'@Type\(\(\)\s*=>\s*([A-Za-z0-9_]+)', decorators_src)
             if tm:
                 ref = tm.group(1)
+                if ref == "Date":  # @Type(() => Date)：不要生成悬空 $ref，直接用 date-time
+                    schema = {"type": "string", "format": "date-time"}
+                    continue
                 if "each" in decorators_src or type_src.startswith(("Array<", "[")) or "[]" in type_src:
                     schema["type"] = "array"
                     schema["items"] = {"$ref": f"#/components/schemas/{ref}"}
                 else:
                     schema["$ref"] = f"#/components/schemas/{ref}"
     if not schema:
-        # 从 TS 类型推断兜底
         base = type_src.split('|')[0].strip()
         if base.startswith("Array<"):
             schema["type"] = "array"
@@ -153,16 +143,13 @@ def build_field_schema(decs, decorators_src, type_src, enums, file_text):
         elif base.startswith("{[") or base == "object" or base.startswith("Record"):
             schema = {"type": "object"}
         else:
-            # 可能是引用类型 → 尝试 $ref
             if re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', base):
                 schema = {"$ref": f"#/components/schemas/{base}"}
     return schema
 
 def infer_array_item(decs, decorators_src, type_src, enums):
-    """数组元素类型：优先 each:true 的验证器，其次 TS 类型。"""
     for d in decs:
         if d in ("IsUUID", "IsString", "IsEmail", "IsNumber", "IsInt", "IsBoolean", "IsEnum", "IsDateString", "IsUrl"):
-            # 检查是否 each:true
             if re.search(r'@%s\([^)]*each:\s*true' % d, decorators_src):
                 t, fmt = TYPE_MAP.get(d, ("string", None))
                 if d == "IsEnum":
@@ -175,6 +162,8 @@ def infer_array_item(decs, decorators_src, type_src, enums):
                 return items
     tm = re.search(r'@Type\(\(\)\s*=>\s*([A-Za-z0-9_]+)', decorators_src)
     if tm:
+        if tm.group(1) == "Date":
+            return {"type": "string", "format": "date-time"}
         return {"$ref": f"#/components/schemas/{tm.group(1)}"}
     base = type_src.split('|')[0].strip()
     if base.startswith("Array<"):
@@ -189,12 +178,39 @@ def infer_array_item(decs, decorators_src, type_src, enums):
         return {"$ref": f"#/components/schemas/{item}"}
     return {"type": "object"}
 
-# ---------- 2. 组装 OpenAPI ----------
+# ---------- TS 类型 → OpenAPI 简单映射（参数级） ----------
+def ts_type_schema(type_src):
+    """把 TS 参数类型转成 schema（string/number/boolean/string[]/number[] 等）。"""
+    base = type_src.strip().rstrip(',')
+    if base.startswith("Array<") and base.endswith(">"):
+        item = base[6:-1]
+        inner = ts_type_schema(item)
+        return {"type": "array", "items": inner or {"type": "string"}}
+    if base.endswith("[]"):
+        item = base[:-2]
+        inner = ts_type_schema(item)
+        return {"type": "array", "items": inner or {"type": "string"}}
+    if base.startswith("{[") or base == "object" or base.startswith("Record"):
+        return {"type": "object"}
+    if base.startswith("Promise<"):
+        return ts_type_schema(base[8:-1])
+    if base == "string":
+        return {"type": "string"}
+    if base == "number":
+        return {"type": "number"}
+    if base == "boolean":
+        return {"type": "boolean"}
+    if base == "Date":
+        return {"type": "string", "format": "date-time"}
+    if base in ("any", "unknown"):
+        return None
+    return None  # 类引用 → 调用方处理
+
+# ---------- 主流程 ----------
 def main():
     classes, enums = collect_classes()
     print(f"class 定义: {len(classes)} | 枚举: {len(enums)}", file=sys.stderr)
 
-    # 修正模块名：src/controllers 下文件用文件名主体
     for e in ENDPOINTS:
         if e["module"] == "controllers":
             e["module"] = e["file"].replace(".controller.ts", "")
@@ -206,12 +222,31 @@ def main():
 
     paths = {}
     for e in ENDPOINTS:
-        path = e["path"].replace(':id', '{id}')
-        # 把所有 :xxx 转 {xxx}
+        path = e["path"]
         path = re.sub(r':([A-Za-z0-9_]+)', r'{\1}', path)
-        op = {"tags": [e["module"]], "operationId": e["handler"], "summary": f"{e['method'].upper()} {e['path']}", "responses": {}}
+        method = e["method"]
+        op = {
+            "tags": [e["module"]],
+            "operationId": e["handler"],
+            "summary": f"{method.upper()} {path}",
+            "responses": {},
+        }
+        # description：JSDoc 优先，其次 service 调用链
+        desc_parts = []
+        if e.get("jsdoc"):
+            desc_parts.append(e["jsdoc"].strip().replace("\n", " "))
+        calls = e.get("calls") or []
+        if calls:
+            chain = " → ".join(f"{c['service']}.{c['method']}" for c in calls)
+            if not e.get("jsdoc"):
+                desc_parts.append(f"内部流程：{chain}。")
+        if desc_parts:
+            op["description"] = " ".join(desc_parts)
+
         parameters = []
-        body_ref = None
+        body_ref = None          # @Body() dto: XxxDto
+        body_fields = []         # @Body('field') f: Type
+        query_dto_ref = None     # @Query() dto: XxxDto
         for p in e["params"]:
             ptype = p["type"].rstrip(',')
             dec = {d["name"]: d["arg"] for d in p["decorators"]}
@@ -220,44 +255,90 @@ def main():
                 return m.group(1) if m else ""
             if "Param" in dec:
                 name = first_str(dec["Param"]) or p["name"]
-                parameters.append({"name": name, "in": "path", "required": True, "schema": {"type": "string"}})
+                sch = ts_type_schema(ptype) or {"type": "string"}
+                if sch.get("type") == "array":
+                    sch = {"type": "string"}  # path 参数不允许数组
+                parameters.append({"name": name, "in": "path", "required": True, "schema": sch})
             elif "Query" in dec:
-                name = first_str(dec["Query"]) or p["name"]
-                parameters.append({"name": name, "in": "query", "schema": {"type": "string"}, "required": False})
+                name = first_str(dec["Query"])
+                if name:
+                    parameters.append({"name": name, "in": "query", "schema": ts_type_schema(ptype) or {"type": "string"}, "required": False})
+                elif ptype and ptype not in ("any", "unknown") and re.match(r'^[A-Za-z_]\w*$', ptype):
+                    query_dto_ref = ptype  # @Query() dto: ListXxxDto → 展开
+                else:
+                    parameters.append({"name": p["name"], "in": "query", "schema": {"type": "string"}, "required": False})
             elif "Body" in dec:
-                if ptype and ptype not in ("any", "unknown"):
+                field = first_str(dec["Body"])
+                if field:
+                    body_fields.append({"name": field, "schema": ts_type_schema(ptype) or {"type": "string"}})
+                elif ptype and ptype not in ("any", "unknown") and re.match(r'^[A-Za-z_]\w*$', ptype):
                     body_ref = ptype
+        # @Query DTO 展开
+        if query_dto_ref and query_dto_ref in classes:
+            for fname, f in classes[query_dto_ref]["fields"].items():
+                sch = {k: v for k, v in f.items() if k != "required"}
+                parameters.append({
+                    "name": fname, "in": "query",
+                    "schema": sch, "required": bool(f.get("required", False)),
+                })
         if parameters:
             op["parameters"] = parameters
+
+        # requestBody
         if body_ref:
             op["requestBody"] = {"required": True, "content": {"application/json": {"schema": {"$ref": f"#/components/schemas/{body_ref}"}}}}
-        # 通用响应
+        elif body_fields:
+            props = {}
+            for bf in body_fields:
+                props[bf["name"]] = bf["schema"]
+            op["requestBody"] = {"required": True, "content": {"application/json": {"schema": {"type": "object", "properties": props}}}}
+
+        # 响应码：默认按 NestJS 语义；@HttpCode 覆盖
+        if e.get("http_code"):
+            status = str(e["http_code"])
+        elif method in ("post", "put", "patch"):
+            status = "201"
+        else:
+            status = "200"
+        # 200 schema：由 return 表达式推断（不编造具体 DTO）
+        resp_schema = {"type": "object"}
+        for r in e.get("returns") or []:
+            if "!!" in r:
+                resp_schema = {"type": "boolean"}
+                break
+            if re.match(r'^\{\s*\}$', r):
+                resp_schema = {"type": "object", "description": "空对象"}
+                break
         op["responses"] = {
-            "200": {"description": "成功", "content": {"application/json": {"schema": {"type": "object"}}}},
+            status: {"description": "成功", "content": {"application/json": {"schema": resp_schema}}},
             "400": {"description": "请求参数错误（Bad Request）"},
             "401": {"description": "未登录 / Token 失效（Unauthorized）"},
             "403": {"description": "无权限（Forbidden）"},
             "404": {"description": "资源不存在（Not Found）"},
             "500": {"description": "服务端错误（Internal Server Error）"},
         }
-        paths.setdefault(path, {})[e["method"]] = op
+        paths.setdefault(path, {})[method] = op
 
     # schemas：只保留被引用或 Request/Response/Dto 类
     referenced = set()
     for p in paths.values():
         for op in p.values():
             if "requestBody" in op:
-                ref = op["requestBody"]["content"]["application/json"]["schema"]["$ref"]
-                referenced.add(ref.split("/")[-1])
+                sch = op["requestBody"]["content"]["application/json"]["schema"]
+                if "$ref" in sch:
+                    referenced.add(sch["$ref"].split("/")[-1])
             for param in op.get("parameters", []):
-                pass
-    # 递归收集被引用 schema 的嵌套引用
+                sch = param.get("schema", {})
+                if "$ref" in sch:
+                    referenced.add(sch["$ref"].split("/")[-1])
+                if "items" in sch and isinstance(sch["items"], dict) and "$ref" in sch["items"]:
+                    referenced.add(sch["items"]["$ref"].split("/")[-1])
+
     schemas = {}
     def collect_refs(name, visited):
         if name in visited or name not in classes:
             return
         visited.add(name)
-        schemas[name] = {}
         props = {}
         req = []
         for fname, f in classes[name]["fields"].items():
@@ -276,7 +357,6 @@ def main():
     for ref in referenced:
         collect_refs(ref, set())
 
-    # 组装文档
     doc = {
         "openapi": "3.0.3",
         "info": {
@@ -290,7 +370,6 @@ def main():
         "components": {"schemas": schemas},
     }
 
-    # ---------- 3. 清理悬空 $ref ----------
     def fix_dangling(obj):
         if isinstance(obj, dict):
             for k, v in list(obj.items()):
@@ -311,21 +390,23 @@ def main():
                 fix_dangling(x)
     fix_dangling(doc)
 
-    # 输出 YAML
     try:
         import yaml
     except ImportError:
         print("PyYAML 未安装，尝试 pip 安装", file=sys.stderr)
         os.system("pip3 install pyyaml -q")
         import yaml
-    yaml_safe_dump = yaml.safe_dump
-    out = yaml_safe_dump(doc, allow_unicode=True, sort_keys=False, width=200)
+    out = yaml.safe_dump(doc, allow_unicode=True, sort_keys=False, width=200)
     with open("/Users/a123456/Documents/Pear code/katana-openapi/katana-server.openapi.yaml", "w", encoding="utf-8") as f:
         f.write(out)
     with open("/Users/a123456/Documents/Pear code/katana-openapi/katana-server.openapi.json", "w", encoding="utf-8") as f:
         json.dump(doc, f, ensure_ascii=False, indent=1)
+    n_desc = sum(1 for p in paths.values() for op in p.values() if "description" in op)
+    n_201 = sum(1 for p in paths.values() for op in p.values() if "201" in op["responses"])
+    n_query_dto = sum(1 for p in paths.values() for op in p.values() if any(x.get("in") == "query" for x in op.get("parameters", [])))
+    n_body_fields = sum(1 for p in paths.values() for op in p.values() if "requestBody" in op and "properties" in op["requestBody"]["content"]["application/json"]["schema"])
     print(f"写入完成: paths={len(paths)} 个路径 / {sum(len(v) for v in paths.values())} 个操作 | schemas={len(schemas)} | YAML 约 {len(out)//1024} KB", file=sys.stderr)
-    # 校验
+    print(f"带描述操作: {n_desc} | 201 响应: {n_201} | 含 query 参数操作: {n_query_dto} | @Body 字段拆分: {n_body_fields}", file=sys.stderr)
     d2 = yaml.safe_load(out)
     assert d2["openapi"].startswith("3."), "openapi 版本错误"
     assert "paths" in d2, "缺少 paths"
