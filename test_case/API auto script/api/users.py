@@ -285,3 +285,53 @@ class UsersApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    def update_social(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """PUT /user/social"""
+        return self._call(
+            "PUT", '/user/social',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def profile_by_vanity_url(
+        self, *,
+        vanityUrl: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """GET /user/vanity-url/{{vanityUrl}} — full curator profile (edit-page source of truth)."""
+        return self._call(
+            "GET", '/user/vanity-url/{{vanityUrl}}',
+            path_vars=_pv(("vanityUrl", vanityUrl), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def shop_info_by_vanity_url(
+        self, *,
+        vanityUrl: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """GET /user/shop-info/{{vanityUrl}} — compact public shop profile."""
+        return self._call(
+            "GET", '/user/shop-info/{{vanityUrl}}',
+            path_vars=_pv(("vanityUrl", vanityUrl), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )

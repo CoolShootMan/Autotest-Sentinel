@@ -168,3 +168,68 @@ class StorefrontApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+
+    def self_profile(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """GET /user/self — current curator profile (vanityUrl / storeName)."""
+        return self._call(
+            "GET", '/user/self',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def theme_list(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """GET /store-front/theme/list — saved style presets for the curator."""
+        return self._call(
+            "GET", '/store-front/theme/list',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def create_theme(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /store-front/theme — save current style as a named preset."""
+        return self._call(
+            "POST", '/store-front/theme',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
+    def delete_theme(
+        self, *,
+        theme_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """DELETE /store-front/theme/{{theme_id}}"""
+        return self._call(
+            "DELETE", '/store-front/theme/{{theme_id}}',
+            path_vars=_pv(("theme_id", theme_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )

@@ -93,6 +93,7 @@ RECIPES: dict[str, dict[str, Any]] = {
     "linda10_token":   {"email": "p10_email",             "password": "password"},
     "linda999_token": {"email": "UIauto_partner_email",  "password": "password",      "app_headers": True},
     "linda998_token": {"email": "UIauto_coseller_email", "password": "password",      "app_headers": True},
+    "linda997_token": {"email": "UIauto_partner997_email", "password": "password",    "app_headers": True},
 }
 
 #: 与已有配方**同账号**的令牌别名（别名 -> 主令牌）。
