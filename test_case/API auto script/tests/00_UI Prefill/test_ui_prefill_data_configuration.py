@@ -13480,11 +13480,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
     expect(_resp151c5).json('$.code').equals('200')
 
 
-    # --- step 151d: set post URL alias ---
+    # --- step 151d: set post URL alias (this post = "Before approval" mode) ---
     _resp151d = ctx.api.admin.post_by_post_id(
         path_vars={"post_id": vars.get("approval_post_id", "")},
         body="""{
-    "urlAlias": "post-setting-require-approval-to-purchase",
+    "urlAlias": "post-setting-require-approval-to-purchase-before",
     "headline": "post setting require approval to purchase",
     "title": "post setting require approval to purchase",
     "subTitle": "",
@@ -13520,6 +13520,71 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
         venue_map_post_id=_approval_post_id,
         body=_json.dumps(_patch_approval), token="token", app_headers=True)
     expect(_resp151f).json('$.code').equals('200')
+
+
+    # --- step 151g: create the second post of the same event ("After approval" mode) ---
+    # 同一个 event 下要放两个 post，UI 的 Post 标签页用下拉（DownLineIcon）切换。
+    # ⚠️ 不要用 POST /posts/curator/event/{eventId}/duplicate/posts（复制 post）：
+    #    复制出来的 post **不会带 relatedProducts**（票全丢，hasTicketProducts=false），
+    #    而 Event 类型的票又不能直接 PATCH 上去（"Cannot add Event products directly.
+    #    Event products are managed through Event sync."），
+    #    POST /posts/curator/toggle-sync 还会 500（numSold 只读）。
+    #    => 用 create-from-event：内容/媒体/样式从 event 继承，票也会带上。
+    _resp151g = ctx.api.posts.curator_create_from_event(
+        body={"eventId": _approval_event_id, "allowPromotersResell": True},
+        token="token", app_headers=True)
+    expect(_resp151g).json('$.code').equals('200')
+    _after_post_id = _resp151g.json()["data"]["id"]
+    expect(_after_post_id).is_not_empty()
+
+    # --- step 151h: give the new post the same venue-map CTA body ---
+    # create-from-event 建出来的 post 默认是 ticket-all 区块，没有 "Show venue map drawer" CTA，
+    # 这里直接复用 before post 的 bodyJson（同一个 event，CTA/eventId 一致）。
+    _resp151h = ctx.api.posts.curator_edit_by_post_id(
+        post_id=_after_post_id, token="token", app_headers=True)
+    expect(_resp151h).json('$.code').equals('200')
+    _after_post_data = _resp151h.json()["data"]
+    _patch_after = dict(_after_post_data)
+    _patch_after["bodyJson"] = _json.dumps(_approval_body)
+    _resp151i = ctx.api.posts.update_curator_content(
+        venue_map_post_id=_after_post_id,
+        body=_json.dumps(_patch_after), token="token", app_headers=True)
+    expect(_resp151i).json('$.code').equals('200')
+
+    # --- step 151j: rename the new post -> ...-after (After approval mode) ---
+    _resp151j = ctx.api.admin.post_by_post_id(
+        post_id=_after_post_id,
+        body="""{
+    "urlAlias": "post-setting-require-approval-to-purchase-after",
+    "headline": "post setting require approval to purchase after",
+    "title": "post setting require approval to purchase after",
+    "subTitle": "",
+    "links": [],
+    "creatorId": "{{user_id}}",
+    "baseSold": 0,
+    "baseViewed": 0,
+    "expiredAt": null,
+    "hideInStore": false,
+    "checkoutInPost": true,
+    "status": "ACTIVE"
+}""", token="admin_token", app_headers=True)
+    expect(_resp151j).json('$.code').equals('200')
+    expect(_resp151j).json('$.message').equals('success')
+
+    # --- step 151k: verify both posts exist and carry the tickets ---
+    _resp151k = ctx.api.posts.curator_event_posts(
+        event_id=_approval_event_id, token="token", app_headers=True)
+    expect(_resp151k).json('$.code').equals('200')
+    _posts_data = _resp151k.json()["data"]
+    _posts = _posts_data if isinstance(_posts_data, list) else (_posts_data.get("items") or [])
+    _aliases = sorted(p.get("urlAlias") for p in _posts)
+    expect(_aliases).equals([
+        "post-setting-require-approval-to-purchase-after",
+        "post-setting-require-approval-to-purchase-before",
+    ])
+    for _p in _posts:
+        _pd = ctx.api.posts.curator_edit_by_post_id(post_id=_p.get("id"), token="token", app_headers=True).json()["data"]
+        expect(_pd.get("hasTicketProducts")).equals(True)
 
 
     # ================================================================
