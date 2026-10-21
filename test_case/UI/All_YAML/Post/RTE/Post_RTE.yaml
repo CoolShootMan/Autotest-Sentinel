@@ -37,6 +37,11 @@ testT4866:
         # ----------------------------------------------------------------------
         # Part 1: Insert a CTA Button whose action is a Form
         # ----------------------------------------------------------------------
+        # [FIX 2026-10-21] hard readiness gate: the editor canvas hydrates at
+        # wildly varying speeds (Insert was missing for 40s+ in one run and
+        # ready in 4s in the next). A `wait_for_selector`-prefixed key is a hard
+        # gate that gives the toolbar up to 30s before R_click_insert starts.
+        wait_for_selector_editor_ready: { selector: "[aria-label='Insert']", timeout: 30000 }
         R_click_insert: { role: "button", name: "Insert", exact: true, index: 0 }
         sleep_after_insert: 2000
 
@@ -129,8 +134,15 @@ testT4866:
 
         # Selecting the decorator reveals the Lexical CTA toolbar, whose Edit
         # control opens the "Edit CTA button" panel.
-        R_click_cta_decorator: { locator: 'button[data-testid="button"][data-cta-action="form"]:has-text("test form")', index: 0, force: true }
-        sleep_cta_decorator: 1200
+        # [FIX 2026-10-21] was R_click (smart_click force:true). After the guest
+        # round-trip on the same page the force click could be swallowed by an
+        # overlay, the selection toolbar never rendered, and the next step timed
+        # out with "element not found: button[aria-label='Edit']" (the button
+        # itself still exists - a probe clicked it fine on a fresh session).
+        # dispatch_click dispatches the full mouse event sequence directly on
+        # the element with no hit-test, so the selection always lands.
+        dispatch_click_cta_decorator: { locator: 'button[data-testid="button"][data-cta-action="form"]:has-text("test form")', index: 0, timeout: 15000 }
+        sleep_cta_decorator: 1500
         R_click_cta_edit: { locator: "button[aria-label='Edit']" }
         sleep_cta_edit_panel: 2000
 
@@ -314,10 +326,16 @@ testT2800:
         # ancestor carrying the retail price and called `element.click()`. That is
         # exactly the case `dispatch_click` (actions/base.py) exists for: it targets
         # the row natively and dispatches the full mouse event sequence on it, with
-        # no hit-test. The row = the innermost element inside the top-most dialog
-        # that contains BOTH the selection circle and the "Retail price" text —
-        # XPath document order returns ancestors first, so `index: -1` picks the
-        # innermost one, matching the old climb-up loop exactly.
+        # no hit-test.
+        # [FIX 2026-10-21] the first DE-JS version matched every card - all three
+        # rows contain "Retail price" - and `index: -1` took the LAST one in
+        # document order, binding the CTA to merch 002 ($100.00) instead of the
+        # free General Admission. The guest checkout then became a PAID flow
+        # ("Place order" + credit card) and the RSVP button never appeared.
+        # The locator is now anchored to the product NAME so only card 1's
+        # ancestors match (the whole-list container also contains "merch", so the
+        # `not(contains(..., 'merch'))` clause excludes it), and `index: -1` takes
+        # the innermost match = the clickable row, same node the old JS climbed to.
         # The old JS also asserted "picked"; the flips-the-Select-button-to-enabled
         # effect is now proven by the R_click_confirm_product below, which cannot
         # succeed while the Select button is still disabled.
@@ -325,7 +343,7 @@ testT2800:
         sleep_product_picker_open: 3000
         wait_for_selector_product_picker: { selector: '[role="dialog"] [data-testid="RoundLineIcon"]', timeout: 15000 }
         dispatch_click_pick_product:
-            locator: "xpath=(//*[@role='dialog'])[last()]//*[.//*[@data-testid='RoundLineIcon']][contains(normalize-space(.), 'Retail price')]"
+            locator: "xpath=(//*[@role='dialog'])[last()]//*[contains(normalize-space(.), 'General Admission')][contains(normalize-space(.), 'Retail price')][not(contains(normalize-space(.), 'merch'))]"
             index: -1
             timeout: 15000
         sleep_after_pick_product: 1500
@@ -379,8 +397,11 @@ testT2800:
         #   - enabled                    : the real click in Part 5 is the proof — Playwright's
         #     actionability check refuses to click a disabled element, so a disabled button
         #     fails loudly there instead of being silently reported in a JS string.
-        # The remaining gap (the JS echoed the computed box) is closed by a real style read:
-        verify_cta_visibility_guest:
+        # The remaining gap (the JS echoed the computed box) is closed by a real style read.
+        # NOTE: this key MUST start with `verify_element_style` — a bare `verify_` prefix
+        # falls through to verify_text_visible, which reads `text` (here absent) and fails
+        # with "Text 'None' not found". `verify_element_style` reads `property`/`expected`.
+        verify_element_style_cta_guest:
             locator: 'button[data-cta-action="buy-now"]:has-text("test buy now")'
             property: "visibility"
             expected: "visible"
