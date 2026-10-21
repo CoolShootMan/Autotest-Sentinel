@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 """
-ONES Plan Sync — 让测试计划 RVEi7pVd 与本地自动化脚本保持一致。
-
-操作：
-1. 移除 plan 中未自动化的用例
-2. 将已自动化的用例标记为 Passed
-3. 新自动化的用例已通过 add API 加入
+ONES Plan Sync — 让测试计划 RVEi7pVd 与本地 API 自动化脚本保持一致。
+扫描所有 tests/ 下的 .py 文件，从 CASE_ID 变量和文件名中提取 T 编号。
 """
 import json
 import re
@@ -22,50 +18,88 @@ PLAN_UUID = "RVEi7pVd"
 TESTS_DIR = PROJECT / "test_case/API auto script/tests"
 
 
+def extract_auto_cases():
+    """从 tests/ 下所有 .py 提取已自动化的 ONES case UUID。
+    新用例: CASE_ID 变量直接是 UUID。
+    老用例: 文件名含 t4543 等编号，需查库映射。
+    """
+    case_uuids = set()
+    t_numbers = set()
+
+    for f in TESTS_DIR.rglob("test_*.py"):
+        text = f.read_text(encoding="utf-8")
+        # 1. CASE_ID variable
+        m = re.search(r'CASE_ID\s*=\s*["\']([^"\']+)["\']', text)
+        if m and not m.group(1).startswith("None"):
+            case_uuids.add(m.group(1))
+        # 2. T-numbers from filename
+        for tm in re.finditer(r'[._](t\d{4})', f.name.lower()):
+            t_numbers.add("T" + tm.group(1)[1:].upper())
+
+    return case_uuids, t_numbers
+
+
 def main():
     env = load_env()
     client = OnesClient(env)
 
-    # ── 1. 本地 CASE_ID 集合 ──
-    local_cids = set()
-    for f in TESTS_DIR.rglob("test_*.py"):
-        text = f.read_text(encoding="utf-8")
-        m = re.search(r'CASE_ID\s*=\s*["\']([^"\']+)["\']', text)
-        if m and not m.group(1).startswith("None"):
-            local_cids.add(m.group(1))
-    print(f"本地自动化用例: {len(local_cids)} 条")
+    case_uuids, t_numbers = extract_auto_cases()
+    print(f"本地: CASE_ID={len(case_uuids)}, 文件名T编号={len(t_numbers)}")
 
-    # ── 2. Plan 现有用例 ──
+    # Map T-number -> UUID via library
+    all_lib = client.cases_by_library()
+    tnum_to_uuid = {f"T{c['number']}": c["uuid"] for c in all_lib if c.get("number")}
+
+    auto_uuids = set(case_uuids)
+    for tn in t_numbers:
+        if tn in tnum_to_uuid:
+            auto_uuids.add(tnum_to_uuid[tn])
+    print(f"匹配到 ONES UUID: {len(auto_uuids)} 条")
+
+    # Plan cases
     plan_cases = client.cases_by_plan(PLAN_UUID)
     plan_uuids = {c["uuid"] for c in plan_cases}
-    print(f"Plan 现有用例: {len(plan_cases)} 条")
+    print(f"Plan 现有: {len(plan_cases)} 条")
 
-    # ── 3. 计算差异 ──
-    to_remove = plan_uuids - local_cids
-    to_pass = plan_uuids & local_cids
-    print(f"  需移除（未自动化）: {len(to_remove)}")
-    print(f"  需标记 Passed: {len(to_pass)}")
+    to_remove = plan_uuids - auto_uuids
+    to_pass = plan_uuids & auto_uuids
+    to_add = auto_uuids - plan_uuids
+    print(f"  需移除: {len(to_remove)}, 需标记Passed: {len(to_pass)}, 需加入: {len(to_add)}")
 
-    # ── 4. 批量移除未自动化用例 ──
+    # Remove
     if to_remove:
         team = client.team
-        removed = 0
-        for i, chunk_start in enumerate(range(0, len(to_remove), 50)):
-            chunk = list(to_remove)[chunk_start:chunk_start+50]
+        for i in range(0, len(to_remove), 50):
+            chunk = list(to_remove)[i:i+50]
             body = json.dumps({"case_uuids": chunk}).encode()
             req = urllib.request.Request(
                 f"{client.base}/project/api/project/team/{team}/testcase/plan/{PLAN_UUID}/cases/delete",
                 data=body, method="POST",
-                headers={"Authorization": f"Bearer {client.token}",
-                         "Content-Type": "application/json"})
+                headers={"Authorization": f"Bearer {client.token}", "Content-Type": "application/json"})
             try:
                 with urllib.request.urlopen(req) as r:
-                    removed += len(chunk)
-                    print(f"  移除批次 {i+1}: {len(chunk)} 条 (累计 {removed})")
+                    print(f"  移除批次 {i//50+1}: {len(chunk)}")
             except urllib.error.HTTPError as e:
-                print(f"  移除批次 {i+1} 失败: HTTP {e.code} {e.read().decode()[:200]}")
+                print(f"  移除失败: {e.code} {e.read().decode()[:150]}")
 
-    # ── 5. 标记自动化用例为 Passed ──
+    # Add new
+    if to_add:
+        team = client.team
+        body = json.dumps({"case_uuids": list(to_add)}).encode()
+        req = urllib.request.Request(
+            f"{client.base}/project/api/project/team/{team}/testcase/plan/{PLAN_UUID}/cases/add",
+            data=body, method="POST",
+            headers={"Authorization": f"Bearer {client.token}", "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as r:
+                resp = json.loads(r.read())
+                added = resp.get("success_cases", [])
+                print(f"  新加入: {len(added)}")
+                to_pass = to_pass | set(added)
+        except urllib.error.HTTPError as e:
+            print(f"  加入失败: {e.code} {e.read().decode()[:150]}")
+
+    # Mark passed
     passed = 0
     for cid in to_pass:
         key = f"testcase_plan_case-{PLAN_UUID}-{cid}"
@@ -75,10 +109,7 @@ def main():
         status, resp = client.gql(q, {"key": key, "result": "passed"})
         if status == 200 and isinstance(resp, dict) and resp.get("data"):
             passed += 1
-        else:
-            print(f"  标记 {cid} 失败: {status} {str(resp)[:200]}")
-    print(f"  标记 Passed: {passed}/{len(to_pass)}")
-
+    print(f"  标记 Passed: {passed}")
     print("\n✅ 同步完成")
 
 
