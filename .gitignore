@@ -258,3 +258,15 @@ data/verify/**
 !data/verify/**/ones_cases*.json
 !data/verify/**/case_diff.*
 data/ua_*.txt
+
+# === Local scratch and stale login state ===
+# .backup/ is the per-session scratch area (YAML pre-images, cookie
+# snapshots, probe scripts, debug screenshots). It is large and several
+# snapshots carry real release_katana_web_auth_token values, so it must
+# never be committed.
+.backup/
+# Login-state cookies must never be tracked, at ANY depth under
+# test_case/UI. The earlier rule was path-anchored
+# (/test_case/UI/*cookie*.json) and did not cross '/', so cookies written
+# into a subdirectory (e.g. Test_Katana/) slipped straight through.
+**/cookie_*.json
