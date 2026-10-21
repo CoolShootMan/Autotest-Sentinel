@@ -1,17 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""从 katana-server.openapi.json 生成自包含 Swagger UI 交互文档 HTML。
+"""从 katana-server.openapi.json 生成完全自包含 Swagger UI 交互文档 HTML。
+Swagger UI 的 CSS/JS 内联进 HTML，不依赖任何外部 CDN，离线可打开。
 用法：python3 build_html.py [输入json] [输出html]
 """
 import json, os, sys
 
 SRC = "/Users/a123456/Documents/Pear code/katana-openapi/katana-server.openapi.json"
 OUT = "/Users/a123456/Documents/Pear code/katana-openapi/katana-server-api-docs.html"
+BASE = os.path.dirname(os.path.abspath(__file__))
+CSS_PATH = os.path.join(BASE, "swagger-ui.css")
+JS_PATH = os.path.join(BASE, "swagger-ui-bundle.js")
 
 def build(src, out):
     spec = json.load(open(src, encoding="utf-8"))
     spec["info"]["title"] = "Katana Server API（交互文档）"
     inline = json.dumps(spec, ensure_ascii=False).replace("</", "<\\/")
+
+    with open(CSS_PATH, encoding="utf-8") as f:
+        css_inline = f.read()
+    with open(JS_PATH, encoding="utf-8") as f:
+        js_inline = f.read()
+    # 防止 bundle 内 "</script>" 提前闭合标签
+    js_inline = js_inline.replace("</script>", "<\\/script>")
 
     html = """<!DOCTYPE html>
 <html lang="zh-CN">
@@ -19,7 +30,9 @@ def build(src, out):
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Katana Server API - Swagger UI</title>
-<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css"/>
+<style>
+__CSS__
+</style>
 <style>
   html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
   *, *:before, *:after { box-sizing: inherit; }
@@ -30,7 +43,9 @@ def build(src, out):
 </head>
 <body>
 <div id="swagger-ui"></div>
-<script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+__JS__
+</script>
 <script>
 window.onload = function() {
   const spec = __SPEC__;
@@ -49,6 +64,8 @@ window.onload = function() {
 </body>
 </html>
 """
+    html = html.replace("__CSS__", css_inline)
+    html = html.replace("__JS__", js_inline)
     html = html.replace("__SPEC__", inline)
     with open(out, "w", encoding="utf-8") as f:
         f.write(html)
