@@ -30,8 +30,8 @@ def test_reorder_links(ctx: "Context"):
     id_b = None
     try:
         resp_a = ctx.api.links.create(body={
-            "title": "Link A",
-            "url": "https://a.example.com",
+            "title": "Spotify - Autotest Playlist",
+            "url": "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
             "type": "GENERAL",
             "showBelowTitle": False,
         }, token="linda997_token")
@@ -39,8 +39,8 @@ def test_reorder_links(ctx: "Context"):
         id_a = resp_a.path("$.data.id")
 
         resp_b = ctx.api.links.create(body={
-            "title": "Link B",
-            "url": "https://b.example.com",
+            "title": "Apple Music - Autotest Radio",
+            "url": "https://music.apple.com/us/radio/apple-music-1",
             "type": "GENERAL",
             "showBelowTitle": False,
         }, token="linda997_token")

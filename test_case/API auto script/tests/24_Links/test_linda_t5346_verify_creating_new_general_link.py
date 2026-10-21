@@ -30,19 +30,19 @@ def test_create_general_link(ctx: "Context"):
     expect(resp_list).json("$.code").equals("200")
 
     resp_create = ctx.api.links.create(body={
-        "title": "API Test General Link",
-        "url": "https://example.com",
+        "title": "Autotest - My Vinyl Collection",
+        "url": "https://bandcamp.com/discover",
         "type": "GENERAL",
         "showBelowTitle": False,
     }, token="linda997_token")
     expect(resp_create).json("$.code").equals("200")
     expect(resp_create).json("$.data.type").equals("GENERAL")
-    expect(resp_create).json("$.data.title").equals("API Test General Link")
+    expect(resp_create).json("$.data.title").equals("Autotest - My Vinyl Collection")
     ctx.extract("link_id", resp_create, "$.data.id")
 
     resp_get = ctx.api.links.by_id(id=ctx["link_id"], token="linda997_token")
     expect(resp_get).json("$.code").equals("200")
     expect(resp_get).json("$.data.id").equals(ctx["link_id"])
-    expect(resp_get).json("$.data.url").equals("https://example.com")
+    expect(resp_get).json("$.data.url").equals("https://bandcamp.com/discover")
 
     ctx.api.links.delete_by_id(id=ctx["link_id"], token="linda997_token")

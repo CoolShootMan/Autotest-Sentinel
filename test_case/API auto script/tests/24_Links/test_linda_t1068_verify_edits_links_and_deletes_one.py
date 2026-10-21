@@ -29,8 +29,8 @@ def test_edit_links_and_delete_one(ctx: "Context"):
     link_ids = []
     for i in range(3):
         resp = ctx.api.links.create(body={
-            "title": f"Edit Link {i}",
-            "url": f"https://original{i}.com",
+            "title": f"Autotest Link {i}",
+            "url": f"https://www.youtube.com/playlist?list=autotest{i}",
             "type": "GENERAL",
             "showBelowTitle": False,
         }, token="linda997_token")
@@ -40,10 +40,10 @@ def test_edit_links_and_delete_one(ctx: "Context"):
     for i, lid in enumerate(link_ids):
         resp = ctx.api.links.update_by_id(id=lid, body={
             "title": f"Edited Link {i}",
-            "url": "https://test.com",
+            "url": "https://music.youtube.com/playlist?list=autotest-edited",
         }, token="linda997_token")
         expect(resp).json("$.code").equals("200")
-        expect(resp).json("$.data.url").equals("https://test.com")
+        expect(resp).json("$.data.url").equals("https://music.youtube.com/playlist?list=autotest-edited")
 
     delete_resp = ctx.api.links.delete_by_id(id=link_ids[1], token="linda997_token")
     expect(delete_resp).json("$.code").equals("200")
