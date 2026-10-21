@@ -102,22 +102,22 @@ class PostsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
-    def duplicate_event_posts(
+    def curator_create_from_event(
         self, *,
-        event_id: str | None = None,
         body: Any = None, token: str | None = None,
         params: dict[str, Any] | None = None,
         headers: dict[str, Any] | None = None,
         app_headers: bool = True, skip_notifications: bool = False,
         path_vars: dict[str, Any] | None = None,
     ) -> "ApiResponse":
-        """POST /posts/curator/event/{eventId}/duplicate/posts
+        """POST /posts/curator/create-from-event
 
-        复制源 event 下的 post 到目标 event（body: fromEventId + postIds）。
+        用 eventId 直接建一个 Event Post（内容/媒体/样式都从 event 继承），
+        走的是和 POST /posts/curator/from-event 一样的落库流程。
         """
         return self._call(
-            "POST", '/posts/curator/event/{{eventId}}/duplicate/posts',
-            path_vars=_pv(("eventId", event_id), extra=path_vars),
+            "POST", '/posts/curator/create-from-event',
+            path_vars=path_vars,
             params=params,
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
