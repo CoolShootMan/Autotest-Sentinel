@@ -443,6 +443,23 @@ def smart_fill(page: Page, v: dict):
         logger.error(f"Fill failed: {e}. AI Healing not fully implemented for Pure Vision fill yet.")
         raise
 
+def _center_in_view(el):
+    """Scroll an element to the middle of its scroll container.
+
+    `scroll_into_view_if_needed()` only guarantees an intersection, so on forms with a
+    sticky footer (e.g. the event edit form's Delete/Save bar) the element can end up
+    sitting *behind* that footer: measured on testT5390, the start-date input landed at
+    y=686 in a 720px-tall viewport, so `click(force=True)` hit the footer instead of the
+    field, focus stayed on <body> and every keystroke was silently dropped. Centering
+    first makes the click land on the element itself.
+    """
+    try:
+        el.evaluate("e => e.scrollIntoView({block: 'center', inline: 'nearest'})")
+        el.page.wait_for_timeout(200)
+    except Exception as e:
+        logger.debug(f"_center_in_view skipped: {e}")
+
+
 def fill_numeric(page: Page, v: dict):
     target_locator = v.get("locator")
     target_locator = _resolve_locator(target_locator)
@@ -459,7 +476,8 @@ def fill_numeric(page: Page, v: dict):
 
     el.wait_for(state="visible", timeout=v.get("timeout", 10000))
     el.scroll_into_view_if_needed()
-    
+    _center_in_view(el)
+
     max_retries = 3
     for attempt in range(max_retries):
         el.click(force=True)
@@ -494,6 +512,7 @@ def fill_type(page: Page, v: dict):
         el = page.get_by_placeholder(str(v.get("placeholder", "")), exact=False).nth(index)
     el.wait_for(state="visible", timeout=v.get("timeout", 10000))
     el.scroll_into_view_if_needed()
+    _center_in_view(el)
     el.click(force=True)
     page.keyboard.press("Control+A")
     page.keyboard.press("Backspace")
