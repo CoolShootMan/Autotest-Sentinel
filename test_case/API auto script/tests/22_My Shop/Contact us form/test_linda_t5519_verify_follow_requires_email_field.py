@@ -31,4 +31,6 @@ def test_linda_t5519_verify_follow_requires_email_field(ctx: "Context"):
         },
     }, token='linda997_token')
     expect(_bad).json('$.code').not_equals('200')
+    _msg = _bad.json().get('message', '') or _bad.json().get('error', '')
+    assert any(k in str(_msg).lower() for k in ['follow', 'email', 'phone', 'field']), f"expected follow/email field validation error, got: {_msg}"
 

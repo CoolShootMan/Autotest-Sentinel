@@ -22,8 +22,8 @@ def test_link_input_format_validation(ctx: "Context"):
         "type": "GENERAL",
         "showBelowTitle": False,
     }, token="linda997_token")
-    expect(resp_bad_url).status().is_one_of([400, 201])
-
+    # "abc" is not a valid URL — API must reject it (non-200 code)
+    expect(resp_bad_url).json("$.code").not_equals("200")
     if resp_bad_url.status_code == 201:
         ctx.extract("bad_link_id", resp_bad_url, "$.data.id")
         ctx.api.links.delete_by_id(id=ctx["bad_link_id"], token="linda997_token")

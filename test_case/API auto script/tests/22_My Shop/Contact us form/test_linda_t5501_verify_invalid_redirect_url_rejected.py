@@ -27,4 +27,6 @@ def test_linda_t5501_verify_invalid_redirect_url_rejected(ctx: "Context"):
         },
     }, token='linda997_token')
     expect(_bad).json('$.code').not_equals('200')
+    _msg = _bad.json().get('message', '') or _bad.json().get('error', '')
+    assert any(k in str(_msg).lower() for k in ['url', 'redirect', 'valid']), f"expected URL validation error, got: {_msg}"
 
