@@ -1,0 +1,63 @@
+# author: Lury
+# time: 2026/10/12 11:41
+
+
+testT4266_venue_map:
+    is_mobile: true
+    description: "Verify partner can view the event location and venue on edit event page and event landing page even if set 'Keep address hidden' or reveal to buyers"
+    expect_result: "Don't show address info for everyone"
+    test_step:
+        # 1. Go to the event list page
+        open: "{BASE_URL}/events"
+        sleep_list: 5000
+
+        # 2. Search for the event named "event-for-ui-auto-venue-map" and open it.
+        R_click_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
+        sleep_event: 5000
+
+        # 3. On the event page, click "Edit event" to open the edit form.
+        R_click_edit_event: { locator: "xpath=//*[normalize-space(.)='Edit event']", index: 0, fallback_scan: true }
+        sleep_edit_event: 4000
+
+        # 4. 找到 "Reveal address later?" 前面的 checkbox（`input[name='isAddressRevealEnabled']`）：
+        if_reveal_address_later_checked:
+            condition:
+                locator: "input[name='isAddressRevealEnabled']"
+                state: checked
+                timeout: 8000
+            then:
+                R_click_address_pen_icon:
+                    locator: "xpath=//input[@name='location']/ancestor::*[.//button[@aria-label='Edit']][1]//button[@aria-label='Edit']"
+                    timeout: 15000
+                sleep_reveal_on: 2500
+            else:
+                # [WHY 普通 click 而不是 smart_check] 实测（10-22 探针）：这个 checkbox 未勾选时
+                # 点击只负责**打开设置抽屉**，自身要等抽屉里 Apply 之后才会变成 checked。
+                # `smart_check` 走 Playwright `set_checked()`，它会硬断言点完状态已改变 →
+                # 直接抛 `Clicking the checkbox did not change its state`。所以这里用普通 click。
+                R_click_reveal_address_later:
+                    locator: "input[name='isAddressRevealEnabled']"
+                    timeout: 15000
+                sleep_reveal_off: 2500
+
+        # 4b. 在刚打开的 "Address visibility settings" 抽屉里选最后一个选项 "Keep address hidden"。
+        R_click_keep_address_hidden:
+            locator: "xpath=//*[normalize-space(.)='Keep address hidden']"
+            timeout: 15000
+        sleep_keep_address_hidden: 1200
+        verify_attribute_keep_address_hidden_selected:
+            locator: "xpath=//*[normalize-space(.)='Keep address hidden']/ancestor::*[.//input[@name='mode']][1]"
+            attribute: "data-checked"
+            value: "true"
+            timeout: 10000
+
+        # 5. On the "Address visibility settings" drawer, click "Apply".
+        R_click_apply_address: { locator: "xpath=//*[contains(@class,'MuiDrawer-paper')][.//*[contains(normalize-space(.),'Address visibility settings')]]//button[normalize-space(.)='Apply']", index: 0, fallback_scan: true }
+        sleep_apply_address: 2500
+
+        # 6. Back on the Edit event page, verify the hint below the Address input reads
+        verify_reveal_hint: { text: "The event address remains hidden from both ticket buyers and the public.", timeout: 10000 }
+
+        # 7. Click the "Save" button at the bottom of the Edit event page.
+        R_click_save: { locator: "xpath=//button[normalize-space(.)='Save']", index: 0, fallback_scan: true }
+        sleep_save: 3000

@@ -13,21 +13,6 @@ testT5649_venue_map_guest_purchase:
     test_step:
         # [GLOBAL NS 2026-10-21] venue_map chain namespace (see use_globals in actions/base.py).
         use_globals: { namespace: venue_map }
-        # 0. [GLOBAL-ONLY, 2026-10-21] no local seeding — every name/price/fee comes from the
-        #    PERSISTENT global store (test_case/UI/global_vars_<env>.json), published by
-        #    All_YAML/Events/Event_settings/venue_map_fee_breakdown_ui.yaml:
-        #        ticket_venue_map / ticket-retails-price / my_revenve / transaction-fees /
-        #        taxes / post_url          (each with `save_as` + `global: true`)
-        #    That case also enables "Show fee breakdown at checkout", which the net-price
-        #    assertions below depend on.
-        #    Because the store is disk-backed there is NO run-order coupling: the producer only
-        #    has to have run ONCE against the same environment (any process, any earlier run):
-        #        ./venv/bin/python -m pytest test_case/UI/test_ui.py \
-        #            --yaml "All_YAML/Events/Event_settings/venue_map_fee_breakdown_ui.yaml"     # once
-        #    Inspect / fix the store with:  ./venv/bin/python tools/globals_store.py
-        #    [WHY the product name matters] this case buys the product NAMED by
-        #    `ticket_venue_map`, i.e. the very product the producer measured — that is what
-        #    keeps the guest order's fees equal to the published `transaction-fees`.
         verify_defined_globals:
             vars: [post_url, ticket_venue_map, my_revenve, transaction-fees, taxes, ticket-retails-price]
 
@@ -51,45 +36,7 @@ testT5649_venue_map_guest_purchase:
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
         # 5. On the opened "Select tickets" drawer a venue map is shown. Select ONE table.
-        #    [BUG FIX 2026-10-16, measured with a guest probe] the OLD code clicked twice —
-        #    `rect[data-id]` idx 0 (= a table) and then `circle[data-id]` idx 1 — and BOTH clicks
-        #    really SELECT an item, so the cart ended up with TWO tables:
-        #        before any click : "0 items selected / Total: $0.00"
-        #        after the rect   : "1 item selected / Total: $100.00"   <- what this case wants
-        #        after the circle : "2 items selected / Total: $200.00"
-        #    The case's arithmetic is written for ONE item, so the Cart/Checkout then read
-        #        Subtotal $200.00 (expected my_revenve $100.00)  -> verify_row_value: row
-        #        'Subtotal' amount 200.0 != expected '100.00';  Transaction fees $24.44 (= 2x12.22)
-        #    and the derived `taxes` came out as a bogus $100.00 (= Total - net - fees) which would
-        #    then demand a "Taxes" row that does not exist. Selecting a single table keeps every
-        #    downstream number on the intended 1-item footing:
-        #        Subtotal $100.00 + Transaction fees $12.22 + taxes $0.00 = Total $112.22
-        #    Do NOT add a second selection back: any extra click on `rect[data-id]` /
-        #    `circle[data-id]` adds another table to the cart.
-        #    [MEASURED 2026-10-16 with an iPhone-14-Pro-Max probe] `rect[data-id]` idx 0 and
-        #    `circle[data-id]` idx 0 are the SAME table (outline + centre dot), so clicking the
-        #    circle at index 0 DESELECTS it ("1 item selected / Total: $60.00" -> "0 items
-        #    selected"). The old code's circle click used `index: 1` = a different table, which
-        #    is why it really added a 2nd item.
-        #    [RACE FIX 2026-10-16] `expect` + `retries`: the drawer can open and the
-        #    `rect[data-id]` nodes be attached BEFORE the SVG map finishes laying out. A
-        #    dispatch on a not-yet-laid-out node is accepted by Playwright but IGNORED by the
-        #    widget, so the cart silently stays empty and the NEXT step failed far away with a
-        #    misleading `pattern '\$\s*60.00\b' not found`. Now the dispatch is repeated until
-        #    the drawer really shows "1 item selected".
         sleep_map_ready: 1500
-        #    [LOCATOR/ROBUSTNESS FIX 2026-10-21, measured with /tmp/probe_venue_map_tables.py
-        #     and /tmp/probe_venue_map_select.py]
-        #     - The hit target is the CENTRE DOT, not the outline: every `rect[data-id]` renders
-        #       `pointer-events: none`, its sibling `circle[data-id]` renders
-        #       `pointer-events: all; cursor: pointer`.
-        #     - SOLD tables are rendered too, and clicking one is silently ignored — so a fixed
-        #       `index: 0` dies as soon as that table has been sold (every successful run of this
-        #       case buys one table). Measured: idx 0 -> "0 items selected" while idx 1..5 ->
-        #       "1 item selected".
-        #     `select_available_map_table` (new native action) walks the tables and stops at the
-        #     first one that really flips the drawer to "1 item selected" — exactly ONE table is
-        #     ever selected, so the 1-item arithmetic below stays valid.
         session_guest__select_available_map_table:
             scope: ".MuiDrawer-root:has-text('Select tickets')"
             expect_text: "1 item selected"
