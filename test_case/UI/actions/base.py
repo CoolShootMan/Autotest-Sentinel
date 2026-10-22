@@ -371,6 +371,20 @@ def save_html(page: Page, v: dict):
         f.write(page.content())
 
 def smart_if(page: Page, v: dict):
+    """Run `then`/`else` step blocks depending on ONE condition.
+
+    condition: {locator|role|name|text, state: visible|hidden|checked|unchecked, timeout}
+      - visible / hidden  : element becomes visible / hidden within `timeout`
+      - checked / unchecked : element's CHECKED state (Playwright `is_checked()`, native
+        <input type=checkbox> / MUI PrivateSwitchBase-input). Added 2026-10-22 for toggles whose
+        click is a *toggle* (clicking an already-ON checkbox would turn it OFF).
+
+    YAML usage:
+        if_reveal_address_later_checked:
+            condition: { locator: "input[name='isAddressRevealEnabled']", state: checked, timeout: 5000 }
+            then: { ...steps... }
+            else: { ...steps... }
+    """
     condition = v.get("condition", {})
     then_steps = v.get("then", {})
     else_steps = v.get("else", {})
@@ -400,7 +414,18 @@ def smart_if(page: Page, v: dict):
         else:
             raise ValueError("Condition must specify locator, role, or text")
             
-        if state == "visible":
+        if state in ("checked", "unchecked"):
+            # [2026-10-22] New states: branch on a checkbox/toggle's CHECKED STATE.
+            # Needed by venue_map_keep_address_hidden_setting_ui.yaml — its "Reveal address later?"
+            # checkbox is already ON in a warm environment, and clicking it blindly would turn it
+            # OFF (and shows no settings drawer), so the case must pick a different action per
+            # state. `is_checked()` is Playwright-native and works on <input type=checkbox>
+            # (including MUI's hidden PrivateSwitchBase-input, which is what this toggle is).
+            el.wait_for(state="attached", timeout=timeout)
+            is_checked_now = el.is_checked()
+            is_true = is_checked_now if state == "checked" else not is_checked_now
+            logger.info(f"Condition state={state!r}: element is_checked={is_checked_now} -> {is_true}")
+        elif state == "visible":
             el.wait_for(state="visible", timeout=timeout)
             is_true = True
         elif state == "hidden":
@@ -3461,11 +3486,21 @@ def select_available_map_table(page: Page, v: dict):
     events = v.get("events") or ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
     init = v.get("event_init") or {"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}
 
+    # [WAIT FIX 2026-10-22] the seat map is drawn ASYNCHRONOUSLY after the drawer opens: a bare
+    # `.count()` right after opening returned 0 and the action died with
+    # "no table node matched 'circle[data-id]' — the drawer is probably not open yet", even though
+    # the map showed up a moment later (measured on venue_map_reveal_address_to_buyer_guest_check_ui).
+    # Poll until the first table node is attached (bounded by `timeout`).
+    deadline = time.time() + timeout / 1000.0
     total = page.locator(item_locator).count()
+    while not total and time.time() < deadline:
+        time.sleep(0.5)
+        total = page.locator(item_locator).count()
     if not total:
         raise AssertionError(
-            f"select_available_map_table: no table node matched {item_locator!r} — "
-            f"the drawer is probably not open yet")
+            f"select_available_map_table: no table node matched {item_locator!r} within "
+            f"{timeout}ms — the drawer/map is not rendered (check that the product click opened "
+            f"the 'Select tickets' drawer)")
 
     def _selected() -> bool:
         try:

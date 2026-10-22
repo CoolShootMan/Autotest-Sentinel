@@ -381,7 +381,11 @@ def get_action(name):
         return smart_fill
     elif name.startswith("uncheck_all"):
         return uncheck_all
-    elif name.startswith("check") or name.startswith("uncheck"):
+    elif name.startswith("check") or name.startswith("uncheck") or name.startswith("smart_check"):
+        # [2026-10-22] `smart_check_*` added: the action's own name must be routable too (the
+        # framework convention), e.g. `smart_check_reveal_address_later`. Nothing earlier in the
+        # chain can swallow it — "smart_check" does not prefix-collide with smart_click/smart_if/
+        # smart_fill/smart_sleep ("smart_cli..." != "smart_che...").
         return smart_check
     elif name.startswith("swipe") or name.startswith("scroll"):
         return smart_swipe

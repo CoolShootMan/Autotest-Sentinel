@@ -7,26 +7,10 @@ testT4239_venue_map_guest_check:
     description: "Verify the event location and venue will only show to buyers if set 'Show address only to ticket buyers' on event page "
     expect_result: "Only show event address to buyer after purchased"
     test_step:
-        # 0. [SELF-SEED] ticket_venue_map — this case is runnable on its own: the product
-        #    name is extracted from the admin event page with the SAME native rule the
-        #    parent case uses (first non-Sold-out card on "Tickets & Merch", card's first
-        #    <p>) and published as a cross-case global for step 6. The main session is
-        #    admin-logged (conftest auto-loads cookie_release.json), so this runs before
-        #    the guest session is created.
-        open: "{BASE_URL}/events"
-        sleep_seed_list: 5000
-        R_click_seed_venue_map_event: { locator: "xpath=//*[normalize-space(.)='event-for-ui-auto-venue-map']", index: 0, fallback_scan: true }
-        sleep_seed_event: 5000
-        R_click_seed_tickets_tab: { role: "tab", name: "Tickets & Merch" }
-        sleep_seed_tickets: 3000
-        extract_value_seed_ticket_name:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))]//p)[1]"
-            source: text
-            numeric: false
-            save_as: "ticket_venue_map"
-            global: true
-            timeout: 20000
-        sleep_seed_name: 800
+        # 0. [SELF-SEED] ticket_venue_map 
+        use_globals: { namespace: venue_map }
+        verify_defined_globals:
+            vars: [ticket_venue_map, my_revenve, transaction-fees, taxes, ticket-retails-price]
 
         # 1. Create the guest session (no cookie = visitor)
         create_session_guest: { name: "guest" }
@@ -40,17 +24,11 @@ testT4239_venue_map_guest_check:
         scroll_to_bottom: { iterations: 10, delay: 500 }
 
         # 4. The venue name "Test venue" must be present on the public post
-        #    [2026-10-16 probe] actual render is "Test venue" (lowercase v) — get_by_text
-        #    is case-insensitive so any case passes here, but step 5's XPath scope is
-        #    case-SENSITIVE, so the spelling must match the DOM exactly.
         verify_venue_name:
             text: "Test venue"
             timeout: 10000
 
         # 5. Under the venue line, the address must be hidden and replaced by the purchase hint
-        #    [2026-10-16 probe] the venue name and street render in ONE <p>:
-        #    "Test venue · West Mound Street, Columbus, OH" — there is NO element whose whole
-        #    text is exactly "Test venue", so the scope anchors on contains() instead.
         verify_venue_address_hint:
             text: "Address will be provided after purchase"
             scope: { locator: "xpath=//p[contains(normalize-space(.), 'Test venue')]/ancestor::*[contains(., 'Address will be provided after purchase')][1]" }
@@ -60,10 +38,12 @@ testT4239_venue_map_guest_check:
         session_guest__R_click_product: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']", index: 0 }
 
         # 7. On the opened "Select tickets" drawer a venue map is shown. Select a table.
-        session_guest__dispatch_click_select_seat:
-            locator: "circle[data-id]"
-            index: 1
-            timeout: 15000
+        sleep_map_ready: 1500
+        session_guest__select_available_map_table:
+            scope: ".MuiDrawer-root:has-text('Select tickets')"
+            expect_text: "1 item selected"
+            max_tables: 20
+            save_as: "table_index"
         sleep_select_seat: 2500
         
         # 8. Click Buy now and wait 3s to reach the Checkout drawer
@@ -71,10 +51,6 @@ testT4239_venue_map_guest_check:
         sleep_guest_checkout: 3000
 
         # 9. Click the Checkout CTA to reach the contact + payment form.
-        #    [2026-10-16] the drawer renders EITHER variant: "Continue" (testid
-        #    checkout-in-post-continue-cta) or PayPal + "Continue with credit card"
-        #    (testid checkout-in-post-credit-card-cta or no testid) — combined locator
-        #    covers all three, first match wins.
         session_guest__R_click_checkout_continue:
             locator: "button[data-testid='checkout-in-post-credit-card-cta'], button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
             timeout: 15000
@@ -125,22 +101,26 @@ testT4239_venue_map_guest_check:
         #     venue name visible (get_by_text is case-insensitive: matches "Test Venue"/"Test venue")
         session_guest__verify_ticket_info_venue_name: { text: "Test Venue", timeout: 20000 }
 
-        # 16. The venue's real address is revealed to the buyer: inside "Ticket Information",
-        #     under the venue name, the full address "West Mound Street, Columbus, Ohio" shows
-        #     (full state name here — the public post abbreviates to "OH").
-        #     Scope = innermost container holding BOTH the venue name and the address, i.e.
-        #     the address sits in the venue's own block. translate() makes the venue-name
-        #     contains() case-insensitive (the post renders it as "Test venue", the
-        #     confirmation page may capitalize differently).
-        session_guest__verify_venue_address_revealed:
-            text: "West Mound Street, Columbus, Ohio"
-            scope:
-                locator: "xpath=(//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'test venue') and contains(., 'West Mound Street, Columbus, Ohio')])[last()]"
+        # 16. "Ticket Information" 区块逐行核对
+        session_guest__verify_text_visible_product_name:
+            text: "{{ticket_venue_map}}"
+            timeout: 20000
+        session_guest__verify_text_regex_event_row:
+            pattern: "\\bEvent\\b\\s*event-for-ui-auto-venue-map"
+            flags: "i"
+            timeout: 20000
+        session_guest__verify_text_regex_venue_row:
+            pattern: "\\bVenue\\b\\s*Test venue"
+            flags: "i"
+            timeout: 20000
+        # 地址必须是 Venue 名**正下方**那一行：把两行写进同一个正则做邻接断言，
+        # 避免"页面上任何位置出现这串地址"就算过。
+        session_guest__verify_text_regex_venue_address_line:
+            pattern: "\\bVenue\\b\\s*Test venue\\s*West Mound Street, Columbus, Ohio"
+            flags: "i"
             timeout: 20000
 
-        # 17. The buyer-facing confirmation must NOT show the "address hidden" hint anymore —
-        #     the address is revealed to ticket buyers. (assert_not_visible only fails on
-        #     VISIBLE copies, so hidden legacy DOM copies don't false-fail.)
+        # 17. The buyer-facing confirmation must NOT show the "address hidden" hint anymore — the address is revealed to ticket buyers. 
         session_guest__verify_hint_gone:
             text: "Address will be provided after purchase"
             assert_not_visible: true
