@@ -47,54 +47,59 @@ testT5442:
     test_step:
         # Re-navigate to event (avoid close-button issue)
         open:                      "{BASE_URL}/events"
-        sleep_step:                5000
+        sleep_after_reopen:                5000
         R_click_my_event:          { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
-        sleep_step:                4000
+        sleep_after_my_event:                4000
 
         # ----------------------------------------------------------------------
         # Step 1: Add a new ticket via Tickets tab
         # ----------------------------------------------------------------------
         R_click_tickets_tab:       { role: "tab", name: "Tickets & Merch" }
-        sleep_step:                2000
+        sleep_after_tickets_tab:                2000
 
         R_click_add_ticket:     { role: "button", name: "Add ticket" }
         wait_for_add_ticket:    { role: "heading", name: "Add a ticket", timeout: 5000 }
         fill_ticket_title:      { role: "textbox", name: "Title", value: "new ticket related to T5442" }
-        sleep_step:             1000
+        sleep_after_ticket_title:             1000
         fill_ticket_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
-        sleep_step:             1000
+        sleep_after_ticket_price:             1000
         fill_ticket_quantity:   { locator: 'input[name="variants.0.inventoryQuantity"]', value: "20" }
-        sleep_step:             1000
+        sleep_after_ticket_quantity:             1000
 
         R_click_create_ticket:  { role: "button", name: "Create" }
-        sleep_step:             3000
+        sleep_after_create_ticket:             3000
 
         # ----------------------------------------------------------------------
         # Step 2: Add a new merch (same Tickets & Merch tab)
         # ----------------------------------------------------------------------
         R_click_merch_subtab:   { locator: "text=Merch", exact: true }
-        sleep_step:             2000
+        sleep_after_merch_subtab:             2000
         R_click_add_merch:      { role: "button", name: "Add merch" }
         wait_for_add_merch:     { role: "heading", name: "Add merch", timeout: 10000 }
         fill_merch_title:       { role: "textbox", name: "Title", value: "new merch related to T5442" }
-        sleep_step:             1000
+        sleep_after_merch_title:             1000
         fill_merch_price:      { locator: 'input[name="variants.0.price"]', value: "10" }
-        sleep_step:             1000
+        sleep_after_merch_price:             1000
         fill_merch_quantity:    { locator: 'input[name="variants.0.inventoryQuantity"]', value: "20" }
-        sleep_step:             1000
+        sleep_after_merch_quantity:             1000
         R_click_create_merch:   { role: "button", name: "Create" }
-        sleep_step:             2000
+        sleep_after_create_merch:             2000
 
         # ----------------------------------------------------------------------
         # Step 3: ticket/merch appear with a "Hidden" label.
         # ----------------------------------------------------------------------
         R_click_post_tab:      { role: "tab", name: "Post" }
-        sleep_step:             2000
+        sleep_after_post_tab:             2000
         R_click_edit_content:   {locator: "button[aria-label='Content']"}
-        sleep_step:             4000
+        sleep_after_content:             4000
 
-        verify_hidden_present:
-            assertion_type: "element_visible_by_text"
+        # [DUP-KEY FIX 2026-10-22] this step used to be `verify_hidden_present`, which
+        # `get_action` routes to verify_text_hidden (assert NOT visible) because of the
+        # `verify_hidden` prefix - `assertion_type: element_visible_by_text` was never
+        # read. It only "passed" because the block had no wait after opening the RTE;
+        # now that the waits run again the "Hidden" chip is rendered and the reversed
+        # check fails. Assert visibility through the generic `verify*` route instead.
+        verify_text_visible_hidden_labels:
             text: "Hidden"
 
         sleep_end:              3000
@@ -130,29 +135,29 @@ VerifyGuest_testT5442:
     teardown_step:
         #description: "Delete newly added ticket and merch to restore original state"
         open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
-        sleep_step: 5000
+        sleep_after_td_open: 5000
 
         R_click_my_event: { locator: "text=Auto-Test-post-setting", exact: true, index: 0 }
-        sleep_step: 4000
+        sleep_after_td_event: 4000
         R_click_TM_tab: { role: 'tab', name: 'Tickets & Merch' }
-        sleep_step: 2000
+        sleep_after_td_tm_tab: 2000
 
         # ---- Delete new merch (only if exists) ----
         # verify_merch_exists: { text: "new merch related to T5442" }
         R_click_tools_1: { role: "button", name: "Tools", index: 0 }
-        sleep_step: 800
+        sleep_after_td_tools_merch: 800
         R_click_delete_merch: { locator: "text=Delete merch" }
-        sleep_step: 1000
+        sleep_after_td_delete_merch: 1000
         R_click_confirm_merch: { role: 'button', name: 'Delete' }
-        sleep_step: 3000
+        sleep_after_td_confirm_merch: 3000
 
         # verify_ticket_exists: { text: "new ticket related to T5442"}
         R_click_tools_2: { role: "button", name: "Tools", index: 0 }
-        sleep_step: 800
+        sleep_after_td_tools_ticket: 800
         R_click_delete_ticket: { locator: "text=Delete ticket"}
-        sleep_step: 1000
+        sleep_after_td_delete_ticket: 1000
         R_click_confirm_ticket: { role: 'button', name: 'Delete' }
-        sleep_step: 3000
+        sleep_after_td_confirm_ticket: 3000
 
     teardown_expect_result:
         description: "Newly added ticket and merch deleted successfully"
@@ -171,25 +176,25 @@ testT5332:
         test_step:
             # Step 1: Navigate to events list
             open: "{BASE_URL}/events"
-            sleep_step: 5000
+            sleep_after_open: 5000
 
             # Step 2: Find and click target event card
             R_click_event: { locator: "text=Test event post variant settings", exact: true }
-            sleep_step: 4000
+            sleep_after_event: 4000
 
             # Step 3: Click Post tab
             R_click_post_tab: { role: "tab", name: "Post" }
-            sleep_step: 2000
+            sleep_after_post_tab: 2000
 
             # Step 4: Click edit button to enter RTE
             R_click_edit_button: { role: "button", name: "Content", exact: true }
-            sleep_step: 3000
+            sleep_after_edit_button: 3000
 
     test_step:
 
         # Step 6: Click the Insert button in RTE toolbar
         R_click_insert_button: { role: "button", name: "Insert" }
-        sleep_step: 2000
+        sleep_after_insert_button: 2000
 
         # Step 7: Hover over "Event" menu item in Insert dropdown to reveal submenu
         # Only targets the Event menuitem inside the Insert popup — never touches CTA Elements
@@ -207,23 +212,23 @@ testT5332:
             expect:
                 text: "Insert all merch"
                 timeout: 4000
-        sleep_step: 2000
+        sleep_after_hover_event: 2000
 
         # Step 8: Click "Insert all merch" from the revealed submenu
         R_click_insert_all_merch: { name: "Insert all merch" }
-        sleep_step: 3000
+        sleep_after_insert_all_merch: 3000
 
         # Step 9: Click "Update" button at bottom of Edit post content dialog to save inserted merch
         R_click_update_post: { role: "button", name: "Update" }
-        sleep_step: 2000
+        sleep_after_update_post: 2000
 
         # Step 10: Click "Update" button in the "Update This Post?" confirmation dialog
         R_click_confirm_update: { locator: "div[role='dialog'] button:has-text('Update')", name: "Update" }
-        sleep_step: 2000
+        sleep_after_confirm_update: 2000
 
         # Step 11: Verify "Post published!" toast appears after publishing
         verify_toast_post_published: { text: "Post published!" }
-        sleep_step: 2000
+        sleep_after_toast: 2000
 
     expect_result:
         description: "All merch from event can be inserted in RTE, saved via Update, and Post published! toast appears"
@@ -262,35 +267,35 @@ testT5332_VerifyGuest:
     teardown_step:
         # Step 0: Re-inject partner cookies (guest test cleared them)
         add_cookies: {}
-        sleep_step: 1000
+        sleep_after_add_cookies: 1000
 
         # Step 1: Navigate to events list
         open_td: "{BASE_URL}/events"
-        sleep_step: 5000
+        sleep_after_td_open: 5000
 
         # Step 2: Scroll to find the event
         scroll_to_bottom: { text: "Test event post variant settings", iterations: 10, delay: 500 }
-        sleep_step: 2000
+        sleep_after_scroll: 2000
 
         # Step 3: Click event card to enter event landing page
         R_click_event_td: { text: "Test event post variant settings" }
-        sleep_step: 4000
+        sleep_after_td_event: 4000
 
         # Step 4: Switch to Post tab
         R_click_post_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        sleep_after_post_tab: 2000
 
         # Step 5: Click edit button to enter RTE
         R_click_edit_button: { role: "button", name: "Content", exact: true }
-        sleep_step: 3000
+        sleep_after_edit_button: 3000
 
         # Step 6: Click on merch 002 button to select the banner & reveal trash icon
         R_click_merch_002:      { locator: "div[role='button']:has-text('merch 002')" }
-        sleep_step:             1000
+        sleep_after_select_merch:             1000
 
         # Step 7: Click Delete button (trash icon in selected block's floating toolbar)
         R_click_delete:         { locator: "button[data-testid='toolbar-icon-control'][aria-label='Delete']" }
-        sleep_step:             1000
+        sleep_after_delete:             1000
 
         # Step 9: Verify merch 001 is no longer visible in RTE
         verify_merch_001_hidden:
@@ -304,9 +309,9 @@ testT5332_VerifyGuest:
 
         # Step 11: Update post to save the deletion
         R_click_update_post:    { role: "button", name: "Update" }
-        sleep_step:             2000
+        sleep_after_update_post:             2000
         R_click_confirm_update: { locator: "div[role='dialog'] button:has-text('Update')", name: "Update" }
-        sleep_step:             2000
+        sleep_after_confirm_update:             2000
 
 
 # ==============================================================================
@@ -322,23 +327,23 @@ testT5443:
         test_step:
             # Step 1: Navigate to events list
             open: "{BASE_URL}/events"
-            sleep_step: 5000
+            sleep_after_open: 5000
 
             # Step 1.5: Scroll down to find "event with no ticket" in the list
             scroll_to_bottom: { text: "event with no ticket", iterations: 10, delay: 500 }
-            sleep_step: 2000
+            sleep_after_scroll: 2000
 
             # Step 2: Click "event with no ticket" to enter event landing page
             R_click_event_title: { text: "event with no ticket" }
-            sleep_step: 3000
+            sleep_after_event: 3000
 
             # Step 3: Click Post tab
             R_click_post_tab: { role: "tab", name: "Post" }
-            sleep_step: 2000
+            sleep_after_post_tab: 2000
 
             # Step 4: Click RTE "Content" icon button via its unique aria-label
             R_click_edit_content: { locator: "button[aria-label='Content']" }
-            sleep_step: 3000
+            sleep_after_edit_content: 3000
 
     test_step:
         # ----------------------------------------------------------------------
@@ -346,53 +351,53 @@ testT5443:
         # ----------------------------------------------------------------------
         # Step 1: Click the empty tickets placeholder text to select the section
         R_click_tickets_placeholder: { text: "Tickets will appear here automatically" }
-        sleep_step: 2000
+        sleep_after_placeholder: 2000
 
         # Step 2: Click Delete button on the section
         R_click_delete_section: { role: "button", name: "Delete" }
-        sleep_step: 1000
+        sleep_after_delete_section: 1000
 
         # Step 3: Confirm Remove section
         R_click_remove_section: { role: "button", name: "Remove section" }
-        sleep_step: 1000
+        sleep_after_remove_section: 1000
 
         # Step 4: Click Update (bottom of Edit post content dialog)
         R_click_update_rte: { role: "button", name: "Update" }
-        sleep_step: 1000
+        sleep_after_update_rte: 1000
 
         # Step 5: Click Update confirmation ("Update This Post?" dialog)
         R_click_update_confirm: { role: "button", name: "Update" }
-        sleep_step: 1000
+        sleep_after_confirm_update: 1000
 
         # ----------------------------------------------------------------------
         # Part B: Add a new ticket via Event tab
         # ----------------------------------------------------------------------
         # Step 6: Switch to Event tab
         R_click_event_tab: { role: "tab", name: "Event" }
-        sleep_step: 2000
+        sleep_after_event_tab: 2000
 
         # Step 7: Click Add ticket button
         R_click_add_ticket: { role: "button", name: "Add ticket" }
-        sleep_step: 2000
+        sleep_after_add_ticket: 2000
 
         # Step 8: Fill in ticket title
         fill_ticket_title_t5443: { role: "textbox", name: "Title", value: "ticket 001" }
-        sleep_step: 1000
+        sleep_after_ticket_title: 1000
 
         # Step 9: Fill price field
         fill_price_t5443: { locator: 'input[name="variants.0.price"]', value: "100" }
-        sleep_step: 1000
+        sleep_after_ticket_price: 1000
 
         # Step 10: Click "Create" button on the page (this triggers the Review ticket visibility popup)
         R_click_create_ticket: { role: "button", name: "Create" }
-        sleep_step: 2000
+        sleep_after_create_ticket: 2000
 
         # ----------------------------------------------------------------------
         # Part C: Go back to Post tab and verify ticket shows up in post
         # ----------------------------------------------------------------------
         # Step 11: Switch back to Post tab
         R_click_post_tab_verify: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        sleep_after_post_tab: 2000
 
         # Step 12: Scroll down then verify ticket 001 is hidden (default status for new tickets)
         page_scroll_t5443_main: { y: 800, steps: 5, delay: 1000 }
@@ -417,7 +422,7 @@ testT5443_VerifyGuest:
     test_step:
         # Step 1: Open the post detail page as guest
         open: "{BASE_URL}/autotestshop/post/event-with-no-ticket"
-        sleep_step: 5000
+        sleep_after_open: 5000
 
         # Step 2: Scroll down to check if ticket 001 is visible (should NOT be there)
         page_scroll: { y: 800, steps: 5, delay: 1000 }
@@ -436,41 +441,41 @@ testT5443_VerifyGuest:
         # ----------------------------------------------------------------------
         # Step 0: Re-inject partner cookies (guest test cleared them)
         add_cookies: {}
-        sleep_step: 1000
+        sleep_after_add_cookies: 1000
 
         # Step 1: Navigate to events list
         open_td: "{BASE_URL}/events"
-        sleep_step: 5000
+        sleep_after_td_open: 5000
 
         # Step 2: Scroll down to find "event with no ticket" in the list
         scroll_to_bottom: { text: "event with no ticket", iterations: 10, delay: 500 }
-        sleep_step: 2000
+        sleep_after_scroll: 2000
 
         # Step 3: Click "event with no ticket" to enter event landing page (MUST do this before accessing Event/Tickets tabs)
         R_click_event_td: { text: "event with no ticket" }
-        sleep_step: 4000
+        sleep_after_td_event: 4000
 
         # Step 4: Switch to Event tab (ticket 001 was added here)
         R_click_event_tab_td: { role: "tab", name: "Event" }
-        sleep_step: 2000
+        sleep_after_td_event_tab: 2000
 
         # Step 5: Open ticket 001 more menu and delete
         R_click_tools_1: { role: "button", name: "Tools", index: 0 }
-        sleep_step: 800
+        sleep_after_td_tools: 800
         R_click_delete_ticket_td: { locator: "text=Delete ticket" }
-        sleep_step: 1000
+        sleep_after_td_delete_ticket: 1000
         R_click_confirm_ticket_td: { role: 'button', name: 'Delete' }
-        sleep_step: 3000
+        sleep_after_td_confirm_ticket: 3000
 
         # Step 6: Go to post → enter RTE "Content" editor to restore All tickets banner
         R_click_post_tab: { role: "tab", name: "Post" }
-        sleep_step: 2000
+        sleep_after_post_tab: 2000
         R_click_edit_content: {locator: "button[aria-label='Content']"}
-        sleep_step: 3000
+        sleep_after_edit_content: 3000
 
         # Step 7: Click "Insert" button in RTE toolbar to open the insert popup
         R_click_insert_button: { role: "button", name: "Insert" }
-        sleep_step: 2000
+        sleep_after_insert_button: 2000
 
         # Use real mouse movement: MUI NestedMenu tracks cursor via elementFromPoint().
         move_to_event:
@@ -478,23 +483,23 @@ testT5443_VerifyGuest:
                 locator: '[role="menuitem"]:has-text("Event")'
                 x: "center"
                 y: "center"
-        sleep_step: 3000
+        sleep_after_move_event: 3000
 
         move_to_insert_all_tickets:
             move_relative_to_selector:
                 locator: '[role="menuitem"]:has-text("Insert all tickets")'
                 x: "center"
                 y: "center"
-        sleep_step: 1000
+        sleep_after_move_all_tickets: 1000
 
         R_click_insert_all_tickets: { name: "Insert all tickets" }
-        sleep_step: 3000
+        sleep_after_insert_all_tickets: 3000
 
         # Step 12: Save via Update (bottom) + confirm dialog (optional, may not appear)
         R_click_update_post: { role: "button", name: "Update" }
-        sleep_step: 2000
+        sleep_after_update_post: 2000
         smart_click_optional_confirm_update: { role: "button", name: "Update" }
-        sleep_step: 3000
+        sleep_after_confirm_update: 3000
 
 
 
