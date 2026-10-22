@@ -227,7 +227,7 @@ def build_slack_text(suites: dict, env: str, run_url: str = "",
     else:
         rate = _rate_str(agg["rate"])
         lines.append(
-            f"> 通过率: *{rate}%*（{agg['passed']}/{agg['total']}）· "
+            f"> 通过率: *{rate}*（{agg['passed']}/{agg['total']}）· "
             f"失败 {agg['failed'] + agg['error']} 条"
         )
 
