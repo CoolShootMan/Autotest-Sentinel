@@ -37,20 +37,65 @@ else:
     ai_vision = None
     logger.debug("AI vision disabled (set ENABLE_AI_VISION=1 to enable)")
 
-# Cross-test-case global variable store (survives across cases in the same pytest
-# process; a step opts in with `save_as` + `global: true`). See global_state.py.
-from .global_state import GLOBAL_VARS as _GLOBAL_VARS, set_global as _set_global
+# Cross-test-case global variable store. Since 2026-10-20 it is PERSISTED to
+# test_case/UI/global_vars_<env>.json, so a value survives the process that produced it
+# (a step opts in with `save_as` + `global: true`). See global_state.py.
+from .global_state import (
+    GLOBAL_VARS as _GLOBAL_VARS,
+    set_global as _set_global,
+    refresh_globals as _refresh_globals,
+    state_path as _global_state_path,
+)
+
+
+def _namespace_of(page):
+    """The global-variable NAMESPACE declared by `use_globals` for this page (or None).
+
+    A namespace keeps independent case chains from overwriting each other's globals: the
+    AXS / TDC / venue_map chains all publish keys with the SAME names (`transaction-fees`,
+    `my_revenve`, `ticket-retails-price`, `post_url` ...). With one flat store a concurrent
+    (or merely later) run of another chain silently poisons the values — measured on
+    2026-10-21: a parallel AXS run rewrote `ticket-retails-price` to 128.77 while the
+    venue_map guest was mid-checkout and its confirmation assertion then failed with
+    `Item(s) total 112.22 != expected 128.77`.
+    """
+    return getattr(page, "_global_ns", None)
+
+
+def _publish_global(page, key, value):
+    """Publish a value to the persistent global store.
+
+    Writes the chain-scoped key (`<ns>.<key>`) — authoritative for cases that declare the
+    same namespace — plus the legacy bare `<key>` mirror, so cases that have not declared a
+    namespace yet keep working exactly as before.
+    """
+    _set_global(key, value)
+    ns = _namespace_of(page)
+    if ns:
+        _set_global(f"{ns}.{key}", value)
 
 
 def _merged_context_vars(page):
     """Build the full {{var}} lookup table for a page.
 
-    Precedence: page._workflow_context (local, this case/session) overrides the
-    cross-case GLOBAL_VARS store.  Falls back to an empty dict when neither exists.
+    Precedence: page._workflow_context (local, this case/session) > the page's NAMESPACE view
+    of the global store > bare global keys.  The store is re-read from disk first (cheap mtime
+    check), so values published by another process / earlier run resolve too.
     """
+    try:
+        _refresh_globals()
+    except Exception:  # never break variable resolution on a cache issue
+        pass
+    _g = _GLOBAL_VARS
+    ns = _namespace_of(page)
+    if ns:
+        prefix = f"{ns}."
+        scoped = {k[len(prefix):]: v for k, v in _g.items() if k.startswith(prefix)}
+        if scoped:
+            _g = {**_g, **scoped}  # namespaced values win over the bare mirror
     _wc = getattr(page, "_workflow_context", None) or {}
     # workflow_context wins over global on key collision
-    return {**_GLOBAL_VARS, **_wc}
+    return {**_g, **_wc}
 
 
 def _fill_vars(page, s):
@@ -2146,8 +2191,45 @@ def _save_context_value(page, save_as, value, is_global=False):
     getattr(page, "_workflow_context")[save_as] = value
     logger.info(f"Saved '{save_as}' = {value!r} in workflow context")
     if is_global:
-        _set_global(save_as, value)
-        logger.info(f"Also published '{save_as}' to the cross-case global store")
+        _publish_global(page, save_as, value)
+        _ns = _namespace_of(page)
+        logger.info(
+            "Also published '%s' to the persistent global store%s",
+            save_as, f" (namespace '{_ns}')" if _ns else " (no namespace declared)",
+        )
+
+
+def use_globals(page: Page, v: dict):
+    """Declare which GLOBAL-VARIABLE NAMESPACE this case belongs to.
+
+    Every chain (AXS / TDC / venue_map) publishes keys with the SAME names, so a single flat
+    store lets one chain overwrite another's values — both across runs and, worse, in the
+    middle of a concurrent run. Declaring a namespace makes `save_as` + `global: true` write
+    `<namespace>.<key>`, and makes `{{key}}` read the namespaced value FIRST (bare keys stay
+    as a backward-compatible fallback for cases that have not declared one).
+
+    Params: namespace (or `ns`/`name`); a bare string value is accepted as shorthand.
+
+    YAML usage (put it first in test_step):
+        use_globals: { namespace: venue_map }
+        # or
+        use_globals: venue_map
+
+    Convention used in this repo:  axs  |  tdc  |  venue_map
+    """
+    ns = v if isinstance(v, str) else (v.get("namespace") or v.get("ns") or v.get("name"))
+    if not ns:
+        raise ValueError("use_globals: 'namespace' is required (e.g. { namespace: venue_map })")
+    ns = str(ns).strip().strip(".")
+    setattr(page, "_global_ns", ns)
+    # sessions already created (e.g. a guest/partner page) must inherit the namespace too
+    for sess in (getattr(page, "_sessions", None) or {}).values():
+        try:
+            setattr(sess.get("page"), "_global_ns", ns)
+        except Exception:
+            pass
+    logger.info(f"use_globals: global variable namespace = '{ns}'")
+    return ns
 
 
 def extract_value(page: Page, v: dict):
@@ -2571,7 +2653,9 @@ def verify_defined(page: Page, v: dict):
     if missing:
         raise AssertionError(
             f"verify_defined: missing context variables {missing} "
-            f"(available: {sorted(k for k in ctx)}) — run the parent case first in the same pytest process"
+            f"(available: {sorted(k for k in ctx)}) — the global store is persistent, so any "
+            f"earlier run of the producing case (any process) would have made them available; "
+            f"store file: {_global_state_path()}"
         )
     logger.info(f"verify_defined: all present -> {names}")
     return "defined: " + ", ".join(names)
@@ -3330,6 +3414,95 @@ def dispatch_click(page: Page, v: dict):
     raise AssertionError(
         f"dispatch_click: expectation not met after {retries + 1} attempt(s) on "
         f"{locator or name} (index={index}): {last_msg}")
+
+
+def select_available_map_table(page: Page, v: dict):
+    """Select the first SELLABLE table on a venue-map (Seats.io-style) map — skip sold ones.
+
+    [WHY IT EXISTS, measured 2026-10-21] The "Select tickets" drawer renders EVERY table as
+    `<circle data-id>` (its twin `<rect data-id>` is only the outline and has
+    `pointer-events: none`). Clicking a table that is already SOLD is silently accepted by
+    Playwright and ignored by the widget, so a hard-coded `index: 0` dies as soon as that
+    table is sold — and every successful run of a case buys one table, so index 0 keeps
+    marching forward. Probe evidence: `circle[data-id]` idx 0 -> "0 items selected" while
+    idx 1..5 -> "1 item selected".
+    This action walks the tables in order, dispatches the real event sequence on each, and
+    stops at the first one that actually flips the drawer to `expect_text`.
+
+    Params:
+      - item_locator   : table node selector (default "circle[data-id]")
+      - scope          : container whose text reveals the selection
+                         (default ".MuiDrawer-root:has-text('Select tickets')")
+      - expect_text    : text that proves a table got selected (default "1 item selected")
+      - max_tables     : how many tables to try (default 30)
+      - attempt_timeout: ms to wait for EACH attempt to register (default 3000)
+      - timeout        : ms to wait for a table node to be attached (default 10000)
+      - events / event_init : same as dispatch_click (the map ignores a bare "click")
+      - save_as        : optional — stores the WINNING index
+
+    YAML usage:
+        session_guest__select_available_map_table:
+            scope: ".MuiDrawer-root:has-text('Select tickets')"
+            expect_text: "1 item selected"
+            save_as: "table_index"
+
+    Returns the winning index (int) and raises AssertionError when no table could be selected.
+    """
+    import time
+
+    item_locator = _fill_placeholders(
+        _resolve_locator(v.get("item_locator") or v.get("locator") or "circle[data-id]"), page)
+    scope_sel = _fill_placeholders(
+        _resolve_locator(v.get("scope") or ".MuiDrawer-root:has-text('Select tickets')"), page)
+    expect_text = _fill_placeholders(v.get("expect_text") or "1 item selected", page)
+    max_tables = int(v.get("max_tables", 30))
+    attempt_timeout = int(v.get("attempt_timeout", 3000))
+    timeout = v.get("timeout", 10000)
+    events = v.get("events") or ["pointerdown", "mousedown", "pointerup", "mouseup", "click"]
+    init = v.get("event_init") or {"pointerId": 1, "isPrimary": True, "button": 0, "buttons": 1}
+
+    total = page.locator(item_locator).count()
+    if not total:
+        raise AssertionError(
+            f"select_available_map_table: no table node matched {item_locator!r} — "
+            f"the drawer is probably not open yet")
+
+    def _selected() -> bool:
+        try:
+            txt = page.locator(scope_sel).first.inner_text()
+        except Exception:
+            return False
+        return expect_text.lower() in (txt or "").lower()
+
+    tried = []
+    for idx in range(min(max_tables, total)):
+        try:
+            el = page.locator(item_locator).nth(idx)
+            el.wait_for(state="attached", timeout=timeout)
+            for ev in events:
+                el.dispatch_event(ev, init)
+        except Exception as exc:
+            logger.debug(f"select_available_map_table: table #{idx} could not be dispatched "
+                         f"({type(exc).__name__}: {str(exc)[:120]}) — trying the next one")
+            tried.append(f"#{idx}:dispatch-error")
+            continue
+
+        deadline = time.time() + attempt_timeout / 1000.0
+        while time.time() < deadline:
+            if _selected():
+                if v.get("save_as"):
+                    _save_context_value(page, v.get("save_as"), idx)
+                logger.info(f"select_available_map_table: table #{idx} selected "
+                            f"({expect_text!r} seen) — {idx} sold/unavailable table(s) skipped")
+                return idx
+            time.sleep(0.3)
+        tried.append(f"#{idx}:no-selection")
+        logger.info(f"select_available_map_table: table #{idx} did NOT select "
+                    f"(sold/unavailable) — trying the next one")
+
+    raise AssertionError(
+        f"select_available_map_table: none of the first {min(max_tables, total)} table(s) of "
+        f"{item_locator!r} could be selected ({', '.join(tried)}) — the map is fully sold out")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -4571,6 +4744,11 @@ def create_session(page: Page, v: dict):
         _wfc = getattr(page, "_workflow_context", None)
         if _wfc is not None:
             setattr(new_page, "_workflow_context", dict(_wfc))
+        # ... and the global-variable namespace, so {{var}} inside this session resolves the
+        # same chain-scoped globals as the parent page (see use_globals / _merged_context_vars).
+        _gns = getattr(page, "_global_ns", None)
+        if _gns:
+            setattr(new_page, "_global_ns", _gns)
 
         # Navigate to URL if provided
         url = v.get("url")
@@ -4823,10 +5001,10 @@ def execute_js(page: Page, v):
         getattr(page, "_workflow_context")[save_as] = result
         logger.info(f"execute_js: saved result as '{save_as}' = {result!r}")
         # Cross-case global store: a step can publish a value that other test cases
-        # (and any session) can read via {{var}} when running in the same pytest process.
+        # (and any session) can read via {{var}} — persisted to disk, chain-scoped.
         if v.get("global"):
-            _set_global(save_as, result)
-            logger.info(f"execute_js: also published '{save_as}' to the cross-case global store")
+            _publish_global(page, save_as, result)
+            logger.info(f"execute_js: also published '{save_as}' to the persistent global store")
 
     return result
 

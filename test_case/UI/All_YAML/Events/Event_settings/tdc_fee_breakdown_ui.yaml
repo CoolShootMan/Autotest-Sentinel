@@ -13,6 +13,9 @@ testT5649_tdc:
     description: "Verify the fee breakdown for TDC ticket on checkout - then place order - check TDC info and link on order confirmation page"
     expect_result: "Checkout shows a fee breakdown for the TDC ticket; order can be placed and the confirmation page shows TDC info and link"
     test_step:
+        # [GLOBAL NS 2026-10-21] TDC chain namespace — each chain keeps its own
+        # transaction-fees / my_revenve / ticket-retails-price / post_url.
+        use_globals: { namespace: tdc }
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
@@ -175,20 +178,27 @@ testT5649_tdc:
             locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip: 2000
 
-        # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
+        # 13. Extract "Platform fees" from the popover -> GLOBAL var transaction-fees
+        #     [signed FIX 2026-10-21] `signed: false` — the guest case now does ARITHMETIC with
+        #     this value (`my_revenve + transaction-fees + service_fee`), and with the default
+        #     `signed: true` the climb from the label to the amount can swallow a stray '-' from a
+        #     neighbouring node (measured on the venue_map checkout: the fee read back as -7.77 and
+        #     poisoned the published global). An organizer-side fee is NEVER negative.
         extract_row_value_platform_fees:
             label: "Platform fees"
             scope: ".MuiPopover-root"
             save_as: "transaction-fees"
+            signed: false
             global: true
             timeout: 15000
 
-        # 14. Extract "Taxes" from the popover -> temp var taxes
-        #     ([PRICING FACT] a TDC hub ticket has no tax -> this is "0.00")
+        # 14. Extract "Taxes" from the popover -> GLOBAL var taxes
+        #     ([PRICING FACT] a TDC hub ticket has no tax -> this is "0.00"; same `signed` reason)
         extract_row_value_taxes:
             label: "Taxes"
             scope: ".MuiPopover-root"
             save_as: "taxes"
+            signed: false
             global: true
             timeout: 15000
 

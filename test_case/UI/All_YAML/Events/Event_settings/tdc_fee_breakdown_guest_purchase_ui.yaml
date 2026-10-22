@@ -12,8 +12,20 @@ testT5649_tdc_guest_purchase:
     description: "Guest check fee breakdown and purchase tdc ticket, check TDC info and link on order confirmation page"
     expect_result: "The TDC product must be priced (non-zero); the guest checkout ends with a confirmed order; pricing/fee assertions cover the post, the Select tickets drawer, the checkout breakdown and the order confirmation (no partner refund flow: TDC tickets are not refundable upstream)"
     test_step:
+        # [GLOBAL NS 2026-10-21] TDC chain namespace (see use_globals in actions/base.py).
+        use_globals: { namespace: tdc }
         # 0. (guard) Fail fast with a clear message if the cross-case globals from the parent case
         #     are missing (was execute_js_ensure_globals).
+        #     [PURE CONSUMER 2026-10-21] the window where this case "self-seeded" its own values
+        #     from the public post is CLOSED: that seed measured a DIFFERENT product than the
+        #     parent (post = first sellable card, event page = first card of the tickets tab), so
+        #     the two halves of the case disagreed (GA02 net 100/fee 12.22 vs GA01 net 60/fee
+        #     7.77, measured on the AXS sibling). Values have exactly ONE source now:
+        #       tdc_fee_breakdown_ui.yaml  (management side)
+        #         -> event_tdc / ticket_tdc / ticket-retails-price / my_revenve /
+        #            transaction-fees / taxes / post_url  (namespace `tdc`, disk-backed, so no
+        #            same-process / same-order requirement)
+        #         -> THIS case  = consume + place the real order
         verify_defined_globals:
             vars: [post_url, ticket_tdc, ticket-retails-price, my_revenve, transaction-fees, taxes]
 
@@ -109,6 +121,11 @@ testT5649_tdc_guest_purchase:
             scope: ".MuiDrawer-root:has-text('Checkout')"
             value: "{{transaction-fees}}"
             tolerance: 0.01
+            # [signed FIX 2026-10-21] a buyer-side fee is NEVER negative; with the default
+            # `signed: true` the climb from the label to the amount can pick up a stray '-' from a
+            # neighbouring node (measured -7.77 on the venue_map checkout), which both fails this
+            # row and poisons the derived totals.
+            signed: false
             timeout: 20000
         # [PRICING FACT] a TDC hub ticket adds a Service fee row on top of Subtotal +
         # Transaction fees; it has no counterpart on the AXS/Pear.US checkout.
@@ -149,6 +166,7 @@ testT5649_tdc_guest_purchase:
             scope: ".MuiDrawer-root:has-text('Checkout')"
             value: "{{transaction-fees}}"
             tolerance: 0.01
+            signed: false       # same reason as step 9's row (see the note there)
             timeout: 20000
         session_guest__verify_number_service_fee_positive_breakdown:
             value: "{{service_fee}}"
@@ -267,7 +285,7 @@ testT5649_tdc_guest_purchase:
 
         # 21. Assert the details: Item(s) total == Subtotal == ticket-retails-price, and
         #     Total == Item(s) total + Service fee (the TDC hub settlement model), plus an
-        #     "(incl. $a fees)" row where a == transaction-fees
+        #     "(incl. $a fees)" row where a == transaction-fees + taxes
         session_guest__verify_row_value_item_total:
             label: "Item(s) total"
             value: "{{ticket-retails-price}}"
@@ -283,8 +301,17 @@ testT5649_tdc_guest_purchase:
             value: "{{tdc_grand_total}}"
             tolerance: 0.01
             timeout: 20000
+        # "(including $a fees)" — [FACT 2026-10-21, measured on order #P193424 (venue_map)] when an
+        # order carries BOTH a platform fee and tax this buyer-facing number is their SUM
+        # ("$12.47 fees" + "$2.30 taxes" rendered as "(incl. $14.77 fees)"). It equals
+        # `transaction-fees` alone only when taxes == 0 — which IS the case for TDC hub tickets
+        # ("0.00"), but deriving the expected value keeps the assertion honest if TDC ever starts
+        # charging tax instead of silently going red on the same row.
+        session_guest__compute_value_fees_incl_tax:
+            expression: "{{transaction-fees}} + {{taxes}}"
+            save_as: "fees_incl_tax"
         session_guest__verify_text_regex_incl_fees_row:
-            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{transaction-fees}}\\s*fees"
+            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{fees_incl_tax}}\\s*fees"
             flags: "i"
             timeout: 20000
 

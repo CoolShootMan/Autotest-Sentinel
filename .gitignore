@@ -28,6 +28,10 @@ env/
 # === Sensitive / Auth ===
 # Cookie files contain real auth tokens - NEVER commit
 test_case/UI/cookie_*.json
+# 跨用例「全局变量」持久化仓库（运行期产物，随环境/运行变化，不提交）
+test_case/UI/global_vars_*.json
+test_case/UI/global_vars_*.json.lock
+test_case/UI/global_vars_*.json.*.tmp
 # API token for ui_workflow scripts
 test_case/UI/api/ui_workflow/api_token.txt
 test_case/UI/staging_cookie.json

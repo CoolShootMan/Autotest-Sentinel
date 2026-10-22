@@ -786,6 +786,22 @@ class EventsApi(BaseApi):
             body=body, token=token, headers=headers,
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
+    
+    def create_staff_id_for_single_event(
+        self, *,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None, headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """POST /app-terminal/v1/access-codes"""
+        return self._call(
+            "POST", '/app-terminal/v1/access-codes',
+            path_vars=path_vars,
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
 
     def lineup_batch(
         self, *,

@@ -13,14 +13,28 @@ testT5649_axs_partner_full_refund:
     description: "Partner full refund the axs order"
     expect_result: "After a full refund the partner's Net Earning equals -transaction-fees on the sale details page"
     test_step:
-        # 0. [CROSS-CASE DEPENDENCY GUARD, added 2026-10-16] This case consumes
-        #    `transaction-fees`, published with `global: true` by its parent
-        #    (axs_fee_breakdown_ui.yaml — the "Platform fees" row read on the Fees + Taxes
-        #    popover). The global store lives in the pytest PROCESS (actions/global_state.py),
-        #    so the parent MUST run first in the same process:
-        #        --yaml "axs_fee_breakdown_ui.yaml,axs_fee_breakdown_partner_full_refund_ui.yaml"
-        #    Without this guard a standalone run leaves `{{transaction-fees}}` as a LITERAL and
-        #    only fails ~15 steps later inside compute_value, pointing at the wrong thing.
+        # [GLOBAL NS 2026-10-21] AXS chain namespace (see use_globals in actions/base.py).
+        use_globals: { namespace: axs }
+        # 0. [CROSS-CASE GUARD — global vars are PERSISTENT since 2026-10-20]
+        #    `transaction-fees` is published with `global: true` by the ADMIN-side case that
+        #    measures it:
+        #        All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml
+        #    (the "Platform fees" row of the Fees + Taxes popover).
+        #    [2026-10-21] The guest purchase case no longer measures/publishes it either — it
+        #    now CONSUMES the same globals, so the producer chain is:
+        #        axs_fee_breakdown_ui.yaml      -> publishes transaction-fees/taxes/ticket*/post_url
+        #        axs_fee_breakdown_guest_purchase_ui.yaml -> places the AXS order (this case's data)
+        #        (this case)                    -> refunds that order
+        #    Since `actions/global_state.py` became disk-backed, the value does not depend on
+        #    run order or on sharing one pytest process: it is written through to
+        #    test_case/UI/global_vars_<env>.json and re-read by every process
+        #    (`{{var}}` / get_global / has_global all refresh from that file).
+        #    => running THIS case on its own works, as long as the producing case has run at
+        #       least once against the same environment (the store is per-env).
+        #    Remaining data prerequisite: the partner's Orders tab must not be empty — an order
+        #    can only exist if a real purchase happened ("No sales yet" = nothing to refund).
+        #    Inspect the store any time with:
+        #        ./venv/bin/python tools/globals_store.py
         verify_defined_globals: { vars: [transaction-fees] }
 
         # 1. Create the partner session and open the event list
@@ -31,11 +45,25 @@ testT5649_axs_partner_full_refund:
         session_partner__R_click_axs_event: { locator: "xpath=//span[normalize-space(.)='AXS']/parent::*", index: 0, fallback_scan: true }
         sleep_partner_event: 6000
 
-        # 3. As the partner, click the Sales tab on the event page
+        # 3. As the partner, click the Sales tab on the event page.
+        #     [RACE FIX 2026-10-20] The event header tab strip (Event | Post | Attendees |
+        #     Co-hosts | Sales) renders AFTER the event body, so clicking too early let
+        #     smart_click's `fallback_scan` fall back to some other "Sales" text: the click
+        #     reported success but the page stayed on the Event tab, and step 4 then died with
+        #     "element not found: //*[@role='tab'][.='Orders']". Waiting for the real tab to be
+        #     visible first keeps the primary locate path (verified: probe sees exactly 1
+        #     `button[role=tab]` with text Sales, and clicking it yields the Orders sub-tab).
+        session_partner__wait_sales_tab:
+            locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']"
+            timeout: 30000
         session_partner__R_click_sales_tab: { locator: "xpath=//button[@role='tab'][normalize-space(.)='Sales']" }
         sleep_partner_sales: 3500
 
-        # 4. Then click the Orders sub-tab under Sales
+        # 4. Then click the Orders sub-tab under Sales (wait for it to render first — it only
+        #    exists once the Sales panel is mounted).
+        session_partner__wait_orders_tab:
+            locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']"
+            timeout: 30000
         session_partner__R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
         sleep_partner_orders: 5000
 

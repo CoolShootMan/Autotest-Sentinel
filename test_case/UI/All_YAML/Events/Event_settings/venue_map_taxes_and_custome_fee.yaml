@@ -1,16 +1,25 @@
 # author: Lury
 # time: 2026/10/13 12:37
-# refactor: all execute_js replaced by framework-native actions (verify_* / verify_value /
-#           extract_value / compute_value / smart_fill / smart_click); new generic actions
-#           extract_value & compute_value live next to verify_value in actions/base.py.
 
 # --- testT4652_venue_map: partner sets a 2% tax rate on a venue_map event's settings,
-#     then retail / Fees+Taxes / My revenue are recalculated (guest verification lives in
-#     venue_map_taxes_custom_fee_guest_purchase_ui.yaml) ---
+#     then retail / Fees+Taxes / My revenue are recalculated and the guest post shows the net price ---
 testT4652_venue_map:
     is_mobile: true
-    description: "Verify partner can set tax rate on events settings for venue map - retail / Fees+Taxes / My revenue recalculated"
+    description: "Verify partner can set tax rate on events settings for venue map - Consumer place order - check sale details page"
     test_step:
+        # [GLOBAL NS + GUARD 2026-10-21] This case is a CONSUMER of the venue_map chain: it needs
+        # the product name produced by the management-side case before it can even locate the
+        # ticket card. Declare the venue_map namespace (so the keys cannot be hijacked by a
+        # concurrent AXS/TDC run that publishes the same names) and then fail fast with a readable
+        # message instead of "${{ticket_venue_map}}" silently staying literal and later timing out
+        # in verify_text with no hint about WHICH variable is missing.
+        #   producer: venue_map_fee_breakdown_ui.yaml
+        #     -> ticket_venue_map / post_url / my_revenve / transaction-fees / taxes /
+        #        ticket-retails-price   (disk-backed store, so no same-process requirement)
+        use_globals: { namespace: venue_map }
+        verify_defined_globals:
+            vars: [ticket_venue_map, post_url]
+
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
@@ -20,35 +29,14 @@ testT4652_venue_map:
         sleep_event: 5000
 
         # 3. Precondition: the cross-case global "ticket_venue_map" (published by
-        #    venue_map_fee_breakdown_ui.yaml in the same pytest process) must resolve.
-        #    [GUARD FIX 2026-10-16] the old form was a single
-        #    `verify_ticket_venue_map: { text: "{{ticket_venue_map}}", timeout: 10000 }`, which
-        #    failed in the worst possible way: an unresolved `{{var}}` stays a LITERAL, so the
-        #    case searched the page for the text "{{ticket_venue_map}}" and timed out 10s later
-        #    with a message that never named the missing variable. `verify_defined` names the
-        #    missing key(s) and stops immediately — before any state-changing step runs.
-        verify_defined_globals: { vars: [ticket_venue_map] }
-        # 3b. ...and the product must actually be listed on the event page.
+        #    venue_map_fee_breakdown_ui.yaml; guarded in step 0 above, so it is known to resolve)
+        #    and the product must be listed on the event page. This step is the "listed?" half of
+        #    the precondition — it is NOT the guard any more.
         verify_ticket_venue_map: { text: "{{ticket_venue_map}}", timeout: 10000 }
 
         # 4. Click the venue_map product (located by the temp var name) to open the Edit ticket page.
         R_click_ticket_venue_map: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
-
-        # 4b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
-        #     "Edit ticket" page blank (header only) so no price input ever renders. Wait for the
-        #     "Fees + Taxes" value natively; when it is still blank, reload once and wait again.
-        #     No JS — smart_if + wait_for_selector + reload are all framework-native actions.
-        if_edit_ticket_form_rendered_1:
-            condition:
-                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                state: visible
-                timeout: 12000
-            else:
-                reload_edit_ticket_1: { sleep_after: 4000 }
-                wait_for_selector_edit_ticket_form_1:
-                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                    timeout: 30000
-        sleep_edit_ticket: 1000
+        sleep_edit_ticket: 6000
 
         # 5. Read "My revenue" (input variants.0.ticketPrice) -> temp var my_revenue_venue_map.
         #    extract_value polls until the input is readable, parses the number and saves it
@@ -86,8 +74,32 @@ testT4652_venue_map:
         # 9. Click the "Charge tax on tickets" checkbox (input isTaxEnabled). A plain click is
         #    used (not smart_check): the click itself opens the tax-rate dialog in either
         #    state, and the rate entered below decides the final on/off state.
+        #    [STATE DRIFT FIX 2026-10-21] the sentence above is only HALF true on the current
+        #    release: when tax is already ON the click turns it OFF and shows a confirmation
+        #    dialog ("Tax rate has been turned off — please review", captured in
+        #    step_captures/testT4652_venue_map/step_013.jpg) with NO `customTaxRate` input, so
+        #    step 10 died with `Locator.fill: Timeout ... input[name='customTaxRate']`. Because
+        #    `uncheck_all` deliberately leaves this toggle alone, the incoming state depends on
+        #    whatever the previous run left behind -> handle BOTH cases below (step 9b) instead
+        #    of assuming a fresh OFF state.
         R_click_charge_tax: { locator: "xpath=//input[@name='isTaxEnabled']", index: 0, fallback_scan: true }
         sleep_charge_tax: 1500
+
+        # 9b. If the rate dialog did not open, the toggle was ALREADY ON and the click in step 9
+        #     just turned tax off: dismiss that dialog, click again to turn it back ON, and wait
+        #     for the rate dialog. All native (smart_if + smart_click + wait_for_selector), no JS.
+        if_tax_rate_dialog_open:
+            condition:
+                locator: "input[name='customTaxRate']"
+                state: visible
+                timeout: 8000
+            else:
+                R_click_got_it_tax_off: { locator: "xpath=//button[normalize-space(.)='Got it']", index: 0, fallback_scan: true }
+                sleep_after_tax_off: 1500
+                R_click_charge_tax_again: { locator: "xpath=//input[@name='isTaxEnabled']", index: 0, fallback_scan: true }
+                wait_for_selector_custom_tax_rate:
+                    locator: "input[name='customTaxRate']"
+                    timeout: 20000
 
         # 10. In the "Charge tax on tickets" dialog, type 2 into the rate input (customTaxRate).
         #     Playwright-native fill triggers the React onChange reliably (the % is an adornment).
@@ -119,7 +131,6 @@ testT4652_venue_map:
         compute_value_retails_price:
             expression: "({{my_revenue_venue_map}} + 1) / (1 - 0.1 - 0.02)"
             save_as: "retails_price_venue_map"
-            global: true
         compute_value_fees_taxes:
             expression: "{{retails_price_venue_map}} - {{my_revenue_venue_map}}"
             save_as: "fees_taxes_venue_map"
@@ -142,39 +153,36 @@ testT4652_venue_map:
         #     My revenue (ticketPrice) unchanged, Fees + Taxes (fees) and Retail price (price)
         #     recalculated for the 2% tax. tolerance 0.01 covers full-precision stored values.
         R_click_ticket_venue_map_2: { locator: "xpath=//p[normalize-space(.)='{{ticket_venue_map}}']" }
-
-        # 17b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
-        #      "Edit ticket" page blank (header only) so no price input/value ever renders. Wait for
-        #      the "Fees + Taxes" value natively; when it is still blank, reload once (a fresh load
-        #      of the product route always renders) and wait again. No JS — smart_if +
-        #      wait_for_selector + reload are all framework-native actions.
-        if_edit_ticket_form_rendered_2:
-            condition:
-                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                state: visible
-                timeout: 12000
-            else:
-                reload_edit_ticket_2: { sleep_after: 4000 }
-                wait_for_selector_edit_ticket_form_2:
-                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                    timeout: 30000
-        sleep_edit_ticket_2: 1000
+        sleep_edit_ticket_2: 6000
         verify_value_my_revenue: { locator: "input[name='variants.0.ticketPrice']", value: "{{my_revenue_venue_map}}", tolerance: 0.01 }
         verify_value_fees_taxes: { locator: "input[name='variants.0.fees']", value: "{{fees_taxes_venue_map}}", tolerance: 0.01 }
         verify_value_retail_price: { locator: "input[name='variants.0.price']", value: "{{retails_price_venue_map}}", tolerance: 0.01 }
         sleep_edit_verify: 800
 
-        # 18. Click the price under "Fees + Taxes" to open the breakdown popover, then verify the
-        #     platform-fee line and the 2% tax amount.
-        #     [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
-        #     = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
-        #     directly and no longer depends on the exact match count.
-        R_click_fees_taxes_vm:
-            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
+        # 18. Click the price under "Fees + Taxes" (the 2nd match = the price) to open the
+        #     breakdown popover, then verify the platform-fee line and the 2% tax amount.
+        R_click_fees_taxes_vm: { locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1]", index: 1 }
         sleep_fees_tip_vm: 2000
         verify_popover_platform_fees: { scope: { locator: ".MuiPopover-root" }, text: "Platform fees" }
         verify_popover_tax_amount: { scope: { locator: ".MuiPopover-root" }, text: "${{tax_amount_venue_map}}" }
 
+        # 19. Create the guest session (no cookie = visitor); saved temp vars are copied into it.
+        create_session_guest: { name: "guest" }
+        sleep_guest_session: 1000
+
+        # 20. As a guest, open the public post. [ENV FIX 2026-10-21] the URL was HARD-CODED as
+        #     "https://release.pear.us/autotestshop/post/event-for-ui-auto-venue-map", which
+        #     silently tested the release shop even when the suite ran against staging. Use the
+        #     `post_url` published by the venue_map producer instead (guarded in step 0, and the
+        #     `venue_map` namespace keeps it from resolving to the AXS/TDC post).
+        session_guest__open_post: { url: "{{post_url}}" }
+        sleep_guest_post: 5000
+
+        # 21. As a guest, the product card must show the retail price.
+        session_guest__verify_net_price:
+            scope: { locator: "xpath=//*[normalize-space(.)='{{ticket_venue_map}}']/ancestor::*[contains(., 'Buy Ticket')][1]" }
+            text: "${{retails_price_venue_map}}"
+
     expect_result:
-        description: "On a venue_map event: read My Revenue, enable 'Charge tax on tickets' at 2%, then verify retail / Fees+Taxes / My Revenue and the 2% tax portion reconcile with retail = (my_revenue + 1) / (1 - 0.1 - tax)"
+        description: "On a venue_map event: read My Revenue, enable 'Charge tax on tickets' at 2%, then verify retail / Fees+Taxes / My Revenue and the 2% tax portion reconcile with retail = (my_revenue + 1) / (1 - 0.1 - tax), and the guest public post shows the net price"
         assertions: []
