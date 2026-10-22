@@ -7,6 +7,10 @@ description: >-
 include:
   names:
   - UI Automation Data Pre-configuration (staging & release, no SQL)
+  # 审批流程的 before/after 两个 post（独立预制，不删用户，可单独跑）
+  - UI Automation Prefill - Require approval to purchase (before/after posts)
+  # 审批流程的 before/after 两个 post（独立预制，不删用户，可单独跑）
+  - UI Automation Prefill - Require approval to purchase (before/after posts)
 pytest_args:
 - -v
 # tee-sys：既保留 pytest 的捕获（失败时仍能看到完整的 Captured 段落），又把输出实时

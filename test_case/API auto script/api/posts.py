@@ -123,6 +123,29 @@ class PostsApi(BaseApi):
             app_headers=app_headers, skip_notifications=skip_notifications,
         )
 
+    def curator_url_alias(
+        self, *,
+        post_id: str | None = None,
+        body: Any = None, token: str | None = None,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, Any] | None = None,
+        app_headers: bool = True, skip_notifications: bool = False,
+        path_vars: dict[str, Any] | None = None,
+    ) -> "ApiResponse":
+        """PATCH /posts/curator/{postId}/url-alias
+
+        改 post 的 URL 别名（body: {"urlAlias": "..."}）。
+        ⚠️ 改别名必须用这个接口：admin 的 PATCH /post/{postId} 对 create-from-event
+        出来的 post 不生效（返回 200 但 urlAlias 没变）。
+        """
+        return self._call(
+            "PATCH", '/posts/curator/{{postId}}/url-alias',
+            path_vars=_pv(("postId", post_id), extra=path_vars),
+            params=params,
+            body=body, token=token, headers=headers,
+            app_headers=app_headers, skip_notifications=skip_notifications,
+        )
+
     def curator_edit_by_post_id(
         self, *,
         post_id: str | None = None,
