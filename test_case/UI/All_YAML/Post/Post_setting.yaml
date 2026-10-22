@@ -2481,6 +2481,16 @@ testT2281:
         click_products_media: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")' }
         sleep_after_products_media: 3000
 
+        # [2026-10-22] The panel keeps the first product-media response and shows
+        # "No media yet" indefinitely when that response came back empty (seen
+        # intermittently: the fetch can fire before the post's products register).
+        # Toggling to "Uploaded" and back to "Products" forces a fresh fetch; both
+        # rows are plain mui-stacks, and ending on "Products" keeps the state intact.
+        click_uploaded_source_2281: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Uploaded")', optional: true }
+        sleep_before_media_refetch: 1500
+        click_products_media_refetch: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")' }
+        sleep_after_products_media_refetch: 4000
+
         # Product images render as img[data-testid="media-picture"] once "Products" is
         # selected; clicking one attaches it as the cover.
         click_media_img: { locator: '[role="dialog"] img[data-testid="media-picture"]', index: 0 }
