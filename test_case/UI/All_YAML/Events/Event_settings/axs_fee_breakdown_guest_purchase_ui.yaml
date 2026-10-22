@@ -7,135 +7,32 @@ testT5649_axs_guest_purchase:
     description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
     expect_result: "Checkout shows a fee breakdown for the AXS ticket; order can be placed and the confirmation page shows AXS info; partner can refund the order"
     test_step:
-        # ==================== [SELF-SEED] admin-side data extraction ====================
-        # 1. Go to the event list page
-        open: "{BASE_URL}/events"
-        sleep_list: 5000
-
-        # 2. Save the name of the event card that carries the AXS tag -> event_axs
-        extract_value_seed_event:
-            locator: "xpath=(//span[normalize-space(.)='AXS']/parent::*//p)[1]"
-            source: text
-            numeric: false
-            save_as: "event_axs"
-            global: true
-            timeout: 20000
-        sleep_seed_event: 800
-
-        # 2b. Enter the event (same locator as step 2, so both hit the same event)
-        R_click_seed_event: { locator: "xpath=//span[normalize-space(.)='AXS']/parent::*", index: 0, fallback_scan: true }
-        sleep_seed_event_page: 5000
-
-        # 3. Open the "Tickets & Merch" tab where ticket names are listed
-        R_click_seed_tickets_tab: { role: "tab", name: "Tickets & Merch" }
-        sleep_seed_tickets: 3000
-
-        # 4. Save the ticket name of the first non-Sold-out "Pear.US"-listed ticket -> ticket_axs
-        extract_value_seed_ticket:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))]//p)[1]"
-            source: text
-            numeric: false
-            save_as: "ticket_axs"
-            global: true
-            timeout: 20000
-        sleep_seed_ticket: 800
-
-        # 5. Save the retail price (first "$" amount on that card) -> ticket-retails-price
-        extract_value_seed_retail:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))])[1]"
-            source: text
-            regex: "\\$\\s*([\\d,]+(?:\\.\\d+)?)"
-            save_as: "ticket-retails-price"
-            global: true
-            timeout: 20000
-        sleep_seed_retail: 500
-
-        # 6. Save the "(incl. $x fees)" amount, then compute my_revenve = retail - incl
-        extract_value_seed_incl:
-            locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][contains(., 'Pear.US')][not(contains(., 'Sold out'))])[1]"
-            source: text
-            regex: "incl\\.?\\s*\\$\\s*([\\d,]+(?:\\.\\d+)?)"
-            save_as: "incl_fees_price"
-            timeout: 20000
-        compute_value_seed_revenue:
-            expression: "{{ticket-retails-price}} - {{incl_fees_price}}"
-            save_as: "my_revenve"
-            global: true
-        sleep_seed_revenue: 800
-
-        # 7. Ensure "Show fee breakdown at checkout" is enabled (the guest checkout
-        #     verification below depends on it). smart_check is idempotent.
-        R_click_seed_settings: { role: "button", name: "Settings" }
-        sleep_seed_settings: 3000
-        check_seed_fee_breakdown: { locator: "xpath=//input[@name='showFeesBreakdown']", checked: true }
-        sleep_seed_fee: 1500
-        R_click_seed_save: { name: "Save" }
-        sleep_seed_save: 3000
-
-        # 8. Click the ticket product -> Edit ticket page (URL .../products/<id>?mode=TICKET)
-        R_click_seed_product: { locator: "xpath=//p[normalize-space(.)='{{ticket_axs}}']" }
-
-        # 8b. [RACE FIX 2026-10-16] the SPA product route can mount before its data, leaving the
-        #     "Edit ticket" page blank (header only) so the "Fees + Taxes" value never renders.
-        #     Wait for the value natively; when the page is still blank, reload once and wait again.
-        #     No JS — smart_if + wait_for_selector + reload are all framework-native actions.
-        if_edit_ticket_form_rendered:
-            condition:
-                locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                state: visible
-                timeout: 12000
-            else:
-                reload_edit_ticket: { sleep_after: 4000 }
-                wait_for_selector_edit_ticket_form:
-                    locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-                    timeout: 30000
-        sleep_seed_edit: 1000
-
-        # 9. Open the "Fees + Taxes" price popover.
-        #    [LOCATOR FIX 2026-10-16] was `.../following-sibling::*[1]` with `index: 1` (1st match
-        #    = tooltip <button>, 2nd = the value <div>); excluding the tooltip selects the value
-        #    directly and no longer depends on the exact match count.
-        R_click_seed_fees_taxes:
-            locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
-        sleep_seed_tip: 2000
-
-        # 10. Save "Platform fees" and "Taxes" from the popover.
-        extract_row_value_seed_fees:
-            label: "Platform fees"
-            scope: ".MuiPopover-root"
-            save_as: "transaction-fees"
-            global: true
-            timeout: 15000
-        extract_row_value_seed_taxes:
-            label: "Taxes"
-            scope: ".MuiPopover-root"
-            save_as: "taxes"
-            global: true
-            timeout: 15000
-
-        # 11. Close the popover, leave the ticket editor and go back to the EVENT page.
-        press_seed_escape: { key: "Escape" }
-        sleep_seed_esc: 1200
-        go_back_seed: { sleep_after: 3500 }
-        smart_click_optional_seed_leave: { text: "Leave without saving" }
-        sleep_seed_leave: 1500
-
-        # 12. Read the public post URL from the event's "Post" tab -> GLOBAL post_url.
-        R_click_seed_post_tab: { locator: "xpath=//*[@role='tab' or self::button][normalize-space(.)='Post']", index: 0 }
-        sleep_seed_post: 4000
-        extract_value_seed_post_url_raw:
-            locator: "xpath=//button[contains(., '/post/')]"
-            source: content
-            strip_whitespace: true
-            regex: "[A-Za-z0-9.-]+\\.pear\\.us/[A-Za-z0-9._-]+/post/[A-Za-z0-9._-]+"
-            numeric: false
-            save_as: "post_url_raw"
-            timeout: 20000
-        set_value_seed_post_url:
-            value: "https://{{post_url_raw}}"
-            save_as: "post_url"
-            global: true
-        sleep_seed_url: 800
+        # [GLOBAL NS 2026-10-21] AXS chain namespace (see use_globals in actions/base.py).
+        use_globals: { namespace: axs }
+        # ============ [GLOBAL-ONLY, 2026-10-21] no admin-side self-seeding ============
+        # This case used to re-measure the whole admin side first (event card -> ticket card ->
+        # retail / "(incl. $x fees)" / Platform fees / Taxes -> ticket editor -> Post tab) and
+        # publish the results.  That duplicate block is GONE: it now consumes the values from
+        # the PERSISTENT global store (test_case/UI/global_vars_<env>.json).
+        #
+        # Producer: All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml, which publishes
+        #   event_axs / ticket_axs / ticket-retails-price / my_revenve / transaction-fees /
+        #   taxes / post_url        (each with `save_as` + `global: true`)
+        # and also enables "Show fee breakdown at checkout", which the checkout assertions
+        # below depend on.
+        #
+        # No run-order coupling: the store is disk-backed, so the producer only has to have run
+        # ONCE against the same environment (any process, any earlier session):
+        #     ./venv/bin/python -m pytest test_case/UI/test_ui.py \
+        #         --yaml "All_YAML/Events/Event_settings/axs_fee_breakdown_ui.yaml"          # once
+        #     ./venv/bin/python -m pytest test_case/UI/test_ui.py \
+        #         --yaml "All_YAML/Events/Event_settings/axs_fee_breakdown_guest_purchase_ui.yaml"
+        # Inspect / fix the store with:  ./venv/bin/python tools/globals_store.py
+        #
+        # (The step numbers below still start at 13 so old run logs / step captures stay
+        #  comparable: steps 1..12 of the original seeding block no longer exist.)
+        verify_defined_globals:
+            vars: [ticket_axs, ticket-retails-price, my_revenve, transaction-fees, taxes, post_url]
 
         # ==================== guest checkout flow ====================
         # 13. Create the guest session (no cookie = visitor); saved temp vars are copied into it
@@ -297,9 +194,14 @@ testT5649_axs_guest_purchase:
             value: "{{ticket-retails-price}}"
             tolerance: 0.01
             timeout: 20000
-        # "(including $a fees)" — the actual copy is "(incl. $5.27 fees)"; accept both
+        # "(including $a fees)" — [FACT 2026-10-21, measured on a venue_map order #P193424] this
+        # buyer-facing number is `transaction-fees + taxes` (fee 12.47 + tax 2.30 -> $14.77); it
+        # equals `transaction-fees` alone only when taxes == 0 (today's AXS config), so derive it.
+        session_guest__compute_value_fees_incl_tax:
+            expression: "{{transaction-fees}} + {{taxes}}"
+            save_as: "fees_incl_tax"
         session_guest__verify_text_regex_incl_fees_row:
-            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{transaction-fees}}\\s*fees"
+            pattern: "(?:including|incl\\.?)\\s*\\$\\s*{{fees_incl_tax}}\\s*fees"
             flags: "i"
             timeout: 20000
 

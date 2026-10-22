@@ -7,6 +7,9 @@ testT5649_axs:
     description: "Verify the fee breakdown for AXS ticket on checkout - then place order - check AXS info on order confirmation page - refund"
     expect_result: "Checkout shows a fee breakdown for the AXS ticket; order can be placed and the confirmation page shows AXS info; partner can refund the order"
     test_step:
+        # [GLOBAL NS 2026-10-21] AXS chain namespace — AXS/TDC/venue_map publish the SAME key
+        # names (transaction-fees / my_revenve / ...), so each chain gets its own namespace.
+        use_globals: { namespace: axs }
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000

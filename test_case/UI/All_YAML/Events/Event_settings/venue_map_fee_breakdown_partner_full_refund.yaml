@@ -9,13 +9,19 @@
 testT5649_venue_map_partner_full_refund:
     is_mobile: true
     description: "Partner full refund the venue map order"
-    expect_result: "After a full refund the partner's Net Earning equals -transaction-fees on the sale details page"
+    expect_result: "After a full refund the partner's Net Earning is reversed (equals 0 - incl_fees_price) on the sale details page"
     test_step:
-        # 0. [SELF-SEED, 2026-10-16] This case no longer depends on the parent case
-        #    (venue_map_fee_breakdown_ui.yaml) publishing `transaction-fees` as a cross-case
-        #    global. Instead it extracts the order's own "Transaction Fee" row from the Sale
-        #    details page (step 6b) before performing the refund, then asserts Net Earning ==
-        #    -transaction-fees after the refund. Fully standalone now.
+        # [GLOBAL NS 2026-10-21] venue_map chain namespace: step 12 consumes `incl_fees_price`,
+        # which venue_map_fee_breakdown_ui.yaml publishes inside the same `venue_map` namespace.
+        use_globals: { namespace: venue_map }
+        # 0. [CONSUMER since 2026-10-21, user request] This case is no longer standalone in its
+        #    ASSERTION: step 12 checks `Net Earning == 0 - incl_fees_price`, the buyer-facing
+        #    "(incl. $X fees)" amount published by venue_map_fee_breakdown_ui.yaml (step 10).
+        #    It still picks its OWN order (step 5 = first row that is not "Refunded"), so the
+        #    DATA side stays independent — only the expected number comes from the chain.
+        #    Guarded below so a missing producer run fails fast with the variable name.
+        verify_defined_globals:
+            vars: [incl_fees_price]
 
         # 1. Create the partner session and open the event list
         session_partner__open: { url: "{BASE_URL}/events", cookie_file: "test_case/UI/cookie_{ENV}.json" }
@@ -33,12 +39,23 @@ testT5649_venue_map_partner_full_refund:
         session_partner__R_click_orders_tab: { locator: "xpath=//*[@role='tab'][normalize-space(.)='Orders']" }
         sleep_partner_orders: 5000
 
-        # 5. Extract the FIRST order id in the list -> temp var first_order_id
-        #     (was execute_js: document.body.innerText.match(/#(P\d+))/ -> extract_value + regex)
+        # 5. Extract the FIRST order id that still HAS money on it -> first_order_id.
+        #     [PICK RULE CHANGED 2026-10-21 — was "skip blocks containing 'Refunded'"]
+        #     The list paints the "#P… / amount" pairs BEFORE the "N Refunded" chips, so the old
+        #     lookahead regex routinely read a refunded row as refundable. Measured today: it
+        #     picked #P193426 (already refunded) and refunded it a SECOND time, which flipped its
+        #     amount from -12.22 to $0.00 and failed step 12 with
+        #     `row 'Net Earning' amount 0.0 != expected '-12.22'`.
+        #     The amount is a far better signal, and it is printed inline with the id:
+        #         #P193429          #P193425          #P193426
+        #         -$12.47           $102.30           $0.00        <- refunded / double-refunded
+        #     A refunded order always shows a NEGATIVE amount (-fee) or, if refunded twice, $0.00;
+        #     only a refundable order shows a plain positive "$<digit>". So require "$" right
+        #     after the id (a "-" in between makes it not match) and reject the $0.00 degenerate.
         session_partner__extract_value_first_order:
             locator: "body"
             source: text
-            regex: "#(P\\d+)"
+            regex: "#(P\\d+)(?!-)\\s*\\$(?!0\\.00)[\\d,]"
             numeric: false
             save_as: "first_order_id"
             timeout: 30000
@@ -48,15 +65,14 @@ testT5649_venue_map_partner_full_refund:
         session_partner__R_click_first_order: { locator: "xpath=//*[normalize-space(.)='#{{first_order_id}}']" }
         sleep_partner_sale_details: 6000
 
-        # 6b. [SELF-SEED] Extract the order's "Transaction Fee" from the Sale details page so the
-        #      case no longer needs the parent's `transaction-fees` global. The Sale details page
-        #      shows a "Transaction Fee" row (e.g. "$7.77") for the order regardless of refund
-        #      status; the full refund performed below then makes Net Earning == -transaction-fees.
-        #      [DOM FACT, verified 2026-10-16 on release] the row label is "Transaction Fee"
-        #      (NOT "Platform fees" / "Transaction fees").
-        session_partner__extract_row_value_transaction_fees:
-            label: "Transaction Fee"
-            save_as: "transaction-fees"
+        # 6b. Wait for the Sale details page to be fully rendered before touching the
+        #     "I want to ..." dropdown (this used to be the Net Earning extraction).
+        #     [2026-10-21] the pre-refund Net Earning is NO LONGER read here: step 12 now asserts
+        #     against the cross-case global `incl_fees_price` published by
+        #     venue_map_fee_breakdown_ui.yaml, so reading it locally would just be a dead value.
+        #     A plain wait keeps the page-ready guarantee without leaving an unused variable.
+        session_partner__wait_for_net_earning_row:
+            locator: "xpath=//*[normalize-space(.)='Net Earning']"
             timeout: 15000
 
         # 7. On the Sale details page, click the "I want to ..." dropdown trigger
@@ -81,16 +97,21 @@ testT5649_venue_map_partner_full_refund:
         session_partner__R_click_refund_confirm: { locator: ".MuiDrawer-root:has-text('Confirm Full Refund') button:has-text('Refund')" }
         sleep_partner_refund: 6000
 
-        # 12. [HARD ASSERTION] after a full refund, Net Earning == -transaction-fees.
+        # 12. [HARD ASSERTION] after a full refund, Net Earning == 0 - incl_fees_price, where
+        #     `incl_fees_price` is the buyer-facing "(incl. $X fees)" amount published by
+        #     venue_map_fee_breakdown_ui.yaml (its step 10, namespace `venue_map`).
+        #     [2026-10-21, user request] the assertion used to be keyed off a LOCAL pre-refund
+        #     read (`net_before`); it now keys off the producer's global so this case cannot drift
+        #     from the amount the chain actually measured.
         #     [WHY retry_until_match] the refund settles ASYNCHRONOUSLY on the server, and the
-        #     "Net Earning" row stays VISIBLE the whole time — it just flips from +fees to -fees.
+        #     "Net Earning" row stays VISIBLE the whole time — it just flips from +X to -X.
         #     A plain verify_row_value reads the FIRST amount it sees and fails on the still
         #     positive value; `retry_until_match: true` keeps re-reading until the amount
         #     actually matches (or `timeout` runs out). This is the native replacement for the
         #     old 50 x 500ms polling execute_js, which looped on `if(net<0) break`.
-        #     The negative amount is kept by `signed: true`.
+        #     The negative amount is kept by `signed: true` (default) on verify_row_value.
         session_partner__compute_value_expected_net_earning:
-            expression: "0 - {{transaction-fees}}"
+            expression: "0 - {{incl_fees_price}}"
             save_as: "expected_net_earning"
         session_partner__verify_row_value_net_earning:
             label: "Net Earning"

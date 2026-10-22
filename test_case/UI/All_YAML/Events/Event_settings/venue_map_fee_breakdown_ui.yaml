@@ -10,6 +10,9 @@ testT5649_venue_map:
     description: "Verify the fee breakdown for venue map ticket on checkout - then place order - check seat info in order confirmation page - refund"
     expect_result: "Checkout shows a fee breakdown for the venue map ticket; order can be placed and the confirmation page shows seat info; partner can refund the order"
     test_step:
+        # [GLOBAL NS 2026-10-21] venue_map chain namespace — each chain keeps its own
+        # transaction-fees / my_revenve / ticket-retails-price / post_url.
+        use_globals: { namespace: venue_map }
         # 1. Go to the event list page
         open: "{BASE_URL}/events"
         sleep_list: 5000
@@ -64,11 +67,16 @@ testT5649_venue_map:
 
         # 10. Extract the "(incl. $x fees)" amount, then compute my_revenve = price - incl
         #     -> temp var my_revenve
+        #     [GLOBAL 2026-10-21, user request] `incl_fees_price` is now published cross-case:
+        #     venue_map_fee_breakdown_partner_full_refund.yaml asserts the refunded
+        #     `Net Earning == -incl_fees_price` from it (that case used to self-read the value).
+        #     It is the buyer-facing "(incl. $14.77 fees)" number = transaction-fees + taxes.
         extract_value_incl_fees:
             locator: "xpath=(//div[@data-testid='mui-stack'][.//button[@data-testid='enhance-button']][not(contains(., 'Sold out'))])[1]"
             source: text
             regex: "incl\\.?\\s*\\$\\s*([\\d,]+(?:\\.\\d+)?)"
             save_as: "incl_fees_price"
+            global: true
             timeout: 20000
         compute_value_my_revenue:
             expression: "{{ticket-retails-price}} - {{incl_fees_price}}"
@@ -106,21 +114,28 @@ testT5649_venue_map:
             locator: "xpath=//*[normalize-space(.)='Fees + Taxes']/following-sibling::*[1][not(self::button)]"
         sleep_fees_tip: 2000
 
-        # 13. Extract "Platform fees" from the popover -> temp var transaction-fees
+        # 13. Extract "Platform fees" from the popover -> GLOBAL transaction-fees
         #     (was execute_js; extract_row_value walks the labelled MUI row natively)
+        #     [signed FIX 2026-10-21] `signed: false` — a fee row can never be negative, but the
+        #     default signed walk folds a neighbouring "-" glyph into the amount (measured as
+        #     -7.77 on the AXS twin). Since 2026-10-21 the guest case ADDS this value
+        #     (`my_revenve + transaction-fees + taxes == Checkout Total`), so a negative here
+        #     would break the guest's arithmetic. Same fix already applied in the AXS/TDC twins.
         extract_row_value_platform_fees:
             label: "Platform fees"
             scope: ".MuiPopover-root"
             save_as: "transaction-fees"
             global: true
+            signed: false
             timeout: 15000
 
-        # 14. Extract "Taxes" from the popover -> temp var taxes
+        # 14. Extract "Taxes" from the popover -> GLOBAL taxes (same `signed: false` reasoning)
         extract_row_value_taxes:
             label: "Taxes"
             scope: ".MuiPopover-root"
             save_as: "taxes"
             global: true
+            signed: false
             timeout: 15000
 
         # 15. This price popover is a modal and covers the Back button, so press Escape to close it

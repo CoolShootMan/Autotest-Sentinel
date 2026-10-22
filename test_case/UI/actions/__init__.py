@@ -38,6 +38,7 @@ from .base import (
     verify_number,
     set_value,
     verify_defined,
+    use_globals,
     verify_text_regex,
     verify_all_commission_values,
     reload_page,
@@ -62,6 +63,7 @@ from .base import (
     ensure_auto_archive,
     smart_click_retry,
     select_event_with_sellable_product,
+    select_available_map_table,
     handle_modal,
     auto_handle_modals,
     create_session,
@@ -231,6 +233,8 @@ ACTIONS = {
     "verify_number": verify_number,
     "set_value": set_value,
     "verify_defined": verify_defined,
+    "verify_defined_globals": verify_defined,
+    "use_globals": use_globals,
     "verify_text_regex": verify_text_regex,
     "verify_all_commission": verify_all_commission_values,
     "verify_cta_type_4": verify_no_sibling_text,
@@ -271,6 +275,7 @@ ACTIONS = {
     "hover": hover,
     "smart_click_retry": smart_click_retry,
     "select_event_with_sellable_product": select_event_with_sellable_product,
+    "select_available_map_table": select_available_map_table,
     "delete_coseller_if_exists": delete_coseller_if_exists,
     "execute_js": execute_js,
     "ensure_auto_archive": ensure_auto_archive,
@@ -346,6 +351,8 @@ def get_action(name):
         return smart_click_retry
     if name.startswith("select_event_with_sellable_product"):
         return select_event_with_sellable_product
+    if name.startswith("select_available_map_table"):
+        return select_available_map_table
     if name.startswith("dispatch_click"):
         return dispatch_click
     # MUST stay above the generic `click*` rule below — otherwise "click_open_new_tab"
@@ -445,6 +452,8 @@ def get_action(name):
         return compute_value
     if name.startswith("set_value"):
         return set_value
+    if name.startswith("use_globals"):
+        return use_globals
     if name.startswith("verify"):
         return verify_text_visible
 

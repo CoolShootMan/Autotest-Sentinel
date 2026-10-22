@@ -109,3 +109,39 @@ testT4239_venue_map_guest_check:
         # 13. Click Place order
         session_guest__R_click_place_order: { role: "button", name: "Place order" }
         sleep_place_order: 8000
+
+        # 14. Click Place order
+        session_guest__wait_for_url_order_confirmation:
+            url: "**/order/**/confirmation"
+            timeout: 30000
+        session_guest__verify_order_confirmed:
+            text:
+                - "Thank you for your payment."
+                - "Your order is confirmed"
+            timeout: 20000
+
+        # 15. The "Ticket Information" section is present on the confirmation page
+        session_guest__verify_ticket_info_title: { text: "Ticket Information", timeout: 20000 }
+        #     venue name visible (get_by_text is case-insensitive: matches "Test Venue"/"Test venue")
+        session_guest__verify_ticket_info_venue_name: { text: "Test Venue", timeout: 20000 }
+
+        # 16. The venue's real address is revealed to the buyer: inside "Ticket Information",
+        #     under the venue name, the full address "West Mound Street, Columbus, Ohio" shows
+        #     (full state name here — the public post abbreviates to "OH").
+        #     Scope = innermost container holding BOTH the venue name and the address, i.e.
+        #     the address sits in the venue's own block. translate() makes the venue-name
+        #     contains() case-insensitive (the post renders it as "Test venue", the
+        #     confirmation page may capitalize differently).
+        session_guest__verify_venue_address_revealed:
+            text: "West Mound Street, Columbus, Ohio"
+            scope:
+                locator: "xpath=(//*[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'test venue') and contains(., 'West Mound Street, Columbus, Ohio')])[last()]"
+            timeout: 20000
+
+        # 17. The buyer-facing confirmation must NOT show the "address hidden" hint anymore —
+        #     the address is revealed to ticket buyers. (assert_not_visible only fails on
+        #     VISIBLE copies, so hidden legacy DOM copies don't false-fail.)
+        session_guest__verify_hint_gone:
+            text: "Address will be provided after purchase"
+            assert_not_visible: true
+            timeout: 10000
