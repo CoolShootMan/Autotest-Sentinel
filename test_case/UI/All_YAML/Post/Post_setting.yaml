@@ -588,8 +588,13 @@ testT2705_VerifyPartner:
     R_click_grid_view: { role: "button", name: "grid" }
     sleep_after_grid_view: 5000
 
-    # Step 6: Search for "General Admission" — fill triggers onChange (debounced fetch).
-    # No Enter — would race with the in-flight debounce fetch and stall loading.
+    # Step 6: Search for "General Admission" in the Select products dialog.
+    # NOTE (2026-10-23): filling this box alone issues NO request. Verified on
+    # release.pear.us: the XHR list stays empty until Enter is pressed, and Enter is
+    # what fires POST /posts/curator/catalog. The previous wording here claimed the
+    # opposite ("No Enter - would race with the in-flight debounce fetch"); it was
+    # wrong, and it is why this case dies at Step 7.1. The missing `press: Enter` and
+    # the product name are fixed separately, so behaviour is unchanged here.
     fill_search_product: { placeholder: "Search product", value: "General Admission" }
     sleep_after_search_product: 8000
 
@@ -796,8 +801,16 @@ testT2705_VerifyGuest:
     R_click_post_card: { locator: 'text="test1234" >> xpath=ancestor::*[.//img][1] >> img', index: 0 }
     sleep_after_td_post_card: 5000
 
-    # Step 10: Wait for post landing page to load
-    wait_for_selling_tab: { selector: 'role=tab[name="Selling"][exact=true]', timeout: 15000 }
+    # Step 10: Wait for post landing page to load.
+    # The old key was `wait_for_selling_tab` with a `selector:` payload. Every `wait_*`
+    # name except `wait_for_selector*` / `wait_for_url*` / `wait_toast*` is routed to
+    # smart_wait, which reads role/name/locator/text and IGNORES `selector` - so this
+    # step logged "no locator/role/name/text specified, skipping" and waited 0ms.
+    # Renamed to the `wait_for_selector_` prefix so the selector is honoured, and the
+    # bogus `[exact=true]` attribute dropped (the Playwright `role=` engine has no
+    # `exact` attribute). This cannot add a new failure mode: the very next step clicks
+    # this same tab, so the tab has to exist anyway - the wait just surfaces it sooner.
+    wait_for_selector_selling_tab: { selector: '[role="tab"]:has-text("Selling")', timeout: 15000 }
     R_click_selling_tab_reset: { role: "tab", name: "Selling", exact: true }
     sleep_after_td_selling_tab_reset: 2000
 
