@@ -43,6 +43,12 @@ def main():
     env = load_env()
     client = OnesClient(env)
 
+    # Check token, refresh if expired
+    if not client.check_token():
+        from ones_writer import refresh_token_via_playwright
+        client.token = refresh_token_via_playwright()
+        env["ONES_AUTH_TOKEN"] = client.token
+
     case_uuids, t_numbers = extract_auto_cases()
     print(f"本地: CASE_ID={len(case_uuids)}, 文件名T编号={len(t_numbers)}")
 

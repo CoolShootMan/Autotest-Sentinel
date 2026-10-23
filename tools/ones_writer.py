@@ -145,16 +145,29 @@ def refresh_token_via_playwright() -> str:
         sys.exit(1)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
-        context = browser.new_context(viewport={"width": 1280, "height": 800})
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(viewport={"width": 1280, "height": 800},
+            user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36")
         page = context.new_page()
         page.set_default_timeout(30000)
 
-        page.goto(ONES_LOGIN_URL)
-        page.get_by_role("textbox", name="* 邮箱").fill(ones_email)
-        page.get_by_role("textbox", name="* 密码").fill(ones_password)
-        page.get_by_role("button", name="登录").click()
-        page.wait_for_timeout(3000)
+        page.goto(ONES_LOGIN_URL, wait_until="domcontentloaded")
+        page.wait_for_timeout(5000)
+        # 兼容多种登录页选择器
+        try:
+            page.locator("input[type='email'], input[placeholder*='邮箱'], input[placeholder*='email']").first.fill(ones_email)
+        except Exception:
+            page.get_by_role("textbox", name="* 邮箱").fill(ones_email)
+        try:
+            page.locator("input[type='password']").first.fill(ones_password)
+        except Exception:
+            page.get_by_role("textbox", name="* 密码").fill(ones_password)
+        # 兼容多种登录按钮
+        try:
+            page.locator("button:has-text('登录'), button:has-text('Login'), button[type='submit']").first.click()
+        except Exception:
+            page.get_by_role("button", name="登录").click()
+        page.wait_for_timeout(8000)
 
         # Navigate to test management to ensure token is set
         try:

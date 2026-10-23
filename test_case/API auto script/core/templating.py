@@ -5,6 +5,7 @@
 * 只替换形如 ``{{key}}`` 的占位符（花括号内允许空格：``{{ key }}``）
 * 变量值统一按 ``str()`` 注入——与旧生成器一致，避免数字/布尔类型漂移
 * 未定义的占位符原样保留，同时记录到 ``unresolved``，便于排查拼写错误
+* 支持 Apifox faker 表达式：``{{$internet.email()}}``、``{{$internet.url}}`` 等
 
 ``render`` 支持 str / list / tuple / dict 递归；非字符串类型原样返回。
 """
@@ -16,12 +17,58 @@ from typing import Any, Iterable
 # 匹配 {{ key }} / {{key}}；不支持嵌套表达式
 _PLACEHOLDER_RE = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
 
+# faker 实例（懒加载，避免无 faker 时影响既有路径）
+_faker = None
+
+
+def _get_faker():
+    global _faker
+    if _faker is None:
+        try:
+            from faker import Faker
+            _faker = Faker()
+        except ImportError:
+            _faker = False
+    return _faker
+
+
+def _resolve_faker(expr: str) -> str | None:
+    """解析 {{$internet.email()}} 等 faker 表达式。返回 None 表示不识别。"""
+    if not expr.startswith("$"):
+        return None
+    f = _get_faker()
+    if not f:
+        return None
+    # 解析 $internet.email(locale='en') -> 分模块和方法
+    m = re.match(r"\$(\w+)\.(\w+)(?:\((.*)\))?", expr)
+    if not m:
+        return None
+    module, method, args_str = m.group(1), m.group(2), m.group(3) or ""
+    # 只支持常见 internet 子方法，避免任意属性访问
+    internet_methods = {"email", "free_email", "safe_email", "url", "domain_name",
+                        "ipv4", "user_name", "mac_address", "slug"}
+    if module == "internet" and method in internet_methods:
+        try:
+            val = getattr(f, method)()
+            return str(val)
+        except Exception:
+            return None
+    return None
+
 
 def render_text(template: str, variables: dict) -> str:
     """渲染单个字符串。"""
     if not isinstance(template, str) or "{{" not in template:
         return template
     out = template
+    # 先替换 faker 表达式 {{$internet.email()}}
+    for m in _PLACEHOLDER_RE.finditer(template):
+        expr = m.group(1).strip()
+        faker_val = _resolve_faker(expr)
+        if faker_val is not None:
+            out = out.replace("{{" + m.group(1) + "}}", faker_val)
+            out = out.replace("{{ " + m.group(1) + " }}", faker_val)
+    # 再替换普通变量
     for key, value in variables.items():
         if value is None:
             continue
