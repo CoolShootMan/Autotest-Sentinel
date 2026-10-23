@@ -64,6 +64,11 @@ fail_wait_*
 # === Debug files (temporary) ===
 gemini-tasks/
 debug_*.py
+# debug screenshots: the `screenshot_<step>` action writes "<name>.png" into the
+# CWD (test_case/UI). Two YAML steps in Post_setting.yaml name them debug_*.png
+# (debug_partner_final / debug_guest_view_restored), so every run used to leave
+# untracked files behind. The old root-anchored `/*.png` rule did not reach them.
+debug_*.png
 check_field.py
 debug_drawer.py
 scratch/
