@@ -29,7 +29,7 @@ name: ui-automation-daily
 # 注意：schedule 只在默认分支 main 上触发；改完必须合到 main 才会定时生效。
 on:
   schedule:
-    - cron: '0 12 * * *'       # 12:00 UTC = 20:00 北京时间（每天晚上8点）
+    - cron: '0 13 * * *'       # 13:00 UTC = 21:00 北京时间（每天晚上9点）
   workflow_dispatch:          # 允许手动触发，便于随时验证
 # 同一 workflow 只允许一个实例在跑，避免并发争抢
 concurrency:
