@@ -1,17 +1,29 @@
 # Katana API 文档
 
-Katana 平台后端接口文档（由 `katana-server` 代码自动生成）。
+Katana 平台后端接口文档（由 `katana-server` 代码自动生成，每日 9:00 定时同步）。
 
 ## 文件说明
 
 | 文件 | 说明 |
 |---|---|
-| `katana-server-api-docs.html` | Swagger UI 交互文档（**主交付物**，浏览器打开即用：按模块浏览全部接口、查看参数/请求体/枚举、在线 Try it out） |
-| `katana-server.openapi.yaml` | OpenAPI 3.0.3 规范源文件（可导入 Swagger UI / Apifox / Postman） |
+| `katana-server-api-docs.html` | **主交付物**：纯静态自包含 HTML（无 SwaggerUI、零渲染框架，秒开不转圈），支持按模块浏览、搜索、折叠、curl 示例、数据模型，浏览器打开即用 |
+| `katana-server.openapi.yaml` | OpenAPI 3.0.3 规范源文件（可导入 Apifox / Postman / 其他工具） |
 | `katana-server.openapi.json` | 同一规范的 JSON 版 |
 | `extract_controllers.py` | 从 `katana-server/src` 解析 controller 路由端点（输出 `/tmp/katana_endpoints.json`） |
 | `build_openapi.py` | 组装 OpenAPI YAML/JSON（读取 `/tmp/katana_endpoints.json` + 扫描 DTO/枚举） |
-| `build_html.py` | 从 openapi.json 生成 Swagger UI 交互 HTML |
+| `build_html.py` | 从 openapi.json 生成纯静态交互 HTML |
+
+## 当前统计（2026-10-23 同步）
+
+| 指标 | 数量 |
+|---|---|
+| API 路径 | 935 |
+| API 操作（端点） | 1058 |
+| 数据模型（schemas） | 344 |
+| 类定义 | 1377 |
+| 枚举 | 131 |
+| 功能模块 | 131 |
+| servers | `https://release.katana-api.1m.app`（release 环境） |
 
 ## 如何更新（代码变更后）
 
