@@ -280,3 +280,5 @@ data/ua_*.txt
 # into a subdirectory (e.g. Test_Katana/) slipped straight through.
 **/cookie_*.json
 tools/login_error_*.png
+.venv-smoke/
+doc-fetch-resources/
