@@ -1934,7 +1934,7 @@ testT3963_VerifyGuestCheckoutShippingFee:
 # duplicated ticket behind. It is not idempotent.
 # =============================================================================
 testT5033_5034_VerifyPartner:
-    description: "Verify a product on an event post can switch its call-to-action type from the default Buy now to View options"
+    description: "Verify four products on an event post each keep their own call-to-action type (View options / Add to cart / View Product / default Buy now) and that the choices are saved"
     test_step:
         # ---------------------------------------------------------------------
         # Block A - Prepare: duplicate the ticket so the post has a 2nd product
@@ -1989,39 +1989,100 @@ testT5033_5034_VerifyPartner:
         sleep_after_add_product_btn_1: 2000
 
         # ---------------------------------------------------------------------
-        # Block C - Verify: switch the call-to-action type of products.1
+        # Block C - Verify: give each of the first four products its own
+        # call-to-action type
         # ---------------------------------------------------------------------
-        # Expand the advanced-settings panel of the target entry, then tick
-        # "Choose call-to-action type" (input name suffix isCtaCustomized).
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 2 }
-        sleep_after_expand_details: 1000
-        R_click_expand_details_2: { test_id: "ExpandMoreIcon", index: 1 }
-        check_CTACustomized: { locator: "input[name$='products.1.isCtaCustomized']" }
-        sleep_after_CTACustomized: 500
-        # Ticking the checkbox reveals the dropdown, which starts on "Buy now".
-        # Guarding the default keeps the assertion below meaningful: without it a
-        # stale "View options" from an earlier run would make the check vacuous.
-        verify_element_contains_text_cta_default:
-            locator: '[role="combobox"][aria-haspopup="listbox"]'
+        # The post is created from the event, so it already carries every event
+        # ticket as a product - four of them exist before anything is added, and
+        # the entry added in Block B becomes the last one.
+        #
+        # A product's Advanced settings is collapsed by default and its
+        # "Choose call-to-action type" checkbox does not exist in the DOM until
+        # the section is expanded. ExpandMoreIcon index N belongs to products.N,
+        # and expanding is additive (opening one section leaves the others open),
+        # so the four sections below can all be open at once.
+        R_click_expand_p0: { test_id: "ExpandMoreIcon", index: 0 }
+        sleep_after_expand_p0: 800
+        R_click_expand_p1: { test_id: "ExpandMoreIcon", index: 1 }
+        sleep_after_expand_p1: 800
+        R_click_expand_p2: { test_id: "ExpandMoreIcon", index: 2 }
+        sleep_after_expand_p2: 800
+        R_click_expand_p3: { test_id: "ExpandMoreIcon", index: 3 }
+        sleep_after_expand_p3: 800
+        # Ticking all four is what makes four boxes appear, one per product.
+        # From here on NO locator may be page-wide: [role="combobox"]
+        # [aria-haspopup="listbox"] matches four elements and
+        # verify_element_contains_text calls inner_text() on the result, which
+        # raises a strict mode violation instead of failing the assertion.
+        check_cta_p0: { locator: "input[name$='products.0.isCtaCustomized']" }
+        sleep_after_check_cta_p0: 500
+        check_cta_p1: { locator: "input[name$='products.1.isCtaCustomized']" }
+        sleep_after_check_cta_p1: 500
+        check_cta_p2: { locator: "input[name$='products.2.isCtaCustomized']" }
+        sleep_after_check_cta_p2: 500
+        check_cta_p3: { locator: "input[name$='products.3.isCtaCustomized']" }
+        sleep_after_check_cta_p3: 500
+
+        # Per-product handle: the first combobox that follows this product's own
+        # checkbox. Scoping by product name does not work - MUI renders Advanced
+        # settings outside the product card, so a :has-text() container resolves
+        # to the name wrapper which holds no dropdown - and ancestor scoping
+        # lands on the section wrapper whose text also contains the
+        # "Choose call-to-action type" label. The following-sibling axis is the
+        # only form that yields the trigger itself, and it resolves to exactly
+        # one node per product.
+        #
+        # Assert the default first: a value left over from an earlier save would
+        # otherwise make the later assertion vacuous.
+        verify_element_contains_text_cta_p0_default:
+            locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "Buy now"
-        # The trigger is the only [aria-haspopup=listbox] on the page and it sits
-        # inside the "Customize product settings" dialog, so the click is pinned
-        # to that dialog. Scoping by product name does not work: MUI renders
-        # Advanced settings outside the product card, so
-        # div:has-text("General Admission") resolves to the name wrapper, which
-        # holds no dropdown at all.
-        click_container_button_buynow_tgp: { container_locator: "//div[@role='dialog']", button: "[aria-haspopup='listbox']:has-text('Buy now')", button_index: 0 }
-        sleep_after_container_button_buynow_tgp: 500
-        R_click_option_view_options: { role: "option", name: "View options" }
-        sleep_after_option_view_options: 500
-        # The selection is applied only if the trigger itself changed its text.
-        verify_element_contains_text_cta_view_options:
-            locator: '[role="combobox"][aria-haspopup="listbox"]'
+        verify_element_contains_text_cta_p1_default:
+            locator: "xpath=//input[@name='products.1.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Buy now"
+        verify_element_contains_text_cta_p2_default:
+            locator: "xpath=//input[@name='products.2.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Buy now"
+        verify_element_contains_text_cta_p3_default:
+            locator: "xpath=//input[@name='products.3.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Buy now"
+
+        # products.0 -> View options
+        R_click_cta_p0:
+            locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
+        sleep_after_click_cta_p0: 500
+        R_click_cta_option_p0: { role: "option", name: "View options" }
+        sleep_after_cta_option_p0: 600
+        verify_element_contains_text_cta_p0:
+            locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "View options"
-        verify_element_contains_text_cta_not_buy_now:
-            locator: '[role="combobox"][aria-haspopup="listbox"]'
+
+        # products.1 -> Add to cart
+        R_click_cta_p1:
+            locator: "xpath=//input[@name='products.1.isCtaCustomized']/following::*[@role='combobox'][1]"
+        sleep_after_click_cta_p1: 500
+        R_click_cta_option_p1: { role: "option", name: "Add to cart" }
+        sleep_after_cta_option_p1: 600
+        verify_element_contains_text_cta_p1:
+            locator: "xpath=//input[@name='products.1.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Add to cart"
+
+        # products.2 -> View Product
+        R_click_cta_p2:
+            locator: "xpath=//input[@name='products.2.isCtaCustomized']/following::*[@role='combobox'][1]"
+        sleep_after_click_cta_p2: 500
+        R_click_cta_option_p2: { role: "option", name: "View Product" }
+        sleep_after_cta_option_p2: 600
+        verify_element_contains_text_cta_p2:
+            locator: "xpath=//input[@name='products.2.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "View Product"
+
+        # products.3 is deliberately left alone: it must still read "Buy now"
+        # after three neighbours were changed, which is what proves the four
+        # dropdowns are independent rather than one shared value.
+        verify_element_contains_text_cta_p3_still_default:
+            locator: "xpath=//input[@name='products.3.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "Buy now"
-            assert: false
 
         # ---------------------------------------------------------------------
         # Block D - Save and confirm the editor accepted the change
@@ -2032,7 +2093,7 @@ testT5033_5034_VerifyPartner:
         sleep_after_save_again: 3000
 
     expect_result:
-        description: "The call-to-action type is applied and saved: the dropdown reads View options instead of the default Buy now, and the editor reports the update"
+        description: "Each product keeps its own call-to-action type after saving: products.0/1/2 read View options / Add to cart / View Product while products.3 still reads the default Buy now, and the editor reports the update"
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "Post products updated"
