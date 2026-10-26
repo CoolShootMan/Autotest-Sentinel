@@ -1896,10 +1896,49 @@ testT3963_VerifyGuestCheckoutShippingFee:
 # ==============================================================================
 # Test Case: T5033_5034 Verify the "Choose call-to-action type" function of the event post
 # ==============================================================================
+# =============================================================================
+# T5033_5034 - Verify the "Choose call-to-action type" function of an event post
+#
+# Feature under test
+#   Every product attached to an event post can override its own call-to-action
+#   button. The dropdown starts on the default "Buy now" and also offers
+#   "View options", "Add to cart" and "View Product".
+#
+# How this case proves it (four blocks, keep them in this order)
+#   A. Prepare - duplicate the event ticket once. This is NOT a leftover: the
+#      post needs a second product entry because the toggle below is addressed
+#      as products.1. Block A is the only step that creates it.
+#   B. Build   - open the post editor and attach the product under test.
+#   C. Verify  - tick "Choose call-to-action type" for that entry, assert the
+#      dropdown still reads the default "Buy now", switch it to "View options",
+#      then assert the trigger really reads the new value.
+#   D. Save    - save twice and assert the editor reports the update.
+#
+# Measured on release.pear.us (2026-10-26), do not "simplify" these away
+#   - The post owns exactly one [role="combobox"][aria-haspopup="listbox"]
+#     once the checkbox is ticked, and it lives in the "Customize product
+#     settings" dialog. Its text is "Buy now" before the selection and
+#     "View options" after it.
+#   - The dialog lists one "General Admission" per duplicated ticket, so
+#     products.N are positional and drift as this case re-runs.
+#   - The second and third duplicate rounds, together with
+#     `verify_toast: Product duplicated successfully`, were dropped upstream in
+#     4ce65520 (2026-08-18) because the post-duplicate SPA redirect is
+#     unreliable in automation. Only one round is kept here, for products.1.
+#   - The old `verify_cta_type_4` (asserting the "Choose call-to-action type"
+#     label is visible) was removed: that label belongs to the checkbox this
+#     case ticks, so it is visible by construction and proved nothing.
+#
+# Known limitation: the case edits the post of the shared event
+# `verify-post-shipping_fee` and has no teardown, so every run leaves one more
+# duplicated ticket behind. It is not idempotent.
+# =============================================================================
 testT5033_5034_VerifyPartner:
-    description: "Verify the 'Choose call-to-action type' function of the event post"
+    description: "Verify a product on an event post can switch its call-to-action type from the default Buy now to View options"
     test_step:
-        # Step 1: Duplicate ticket
+        # ---------------------------------------------------------------------
+        # Block A - Prepare: duplicate the ticket so the post has a 2nd product
+        # ---------------------------------------------------------------------
         open_events_1: "{BASE_URL}/events"
         sleep_after_open_events_1: 3000
         R_click_event_1: { role: "cell", name: "verify-post-shipping_fee", optional: false }
@@ -1910,106 +1949,90 @@ testT5033_5034_VerifyPartner:
         sleep_after_duplicate_menuitem_1: 1000
         R_click_duplicate_submit_1: { role: "button", name: "Duplicate" }
         sleep_after_duplicate_submit_1: 3000
+        # The confirm dialog only shows up after the SPA redirect, so the first
+        # submit may not commit on its own; this second click is optional and is
+        # skipped silently when the dialog never appears.
         smart_click_optional_duplicate: { role: 'button', name: 'Duplicate', timeout: 3000 }
-        # duplicate SPA-redirect is unreliable in automation; force-navigate back to the event
-        # (suffix _2 avoids YAML duplicate-key collapse: test_step is a dict, so a repeated bare
-        #  "open"/"R_click_event" key would be folded to its LAST occurrence and silently skipped)
-        # open_events_2: "{BASE_URL}/events"
-        # sleep_step: 3000
-        # R_click_event_2: { role: "cell", name: "verify-post-shipping_fee", optional: false }
-        # sleep_step: 2000
-        # R_click_tickets_tab_1b: { role: "tab", name: "Tickets", exact: true }
-        # sleep_step: 1500
-        # R_click_tools_2: { role: "button", name: "Tools" }
-        # sleep_step: 800
-        # R_click_duplicate_menuitem_2: { role: "menuitem", name: "Duplicate", exact: true }
-        # sleep_step: 3000
-        # R_click_duplicate_submit_2: { role: "button", name: "Duplicate" }
-        # sleep_step: 2000
-        # verify_toast: { text: "Product duplicated successfully", optional: true }
-        # force-navigate back to the event so Step 2 starts on the event view
-        # (suffix _3 for the same duplicate-key-collapse reason as above)
 
-        # Step 2: Create a post
-        #R_click_event_tab_2: { role: 'tab', name: 'Event', exact: true }
+        # ---------------------------------------------------------------------
+        # Block B - Build: open the post and attach the product under test
+        # ---------------------------------------------------------------------
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_after_post_tab: 2000
-        # New event UI: no inline "Add another post" button -> create via the top-right "..." menu.
-        # NOTE: the header "..." has aria-label "More" (the "More action" one belongs to the Tickets & Merch card menu)
+        # Header "..." button. Its aria-label is "More"; the "More action"
+        # button belongs to the Tickets & Merch card menu, so it cannot be used.
         R_click_header_more: { locator: 'button[data-testid="komi-header-icon-btn"][aria-label="More"]' }
         sleep_after_more_action: 1500
-        # locator (not role) so the item is searched on the page, not scoped into a stray dialog
+        # locator instead of role: the item has to be found on the page itself,
+        # not scoped into a stray dialog.
         R_click_create_a_post: { locator: '[role="menuitem"]:has-text("Create a post")' }
         sleep_after_create_post: 2500
-        # "Your event is ready to share!" modal may still appear; dismiss it via "Apply" (optional)
+        # "Your event is ready to share!" may still be on screen; dismiss via "Apply".
         R_click_apply_ready: { role: "button", name: "Apply", optional: true }
         sleep_after_apply_ready: 1500
-        # "Create a post" + "Apply" land us directly inside the post editor (tabs:
-        # Content/Selling/Co-selling/Coupons) -> no post card exists here, do NOT click one.
-        # The old R_click_post: {test_id: "mui-card-action-area"} step was removed (count=0).
-
-        # Step 3: Switch to Selling tab and customize products
+        # "Create a post" + "Apply" land directly inside the post editor (tabs:
+        # Content/Selling/Co-selling/Coupons), so there is no post card to click.
         click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1}
         sleep_after_container_button_3: 1500
         R_click_select_products: { test_id: "enhance-button-cta" }
         sleep_after_select_products: 2000
-
-        # Step 4: Add test_general_products and customize ITS call-to-action.
-        # The target post may already contain many products (env data drift), so every
-        # action is scoped to the "test_general_products" product entry by name instead of
-        # assuming fixed products.* indices (those broke once the post accumulated products).
-        # First search for "test_general_products" to make it the only visible card
         fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
         sleep_after_product_search_4: 500
-        # Select-products dialog Search button has NO accessible name -> trigger via Enter
-        # (mirrors T2874/T2834 verified pattern; clicking role=button name=Search fails)
+        # The dialog's Search button has no accessible name (clicking
+        # role=button name=Search fails), so run the search with Enter.
         press_search_4: { key: "Enter" }
         sleep_after_press_search_4: 1500
-        # click the test_general_products card (first/only visible card after search)
         click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
-        # Add button text is "Add N/20 product(s)" where N varies with the post's existing
-        # product count — match on the stable "product(s)" substring, not a hardcoded count.
+        # The Add button reads "Add N/20 product(s)" where N depends on how many
+        # products the post already holds -> match the stable "product(s)" part.
         click_add_product_btn_1: { role: 'button', name: 'product(s)' }
         sleep_after_add_product_btn_1: 2000
 
-        # Expand test_general_products details (scoped to its product card by name)
+        # ---------------------------------------------------------------------
+        # Block C - Verify: switch the call-to-action type of products.1
+        # ---------------------------------------------------------------------
+        # Expand the advanced-settings panel of the target entry, then tick
+        # "Choose call-to-action type" (input name suffix isCtaCustomized).
         R_click_expand_details: { test_id: "ExpandMoreIcon", index: 2 }
-        # [2026-10-21] Removed the `verify_text_hidden: "Choose call-to-action type"` gate.
-        # That label is the checkbox of the very panel the step above expands, so it is
-        # visible by design; the gate was an inverted copy of the original
-        # `verify_cta_type_4` (which asserted the prompt IS visible) and can never pass.
         sleep_after_expand_details: 1000
-
-        # Check its "isCtaCustomized" (scoped to the product card; set_checked is idempotent)
         R_click_expand_details_2: { test_id: "ExpandMoreIcon", index: 1 }
         check_CTACustomized: { locator: "input[name$='products.1.isCtaCustomized']" }
         sleep_after_CTACustomized: 500
-        # Set its Buy now CTA option -> "View options"
-        # The button selector [aria-haspopup='listbox']:has-text('Buy now') is correct (exactly one on the page).
-        # container_text="General Admission" is not usable as the container: MUI renders Advanced settings
-        # (CTA checkbox + Buy now) outside the product card's data-testid="content", so
-        # page.locator("div", has_text="General Admission").last resolves to the product-name
-        # wrapper, which holds no Buy now -> timeout. Measured: the page has exactly one
-        # Buy now and it lives inside the dialog, so container_locator pins that dialog (no framework change).
+        # Ticking the checkbox reveals the dropdown, which starts on "Buy now".
+        # Guarding the default keeps the assertion below meaningful: without it a
+        # stale "View options" from an earlier run would make the check vacuous.
+        verify_element_contains_text_cta_default:
+            locator: '[role="combobox"][aria-haspopup="listbox"]'
+            text: "Buy now"
+        # The trigger is the only [aria-haspopup=listbox] on the page and it sits
+        # inside the "Customize product settings" dialog, so the click is pinned
+        # to that dialog. Scoping by product name does not work: MUI renders
+        # Advanced settings outside the product card, so
+        # div:has-text("General Admission") resolves to the name wrapper, which
+        # holds no dropdown at all.
         click_container_button_buynow_tgp: { container_locator: "//div[@role='dialog']", button: "[aria-haspopup='listbox']:has-text('Buy now')", button_index: 0 }
         sleep_after_container_button_buynow_tgp: 500
         R_click_option_view_options: { role: "option", name: "View options" }
         sleep_after_option_view_options: 500
+        # The selection is applied only if the trigger itself changed its text.
+        verify_element_contains_text_cta_view_options:
+            locator: '[role="combobox"][aria-haspopup="listbox"]'
+            text: "View options"
+        verify_element_contains_text_cta_not_buy_now:
+            locator: '[role="combobox"][aria-haspopup="listbox"]'
+            text: "Buy now"
+            assert: false
 
-        # Verify the CTA type prompt is present for test_general_products
-        # verify_cta_type_4:
-        #     text: 'Choose call-to-action type'
-        #     container: 'test_general_products'
-
-
-        # Step 5: Save changes
+        # ---------------------------------------------------------------------
+        # Block D - Save and confirm the editor accepted the change
+        # ---------------------------------------------------------------------
         R_click_save: { role: "button", name: "Save" }
         sleep_after_save: 1000
         R_click_save_again: { role: "button", name: "Save" }
         sleep_after_save_again: 3000
-        
+
     expect_result:
-        description: "Post products updated successfully"
+        description: "The call-to-action type is applied and saved: the dropdown reads View options instead of the default Buy now, and the editor reports the update"
         assertions:
             - assertion_type: "element_visible_by_text"
               text: "Post products updated"
