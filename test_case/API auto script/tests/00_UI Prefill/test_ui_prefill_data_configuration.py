@@ -765,11 +765,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "inventoryQuantity": 1000,
             "inventoryQuantityOriginal": 1000,
             "soldQuantity": 0,
-            "priceDisplay": 25.56,
+            "priceDisplay": 25.55,
             "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
+            "priceMin": 25.55,
             "priceMinAnchor": 0,
-            "priceMax": 25.56,
+            "priceMax": 25.55,
             "priceMaxAnchor": 0,
             "priceImportedMin": 0,
             "priceImportedMax": 0,
@@ -905,7 +905,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "option1": "Default Title"
                     },
                     "position": 1,
-                    "price": "25.56",
+                    "price": "25.55",
                     "priceAnchor": "0",
                     "priceImported": "0.00",
                     "productId": "{{ticket_id}}",
@@ -916,10 +916,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "weight": null,
                     "weightUnit": null,
                     "platform": null,
-                    "fees": 3.56,
+                    "fees": 3.55,
                     "transactionFee": {
                         "customFee": 0,
-                        "platformFee": 3.56,
+                        "platformFee": 3.55,
                         "customFeeBreakdown": {
                             "TAX": {
                                 "itemFee": 0,
@@ -927,7 +927,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                                 "unitPercentageFee": 0
                             }
                         },
-                        "transactionItemFee": 3.56
+                        "transactionItemFee": 3.55
                     },
                     "ticketPrice": 22,
                     "isMinPurchaseQuantityEnabled": false,
@@ -1080,6 +1080,8 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
 
 
 
+
+
     # --- step 30: update the post title to verify-post-shipping-fee (PATCH /post/{{shipping_fee_postsId}}) ---
     _resp30 = ctx.api.admin.post_by_post_id(path_vars={"post_id": vars.get("shipping_fee_postsId", "")}, body="""{
     "urlAlias": "verify-post-shipping-fee",
@@ -1194,11 +1196,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "inventoryQuantity": 1000,
             "inventoryQuantityOriginal": 1000,
             "soldQuantity": 0,
-            "priceDisplay": 25.56,
+            "priceDisplay": 25.55,
             "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
+            "priceMin": 25.55,
             "priceMinAnchor": 0,
-            "priceMax": 25.56,
+            "priceMax": 25.55,
             "priceMaxAnchor": 0,
             "priceImportedMin": 0,
             "priceImportedMax": 0,
@@ -1334,7 +1336,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "option1": "Default Title"
                     },
                     "position": 1,
-                    "price": "25.56",
+                    "price": "25.55",
                     "priceAnchor": "0",
                     "priceImported": "0.00",
                     "productId": "{{ticket_id}}",
@@ -1345,10 +1347,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "weight": null,
                     "weightUnit": null,
                     "platform": null,
-                    "fees": 3.56,
+                    "fees": 3.55,
                     "transactionFee": {
                         "customFee": 0,
-                        "platformFee": 3.56,
+                        "platformFee": 3.55,
                         "customFeeBreakdown": {
                             "TAX": {
                                 "itemFee": 0,
@@ -1356,7 +1358,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                                 "unitPercentageFee": 0
                             }
                         },
-                        "transactionItemFee": 3.56
+                        "transactionItemFee": 3.55
                     },
                     "ticketPrice": 22,
                     "isMinPurchaseQuantityEnabled": false,
@@ -1622,11 +1624,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "inventoryQuantity": 1000,
             "inventoryQuantityOriginal": 1000,
             "soldQuantity": 0,
-            "priceDisplay": 25.56,
+            "priceDisplay": 25.55,
             "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
+            "priceMin": 25.55,
             "priceMinAnchor": 0,
-            "priceMax": 25.56,
+            "priceMax": 25.55,
             "priceMaxAnchor": 0,
             "priceImportedMin": 0,
             "priceImportedMax": 0,
@@ -1762,7 +1764,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "option1": "Default Title"
                     },
                     "position": 1,
-                    "price": "25.56",
+                    "price": "25.55",
                     "priceAnchor": "0",
                     "priceImported": "0.00",
                     "productId": "{{ticket_id}}",
@@ -1773,10 +1775,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "weight": null,
                     "weightUnit": null,
                     "platform": null,
-                    "fees": 3.56,
+                    "fees": 3.55,
                     "transactionFee": {
                         "customFee": 0,
-                        "platformFee": 3.56,
+                        "platformFee": 3.55,
                         "customFeeBreakdown": {
                             "TAX": {
                                 "itemFee": 0,
@@ -1784,7 +1786,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                                 "unitPercentageFee": 0
                             }
                         },
-                        "transactionItemFee": 3.56
+                        "transactionItemFee": 3.55
                     },
                     "ticketPrice": 22,
                     "isMinPurchaseQuantityEnabled": false,
@@ -2321,11 +2323,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "inventoryQuantity": 1000,
             "inventoryQuantityOriginal": 1000,
             "soldQuantity": 0,
-            "priceDisplay": 25.56,
+            "priceDisplay": 25.55,
             "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
+            "priceMin": 25.55,
             "priceMinAnchor": 0,
-            "priceMax": 25.56,
+            "priceMax": 25.55,
             "priceMaxAnchor": 0,
             "priceImportedMin": 0,
             "priceImportedMax": 0,
@@ -2461,7 +2463,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "option1": "Default Title"
                     },
                     "position": 1,
-                    "price": "25.56",
+                    "price": "25.55",
                     "priceAnchor": "0",
                     "priceImported": "0.00",
                     "productId": "{{ticket_id}}",
@@ -2472,10 +2474,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "weight": null,
                     "weightUnit": null,
                     "platform": null,
-                    "fees": 3.56,
+                    "fees": 3.55,
                     "transactionFee": {
                         "customFee": 0,
-                        "platformFee": 3.56,
+                        "platformFee": 3.55,
                         "customFeeBreakdown": {
                             "TAX": {
                                 "itemFee": 0,
@@ -2483,7 +2485,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                                 "unitPercentageFee": 0
                             }
                         },
-                        "transactionItemFee": 3.56
+                        "transactionItemFee": 3.55
                     },
                     "ticketPrice": 22,
                     "isMinPurchaseQuantityEnabled": false,
@@ -2760,11 +2762,11 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
             "inventoryQuantity": 1000,
             "inventoryQuantityOriginal": 1000,
             "soldQuantity": 0,
-            "priceDisplay": 25.56,
+            "priceDisplay": 25.55,
             "priceDisplayAnchor": 0,
-            "priceMin": 25.56,
+            "priceMin": 25.55,
             "priceMinAnchor": 0,
-            "priceMax": 25.56,
+            "priceMax": 25.55,
             "priceMaxAnchor": 0,
             "priceImportedMin": 0,
             "priceImportedMax": 0,
@@ -2900,7 +2902,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                         "option1": "Default Title"
                     },
                     "position": 1,
-                    "price": "25.56",
+                    "price": "25.55",
                     "priceAnchor": "0",
                     "priceImported": "0.00",
                     "productId": "{{ticket_id}}",
@@ -2911,10 +2913,10 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                     "weight": null,
                     "weightUnit": null,
                     "platform": null,
-                    "fees": 3.56,
+                    "fees": 3.55,
                     "transactionFee": {
                         "customFee": 0,
-                        "platformFee": 3.56,
+                        "platformFee": 3.55,
                         "customFeeBreakdown": {
                             "TAX": {
                                 "itemFee": 0,
@@ -2922,7 +2924,7 @@ def test_ui_prefill_data_configuration(ctx: "Context"):
                                 "unitPercentageFee": 0
                             }
                         },
-                        "transactionItemFee": 3.56
+                        "transactionItemFee": 3.55
                     },
                     "ticketPrice": 22,
                     "isMinPurchaseQuantityEnabled": false,

@@ -198,7 +198,12 @@ testT3683_T3684_TDC:
         sleep_step: 5000
 
         # Wait for order confirmation page to load ("Access Your Order" button appears)
-        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+        # [2026-10-26] `required: true` — WITHOUT it a timeout was only a WARNING and the
+        # case carried on to the next step, so the real failure (the order was never
+        # submitted, the Checkout drawer was still open) surfaced much later as the
+        # misleading "Text 'Test Note - ...' not found." Now the timeout fails HERE,
+        # naming the element that never appeared.
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000, required: true }
         sleep_step: 2000
 
         # T3684 Expected: Verify confirmation note is displayed (no manual scroll needed, wait_for will auto-wait for visibility)
@@ -412,7 +417,11 @@ testT3686_CosellerResell_TDC:
         R_click_place_order_rsvp_fallback: { role: 'button', name: 'RSVP', optional: true }
 
         # Wait for order confirmation page to load ("Access Your Order" button appears)
-        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000 }
+        # [2026-10-26] `required: true` — a timeout must fail HERE instead of being
+        # downgraded to a warning (which let the run continue and fail later with the
+        # misleading "Text 'Test Note - ...' not found." while the Checkout drawer was
+        # still open, i.e. the order had never been submitted).
+        wait_for_access_order_button: { role: 'button', name: 'Access Your Order', timeout: 20000, required: true }
         sleep_step: 2000
 
         # T3686 Expected: Verify confirmation note is displayed
@@ -801,7 +810,12 @@ testT3767_TDC:
         sleep_step: 8000
         R_click_place_order: { role: "button", name: "Place order", optional: true }
         sleep_step: 5000
-        wait_for_url: { url: "*order*", timeout: 45000 }
+        # [2026-10-26] Narrow the URL pattern. "*order*" also matches any URL that merely
+        # contains the word "order" (e.g. an "order details" anchor on the post page), so it
+        # can succeed while the case is still sitting in the Checkout drawer. The real
+        # order-placed route is /order/<id>/confirmation — the same pattern the sibling
+        # TDC/AXS/venue-map fee-breakdown cases use.
+        wait_for_url: { url: "**/order/**/confirmation**", timeout: 45000 }
         sleep_step: 2000
 
 
@@ -961,7 +975,20 @@ testT4955_Guest_VerifyAccessCode_TDC:
         # Step 8.6: New checkout opens collapsed with only the payment CTA — clicking
         # "Continue with credit card" expands the Contact + Payment form (checkout
         # redesign shipped with the KAT-12263 fix, 2026-10-13).
-        R_click_continue_cc: { role: "button", name: "Continue with credit card" }
+        # [2026-10-26] Two changes:
+        #   (a) locate the CTA by its testid first. The TDC checkout CTA is
+        #       `checkout-in-post-credit-card-cta` (see the sibling file
+        #       Events/Event_settings/tdc_fee_breakdown_guest_purchase_ui.yaml, which
+        #       uses the same JOINED selector); matching on the visible text alone
+        #       missed it in CI run #58 and the case died here.
+        #   (b) `optional: true` — after the access code is accepted the checkout may
+        #       already be expanded, in which case there is no CTA to click and the
+        #       Contact fields below are directly present. A hard failure there was
+        #       wrong (it aborted the case before it ever tried to place the order).
+        R_click_continue_cc:
+            locator: "button[data-testid='checkout-in-post-credit-card-cta'], button[data-testid='checkout-in-post-continue-cta'], button:has-text('Continue with credit card')"
+            timeout: 15000
+            optional: true
         sleep_step: 2500
 
         # Step 9: Fill Contact info (checkout dialog)
