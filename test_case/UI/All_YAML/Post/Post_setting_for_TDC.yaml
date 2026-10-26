@@ -371,6 +371,16 @@ testT3686_CosellerResell_TDC:
         scroll_to_bottom: { iterations: 3, delay: 500 }
         sleep_step: 2000
 
+        # [2026-10-26] HARD ASSERTION before clicking: the resold post must actually be
+        # listed in the coseller's public shop. Without this the click below silently
+        # navigated to a 404 page ("This page could not be found") and the case only
+        # failed 3 steps later with the misleading "element not found: Buy Ticket".
+        # Root cause of the 404: the "Add to shop" step earlier in this case did not
+        # actually publish the TDC post into the coseller shop, so the shop shows
+        # "Exciting things are coming soon!" and the event title is nowhere on the page.
+        wait_for_resold_post_in_shop:
+            locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']"
+            timeout: 15000
         R_click_resold_post_guest: { locator: "xpath=//*[normalize-space(.)='{{event_tdc}}']", index: 0, fallback_scan: true }
         sleep_step: 3000
 
