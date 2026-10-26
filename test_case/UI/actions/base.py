@@ -1513,13 +1513,24 @@ def smart_wait(page: Page, v: dict):
     Supports: role, name, locator, text.
     Usage in YAML:
         wait_customize_back: { role: 'button', name: 'Customize products', timeout: 15000, disable_ai: true }
+
+    required: bool, default False (2026-10-26)
+        When True, a timeout RAISES AssertionError instead of only logging a warning.
+        Why: the default "warn and continue" behaviour silently swallowed the real
+        failure of the TDC order flow (2026-10-25 CI run #58) — the wait for the
+        order-placed page timed out, the run continued, and the case finally failed
+        on a downstream `verify_text_visible` with the misleading message
+        "Text '...' not found." (the page had never left the Checkout drawer).
+        Opt-in via `required: true` so the ~148 already-passing cases keep their
+        current, lenient semantics.
     """
     timeout = v.get("timeout", 5000)
     role = v.get("role")
     name = v.get("name")
     locator = v.get("locator")
     text = v.get("text")
-    logger.info(f"smart_wait: waiting for element (role={role}, name={name}, locator={locator}, text={text}, timeout={timeout})")
+    required = v.get("required", False)
+    logger.info(f"smart_wait: waiting for element (role={role}, name={name}, locator={locator}, text={text}, timeout={timeout}, required={required})")
 
     try:
         if locator:
@@ -1542,6 +1553,12 @@ def smart_wait(page: Page, v: dict):
             page.screenshot(path=f"fail_wait_{str(v)[:30]}.png")
         except:
             pass
+        if required:
+            target = locator or (f"role={role}, name={name}" if role else f"text={text}")
+            raise AssertionError(
+                f"Required element not visible within {timeout}ms: {target}. "
+                f"Underlying error: {e}"
+            )
 
 def reload_page(page: Page, v: dict):
     page.reload()
