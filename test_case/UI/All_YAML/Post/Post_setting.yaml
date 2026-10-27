@@ -1897,48 +1897,23 @@ testT3963_VerifyGuestCheckoutShippingFee:
 # Test Case: T5033_5034 Verify the "Choose call-to-action type" function of the event post
 # ==============================================================================
 # =============================================================================
-# T5033_5034 - Verify the "Choose call-to-action type" function of an event post
+# T5033_5034 - Each product of an event post can override its own
+# call-to-action button (default "Buy now", also "View options" / "Add to cart" /
+# "View Product").
 #
-# Feature under test
-#   Every product attached to an event post can override its own call-to-action
-#   button. The dropdown starts on the default "Buy now" and also offers
-#   "View options", "Add to cart" and "View Product".
+# Fixture: a post inherits one product per ticket, so four products need 1 + 3
+# duplicated tickets (catalog products never stick). A duplicate lands after
+# ~13s and ends on a product route without a Post tab, hence open_events_n
+# before every round. The seed resets the event to one ticket before each run,
+# so this case is not idempotent: never run it twice without re-seeding.
 #
-# How this case proves it (four blocks, keep them in this order)
-#   A. Prepare - duplicate the event ticket once. This is NOT a leftover: the
-#      post needs a second product entry because the toggle below is addressed
-#      as products.1. Block A is the only step that creates it.
-#   B. Build   - open the post editor and attach the product under test.
-#   C. Verify  - tick "Choose call-to-action type" for that entry, assert the
-#      dropdown still reads the default "Buy now", switch it to "View options",
-#      then assert the trigger really reads the new value.
-#   D. Save    - save twice and assert the editor reports the update.
-#
-# Measured on release.pear.us (2026-10-26), do not "simplify" these away
-#   - The post owns exactly one [role="combobox"][aria-haspopup="listbox"]
-#     once the checkbox is ticked, and it lives in the "Customize product
-#     settings" dialog. Its text is "Buy now" before the selection and
-#     "View options" after it.
-#   - The dialog lists one "General Admission" per duplicated ticket, so
-#     products.N are positional and drift as this case re-runs.
-#   - The second and third duplicate rounds, together with
-#     `verify_toast: Product duplicated successfully`, were dropped upstream in
-#     4ce65520 (2026-08-18) because the post-duplicate SPA redirect is
-#     unreliable in automation. Only one round is kept here, for products.1.
-#   - The old `verify_cta_type_4` (asserting the "Choose call-to-action type"
-#     label is visible) was removed: that label belongs to the checkbox this
-#     case ticks, so it is visible by construction and proved nothing.
-#
-# Known limitation: the case edits the post of the shared event
-# `verify-post-shipping_fee` and has no teardown, so every run leaves one more
-# duplicated ticket behind. It is not idempotent.
+# Each product owns its own combobox inside "Customize product settings", so
+# every locator below is scoped to a single product.
 # =============================================================================
 testT5033_5034_VerifyPartner:
     description: "Verify four products on an event post each keep their own call-to-action type (View options / Add to cart / View Product / default Buy now) and that the choices are saved"
     test_step:
-        # ---------------------------------------------------------------------
-        # Block A - Prepare: duplicate the ticket so the post has a 2nd product
-        # ---------------------------------------------------------------------
+        # Block A - duplicate the ticket 3x so the post holds 4 products
         open_events_1: "{BASE_URL}/events"
         sleep_after_open_events_1: 3000
         R_click_event_1: { role: "cell", name: "verify-post-shipping_fee", optional: false }
@@ -1949,58 +1924,63 @@ testT5033_5034_VerifyPartner:
         sleep_after_duplicate_menuitem_1: 1000
         R_click_duplicate_submit_1: { role: "button", name: "Duplicate" }
         sleep_after_duplicate_submit_1: 3000
-        # The confirm dialog only shows up after the SPA redirect, so the first
-        # submit may not commit on its own; this second click is optional and is
-        # skipped silently when the dialog never appears.
+        # Second click covers the confirm dialog; skipped when it never appears.
         smart_click_optional_duplicate: { role: 'button', name: 'Duplicate', timeout: 3000 }
 
-        # ---------------------------------------------------------------------
-        # Block B - Build: open the post and attach the product under test
-        # ---------------------------------------------------------------------
+        open_events_2: "{BASE_URL}/events"
+        sleep_after_open_events_2: 3000
+        R_click_event_2: { role: "cell", name: "verify-post-shipping_fee", optional: false }
+        sleep_after_event_2: 2000
+        R_click_tools_2: { role: "button", name: "Tools" }
+        sleep_after_tools_2: 800
+        R_click_duplicate_menuitem_2: { role: "menuitem", name: "Duplicate", exact: true }
+        sleep_after_duplicate_menuitem_2: 1000
+        R_click_duplicate_submit_2: { role: "button", name: "Duplicate" }
+        sleep_after_duplicate_submit_2: 3000
+        smart_click_optional_duplicate_2: { role: 'button', name: 'Duplicate', timeout: 3000 }
+
+        open_events_3: "{BASE_URL}/events"
+        sleep_after_open_events_3: 3000
+        R_click_event_3: { role: "cell", name: "verify-post-shipping_fee", optional: false }
+        sleep_after_event_3: 2000
+        R_click_tools_3: { role: "button", name: "Tools" }
+        sleep_after_tools_3: 800
+        R_click_duplicate_menuitem_3: { role: "menuitem", name: "Duplicate", exact: true }
+        sleep_after_duplicate_menuitem_3: 1000
+        R_click_duplicate_submit_3: { role: "button", name: "Duplicate" }
+        sleep_after_duplicate_submit_3: 3000
+        smart_click_optional_duplicate_3: { role: 'button', name: 'Duplicate', timeout: 3000 }
+
+        # Back to the event view; duplicates need ~13s to land before Block B.
+        open_events_4: "{BASE_URL}/events"
+        sleep_after_open_events_4: 3000
+        R_click_event_4: { role: "cell", name: "verify-post-shipping_fee", optional: false }
+        sleep_after_event_4: 7000
+
+        # Block B - open the post editor
         R_click_post_tab: { role: "tab", name: "Post" }
         sleep_after_post_tab: 2000
-        # Header "..." button. Its aria-label is "More"; the "More action"
-        # button belongs to the Tickets & Merch card menu, so it cannot be used.
+        # Header "..." is aria-label="More"; the Tickets & Merch card has its own
+        # "More action" button, so it cannot be used here.
         R_click_header_more: { locator: 'button[data-testid="komi-header-icon-btn"][aria-label="More"]' }
         sleep_after_more_action: 1500
-        # locator instead of role: the item has to be found on the page itself,
-        # not scoped into a stray dialog.
+        # locator, not role: the item must be found on the page, not in a stray dialog.
         R_click_create_a_post: { locator: '[role="menuitem"]:has-text("Create a post")' }
         sleep_after_create_post: 2500
         # "Your event is ready to share!" may still be on screen; dismiss via "Apply".
         R_click_apply_ready: { role: "button", name: "Apply", optional: true }
         sleep_after_apply_ready: 1500
-        # "Create a post" + "Apply" land directly inside the post editor (tabs:
-        # Content/Selling/Co-selling/Coupons), so there is no post card to click.
+        # "Create a post" + "Apply" open the editor directly, so there is no card to click.
         click_container_button_3: { container: "Selling", container_locator: "..", button: "//button[@role='tab']", button_index: 1}
         sleep_after_container_button_3: 1500
-        R_click_select_products: { test_id: "enhance-button-cta" }
-        sleep_after_select_products: 2000
-        fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test_general_products' }
-        sleep_after_product_search_4: 500
-        # The dialog's Search button has no accessible name (clicking
-        # role=button name=Search fails), so run the search with Enter.
-        press_search_4: { key: "Enter" }
-        sleep_after_press_search_4: 1500
-        click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
-        # The Add button reads "Add N/20 product(s)" where N depends on how many
-        # products the post already holds -> match the stable "product(s)" part.
-        click_add_product_btn_1: { role: 'button', name: 'product(s)' }
-        sleep_after_add_product_btn_1: 2000
+        R_click_customize_again: { role: "button", name: "Customize", exact: true }
+        sleep_after_customize_again: 3000
 
-        # ---------------------------------------------------------------------
-        # Block C - Verify: give each of the first four products its own
-        # call-to-action type
-        # ---------------------------------------------------------------------
-        # The post is created from the event, so it already carries every event
-        # ticket as a product - four of them exist before anything is added, and
-        # the entry added in Block B becomes the last one.
-        #
-        # A product's Advanced settings is collapsed by default and its
-        # "Choose call-to-action type" checkbox does not exist in the DOM until
-        # the section is expanded. ExpandMoreIcon index N belongs to products.N,
-        # and expanding is additive (opening one section leaves the others open),
-        # so the four sections below can all be open at once.
+        # Block C - give each of the first four products its own CTA type.
+        # products.0..3 are the four inherited tickets, in insertion order.
+        # Advanced settings is collapsed by default, so the CTA checkbox is not in
+        # the DOM until expanded; ExpandMoreIcon index N belongs to products.N and
+        # sections stay open once expanded.
         R_click_expand_p0: { test_id: "ExpandMoreIcon", index: 0 }
         sleep_after_expand_p0: 800
         R_click_expand_p1: { test_id: "ExpandMoreIcon", index: 1 }
@@ -2009,11 +1989,8 @@ testT5033_5034_VerifyPartner:
         sleep_after_expand_p2: 800
         R_click_expand_p3: { test_id: "ExpandMoreIcon", index: 3 }
         sleep_after_expand_p3: 800
-        # Ticking all four is what makes four boxes appear, one per product.
-        # From here on NO locator may be page-wide: [role="combobox"]
-        # [aria-haspopup="listbox"] matches four elements and
-        # verify_element_contains_text calls inner_text() on the result, which
-        # raises a strict mode violation instead of failing the assertion.
+        # Four triggers appear; a page-wide [role="combobox"] matches all of them
+        # and raises a strict mode violation, so every locator is product-scoped.
         check_cta_p0: { locator: "input[name$='products.0.isCtaCustomized']" }
         sleep_after_check_cta_p0: 500
         check_cta_p1: { locator: "input[name$='products.1.isCtaCustomized']" }
@@ -2023,17 +2000,10 @@ testT5033_5034_VerifyPartner:
         check_cta_p3: { locator: "input[name$='products.3.isCtaCustomized']" }
         sleep_after_check_cta_p3: 500
 
-        # Per-product handle: the first combobox that follows this product's own
-        # checkbox. Scoping by product name does not work - MUI renders Advanced
-        # settings outside the product card, so a :has-text() container resolves
-        # to the name wrapper which holds no dropdown - and ancestor scoping
-        # lands on the section wrapper whose text also contains the
-        # "Choose call-to-action type" label. The following-sibling axis is the
-        # only form that yields the trigger itself, and it resolves to exactly
-        # one node per product.
-        #
-        # Assert the default first: a value left over from an earlier save would
-        # otherwise make the later assertion vacuous.
+        # Per-product trigger: the first combobox following this product's own
+        # checkbox. Name/ancestor scoping hits a wrapper instead, because MUI
+        # renders Advanced settings outside the product card.
+        # Assert the default first, or a stale value makes the later check vacuous.
         verify_element_contains_text_cta_p0_default:
             locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "Buy now"
@@ -2077,26 +2047,56 @@ testT5033_5034_VerifyPartner:
             locator: "xpath=//input[@name='products.2.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "View Product"
 
-        # products.3 is deliberately left alone: it must still read "Buy now"
-        # after three neighbours were changed, which is what proves the four
-        # dropdowns are independent rather than one shared value.
+        # products.3 is left alone: still reading "Buy now" after three neighbours
+        # changed is what proves the four dropdowns are independent.
         verify_element_contains_text_cta_p3_still_default:
             locator: "xpath=//input[@name='products.3.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "Buy now"
 
-        # ---------------------------------------------------------------------
-        # Block D - Save and confirm the editor accepted the change
-        # ---------------------------------------------------------------------
+        # Block D - one Save inside the dialog is what persists the choices. The
+        # editor-level Save that used to run after the dialog closed re-submitted the
+        # form snapshot taken before customizing and cleared every CTA flag, so it is
+        # deliberately not used here.
         R_click_save: { role: "button", name: "Save" }
-        sleep_after_save: 1000
-        R_click_save_again: { role: "button", name: "Save" }
-        sleep_after_save_again: 3000
+        sleep_after_save: 3000
+
+        # Read the values back from a reopened dialog: the checks above only see the
+        # live form, so persistence is proven here. A reopened dialog mounts collapsed,
+        # hence the sections are expanded again.
+        R_click_customize_reopen: { role: "button", name: "Customize", exact: true }
+        sleep_after_customize_reopen: 3000
+        R_click_expand_saved_p0: { test_id: "ExpandMoreIcon", index: 0 }
+        sleep_after_expand_saved_p0: 800
+        R_click_expand_saved_p1: { test_id: "ExpandMoreIcon", index: 1 }
+        sleep_after_expand_saved_p1: 800
+        R_click_expand_saved_p2: { test_id: "ExpandMoreIcon", index: 2 }
+        sleep_after_expand_saved_p2: 800
+        R_click_expand_saved_p3: { test_id: "ExpandMoreIcon", index: 3 }
+        sleep_after_expand_saved_p3: 800
+        verify_element_contains_text_saved_p0:
+            locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "View options"
+        verify_element_contains_text_saved_p1:
+            locator: "xpath=//input[@name='products.1.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Add to cart"
+        verify_element_contains_text_saved_p2:
+            locator: "xpath=//input[@name='products.2.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "View Product"
+        verify_element_contains_text_saved_p3:
+            locator: "xpath=//input[@name='products.3.isCtaCustomized']/following::*[@role='combobox'][1]"
+            text: "Buy now"
 
     expect_result:
-        description: "Each product keeps its own call-to-action type after saving: products.0/1/2 read View options / Add to cart / View Product while products.3 still reads the default Buy now, and the editor reports the update"
+        description: "The four call-to-action types survive a dialog reopen: products.0/1/2 read View options / Add to cart / View Product, products.3 still reads the default Buy now, and all four products keep the override enabled"
         assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Post products updated"
+            - assertion_type: "element_checked"
+              locator: "input[name$='products.0.isCtaCustomized']"
+            - assertion_type: "element_checked"
+              locator: "input[name$='products.1.isCtaCustomized']"
+            - assertion_type: "element_checked"
+              locator: "input[name$='products.2.isCtaCustomized']"
+            - assertion_type: "element_checked"
+              locator: "input[name$='products.3.isCtaCustomized']"
 
 
 # testT5033_5034_VerifyGuest:
@@ -2758,35 +2758,77 @@ testT3108:
     test_step:
         open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_after_open: 3000
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # Discard unsaved-draft recovery dialog if present (the wizard offers it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_after_optional_discard: 1000
 
-        R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
-        sleep_after_enhance_button_cta: 1000
-
-        click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_product_img: 1000
+        # Step 1 of 4 - the wizard now owns product selection. The square icon inside a
+        # product card is the selection toggle; clicking the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
 
         R_click_shared_with_me_tab: { role: 'tab', name: 'Shared with me' }
-        sleep_after_shared_with_me_tab: 1000
+        sleep_after_shared_with_me_tab: 1500
 
-        click_shared_with_me_product: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_shared_with_me_product: 1000
+        click_shared_with_me_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_shared_with_me_product: 1200
 
-        R_click_add_products_btn_1: { locator: "button:has-text('product(s)')" }
-        sleep_after_add_products_btn_1: 1000
+        # "Continue (N selected)" replaces the old "Add N product(s)" button.
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
 
-        # R_click_close_btn: { role: 'button', name: 'Close', optional: true }
-        # sleep_step: 1000
+        # Co-selling step, only rendered when products were selected.
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-        R_click_customize_products_btn: { role: 'button', name: 'Customize' }
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_after_expand_details: 1000
+        # Step 2 of 4 - the title is required before "Create and continue" becomes enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 3108' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
+
+        # A coach popover ("Insert advanced sections") is rendered as a modal, so it becomes
+        # the click scope and swallows clicks on the footer until it is dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+
+        # Step 3 of 4 (content) then Step 4 of 4 (style).
+        # xpath keeps the search at page level: the wizard renders two stacked modal roots,
+        # so the framework's modal scope points at the wrong subtree and misses the footer.
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+
+        # The wizard ends on a summary screen; "Continue with advanced" opens the editor,
+        # which now lives at /post/<id>/view instead of /post/create.
+        # The button reads "Continue with advanced editing" plus a subtitle line.
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
+
+        # Per-product settings are reached from the Selling tab, not from an "Add products" CTA.
+        R_click_selling_tab: { role: 'tab', name: 'Selling' }
+        sleep_after_selling_tab: 4000
+        R_click_customize_products_btn: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_products_btn: 3000
+
+        # "Set resale earnings" onboarding covers the dialog and owns the click scope.
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing', timeout: 3000 }
+        sleep_after_start_customizing: 1500
+        smart_click_optional_resale_done: { role: 'button', name: 'Done', timeout: 3000 }
+        sleep_after_resale_done: 1200
+
+        # xpath: several stacked modals are visible, so modal-scoped lookups miss the section.
+        R_click_expand_details: { locator: "xpath=(//*[@data-testid='ExpandMoreIcon'])[1]" }
+        sleep_after_expand_details: 1200
 
     expect_result:
         description: "Products setCustomizePrice is not checked"
         assertions:
+            # Gate first: the switch only exists once the product section is expanded,
+            # and element_not_checked passes on a missing element.
+            - assertion_type: "element_visible_by_locator"
+              locator: 'input[name="products.0.setCustomizePrice"]'
             - assertion_type: "element_not_checked"
               locator: 'input[name="products.0.setCustomizePrice"]'
 
@@ -2797,85 +2839,115 @@ testT3108:
 testT3110:
     description: "Verify setCustomizePrice check, uncheck and save flow"
     test_step:
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_after_open: 3000
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # Discard unsaved-draft recovery dialog if present (the wizard offers it on open)
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_after_optional_discard: 1000
 
-        R_click_enhance_button_cta: { test_id: "enhance-button-cta" }
-        sleep_after_enhance_button_cta: 1000
-
-        click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_product_img: 1000
+        # Step 1 of 4 - the wizard now owns product selection. The square icon inside a
+        # product card is the selection toggle; clicking the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
 
         R_click_shared_with_me_tab: { role: 'tab', name: 'Shared with me' }
-        sleep_after_shared_with_me_tab: 1000
+        sleep_after_shared_with_me_tab: 1500
 
-        click_shared_with_me_product: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_shared_with_me_product: 1000
+        click_shared_with_me_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_shared_with_me_product: 1200
 
-        R_click_add_products_btn: { locator: "button:has-text('product(s)')" }
-        sleep_after_add_products_btn: 1000
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
 
-        R_click_close_btn: { role: 'button', name: 'Close', optional: true }
-        sleep_after_close_btn: 1000
+        # Co-selling step, only rendered when products were selected.
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-        R_click_customize_products_btn_1: { role: 'button', name: 'Customize' }
-        sleep_after_customize_products_btn_1: 1500
+        # Step 2 of 4 - the title is required before "Create and continue" becomes enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 3110' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
 
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_after_expand_details: 1000
+        # A coach popover ("Insert advanced sections") is rendered as a modal, so it becomes
+        # the click scope and swallows clicks on the footer until it is dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+
+        # Step 3 of 4 (content) then Step 4 of 4 (style).
+        # xpath keeps the search at page level: the wizard renders two stacked modal roots,
+        # so the framework's modal scope points at the wrong subtree and misses the footer.
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+
+        # The wizard ends on a summary screen; "Continue with advanced" opens the editor,
+        # which now lives at /post/<id>/view instead of /post/create.
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
+
+        # Per-product settings are reached from the Selling tab, not from an "Add products" CTA.
+        R_click_selling_tab: { role: 'tab', name: 'Selling' }
+        sleep_after_selling_tab: 4000
+        R_click_customize_products_btn: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_products_btn: 3000
+
+        # "Set resale earnings" onboarding covers the dialog and owns the click scope.
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing', timeout: 3000 }
+        sleep_after_start_customizing: 1500
+        smart_click_optional_resale_done: { role: 'button', name: 'Done', timeout: 3000 }
+        sleep_after_resale_done: 1200
+
+        # Sections mount collapsed; xpath because several stacked modals are visible.
+        R_click_expand_details: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_details: 1200
+
+        # 1) Tick the flag and persist with the single Save inside the dialog. The editor
+        # level Save that the old flow used re-submits a snapshot taken before customizing.
+        # The co-seller commission above the flag rejects the save when it is above
+        # the cap ("this must be less than or equal to 0"), so zero it first.
+        fill_products_0_commission: { locator: 'input[name="products.0.variants.0.commissionRateForPromoters"]', value: '0' }
+        sleep_after_fill_commission: 800
 
         check_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
-        sleep_after_products_0_setCustomizePrice: 1000
+        sleep_after_check_price: 1000
+        R_click_save_dialog: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_dialog: 3000
+        execute_js_dialog_closed_after_save: { script: "() => [...document.querySelectorAll('[role=dialog], .MuiDialog-root')].filter(d => d.getBoundingClientRect().width).length", assert_equals: 0 }
 
-        #check_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: true }
-        sleep_after_products_0_setCustomizePrice_2: 1000
+        # 2) Read the flag back from a reopened dialog: the live form only proves the tick,
+        # not the save. Sections mount collapsed again on every open.
+        R_click_customize_reopen_check: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_reopen_check: 3000
+        R_click_expand_reopen_check: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_reopen_check: 1200
+        execute_js_checked_after_save:
+            script: "() => { const el = [...document.querySelectorAll('input')].find(e => e.name === 'products.0.setCustomizePrice'); return el ? el.checked : null; }"
+            assert_equals: true
 
-        R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
-        sleep_after_save_btn: 1500
-
-        R_click_save_as_draft: { role: 'button', name: 'Unpublish' }
-        sleep_after_save_as_draft: 1500
-
-        fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 3110' }
-        sleep_after_post_title: 1000
-
-        R_click_save_as_draft_2: { role: 'button', name: 'Unpublish' }
-        sleep_after_save_as_draft_2: 1000
-
-        #R_click_got_it: { role: 'button', name: 'Save'}
-        R_click_close_btn_1: { role: 'button', name: 'Apply' }
-        
-        sleep_after_close_btn_1: 1500
-
-        R_click_selling_tab: { role: 'tab', name: 'Selling', exact: true }
-        sleep_after_selling_tab: 1000
-
-        R_click_customize_products_btn_2: { role: 'button', name: 'Customize' }
-        sleep_after_customize_products_btn_2: 1000
-
-        R_click_expand_details_2: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_after_expand_details_2: 2000
-
+        # 3) Untick inside the same reopened dialog and save again.
         uncheck_products_0_setCustomizePrice: { locator: 'input[name="products.0.setCustomizePrice"]', checked: false }
-        sleep_after_products_0_setCustomizePrice_3: 1000
+        sleep_after_uncheck_price: 1000
+        R_click_save_dialog_2: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_dialog_2: 3000
+        execute_js_dialog_closed_after_save_2: { script: "() => [...document.querySelectorAll('[role=dialog], .MuiDialog-root')].filter(d => d.getBoundingClientRect().width).length", assert_equals: 0 }
 
-        #uncheck_products_1_setCustomizePrice: { locator: 'input[name="products.1.setCustomizePrice"]', checked: false }
-        #sleep_step: 1000
-
-        R_click_save_btn_2: { role: 'button', name: 'Save', index: 0 }
-        sleep_after_save_btn_2: 1500
-        R_click_save_btn_3: { role: 'button', name: 'Save', index: 0 }
-        sleep_after_save_btn_3: 1000
+        # 4) Reopen once more so the final assertion below reads the stored value.
+        R_click_customize_reopen_final: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_reopen_final: 3000
+        R_click_expand_reopen_final: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_reopen_final: 1200
 
     expect_result:
-        description: "Verify setCustomizePrice workflow completed successfully"
+        description: "setCustomizePrice can be ticked and unticked, and the unticked state survives a save"
         assertions:
-            - assertion_type: "element_visible_by_text"
-              text: "Post products updated"
-
+            # Gate first: the switch only exists once the product section is expanded,
+            # and element_not_checked passes on a missing element.
+            - assertion_type: "element_visible_by_locator"
+              locator: 'input[name="products.0.setCustomizePrice"]'
+            - assertion_type: "element_not_checked"
+              locator: 'input[name="products.0.setCustomizePrice"]'
 
 # ==============================================================================
 # Test Case: T1928
