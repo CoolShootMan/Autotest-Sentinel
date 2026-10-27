@@ -282,3 +282,11 @@ data/ua_*.txt
 tools/login_error_*.png
 .venv-smoke/
 doc-fetch-resources/
+
+# === One-off local debug artifacts (do not commit) ===
+# daily smoke plan 报告的历史备份（本机留存，不入库）
+data/daily_smoke_plan_report.json.bak_*
+# 临时探针用例目录（一次性 API 探针，用完即删）
+test_case/API auto script/tests/00_probe/
+# Playwright / 浏览器导出的静态页面快照
+test_case/UI/page.html
