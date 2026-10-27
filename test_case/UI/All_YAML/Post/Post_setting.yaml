@@ -2094,39 +2094,6 @@ testT5033_5034_VerifyPartner:
               locator: "input[name$='products.3.isCtaCustomized']"
 
 
-# testT5033_5034_VerifyGuest:
-#     guest: true
-#     description: "Verify that the free shipping label is visible on the shop page, post details, order drawer, and checkout"
-#     test_step:
-#         # Step 1: Shop page
-#         open: "{BASE_URL}/autotestshop"
-#         sleep_step: 3000
-#         # Click the specific product image (as in recording)
-#         R_click_product_img: { role: "button", name: "Image of Product verify-co" }
-#         sleep_step: 3000
-
-#         # Step 2: Navigate to Post details directly (from recording)
-#         open_post_details: "{BASE_URL}/autotestshop/post/verify-post-shipping_fee-1"
-#         sleep_step: 3000
-#         # Verify on post details
-#         verify_free_shipping_drawer: { text: "Free shipping", index: 1 }
-#         sleep_step: 500
-
-#         # Step 3: Post-purchase expand details
-#         verify_order_confirmationh: { text: "Thank you! Your order is confirmed" }
-#         R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-#         sleep_step: 1000
-
-#     expect_result:
-#         description: "The free shipping label should be visible on the final order page"
-#         assertions:
-#             - assertion_type: "element_visible_by_text"
-#               text: "Free shipping"
-
-
-
-
-
 # T4955: Partner enables Payment Restriction and sets access code
 testT4955_Partner_SetPaymentRestriction:
     description: "Partner enables Payment Restriction and sets access code 'demi123'"
