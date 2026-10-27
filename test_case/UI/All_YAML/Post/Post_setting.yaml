@@ -3163,102 +3163,93 @@ testT1928:
 testT3811:
     description: "Verify customize price setting and unsetting in post creation and editing"
     test_step:
-        # Step 1: Open create post page with specific partner/coseller cookies
-        open_create_post: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
-        sleep_after_open_create_post: 3000
-
-        # Step 4: Discard draft if present
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        sleep_after_open: 3000
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_after_optional_discard: 1000
 
-        # Step 5: Add product
-        R_click_enhance_cta: { test_id: "enhance-button-cta" }
-        sleep_after_enhance_cta: 1500
+        # Step 1 of 4 - product selection lives in the wizard now; the square icon inside a
+        # product card is the toggle (clicking the card only opens a preview).
+        R_click_product_img: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_product_img: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-        # Step 6: Select first product image
-        R_click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_product_img: 1000
+        # Step 2 of 4 - title is required before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 3811' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
 
-        # Step 7: Add product to post
-        R_click_add_products: { role: 'button', name: 'Add 1/20 product(s)' }
-        sleep_after_add_products: 1500
+        # Coach popover swallows footer clicks until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
 
-        # Step 8: Close product selection modal
-        # R_click_close_modal: { role: 'button', name: 'Close' }
-        # sleep_step: 1000
+        # Step 3 of 4 (content) then Step 4 of 4 (style); xpath bypasses the stacked modal roots.
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
 
-        # Step 9: Customize products
-        R_click_customize_products: { role: 'button', name: 'Customize' }
-        sleep_after_customize_products: 2000
+        # Per-product settings sit behind Selling -> Customize.
+        R_click_selling_tab: { role: 'tab', name: 'Selling' }
+        sleep_after_selling_tab: 4000
+        R_click_customize_products_edit: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_products_edit: 3000
 
-        # Step 9.1: Expand details
-        R_click_expand_details: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_after_expand_details: 2000
+        smart_click_optional_start_customizing: { role: 'button', name: 'Start Customizing', timeout: 3000 }
+        sleep_after_start_customizing: 1500
+        smart_click_optional_resale_done: { role: 'button', name: 'Done', timeout: 3000 }
+        sleep_after_resale_done: 1200
 
-        # Step 10: Check setCustomizePrice
+        # Sections mount collapsed; click the header text (the svg icon does nothing here).
+        R_click_expand_details: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_details: 1200
+
+        # Enable during creation. The co-seller commission above the flag rejects the save
+        # when it is above the cap, so zero it first.
+        fill_products_0_commission: { locator: 'input[name="products.0.variants.0.commissionRateForPromoters"]', value: '0' }
+        sleep_after_fill_commission: 800
         check_set_customize_price: { locator: 'input[name="products.0.setCustomizePrice"]', checked: true }
         sleep_after_set_customize_price: 1000
+        R_click_save_customization: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_customization: 3000
+        execute_js_dialog_closed_after_set: { script: "() => [...document.querySelectorAll('[role=dialog], .MuiDialog-root')].filter(d => d.getBoundingClientRect().width).length", assert_equals: 0 }
 
-        # Step 11: Save customization
-        R_click_save_customization: { role: 'button', name: 'Save' }
-        sleep_after_save_customization: 1500
+        # Reopen to prove the flag survived the save.
+        R_click_customize_products_reopen: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_products_reopen: 3000
+        R_click_expand_details_2: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_details_2: 1200
+        execute_js_checked_after_create:
+            script: "() => { const el = [...document.querySelectorAll('input')].find(e => e.name === 'products.0.setCustomizePrice'); return el ? el.checked : null; }"
+            assert_equals: true
 
-        # Step 12: Confirm customization
-        R_click_confirm_customization: { test_id: 'confirm-button' }
-        sleep_after_confirm_customization: 1500
-
-        # Step 13: Fill post title
-        fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 3811' }
-        sleep_after_post_title: 1000
-
-        # Step 14: Confirm title/post
-        R_click_confirm_post: { test_id: 'confirm-button' }
-        sleep_after_confirm_post: 1500
-
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-
-        # Step 15: Publish post
-        click_publish_btn: { role: 'button', name: 'Publish', index: 1 }
-        sleep_after_publish_btn: 500
-        click_publish_btn_2: { role: 'button', name: 'Publish' }
-        sleep_after_publish_btn_2: 2000
-
-        # Step 16: Click Apply
-        click_apply_btn: { role: 'button', name: 'Apply' }
-        sleep_after_apply_btn: 3000
-
-        # Step 17: Click the post card to enter details
-        R_click_post_card: { role: 'button', name: 'View post', index: 0 }
-        sleep_after_post_card: 3000
-
-        # Step 18: Click Selling tab
-        R_click_selling_tab: { role: 'tab', name: 'Selling', exact: true }
-        sleep_after_selling_tab: 2000
-
-        # Step 19: Customize products again
-        R_click_customize_products_edit: { role: 'button', name: 'Customize' }
-        sleep_after_customize_products_edit: 1000
-
-        R_click_expand_details_2: { test_id: "ExpandMoreIcon", index: 0 }
-        sleep_after_expand_details_2: 2000
-
-        # Step 20: Uncheck setCustomizePrice
+        # Disable while editing, then save again.
         uncheck_set_customize_price: { locator: 'input[name="products.0.setCustomizePrice"]', checked: false }
         sleep_after_set_customize_price_2: 1000
+        R_click_save_edit: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_edit: 3000
+        execute_js_dialog_closed_after_unset: { script: "() => [...document.querySelectorAll('[role=dialog], .MuiDialog-root')].filter(d => d.getBoundingClientRect().width).length", assert_equals: 0 }
 
-        # Step 21: Save
-        R_click_save_edit: { role: 'button', name: 'Save' }
-        sleep_after_save_edit: 1500
-
-        # Step 22: Save again (confirm/final save)
-        R_click_save_final: { role: 'button', name: 'Save' }
-        sleep_end: 2000
+        # Final reopen so the assertion below reads the stored value.
+        R_click_customize_products_final: { role: 'button', name: 'Customize', exact: true }
+        sleep_after_customize_products_final: 3000
+        R_click_expand_details_3: { locator: "xpath=(//*[@role='dialog']//p[normalize-space(.)='Advanced settings'])[1]" }
+        sleep_after_expand_details_3: 1200
 
     expect_result:
-        description: "Verify that customize price can be enabled during creation and disabled during editing"
+        description: "Customize price can be enabled during creation and disabled while editing, and the disabled state is what gets stored"
         assertions:
+            - assertion_type: "element_visible_by_locator"
+              locator: 'input[name="products.0.setCustomizePrice"]'
+            - assertion_type: "element_not_checked"
+              locator: 'input[name="products.0.setCustomizePrice"]'
             - assertion_type: "element_visible_by_text"
               text: "test case 3811"
+
+
