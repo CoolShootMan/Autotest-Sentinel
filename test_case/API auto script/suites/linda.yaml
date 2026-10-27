@@ -40,9 +40,17 @@ include:
   - Verify user can receive e-ticket email if ticket poster format is avif/png/jpg
   - Verify all data are displayed correct in the Event report
   - Verify adding music link types in the storefront modules
-  # T4283「Verify multiple submissions and data consistency」已移除：
-  #   POST /user-contact-form/submit 在 Release 返回 404 Cannot POST，
-  #   接口疑似已下线，非迁移缺陷。用例文件保留，需要时再放回。
+  # T4283「Verify multiple submissions and data consistency」：
+  #   套件里按 name 选中的其实有两条同名用例（include.names 只认 name，不区分目录）：
+  #     ① tests/10_Module/…                    (case_id=7919438) —— 已废弃
+  #        它调用 POST /user-contact-form/submit，Release 返回 404 Cannot POST
+  #        （接口已下线，非迁移缺陷）；且它只有"guest login + 一次 submit"两步，
+  #        并未实现本用例名承诺的"多次提交 + 数据一致性"语义。
+  #     ② tests/22_My Shop/Contact us form/…  (case_id=SKfEiaeh) —— 现役实现
+  #        创建 form → 提交两次 → 查 /form/list/inquiry 断言 totalCount=2 → 清理，
+  #        走的是现役端点 POST /form/submit，run #46 实测通过。
+  #   ⇒ 保留 include 里的 name（用于选中 ②），并在下面的 exclude.case_ids 里
+  #      显式排除 ①，避免同名两条同时跑。
   - and &T2931 Verify the total saving includes the percent off of subscription plan
   - Verify the quantity works well with change frequency on subscription item
   - Verify the price range and discount contains subscription price on post card
@@ -163,7 +171,17 @@ exclude:
   #     等），由 main.py 在跑 UI 用例之前单独执行（专用套 suites/ui_automation_prefill.yaml）。
   #   注意：该用例自身带 suite:linda 标签，故这里用 case_ids 显式排除，
   #   防止将来若把 linda 套改回按标签选择时，它又被带回本次回归。
+  #
+  # ── T4283 的废弃版本（10_Module 目录下那份）──
+  #   include.names 是按 name 选的，而 T4283 有两条同名用例，因此必须在这里按
+  #   case_id 精确排除旧的那条，否则两条都会跑、旧的必然 404 失败。
+  #   旧版 case_id=7919438：调 POST /user-contact-form/submit（接口已下线），
+  #   且只实现了"guest login + 一次 submit"，没有"多次提交 + 数据一致性"语义。
+  #   现役版本 case_id=SKfEiaeh（tests/22_My Shop/Contact us form/）走
+  #   POST /form/submit，完整覆盖多次提交与一致性校验，保留在套件内。
+  #   用例文件本身保留在仓库里，需要时可随时放回。
   case_ids:
   - test_ui_prefill_data_configuration
+  - 7919438
 pytest_args:
 - -v

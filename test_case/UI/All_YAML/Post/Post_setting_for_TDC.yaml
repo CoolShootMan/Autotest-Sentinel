@@ -512,7 +512,9 @@ testT2515_SetLimit_WithVariant_TDC:
         sleep_step: 2000
 
 
-        # Step 3: Enable "Purchase quantity limit" toggle
+        # Step 3: Toggle OFF first (to force Save button enabled), then ON
+        uncheck_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']" }
+        sleep_step: 1000
         check_purchase_limit: { locator: "input[name='isPurchaseQuantityLimited']" }
         sleep_step: 1000
 
@@ -522,13 +524,10 @@ testT2515_SetLimit_WithVariant_TDC:
         fill_limit_value: { role: "spinbutton", value: "5" }
         sleep_step: 1000
 
-        # Step 5: Save
-        # [2026-10-10] idempotent re-run: when the limit is already 5, Save is disabled and
-        # no toast fires — skip the save and treat the toast as optional (16:52 run failed
-        # exactly here: 8/8 steps passed yet the case failed on this wait).
-        R_click_save: { role: "button", name: "Save", skip_if_disabled: true }
+        # Step 5: Save (without skip_if_disabled — we toggled so Save should be enabled)
+        R_click_save: { role: "button", name: "Save" }
         sleep_step: 3000
-        wait_toast_save: { message: "Post settings updated", timeout: 15000, optional: true }
+        wait_toast_save: { message: "Post settings updated", timeout: 15000 }
 
     expect_result:
         description: "Purchase quantity limit saved successfully"
@@ -560,24 +559,27 @@ testT2515_VerifyDisabled_WithVariant_TDC:
         open: "{{post_url}}"
         sleep_after_open: 6000
 
-        # Step 2: TDC no-map purchase - click "Buy Ticket" to open the ticket drawer,
-        # raise the quantity to 6 (over the limit=5) via the "+" (Add) stepper, then
-        # "Buy now". The server enforces the purchase-quantity limit and surfaces the
-        # over-limit warning before checkout.
-        R_click_buy_ticket: { role: 'button', name: 'Buy Ticket' }
-        # "Select tickets" dialog: raise quantity to 6 via "+" stepper
+        # Step 2: Scroll down and click the 2nd "Buy Ticket" (BL26+ Bleachers, which
+        # has >10 inventory). The 1st section VRRF only has 4 tickets and can't
+        # reach qty=6 to trigger the limit.
+        scroll_post_down: { direction: "down", amount: 500 }
         sleep_step: 2000
+        R_click_buy_ticket_2nd: { locator: "button:has-text('Buy Ticket')", index: 1, timeout: 10000 }
+        sleep_step: 2000
+        # Raise quantity to 6 (> limit=5) via "+" stepper
         R_click_qty_add_1: { locator: "button[aria-label='Add']", index: 0, timeout: 10000 }
         R_click_qty_add_2: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_3: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_4: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_5: { locator: "button[aria-label='Add']", index: 0 }
         R_click_qty_add_6: { locator: "button[aria-label='Add']", index: 0 }
-        smart_click_optional_buy_now: { role: 'button', name: 'Buy now', timeout: 3000 }
+        sleep_step: 1000
+        # Click "Buy now" — the server enforces limit=5 and shows the warning
+        R_click_buy_now: { role: 'button', name: 'Buy now', timeout: 5000 }
+        sleep_step: 3000
 
-        # Step 3: Verify the server-enforced purchase-limit warning (limit=5, requested 6)
-        verify_purchase_limit_warning: { text: "has a quantity limit", timeout: 10000 }
-        sleep_end: 2000
+        # Step 3: Verify the server-enforced purchase-limit warning
+        verify_purchase_limit_warning: { text: "has a quantity limit", timeout: 20000 }
 
     expect_result:
         description: "TDC ticket quantity raised to 6 (> limit 5) shows the server-enforced limit message 'Each customer can buy up to 5 items'"

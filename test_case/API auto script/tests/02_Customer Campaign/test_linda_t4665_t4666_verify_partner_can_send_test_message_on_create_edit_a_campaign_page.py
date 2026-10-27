@@ -67,10 +67,11 @@ ENV_NAME = "Release"
 # post:     pm.expect(data.totalSegments).to.eql(1);
 # post:     
 # post:     // 费用校验
-# post:     pm.expect(data.unitPrice).to.eql(0.01);
+# post:     // [2026-10-26] SMS 单价 0.01 -> 0.03（需求变更），totalToPay 2.01 -> 2.03
+# post:     pm.expect(data.unitPrice).to.eql(0.03);
 # post:     pm.expect(data.fixedFee).to.eql(2);
-# post:     pm.expect(data.usageFee).to.eql(0.01);
-# post:     pm.expect(data.totalToPay).to.eql(2.01);
+# post:     pm.expect(data.usageFee).to.eql(0.03);
+# post:     pm.expect(data.totalToPay).to.eql(2.03);
 # post:     
 # post:     // 动态计算逻辑断言：应付金额 = 固定费 + 使用费
 # post:     pm.expect(data.totalToPay).to.eql(data.fixedFee + data.usageFee);
@@ -149,7 +150,8 @@ ENV_NAME = "Release"
 # post: // 4. 费用与计算逻辑断言
 # post: pm.test("断言费用计算是否正确", function () {
 # post:     const data = responseData.data;
-# post:     pm.expect(data.unitPrice).to.eql(0.001);
+# post:     // [2026-10-26] Email 渠道 unitPrice 0.001 -> 0.002（需求变更）
+# post:     pm.expect(data.unitPrice).to.eql(0.002);
 # post:     pm.expect(data.totalToPay).to.eql(1);
 # post:     pm.expect(data.paymentBreakdown.PAYOUT).to.eql(1);
 # post: });
@@ -288,10 +290,12 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
                 "selectAll": False,
                 "totalSegments": 1,
                 "fixedFee": 2,
-                "unitPrice": 0.01,
-                "totalToPay": 2.01,
-                "usageFee": 0.01,
-                "paymentBreakdown": {"PAYOUT": 2.01, "DEPOSIT": 0, "CAMPAIGN": 0},
+                # [2026-10-26] SMS 单价 0.01 -> 0.03（需求变更）。后端会按自己的费率表重算
+                # unitPrice/usageFee/totalToPay，请求里的值仅作参考，故一并同步为 0.03 / 2.03。
+                "unitPrice": 0.03,
+                "totalToPay": 2.03,
+                "usageFee": 0.03,
+                "paymentBreakdown": {"PAYOUT": 2.03, "DEPOSIT": 0, "CAMPAIGN": 0},
                 "paymentMethod": None,
                 "id": "{{campaignId}}",
             },
@@ -315,10 +319,16 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     assert _d4.get('totalSelectedCount') == 1, f"totalSelectedCount应为1，实际={_d4.get('totalSelectedCount')!r}"
     assert _d4.get('segmentsPerMessage') == 1, f"segmentsPerMessage应为1，实际={_d4.get('segmentsPerMessage')!r}"
     assert _d4.get('totalSegments') == 1, f"totalSegments应为1，实际={_d4.get('totalSegments')!r}"
-    assert _d4.get('unitPrice') == 0.01, f"unitPrice应为0.01，实际={_d4.get('unitPrice')!r}"
+    # [2026-10-26] 标准价按 KAT-12274（"Operation: introduce per-message credit for SMS
+    # and email campaigns"）更新：SMS $0.03/segment（原 $0.01），Email $0.002/email（原 $0.001）。
+    # unitPrice / usageFee 均为 0.03，totalToPay = fixedFee(2) + usageFee(0.03) = 2.03。
+    # 注意：仅 SMS 渠道改了价，step8 的 EMAIL 渠道是 0.002 / totalToPay=1。
+    # 注：KAT-12274 还引入了 account-level credit（早期用户按 credit 保留旧价），
+    #     若本账号日后被配置了 credit，unitPrice 会重新变回 0.01/0.001，届时需同步断言。
+    assert _d4.get('unitPrice') == 0.03, f"unitPrice应为0.03，实际={_d4.get('unitPrice')!r}"
     assert _d4.get('fixedFee') == 2, f"fixedFee应为2，实际={_d4.get('fixedFee')!r}"
-    assert _d4.get('usageFee') == 0.01, f"usageFee应为0.01，实际={_d4.get('usageFee')!r}"
-    assert _d4.get('totalToPay') == 2.01, f"totalToPay应为2.01，实际={_d4.get('totalToPay')!r}"
+    assert _d4.get('usageFee') == 0.03, f"usageFee应为0.03，实际={_d4.get('usageFee')!r}"
+    assert _d4.get('totalToPay') == 2.03, f"totalToPay应为2.03，实际={_d4.get('totalToPay')!r}"
     assert _d4.get('totalToPay') == (_d4.get('fixedFee') or 0) + (_d4.get('usageFee') or 0), f"应付金额应=固定费+使用费，实际totalToPay={_d4.get('totalToPay')!r}"
     assert (_d4.get('paymentBreakdown') or {}).get('PAYOUT') == _d4.get('totalToPay'), f"paymentBreakdown.PAYOUT应等于totalToPay，实际={(_d4.get('paymentBreakdown') or {}).get('PAYOUT')!r}"
     # 动态数据：只校验类型、非空和格式
@@ -390,6 +400,9 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
                 "selectAll": False,
                 "totalSegments": 1,
                 "fixedFee": 2,
+                # [2026-10-26] Email 渠道：下面的价格是请求里的占位值，后端会按 Email 自己的
+                # 费率表重算（实际返回 unitPrice=0.001 / totalToPay=1，见下方断言）。
+                # 因此这里不跟随 SMS 的 0.03 变更。
                 "unitPrice": 0.01,
                 "totalToPay": 2.01,
                 "usageFee": 0.01,
@@ -414,6 +427,8 @@ def test_linda_t4665_t4666_verify_partner_can_send_test_message_on_create_edit_a
     assert _d8.get('channel') == "EMAIL", f"data.channel应为EMAIL，实际={_d8.get('channel')!r}"
     assert isinstance(_d8.get('id'), str) and _d8.get('id'), f"data.id应为非空字符串，实际={_d8.get('id')!r}"
     # 费用与计算逻辑断言
-    assert _d8.get('unitPrice') == 0.001, f"unitPrice应为0.001，实际={_d8.get('unitPrice')!r}"
+    # [2026-10-26] Email 渠道 unitPrice 0.001 -> 0.002（KAT-12274 标准价更新）。
+    # totalToPay 仍为 1（fixedFee=1 + usageFee=0），未变。
+    assert _d8.get('unitPrice') == 0.002, f"unitPrice应为0.002，实际={_d8.get('unitPrice')!r}"
     assert _d8.get('totalToPay') == 1, f"totalToPay应为1，实际={_d8.get('totalToPay')!r}"
     assert (_d8.get('paymentBreakdown') or {}).get('PAYOUT') == 1, f"paymentBreakdown.PAYOUT应为1，实际={(_d8.get('paymentBreakdown') or {}).get('PAYOUT')!r}"
