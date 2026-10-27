@@ -2680,74 +2680,79 @@ testT2281:
 testT2537:
     description: "Verify that user can set access restricted by phone number"
     test_step:
-        open: "{BASE_URL}/post/create"
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_after_open: 3000
-
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # The wizard offers an unsaved-draft recovery dialog on open.
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_after_optional_discard: 1000
 
-        click_setting_tab: { role: 'tab', name: 'Settings' }
-        sleep_after_setting_tab: 1000
+        # Step 1 of 4 - product selection moved into the wizard. The square icon inside a
+        # product card is the selection toggle; the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-
-        check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
-        sleep_after_access_restricted: 1000
-
-        check_phone_checkbox: { role: 'checkbox', index: 0 }
-        sleep_after_phone_checkbox: 1000
-
-        fill_phone_number_1: { role: 'textbox', name: 'Phone number', value: '1 (202) 555-0147' }
-        sleep_after_phone_number_1: 500
-
-        click_add_1: { role: 'button', name: 'Add' }
-        sleep_after_add_1: 1000
-
-        fill_phone_number_2: { role: 'textbox', name: 'Phone number', value: '(202) 555-0148' }
-        sleep_after_phone_number_2: 500
-
-        click_add_2: { role: 'button', name: 'Add' }
-        sleep_after_add_2: 1000
-
-        click_remove_first: { text: 'Remove', index: 0 }
-        sleep_after_remove_first: 1000
-
-        click_confirm_remove: { role: 'button', name: 'Confirm' }
-        sleep_after_confirm_remove: 1000
-
-        click_confirm_advanced: { role: 'button', name: 'Confirm', timeout: 5000, optional: true }
-        sleep_after_confirm_advanced: 1000
-
-        click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab: 1500
-
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
         fill_post_title: { locator: 'input[name="title"]', value: 'test case 2537' }
         sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
 
-        click_confirm_title: { role: 'button', name: 'Confirm', timeout: 5000, optional: true }
-        sleep_after_confirm_title: 1000
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
 
-        click_publish: { role: 'button', name: 'Publish' }
-        sleep_after_publish: 3000
+        # The wizard publishes the post on creation, so the Tools menu already offers the
+        # unpublish action. Assert it here: saving the settings navigates off this page.
+        R_click_tools: { locator: "button[data-testid='enhance-button']:has-text('Tools')" }
+        sleep_after_tools: 3000
+        execute_js_tools_lists_unpublish:
+            script: "() => [...document.querySelectorAll('[role=menuitem]')].some(e => (e.innerText || '').includes('Unpublish this post'))"
+            assert_equals: true
+        press_escape_tools: { key: 'Escape' }
+        sleep_after_escape_tools: 2500
 
-        click_got_it: { role: 'button', name: 'Save', timeout: 3000, optional: true }
-        sleep_after_got_it: 3000
+        # Settings is a secondary footer button that opens its own route, no longer a tab.
+        R_click_settings_btn: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn: 4000
 
-        click_created_post: { text: 'test case 2537', index: 0, timeout: 3000, optional: true }
-        sleep_after_created_post: 3000
+        check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
+        sleep_after_access_restricted: 2500
 
-        click_setting_tab_2: { role: 'tab', name: 'Settings', timeout: 3000, optional: true }
-        sleep_after_setting_tab_2: 1000
+        # Enabling the switch reveals "Post access control" with a phone field per account.
+        fill_phone_number_1: { locator: 'input[name="phoneNumber"]', value: '1 (202) 555-0147' }
+        sleep_after_phone_number_1: 800
+        R_click_add_phone: { locator: "xpath=(//button[normalize-space(.)='Add'])[last()]" }
+        sleep_after_add_phone: 2500
 
+        fill_phone_number_2: { locator: 'input[name="phoneNumber"]', value: '(202) 555-0148' }
+        sleep_after_phone_number_2: 800
+        R_click_add_phone_2: { locator: "xpath=(//button[normalize-space(.)='Add'])[last()]" }
+        sleep_after_add_phone_2: 2500
 
-        click_manage: { role: 'button', name: 'Manage', timeout: 3000, optional: true }
-        sleep_after_manage: 1000
+        # Drop the first account again and confirm the removal dialog.
+        R_click_remove_first_account: { text: 'Remove', index: 0 }
+        sleep_after_remove_first_account: 2000
+        R_click_confirm_remove: { locator: "xpath=//button[normalize-space(.)='Confirm']" }
+        sleep_after_confirm_remove: 2000
+
+        R_click_save_settings: { locator: "xpath=(//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_settings: 8000
 
     expect_result:
         description: "Post published with phone-restricted access"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Unpublish"
+              text: "test case 2537"
 
 # ==============================================================================
 # Test Case: T3108
