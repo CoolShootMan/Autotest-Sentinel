@@ -2962,94 +2962,66 @@ testT1928:
         R_click_setting_save: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
         sleep_step_s1: 3000
 
-        # Then proceed with post creation
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE" }
-        #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        # The wizard replaced the old single-page editor; ?c=POST_PAGE is ignored now.
+        open: { url: "{BASE_URL}/post/create" }
         sleep_step_s2: 3000
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # The wizard offers an unsaved-draft recovery dialog on open.
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_step_s3: 1000
 
-        # smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
-        # sleep_step: 1000
+        # Step 1 of 4 - the catalog opens on the full product list, so filter it down to the
+        # product created above. Typing alone does not query the backend; Enter does.
+        fill_catalog_search: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
+        sleep_step_s3b: 1500
+        press_catalog_search: { key: 'Enter' }
+        sleep_step_s3c: 5000
+        # The square icon inside a product card is the toggle; the card body only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_step_s4: 1500
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_step_s5: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_step_s6: 5000
 
-        R_click_enhance_cta: { test_id: "enhance-button-cta" }
-        sleep_step_s4: 1000
-
-        # R_click_shared_tab: { role: 'tab', name: 'Shared with me' }
-        # sleep_step: 1000
-
-        fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
-        sleep_step_s5: 500
-        press_search_4: { key: "Enter" }
-        sleep_step_s6: 1500
-
-        # click the test_general_products card (first/only visible card after search)
-        click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
-
-        R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 1928' }
         sleep_step_s7: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_step_s8: 6000
 
-        # Dismiss the "You've added products - great start!" onboarding popover (MuiPopover, 16x16 Close); it otherwise covers Customize
-        smart_click_optional_great_start_close: { locator: "button[aria-label='Close']", timeout: 3000 }
-        sleep_step_p23_a: 1500
-
-        # smart_click_optional_close_btn_1: { role: 'button', name: 'Close', timeout: 3000 }
-        # sleep_step: 1000
-
-        R_click_customize_products_btn: { role: 'button', name: 'Customize' }
-        sleep_step_s8: 2000
-
-        # New UI: Advanced settings in the Customize products panel is expanded by default, so the Retail column is directly editable
-        sleep_step_p23: 1000
-
-        R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
         sleep_step_s9: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_step_s10: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_step_s11: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_step_s12: 7000
 
-        smart_click_optional_confirm: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s10: 1500
-
-        fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 1928' }
-        sleep_step_s11: 1000
-
-        # Pin the post URL alias so a guest can open it through the stable link {BASE_URL}/autotestshop/post/test1928
-        R_click_settings_tab: { role: 'tab', name: 'Settings', exact: true }
-        sleep_step_p26: 2500
-        fill_post_url_alias: { locator: "textarea[name='urlAlias']", value: 'test1928' }
+        # Pin the post URL alias so a guest can open it through a stable link. The alias moved
+        # from the Settings tab into the edit pencil next to the post URL in the header.
+        R_click_edit_slug: { locator: "button[aria-label='Edit']" }
+        sleep_step_p26: 4500
+        execute_js_set_url_alias:
+            script: "() => { const dlg = [...document.querySelectorAll('[role=dialog]')].pop(); if (!dlg) return 'no-dialog'; const el = [...dlg.querySelectorAll('input,textarea,[contenteditable]')].find(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }); if (!el) return 'no-field'; if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') { const proto = el.tagName === 'INPUT' ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, 'test1928'); el.dispatchEvent(new Event('input', { bubbles: true })); } else { el.innerText = 'test1928'; el.dispatchEvent(new Event('input', { bubbles: true })); } return el.tagName + ':' + (el.value !== undefined ? el.value : el.innerText); }"
+            assert_contains: "test1928"
         sleep_step_p27: 1000
+        R_click_save_slug: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_step_p28: 4000
+        # The post is already live, so saving the alias asks for confirmation first.
+        R_click_update_url_confirm: { locator: "xpath=(//*[@role='dialog']//button[contains(normalize-space(.), 'Update URL')])[last()]" }
+        sleep_step_p29: 5000
 
-        # After filling the alias we must switch back to Content, otherwise Add cover media is not in the current view
-        R_click_content_tab_1928: { role: 'tab', name: 'Content', exact: true }
-        sleep_step_p35: 2000
-
-        smart_click_optional_confirm_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s12: 1500
-
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-        sleep_step_s13: 1000
-
-        # Switch Layout to Collection; the default Story Only is a content-only layout that renders no product cards
-        R_click_style_tab_1928: { role: 'tab', name: 'Style', exact: true }
-        sleep_step_p28: 2000
-        R_click_layout_tab_1928: { role: 'tab', name: 'Layout', exact: true }
-        sleep_step_p29: 2000
-        R_click_layout_combobox_1928: { role: 'combobox' }
-        sleep_step_p30: 1500
-        R_click_collection_option_1928: { locator: '[role="option"]:has-text("Collection")' }
-        sleep_step_p31: 2000
-
-        # Step 13: Click Publish (publish the duplicate)
-        R_click_publish_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s14: 1000
-
-        R_click_publish_3: { role: 'button', name: 'Publish' }
-        sleep_step_s15: 3000
-
-        smart_click_optional_got_it: { role: 'button', name: 'Apply', timeout: 3000 }
-        sleep_step_s16: 5000
+        # The wizard publishes on creation, so the Tools menu already lists the unpublish
+        # action. Assert it here because the settings route navigates away on save.
+        R_click_tools: { locator: "button[data-testid='enhance-button']:has-text('Tools')" }
+        sleep_step_s13: 3000
+        execute_js_tools_lists_unpublish:
+            script: "() => [...document.querySelectorAll('[role=menuitem]')].some(e => (e.innerText || '').includes('Unpublish this post'))"
+            assert_equals: true
+        press_escape_tools: { key: 'Escape' }
+        sleep_step_s14: 2000
 
         # Navigate to Catalogs to update product price
         # Navigate straight to the Storefront page (the old R_click_storefront name=Storefront actually pointed at the hamburger icon above and opened the menu by mistake)
