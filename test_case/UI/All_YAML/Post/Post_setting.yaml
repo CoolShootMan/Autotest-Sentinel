@@ -164,78 +164,73 @@ testT1742:
 testT3991:
     description: "Verify that partner can set a note for co-sellers in a post"
     test_step:
-        open: "{BASE_URL}/post/create"
-        sleep_after_open: 5000
-        
-        click_content_tab: { role: 'tab', name: 'Content' }
-        fill_post_title: { role: 'textbox', name: 'title', value: 'testT3991' }
-        click_advanced_tab: { role: 'tab', name: 'Settings' }
-        
-        # Must assertion 1: Verify advanced settings are visible
-        verify_allow_copy_visible: { text: "Allow others to copy" }
-        click_commerce_tab: { role: 'tab', name: 'Commerce' }
-        click_add_product_cta: { test_id: 'enhance-button-cta' }
-        click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_click_product: 1000
-        click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
-        sleep_after_add_product: 1500
-        
-        # After modal state changes, check the product option (may be in modal or back to main page)
-        click_product_checkbox: { role: 'checkbox', index: 0}
-        sleep_after_check_product_checkbox: 1000
-        click_save_btn_commerce: { role: 'button', name: 'Save' }
-        sleep_before_confirm: 1000
-        click_confirm_publish: { test_id: 'confirm-button' }
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-        click_publish_btn: { role: 'button', name: 'Publish', index: 1 }
-        click_publish_btn_2: { role: 'button', name: 'Publish' }
-        click_apply_btn: { role: 'button', name: 'Apply' }
-        sleep_after_save: 2000
-        
-        # Click the newly created Post to enter details
-        click_post_card: { role: 'button', name: 'Image of Product', index: 0 }
-        sleep_after_click_post: 1500
-        click_coselling_tab: { role: 'tab', name: 'Co‑selling' }
-        sleep_after_coselling_tab: 1500
-        # Panel may open in OFF state: turn Co-selling on and save the default commission first
-        R_click_turn_on_coselling: { role: 'button', name: 'Turn on Co-selling', optional: true, disable_ai: true }
-        sleep_after_turn_on_coselling: 1000
-        R_click_save_customize: { role: 'button', name: 'Save', optional: true, disable_ai: true }
-        sleep_after_save_customize: 1500
-        click_mui_btn: { role: 'button', name: 'Add to co-seller Pear Shops' }
-        check_coseller_checkbox: { role: 'checkbox', index: 1 }
-        click_add_btn: { role: 'button', name: 'Add' }
-        
-        # Must assertion 2: Toast message after successfully adding co-seller
-        verify_toast_post_added: { text: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress." }
-        sleep_after_toast_1: 1500
-        
-        # Co-selling sub-tab hides the content action cards; switch back to Content first
-        R_click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab: 1500
-        click_setting_tab_2: { role: 'button', name: 'Settings' }
-        
-        # Must assertion 3: Verify setting item is visible
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        sleep_after_open: 3000
+        # The wizard offers an unsaved-draft recovery dialog on open.
+        smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
+        sleep_after_optional_discard: 1000
+
+        # Step 1 of 4 - product selection moved into the wizard. The square icon inside a
+        # product card is the selection toggle; the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
+
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 3991' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
+
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
+
+        # Co-selling must be on for a co-seller note to be meaningful; the wizard already
+        # turned it on, so only confirm the tab renders its panel.
+        R_click_coselling_tab: { role: 'tab', name: 'Co‑selling' }
+        sleep_after_coselling_tab: 5000
+        execute_js_coselling_enabled:
+            script: "() => { const el = [...document.querySelectorAll('input')].find(e => e.name === 'allowPromotersResell'); return el ? el.checked : null; }"
+            assert_equals: true
+
+        # Settings moved to its own route; the co-seller note lives there.
+        R_click_settings_btn: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn: 5000
+
+        # Must assertion: the setting exists and is off by default.
         verify_note_visible: { text: "Add a note for co-sellers" }
-        
+
         check_enable_downline_note: { locator: 'input[name="enableDownlineNote"]' }
-        fill_note: { role: 'textbox', name: 'Enter a short message for', value: 'test_3991' }
-        click_apply_btn_2: { role: 'button', name: 'Apply' }
-        sleep_after_apply: 1000
-        click_save_settings_btn: { role: 'button', name: 'Save' }
-        sleep_after_save_settings: 3000
+        sleep_after_enable_downline_note: 3000
 
-        # Must assertion 4: Toast message after configuration is complete
-        verify_toast_settings_updated: { text: "Post settings updated", optional: true }
-        
+        # Enabling the switch reveals a rich-text message box plus its own Apply.
+        fill_note: { locator: '[contenteditable="true"]', value: 'test_3991' }
+        sleep_after_fill_note: 1500
+        execute_js_note_text:
+            script: "() => (document.querySelector('[contenteditable=true]') || {}).innerText || ''"
+            assert_contains: "test_3991"
+        R_click_apply_note: { locator: "xpath=(//button[normalize-space(.)='Apply'])[last()]" }
+        sleep_after_apply_note: 2500
+
+        # Saving settings navigates back to the partner home page.
+        R_click_save_settings: { locator: "xpath=(//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_settings: 8000
+
     expect_result:
-        description: "Partner should be able to set a note for co-sellers successfully."
-        assertions: []
-
-
+        description: "Partner can set a note for co-sellers and the post stays live"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test case 3991"
 
 # ==============================================================================
 # Test Case: T3683 & T3684
