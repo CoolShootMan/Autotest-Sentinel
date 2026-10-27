@@ -164,78 +164,73 @@ testT1742:
 testT3991:
     description: "Verify that partner can set a note for co-sellers in a post"
     test_step:
-        open: "{BASE_URL}/post/create"
-        sleep_after_open: 5000
-        
-        click_content_tab: { role: 'tab', name: 'Content' }
-        fill_post_title: { role: 'textbox', name: 'title', value: 'testT3991' }
-        click_advanced_tab: { role: 'tab', name: 'Settings' }
-        
-        # Must assertion 1: Verify advanced settings are visible
-        verify_allow_copy_visible: { text: "Allow others to copy" }
-        click_commerce_tab: { role: 'tab', name: 'Commerce' }
-        click_add_product_cta: { test_id: 'enhance-button-cta' }
-        click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-        sleep_after_click_product: 1000
-        click_add_product_btn: { role: 'button', name: 'Add 1/20 product(s)' }
-        sleep_after_add_product: 1500
-        
-        # After modal state changes, check the product option (may be in modal or back to main page)
-        click_product_checkbox: { role: 'checkbox', index: 0}
-        sleep_after_check_product_checkbox: 1000
-        click_save_btn_commerce: { role: 'button', name: 'Save' }
-        sleep_before_confirm: 1000
-        click_confirm_publish: { test_id: 'confirm-button' }
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-        click_publish_btn: { role: 'button', name: 'Publish', index: 1 }
-        click_publish_btn_2: { role: 'button', name: 'Publish' }
-        click_apply_btn: { role: 'button', name: 'Apply' }
-        sleep_after_save: 2000
-        
-        # Click the newly created Post to enter details
-        click_post_card: { role: 'button', name: 'Image of Product', index: 0 }
-        sleep_after_click_post: 1500
-        click_coselling_tab: { role: 'tab', name: 'Co‑selling' }
-        sleep_after_coselling_tab: 1500
-        # Panel may open in OFF state: turn Co-selling on and save the default commission first
-        R_click_turn_on_coselling: { role: 'button', name: 'Turn on Co-selling', optional: true, disable_ai: true }
-        sleep_after_turn_on_coselling: 1000
-        R_click_save_customize: { role: 'button', name: 'Save', optional: true, disable_ai: true }
-        sleep_after_save_customize: 1500
-        click_mui_btn: { role: 'button', name: 'Add to co-seller Pear Shops' }
-        check_coseller_checkbox: { role: 'checkbox', index: 1 }
-        click_add_btn: { role: 'button', name: 'Add' }
-        
-        # Must assertion 2: Toast message after successfully adding co-seller
-        verify_toast_post_added: { text: "Adding posts to selected co-seller shops. This may take a few seconds. Click Refresh to see the latest progress." }
-        sleep_after_toast_1: 1500
-        
-        # Co-selling sub-tab hides the content action cards; switch back to Content first
-        R_click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab: 1500
-        click_setting_tab_2: { role: 'button', name: 'Settings' }
-        
-        # Must assertion 3: Verify setting item is visible
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        sleep_after_open: 3000
+        # The wizard offers an unsaved-draft recovery dialog on open.
+        smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
+        sleep_after_optional_discard: 1000
+
+        # Step 1 of 4 - product selection moved into the wizard. The square icon inside a
+        # product card is the selection toggle; the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
+
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 3991' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
+
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
+
+        # Co-selling must be on for a co-seller note to be meaningful; the wizard already
+        # turned it on, so only confirm the tab renders its panel.
+        R_click_coselling_tab: { role: 'tab', name: 'Co‑selling' }
+        sleep_after_coselling_tab: 5000
+        execute_js_coselling_enabled:
+            script: "() => { const el = [...document.querySelectorAll('input')].find(e => e.name === 'allowPromotersResell'); return el ? el.checked : null; }"
+            assert_equals: true
+
+        # Settings moved to its own route; the co-seller note lives there.
+        R_click_settings_btn: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn: 5000
+
+        # Must assertion: the setting exists and is off by default.
         verify_note_visible: { text: "Add a note for co-sellers" }
-        
+
         check_enable_downline_note: { locator: 'input[name="enableDownlineNote"]' }
-        fill_note: { role: 'textbox', name: 'Enter a short message for', value: 'test_3991' }
-        click_apply_btn_2: { role: 'button', name: 'Apply' }
-        sleep_after_apply: 1000
-        click_save_settings_btn: { role: 'button', name: 'Save' }
-        sleep_after_save_settings: 3000
+        sleep_after_enable_downline_note: 3000
 
-        # Must assertion 4: Toast message after configuration is complete
-        verify_toast_settings_updated: { text: "Post settings updated", optional: true }
-        
+        # Enabling the switch reveals a rich-text message box plus its own Apply.
+        fill_note: { locator: '[contenteditable="true"]', value: 'test_3991' }
+        sleep_after_fill_note: 1500
+        execute_js_note_text:
+            script: "() => (document.querySelector('[contenteditable=true]') || {}).innerText || ''"
+            assert_contains: "test_3991"
+        R_click_apply_note: { locator: "xpath=(//button[normalize-space(.)='Apply'])[last()]" }
+        sleep_after_apply_note: 2500
+
+        # Saving settings navigates back to the partner home page.
+        R_click_save_settings: { locator: "xpath=(//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_settings: 8000
+
     expect_result:
-        description: "Partner should be able to set a note for co-sellers successfully."
-        assertions: []
-
-
+        description: "Partner can set a note for co-sellers and the post stays live"
+        assertions:
+            - assertion_type: "element_visible_by_text"
+              text: "test case 3991"
 
 # ==============================================================================
 # Test Case: T3683 & T3684
@@ -2526,228 +2521,173 @@ testT3767:
 testT2281:
     description: "Verify duplicate post copies Settings settings (allowExpire) and can be modified independently"
     test_step:
-        # Step 1: Open the post editor and add a product.
-        open: "{BASE_URL}/post/create"
-        sleep_after_open: 5000
-
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        sleep_after_open: 3000
+        # The wizard offers an unsaved-draft recovery dialog on open.
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
-        sleep_after_optional_discard: 2500
+        sleep_after_optional_discard: 1000
 
-        # The Commerce CTA is an enhance-button-cta whose label is "Select" (not
-        # "Add products"); it opens the "Select products" dialog.
-        click_add_product_cta: { test_id: 'enhance-button-cta' }
-        sleep_after_select_open: 3500
+        # Step 1 of 4 - product selection moved into the wizard. The square icon inside a
+        # product card is the selection toggle; the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-        # Card = the mui-stack wrapping the product image; container-agnostic on purpose (this panel has been both a bottom MuiDrawer and a [role=dialog] over time), index 0 = first product. Do NOT click SquareLineIcon: it matches every card's icon and does not toggle selection.
-        click_product_card_2281: { locator: '[data-testid="mui-stack"][role="button"]:has([data-testid="product-list-card-image-component"])', index: 0 }
-        sleep_after_click_product: 1500
-        click_add_product_btn: { locator: 'button:has-text("product(s)")' }
-        sleep_after_add_product: 2500
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 2281 post' }
+        sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
 
-        # Step 2: Click Content tab and fill title
-        R_click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab: 2000
-        fill_title: { locator: 'input[name="title"]', value: 'test case 2281 post' }
-        sleep_after_title: 1000
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
 
-        # Step 3: Click Settings tab and enable allowExpire
-        R_click_setting_tab: { role: 'tab', name: 'Settings' }
-        sleep_after_setting_tab: 2500
+        # Step 3 - turn allowExpire on for the original post. Settings is a secondary footer
+        # button that opens its own route, it is no longer a tab in the editor.
+        R_click_settings_btn: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn: 5000
         check_allow_expire: { locator: 'input[name="allowExpire"]' }
         sleep_after_allow_expire: 2500
+        R_click_save_settings: { locator: "xpath=(//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_settings: 8000
 
-        # Step 4: Publish the post (footer button carries data-testid="confirm-button").
-        # Publishing is a THREE-stage flow that was not modelled before:
-        #   1) Publish            -> "Almost Ready! / This layout requires a cover media."
-        #   2) Add cover media... -> fills the cover, but the post is STILL A DRAFT
-        #   3) Publish again      -> "Ready to Publish Your Post?" -> confirm
-        #   4) "Your item is ready!" (storefront placement) -> Apply
-        R_click_publish: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
-        sleep_after_publish: 5000
+        # Saving navigates off the editor and back to the partner home page. Reopen the post
+        # by clicking its title there, which goes straight to /post/<id>/view.
+        R_click_post_title_2281: { text: 'test case 2281 post', index: 0 }
+        sleep_after_post_title_2281: 9000
 
-        # Stage 1 dialog: only "Add cover media" / "Change layout" -- there is NO "Apply".
-        # The old R_click_got_it: Apply never matched, and because it carried optional:true
-        # it silently no-op'd and left the dialog open; the framework then scoped every
-        # later lookup into that dialog, which is what broke the following "More" click.
-        R_click_add_cover_media: { locator: '[role="dialog"] button:has-text("Add cover media")' }
-        sleep_after_add_cover: 4000
+        # Step 4 - duplicate from the editor's Tools menu; own posts are no longer listed on
+        # /autotestshop/archive, so the old card menu entry point is gone.
+        R_click_tools: { locator: "button[data-testid='enhance-button']:has-text('Tools')" }
+        sleep_after_tools: 3000
+        R_click_duplicate_post: { locator: '[role="menuitem"]:has-text("Duplicate post")' }
+        sleep_after_duplicate_post: 9000
 
-        # "Manage cover media" lists its sources as mui-stack radio rows (NOT buttons or
-        # tabs), so a ':is(button,[role="tab"])' selector can never match them.
-        click_products_media: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")' }
-        sleep_after_products_media: 3000
+        # Step 5 - duplicating opens the copy wizard on /post/<id>/duplicate, which keeps
+        # the old tab strip (Commerce / Content / Style / Promo / Settings) and its own
+        # Publish footer. The copy starts as a draft that inherits the original settings.
+        R_click_duplicate_settings_tab: { role: 'tab', name: 'Settings' }
+        sleep_after_duplicate_settings_tab: 5000
+        execute_js_duplicate_inherited_allow_expire:
+            script: "() => { const el = [...document.querySelectorAll('input')].find(e => e.name === 'allowExpire'); return el ? el.checked : null; }"
+            assert_equals: true
 
-        # [2026-10-22] The panel keeps the first product-media response and shows
-        # "No media yet" indefinitely when that response came back empty (seen
-        # intermittently: the fetch can fire before the post's products register).
-        # Toggling to "Uploaded" and back to "Products" forces a fresh fetch; both
-        # rows are plain mui-stacks, and ending on "Products" keeps the state intact.
-        click_uploaded_source_2281: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Uploaded")', optional: true }
-        sleep_before_media_refetch: 1500
-        click_products_media_refetch: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")' }
-        sleep_after_products_media_refetch: 4000
-
-        # Product images render as img[data-testid="media-picture"] once "Products" is
-        # selected; clicking one attaches it as the cover.
-        click_media_img: { locator: '[role="dialog"] img[data-testid="media-picture"]', index: 0 }
-        sleep_after_media_img: 2500
-
-        # Done closes "Manage cover media". The post is still a draft at this point
-        # ("draft won't be visible to others"), so publishing must be re-triggered.
-        click_done_btn_commerce: { locator: '[role="dialog"] [data-testid="enhance-button"]:has-text("Done")' }
-        sleep_after_cover_done: 5000
-
-        # Stage 3: publish again -> "Ready to Publish Your Post?" confirmation dialog
-        R_click_publish_again_2281: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
-        sleep_after_publish_again: 4000
-        R_click_publish_confirm_dialog: { locator: '[role="dialog"] button:has-text("Publish")' }
-        sleep_after_publish_confirm: 5000
-
-        # Stage 4: "Your item is ready! / Choose where you'd like to feature on your
-        # storefront." -- dismissed with Apply. (The old R_click_got_it: Apply belonged
-        # HERE, not on the cover-media dialog.)
-        R_click_apply_ready: { locator: '[role="dialog"] button:has-text("Apply")', optional: true }
-        sleep_after_apply_ready: 4000
-
-        # Step 6: Duplicate the post from My content.
-        # Standalone posts are NOT events, so /events never lists them. The post list is
-        # /autotestshop/archive, sorted by recency, so the post just published is card 0.
-        # [UI drift] "Duplicate post" is NOT reachable from the post detail page
-        # (/post/<id>/view is the "Manage your post" editor, which only has Close/Edit/
-        # Copy/Content/Style/Settings/Tools/Visit -- no "..." and no komi-header-icon-btn).
-        # It lives in the archive CARD's own "..." menu (base-more-horiz-icon-cta).
-        open_archive_2281: "{BASE_URL}/autotestshop/archive"
-        sleep_after_open_archive: 9000
-
-        R_click_card_more_2281: { locator: 'div[data-testid="base-post-card"] button[data-testid="base-more-horiz-icon-cta"]', index: 0 }
-        sleep_after_card_more: 3000
-
-        # The item is "Duplicate post" (the old YAML said "Duplicate this post").
-        R_click_duplicate: { locator: '[role="menuitem"]:has-text("Duplicate post")' }
-        sleep_after_duplicate: 6000
-
-        # Step 7: In the duplicate editor, click Content tab and change title
-        R_click_content_tab_2: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab_2: 2500
-        fill_title_duplicate: { locator: 'input[name="title"]', value: 'test case 2281 post duplicate' }
-        sleep_after_title_duplicate: 1500
-
-        # Step 8: Click Settings tab and uncheck allowExpire (the copied setting)
-        R_click_setting_tab_2: { role: 'tab', name: 'Settings' }
-        sleep_after_setting_tab_2: 2500
+        # Step 6 - change the copied setting independently of the original.
         uncheck_allow_expire_1: { locator: 'input[name="allowExpire"]', checked: false }
         sleep_after_allow_expire_1: 2500
+        # Publish the copy so the new setting is committed. The footer button only opens
+        # "Ready to Publish Your Post?", the dialog's own Publish does the work.
+        R_click_publish_duplicate: { locator: "xpath=(//button[normalize-space(.)='Publish'])[last()]" }
+        sleep_after_publish_duplicate: 4000
+        R_click_publish_confirm_duplicate: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Publish'])[last()]" }
+        sleep_after_publish_confirm_duplicate: 9000
+        smart_click_optional_apply_duplicate: { locator: "xpath=(//button[normalize-space(.)='Apply'])[last()]", timeout: 3000 }
+        sleep_after_apply_duplicate: 4000
 
-        # Step 9: Publish the duplicate. The duplicate inherits the original's cover, so the
-        # "Almost Ready!" cover dialog normally does NOT reappear -- every cover step is
-        # optional. "Ready to Publish Your Post?" and "Your item is ready!" still appear.
-        R_click_publish_2: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")' }
-        sleep_after_publish_2: 5000
-        R_click_add_cover_media_2: { locator: '[role="dialog"] button:has-text("Add cover media")', optional: true }
-        sleep_after_add_cover_2: 4000
-        click_products_media_2: { locator: '[role="dialog"] [data-testid="mui-stack"]:has-text("Products")', optional: true }
-        sleep_after_products_media_2: 3000
-        click_media_img_2: { locator: '[role="dialog"] img[data-testid="media-picture"]', index: 0, optional: true }
-        sleep_after_media_img_2: 2500
-        click_done_btn_commerce_2: { locator: '[role="dialog"] [data-testid="enhance-button"]:has-text("Done")', optional: true }
-        sleep_after_cover_done_2: 5000
-        R_click_publish_again_2: { locator: 'button[data-testid="confirm-button"]:has-text("Publish")', optional: true }
-        sleep_after_publish_again_2: 4000
-        R_click_publish_confirm_dialog_2: { locator: '[role="dialog"] button:has-text("Publish")', optional: true }
-        sleep_after_publish_confirm_2: 5000
-        R_click_apply_ready_2: { locator: '[role="dialog"] button:has-text("Apply")', optional: true }
-        sleep_after_apply_ready_2: 4000
-
-        # Step 10: Re-open the duplicate (newest, so archive card 0) and check its Settings
-        # tab. Clicking the card opens the "Manage your post" editor, where the Settings
-        # tab exposes input[name="allowExpire"] for the assertion.
-        open_archive_2281_b: "{BASE_URL}/autotestshop/archive"
-        sleep_after_open_archive_b: 9000
-        R_click_duplicate_post_card: { locator: 'div[data-testid="base-post-card"]', index: 0 }
-        sleep_after_open_dup: 7000
-        R_click_settings_tab_3: { role: 'tab', name: 'Settings' }
-        sleep_after_settings_tab_3: 3000
+        # Step 7 - reopen the copy so the final assertion reads the stored value rather than
+        # the form that was just submitted. The copy is the newest post on the home page.
+        R_click_post_title_2281_again: { text: 'test case 2281 post', index: 0 }
+        sleep_after_post_title_2281_again: 9000
+        R_click_settings_btn_3: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn_3: 5000
 
         sleep_end: 2000
 
     expect_result:
         description: "Duplicate post created with allowExpire setting independently modified (unchecked)"
         assertions:
+            # Gate first: element_not_checked passes on a missing element.
+            - assertion_type: "element_visible_by_locator"
+              locator: 'input[name="allowExpire"]'
             - assertion_type: "element_not_checked"
               locator: 'input[name="allowExpire"]'
 
 testT2537:
     description: "Verify that user can set access restricted by phone number"
     test_step:
-        open: "{BASE_URL}/post/create"
+        open: { url: "{BASE_URL}/post/create", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
         sleep_after_open: 3000
-
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # The wizard offers an unsaved-draft recovery dialog on open.
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_after_optional_discard: 1000
 
-        click_setting_tab: { role: 'tab', name: 'Settings' }
-        sleep_after_setting_tab: 1000
+        # Step 1 of 4 - product selection moved into the wizard. The square icon inside a
+        # product card is the selection toggle; the card itself only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_after_catalog_product: 1200
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_after_continue_products: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_after_continue_coselling: 5000
 
-
-        check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
-        sleep_after_access_restricted: 1000
-
-        check_phone_checkbox: { role: 'checkbox', index: 0 }
-        sleep_after_phone_checkbox: 1000
-
-        fill_phone_number_1: { role: 'textbox', name: 'Phone number', value: '1 (202) 555-0147' }
-        sleep_after_phone_number_1: 500
-
-        click_add_1: { role: 'button', name: 'Add' }
-        sleep_after_add_1: 1000
-
-        fill_phone_number_2: { role: 'textbox', name: 'Phone number', value: '(202) 555-0148' }
-        sleep_after_phone_number_2: 500
-
-        click_add_2: { role: 'button', name: 'Add' }
-        sleep_after_add_2: 1000
-
-        click_remove_first: { text: 'Remove', index: 0 }
-        sleep_after_remove_first: 1000
-
-        click_confirm_remove: { role: 'button', name: 'Confirm' }
-        sleep_after_confirm_remove: 1000
-
-        click_confirm_advanced: { role: 'button', name: 'Confirm', timeout: 5000, optional: true }
-        sleep_after_confirm_advanced: 1000
-
-        click_content_tab: { role: 'tab', name: 'Content' }
-        sleep_after_content_tab: 1500
-
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
         fill_post_title: { locator: 'input[name="title"]', value: 'test case 2537' }
         sleep_after_post_title: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_after_create_and_continue: 6000
 
-        click_confirm_title: { role: 'button', name: 'Confirm', timeout: 5000, optional: true }
-        sleep_after_confirm_title: 1000
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+        sleep_after_got_it: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_after_continue_content: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_after_finish_style: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_after_continue_advanced: 7000
 
-        click_publish: { role: 'button', name: 'Publish' }
-        sleep_after_publish: 3000
+        # The wizard publishes the post on creation, so the Tools menu already offers the
+        # unpublish action. Assert it here: saving the settings navigates off this page.
+        R_click_tools: { locator: "button[data-testid='enhance-button']:has-text('Tools')" }
+        sleep_after_tools: 3000
+        execute_js_tools_lists_unpublish:
+            script: "() => [...document.querySelectorAll('[role=menuitem]')].some(e => (e.innerText || '').includes('Unpublish this post'))"
+            assert_equals: true
+        press_escape_tools: { key: 'Escape' }
+        sleep_after_escape_tools: 2500
 
-        click_got_it: { role: 'button', name: 'Save', timeout: 3000, optional: true }
-        sleep_after_got_it: 3000
+        # Settings is a secondary footer button that opens its own route, no longer a tab.
+        R_click_settings_btn: { locator: "button[data-testid='enhance-button'][aria-label='Settings']" }
+        sleep_after_settings_btn: 4000
 
-        click_created_post: { text: 'test case 2537', index: 0, timeout: 3000, optional: true }
-        sleep_after_created_post: 3000
+        check_access_restricted: { locator: 'input[name="isAccessRestricted"]' }
+        sleep_after_access_restricted: 2500
 
-        click_setting_tab_2: { role: 'tab', name: 'Settings', timeout: 3000, optional: true }
-        sleep_after_setting_tab_2: 1000
+        # Enabling the switch reveals "Post access control" with a phone field per account.
+        fill_phone_number_1: { locator: 'input[name="phoneNumber"]', value: '1 (202) 555-0147' }
+        sleep_after_phone_number_1: 800
+        R_click_add_phone: { locator: "xpath=(//button[normalize-space(.)='Add'])[last()]" }
+        sleep_after_add_phone: 2500
 
+        fill_phone_number_2: { locator: 'input[name="phoneNumber"]', value: '(202) 555-0148' }
+        sleep_after_phone_number_2: 800
+        R_click_add_phone_2: { locator: "xpath=(//button[normalize-space(.)='Add'])[last()]" }
+        sleep_after_add_phone_2: 2500
 
-        click_manage: { role: 'button', name: 'Manage', timeout: 3000, optional: true }
-        sleep_after_manage: 1000
+        # Drop the first account again and confirm the removal dialog.
+        R_click_remove_first_account: { text: 'Remove', index: 0 }
+        sleep_after_remove_first_account: 2000
+        R_click_confirm_remove: { locator: "xpath=//button[normalize-space(.)='Confirm']" }
+        sleep_after_confirm_remove: 2000
+
+        R_click_save_settings: { locator: "xpath=(//button[normalize-space(.)='Save'])[last()]" }
+        sleep_after_save_settings: 8000
 
     expect_result:
         description: "Post published with phone-restricted access"
         assertions:
             - assertion_type: "element_visible_by_text"
-              text: "Unpublish"
+              text: "test case 2537"
 
 # ==============================================================================
 # Test Case: T3108
@@ -3022,94 +2962,66 @@ testT1928:
         R_click_setting_save: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
         sleep_step_s1: 3000
 
-        # Then proceed with post creation
-        open: { url: "{BASE_URL}/post/create?c=POST_PAGE" }
-        #open: { url: "{BASE_URL}/post/create?c=POST_PAGE", cookie_file: "test_case/UI/cookie_{ENV}_partner_coseller.json" }
+        # The wizard replaced the old single-page editor; ?c=POST_PAGE is ignored now.
+        open: { url: "{BASE_URL}/post/create" }
         sleep_step_s2: 3000
-        # Discard unsaved-draft recovery dialog if present (editor shows it on open)
+        # The wizard offers an unsaved-draft recovery dialog on open.
         smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
         sleep_step_s3: 1000
 
-        # smart_click_optional_no: { role: 'button', name: 'No', timeout: 3000 }
-        # sleep_step: 1000
+        # Step 1 of 4 - the catalog opens on the full product list, so filter it down to the
+        # product created above. Typing alone does not query the backend; Enter does.
+        fill_catalog_search: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
+        sleep_step_s3b: 1500
+        press_catalog_search: { key: 'Enter' }
+        sleep_step_s3c: 5000
+        # The square icon inside a product card is the toggle; the card body only opens a preview.
+        click_catalog_product: { locator: '[role="button"][aria-label] [data-testid="SquareLineIcon"]', index: 0 }
+        sleep_step_s4: 1500
+        R_click_continue_products: { locator: "button:has-text('Continue')" }
+        sleep_step_s5: 5000
+        R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+        sleep_step_s6: 5000
 
-        R_click_enhance_cta: { test_id: "enhance-button-cta" }
-        sleep_step_s4: 1000
-
-        # R_click_shared_tab: { role: 'tab', name: 'Shared with me' }
-        # sleep_step: 1000
-
-        fill_product_search_4: { locator: 'input[placeholder="Search product"]', value: 'test 1928 product' }
-        sleep_step_s5: 500
-        press_search_4: { key: "Enter" }
-        sleep_step_s6: 1500
-
-        # click the test_general_products card (first/only visible card after search)
-        click_product_card_5: { test_id: 'SquareLineIcon', index: 0 }
-
-        R_click_add_1_product: { locator: "button:has-text('product(s)')", index: 0 }
+        # Step 2 of 4 - the title must be filled before "Create and continue" is enabled.
+        fill_post_title: { locator: 'input[name="title"]', value: 'test case 1928' }
         sleep_step_s7: 1000
+        R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+        sleep_step_s8: 6000
 
-        # Dismiss the "You've added products - great start!" onboarding popover (MuiPopover, 16x16 Close); it otherwise covers Customize
-        smart_click_optional_great_start_close: { locator: "button[aria-label='Close']", timeout: 3000 }
-        sleep_step_p23_a: 1500
-
-        # smart_click_optional_close_btn_1: { role: 'button', name: 'Close', timeout: 3000 }
-        # sleep_step: 1000
-
-        R_click_customize_products_btn: { role: 'button', name: 'Customize' }
-        sleep_step_s8: 2000
-
-        # New UI: Advanced settings in the Customize products panel is expanded by default, so the Retail column is directly editable
-        sleep_step_p23: 1000
-
-        R_click_save_btn: { role: 'button', name: 'Save', index: 0 }
+        # The coach popover is rendered as a modal and owns the click scope until dismissed.
+        R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
         sleep_step_s9: 1500
+        R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+        sleep_step_s10: 5000
+        R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+        sleep_step_s11: 6000
+        R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+        sleep_step_s12: 7000
 
-        smart_click_optional_confirm: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s10: 1500
-
-        fill_post_title: { role: 'textbox', name: 'Post title', value: 'test case 1928' }
-        sleep_step_s11: 1000
-
-        # Pin the post URL alias so a guest can open it through the stable link {BASE_URL}/autotestshop/post/test1928
-        R_click_settings_tab: { role: 'tab', name: 'Settings', exact: true }
-        sleep_step_p26: 2500
-        fill_post_url_alias: { locator: "textarea[name='urlAlias']", value: 'test1928' }
+        # Pin the post URL alias so a guest can open it through a stable link. The alias moved
+        # from the Settings tab into the edit pencil next to the post URL in the header.
+        R_click_edit_slug: { locator: "button[aria-label='Edit']" }
+        sleep_step_p26: 4500
+        execute_js_set_url_alias:
+            script: "() => { const dlg = [...document.querySelectorAll('[role=dialog]')].pop(); if (!dlg) return 'no-dialog'; const el = [...dlg.querySelectorAll('input,textarea,[contenteditable]')].find(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }); if (!el) return 'no-field'; if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') { const proto = el.tagName === 'INPUT' ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, 'test1928'); el.dispatchEvent(new Event('input', { bubbles: true })); } else { el.innerText = 'test1928'; el.dispatchEvent(new Event('input', { bubbles: true })); } return el.tagName + ':' + (el.value !== undefined ? el.value : el.innerText); }"
+            assert_contains: "test1928"
         sleep_step_p27: 1000
+        R_click_save_slug: { locator: "xpath=(//*[@role='dialog']//button[normalize-space(.)='Save'])[last()]" }
+        sleep_step_p28: 4000
+        # The post is already live, so saving the alias asks for confirmation first.
+        R_click_update_url_confirm: { locator: "xpath=(//*[@role='dialog']//button[contains(normalize-space(.), 'Update URL')])[last()]" }
+        sleep_step_p29: 5000
 
-        # After filling the alias we must switch back to Content, otherwise Add cover media is not in the current view
-        R_click_content_tab_1928: { role: 'tab', name: 'Content', exact: true }
-        sleep_step_p35: 2000
-
-        smart_click_optional_confirm_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s12: 1500
-
-        click_add_cover_media: { role: 'button', name: 'Add cover media' }
-        click_products_media: { text: 'Products', exact: true }
-        click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-        click_done_btn_commerce: { role: 'button', name: 'Done' }
-        sleep_step_s13: 1000
-
-        # Switch Layout to Collection; the default Story Only is a content-only layout that renders no product cards
-        R_click_style_tab_1928: { role: 'tab', name: 'Style', exact: true }
-        sleep_step_p28: 2000
-        R_click_layout_tab_1928: { role: 'tab', name: 'Layout', exact: true }
-        sleep_step_p29: 2000
-        R_click_layout_combobox_1928: { role: 'combobox' }
-        sleep_step_p30: 1500
-        R_click_collection_option_1928: { locator: '[role="option"]:has-text("Collection")' }
-        sleep_step_p31: 2000
-
-        # Step 13: Click Publish (publish the duplicate)
-        R_click_publish_2: { test_id: 'confirm-button', timeout: 3000 }
-        sleep_step_s14: 1000
-
-        R_click_publish_3: { role: 'button', name: 'Publish' }
-        sleep_step_s15: 3000
-
-        smart_click_optional_got_it: { role: 'button', name: 'Apply', timeout: 3000 }
-        sleep_step_s16: 5000
+        # The wizard publishes on creation, so the Tools menu already lists the unpublish
+        # action. Assert it here because the settings route navigates away on save.
+        R_click_tools: { locator: "button[data-testid='enhance-button']:has-text('Tools')" }
+        sleep_step_s13: 3000
+        execute_js_tools_lists_unpublish:
+            script: "() => [...document.querySelectorAll('[role=menuitem]')].some(e => (e.innerText || '').includes('Unpublish this post'))"
+            assert_equals: true
+        press_escape_tools: { key: 'Escape' }
+        sleep_step_s14: 2000
 
         # Navigate to Catalogs to update product price
         # Navigate straight to the Storefront page (the old R_click_storefront name=Storefront actually pointed at the hamburger icon above and opened the menu by mistake)
