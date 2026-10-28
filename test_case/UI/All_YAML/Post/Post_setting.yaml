@@ -1950,25 +1950,46 @@ testT5033_5034_VerifyPartner:
             locator: "xpath=//input[@name='products.3.isCtaCustomized']/following::*[@role='combobox'][1]"
             text: "Buy now"
 
-        # Block D - one Save inside the dialog is what persists the choices. The
-        # editor-level Save that used to run after the dialog closed re-submitted the
-        # form snapshot taken before customizing and cleared every CTA flag, so it is
-        # deliberately not used here.
+        # Block D - the dialog Save only closes the dialog: it fires no request, so the
+        # choices are still sitting in the browser. They reach the backend when the
+        # Selling tab's own Save sends PATCH /posts/curator/<id>/products.
         R_click_save: { role: "button", name: "Save" }
         sleep_after_save: 3000
 
-        # Read the values back from a reopened dialog: the checks above only see the
-        # live form, so persistence is proven here. A reopened dialog mounts collapsed,
-        # hence the sections are expanded again.
-        R_click_customize_reopen: { role: "button", name: "Customize", exact: true }
-        sleep_after_customize_reopen: 3000
-        R_click_expand_saved_p0: { test_id: "ExpandMoreIcon", index: 0 }
+        # The dialog closing is not enough: the editor Save has to light up, otherwise
+        # the click below lands on a disabled button, no PATCH goes out, and the whole
+        # block still looks green because the browser kept the values in memory.
+        execute_js_editor_save_enabled:
+            script: |
+                () => {
+                    const btns = [...document.querySelectorAll("button[data-testid='enhance-button']")]
+                        .filter(e => (e.innerText || "").trim() === "Save");
+                    return btns.length === 1 && !btns[0].disabled;
+                }
+            assert_equals: true
+        R_click_editor_save: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
+        sleep_after_editor_save: 6000
+
+        # Reload before reading back. Without it the reads below come from the same
+        # in-browser edit store that held the unsaved values, which is how this case
+        # used to pass while the guest page still showed four plain Buy Ticket buttons.
+        reload_after_editor_save: {}
+        sleep_after_reload_saved: 8000
+        R_click_selling_tab_saved: { role: "tab", name: "Selling" }
+        sleep_after_selling_tab_saved: 3500
+
+        # Read the values back from a reopened dialog. It mounts collapsed, hence the
+        # sections are expanded again - scoped to the dialog, because the page itself
+        # carries icons with the same test id and a page-wide index expands the wrong ones.
+        R_click_customize_reopen: { locator: "button:visible:has-text('Customize')", index: 0 }
+        sleep_after_customize_reopen: 3500
+        R_click_expand_saved_p0: { locator: '[role="dialog"] [data-testid="ExpandMoreIcon"]', index: 0 }
         sleep_after_expand_saved_p0: 800
-        R_click_expand_saved_p1: { test_id: "ExpandMoreIcon", index: 1 }
+        R_click_expand_saved_p1: { locator: '[role="dialog"] [data-testid="ExpandMoreIcon"]', index: 1 }
         sleep_after_expand_saved_p1: 800
-        R_click_expand_saved_p2: { test_id: "ExpandMoreIcon", index: 2 }
+        R_click_expand_saved_p2: { locator: '[role="dialog"] [data-testid="ExpandMoreIcon"]', index: 2 }
         sleep_after_expand_saved_p2: 800
-        R_click_expand_saved_p3: { test_id: "ExpandMoreIcon", index: 3 }
+        R_click_expand_saved_p3: { locator: '[role="dialog"] [data-testid="ExpandMoreIcon"]', index: 3 }
         sleep_after_expand_saved_p3: 800
         verify_element_contains_text_saved_p0:
             locator: "xpath=//input[@name='products.0.isCtaCustomized']/following::*[@role='combobox'][1]"
@@ -1994,6 +2015,48 @@ testT5033_5034_VerifyPartner:
               locator: "input[name$='products.2.isCtaCustomized']"
             - assertion_type: "element_checked"
               locator: "input[name$='products.3.isCtaCustomized']"
+
+
+# T5033_5034 Guest: each product's own call-to-action must reach the storefront
+testT5033_5034_VerifyGuest:
+    guest: true
+    description: "Verify each product's own call-to-action reaches the guest post page: one product offers View Options, one Add to Cart, one View ticket and the fourth keeps the default Buy Ticket"
+    test_step:
+        # The post is created by testT5033_5034_VerifyPartner earlier in the same run and
+        # the shop lists the newest post first, so the first matching card is that post.
+        # Its alias cannot be hardcoded: every run creates a new post and Pear appends a
+        # numeric suffix once the plain alias is taken.
+        open_guest_shop_5033: "{BASE_URL}/autotestshop"
+        sleep_after_guest_shop_5033: 8000
+        R_click_guest_post_card: { text: "verify-post-shipping_fee", exact: true, index: 0 }
+        sleep_after_guest_post_card: 8000
+        screenshot_guest_cta_5033: { name: "debug_guest_cta_5033" }
+
+        # Collect the label of every product card button in one go. Comparing the sorted
+        # set proves both halves of the requirement: all four choices are on the page, and
+        # each of them appears exactly once. Checking only that "Buy Ticket" is visible
+        # would still pass when no choice reached the storefront.
+        execute_js_guest_cta_labels:
+            script: |
+                () => [...document.querySelectorAll('[data-track-product-id]')]
+                    .filter(e => e.tagName === 'BUTTON')
+                    .filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; })
+                    .map(e => (e.innerText || '').trim())
+                    .sort()
+                    .join(' | ')
+            assert_equals: "Add to Cart | Buy Ticket | View Options | View ticket"
+
+    expect_result:
+        description: "Each product keeps its own call-to-action on the guest post page: View Options, Add to Cart, View ticket and the untouched default Buy Ticket all render once"
+        assertions:
+            - assertion_type: "element_visible_by_locator"
+              locator: "button:has-text('View Options')"
+            - assertion_type: "element_visible_by_locator"
+              locator: "button:has-text('Add to Cart')"
+            - assertion_type: "element_visible_by_locator"
+              locator: "button:has-text('View ticket')"
+            - assertion_type: "element_visible_by_locator"
+              locator: "button:has-text('Buy Ticket')"
 
 
 # T4955: Partner enables Payment Restriction and sets access code
