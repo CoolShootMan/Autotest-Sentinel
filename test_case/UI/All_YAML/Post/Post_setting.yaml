@@ -554,167 +554,117 @@ testT3686_teardown:
 # T2705: Partner hides the variant and sets the default variant
 testT2705_VerifyPartner:
   guest: false
-  description: "Partner hides the variant and sets the default variant on the management page"
+  description: "Partner hides the '5 people' variant and sets '9 people' as the default variant on the management page"
   test_step:
-    # Step 1: Open autotestshop page
-    open: "{BASE_URL}/autotestshop"
-    sleep_after_open: 5000
+    # The variant flags live on a post product, and a post no longer has an editor route
+    # of its own: /post/<alias>/view returns 404 for the curator. The editor is the
+    # "Post" tab of the event view, so the event is the entry point.
+    open_events: { url: "{BASE_URL}/events" }
+    sleep_after_open_events: 6000
 
-    # Step 2: Click "Add" button
-    R_click_add: { role: "button", name: "Add" }
-    sleep_after_add: 1000
+    fill_event_search: { locator: 'input[placeholder="Search events"]', value: "Test event post variant settings" }
+    sleep_after_fill_event_search: 800
+    press_event_search: { key: "Enter" }
+    sleep_after_press_event_search: 5000
+    R_click_event_row: { locator: "p:text-is('Test event post variant settings')", index: 0 }
+    sleep_after_event_row: 8000
 
-    # Step 3: Click "Create post Pear-exclusive"
-    R_click_create_post: { role: "button", name: "Create post Pear-exclusive" }
-    sleep_after_create_post: 2000
+    R_click_post_tab: { role: "tab", name: "Post" }
+    sleep_after_post_tab: 4000
+    R_click_selling_tab: { role: "tab", name: "Selling" }
+    sleep_after_selling_tab: 4000
+    R_click_customize: { role: "button", name: "Customize", exact: true }
+    sleep_after_customize: 4000
 
-    # Step 4: Click "No" (skip co-sellers)
-    R_click_no: { role: "button", name: "No" }
-    sleep_after_no: 3000
+    # Phase 1 - clear both flags first. They belong to the post, so the previous run
+    # leaves them set. Clearing them turns the toggles below into real transitions
+    # instead of no-ops, and it is what makes the editor Save dirty again.
+    # The rows are addressed by their variant label, not by position: the product has
+    # three variants (5 / 7 / 9 people) and their order is not part of the contract.
+    check_exclude_5people_off:
+      locator: "xpath=//tr[descendant::*[normalize-space(text())='5 people']]//input[contains(@name, '.isExcluded')]"
+      checked: false
+    check_default_9people_off:
+      locator: "xpath=//tr[descendant::*[normalize-space(text())='9 people']]//input[contains(@name, '.isDefault')]"
+      checked: false
+    sleep_after_clear_variants: 1500
+    execute_js_variants_cleared:
+      script: |
+        () => {
+            const flag = (label, suffix) => {
+                const tr = [...document.querySelectorAll('tr')].find(r => (r.innerText || '').includes(label));
+                if (!tr) return 'missing';
+                const box = tr.querySelector(`input[name$='${suffix}']`);
+                return box ? String(box.checked) : 'missing';
+            };
+            return `5people.exclude=${flag('5 people', '.isExcluded')} 9people.default=${flag('9 people', '.isDefault')}`;
+        }
+      assert_equals: "5people.exclude=false 9people.default=false"
 
-    smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 6000 }
-    sleep_after_optional_discard: 500
+    # The dialog Save only closes the dialog: the flags are still in the browser until
+    # the editor-level Save sends PATCH /posts/curator/<id>/products.
+    R_click_dialog_save_cleared: { locator: '[role="dialog"] button:has-text("Save")' }
+    sleep_after_dialog_save_cleared: 3500
+    R_click_editor_save_cleared: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
+    sleep_after_editor_save_cleared: 7000
 
-    # Step 5: Click "Select" button.
-    R_click_select_products: { role: "button", name: "Select" }
-    sleep_after_select_products: 6000
+    # Phase 2 - hide "5 people" and make "9 people" the default.
+    R_click_customize_apply: { role: "button", name: "Customize", exact: true }
+    sleep_after_customize_apply: 4000
+    check_exclude_5people_on:
+      locator: "xpath=//tr[descendant::*[normalize-space(text())='5 people']]//input[contains(@name, '.isExcluded')]"
+      checked: true
+    check_default_9people_on:
+      locator: "xpath=//tr[descendant::*[normalize-space(text())='9 people']]//input[contains(@name, '.isDefault')]"
+      checked: true
+    sleep_after_apply_variants: 1500
+    execute_js_variants_applied:
+      script: |
+        () => {
+            const flag = (label, suffix) => {
+                const tr = [...document.querySelectorAll('tr')].find(r => (r.innerText || '').includes(label));
+                if (!tr) return 'missing';
+                const box = tr.querySelector(`input[name$='${suffix}']`);
+                return box ? String(box.checked) : 'missing';
+            };
+            return `5people.exclude=${flag('5 people', '.isExcluded')} 9people.default=${flag('9 people', '.isDefault')}`;
+        }
+      assert_equals: "5people.exclude=true 9people.default=true"
 
-    # Step 5.5: Switch Select products dialog to grid/card view.
-    R_click_grid_view: { role: "button", name: "grid" }
-    sleep_after_grid_view: 5000
+    R_click_dialog_save_applied: { locator: '[role="dialog"] button:has-text("Save")' }
+    sleep_after_dialog_save_applied: 3500
+    R_click_editor_save_applied: { locator: "button[data-testid='enhance-button']:has-text('Save')" }
+    sleep_after_editor_save_applied: 7000
 
-    # Step 6: Search for "General Admission" in the Select products dialog.
-    # NOTE (2026-10-23): filling this box alone issues NO request. Verified on
-    # release.pear.us: the XHR list stays empty until Enter is pressed, and Enter is
-    # what fires POST /posts/curator/catalog. The previous wording here claimed the
-    # opposite ("No Enter - would race with the in-flight debounce fetch"); it was
-    # wrong, and it is why this case dies at Step 7.1. The missing `press: Enter` and
-    # the product name are fixed separately, so behaviour is unchanged here.
-    fill_search_product: { placeholder: "Search product", value: "General Admission" }
-    sleep_after_search_product: 8000
-
-    # Step 7: Scroll the dialog product list — the target card sits below the fold
-    page_scroll_select_products: { y: 600, steps: 4, delay: 800 }
-    sleep_after_page_scroll_select_products: 1500
-
-    # Step 7.1: Click "General Admission" (the card whose desc is "Test event post variant settings")
-    R_click_general_admission: { locator: '[role="dialog"] [data-testid="content"]:has-text("Test event post variant settings") >> text="General Admission"', disable_ai: true }
-    sleep_after_general_admission: 2000
-
-
-    # Step 8: Click "Add 1/20 product(s)" to add selected product
-    R_click_add_product: { role: "button", name: "Add 1/20 product(s)" }
-    sleep_after_add_product: 2000
-
-    # Step 8.1: Click "Customize" (the panel was renamed by the Pear UI team from "Customize products" to "Customize")
-    R_click_customize: { role: "button", name: "Customize" }
-    sleep_before_scroll: 2000
-
-    # The exclude checkbox for '5 people' (1st column checkbox, index=0)
-    check_exclude: { locator: "xpath=//tr[descendant::*[contains(text(), '5 people')]]//input[@type='checkbox']", index: 0 }
-
-    # The default variant checkbox for '9 people' (2nd column checkbox, index=1)
-    check_default: { locator: "xpath=//tr[descendant::*[contains(text(), '9 people')]]//input[@type='checkbox']", index: 1 }
-
-    # Save
-    R_click_save: { role: "button", name: "Save" }
-    sleep_after_update: 5000
-
-    # Step 9: Click "Content" tab
-    click_content_tab: { role: 'tab', name: 'Content' }
-    sleep_after_content_tab: 1000
-
-    # Step 10: Fill post title
-    fill_post_title: { role: 'textbox', name: 'Post title', value: 'test post variant settings' }
-    sleep_after_post_title: 500
-
-    # Step 11: Add cover media (select product image as cover)
-    click_add_cover_media: { role: 'button', name: 'Add cover media' }
-    sleep_after_add_cover_media: 1000
-    click_products_media: { text: 'Products', exact: true }
-    sleep_after_products_media: 500
-    click_media_img: { role: 'img', name: 'Image of Product', index: 0 }
-    sleep_after_media_img: 500
-    click_done_cover: { role: 'button', name: 'Done' }
-    sleep_after_done_cover: 1000
-
-    # Step 12: Click "Style" tab
-    R_click_style_tab: { role: 'tab', name: 'Style' }
-    sleep_after_style_tab: 1000
-
-    # Step 13: Click "Layout" to enter layout settings (new UI requires this click)
-    R_click_layout: { role: 'tab', name: 'Layout' }
-    sleep_after_layout: 1000
-
-    # Step 14: Change layout to "Collection" via combobox dropdown
-    R_click_layout_combobox: { role: 'combobox' }
-    sleep_after_layout_combobox: 500
-    R_click_collection_option: { locator: 'text=Collection' }
-    sleep_after_collection_option: 500
-
-    # Step 15: Switch to Settings tab.
-    # [DE-JS 2026-10-16] was an execute_js that force-clicked the close button of every visible
-    # popover, forced `p.style.display = 'none'` on the rest, fired a synthetic Escape keydown
-    # on `document`, clicked `document.body`, then scanned the tab list for a VISIBLE "Settings"
-    # tab and clicked it — asserting only that such a tab was found. Every part has a native
-    # equivalent, and the old assertion is now implicit: `R_click_settings_tab` fails loudly if
-    # the tab is missing OR still covered by an overlay (the old JS cheerfully returned
-    # "clicked Settings" for a tab that was behind the popover).
-    press_close_popovers: { key: "Escape" }
-    sleep_close_popovers: 800
-    # MUI popovers anchored to a still-mounted trigger do not always close on Escape alone;
-    # clicking the document body is the standard dismissal and is exactly what the old JS did
-    # (`document.body.click()`). `dispatch_click` sends it natively, with no hit-test.
-    dispatch_click_document_body: { locator: "body", events: ["click"] }
-    sleep_after_body_click: 800
-    R_click_settings_tab: { role: 'tab', name: 'Settings' }
-    sleep_after_settings_tab: 1500
-
-    # Step 15.1: Replace the Post URL slug with "test1234".
-    R_click_post_url_input: { role: 'textbox', name: 'https://release.pear.us/' }
-    sleep_after_post_url_input: 500
-    press_select_all_url: { press: 'Control+a' }
-    press_delete_url: { press: 'Backspace' }
-    sleep_after_press_delete_url: 300
-    fill_post_url:
-      role: 'textbox'
-      name: 'https://release.pear.us/'
-      value: 'test1234'
-    sleep_after_press_delete_url_2: 1000
-
-    # Step 16: Click "Publish" in the bottom action bar → opens "Ready to Publish?" modal.
-    R_click_publish:
-      locator: ':text-is("Publish")'
-      optional: true
-    sleep_after_press_delete_url_3: 1500
-
-    # Step 17: Click "Publish" INSIDE the "Ready to Publish Your Post?" confirmation modal.
-    R_click_publish_confirm:
-      locator: 'div[role="dialog"] :text-is("Publish")'
-      optional: true
-    sleep_after_press_delete_url_4: 2000
-
-    # Step 18: Click "Apply" INSIDE the "Your item is ready!" modal — scoped to dialog
-    R_click_apply:
-      locator: 'div[role="dialog"] :text-is("Apply")'
-      optional: true
-    sleep_after_press_delete_url_5: 3000
+    # Read the flags back from the server. Without the reload the reads below come from
+    # the same in-browser form state that held the unsaved values.
+    reload_after_save: {}
+    sleep_after_reload_save: 9000
+    R_click_selling_tab_reloaded: { role: "tab", name: "Selling" }
+    sleep_after_selling_tab_reloaded: 3500
+    R_click_customize_reloaded: { role: "button", name: "Customize", exact: true }
+    sleep_after_customize_reloaded: 4000
 
   expect_result:
-    description: "Curator successfully publishes post with variants applied"
+    description: "The '5 people' variant is excluded and the '9 people' variant is the default, both persisted on the server"
     assertions:
-      - assertion_type: "element_visible_by_text"
-        text: "Post published!"
+      - assertion_type: "element_checked"
+        locator: "xpath=//tr[descendant::*[normalize-space(text())='5 people']]//input[contains(@name, '.isExcluded')]"
+      - assertion_type: "element_checked"
+        locator: "xpath=//tr[descendant::*[normalize-space(text())='9 people']]//input[contains(@name, '.isDefault')]"
 
 
 # Separate verification for Guest
 testT2705_VerifyGuest:
   guest: true
-  description: "Verify that '5 people' variant is hidden and '9 people' variant is the default variant for guest users after curator action"
+  description: "Verify the hidden '5 people' variant is not offered to guests on the post page while the other variants stay bookable"
   test_step:
-    # Step 1: Open the post page; retry until it renders (storefront needs time to pick up the just-published post)
+    # The alias is derived from the event title by the prefill data, so it is stable
+    # across runs. The old case hand-made the alias "test1234" and published a new post
+    # every run, which failed with "URL already taken" as soon as the previous run's post
+    # was still around.
     open_until_ready:
-      url: "{BASE_URL}/autotestshop/post/test1234"
+      url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
       ready: 'text="General Admission"'
       retries: 6
       retry_delay: 5000
@@ -723,29 +673,18 @@ testT2705_VerifyGuest:
     page_scroll: { y: 400, delay: 500 }
     sleep_after_page_scroll: 500
 
-    # Click product card to open product drawer
+    # The product card opens the drawer that carries the variant pickers.
     R_click_product_card: { text: 'General Admission', index: 0 }
-    sleep_after_product_card: 2000
-
-    # Scroll down to the variant section in the detail page
+    sleep_after_product_card: 4000
     swipe_to_variant: { x: 0, y: 600 }
 
-    # [DE-JS 2026-10-16] was an execute_js that read `getComputedStyle(b).backgroundColor` of
-    # every `[role=button][data-testid=styled-list-item-button]` and asserted two things:
-    #   (a) no button whose exact text is "5 people" exists  -> verify_text_hidden (a missing
-    #       element counts as hidden, which is exactly the old "fivePresent" check);
-    #   (b) the "9 people" button has a NON-transparent background -> verify_element_style with
-    #       the new `not_equals` operator, read on the button itself (same element the JS read).
+    # The drawer only renders the variants the curator left enabled - the excluded one
+    # is missing from the DOM, and the consumer payload confirms it is not served at all.
     verify_hidden_5people_variant: { text: "5 people", exact: true, timeout: 10000 }
-    verify_element_style_9people_variant_selected:
-        locator: "xpath=//*[@role='button'][@data-testid='styled-list-item-button'][normalize-space(.)='9 people']"
-        property: "backgroundColor"
-        operator: "not_equals"
-        expected: "rgba(0, 0, 0, 0)"
-        timeout: 10000
+    verify_available_9people_variant: { text: "9 people", exact: true, timeout: 10000 }
 
   expect_result:
-    description: "The variant '5 people' should be completely hidden and '9 people' variant should be the default (selected) variant"
+    description: "The variant '5 people' is not offered and the remaining variants are still listed for the guest"
     assertions:
       - assertion_type: "element_not_visible_by_text"
         text: "5 people"
@@ -753,78 +692,6 @@ testT2705_VerifyGuest:
         text: "5people"
       - assertion_type: "element_visible_by_text"
         text: "9 people"
-
-  teardown_step:
-    # Step 1: Inject partner cookies (switch from guest back to curator)
-    add_cookies: {}
-    sleep_after_td_add_cookies: 1000
-
-    # Step 2: Open storefront page
-    open: "{BASE_URL}/autotestshop"
-    sleep_after_td_open: 5000
-
-    # Step 3: Click "Add" button
-    R_click_add: { role: "button", name: "Add" }
-    sleep_after_td_add: 1000
-
-    # Step 4: Click "Add products"
-    R_click_add_products: { role: "button", name: "Add products" }
-    sleep_after_td_add_products: 2000
-
-    fill_product_search_4: { locator: 'input[placeholder="Search..."]', value: 'test_general_products' }
-    sleep_after_td_product_search_4: 500
-    press_search_4: { key: "Enter" }
-    sleep_after_td_press_search_4: 1500
-
-    # Step 5: Click product_img
-    click_product_img: { test_id: 'SquareLineIcon', index: 0 }
-    sleep_after_td_product_img: 1000
-
-    # Step 6: Click "Continue"
-    R_click_Continue_btn: { role: "button", name: "Continue" }
-    sleep_after_td_Continue_btn: 2000
-
-    # Step 7: Click "Apply"
-    R_click_Apply_btn: { role: "button", name: "Apply" }
-    sleep_after_td_Apply_btn: 2000
-
-    # Step 8: Click "My content" button
-    R_click_my_content: { role: "button", name: "My content" }
-    sleep_after_td_my_content: 3000
-
-    # Step 9: Locate the post card by its URL alias "test1234", then click
-    R_click_post_card: { locator: 'text="test1234" >> xpath=ancestor::*[.//img][1] >> img', index: 0 }
-    sleep_after_td_post_card: 5000
-
-    # Step 10: Wait for post landing page to load.
-    # The old key was `wait_for_selling_tab` with a `selector:` payload. Every `wait_*`
-    # name except `wait_for_selector*` / `wait_for_url*` / `wait_toast*` is routed to
-    # smart_wait, which reads role/name/locator/text and IGNORES `selector` - so this
-    # step logged "no locator/role/name/text specified, skipping" and waited 0ms.
-    # Renamed to the `wait_for_selector_` prefix so the selector is honoured, and the
-    # bogus `[exact=true]` attribute dropped (the Playwright `role=` engine has no
-    # `exact` attribute). This cannot add a new failure mode: the very next step clicks
-    # this same tab, so the tab has to exist anyway - the wait just surfaces it sooner.
-    wait_for_selector_selling_tab: { selector: '[role="tab"]:has-text("Selling")', timeout: 15000 }
-    R_click_selling_tab_reset: { role: "tab", name: "Selling", exact: true }
-    sleep_after_td_selling_tab_reset: 2000
-
-    # Step 11: Click Customize (Pear UI renamed from "Customize products")
-    R_click_customize_reset: { role: "button", name: "Customize" }
-    sleep_after_td_customize_reset: 2000
-
-    # Step 12: Uncheck variant checkboxes (reset to default state)
-    uncheck_exclude: { locator: 'input[name="products.0.variants.0.isExcluded"]', checked: false }
-    uncheck_default: { locator: 'input[name="products.0.variants.2.isDefault"]', checked: false }
-    sleep_after_td_default: 1000
-
-    # Step 13: Save twice
-    R_click_save_reset: { role: "button", name: "Save" }
-    R_click_save_reset1: { role: "button", name: "Save" }
-    sleep_after_td_save_reset1: 4000
-
-    # Step 14: Verify success toast "Post product updated!"
-    wait_toast_save_teardown: { message: "Post products updated", timeout: 15000 }
 
 
 # T2830: Partner hides a post on the storefront
