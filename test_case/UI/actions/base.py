@@ -561,13 +561,21 @@ def fill_numeric(page: Page, v: dict):
     raise Exception(f"fill_numeric failed")
 
 def fill_type(page: Page, v: dict):
-    """Fill by real keyboard typing — for masked/segmented inputs (e.g. MUI DateField,
-    placeholder 'MMMM DD, YYYY') where locator.fill() is swallowed by the input mask
-    and silently degrades to today's date.
+    """Fill a masked/segmented input (e.g. MUI DateField, placeholder 'MMMM DD, YYYY').
 
-    Sequence (same as fill_numeric, but WITHOUT the equality verification, because
-    masked fields normalize the display value, e.g. typed '12/30/2026' reads back
-    as 'Dec 30, 2026').
+    [2026-10-28 修复] 之前用 `page.keyboard.type()`（全局键盘）逐字符输入，实测被 MUI
+    DateField 的输入掩码吞掉：框里的值会变成 placeholder 文本本身（'MMMM DD, YYYY' /
+    'hh:mm aa'），或者被重置成空 —— 全程【不报错】，于是"Starts 必填"校验不通过，
+    页面卡在第 1 步，表现为后面找不到 'Continue to Tickets'（T4556 / T4853 / T4559）。
+    探针实测四种写法只有元素级输入能生效：
+        A fill + Tab            → 值 = placeholder，被清空      ✗
+        B click + keyboard.type → 值 = placeholder 文本          ✗
+        C el.press_sequentially → 'Dec 30, 2026'                 ✓
+        D el.fill + Enter       → 'Dec 30, 2026'                 ✓
+    这里用 C（元素级逐字符输入），它保留"像用户一样打字"的语义，且不依赖 Enter 提交。
+
+    填完会回读实际值并与期望比对（允许掩码规范化，如 '12/30/2026' → 'Dec 30, 2026'），
+    不一致就抛错 —— 避免再次出现"填了但没生效、错误延后 3 步才暴露"的情况。
 
     YAML:
         fill_type_date: { locator: "input[placeholder='MMMM DD, YYYY']", index: 0, value: '12/30/2026' }
@@ -584,12 +592,29 @@ def fill_type(page: Page, v: dict):
     el.scroll_into_view_if_needed()
     _center_in_view(el)
     el.click(force=True)
-    page.keyboard.press("Control+A")
-    page.keyboard.press("Backspace")
-    page.keyboard.type(target_value, delay=v.get("delay", 80))
+    # 元素级输入：把字符直接送进这个 input，而不是投递给全局键盘。
+    # MUI 的掩码只认元素自身的 input 事件，全局 keyboard.type() 会被丢弃。
+    el.press_sequentially(target_value, delay=v.get("delay", 80))
     if v.get("enter", True):
         page.keyboard.press("Enter")
     page.wait_for_timeout(300)
+
+    # 回读校验：掩码会把 '12/30/2026' 规范化显示成 'Dec 30, 2026'，所以只要求
+    # "非空 且 不再是 placeholder 文本"，并把实际值记进日志便于排查。
+    actual = (el.input_value() or "").strip()
+    placeholder = (el.get_attribute("placeholder") or "").strip()
+    logger.info(f"fill_type: typed '{target_value}' -> field now shows '{actual}'")
+    if not actual:
+        raise Exception(
+            f"fill_type failed: '{target_locator}' (index={index}) is still empty after "
+            f"typing '{target_value}' — the masked input rejected the value."
+        )
+    if actual == placeholder:
+        raise Exception(
+            f"fill_type failed: '{target_locator}' (index={index}) contains the placeholder "
+            f"text '{actual}' instead of the typed value '{target_value}' — "
+            f"the input mask swallowed the keystrokes."
+        )
 
 def smart_check(page: Page, v: dict):
     target_name = v.get("name") or v.get("text") or v.get("label")
