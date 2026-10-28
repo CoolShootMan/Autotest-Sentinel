@@ -554,23 +554,59 @@ testT3686_teardown:
 # T2705: Partner hides the variant and sets the default variant
 testT2705_VerifyPartner:
   guest: false
-  description: "Partner hides the '5 people' variant and sets '9 people' as the default variant on the management page"
+  description: "Partner creates a standalone post, hides the '5 people' variant and sets '9 people' as the default variant"
   test_step:
-    # The variant flags live on a post product, and a post no longer has an editor route
-    # of its own: /post/<alias>/view returns 404 for the curator. The editor is the
-    # "Post" tab of the event view, so the event is the entry point.
-    open_events: { url: "{BASE_URL}/events" }
-    sleep_after_open_events: 6000
+    # Build a standalone (non-event) post from scratch: the variant flags under test
+    # live on a post product, and the case must not ride on the prefill event post.
+    # /post/create opens the 4-step wizard directly (no event linkage).
+    open: { url: "{BASE_URL}/post/create" }
+    sleep_after_open_create: 5000
+    smart_click_optional_discard: { role: 'button', name: 'Discard', timeout: 3000 }
+    sleep_after_optional_discard: 1500
 
-    fill_event_search: { locator: 'input[placeholder="Search events"]', value: "Test event post variant settings" }
-    sleep_after_fill_event_search: 800
-    press_event_search: { key: "Enter" }
-    sleep_after_press_event_search: 5000
-    R_click_event_row: { locator: "p:text-is('Test event post variant settings')", index: 0 }
-    sleep_after_event_row: 8000
+    # Step 1 of 4 - pick the variant product (the $0.00 General Admission under the
+    # "Test event post variant settings" event; searching "General Admission" alone
+    # returns 9 same-named cards). Typing alone does not query; Enter does.
+    fill_catalog_search: { locator: 'input[placeholder="Search product"]', value: 'General Admission' }
+    sleep_after_catalog_search: 1200
+    press_catalog_search: { key: 'Enter' }
+    sleep_after_press_catalog_search: 5000
+    click_variant_product: { locator: 'div[role=button]:has-text("Test event post variant settings") [data-testid="SquareLineIcon"]', index: 0 }
+    sleep_after_variant_product: 2000
+    R_click_continue_products: { locator: "button:has-text('Continue')" }
+    sleep_after_continue_products: 5000
+    R_click_continue_coselling: { role: 'button', name: 'Continue', exact: true }
+    sleep_after_continue_coselling: 5000
 
-    R_click_post_tab: { role: "tab", name: "Post" }
-    sleep_after_post_tab: 4000
+    # Step 2 of 4 - title + URL slug. The slug is a textarea#post-alias (not an input).
+    # A fixed alias lets the guest case reopen this exact post across runs.
+    fill_post_title: { locator: 'input[name="title"]', value: 'T2705 standalone post' }
+    sleep_after_post_title: 1000
+    fill_post_alias: { locator: 'textarea#post-alias', value: 'test2705-standalone' }
+    sleep_after_post_alias: 1500
+    R_click_create_and_continue: { role: 'button', name: 'Create and continue' }
+    sleep_after_create_and_continue: 7000
+
+    # Step 3 of 4 (content) - the coach popover is a MuiPaper (role=null), not a button,
+    # so it must be addressed by xpath. It owns the click scope until dismissed.
+    R_click_got_it: { locator: "xpath=//button[normalize-space(.)='Got it']" }
+    sleep_after_got_it: 2000
+    R_click_continue_content: { locator: "xpath=//button[normalize-space(.)='Continue']" }
+    sleep_after_continue_content: 5000
+
+    # Step 4 of 4 (style) -> Finish -> "Your Post is ready!" -> advanced editing.
+    R_click_finish_style: { locator: "xpath=//button[normalize-space(.)='Finish']" }
+    sleep_after_finish_style: 6000
+    R_click_continue_advanced: { locator: "xpath=//button[contains(., 'Continue with advanced')]" }
+    sleep_after_continue_advanced: 8000
+
+    # The advanced editor lands on /post/<uuid>/view. Capture the post id so the
+    # flags below are read from (and saved to) this very post after reload.
+    execute_js_capture_post_id:
+      script: "() => location.pathname.split('/post/')[1].split('/')[0]"
+      save_as: "post_uuid"
+    sleep_after_capture_post_id: 1000
+
     R_click_selling_tab: { role: "tab", name: "Selling" }
     sleep_after_selling_tab: 4000
     R_click_customize: { role: "button", name: "Customize", exact: true }
@@ -659,12 +695,11 @@ testT2705_VerifyGuest:
   guest: true
   description: "Verify the hidden '5 people' variant is not offered to guests on the post page while the other variants stay bookable"
   test_step:
-    # The alias is derived from the event title by the prefill data, so it is stable
-    # across runs. The old case hand-made the alias "test1234" and published a new post
-    # every run, which failed with "URL already taken" as soon as the previous run's post
-    # was still around.
+    # The partner case publishes this standalone post under a fixed alias, so the
+    # guest can reopen the exact post across runs. Run the partner case first (or
+    # clear data so its alias is free) - the alias is not idempotent across runs.
     open_until_ready:
-      url: "{BASE_URL}/autotestshop/post/test-event-post-variant-settings"
+      url: "{BASE_URL}/autotestshop/post/test2705-standalone"
       ready: 'text="General Admission"'
       retries: 6
       retry_delay: 5000
