@@ -172,6 +172,10 @@ tools/__pycache__/*.pyc
 data/*.xlsx
 .cline
 
+# === UI automation: CSV/导出落地目录（用例下载产物，不入库）===
+# 例：testPartner_verify_commission 会把 "Customer Submissions_<日期>.xlsx" 落到这里
+test_case/UI/data/
+
 # Ignore debug htmL fiLes
 debug_*.html
 
