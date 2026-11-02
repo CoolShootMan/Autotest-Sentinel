@@ -1,4 +1,4 @@
-# Auto Test Framework v4.4 - 技术指南
+# Auto Test Framework v4.5 - 技术指南
 
 ## 目录
 - [1. 项目架构](#1-项目架构)
@@ -19,6 +19,7 @@
 - [16. 辅助工具生态](#16-辅助工具生态)
 - [17. DOM 向量知识库 (dom_kb.py)](#17-dom-向量知识库-dom_kbpy)
 - [18. AI RAG 智能建议 (Probe 9)](#18-ai-rag-智能建议-probe-9)
+- [19. 多模块索引（API / 性能 / backend / tools）](#19-多模块索引api--性能--backend--tools)
 
 ---
 
@@ -909,6 +910,8 @@ ENABLE_AI_VISION=1
 
 ### 16.1 工具总览
 
+> 本节只列高频工具；`tools/` 下 50+ 脚本的完整分类清单见 **[docs/TOOLS.md](./docs/TOOLS.md)**。
+
 | 工具 | 用途 | 典型场景 |
 |------|------|---------|
 | `diagnose_failed.py` | 失败用例诊断报告 | 测试失败后自动重放 + 9 种探查 + AI RAG 建议 |
@@ -1068,6 +1071,24 @@ Probe 9 与 Probe 7/8 **同时存在**，不互相替代：
 - HTML 报告中，所有建议按 score 降序排列，同时展示
 - AI 建议卡片带 "View all RAG candidates" 折叠面板
 - 终端输出带 `[AI RAG]` / `[Rule]` 标签区分
+
+---
+
+## 19. 多模块索引（API / 性能 / backend / tools）
+
+本指南聚焦 **UI 框架内部机制**；仓库其余模块的完整说明见：
+
+| 主题 | 文档 |
+|------|------|
+| 全仓库模块地图（UI / API / 性能 / 缓存回归 / backend / CI / 产物目录） | [docs/MODULES.md](./docs/MODULES.md) |
+| `tools/` 50+ 脚本分类速查（用途 + 常用命令 + 场景选择） | [docs/TOOLS.md](./docs/TOOLS.md) |
+| API 自动化上手（环境、四层架构、套件运行、写用例） | [test_case/API auto script/ONBOARDING.md](./test_case/API%20auto%20script/ONBOARDING.md) |
+| 性能测试（并发浏览器 FE/BE 指标） | `test_case/performance testing/Pear_FE_BE_performance.py` |
+| 缓存回归（`X-DB-Query-Count` 0-DB 审计） | `test_case/performance testing/cache-regression/` |
+| Backend 服务（FastAPI） | `backend/main.py` + `backend/requirements.txt` |
+| CI 三条 daily workflow | `.github/workflows/` |
+
+> 维护约定：新增模块或工具时，同步更新 `docs/MODULES.md`（模块）或 `docs/TOOLS.md`（工具），并保持 README 双语同步。
 
 ---
 

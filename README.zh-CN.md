@@ -1,4 +1,4 @@
-# Auto Test 框架 v4.4
+# Auto Test 框架 v4.5
 
 > pytest + playwright + allure + Gemini AI 实现 UI 自动化测试 + AI 自愈
 
@@ -23,6 +23,21 @@
 
 ---
 
+## 📦 模块一览
+
+本仓库不止 UI 自动化一条线。完整模块地图见 **[docs/MODULES.md](./docs/MODULES.md)**，工具速查见 **[docs/TOOLS.md](./docs/TOOLS.md)**。
+
+| 模块 | 路径 | 入口 | 说明 |
+|------|------|------|------|
+| **UI 自动化** | `test_case/UI/` | `pytest`（仓库根）/ `main.py`（CI）/ `runner.py`（交互式） | YAML 关键字驱动 + Action Registry + AI 自愈（本文档主线） |
+| **API 自动化** | `test_case/API auto script/` | `python run_suite.py suites/linda.yaml` | 独立 pytest 工程，api/core/suites/tests 四层；上手见 [ONBOARDING.md](./test_case/API%20auto%20script/ONBOARDING.md) |
+| **性能测试** | `test_case/performance testing/` | `python Pear_FE_BE_performance.py --concurrent 20` | 并发真实浏览器，采集 FE Navigation Timing / Paint + BE 响应时间，输出 Markdown 报告 |
+| **缓存回归** | `test_case/performance testing/cache-regression/` | `pytest`（该目录内） | 基于响应头 `X-DB-Query-Count` 审计「缓存命中必须 0 次 DB 查询」 |
+| **Backend 服务** | `backend/` | `uvicorn backend.main:app` | FastAPI AI 测试平台后端（独立服务，不参与每日套件） |
+| **工具链** | `tools/` | `py -3.9 tools/<script>.py` | 50+ 脚本：登录态、定位器、诊断、ONES/Jira、发布同步等 |
+
+---
+
 ## 💻 系统要求
 
 - **Python:** 3.9+ (推荐 3.10+)
@@ -30,6 +45,20 @@
 - **浏览器:** Chromium (由 Playwright 自动安装)
 - **内存:** 建议 8GB+ RAM
 - **磁盘空间:** 至少 2GB 可用空间
+
+> 注意：CI 统一使用 **Python 3.11**；本地约定 `py -3.9`。在 3.9 上安装 `venv_requirements.txt` 时需放宽 4 个钉版本（见 [docs/MODULES.md §9](./docs/MODULES.md)）。
+
+---
+
+## ⚙️ CI / 每日自动化
+
+| Workflow | 时间（北京时间） | 内容 |
+|----------|------------------|------|
+| `ui-automation-daily` | **20:00** 每晚 | 无头跑全量 UI 套件（`main.py`），Allure 报告发布 GitHub Pages，Slack 汇总 |
+| `api-automation-daily` | **08:00** 每天 | 跑 `linda` + `lury` API 套件，结果写运行页 Summary，Slack 通知 |
+| `cache-regression-daily` | **10:00** 每天 | 缓存 0-DB 审计，报告写 Job Summary + 上传 artifact |
+
+三条均支持 `workflow_dispatch` 手动触发；UI workflow 会先准备 Java（仓库自带 Allure CLI 依赖 JRE）。
 
 ---
 
@@ -270,30 +299,42 @@ actions/ (Action Registry 动作注册表)
 │  └─config.yaml          # 配置文件
 ├─recordings              # playwright codegen 录制脚本
 ├─test_case
-│  └─UI                    # 框架根（在仓库根执行 pytest）
-│     ├─All_YAML/          # 测试用例定义（按功能分目录）
-│     ├─actions/           # Action Registry (动作注册表)
-│     │  ├─__init__.py     # 注册表入口
-│     │  ├─base.py         # 基础动作 (smart_click, smart_fill, AI Fallback)
-│     │  └─...             # 各业务线动作模块
-│     ├─page/              # UI 层封装 (home.py / my_shop_page.py 等)
-│     ├─utils/             # [NEW v4.0] AI 自愈工具集
-│     │  ├─ai_vision.py    # Gemini Vision AI 服务 (SOM + 多 API Key 轮换)
-│     │  ├─rag_knowledge.py   # RAG 知识库 (FAISS + SentenceTransformers)
-│     │  └─Knowledge_Base.md  # 领域知识库文档
-│     ├─conftest.py        # Pytest fixtures (多环境 + 认证，解析 --yaml)
-│     ├─test_ui.py         # 核心测试执行引擎 (含执行历史追踪)
-│     ├─runner.py          # 交互式启动器（需先 cd test_case/UI）
-│     └─main.py            # CI 主入口（pytest + Allure 报告）
-├─tools                   # 工具包（在仓库根执行）
-│  ├─diagnose_failed.py    # [v4.4] 失败用例诊断报告工具（9 种探查 + AI RAG 建议）
+│  ├─UI                    # UI 自动化框架根（在仓库根执行 pytest）
+│  │  ├─All_YAML/          # 测试用例定义（按功能分目录）
+│  │  ├─actions/           # Action Registry (动作注册表)
+│  │  │  ├─__init__.py     # 注册表入口
+│  │  │  ├─base.py         # 基础动作 (smart_click, smart_fill, AI Fallback)
+│  │  │  └─...             # 各业务线动作模块
+│  │  ├─page/              # UI 层封装 (home.py / my_shop_page.py 等)
+│  │  ├─utils/             # AI 自愈工具集
+│  │  │  ├─ai_vision.py    # Gemini Vision AI 服务 (SOM + 多 API Key 轮换)
+│  │  │  ├─rag_knowledge.py   # RAG 知识库 (FAISS + SentenceTransformers)
+│  │  │  └─Knowledge_Base.md  # 领域知识库文档
+│  │  ├─conftest.py        # Pytest fixtures (多环境 + 认证，解析 --yaml)
+│  │  ├─test_ui.py         # 核心测试执行引擎 (含执行历史追踪)
+│  │  ├─runner.py          # 交互式启动器（需先 cd test_case/UI）
+│  │  └─main.py            # CI 主入口（pytest + Allure 报告）
+│  ├─API auto script/      # API 自动化（独立 pytest 工程，见 ONBOARDING.md）
+│  │  ├─api/ core/         # 业务门面 / HTTP·上下文·断言
+│  │  ├─suites/ tests/     # 套件清单 / 用例脚本
+│  │  ├─config/            # 环境 YAML + 占位符渲染
+│  │  └─run_suite.py       # 套件执行入口（python run_suite.py suites/linda.yaml）
+│  └─performance testing/  # 性能测试 + 缓存回归
+│     ├─Pear_FE_BE_performance.py  # 并发浏览器 FE/BE 性能报告
+│     └─cache-regression/          # 缓存 0-DB 审计（X-DB-Query-Count）
+├─backend                  # FastAPI 服务（AI 测试平台后端）
+├─tools                   # 工具链（50+ 脚本，速查见 docs/TOOLS.md）
+│  ├─diagnose_failed.py    # 失败用例诊断（9 种探查 + AI RAG 建议）
 │  ├─get_all_cookies.py    # 登录态 cookie 刷新
 │  ├─ui_snapshot.py        # DOM 快照 + diff 检测
 │  ├─locator_updater.py    # YAML 定位器批量更新
-│  ├─dom_kb.py             # [NEW v4.4] DOM 向量知识库（FAISS + RAG）
+│  ├─dom_kb.py             # DOM 向量知识库（FAISS + RAG）
+│  ├─gh_push.py / gh_pr.py # 凭据管理器推送 / REST 开 PR
 │  └─...                   # 其他辅助工具
+├─docs                    # 模块全景（MODULES.md）+ 工具速查（TOOLS.md）
+├─allure                  # 仓库自带 Allure CLI 2.26.0（勿删）
 ├─pytest.ini               # Pytest 配置（仓库根 = rootdir）
-├─venv_requirements.txt    # 项目核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
+├─venv_requirements.txt    # 核心依赖 (pytest, playwright, allure, FAISS, Gemini 等)
 ├─setup_env.sh / .bat      # 跨平台环境一键设置脚本
 └─.env.example             # 环境变量模板（复制为 .env）
 ```
@@ -650,4 +691,4 @@ python tools/locator_updater.py update --role button --name "Edit post" --new-na
 
 ---
 
-**版本:** v4.4 | **最后更新:** 2026-05-25 | **维护者:** Autotest-monster Team
+**版本:** v4.5 | **最后更新:** 2026-11-02 | **维护者:** Autotest-monster Team

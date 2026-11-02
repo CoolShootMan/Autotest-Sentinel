@@ -11,9 +11,15 @@ English | [简体中文](./README.zh-CN.md)
 | Module | Tech | Description |
 |--------|------|-------------|
 | **UI Automation** | Pytest + Playwright + YAML | Keyword-driven test cases defined in YAML. AI self-healing via Gemini Vision (optional). |
-| **API Automation** | Pytest + Requests | 20+ test suites covering login, purchase flow, post settings, resell, Shopify, admin tools, etc. |
+| **API Automation** | Pytest + Requests | Independent pytest project (api/core/suites/tests). 20+ suites covering login, purchase flow, post settings, resell, Shopify, admin tools, etc. See [ONBOARDING.md](./test_case/API%20auto%20script/ONBOARDING.md). |
 | **Data Prefill** | API scripts | `00_UI Prefill` suite seeds test posts, events, products and tickets before UI runs. |
-| **CI/CD** | GitHub Actions | Scheduled daily runs on `ubuntu-latest`, Allure reports on GitHub Pages, Slack notifications. |
+| **Performance** | Playwright (concurrent browsers) | `Pear_FE_BE_performance.py` — N concurrent real browsers, collects FE Navigation Timing/Paint + BE API response times, emits a Markdown report. |
+| **Cache Regression** | Pytest + header audit | Asserts cached endpoints perform **0 DB queries** via `X-DB-Query-Count`, C-end storefront only. |
+| **Backend Service** | FastAPI | AI test platform backend under `backend/`, standalone (not part of daily suites). |
+| **Tools** | Python | 50+ scripts: cookies, locators, diagnosis, ONES/Jira, release sync. See [docs/TOOLS.md](./docs/TOOLS.md). |
+| **CI/CD** | GitHub Actions | Scheduled daily runs on `ubuntu-latest` (Python 3.11), Allure reports on GitHub Pages, Slack notifications. |
+
+> Full module map: [docs/MODULES.md](./docs/MODULES.md). Tools reference: [docs/TOOLS.md](./docs/TOOLS.md).
 
 ---
 
@@ -50,6 +56,7 @@ English | [简体中文](./README.zh-CN.md)
 |----------|-------------------|--------------|
 | `ui-automation-daily` | **20:00** every night | Full UI suite on `ubuntu-latest`, headless. Publishes Allure report to GitHub Pages, sends Slack summary. |
 | `api-automation-daily` | **08:00** every morning | API suites (linda + lury). Slack notification with pass/fail counts. |
+| `cache-regression-daily` | **10:00** every morning | Cache 0-DB audit; report written to Job Summary, output uploaded as artifact. |
 
 Both workflows support `workflow_dispatch` for manual triggering. Reports are published to GitHub Pages; Slack notifications go to `#api-ui-automation-result-daily-report`.
 
@@ -302,13 +309,20 @@ actions/ (Action Registry)
 │  │  ├─test_ui.py        # YAML test runner
 │  │  ├─runner.py         # Interactive launcher
 │  │  └─main.py           # CI entry point
-│  └─API auto script/     # API automation (pytest + requests)
-│     ├─api/              # Reusable API clients (login, orders, posts...)
-│     ├─tests/            # Test suites by domain (00_Prefill, 01_Login, 03_Purchase, 07_Post...)
-│     ├─core/             # API framework core
-│     └─suites/           # Suite configurations
-├─tools                   # Utilities (cookie fetch, CI summary, diagnosis, etc.)
-├─.github/workflows/      # CI pipelines (ui-automation-daily, api-automation-daily)
+│  ├─API auto script/     # API automation (pytest + requests, own pytest.ini)
+│  │  ├─api/              # Reusable API clients (login, orders, posts...)
+│  │  ├─core/             # HTTP client, context, assertions, templating
+│  │  ├─tests/            # Test suites by domain (00_Prefill, 01_Login, 03_Purchase, 07_Post...)
+│  │  ├─config/           # Environment YAML + placeholder rendering
+│  │  └─run_suite.py      # Suite runner (python run_suite.py suites/linda.yaml)
+│  └─performance testing/ # Performance + cache regression
+│     ├─Pear_FE_BE_performance.py  # Concurrent-browser FE/BE performance report
+│     └─cache-regression/          # 0-DB query audit (X-DB-Query-Count)
+├─backend                 # FastAPI service (AI test platform backend)
+├─tools                   # Utilities (cookie fetch, CI summary, diagnosis, etc.) - see docs/TOOLS.md
+├─docs                    # Module map (MODULES.md) + tools reference (TOOLS.md)
+├─allure                  # Bundled Allure CLI 2.26.0 (do not remove)
+├─.github/workflows/      # CI pipelines (ui / api / cache-regression daily)
 ├─pytest.ini              # Pytest configuration
 ├─venv_requirements.txt   # Project dependencies
 ├─setup_env.sh / .bat     # Cross-platform one-click environment setup
@@ -669,4 +683,4 @@ python tools/locator_updater.py update --role button --name "Edit post" --new-na
 
 ---
 
-**Version:** v4.4 | **Last Updated:** 2026-05-25 | **Maintained by:** Autotest-monster Team
+**Version:** v4.5 | **Last Updated:** 2026-11-02 | **Maintained by:** Autotest-monster Team
